@@ -23,20 +23,20 @@
 :root{--p:#00f2ff;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);color:#fff;overflow-x:hidden;padding-bottom:70px;min-height:100vh;display:flex;flex-direction:column}
-#auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:center;align-items:center;padding:20px;text-align:center;overflow-y:auto}
+#auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px 20px 40px;text-align:center;overflow-y:auto}
 .auth-box{background:#151b2e;padding:20px;border-radius:20px;border:1px solid var(--p);width:100%;max-width:400px}
 .auth-box h1{color:var(--p);margin:10px 0;font-size:1.3rem}
 .auth-box input{width:100%;padding:10px;margin-bottom:8px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:0.9rem;outline:none}
 .auth-box button{width:100%;padding:12px;background:var(--p);color:#000;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:0.95rem}
-.character-preview-large{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--p);border-radius:15px;padding:20px;margin:15px 0;text-align:center}
-.character-preview-large svg{width:160px;height:160px;filter:drop-shadow(0 0 15px rgba(0,242,255,0.5));animation:float 3s ease-in-out infinite}
+.character-preview-large{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--p);border-radius:15px;padding:12px;margin:10px 0;text-align:center}
+.character-preview-large svg{width:110px;height:110px;filter:drop-shadow(0 0 15px rgba(0,242,255,0.5));animation:float 3s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 .character-name{font-size:1rem;font-weight:800;color:var(--g);margin-top:10px}
 .customization-section{margin:15px 0}
 .customization-section h3{color:var(--g);font-size:0.95rem;margin-bottom:10px}
-.helmet-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.accessory-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.skin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.helmet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px}
+.accessory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
+.skin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
 .custom-option{background:var(--gl);border:2px solid #333;border-radius:10px;padding:6px;cursor:pointer;text-align:center;transition:all 0.3s;position:relative}
 .custom-option.selected{border-color:var(--g);box-shadow:0 0 15px var(--g);background:rgba(255,215,0,0.1)}
 .custom-option svg{width:100%;height:50px;margin-bottom:4px}
@@ -82,8 +82,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .gtt{background:rgba(255,255,255,0.05);padding:5px 10px;border-radius:12px;white-space:nowrap;cursor:pointer;border:1px solid #333;font-size:0.7rem}
 .gtt.on{background:var(--p);color:#000;border-color:var(--p);font-weight:bold}
 .gi{background:rgba(0,242,255,0.05);padding:10px;border-radius:8px;margin-bottom:6px;border-left:3px solid var(--p);cursor:pointer}
-.logout-btn{position:fixed;top:8px;right:8px;background:rgba(255,0,0,0.3);border:1px solid #ff3333;color:#fff;padding:4px 8px;border-radius:8px;font-size:0.65rem;cursor:pointer;z-index:1500;display:none}
-.ghost-toggle{position:fixed;bottom:148px;right:10px;background:rgba(155,89,182,0.85);border:1px solid #9b59b6;color:#fff;padding:6px 10px;border-radius:15px;font-size:0.7rem;cursor:pointer;z-index:1500;display:none}
+.hdr-right{display:flex;align-items:center;gap:6px}
+.logout-btn{background:rgba(255,0,0,0.3);border:1px solid #ff3333;color:#fff;padding:5px 9px;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;display:none;white-space:nowrap}
+.ghost-toggle{background:rgba(155,89,182,0.85);border:1px solid #9b59b6;color:#fff;padding:5px 9px;border-radius:10px;font-size:0.68rem;font-weight:700;cursor:pointer;display:none;white-space:nowrap}
 .map-controls{position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px}
 .map-btn{background:var(--p);color:#000;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.75rem}
 .route-alert{background:rgba(255,51,51,0.2);border:1px solid var(--r);padding:8px;border-radius:8px;margin:6px 0}
@@ -197,6 +198,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <h1>Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Crea tu personaje ciclista</p>
 <input type="text" id="nombre-input" placeholder="Tu nombre" required style="border:2px solid var(--g)">
+<input type="email" id="em" placeholder="correo@ejemplo.com" required>
+<button type="submit">Entrar</button>
+<p style="color:#888;font-size:0.72rem;margin:12px 0 4px">Personaliza tu casco (opcional)</p>
 <div class="character-preview-large">
   <svg id="preview-svg" viewBox="0 0 200 200"></svg>
   <div class="character-name" id="characterNameDisplay">Tu Personaje</div>
@@ -204,13 +208,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="customization-section"><h3>Casco</h3><div class="helmet-grid" id="helmetGrid"></div></div>
 <div class="customization-section"><h3>Color del casco</h3><div class="skin-grid" id="skinGrid"></div></div>
 <div class="customization-section"><h3>Lentes</h3><div class="accessory-grid" id="accessoryGrid"></div></div>
-<input type="email" id="em" placeholder="correo@ejemplo.com" required>
-<button type="submit">Entrar</button>
 </div>
 </form>
 
-<button class="logout-btn" id="logoutBtn" onclick="cerrarSesion()">Salir</button>
-<button class="ghost-toggle" id="ghostBtn" onclick="toggleGhost()">Fantasma: OFF</button>
 <button class="fab" id="micBtn" onclick="toggleMic()" title="Comando de voz"><i class="fas fa-microphone"></i></button>
 <div id="pisteroBubble"></div>
 <button id="pwaInstall" onclick="instalarPWA()" style="display:none;position:fixed;left:14px;bottom:80px;z-index:2100;align-items:center;gap:7px;background:var(--p);color:#03121a;border:none;padding:10px 14px;border-radius:24px;font-weight:800;font-size:0.82rem;box-shadow:0 4px 14px rgba(0,242,255,0.35);cursor:pointer"><i class="fas fa-download"></i> Instalar app</button>
@@ -265,7 +265,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <header>
 <h2>🚲 Libre Pedal</h2>
+<div class="hdr-right">
+<button class="ghost-toggle" id="ghostBtn" onclick="toggleGhost()">👻 OFF</button>
 <div class="ulvl"><span id="nv">Novato</span></div>
+<button class="logout-btn" id="logoutBtn" onclick="cerrarSesion()">Salir</button>
+</div>
 </header>
 
 <main>
@@ -726,7 +730,7 @@ async function reg(e){
 
 function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(confirm("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
 function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
-function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText=ghostMode?'Fantasma: ON':'Fantasma: OFF'; btn.style.background=ghostMode?'rgba(255,0,0,0.6)':'rgba(155,89,182,0.85)'; }
+function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText=ghostMode?'👻 ON':'👻 OFF'; btn.style.background=ghostMode?'rgba(255,0,0,0.6)':'rgba(155,89,182,0.85)'; }
 function gd(){ if(!cu) return; localStorage.setItem('lp_u_'+cu,JSON.stringify(us)); localStorage.setItem('lp_j_'+cu,JSON.stringify(uj)); localStorage.setItem('lp_r_'+cu,JSON.stringify(rh)); }
 async function getNombreUsuario(userId){ if(userId===cu) return nombreUsuario; try{ const doc=await db.collection('users').doc(userId).get(); if(doc.exists && doc.data().nombre) return doc.data().nombre; }catch(e){} return userId; }
 function subscribeToUsers(){ ulp=db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ if(!mp) return; sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ if(currentUserLocation && calculateDistance(currentUserLocation.lat,currentUserLocation.lon,data.lat,data.lon) > 100000){ continue; } const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(mp).bindPopup('<b>'+nombre+'</b>'); sm.push(marker); } } }); }
