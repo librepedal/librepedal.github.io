@@ -55,6 +55,8 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .speed-value{font-size:2.5rem;font-weight:800;color:var(--p);line-height:1}
 .speed-label{font-size:0.8rem;color:#888;margin-top:3px}
 .speed-status{font-size:0.75rem;color:var(--g);margin-top:6px;font-weight:700}
+.darma-badge{display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;font-weight:800;padding:10px 12px;border-radius:12px;margin-bottom:10px;cursor:pointer;font-size:0.95rem;box-shadow:0 3px 10px rgba(255,215,0,0.25)}
+.darma-badge small{font-weight:700;opacity:0.75;font-size:0.62rem}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
 .stat-card{background:var(--gl);padding:10px;border-radius:8px;text-align:center;border:1px solid #222}
 .stat-value{font-size:1.3rem;font-weight:800;color:var(--p)}
@@ -280,6 +282,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="speed-label">km/h</div>
   <div class="speed-status" id="speedStatus">Detenido</div>
 </div>
+<div class="darma-badge" onclick="cv('stats')">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="stats-grid">
   <div class="stat-card"><div class="stat-value" id="dt">0.0</div><div class="stat-label">Km totales</div></div>
   <div class="stat-card"><div class="stat-value" id="cl">0</div><div class="stat-label">Calorías</div></div>
@@ -518,7 +521,7 @@ const extrasOptions = [
   {id:'bandana', name:'Pañoleta', svg:'<path d="M64 150 Q100 166 136 150 L132 160 Q100 174 68 160 Z" fill="#e74c3c"/>'}
 ];
 
-let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='';
+let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null;
 let categoriaActual='todos', hostelTipoActual='todos';
 let trips=[], currentTrip=null, navMap=null, helmetMarker=null, routeLine=null;
 let addedDests=[], currentFilter='hostel', allHostels=[];
@@ -573,7 +576,15 @@ function toggleVoz(){
 }
 
 function skinColor(id){ const s=skinOptions.find(function(x){return x.id===id;}); return s?s.c:'#00f2ff'; }
-function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x){return x.id===helmetId;})||helmetDesigns[0]; const stripe = accent?'<path d="M42 88 Q100 62 158 88" stroke="'+accent+'" stroke-width="8" fill="none" stroke-linecap="round"/>':''; return '<svg viewBox="22 48 156 70" xmlns="http://www.w3.org/2000/svg">'+hd.svg+stripe+'</svg>'; }
+function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x){return x.id===helmetId;})||helmetDesigns[0]; const col=hd.color||'#00aaff'; return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'
+  +'<path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/>'
+  +'<path d="M12 54 A38 36 0 0 1 88 54 Z" fill="'+col+'"/>'
+  +'<path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/>'
+  +'<path d="M50 22 L50 52" stroke="'+(accent||'#00f2ff')+'" stroke-width="6" stroke-linecap="round"/>'
+  +'<circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/>'
+  +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
+  +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+  +'</svg>'; }
 function riderMarkerHTML(helmetId, accent, mine){ return '<div class="helmet-pin'+(mine?' mine':'')+'">'+miniHelmetSVG(helmetId, accent||'#00f2ff')+'</div>'; }
 
 function generateCharacterSVG(helmetId, lensId, skinId, extras){
@@ -581,20 +592,34 @@ function generateCharacterSVG(helmetId, lensId, skinId, extras){
   const lens = lensOptions.find(function(x){return x.id===lensId;}) || lensOptions[0];
   const accent = skinColor(skinId);
   extras = extras || [];
+  const col = helmet.color || '#00aaff';
   let s = '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">';
-  // casco elegido
-  s += helmet.svg;
-  // skin: franja de color sobre el casco (personalizacion)
-  s += '<path d="M42 88 Q100 60 158 88" stroke="'+accent+'" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.95"/>';
-  // ojos dentro del casco (parpadean)
-  s += '<ellipse cx="84" cy="116" rx="9" ry="10" fill="#ffffff"><animate attributeName="ry" values="10;10;1;10;10" dur="4s" repeatCount="indefinite"/></ellipse>';
-  s += '<ellipse cx="116" cy="116" rx="9" ry="10" fill="#ffffff"><animate attributeName="ry" values="10;10;1;10;10" dur="4s" repeatCount="indefinite"/></ellipse>';
-  s += '<circle cx="86" cy="118" r="4.2" fill="#16203a"/><circle cx="118" cy="118" r="4.2" fill="#16203a"/>';
-  s += '<circle cx="87.6" cy="116.4" r="1.4" fill="#fff"/><circle cx="119.6" cy="116.4" r="1.4" fill="#fff"/>';
+  // sombra en el suelo
+  s += '<ellipse cx="100" cy="184" rx="44" ry="7" fill="rgba(0,0,0,0.22)"/>';
+  // cara (forma de rostro bajo la visera, tono piel; enmarca ojos y boca, NO es una esfera)
+  s += '<path d="M64 126 Q64 172 100 174 Q136 172 136 126 Z" fill="#f4c9a0"/>';
+  // casco FRONTAL: cupula vista de frente sobre la frente
+  s += '<path d="M40 132 A60 58 0 0 1 160 132 Z" fill="'+col+'"/>';
+  // visera / borde inferior del casco
+  s += '<path d="M40 132 Q100 150 160 132 L160 125 Q100 143 40 125 Z" fill="rgba(0,0,0,0.30)"/>';
+  // franja central de color (personalizacion)
+  s += '<path d="M100 76 L100 130" stroke="'+accent+'" stroke-width="9" stroke-linecap="round"/>';
+  // ventilaciones (ranuras en la cupula)
+  s += '<path d="M70 102 q7 -16 14 0" stroke="rgba(0,0,0,0.22)" stroke-width="5" fill="none" stroke-linecap="round"/>';
+  s += '<path d="M116 102 q7 -16 14 0" stroke="rgba(0,0,0,0.22)" stroke-width="5" fill="none" stroke-linecap="round"/>';
+  // brillo del casco
+  s += '<path d="M60 118 A48 48 0 0 1 90 84" stroke="rgba(255,255,255,0.35)" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  // ojos (debajo de la visera, parpadean)
+  s += '<ellipse cx="83" cy="144" rx="10" ry="11" fill="#ffffff"><animate attributeName="ry" values="11;11;1;11;11" dur="4s" repeatCount="indefinite"/></ellipse>';
+  s += '<ellipse cx="117" cy="144" rx="10" ry="11" fill="#ffffff"><animate attributeName="ry" values="11;11;1;11;11" dur="4s" repeatCount="indefinite"/></ellipse>';
+  s += '<circle cx="85" cy="146" r="4.6" fill="#16203a"/><circle cx="119" cy="146" r="4.6" fill="#16203a"/>';
+  s += '<circle cx="86.6" cy="144.2" r="1.5" fill="#fff"/><circle cx="120.6" cy="144.2" r="1.5" fill="#fff"/>';
+  // mejillas
+  s += '<circle cx="72" cy="158" r="4.5" fill="rgba(255,120,120,0.35)"/><circle cx="128" cy="158" r="4.5" fill="rgba(255,120,120,0.35)"/>';
   // boca (sonrisa)
-  s += '<path d="M86 140 Q100 151 114 140" stroke="#ffffff" stroke-width="3.2" fill="none" stroke-linecap="round"/>';
-  // lentes sobre los ojos
-  if(lensId!=='none' && lens.svg) s += lens.svg;
+  s += '<path d="M86 162 Q100 174 114 162" stroke="#7a4a2a" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
+  // lentes (reposicionados a la nueva altura de ojos)
+  if(lensId!=='none' && lens.svg) s += '<g transform="translate(0,28)">'+lens.svg+'</g>';
   // accesorios
   extras.forEach(function(id){ const ex=extrasOptions.find(function(x){return x.id===id;}); if(ex) s+=ex.svg; });
   s += '</svg>';
@@ -759,7 +784,7 @@ function toggleGPS(){
   }
 }
 function ug(p){
-  const la=p.coords.latitude, lo=p.coords.longitude, sp=p.coords.speed?p.coords.speed*3.6:0;
+  const la=p.coords.latitude, lo=p.coords.longitude, sp=(p.coords.speed&&p.coords.speed>0.7)?p.coords.speed*3.6:0;
   document.getElementById('spd').innerText=Math.round(sp);
   updateSpeedStatus(sp);
   if(sp>maxSpeed) maxSpeed=sp;
@@ -769,7 +794,7 @@ function ug(p){
   currentRoute.push({lat:la,lon:lo,t:Date.now()});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
   if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ db.collection('users').doc(cu).set({lat:la,lon:lo,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); lastPos={lat:la,lon:lo}; } }
-  if(Math.random()>0.95){ const frase=(sp<25&&Math.random()<0.35)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(frase) h(frase); }
+  if(sp>0 && Math.random()>0.95){ const frase=(sp<25&&Math.random()<0.35)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(frase) h(frase); }
 }
 function updateSpeedStatus(speed){
   const el=document.getElementById('speedStatus'); if(!el) return;
@@ -789,10 +814,10 @@ function hg(e){ h("La señal de GPS está inestable."); }
 function gd2(a,b,c,d){ const R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
 function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<8?'lento':v<25?'normal':'rapido'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
-function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; pf.innerText=perf+'%'; gd(); }
+function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; pf.innerText=perf+'%'; gd(); }
 async function im(){ mp=L.map('map',{zoomControl:true}).setView([20,0],2); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp); if(!ghostMode) subscribeToUsers(); }
 function ap(){ const n=document.getElementById('np').value; if(n){ us.d+=20; const la=(currentUserLocation?currentUserLocation.lat:-34.6037)+(Math.random()*0.02-0.01), lo=(currentUserLocation?currentUserLocation.lon:-58.3816)+(Math.random()*0.02-0.01); L.marker([la,lo]).addTo(mp).bindPopup('<b>'+n+'</b>'); au(); h("Punto agregado. Veinte de Darma para ti."); document.getElementById('np').value=""; } }
-function toggleRadarOnMap(){ radarActive=!radarActive; if(radarActive){ h("Radar de ciclistas activado."); if(sm.length===0) subscribeToUsers(); } else { sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; h("Radar desactivado."); } }
+function toggleRadarOnMap(){ radarActive=!radarActive; if(radarActive){ cv('map'); if(sm.length===0) subscribeToUsers(); if(currentUserLocation && mp){ if(radarCircle) mp.removeLayer(radarCircle); radarCircle=L.circle([currentUserLocation.lat,currentUserLocation.lon],{radius:100000,color:'#00f2ff',weight:1.5,fillColor:'#00f2ff',fillOpacity:0.06}).addTo(mp); mp.fitBounds(radarCircle.getBounds(),{padding:[20,20]}); h("Radar activado. Buscando ciclistas a 100 km a la redonda."); } else { h("Radar activado, pero necesito tu GPS para centrar la búsqueda."); } } else { sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; if(radarCircle){ mp.removeLayer(radarCircle); radarCircle=null; } h("Radar desactivado."); } }
 function addRouteAlert(){ const type=prompt("¿Qué reportas? (bache, perro, peligro...)"); if(!type) return; const desc=prompt("Descripción:"); if(!desc) return; const hora=new Date().toLocaleTimeString(); db.collection('routeAlerts').add({user:cu,nombre:nombreUsuario,type:type,desc:desc,h:hora,lat:us.la||null,lon:us.lo||null,timestamp:firebase.firestore.FieldValue.serverTimestamp()}); h("Reporte enviado. Gracias por avisar."); }
 function em(){ const i=document.getElementById('chi'), t=i.value.trim(); if(!t||!cu) return; const n=new Date(), h2=(n.getHours().toString().padStart(2,'0'))+':'+(n.getMinutes().toString().padStart(2,'0')); db.collection('chat').add({a:cu,nombre:nombreUsuario,t:t,h:h2,ts:firebase.firestore.FieldValue.serverTimestamp()}); i.value=""; }
 function rc(){ const c=document.getElementById('chm'); if(!c) return; c.innerHTML=cm.map(function(m){ return '<div class="ms '+(m.a===cu?'sf':'ot')+'">'+(m.a!==cu?'<div class="ma">'+(m.nombre||m.a)+' · '+m.h+'</div>':'')+'<div class="mb">'+m.t+'</div>'+(m.a===cu?'<div class="ma" style="text-align:right;margin-top:3px">'+m.h+'</div>':'')+'</div>'; }).join(''); c.scrollTop=c.scrollHeight; }
@@ -861,7 +886,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
     lpWakeLock.enable();
     gpsWatchId=navigator.geolocation.watchPosition(function(pos){
-      const lat=pos.coords.latitude, lon=pos.coords.longitude, speed=pos.coords.speed?pos.coords.speed*3.6:0;
+      const lat=pos.coords.latitude, lon=pos.coords.longitude, speed=(pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0;
       if(pos.coords.accuracy>30) return;
       if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<0.005) return; totalDistance+=dist; }
       gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:Date.now()}); lastGpsPoint={lat:lat,lon:lon};
