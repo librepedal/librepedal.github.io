@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Libre Pedal · Cómo funciona</title>
+<style>
+:root{--p:#00f2ff;--d:#0a0f1d;--g:#ffd700}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);color:#e8eeff;line-height:1.6}
+header{background:linear-gradient(135deg,#151b2e,#0a0f1d);padding:34px 20px;text-align:center;border-bottom:2px solid var(--p)}
+header h1{margin:0;color:var(--p);font-size:1.8rem}
+header p{color:#9fb0d0;margin:8px 0 0}
+.wrap{max-width:860px;margin:0 auto;padding:20px}
+nav.toc{position:sticky;top:0;background:rgba(10,15,29,0.96);padding:10px;border-bottom:1px solid #233;display:flex;gap:8px;flex-wrap:wrap;z-index:10}
+nav.toc a{color:var(--p);text-decoration:none;font-size:0.8rem;background:rgba(0,242,255,0.08);padding:4px 10px;border-radius:12px;border:1px solid #224}
+section{background:#121829;border:1px solid #233;border-radius:14px;padding:18px 20px;margin:16px 0}
+section h2{color:var(--g);margin:0 0 4px;font-size:1.25rem}
+section>.sub{color:#8aa;font-size:0.85rem;margin-bottom:10px}
+h3{color:var(--p);font-size:1rem;margin:16px 0 4px}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:0.9rem}
+th,td{text-align:left;padding:8px;border-bottom:1px solid #233;vertical-align:top}
+th{color:var(--p)}
+code{background:#0a1020;color:var(--g);padding:1px 6px;border-radius:5px;font-size:0.85rem}
+.tag{display:inline-block;background:rgba(255,215,0,0.12);color:var(--g);border:1px solid #553;padding:2px 8px;border-radius:10px;font-size:0.72rem;margin:2px}
+.note{background:rgba(0,242,255,0.07);border-left:3px solid var(--p);padding:10px 14px;border-radius:8px;margin:10px 0;font-size:0.9rem}
+.warn{background:rgba(255,180,0,0.08);border-left:3px solid var(--g)}
+footer{text-align:center;color:#667;padding:30px;font-size:0.8rem}
+ul{margin:6px 0 6px 0;padding-left:20px}
+li{margin:3px 0}
+</style>
+</head>
+<body>
+<header>
+<h1>🚲 Libre Pedal — Manual de funcionamiento</h1>
+<p>Cómo opera cada función de la aplicación · versión 2</p>
+</header>
+
+<nav class="toc">
+<a href="#general">General</a>
+<a href="#voz">Voz y comandos</a>
+<a href="#personaje">Personaje</a>
+<a href="#inicio">Inicio</a>
+<a href="#mapa">Mapa</a>
+<a href="#nav">Navegación</a>
+<a href="#hidratacion">Hidratación</a>
+<a href="#social">Social</a>
+<a href="#taller">Taller</a>
+<a href="#guia">CicloGuía</a>
+<a href="#perfil">Perfil</a>
+<a href="#datos">Datos</a>
+<a href="#recursos">Recursos IA</a>
+</nav>
+
+<div class="wrap">
+
+<section id="general">
+<h2>Visión general</h2>
+<div class="sub">Aplicación web de un solo archivo (index.html). No requiere instalación ni servidor propio.</div>
+<p>Libre Pedal es un copiloto para ciclistas con un personaje llamado <strong>Pistero</strong> que habla, navega contigo estilo Waze y vive en el mapa. Toda la información se guarda en dos lugares:</p>
+<ul>
+<li><strong>Firebase Firestore</strong> (en la nube): usuarios, chat, rutas, viajes, hostels, recomendaciones, amigos y reportes. Es lo que permite ver a otros ciclistas en tiempo real.</li>
+<li><strong>localStorage</strong> (en tu teléfono): tu sesión, tu personaje, kilómetros y calorías acumuladas. Funciona sin conexión.</li>
+</ul>
+<div class="note">La barra inferior se redujo a <strong>5 botones</strong> (Inicio · Mapa · Social · Taller · Perfil). Las demás secciones siguen estando: se abren con accesos directos dentro de cada pantalla o por comando de voz. <strong>No se eliminó ninguna función.</strong></div>
+</section>
+
+<section id="voz">
+<h2>Voz y comandos de voz</h2>
+<div class="sub">El personaje habla y también te entiende.</div>
+<h3>Cómo habla Pistero</h3>
+<p>Usa la voz del navegador (Web Speech API). Antes de hablar, el texto pasa por un filtro que <strong>elimina todos los emojis e iconos</strong>, así que ya no los lee en voz alta. Elige automáticamente la mejor voz en español disponible (prioriza español de Chile, luego de Latinoamérica). Se puede silenciar desde <em>Perfil → Voz: ON/OFF</em>.</p>
+<h3>Comando de voz (botón del micrófono)</h3>
+<p>El botón morado flotante activa el reconocimiento de voz. Frases que entiende:</p>
+<table>
+<tr><th>Dices…</th><th>Pistero hace…</th></tr>
+<tr><td>"ir a Valparaíso" / "llévame a…"</td><td>Calcula la ruta y arranca la navegación</td></tr>
+<tr><td>"abre el mapa", "mis rutas", "viajes"</td><td>Cambia de sección</td></tr>
+<tr><td>"chat", "amigos", "taller", "guía", "estadísticas", "perfil"</td><td>Abre esa sección</td></tr>
+<tr><td>"activa el GPS" / "grabar"</td><td>Inicia/detiene la grabación de ruta</td></tr>
+<tr><td>"cuántos kilómetros llevo"</td><td>Te dice km y calorías en voz</td></tr>
+<tr><td>"silencio" / "habla"</td><td>Apaga o enciende la voz</td></tr>
+<tr><td>"tutorial"</td><td>Abre el tutorial guiado</td></tr>
+</table>
+<div class="note warn">El comando de voz necesita micrófono y funciona mejor en <strong>Chrome/Android</strong>. En algunos navegadores (Firefox, ciertos iOS) puede no estar disponible; el botón te lo avisa.</div>
+</section>
+
+<section id="personaje">
+<h2>El personaje (Pistero)</h2>
+<div class="sub">Animado, personalizable y presente en todos los mapas.</div>
+<ul>
+<li>El personaje <strong>es el casco</strong>: una cara simpática (ojos que parpadean y boca) que vive dentro del casco elegido. Sin rostro ni cuerpo: limpio y reconocible.</li>
+<li><strong>18 cascos</strong> y subiendo (marcas reales + Full Face, Urbano, Kids, Smart LED, Premium dorado, Camuflado). Pensado para ampliar y vender modelos a futuro.</li>
+<li><strong>8 colores</strong> (skin = franja de color sobre el casco), <strong>6 estilos de lentes</strong> y <strong>accesorios</strong> combinables: faro, antena, calcomanía y pañoleta.</li>
+<li>Es SVG animado y liviano, no traba el teléfono.</li>
+<li><strong>En el mapa, cada ciclista se ve como su casco</strong> (no un pin ni un emoji). El tuyo brilla y rebota para distinguirse.</li>
+<li><strong>Estructura lista para monetizar:</strong> cascos premium, packs de colores, lentes y accesorios como compras futuras.</li>
+</ul>
+</section>
+
+<section id="inicio">
+<h2>Inicio</h2>
+<div class="sub">Tu tablero del día.</div>
+<table>
+<tr><th>Elemento</th><th>Qué hace</th></tr>
+<tr><td>Velocímetro</td><td>Velocidad en vivo desde el GPS y estado (detenido / lento / normal / rápido)</td></tr>
+<tr><td>Tarjetas</td><td>Km totales, calorías, velocidad media y número de viajes completados</td></tr>
+<tr><td>Barra de desempeño</td><td>Progreso hacia tu meta (sube con los km recorridos)</td></tr>
+<tr><td><code>GPS</code></td><td>Inicia/detiene la grabación de tu recorrido; al detener, lo guarda en "Mis Rutas"</td></tr>
+<tr><td><code>+10 Darma</code></td><td>Puntos de gamificación (suben tu nivel: Novato → Explorador → Nómada → Leyenda)</td></tr>
+<tr><td><code>Mis Viajes</code> / <code>Tutorial</code></td><td>Accesos directos</td></tr>
+<tr><td>Música / PDF</td><td>Enlaces a apps de música y descarga del PDF de frases</td></tr>
+</table>
+</section>
+
+<section id="mapa">
+<h2>Mapa global</h2>
+<div class="sub">Comunidad y puntos de interés.</div>
+<ul>
+<li><strong>Ciclistas</strong>: muestra a otros usuarios visibles en tiempo real, cada uno con su casco.</li>
+<li><strong>Reportar</strong>: avisa un peligro (bache, perro, etc.) que verán los demás.</li>
+<li><strong>Agregar punto</strong>: marca agua, camping, taller, mirador u hostel (+20 Darma).</li>
+<li>Accesos directos a <em>Mis Rutas</em> y <em>Mis Viajes</em>.</li>
+</ul>
+</section>
+
+<section id="nav">
+<h2>Navegación estilo Waze</h2>
+<div class="sub">Lo central de la app.</div>
+<ul>
+<li><strong>Viaje rápido</strong>: escribe (o dicta) un destino; busca la dirección (Nominatim) y calcula la ruta en bici (OSRM).</li>
+<li>Pantalla a pantalla completa con instrucción grande, ícono de giro, velocidad, km, tiempo y hora estimada de llegada.</li>
+<li><strong>Tu personaje avanza por el mapa</strong> siguiendo tu GPS, y el mapa te sigue (paneo automático), como Waze.</li>
+<li>Las indicaciones se anuncian por voz, sin leer iconos, con gramática natural ("Gira a la derecha por…").</li>
+<li><strong>Viajes multi-destino</strong>: planifica varios puntos en orden y guárdalos. (Al iniciar, la navegación va al destino final; los intermedios quedan listados.)</li>
+<li>Al llegar, el viaje se marca como completado y guarda distancia, duración y calorías.</li>
+</ul>
+</section>
+
+<section id="hidratacion">
+<h2>Hidratación y nutrición por voz</h2>
+<div class="sub">Recomendaciones automáticas durante la navegación.</div>
+<p>Basado en la guía deportiva habitual: un ciclista debe <strong>hidratarse cada 15–20 minutos</strong> (≈ 500–750 ml por hora) y, en salidas de más de una hora, <strong>comer carbohidratos cada 45–60 minutos</strong> (≈ 30–60 g por hora). Llevado a distancia y a ritmo recreativo, Libre Pedal te avisa por voz:</p>
+<table>
+<tr><th>Cada…</th><th>Mensaje</th></tr>
+<tr><td>5 km</td><td>"Toma un par de tragos de agua para no deshidratarte."</td></tr>
+<tr><td>20 km</td><td>"Come algo ligero, una fruta o una barra, para recargar energía."</td></tr>
+</table>
+<div class="note">Estos intervalos están en el código (<code>nextHydrateKm</code> = 5, <code>nextEatKm</code> = 20) y se pueden ajustar fácilmente si quieres recordatorios más o menos seguidos.</div>
+</section>
+
+<section id="social">
+<h2>Social</h2>
+<div class="sub">Chat · Amigos · Recomendaciones.</div>
+<ul>
+<li><strong>Chat global</strong> en tiempo real para todos los ciclistas.</li>
+<li><strong>Amigos</strong>: envía y acepta solicitudes; busca ciclistas a 10 km a la redonda.</li>
+<li><strong>Recomendaciones</strong>: publica lugares útiles (agua, comida, vistas, seguridad) y dale "me gusta".</li>
+</ul>
+</section>
+
+<section id="taller">
+<h2>Taller MacGyver</h2>
+<div class="sub">Reparaciones de emergencia.</div>
+<p>17 trucos para arreglar la bici con lo que tengas (cadena, pinchazo, radios, frenos…), con buscador. Puedes <strong>compartir tus propios secretos</strong> con la comunidad. Toca cualquier truco y Pistero te lo lee.</p>
+</section>
+
+<section id="guia">
+<h2>CicloGuía</h2>
+<div class="sub">Hospedajes, panoramas y tips.</div>
+<p>Filtros por categoría (hospedaje, panoramas, tips, economía) y por tipo de alojamiento (hostel, camping, casa). Puedes publicar un alojamiento nuevo y <strong>marcar su ubicación con GPS</strong> tocando el mapa. Sección de comentarios de la comunidad.</p>
+</section>
+
+<section id="perfil">
+<h2>Perfil y personaje</h2>
+<div class="sub">Personalización y ajustes.</div>
+<p>Cambia casco, color, lentes y extras (se ven en vivo y en el mapa). Desde aquí también: <strong>Estadísticas</strong>, <strong>Voz ON/OFF</strong>, <strong>Tutorial</strong> y <strong>Modo Fantasma</strong> (te oculta del mapa de otros ciclistas).</p>
+</section>
+
+<section id="datos">
+<h2>Estadísticas y datos</h2>
+<div class="sub">Tu actividad, medible y exportable.</div>
+<ul>
+<li>Km, viajes, calorías, Darma, velocidad media y máxima.</li>
+<li>Gráficos de barras por viaje: distancia, duración y calorías.</li>
+<li><strong>Exportar GPX</strong>: descarga la ruta para abrirla en Strava, Komoot, etc.</li>
+<li><strong>PDF de frases</strong>: genera un documento con todas las frases de Pistero.</li>
+</ul>
+</section>
+
+<section id="recursos">
+<h2>Sobre los recursos de IA (voces y animación)</h2>
+<div class="sub">Qué sirve para esta app y qué no.</div>
+<h3>Voces</h3>
+<p>Piper, XTTS v2, Fish Speech y Mozilla Common Voice son excelentes, pero <strong>corren en servidor con Python (8–16 GB RAM)</strong>: no se pueden incrustar en una web de un solo archivo sin montar un backend. Por eso la app usa la <strong>voz nativa del navegador</strong> (gratis, sin instalar nada). Si en el futuro quieres voz "AI premium" tipo Piper, requiere un servidor (decisión de infraestructura aparte).</p>
+<h3>Animación / personajes</h3>
+<p>Mixamo, ActorCore, Sketchfab y similares entregan <strong>modelos 3D</strong> para Blender/Unity. Renderizar 3D en vivo sobre el mapa, en celular, afectaría el rendimiento. La mejor opción para "el personaje que avanza en el mapa" es un <strong>personaje SVG/CSS liviano</strong> (el que ya usa la app). Mixamo es ideal para <strong>videos promocionales o intro</strong>, no para el marcador del mapa.</p>
+</section>
+
+</div>
+<footer>Libre Pedal · Manual generado automáticamente · Pistero te acompaña 🚲</footer>
+</body>
+</html>
