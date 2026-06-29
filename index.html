@@ -190,6 +190,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 #tutPrev{background:#2a3147;color:#fff}#tutNext{background:var(--p);color:#000}
 .tut-skip{background:none;border:none;color:#888;margin-top:12px;cursor:pointer;font-size:0.8rem;text-decoration:underline}
 .quick-links{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+#saver{position:fixed;inset:0;background:#000;z-index:6000;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;-webkit-tap-highlight-color:transparent;cursor:pointer}
+#saver.on{display:flex}
+.saver-spd{font-size:4.2rem;font-weight:800;color:#0c5a68;line-height:1}
+.saver-spd small{display:block;font-size:1rem;color:#073d47;font-weight:700;margin-top:4px}
+.saver-km{margin-top:18px;font-size:1.15rem;color:#0c5a68;font-weight:700}
+.saver-hint{position:absolute;bottom:42px;left:0;right:0;font-size:0.72rem;color:#15323a;line-height:1.5}
 </style>
 </head>
 <body>
@@ -214,6 +220,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </form>
 
 <button class="fab" id="micBtn" onclick="toggleMic()" title="Comando de voz"><i class="fas fa-microphone"></i></button>
+<div id="saver" onclick="toggleSaver()">
+  <div class="saver-spd"><span id="saverSpd">0</span><small>km/h</small></div>
+  <div class="saver-km"><span id="saverKm">0.00</span> km</div>
+  <div class="saver-hint">🔋 Modo ahorro · GPS y voz siguen activos<br>Toca la pantalla para volver</div>
+</div>
 <div id="pisteroBubble"></div>
 <button id="pwaInstall" onclick="instalarPWA()" style="display:none;position:fixed;left:14px;bottom:80px;z-index:2100;align-items:center;gap:7px;background:var(--p);color:#03121a;border:none;padding:10px 14px;border-radius:24px;font-weight:800;font-size:0.82rem;box-shadow:0 4px 14px rgba(0,242,255,0.35);cursor:pointer"><i class="fas fa-download"></i> Instalar app</button>
 
@@ -293,6 +304,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="quick-links">
   <button class="bg" onclick="toggleGPS()">📍 GPS</button>
   <button class="btrip" onclick="cv('trips')">🗺️ Mis Viajes</button>
+  <button class="bd" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Tutorial</button>
 </div>
 <h3 style="margin-top:14px;font-size:0.95rem">Música</h3>
@@ -521,7 +533,7 @@ const extrasOptions = [
   {id:'bandana', name:'Pañoleta', svg:'<path d="M64 150 Q100 166 136 150 L132 160 Q100 174 68 160 Z" fill="#e74c3c"/>'}
 ];
 
-let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null;
+let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0;
 let categoriaActual='todos', hostelTipoActual='todos';
 let trips=[], currentTrip=null, navMap=null, helmetMarker=null, routeLine=null;
 let addedDests=[], currentFilter='hostel', allHostels=[];
@@ -783,13 +795,33 @@ function toggleGPS(){
     if(cu&&!ghostMode) db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true});
   }
 }
+function toggleSaver(){
+  const s=document.getElementById('saver'); if(!s) return;
+  const on=s.classList.toggle('on');
+  if(on){
+    if(typeof lpWakeLock==='object') lpWakeLock.enable();
+    const sp=document.getElementById('spd'); document.getElementById('saverSpd').innerText=sp?sp.innerText:'0';
+    document.getElementById('saverKm').innerText=us.di.toFixed(2);
+    h("Modo ahorro activado. Sigo guiándote por voz; la pantalla queda al mínimo. Toca para volver.");
+  }
+}
 function ug(p){
-  const la=p.coords.latitude, lo=p.coords.longitude, sp=(p.coords.speed&&p.coords.speed>0.7)?p.coords.speed*3.6:0;
+  const la=p.coords.latitude, lo=p.coords.longitude;
+  // Descarta fixes imprecisos: el GPS "salta" varios metros aunque estés quieto.
+  if(p.coords.accuracy && p.coords.accuracy>35) return;
+  const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
+  // Velocidad real: usa la del GPS si es fiable; si no entrega, no inventa movimiento.
+  let sp = (p.coords.speed!=null && p.coords.speed>0.7) ? p.coords.speed*3.6 : 0;
+  if(p.coords.speed==null && moved>=0.008){ const dt=(lastFixTime?(Date.now()-lastFixTime)/1000:0); if(dt>0) sp=(moved*1000/dt)*3.6; }
+  lastFixTime=Date.now();
   document.getElementById('spd').innerText=Math.round(sp);
+  { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
   updateSpeedStatus(sp);
   if(sp>maxSpeed) maxSpeed=sp;
   speedReadings.push(sp);
-  if(us.la){ const d=gd2(us.la,us.lo,la,lo); us.di+=d; us.c+=(d*30); au(); }
+  // JITTER: ignora desplazamientos < 8 m (deriva del GPS estando parado).
+  if(us.la && moved<0.008){ return; }
+  if(us.la){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   currentRoute.push({lat:la,lon:lo,t:Date.now()});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
