@@ -1,6 +1,6 @@
 /* Libre Pedal — Service Worker
    App-shell offline + runtime cache de mapas y librerías CDN. */
-const CACHE = 'librepedal-v1';
+const CACHE = 'librepedal-v2';
 
 // Núcleo que se precachea al instalar (lo propio de la app).
 const CORE = [
@@ -36,8 +36,24 @@ self.addEventListener('fetch', function (e) {
   // No interceptar Firestore/realtime: necesita la red siempre.
   if (/firestore|googleapis|firebaseio|gstatic\.com\/firebasejs/.test(url.href)) return;
 
-  // App-shell (mismo origen): cache-first con fallback a red; si falla todo, index.html.
+  // Mismo origen.
   if (url.origin === self.location.origin) {
+    const isHTML = req.mode === 'navigate' || (req.headers.get('accept') || '').indexOf('text/html') !== -1;
+    if (isHTML) {
+      // HTML: network-first → siempre sirve la última versión desplegada;
+      // si no hay red, cae al cache (offline).
+      e.respondWith(
+        fetch(req).then(function (res) {
+          const copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(req, copy); });
+          return res;
+        }).catch(function () {
+          return caches.match(req).then(function (hit) { return hit || caches.match('./index.html'); });
+        })
+      );
+      return;
+    }
+    // Otros recursos propios (manifest, icon): cache-first.
     e.respondWith(
       caches.match(req).then(function (hit) {
         return hit || fetch(req).then(function (res) {

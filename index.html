@@ -1015,8 +1015,36 @@ const lpWakeLock = (function(){
     if(wanted && document.visibilityState==='visible' && !lock) request();
   });
   return {
-    enable: function(){ wanted=true; request(); },
-    disable: function(){ wanted=false; if(lock){ lock.release().catch(function(){}); lock=null; } }
+    enable: function(){ wanted=true; request(); lpSalud.start(); },
+    disable: function(){ wanted=false; if(lock){ lock.release().catch(function(){}); lock=null; } lpSalud.stop(); }
+  };
+})();
+
+/* ===== Recordatorios inteligentes de salud y seguridad (mientras pedaleas) =====
+   Solo se activan durante un pedaleo real (GPS/navegación) y se pueden apagar
+   con localStorage 'lp_salud'='off'. Espaciados para acompañar, no molestar. */
+const lpSalud = (function(){
+  let timer=null, mins=0;
+  const recurrentes=[
+    {cada:20, msg:"Toma agüita, mijo. Hidrátate aunque no tengas sed."},
+    {cada:35, msg:"Estira las piernas y la espalda en la próxima parada."},
+    {cada:60, msg:"Come algo: una fruta o snack para no quedarte sin pila."},
+    {cada:90, msg:"Reaplica bloqueador y cuídate del sol."}
+  ];
+  function activo(){ return localStorage.getItem('lp_salud')!=='off'; }
+  function tick(){
+    if(!activo()) return;
+    mins++;
+    recurrentes.forEach(function(r){ if(mins % r.cada === 0 && typeof h==='function') h(r.msg); });
+  }
+  return {
+    start:function(){
+      if(timer || !activo()) return; mins=0;
+      // Chequeo de la bici al partir (una sola vez, sin pisar el aviso de GPS).
+      setTimeout(function(){ if(activo() && typeof h==='function') h("Antes de salir: revisa presión de neumáticos, frenos, cadena y luces. ¡Buen viaje!"); }, 6500);
+      timer=setInterval(tick, 60000);
+    },
+    stop:function(){ if(timer){ clearInterval(timer); timer=null; } mins=0; }
   };
 })();
 
