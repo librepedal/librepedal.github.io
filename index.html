@@ -62,7 +62,8 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .stat-value{font-size:1.3rem;font-weight:800;color:var(--p)}
 .stat-label{font-size:0.65rem;color:#888;margin-top:3px}
 .performance-bar{background:#222;border-radius:10px;height:20px;margin:8px 0;overflow:hidden;position:relative}
-.performance-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:10px;transition:width 0.5s;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#000}
+.performance-bar::after{content:attr(data-pct);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.6);pointer-events:none}
+.performance-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:10px;transition:width 0.5s;overflow:hidden;font-size:0;color:transparent}
 .chart-container{background:var(--gl);padding:10px;border-radius:10px;margin:8px 0;border:1px solid #222}
 .chart-bar{display:flex;align-items:flex-end;gap:4px;height:100px;margin-top:8px}
 .chart-bar-item{flex:1;background:var(--p);border-radius:4px 4px 0 0;min-height:5px;transition:height 0.5s}
@@ -846,7 +847,7 @@ function hg(e){ h("La señal de GPS está inestable."); }
 function gd2(a,b,c,d){ const R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
 function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<8?'lento':v<25?'normal':'rapido'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
-function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; pf.innerText=perf+'%'; gd(); }
+function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd(); }
 async function im(){ mp=L.map('map',{zoomControl:true}).setView([20,0],2); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp); if(!ghostMode) subscribeToUsers(); }
 function ap(){ const n=document.getElementById('np').value; if(n){ us.d+=20; const la=(currentUserLocation?currentUserLocation.lat:-34.6037)+(Math.random()*0.02-0.01), lo=(currentUserLocation?currentUserLocation.lon:-58.3816)+(Math.random()*0.02-0.01); L.marker([la,lo]).addTo(mp).bindPopup('<b>'+n+'</b>'); au(); h("Punto agregado. Veinte de Darma para ti."); document.getElementById('np').value=""; } }
 function toggleRadarOnMap(){ radarActive=!radarActive; if(radarActive){ cv('map'); if(sm.length===0) subscribeToUsers(); if(currentUserLocation && mp){ if(radarCircle) mp.removeLayer(radarCircle); radarCircle=L.circle([currentUserLocation.lat,currentUserLocation.lon],{radius:100000,color:'#00f2ff',weight:1.5,fillColor:'#00f2ff',fillOpacity:0.06}).addTo(mp); mp.fitBounds(radarCircle.getBounds(),{padding:[20,20]}); h("Radar activado. Buscando ciclistas a 100 km a la redonda."); } else { h("Radar activado, pero necesito tu GPS para centrar la búsqueda."); } } else { sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; if(radarCircle){ mp.removeLayer(radarCircle); radarCircle=null; } h("Radar desactivado."); } }
@@ -991,7 +992,7 @@ function updateStatsView(){
   document.getElementById('statMaxSpeed').innerText=maxSpeed.toFixed(1);
   const perf=Math.min(100,Math.round((us.di/10)*100));
   document.getElementById('statPerformanceFill').style.width=perf+'%';
-  document.getElementById('statPerformanceFill').innerText=perf+'%';
+  { const sp=document.getElementById('statPerformanceFill'); if(sp.parentElement) sp.parentElement.setAttribute('data-pct',perf+'%'); }
   const ct=trips.filter(function(t){return t.status==='completed'&&t.gpsData;});
   const ck=document.getElementById('chartKm'), cd=document.getElementById('chartDuration'), cc=document.getElementById('chartCal');
   if(ct.length===0){ ck.innerHTML=cd.innerHTML=cc.innerHTML='<p style="color:#888;font-size:0.8rem;text-align:center;width:100%">Sin datos todavía</p>'; return; }
