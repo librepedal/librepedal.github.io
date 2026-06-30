@@ -770,14 +770,16 @@ window.onload = async function(){
 };
 
 function getCurrentLocation(){
-  showLoading("Obteniendo tu ubicación...");
-  if(!navigator.geolocation){ hideLoading(); return; }
-  navigator.geolocation.getCurrentPosition(function(pos){
-    currentUserLocation={lat:pos.coords.latitude, lon:pos.coords.longitude, accuracy:pos.coords.accuracy};
-    const qs=document.getElementById('quick-start'); if(qs) qs.value="Mi ubicación actual";
-    hideLoading(); showSpeechBubble("Ubicación detectada");
-  }, function(){ hideLoading(); const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; showSpeechBubble("No se pudo obtener el GPS"); },
-  {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+  return new Promise(function(resolve){
+    showLoading("Obteniendo tu ubicación...");
+    if(!navigator.geolocation){ hideLoading(); resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(function(pos){
+      currentUserLocation={lat:pos.coords.latitude, lon:pos.coords.longitude, accuracy:pos.coords.accuracy};
+      const qs=document.getElementById('quick-start'); if(qs) qs.value="Mi ubicación actual";
+      hideLoading(); showSpeechBubble("Ubicación detectada"); resolve(currentUserLocation);
+    }, function(){ hideLoading(); const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; showSpeechBubble("No se pudo obtener el GPS"); resolve(null); },
+    {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+  });
 }
 function showLoading(t){ document.getElementById('loadingText').innerText=t; document.getElementById('loadingOverlay').classList.add('show'); }
 function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); }
@@ -1175,6 +1177,8 @@ const tutorialSteps=[
   {view:'dash', sel:'button[onclick="toggleSaver()"]', d:'El modo ahorro deja la pantalla casi negra para cuidar tu batería, pero yo sigo guiándote por voz.'},
   {view:'trips', sel:'#quick-dest', d:'Aquí escribes un destino y te guío paso a paso, igual que Waze, marcando la ruta en el mapa.'},
   {view:'map', sel:'#v-map .section-info', d:'El mapa global muestra a otros ciclistas, puntos de agua, talleres y miradores cerca de ti.'},
+  {view:'map', sel:'.map-controls', d:'Con el botón Reportar avisas a la comunidad: alojamiento, peligros, picadas o miradores. Tu dato queda en el mapa de tu zona para ayudar a otros.'},
+  {view:'diario', sel:'#v-diario .section-info', d:'En Mi Diario registras cómo amaneciste, tu meta del día y tu reflexión del viaje. Es privado: queda solo en tu teléfono.'},
   {view:'routes', sel:'#v-routes .section-info', d:'Tus recorridos grabados quedan guardados aquí. Puedes verlos, combinarlos y exportarlos como archivo GPX.'},
   {view:'chat', sel:'#v-chat .section-info', d:'En Social chateas con la comunidad, agregas amigos y dejas recomendaciones para los demás.'},
   {view:'mac', sel:'#v-mac .section-info', d:'El Taller MacGyver tiene trucos para reparar tu bici con lo que tengas a mano en plena ruta.'},
