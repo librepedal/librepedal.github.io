@@ -860,23 +860,23 @@ function ug(p){
   // Descarta fixes imprecisos: el GPS "salta" varios metros aunque estés quieto.
   if(p.coords.accuracy && p.coords.accuracy>35) return;
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
-  // Velocidad real: usa la del GPS si es fiable; si no entrega, no inventa movimiento.
+  // Velocidad SOLO de lo que reporta el GPS. Si no entrega velocidad, es 0:
+  // NO la fabricamos del temblor del GPS (eso hacía "creer" movimiento en casa).
   let sp = (p.coords.speed!=null && p.coords.speed>0.7) ? p.coords.speed*3.6 : 0;
-  if(p.coords.speed==null && moved>=0.008){ const dt=(lastFixTime?(Date.now()-lastFixTime)/1000:0); if(dt>0) sp=(moved*1000/dt)*3.6; }
   lastFixTime=Date.now();
   document.getElementById('spd').innerText=Math.round(sp);
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
   updateSpeedStatus(sp);
   if(sp>maxSpeed) maxSpeed=sp;
   speedReadings.push(sp);
-  // JITTER: ignora desplazamientos < 8 m (deriva del GPS estando parado).
-  if(us.la && moved<0.008){ return; }
+  // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
+  if(us.la && moved<0.012){ return; }
   if(us.la){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   currentRoute.push({lat:la,lon:lo,t:Date.now()});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
   if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ db.collection('users').doc(cu).set({lat:la,lon:lo,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); lastPos={lat:la,lon:lo}; } }
-  if(sp>0 && Math.random()>0.95){ const frase=(sp<25&&Math.random()<0.35)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(frase) h(frase); }
+  if(sp>=6 && Math.random()>0.95){ const frase=(sp<25&&Math.random()<0.35)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(frase) h(frase); }
 }
 function updateSpeedStatus(speed){
   const el=document.getElementById('speedStatus'); if(!el) return;
@@ -1138,11 +1138,23 @@ function initVoz(){
     else if(err!=='aborted'){ h("Hubo un problema con el micrófono. Inténtalo otra vez."); }
   };
 }
+const llamadosAlViaje=[
+  "¿Dónde quieres ir?",
+  "¿Dónde vamos esta vez?",
+  "¿Cuál será la ruta de hoy?",
+  "Cuéntame, ¿a dónde pedaleamos?",
+  "¿Hacia dónde apuntamos hoy?",
+  "Dime el lugar y yo te guío.",
+  "¿Qué aventura tienes en mente?",
+  "Tú dime el destino, yo pongo el camino.",
+  "¿A qué rincón vamos hoy?",
+  "Soy todo oídos: ¿tu destino?"
+];
 function toggleMic(){
   if(!recognition){ h("Tu navegador no permite comandos de voz. Usa Google Chrome."); return; }
   if(!window.isSecureContext){ h("Los comandos de voz solo funcionan con candado de seguridad, es decir desde la página publicada, no abriendo el archivo directo."); return; }
   if(micOn){ try{recognition.stop();}catch(e){} micOn=false; updateMicBtn(); return; }
-  try{ recognition.start(); micOn=true; updateMicBtn(); h("Te escucho. Dime, por ejemplo: llévame a Valparaíso, o el nombre de cualquier lugar."); }
+  try{ recognition.start(); micOn=true; updateMicBtn(); h(llamadosAlViaje[Math.floor(Math.random()*llamadosAlViaje.length)]); }
   catch(e){ micOn=false; updateMicBtn(); h("Espera un segundo y vuelve a tocar el micrófono."); }
 }
 function updateMicBtn(){ const b=document.getElementById('micBtn'); if(b) b.classList.toggle('listening',micOn); }
@@ -1165,7 +1177,11 @@ function handleVoiceCommand(raw){
   if(/silencio|callate|calla|guarda silencio/.test(t)){ vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
   if(/activa la voz|enciende la voz|\bhabla\b/.test(t)){ vozActiva=true; localStorage.setItem('lp_voz','on'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-high"></i> Voz: ON'; h("Voz activada."); return; }
   if(/tutorial|ayuda|como funciona/.test(t)){ startTutorial(); return; }
-  h("Escuché: "+raw+". Prueba con: llévame a un lugar, mapa, viajes, taller o cuántos kilómetros llevo.");
+  // Si no fue ningún comando, asumimos que dijo un DESTINO y armamos el viaje.
+  const destino=raw.trim();
+  const stop=/^(hola|gracias|ok|si|no|que|como estas|chao|adios|prueba|test)\.?$/i;
+  if(destino.length>2 && !stop.test(destino)){ cv('trips'); const qd=document.getElementById('quick-dest'); if(qd) qd.value=destino; h("Perfecto, armo el viaje a "+destino+" y te marco la ruta."); startQuickTrip(); return; }
+  h("No te entendí bien. ¿Me repites a dónde quieres ir?");
 }
 
 const tutorialSteps=[
