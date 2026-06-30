@@ -70,6 +70,11 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 #map,#map-all-routes,#map-hostel-select{height:280px;width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222}
 #map-hostel-select.show{display:block}
 .cd{background:var(--gl);padding:12px;border-radius:10px;margin-bottom:10px;border:1px solid #222}
+#sugerencias-dest{position:absolute;top:100%;left:0;right:0;z-index:1500;background:#0d1426;border:1px solid var(--p);border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;display:none;box-shadow:0 8px 18px rgba(0,0,0,0.5)}
+#sugerencias-dest.show{display:block}
+#sugerencias-dest .sug{padding:9px 11px;border-bottom:1px solid #1a2740;cursor:pointer;font-size:0.82rem;color:#dfe7ff;line-height:1.3}
+#sugerencias-dest .sug:active{background:rgba(0,242,255,0.14)}
+#sugerencias-dest .sug small{color:#7d8ba0;font-size:0.68rem}
 nav{position:fixed;bottom:0;width:100%;background:rgba(10,15,29,0.99);display:flex;justify-content:space-around;padding:6px 0 14px;border-top:1px solid #222;z-index:1000}
 .nb{background:none;border:none;color:#666;cursor:pointer;transition:0.3s;padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .nb i{font-size:1.2rem}
@@ -320,7 +325,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;color:#3a4a5a;font-size:0.62rem;margin-top:14px">Libre Pedal · v3.0</div>
+<div style="text-align:center;color:#3a4a5a;font-size:0.62rem;margin-top:14px">Libre Pedal · v3.1</div>
 </section>
 
 <section id="v-trips" class="view">
@@ -328,7 +333,10 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-bottom:12px">
 <h4 style="color:var(--p);margin:0 0 8px 0;font-size:0.9rem">Viaje Rápido</h4>
 <input type="text" id="quick-start" placeholder="Origen (automático)" readonly>
-<input type="text" id="quick-dest" placeholder="¿A dónde vamos?">
+<div style="position:relative">
+  <input type="text" id="quick-dest" placeholder="¿A dónde vamos?" autocomplete="off" oninput="sugerirDestino(this.value)">
+  <div id="sugerencias-dest"></div>
+</div>
 <button class="bg" style="margin-top:6px" onclick="startQuickTrip()">▶️ Iniciar navegación</button>
 </div>
 <button class="ab" onclick="showNewTripForm()">➕ Viaje Multi-Destino</button>
@@ -1024,28 +1032,58 @@ async function startNavigation(tripId){ const trip=trips.find(function(t){return
 // si conocemos tu ubicación, prefiere los resultados cercanos (para términos
 // genéricos como "la plaza", "farmacia", "supermercado"). Sigue siendo global:
 // si lo más relevante está lejos (ej. "Torre Eiffel"), igual lo encuentra.
+// Desplegable de sugerencias mientras escribes el destino (autocompletado).
+let destinoElegido=null, sugTimer=null;
+function sugerirDestino(q){
+  destinoElegido=null;
+  const box=document.getElementById('sugerencias-dest'); if(!box) return;
+  q=(q||'').trim();
+  if(q.length<3){ box.classList.remove('show'); box.innerHTML=''; return; }
+  clearTimeout(sugTimer);
+  sugTimer=setTimeout(async function(){
+    let url='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=6&q='+encodeURIComponent(q);
+    const cc=await paisDelUsuario(); if(cc) url+='&countrycodes='+cc;
+    if(currentUserLocation){ const d=3,lo=currentUserLocation.lon,la=currentUserLocation.lat; url+='&viewbox='+(lo-d)+','+(la+d)+','+(lo+d)+','+(la-d); }
+    let g=[]; try{ const r=await fetch(url); g=await r.json(); }catch(e){}
+    if(!g||!g.length){ box.innerHTML='<div class="sug" style="color:#7d8ba0">Sin resultados para "'+q+'"</div>'; box.classList.add('show'); return; }
+    box.innerHTML=g.map(function(it){ const parts=(it.display_name||'').split(','); const titulo=parts[0]; const resto=parts.slice(1,4).join(',').trim(); const nm=(it.display_name||'').replace(/['"\\]/g,' ').slice(0,90); return '<div class="sug" onclick="elegirSugerencia('+it.lat+','+it.lon+',\''+nm+'\')"><strong>'+titulo+'</strong>'+(resto?'<br><small>'+resto+'</small>':'')+'</div>'; }).join('');
+    box.classList.add('show');
+  }, 350);
+}
+function elegirSugerencia(lat,lon,nombre){
+  destinoElegido={lat:parseFloat(lat),lon:parseFloat(lon),name:nombre};
+  const qd=document.getElementById('quick-dest'); if(qd) qd.value=nombre;
+  const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); box.innerHTML=''; }
+}
+// País del usuario (código ISO, ej "cl") para resolver bien destinos ambiguos
+// como "Santiago" (la capital de TU país, no otra del mundo). Se cachea.
+let paisUsuario=null;
+async function paisDelUsuario(){
+  if(paisUsuario) return paisUsuario;
+  if(!currentUserLocation) return null;
+  try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=3&lat='+currentUserLocation.lat+'&lon='+currentUserLocation.lon); const j=await r.json(); paisUsuario=(j.address&&j.address.country_code)?j.address.country_code:null; }catch(e){}
+  return paisUsuario;
+}
 async function geocodeDestino(query){
-  const base='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=6&q='+encodeURIComponent(query);
-  async function run(extra){ try{ const r=await fetch(base+extra); return await r.json(); }catch(e){ return []; } }
+  const baseUrl='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=8&q='+encodeURIComponent(query);
+  async function buscar(extra){ try{ const r=await fetch(baseUrl+extra); return await r.json(); }catch(e){ return []; } }
   let g=[];
-  if(currentUserLocation){
-    // 1) Preferir lo cercano: restringe a tu zona (~±2.5°, varios cientos de km).
-    const d=2.5, lon=currentUserLocation.lon, lat=currentUserLocation.lat;
-    g=await run('&viewbox='+(lon-d)+','+(lat+d)+','+(lon+d)+','+(lat-d)+'&bounded=1');
-  }
-  // 2) Si no hay nada cerca (o no conocemos tu ubicación), búsqueda GLOBAL.
-  if(!g||g.length===0){ g=await run(''); }
-  if(!g||g.length===0) return null;
+  const cc=await paisDelUsuario();
+  // 1) Primero en TU país (así "Santiago" => Santiago de Chile, no otra del mundo).
+  if(cc){ g=await buscar('&countrycodes='+cc); }
+  // 2) Si no hay nada en tu país (ej. "Torre Eiffel"), búsqueda GLOBAL.
+  if(!g||!g.length){ g=await buscar(''); }
+  if(!g||!g.length) return null;
+  const topImp=parseFloat(g[0].importance||0);
   let best=g[0];
-  // Entre los mejores, prefiere el más cercano (desempata por distancia).
-  if(currentUserLocation){
-    const top=g.slice(0,4);
-    top.sort(function(a,b){ return calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(a.lat),parseFloat(a.lon)) - calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(b.lat),parseFloat(b.lon)); });
-    best=top[0];
+  // Términos genéricos (poca relevancia, ej "la plaza"): el más cercano a ti.
+  // Lugares importantes (ciudades/hitos): se respeta el de mayor relevancia.
+  if(currentUserLocation && topImp<0.45){
+    best=g.slice().sort(function(a,b){ return calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(a.lat),parseFloat(a.lon)) - calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(b.lat),parseFloat(b.lon)); })[0];
   }
   return {lat:parseFloat(best.lat), lon:parseFloat(best.lon), name:best.display_name};
 }
-async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } showLoading("Buscando: "+destInput); try{ const dest=await geocodeDestino(destInput); if(!dest){ hideLoading(); alert("No encontré: "+destInput+". Prueba con más detalle (ciudad o calle)."); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert("Error: "+err.message); } }
+async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); alert("No encontré: "+destInput+". Prueba con más detalle (ciudad o calle)."); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert("Error: "+err.message); } }
 async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
   document.getElementById('nav-screen').classList.add('active');
   if(navMap) navMap.remove();
@@ -1078,7 +1116,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
       const lat=pos.coords.latitude, lon=pos.coords.longitude;
       if(pos.coords.accuracy>30) return;
       // jitter: ignora saltos < 12 m (deriva del GPS estando quieto)
-      if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<12) return; totalDistance+=dist; }
+      if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<12) return; totalDistance+=dist/1000; }
       const _now=Date.now();
       const _spGps=(pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0;
       gpsPoints.push({lat:lat,lon:lon,speed:_spGps,timestamp:_now}); lastGpsPoint={lat:lat,lon:lon};
