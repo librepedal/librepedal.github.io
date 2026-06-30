@@ -98,9 +98,17 @@ service cloud.firestore {
       allow create, update, delete: if signedIn();
     }
 
+    // Diario personal (respaldo en la nube). Privacidad real (solo el dueño)
+    // llega con la migración a auth.uid; por ahora exige sesión para leer.
+    match /diarios/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && strOk('reflexion', 2000) && strOk('complejo', 2000) && strOk('meta', 300);
+      allow delete: if signedIn();
+    }
+
     // Mensajes privados entre amigos (para el chat de amigos que viene)
     match /dm/{conversationId}/messages/{msgId} {
-      allow read: if true;
+      allow read: if signedIn();
       allow create: if signedIn() && strOk('text', 1000);
       allow update, delete: if false;
     }
