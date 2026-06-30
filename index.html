@@ -325,7 +325,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;color:#3a4a5a;font-size:0.62rem;margin-top:14px">Libre Pedal · v3.1</div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.0</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -506,6 +506,29 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </div>
 
 <script>
+/* ===== AUTO-REPARACIÓN DE CACHÉ =====
+   Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
+   (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
+const APP_VERSION='4.0';
+(function(){
+  try{
+    fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
+      v=(v||'').trim();
+      if(v && v!==APP_VERSION && sessionStorage.getItem('lp_heal')!=='1'){
+        sessionStorage.setItem('lp_heal','1');
+        try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); for(const r of rs){ await r.unregister(); } } }catch(e){}
+        try{ if(window.caches){ const ks=await caches.keys(); for(const k of ks){ await caches.delete(k); } } }catch(e){}
+        location.reload();
+      } else { sessionStorage.removeItem('lp_heal'); }
+    }).catch(function(){});
+  }catch(e){}
+})();
+async function forzarActualizacion(){
+  try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); for(const r of rs){ await r.unregister(); } } }catch(e){}
+  try{ if(window.caches){ const ks=await caches.keys(); for(const k of ks){ await caches.delete(k); } } }catch(e){}
+  try{ localStorage.removeItem('lp_pais'); }catch(e){}
+  location.reload();
+}
 const firebaseConfig = {
   apiKey: "AIzaSyBIhhvyhRR0ekVmOXmVDx7C_J-TBfVGCbQ",
   authDomain: "librepedal-cb983.firebaseapp.com",
@@ -1057,11 +1080,11 @@ function elegirSugerencia(lat,lon,nombre){
 }
 // País del usuario (código ISO, ej "cl") para resolver bien destinos ambiguos
 // como "Santiago" (la capital de TU país, no otra del mundo). Se cachea.
-let paisUsuario=null;
+let paisUsuario=localStorage.getItem('lp_pais')||null;
 async function paisDelUsuario(){
   if(paisUsuario) return paisUsuario;
   if(!currentUserLocation) return null;
-  try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=3&lat='+currentUserLocation.lat+'&lon='+currentUserLocation.lon); const j=await r.json(); paisUsuario=(j.address&&j.address.country_code)?j.address.country_code:null; }catch(e){}
+  try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=3&lat='+currentUserLocation.lat+'&lon='+currentUserLocation.lon); const j=await r.json(); const cc=(j.address&&j.address.country_code)?j.address.country_code:null; if(cc){ paisUsuario=cc; try{ localStorage.setItem('lp_pais',cc); }catch(e){} } }catch(e){}
   return paisUsuario;
 }
 async function geocodeDestino(query){

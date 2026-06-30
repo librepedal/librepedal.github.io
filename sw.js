@@ -1,6 +1,6 @@
 /* Libre Pedal — Service Worker
    App-shell offline + runtime cache de mapas y librerías CDN. */
-const CACHE = 'librepedal-v4';
+const CACHE = 'librepedal-v5';
 
 // Núcleo que se precachea al instalar (lo propio de la app).
 const CORE = [
@@ -37,6 +37,8 @@ self.addEventListener('fetch', function (e) {
   const url = new URL(req.url);
   // No interceptar Firestore/realtime: necesita la red siempre.
   if (/firestore|googleapis|firebaseio|gstatic\.com\/firebasejs/.test(url.href)) return;
+  // version.txt SIEMPRE de la red (nunca cache): habilita la auto-reparación.
+  if (/version\.txt/.test(url.pathname)) return;
 
   // Mismo origen.
   if (url.origin === self.location.origin) {
