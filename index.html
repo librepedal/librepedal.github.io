@@ -307,6 +307,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="bg" onclick="toggleGPS()">📍 GPS</button>
   <button class="btrip" onclick="cv('trips')">🗺️ Mis Viajes</button>
   <button class="bd" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
+  <button class="btrip" onclick="openDiario()">📓 Mi Diario</button>
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Tutorial</button>
 </div>
 <h3 style="margin-top:14px;font-size:0.95rem">Música</h3>
@@ -354,14 +355,34 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div id="map"></div>
 <div class="map-controls">
 <button class="map-btn" onclick="toggleRadarOnMap()">Ciclistas</button>
-<button class="map-btn" onclick="addRouteAlert()">Reportar</button>
+<button class="map-btn" onclick="reportarEnRuta()" style="background:#f59e0b">📍 Reportar</button>
 <button class="map-btn" onclick="showAllRoutesOnMap()">Rutas</button>
 </div>
 <div class="cd"><h4 style="margin-top:0;font-size:0.9rem">Agregar Punto</h4>
 <input type="text" id="np" placeholder="Nombre">
 <select id="cp"><option value="agua">Agua</option><option value="camping">Camping</option><option value="taller">Taller</option><option value="mirador">Mirador</option><option value="hostel">Hostel</option></select>
 <button class="ab" onclick="ap()">Agregar (+20 Darma)</button></div>
+<div id="reportes-comunidad"></div>
 <div id="route-alerts"></div>
+</section>
+
+<section id="v-diario" class="view">
+<div class="section-info"><h4>📓 Mi Diario</h4><p>Tu bitácora del viaje. Lo privado queda solo en tu teléfono.</p></div>
+<div class="cd">
+  <h4 style="margin-top:0;font-size:0.9rem">🌅 Inicio del día</h4>
+  <p style="font-size:0.78rem;color:#9fb3c8;margin:4px 0 6px">¿Cómo amaneciste hoy?</p>
+  <div id="diarioEstado" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  <input type="text" id="diarioMeta" placeholder="🎯 Meta del día: ¿a dónde vas?" style="margin-top:10px">
+</div>
+<div class="cd">
+  <h4 style="margin-top:0;font-size:0.9rem">⛺ Cierre del día</h4>
+  <p style="font-size:0.78rem;color:#9fb3c8;margin:4px 0">Hoy pedaleaste <strong id="diarioKm" style="color:var(--p)">0.00</strong> km.</p>
+  <textarea id="diarioComplejo" rows="2" placeholder="Lo más complejo del tramo... (privado)"></textarea>
+  <textarea id="diarioReflexion" rows="3" placeholder="El viaje interno: tu reflexión del día... (privado)" style="margin-top:6px"></textarea>
+</div>
+<button class="ab" onclick="guardarDiario()">💾 Guardar mi día</button>
+<button class="ab sec" onclick="cv('dash')">← Volver al inicio</button>
+<div id="diarioHistorial" style="margin-top:14px"></div>
 </section>
 
 <section id="v-routes" class="view">
@@ -740,7 +761,7 @@ window.onload = async function(){
     initCustomization();
     setTimeout(function(){ h(saludoBienvenida(nombreUsuario)); },500);
     if(!ghostMode) subscribeToUsers();
-    subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests();
+    subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes();
     getCurrentLocation();
   } else {
     document.getElementById('auth').style.display='flex';
@@ -786,7 +807,7 @@ async function reg(e){
   await im(); au(); rm(MG); fg('todos');
   loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips();
   if(!ghostMode) subscribeToUsers();
-  subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests();
+  subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes();
   getCurrentLocation();
   if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(startTutorial, 700); }
   else { setTimeout(function(){ h(saludoBienvenida(nombre)); },600); }
@@ -887,6 +908,67 @@ function rejectFriendRequest(reqId){ db.collection('friendRequests').doc(reqId).
 async function showUserListForFriendRequest(){ document.getElementById('modalTitle').innerText='Ciclistas cerca (10 km)'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Buscando...</p>'; document.getElementById('userModal').classList.add('on'); if(!currentUserLocation){ c.innerHTML='<p style="color:#888">Primero activa tu ubicación GPS</p>'; return; } const snapshot=await db.collection('users').where('visible','==',true).get(); let html='', n=0; for(const doc of snapshot.docs){ if(doc.id===cu) continue; const data=doc.data(); if(data.lat&&data.lon){ const dist=gd2(currentUserLocation.lat,currentUserLocation.lon,data.lat,data.lon); if(dist<=10){ n++; const nombre=data.nombre||doc.id; const sent=friendRequestSent.indexOf(doc.id)!==-1; html+='<div class="nearby-user"><div style="width:35px;height:35px;background:var(--p);border-radius:50%"></div><div style="flex:1"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+nombre+'</h4><div class="distance">'+dist.toFixed(2)+' km</div></div>'+(sent?'<span style="color:#888;font-size:0.75rem">Enviada</span>':'<button class="route-btn" onclick="sendFriendRequest(\''+doc.id+'\')">Agregar</button>')+'</div>'; } } } c.innerHTML = n===0 ? '<p style="color:#888">No hay ciclistas en 10 km a la redonda</p>' : '<p style="color:var(--g);font-size:0.85rem;margin-bottom:10px">'+n+' ciclistas encontrados</p>'+html; }
 function sendFriendRequest(toUser){ db.collection('friendRequests').add({from:cu,fromNombre:nombreUsuario,to:toUser,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()}); friendRequestSent.push(toUser); h("Solicitud enviada."); showUserListForFriendRequest(); }
 function closeModal(){ document.getElementById('userModal').classList.remove('on'); }
+
+/* ===== MAPA COMUNITARIO: "Reportar en Ruta" (público, agrupado por zona) ===== */
+const REPORTE_CATS={
+  alojamiento:{e:'🏕️',l:'Alojamiento',c:'#10b981',h:'Campings, hospedajes, acampada libre y precios'},
+  critico:{e:'⚠️',l:'Punto Crítico',c:'#ef4444',h:'Perros sueltos, caminos cortados, peligros, falta de agua'},
+  util:{e:'🥖',l:'Dato Útil / Picada',c:'#f59e0b',h:'Almacenes, talleres amigos, agua gratis, comida al paso'},
+  mirador:{e:'📸',l:'Mirador',c:'#3b82f6',h:'Spots para detenerse y registrar el paisaje'}
+};
+let reporteCatSel=null, reporteMarkers=[];
+function reportarEnRuta(){
+  reporteCatSel=null;
+  let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu dato queda público en el mapa de tu zona para ayudar a otros ciclistas. Elige qué reportas:</p><div id="repCats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  Object.keys(REPORTE_CATS).forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+k+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.8rem">'+c.e+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; });
+  html+='</div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea><button class="ab" style="margin-top:8px" onclick="enviarReporte()">📍 Publicar en mi zona (+15 Darma)</button>';
+  document.getElementById('modalTitle').innerText='🚴 Reportar en Ruta';
+  document.getElementById('modalContent').innerHTML=html;
+  document.getElementById('userModal').classList.add('on');
+}
+function seleccionarCatReporte(k){ reporteCatSel=k; document.querySelectorAll('#repCats .rep-cat').forEach(function(el){ el.style.borderColor = el.getAttribute('data-k')===k ? REPORTE_CATS[k].c : '#2a3147'; el.style.background = el.getAttribute('data-k')===k ? 'rgba(255,255,255,0.05)' : 'transparent'; }); }
+async function enviarReporte(){
+  if(!reporteCatSel){ alert('Elige primero una categoría'); return; }
+  const text=document.getElementById('repText').value.trim();
+  if(!text){ alert('Escribe el dato que quieres compartir'); return; }
+  let loc=currentUserLocation || (us.la?{lat:us.la,lon:us.lo}:null);
+  if(!loc){ alert('Necesito tu ubicación para ubicar el reporte. Activa el GPS.'); getCurrentLocation(); return; }
+  let comuna='Mi zona';
+  try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+loc.lat+'&lon='+loc.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
+  try{
+    await db.collection('reportes').add({cat:reporteCatSel, text:text, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    us.d+=15; au();
+    closeModal();
+    h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
+  }catch(err){ alert('No se pudo enviar: '+err.message); }
+}
+function tiempoTranscurrido(ts){ if(!ts||!ts.seconds) return 'recién'; const s=Math.floor(Date.now()/1000)-ts.seconds; if(s<60) return 'recién'; const m=Math.floor(s/60); if(m<60) return 'hace '+m+' min'; const h2=Math.floor(m/60); if(h2<24) return 'hace '+h2+' h'; const d=Math.floor(h2/24); if(d<7) return 'hace '+d+' día'+(d>1?'s':''); const w=Math.floor(d/7); return 'hace '+w+' sem'; }
+function subscribeToReportes(){
+  db.collection('reportes').orderBy('ts','desc').limit(200).onSnapshot(function(snap){
+    const docs=[]; snap.forEach(function(d){ docs.push(d.data()); });
+    reporteMarkers.forEach(function(m){ if(mp) mp.removeLayer(m); }); reporteMarkers=[];
+    if(mp){ docs.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const ic=L.divIcon({className:'',html:'<div style="background:'+c.c+';border:2px solid #fff;border-radius:50% 50% 50% 0;width:30px;height:30px;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,0.5)"><span style="transform:rotate(45deg);font-size:14px">'+c.e+'</span></div>',iconSize:[30,30],iconAnchor:[15,30]}); const mk=L.marker([r.lat,r.lon],{icon:ic}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b><br>'+r.text+'<br><small>'+(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</small>'); reporteMarkers.push(mk); } }); }
+    renderReportesComunidad(docs);
+  });
+}
+function renderReportesComunidad(docs){
+  const cont=document.getElementById('reportes-comunidad'); if(!cont) return;
+  if(!docs.length){ cont.innerHTML='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">📍 Mapa Comunitario</h4><p style="color:#888;font-size:0.8rem;margin:0">Aún no hay reportes. ¡Sé el primero en aportar un dato de tu zona con "Reportar en Ruta"!</p></div>'; return; }
+  const byZona={}; docs.forEach(function(r){ const z=r.comuna||'Mi zona'; (byZona[z]=byZona[z]||[]).push(r); });
+  let html='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">📍 Mapa Comunitario · datos de la ruta</h4>';
+  Object.keys(byZona).forEach(function(z){ html+='<div style="margin-top:10px"><div style="font-weight:800;color:var(--p);font-size:0.82rem;border-bottom:1px solid #223;padding-bottom:4px;margin-bottom:6px">📌 '+z+'</div>'; byZona[z].forEach(function(r){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; html+='<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #15202e"><div style="font-size:1.1rem">'+c.e+'</div><div style="flex:1"><div style="font-size:0.8rem;color:#dfe7ff;line-height:1.3">'+r.text+'</div><div style="font-size:0.65rem;color:#7d8ba0;margin-top:2px">'+(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</div></div></div>'; }); html+='</div>'; });
+  html+='</div>'; cont.innerHTML=html;
+}
+
+/* ===== MI DIARIO (privado, AM/PM, en el teléfono) ===== */
+const DIARIO_ESTADOS=[{e:'💪',l:'Excelente'},{e:'🩹',l:'Con molestias'},{e:'🐢',l:'Fatigado'}];
+let diarioEstadoSel=null;
+function diarioHoyKey(){ return 'lp_diario_'+(cu||'anon')+'_'+new Date().toISOString().slice(0,10); }
+function openDiario(){ cv('diario'); cargarDiario(); }
+function renderDiarioEstados(){ const c=document.getElementById('diarioEstado'); if(!c) return; c.innerHTML=DIARIO_ESTADOS.map(function(s){ const sel=diarioEstadoSel===s.l; return '<button onclick="diarioEstadoSel=\''+s.l+'\';renderDiarioEstados()" style="flex:1;min-width:88px;padding:10px;border-radius:10px;border:2px solid '+(sel?'var(--p)':'#2a3147')+';background:'+(sel?'rgba(0,242,255,0.12)':'var(--gl)')+';color:#fff;font-weight:700;font-size:0.78rem;cursor:pointer">'+s.e+' '+s.l+'</button>'; }).join(''); }
+function cargarDiario(){ const km=document.getElementById('diarioKm'); if(km) km.innerText=us.di.toFixed(2); let d={}; try{ d=JSON.parse(localStorage.getItem(diarioHoyKey()))||{}; }catch(e){} diarioEstadoSel=d.estado||null; const meta=document.getElementById('diarioMeta'), comp=document.getElementById('diarioComplejo'), refl=document.getElementById('diarioReflexion'); if(meta) meta.value=d.meta||''; if(comp) comp.value=d.complejo||''; if(refl) refl.value=d.reflexion||''; renderDiarioEstados(); renderDiarioHistorial(); }
+function guardarDiario(){ const d={estado:diarioEstadoSel, meta:document.getElementById('diarioMeta').value, complejo:document.getElementById('diarioComplejo').value, reflexion:document.getElementById('diarioReflexion').value, km:us.di, fecha:new Date().toISOString().slice(0,10)}; localStorage.setItem(diarioHoyKey(),JSON.stringify(d)); h('Diario guardado. Tu viaje interno queda solo para ti. Buen camino.'); renderDiarioHistorial(); }
+function renderDiarioHistorial(){ const c=document.getElementById('diarioHistorial'); if(!c) return; const pre='lp_diario_'+(cu||'anon')+'_'; const keys=Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().reverse().filter(function(k){return k!==diarioHoyKey();}); if(!keys.length){ c.innerHTML=''; return; } let html='<h4 style="font-size:0.85rem;color:var(--p)">Días anteriores</h4>'; keys.slice(0,12).forEach(function(k){ let d={}; try{d=JSON.parse(localStorage.getItem(k));}catch(e){return;} const est=DIARIO_ESTADOS.find(function(s){return s.l===d.estado;}); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.76rem;color:#9fb3c8">'+(d.fecha||'')+' · '+(est?est.e+' '+est.l:'')+' · '+(d.km?(+d.km).toFixed(1):0)+' km</div>'+(d.meta?'<div style="font-size:0.78rem;margin-top:3px">🎯 '+d.meta+'</div>':'')+(d.complejo?'<div style="font-size:0.75rem;color:#cdd;margin-top:3px">💪 '+d.complejo+'</div>':'')+(d.reflexion?'<div style="font-size:0.75rem;color:#9fb3c8;font-style:italic;margin-top:3px">🧘 '+d.reflexion+'</div>':'')+'</div>'; }); c.innerHTML=html; }
 function rm(l){ document.getElementById('ml').innerHTML=l.map(function(i){ return '<div class="cd" onclick="h(\''+i.t+'. '+i.s.replace(/'/g,"\\'")+'\')"><b style="color:var(--p);font-size:0.85rem">'+i.t+'</b><p style="margin:6px 0;font-size:0.8rem">'+i.s+'</p><small style="color:#888;font-size:0.7rem">Fuente: '+i.f+'</small></div>'; }).join(''); }
 function fm(){ const v=document.getElementById('bm').value.toLowerCase(); rm(MG.filter(function(i){ return i.t.toLowerCase().indexOf(v)!==-1||i.s.toLowerCase().indexOf(v)!==-1; })); }
 function toggleSecretForm(){ document.getElementById('secretForm').classList.toggle('show'); }
@@ -1008,7 +1090,7 @@ function showSpeechBubble(text){ const b=document.getElementById('speechBubble')
 async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigation(); return; } if(confirm("¿Terminar y guardar el viaje?")){ if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; if(currentTrip){ await db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}); } showSpeechBubble("Guardado: "+totalDistance.toFixed(2)+" km"); setTimeout(endNavigation,2500); } }
 function endNavigation(){ lpWakeLock.disable(); if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; loadTrips(); }
 function interactuarPistero(){ const f=obtenerFrasePorVelocidad(15); if(f) h(f); }
-function cv(id){ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.invalidateSize(); },120); if(id==='routes') setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); }
+function cv(id){ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.invalidateSize(); },120); if(id==='routes') setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 function updateStatsView(){
   document.getElementById('statKm').innerText=us.di.toFixed(1);
   document.getElementById('statTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length;
