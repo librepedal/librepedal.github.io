@@ -3,7 +3,19 @@
   "appName": "Libre Pedal",
   "webDir": "www",
   "server": {
-    "androidScheme": "https"
+    "url": "https://librepedal.github.io",
+    "androidScheme": "https",
+    "allowNavigation": [
+      "librepedal.github.io",
+      "*.openstreetmap.org",
+      "*.tile.openstreetmap.org",
+      "router.project-osrm.org",
+      "nominatim.openstreetmap.org",
+      "*.gstatic.com",
+      "*.googleapis.com",
+      "*.firebaseio.com",
+      "firestore.googleapis.com"
+    ]
   },
   "plugins": {
     "BackgroundGeolocation": {}

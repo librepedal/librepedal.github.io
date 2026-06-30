@@ -325,7 +325,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.2</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.3</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -509,7 +509,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='4.2';
+const APP_VERSION='4.3';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -646,11 +646,27 @@ function limpiarParaVoz(t){
 function cargarVoces(){ try{ const vs=speechSynthesis.getVoices(); vozPref = vs.find(function(v){return /es(-|_)(CL|419|MX)/i.test(v.lang);}) || vs.find(function(v){return (v.lang||'').toLowerCase().indexOf('es')===0;}) || null; }catch(e){} }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
 function mostrarBocadillo(t){ const b=document.getElementById('pisteroBubble'); if(!b) return; b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },4500); }
+/* Voz NATIVA de Android (app Capacitor). En el WebView nativo, speechSynthesis
+   suele no sonar; usamos el motor TTS del sistema. En web no hace nada. */
+const lpTTS = (function(){
+  let TTS=null;
+  const nativo=(typeof window.Capacitor!=='undefined') && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
+  if(nativo){ try{ TTS=Capacitor.registerPlugin('TextToSpeech'); }catch(e){} }
+  return {
+    disponible:function(){ return !!TTS; },
+    hablar:function(texto){ if(!TTS) return; try{ TTS.stop(); }catch(e){}
+      try{ TTS.speak({text:texto, lang:'es-ES', rate:1.0, pitch:1.05, volume:1.0, category:'playback'}); }
+      catch(e){ try{ TTS.speak({text:texto, lang:'es'}); }catch(e2){} } },
+    stop:function(){ if(TTS){ try{ TTS.stop(); }catch(e){} } }
+  };
+})();
 function h(t){
   mostrarBocadillo(t);
-  if(!vozActiva || !('speechSynthesis' in window)) return;
+  if(!vozActiva) return;
   const limpio = limpiarParaVoz(t);
   if(!limpio) return;
+  if(lpTTS.disponible()){ lpTTS.hablar(limpio); return; }   // app nativa: voz del sistema
+  if(!('speechSynthesis' in window)) return;
   try{
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(limpio);
