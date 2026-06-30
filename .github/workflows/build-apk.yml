@@ -17,6 +17,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write          # necesario para publicar el APK en Releases
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
@@ -59,3 +61,11 @@ jobs:
           name: LibrePedal-APK
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Publicar APK en Releases (enlace de descarga directa y fijo)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: "Libre Pedal · Última APK"
+          body: "Última versión del APK de Libre Pedal (se actualiza en cada cambio). Descarga el .apk, instálalo, permite ubicación Todo el tiempo y desactiva la optimización de batería."
+          files: android/app/build/outputs/apk/debug/*.apk
