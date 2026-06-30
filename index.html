@@ -179,17 +179,17 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.6)}50%{box-shadow:0 0 0 12px rgba(255,59,48,0)}}
 #pisteroBubble{position:fixed;bottom:148px;right:14px;max-width:230px;background:rgba(0,0,0,0.92);border:2px solid var(--p);color:#fff;padding:9px 12px;border-radius:14px 14px 2px 14px;font-size:0.82rem;font-weight:600;z-index:2100;opacity:0;transform:translateY(8px);transition:0.25s;pointer-events:none;line-height:1.25}
 #pisteroBubble.show{opacity:1;transform:translateY(0)}
-#tutorialOverlay{position:fixed;inset:0;background:rgba(5,8,18,0.96);z-index:7000;display:none;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center}
-#tutorialOverlay.on{display:flex}
-.tut-card{background:#151b2e;border:2px solid var(--p);border-radius:18px;padding:24px;max-width:420px;width:100%}
-.tut-mascot{font-size:3rem;margin-bottom:6px}
-.tut-card h2{color:var(--g);margin:6px 0;font-size:1.2rem}
-.tut-card p{color:#dfe7ff;line-height:1.5;font-size:0.95rem;min-height:90px}
-.tut-progress{color:#888;font-size:0.75rem;margin:10px 0}
-.tut-actions{display:flex;gap:8px;margin-top:8px}
-.tut-actions button{flex:1;padding:11px;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-size:0.9rem}
-#tutPrev{background:#2a3147;color:#fff}#tutNext{background:var(--p);color:#000}
-.tut-skip{background:none;border:none;color:#888;margin-top:12px;cursor:pointer;font-size:0.8rem;text-decoration:underline}
+#tutorialOverlay{position:fixed;inset:0;z-index:7000;display:none;pointer-events:none}
+#tutorialOverlay.on{display:block}
+.tut-dim{position:fixed;background:rgba(5,8,18,0.86);z-index:7000;pointer-events:auto}
+#tutRing{position:fixed;z-index:7001;border:3px solid var(--p);border-radius:12px;box-shadow:0 0 18px 3px var(--p);pointer-events:none;display:none;animation:tutPulse 1.3s ease-in-out infinite}
+@keyframes tutPulse{0%,100%{box-shadow:0 0 14px 2px var(--p)}50%{box-shadow:0 0 26px 7px var(--p)}}
+.tut-banner{position:fixed;top:14px;left:14px;right:14px;z-index:7003;background:linear-gradient(135deg,var(--p),#0aa6c9);color:#021;padding:11px 14px;border-radius:13px;font-weight:800;font-size:0.82rem;text-align:center;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,0.5);line-height:1.35}
+.tut-bar{position:fixed;bottom:18px;left:12px;right:12px;z-index:7003;display:flex;align-items:center;gap:8px;justify-content:center;pointer-events:auto}
+.tut-bar button{padding:12px 14px;border:none;border-radius:11px;font-weight:800;font-size:0.85rem;cursor:pointer}
+#tutPrev{background:#2a3147;color:#fff}#tutNext{background:var(--p);color:#000;flex:1}
+#tutProgress{color:#fff;font-weight:800;font-size:0.78rem;background:rgba(0,0,0,0.65);padding:10px 10px;border-radius:9px;white-space:nowrap}
+.tut-skip{background:#3a1f2a;color:#ff8a8a;border:none;border-radius:11px;padding:12px;font-weight:800;font-size:0.85rem;cursor:pointer}
 .quick-links{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
 #saver{position:fixed;inset:0;background:#000;z-index:6000;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;-webkit-tap-highlight-color:transparent;cursor:pointer}
 #saver.on{display:flex}
@@ -235,16 +235,17 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </div>
 
 <div id="tutorialOverlay">
-  <div class="tut-card">
-    <div class="tut-mascot">🚴</div>
-    <h2 id="tutTitle">Bienvenido</h2>
-    <p id="tutDesc"></p>
-    <div class="tut-progress" id="tutProgress">1 / 1</div>
-    <div class="tut-actions">
-      <button id="tutPrev" onclick="tutPrev()">Atrás</button>
-      <button id="tutNext" onclick="tutNext()">Siguiente</button>
-    </div>
-    <button class="tut-skip" onclick="closeTutorial()">Saltar tutorial</button>
+  <div class="tut-dim" id="tutDimT"></div>
+  <div class="tut-dim" id="tutDimB"></div>
+  <div class="tut-dim" id="tutDimL"></div>
+  <div class="tut-dim" id="tutDimR"></div>
+  <div id="tutRing"></div>
+  <div class="tut-banner">🎓 Tutorial — sube el volumen 🔊 del teléfono para escuchar a Pistero. El brillo te muestra de qué te hablo.</div>
+  <div class="tut-bar">
+    <button id="tutPrev" onclick="tutPrev()">◀</button>
+    <span id="tutProgress">1 / 1</span>
+    <button id="tutNext" onclick="tutNext()">Siguiente ▶</button>
+    <button class="tut-skip" onclick="closeTutorial()">Saltar</button>
   </div>
 </div>
 
@@ -539,6 +540,31 @@ let categoriaActual='todos', hostelTipoActual='todos';
 let trips=[], currentTrip=null, navMap=null, helmetMarker=null, routeLine=null;
 let addedDests=[], currentFilter='hostel', allHostels=[];
 let gpsPoints=[], lastGpsPoint=null, totalDistance=0, gpsWatchId=null, tripStartTime=0;
+const saludosBienvenida=[
+  "¡Qué alegría verte, NOMBRE! Te estaba esperando para pedalear.",
+  "¡NOMBRE! Justo pensaba en ti. ¿Listo para sumar kilómetros?",
+  "Bienvenido de vuelta, NOMBRE. Contigo el camino se hace más bonito.",
+  "¡Eh, NOMBRE! Agarra la bici, que hoy se ve un lindo día para rodar.",
+  "Me alegra que volvieras, NOMBRE. Vamos a hacer historia sobre dos ruedas.",
+  "¡NOMBRE, compadre! Aquí estoy, listo para acompañarte a donde sea.",
+  "Hola NOMBRE, qué bueno tenerte de nuevo. ¿Para dónde agarramos hoy?",
+  "¡Buenas, NOMBRE! Pistero reportándose, listo para la aventura.",
+  "Te echaba de menos, NOMBRE. No es lo mismo el camino sin ti.",
+  "¡Arriba, NOMBRE! Cada pedalada cuenta y hoy las vamos a disfrutar todas.",
+  "¡Qué gusto, NOMBRE! Respira hondo, que la ruta nos espera.",
+  "Hola de nuevo, NOMBRE. Recuerda: lo lindo no es la meta, es el viaje.",
+  "¡NOMBRE! Listo el casco, lista la sonrisa. Vamos a rodar tranquilos.",
+  "Bienvenido, NOMBRE. Hoy también voy a cuidar cada kilómetro contigo.",
+  "¡Hey, NOMBRE! Me encanta pedalear contigo. ¿A dónde nos lleva el corazón hoy?",
+  "Qué bonito verte, NOMBRE. Sea corto o largo el viaje, lo hacemos juntos."
+];
+function saludoBienvenida(nombre){
+  const last=parseInt(localStorage.getItem('lp_saludo')||'-1',10);
+  let i=Math.floor(Math.random()*saludosBienvenida.length);
+  if(saludosBienvenida.length>1){ let guard=0; while(i===last&&guard<20){ i=Math.floor(Math.random()*saludosBienvenida.length); guard++; } }
+  localStorage.setItem('lp_saludo',String(i));
+  return saludosBienvenida[i].replace(/NOMBRE/g, nombre||'ciclista');
+}
 let frasesUsadas = {lento:[], normal:[], rapido:[], parado:[], motivacional:[], profunda:[]};
 let lastFraseTime = 0;
 const MIN_INTERVALO = 10000;
@@ -712,7 +738,7 @@ window.onload = async function(){
     await im(); au(); rm(MG); fg('todos');
     loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips();
     initCustomization();
-    setTimeout(function(){ h("¡Hola de nuevo, "+nombreUsuario+"! ¿A dónde pedaleamos hoy?"); },500);
+    setTimeout(function(){ h(saludoBienvenida(nombreUsuario)); },500);
     if(!ghostMode) subscribeToUsers();
     subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests();
     getCurrentLocation();
@@ -763,7 +789,7 @@ async function reg(e){
   subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests();
   getCurrentLocation();
   if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(startTutorial, 700); }
-  else { setTimeout(function(){ h("Bienvenido, "+nombre+". Soy Pistero, tu copiloto."); },600); }
+  else { setTimeout(function(){ h(saludoBienvenida(nombre)); },600); }
 }
 
 function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(confirm("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
@@ -1038,8 +1064,8 @@ function toggleMic(){
 function updateMicBtn(){ const b=document.getElementById('micBtn'); if(b) b.classList.toggle('listening',micOn); }
 function handleVoiceCommand(raw){
   const t=normalizar(raw);
-  let m=t.match(/(?:ir a|llevame a|llevarme a|navega a|navegar a|vamos a|vamonos a|quiero ir a|voy a)\s+(.+)/);
-  if(m && m[1]){ const dest=m[1].trim(); cv('trips'); document.getElementById('quick-dest').value=dest; h("Buscando ruta a "+dest); startQuickTrip(); return; }
+  let m=t.match(/(?:planifica(?:r)?(?:me)?(?: mi| el| un)? viaje (?:a|hasta|hacia|para)|ir (?:a|hasta|hacia)|llevame (?:a|hasta|hacia)|llevarme a|navega(?:r|me)? (?:a|hasta|hacia)|guia(?:r|me)? (?:a|hasta|hacia)|vamos (?:a|hasta)|vamonos a|quiero ir (?:a|hasta|hacia)|voy a|ruta (?:a|hasta|hacia|para)|como (?:llego|voy) a|llegar a|necesito ir a)\s+(.+)/);
+  if(m && m[1]){ const dest=m[1].trim(); cv('trips'); const qd=document.getElementById('quick-dest'); if(qd) qd.value=dest; h("Perfecto, busco la ruta a "+dest+" y te la marco en el mapa."); startQuickTrip(); return; }
   if(/\binicio\b|panel|principal|tablero/.test(t)){ cv('dash'); h("Vamos al inicio."); return; }
   if(/\bmapa\b/.test(t)){ cv('map'); h("Aquí está el mapa."); return; }
   if(/mis rutas|\bruta/.test(t)){ cv('routes'); h("Tus rutas."); return; }
@@ -1059,24 +1085,50 @@ function handleVoiceCommand(raw){
 }
 
 const tutorialSteps=[
-  {t:'¡Hola! Soy Pistero',d:'Soy tu copiloto en cada pedaleo. Te voy a mostrar cómo funciona toda la aplicación. Avanza con el botón Siguiente.'},
-  {t:'Inicio',d:'Aquí ves tu velocidad en vivo, los kilómetros, las calorías y tu nivel. El botón GPS empieza a grabar tu recorrido en el mapa.'},
-  {t:'Comandos de voz',d:'Toca el botón del micrófono y háblame. Por ejemplo: ir a Valparaíso, abre el mapa, o cuántos kilómetros llevo. Yo me encargo del resto.'},
-  {t:'Mapa',d:'El mapa global muestra a otros ciclistas, puntos de agua, talleres y miradores. Cada ciclista aparece con el casco que eligió. Puedes reportar peligros para avisar a los demás.'},
-  {t:'Viajes y navegación',d:'Escribe un destino en Viaje Rápido y te guío paso a paso, igual que Waze. Tu personaje avanza por el mapa según tu velocidad real.'},
-  {t:'Hidratación y comida',d:'Mientras navegas te aviso por voz: cada cinco kilómetros recuerda tomar agua, y cada veinte kilómetros conviene comer algo para no quedarte sin energía.'},
-  {t:'Rutas',d:'Tus recorridos grabados quedan guardados. Puedes verlos en el mapa, combinarlos en una sola ruta y exportarlos como archivo GPX.'},
-  {t:'Social',d:'Chatea con la comunidad, agrega amigos y deja recomendaciones. También puedes buscar ciclistas a diez kilómetros a la redonda.'},
-  {t:'Taller MacGyver',d:'Trucos para reparar tu bicicleta con lo que tengas a mano en plena ruta. También puedes compartir tus propios secretos.'},
-  {t:'CicloGuía',d:'Encuentra hospedajes, panoramas, tips y consejos para ahorrar en tu viaje.'},
-  {t:'Perfil y personaje',d:'Elige tu casco, el color de tu polera, los lentes y accesorios extra. Tu personaje aparece en todos los mapas. ¡Listo, a pedalear!'}
+  {d:'¡Hola! Soy Pistero, tu copiloto. Sube el volumen y déjame mostrarte la aplicación. El brillo de la pantalla te indica de qué te estoy hablando. Avanza con Siguiente.'},
+  {view:'dash', sel:'.speed-display', d:'Aquí en el Inicio ves tu velocidad en vivo. Más abajo aparecen tus kilómetros, las calorías y tu nivel.'},
+  {view:'dash', sel:'.quick-links .bg', d:'Este botón GPS empieza a grabar tu recorrido en el mapa. Tócalo cuando salgas a rodar.'},
+  {view:'dash', sel:'.darma-badge', d:'Esta es tu Darma: tu premio por aportar a la comunidad. Mientras más ayudas a otros ciclistas, más sube.'},
+  {sel:'#micBtn', d:'Toca el micrófono y háblame. Por ejemplo: llévame a Valparaíso, o abre el mapa. Yo me encargo del resto.'},
+  {view:'dash', sel:'button[onclick="toggleSaver()"]', d:'El modo ahorro deja la pantalla casi negra para cuidar tu batería, pero yo sigo guiándote por voz.'},
+  {view:'trips', sel:'#quick-dest', d:'Aquí escribes un destino y te guío paso a paso, igual que Waze, marcando la ruta en el mapa.'},
+  {view:'map', sel:'#v-map .section-info', d:'El mapa global muestra a otros ciclistas, puntos de agua, talleres y miradores cerca de ti.'},
+  {view:'routes', sel:'#v-routes .section-info', d:'Tus recorridos grabados quedan guardados aquí. Puedes verlos, combinarlos y exportarlos como archivo GPX.'},
+  {view:'chat', sel:'#v-chat .section-info', d:'En Social chateas con la comunidad, agregas amigos y dejas recomendaciones para los demás.'},
+  {view:'mac', sel:'#v-mac .section-info', d:'El Taller MacGyver tiene trucos para reparar tu bici con lo que tengas a mano en plena ruta.'},
+  {view:'customize', sel:'#helmetGrid', d:'En Perfil eliges tu casco, el color, los lentes y accesorios. Tu personaje aparece en todos los mapas. ¡Listo, a pedalear!'}
 ];
 let tutorialIdx=0;
+function tutSetPanel(el,x,y,w,h2){ el.style.left=x+'px'; el.style.top=y+'px'; el.style.width=Math.max(0,w)+'px'; el.style.height=Math.max(0,h2)+'px'; el.style.display='block'; }
+function tutSpotlight(el){
+  const T=document.getElementById('tutDimT'),B=document.getElementById('tutDimB'),L=document.getElementById('tutDimL'),R=document.getElementById('tutDimR'),ring=document.getElementById('tutRing');
+  if(!el){ tutSetPanel(T,0,0,window.innerWidth,window.innerHeight); [B,L,R].forEach(function(p){p.style.display='none';}); ring.style.display='none'; return; }
+  const r=el.getBoundingClientRect(), pad=8;
+  const x=Math.max(0,r.left-pad), y=Math.max(0,r.top-pad), w=r.width+pad*2, h2=r.height+pad*2;
+  tutSetPanel(T,0,0,window.innerWidth,y);
+  tutSetPanel(B,0,y+h2,window.innerWidth,window.innerHeight-(y+h2));
+  tutSetPanel(L,0,y,x,h2);
+  tutSetPanel(R,x+w,y,window.innerWidth-(x+w),h2);
+  ring.style.display='block'; ring.style.left=x+'px'; ring.style.top=y+'px'; ring.style.width=w+'px'; ring.style.height=h2+'px';
+}
 function startTutorial(){ tutorialIdx=0; document.getElementById('tutorialOverlay').classList.add('on'); renderTutorial(); }
-function renderTutorial(){ const s=tutorialSteps[tutorialIdx]; document.getElementById('tutTitle').innerText=s.t; document.getElementById('tutDesc').innerText=s.d; document.getElementById('tutProgress').innerText=(tutorialIdx+1)+' / '+tutorialSteps.length; document.getElementById('tutPrev').style.visibility=tutorialIdx===0?'hidden':'visible'; document.getElementById('tutNext').innerText=tutorialIdx===tutorialSteps.length-1?'¡Empezar!':'Siguiente'; h(s.t+'. '+s.d); }
+function renderTutorial(){
+  const s=tutorialSteps[tutorialIdx];
+  document.getElementById('tutProgress').innerText=(tutorialIdx+1)+' / '+tutorialSteps.length;
+  document.getElementById('tutPrev').style.visibility=tutorialIdx===0?'hidden':'visible';
+  document.getElementById('tutNext').innerText=tutorialIdx===tutorialSteps.length-1?'¡A pedalear!':'Siguiente ▶';
+  if(s.view) cv(s.view);
+  // pequeño retardo para que la vista cambie y el elemento exista/posicione
+  setTimeout(function(){
+    const el=s.sel?document.querySelector(s.sel):null;
+    if(el) el.scrollIntoView({block:'center',behavior:'smooth'});
+    setTimeout(function(){ tutSpotlight(el); },s.sel?320:0);
+  }, s.view?260:60);
+  h(s.d);
+}
 function tutNext(){ if(tutorialIdx<tutorialSteps.length-1){ tutorialIdx++; renderTutorial(); } else { closeTutorial(); } }
 function tutPrev(){ if(tutorialIdx>0){ tutorialIdx--; renderTutorial(); } }
-function closeTutorial(){ document.getElementById('tutorialOverlay').classList.remove('on'); if(cu) localStorage.setItem('lp_tut_'+cu,'done'); if('speechSynthesis' in window) speechSynthesis.cancel(); }
+function closeTutorial(){ document.getElementById('tutorialOverlay').classList.remove('on'); if(cu) localStorage.setItem('lp_tut_'+cu,'done'); if('speechSynthesis' in window) speechSynthesis.cancel(); h("¡Listo! Ya conoces lo básico. Cualquier duda, tócame el micrófono. ¡A rodar!"); }
 
 /* ===== PWA: Service Worker + Wake Lock (GPS/voz con pantalla apagada) ===== */
 if('serviceWorker' in navigator){
