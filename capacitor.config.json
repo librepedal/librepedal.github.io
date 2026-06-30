@@ -1,0 +1,11 @@
+{
+  "appId": "cl.librepedal.app",
+  "appName": "Libre Pedal",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "BackgroundGeolocation": {}
+  }
+}

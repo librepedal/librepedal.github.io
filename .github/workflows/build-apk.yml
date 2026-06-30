@@ -1,0 +1,61 @@
+name: Construir APK Android
+
+on:
+  workflow_dispatch:        # permite lanzarlo a mano desde GitHub
+  push:
+    branches: [ main ]
+    paths:                  # solo recompila el APK si cambia algo relevante
+      - 'index.html'
+      - 'manifest.json'
+      - 'icon.svg'
+      - 'version.txt'
+      - 'package.json'
+      - 'capacitor.config.json'
+      - 'scripts/**'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Preparar carpeta web (www/)
+        run: node scripts/copy-web.js
+
+      - name: Agregar plataforma Android
+        run: npx cap add android
+
+      - name: Inyectar permisos nativos
+        run: node scripts/patch-android.js
+
+      - name: Sincronizar Capacitor
+        run: npx cap sync android
+
+      - name: Compilar APK (debug)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Publicar el APK como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: LibrePedal-APK
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

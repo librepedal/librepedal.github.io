@@ -325,7 +325,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.1</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.2</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -509,7 +509,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='4.1';
+const APP_VERSION='4.2';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -860,10 +860,44 @@ function subscribeToFriendRequests(){ db.collection('friendRequests').where('to'
 
 function sd(){ us.d+=10; au(); h("Diez puntos de Darma para ti."); }
 
+/* GPS NATIVO EN SEGUNDO PLANO (solo en la app Android con Capacitor).
+   Corre un Foreground Service que entrega la ubicación AUNQUE LA PANTALLA ESTÉ
+   APAGADA, y la inyecta en el mismo motor (ug) que usa la versión web.
+   En la web no hace nada: disponible() devuelve false. */
+const lpBackgroundGeo = (function(){
+  let watcherId=null, BG=null;
+  const esNativo = (typeof window.Capacitor!=='undefined') && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
+  if(esNativo){ try{ BG=Capacitor.registerPlugin('BackgroundGeolocation'); }catch(e){} }
+  return {
+    disponible: function(){ return !!BG; },
+    start: async function(){
+      if(!BG || watcherId) return;
+      try{
+        watcherId = await BG.addWatcher({
+          backgroundMessage: "Registrando tu ruta. Toca para volver a Libre Pedal.",
+          backgroundTitle: "Libre Pedal pedaleando contigo 🚴",
+          requestPermissions: true,
+          stale: false,
+          distanceFilter: 8
+        }, function(location, error){
+          if(error || !location) return;
+          if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}});
+        });
+      }catch(e){}
+    },
+    stop: async function(){ if(BG && watcherId){ try{ await BG.removeWatcher({id:watcherId}); }catch(e){} watcherId=null; } }
+  };
+})();
 function toggleGPS(){
   const btn=document.querySelector('#v-dash .bg');
   if(!ig){
-    if("geolocation" in navigator){
+    if(lpBackgroundGeo.disponible()){
+      lpBackgroundGeo.start(); ig=true;
+      if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
+      currentRoute=[]; crl=L.polyline([],{color:'#00f2ff',weight:5,opacity:0.8}).addTo(mp);
+      lpWakeLock.enable();
+      h("GPS activado. Sigo grabando tu ruta aunque apagues la pantalla.");
+    } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,{enableHighAccuracy:true,maximumAge:1000});
       ig=true; if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=L.polyline([],{color:'#00f2ff',weight:5,opacity:0.8}).addTo(mp);
@@ -871,7 +905,8 @@ function toggleGPS(){
       h("GPS activado. Estoy grabando tu ruta.");
     } else { alert("Tu dispositivo no soporta GPS"); }
   } else {
-    navigator.geolocation.clearWatch(gw); ig=false; lpWakeLock.disable();
+    if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
+    ig=false; lpWakeLock.disable();
     if(btn){ btn.innerText="📍 GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
     if(currentRoute.length>1){ saveRouteToHistory(currentRoute); h("Ruta guardada. Buen trabajo."); }
     if(cu&&!ghostMode) db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true});

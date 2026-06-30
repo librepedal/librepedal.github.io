@@ -1,3 +1,10 @@
 LibrePedal-deploy.zip
 .DS_Store
 Thumbs.db
+
+# Generados por el build nativo (Capacitor / Android)
+node_modules/
+www/
+android/
+.gradle/
+package-lock.json
