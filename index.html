@@ -320,6 +320,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
+<div style="text-align:center;color:#3a4a5a;font-size:0.62rem;margin-top:14px">Libre Pedal · v3.0</div>
 </section>
 
 <section id="v-trips" class="view">
@@ -860,15 +861,15 @@ function ug(p){
   // Descarta fixes imprecisos: el GPS "salta" varios metros aunque estés quieto.
   if(p.coords.accuracy && p.coords.accuracy>35) return;
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
-  // Velocidad de lo que reporta el GPS (0 si no entrega).
-  let sp = (p.coords.speed!=null && p.coords.speed>0.7) ? p.coords.speed*3.6 : 0;
-  // Verificación por DESPLAZAMIENTO real en ~10s: si en la ventana casi no nos
-  // movimos, estamos QUIETOS aunque el GPS reporte velocidad por ruido (caso casa).
+  // VELOCIDAD VERIFICADA POR DESPLAZAMIENTO REAL (ventana ~10s). Es la fuente de
+  // verdad: promedia el ruido del GPS. Si en 10s no nos desplazamos de verdad,
+  // estamos QUIETOS aunque el GPS reporte velocidad fantasma (caso casa).
   posHistory.push({lat:la,lon:lo,t:Date.now()});
-  while(posHistory.length>1 && (Date.now()-posHistory[0].t)>10000) posHistory.shift();
-  let spVentana=0;
-  if(posHistory.length>=2){ const _a=posHistory[0], _b=posHistory[posHistory.length-1], _dt=(_b.t-_a.t)/1000; if(_dt>=4) spVentana=(gd2(_a.lat,_a.lon,_b.lat,_b.lon)*1000/_dt)*3.6; }
-  if(spVentana<3) sp=0; // quieto: ignora el ruido de velocidad del GPS
+  while(posHistory.length>1 && (Date.now()-posHistory[0].t)>12000) posHistory.shift();
+  // Velocidad SOLO verificada por desplazamiento real (centroides). Ignoramos por
+  // completo la "velocidad" que reporta el GPS (es la que se vuelve fantasma en casa).
+  const spVentana=velocidadVentana(posHistory);
+  let sp = (spVentana<6) ? 0 : spVentana;
   lastFixTime=Date.now();
   document.getElementById('spd').innerText=Math.round(sp);
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
@@ -882,7 +883,7 @@ function ug(p){
   currentRoute.push({lat:la,lon:lo,t:Date.now()});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
   if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ db.collection('users').doc(cu).set({lat:la,lon:lo,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); lastPos={lat:la,lon:lo}; } }
-  if(sp>=6 && Math.random()>0.95){ const frase=(sp<25&&Math.random()<0.35)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(frase) h(frase); }
+  if(spVentana>=8 && Math.random()>0.95){ const frase=(sp<25&&Math.random()<0.35)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(frase) h(frase); }
 }
 function updateSpeedStatus(speed){
   const el=document.getElementById('speedStatus'); if(!el) return;
@@ -900,6 +901,20 @@ function showAllRoutesOnMap(){ if(!cu) return; db.collection('routes').where('us
 function combineAllRoutes(){ db.collection('routes').where('user','==',cu).get().then(function(snapshot){ if(snapshot.empty){ h("No hay rutas para combinar."); return; } let allPoints=[]; const docs=snapshot.docs.slice().sort(function(a,b){ return ((a.data().savedAt&&a.data().savedAt.seconds)||0)-((b.data().savedAt&&b.data().savedAt.seconds)||0); }); docs.forEach(function(doc){ const d=doc.data(); if(d.points&&d.points.length>0) allPoints=allPoints.concat(d.points); }); if(allPoints.length===0){ h("No hay puntos."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=L.polyline(allPoints.map(function(p){return [p.lat,p.lon];}),{color:'#ff0055',weight:5,opacity:0.9}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Combiné tus rutas en una sola."); },300); }); }
 function hg(e){ h("La señal de GPS está inestable."); }
 function gd2(a,b,c,d){ const R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
+// Velocidad REAL por ventana (~10s): compara el centroide de la 1ª mitad de
+// posiciones vs la 2ª mitad. El ruido del GPS se promedia y se cancela; solo
+// queda el desplazamiento verdadero. Devuelve km/h (0 si estás quieto).
+function velocidadVentana(pts){
+  const now=Date.now();
+  const w=pts.filter(function(p){ return now-(p.t||p.timestamp)<=10000; });
+  if(w.length<4) return 0;
+  const half=Math.floor(w.length/2);
+  const cen=function(arr){ let la=0,lo=0,t=0; arr.forEach(function(p){ la+=p.lat; lo+=p.lon; t+=(p.t||p.timestamp); }); const n=arr.length||1; return {lat:la/n,lon:lo/n,t:t/n}; };
+  const c1=cen(w.slice(0,half)), c2=cen(w.slice(half));
+  const dt=(c2.t-c1.t)/1000;
+  if(dt<2) return 0;
+  return (gd2(c1.lat,c1.lon,c2.lat,c2.lon)*1000/dt)*3.6;
+}
 function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<8?'lento':v<25?'normal':'rapido'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd(); }
@@ -1060,10 +1075,16 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
     lpWakeLock.enable();
     gpsWatchId=navigator.geolocation.watchPosition(function(pos){
-      const lat=pos.coords.latitude, lon=pos.coords.longitude, speed=(pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0;
+      const lat=pos.coords.latitude, lon=pos.coords.longitude;
       if(pos.coords.accuracy>30) return;
-      if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<0.005) return; totalDistance+=dist; }
-      gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:Date.now()}); lastGpsPoint={lat:lat,lon:lon};
+      // jitter: ignora saltos < 12 m (deriva del GPS estando quieto)
+      if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<12) return; totalDistance+=dist; }
+      const _now=Date.now();
+      const _spGps=(pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0;
+      gpsPoints.push({lat:lat,lon:lon,speed:_spGps,timestamp:_now}); lastGpsPoint={lat:lat,lon:lon};
+      // velocidad VERIFICADA por desplazamiento (centroides, ventana 10s)
+      const _spWin=velocidadVentana(gpsPoints);
+      const speed=(_spWin<6)?0:_spWin;
       helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]);
       L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
       document.getElementById('navSpeed').innerText=Math.round(speed);
@@ -1240,8 +1261,19 @@ function closeTutorial(){ document.getElementById('tutorialOverlay').classList.r
 
 /* ===== PWA: Service Worker + Wake Lock (GPS/voz con pantalla apagada) ===== */
 if('serviceWorker' in navigator){
+  // Auto-actualización: si entra un Service Worker nuevo y toma control,
+  // recargamos una sola vez para que el usuario reciba siempre la última versión.
+  let lpRefrescando=false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(lpRefrescando) return; lpRefrescando=true; window.location.reload();
+  });
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW no registrado:', e); });
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // forzar chequeo de versión nueva en cada arranque
+      try{ reg.update(); }catch(e){}
+      if(reg.waiting){ reg.waiting.postMessage('skipWaiting'); }
+      reg.addEventListener('updatefound', function(){ const nw=reg.installing; if(nw){ nw.addEventListener('statechange', function(){ if(nw.state==='installed' && navigator.serviceWorker.controller){ nw.postMessage('skipWaiting'); } }); } });
+    }).catch(function(e){ console.warn('SW no registrado:', e); });
   });
 }
 

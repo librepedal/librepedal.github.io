@@ -1,6 +1,6 @@
 /* Libre Pedal — Service Worker
    App-shell offline + runtime cache de mapas y librerías CDN. */
-const CACHE = 'librepedal-v2';
+const CACHE = 'librepedal-v3';
 
 // Núcleo que se precachea al instalar (lo propio de la app).
 const CORE = [
@@ -19,6 +19,8 @@ self.addEventListener('install', function (e) {
       .then(function () { return self.skipWaiting(); })
   );
 });
+
+self.addEventListener('message', function (e) { if (e.data === 'skipWaiting') self.skipWaiting(); });
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(
