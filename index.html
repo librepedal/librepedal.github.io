@@ -556,7 +556,7 @@ const extrasOptions = [
   {id:'bandana', name:'Pañoleta', svg:'<path d="M64 150 Q100 166 136 150 L132 160 Q100 174 68 160 Z" fill="#e74c3c"/>'}
 ];
 
-let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0;
+let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[];
 let categoriaActual='todos', hostelTipoActual='todos';
 let trips=[], currentTrip=null, navMap=null, helmetMarker=null, routeLine=null;
 let addedDests=[], currentFilter='hostel', allHostels=[];
@@ -860,9 +860,15 @@ function ug(p){
   // Descarta fixes imprecisos: el GPS "salta" varios metros aunque estés quieto.
   if(p.coords.accuracy && p.coords.accuracy>35) return;
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
-  // Velocidad SOLO de lo que reporta el GPS. Si no entrega velocidad, es 0:
-  // NO la fabricamos del temblor del GPS (eso hacía "creer" movimiento en casa).
+  // Velocidad de lo que reporta el GPS (0 si no entrega).
   let sp = (p.coords.speed!=null && p.coords.speed>0.7) ? p.coords.speed*3.6 : 0;
+  // Verificación por DESPLAZAMIENTO real en ~10s: si en la ventana casi no nos
+  // movimos, estamos QUIETOS aunque el GPS reporte velocidad por ruido (caso casa).
+  posHistory.push({lat:la,lon:lo,t:Date.now()});
+  while(posHistory.length>1 && (Date.now()-posHistory[0].t)>10000) posHistory.shift();
+  let spVentana=0;
+  if(posHistory.length>=2){ const _a=posHistory[0], _b=posHistory[posHistory.length-1], _dt=(_b.t-_a.t)/1000; if(_dt>=4) spVentana=(gd2(_a.lat,_a.lon,_b.lat,_b.lon)*1000/_dt)*3.6; }
+  if(spVentana<3) sp=0; // quieto: ignora el ruido de velocidad del GPS
   lastFixTime=Date.now();
   document.getElementById('spd').innerText=Math.round(sp);
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
