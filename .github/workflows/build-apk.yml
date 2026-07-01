@@ -2,7 +2,7 @@ name: Construir APK Android
 on:
   push:
     branches: [ main ]
-  workflow_dispatch
+  workflow_dispatch:
 
 env:
   VER: "5.9.2"
@@ -11,49 +11,34 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Instalar Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-
-      - name: Instalar paquetes
-        run: npm ci || npm install
-
-      - name: Crear proyecto Android
-        run: |
+          cache: 'npm'
+      - run: npm install
+      - run: |
           npx cap add android || true
           npx cap sync android
-
-      - name: Actualizar todas las versiones
-        run: |
+      - run: |
           sed -i "s/versionCode [0-9]*/versionCode $VC/" android/app/build.gradle
-          sed -i "s/versionName \".*\"/versionName \"$VER\"/" android/app/build.gradle
-          sed -i "s/APP_VERSION = \".*\"/APP_VERSION = \"$VER\"/" index.html
+          sed -i 's/versionName ".*"/versionName "'"$VER"'"/' android/app/build.gradle
+          sed -i 's/APP_VERSION = ".*"/APP_VERSION = "'"$VER"'"/' index.html
           sed -i "s/librepedal-v[0-9]*/librepedal-v26/g" index.html sw.js
           echo "$VER" > version.txt
-
-      - name: Compilar APK
-        run: |
-          cd android
-          chmod +x gradlew
+      - run: |
+          cd android && chmod +x gradlew
           ./gradlew assembleDebug
-
-      - name: Subir archivo
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: LibrePedal-v${{ env.VER }}
+          name: apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Publicar
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
+        if: success()
         with:
           tag_name: v${{ env.VER }}
           name: Libre Pedal v${{ env.VER }}
