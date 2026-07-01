@@ -116,8 +116,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .route-item-info{flex:1}.route-item-actions{display:flex;gap:4px}
 .route-btn{background:var(--p);color:#000;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:0.7rem}
 .route-btn.delete{background:var(--r);color:#fff}
-.music-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.music-btn{padding:12px;border-radius:10px;text-decoration:none;color:#fff;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.8rem}
+.music-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.music-btn{padding:8px 4px;border-radius:9px;text-decoration:none;color:#fff;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;font-size:0.68rem}
 .music-spotify{background:#1DB954}.music-youtube{background:#FF0000}.music-apple{background:#FA243C}
 .music-deezer{background:#A2C2E0;color:#000}.music-soundcloud{background:#FF5500}.music-amazon{background:#25D1DA;color:#000}
 .section-info{background:rgba(0,242,255,0.08);border:1px solid var(--p);padding:10px;border-radius:10px;margin-bottom:12px;font-size:0.8rem;line-height:1.4}
@@ -312,10 +312,13 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="quick-links">
   <button class="bg" onclick="toggleGPS()">📍 GPS</button>
   <button class="btrip" onclick="cv('trips')">🗺️ Mis Viajes</button>
+  <button class="btrip" onclick="openDiario()">📓 Ciclo Bitácora</button>
   <button class="bd" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
-  <button class="btrip" onclick="openDiario()">📓 Mi Diario</button>
-  <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Tutorial</button>
+  <button class="ab sec" style="margin:0" onclick="mostrarLogros()">🏆 Logros</button>
+  <button class="ab sec" style="margin:0" onclick="mostrarRanking()">🥇 Ranking</button>
 </div>
+<button class="ab sec" style="margin-top:6px;background:rgba(0,242,255,0.08);border:1px solid var(--p)" onclick="startTutorial()">🎓 Ver tutorial</button>
+<div style="text-align:center;font-size:0.68rem;color:#7d8ba0;margin-top:10px;line-height:1.4">🤝 Libre Pedal se construye <strong style="color:var(--p)">gracias a la comunidad</strong>: cada punto que compartes hace crecer a todos.</div>
 <h3 style="margin-top:14px;font-size:0.95rem">Música</h3>
 <div class="music-grid">
 <a href="https://open.spotify.com/search/cycling%20music" target="_blank" class="music-btn music-spotify"><i class="fab fa-spotify"></i> Spotify</a>
@@ -326,7 +329,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.6</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.7</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -361,7 +364,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-map" class="view">
 <div class="section-info"><h4>Mapa Global</h4><p>Ciclistas, puntos de agua, talleres y miradores.</p></div>
-<div class="quick-links"><button class="ab sec" style="margin:0" onclick="cv('routes')">📋 Mis Rutas</button><button class="ab sec" style="margin:0" onclick="cv('trips')">🗺️ Mis Viajes</button></div>
+<div class="quick-links">
+  <button class="bg" style="margin:0" onclick="toggleRadarOnMap()">🚴 Ciclistas</button>
+  <button class="bd" style="margin:0" onclick="reportarEnRuta()">📍 Reportar</button>
+  <button class="btrip" style="margin:0" onclick="showAllRoutesOnMap()">🛣️ Rutas</button>
+  <button class="ab sec" style="margin:0" onclick="cv('trips')">🗺️ Mis Viajes</button>
+</div>
 <div id="map"></div>
 <div class="map-controls">
 <button class="map-btn" onclick="toggleRadarOnMap()">Ciclistas</button>
@@ -377,7 +385,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </section>
 
 <section id="v-diario" class="view">
-<div class="section-info"><h4>📓 Mi Diario</h4><p>Tu bitácora del viaje. Lo privado queda solo en tu teléfono.</p></div>
+<div class="section-info"><h4>📓 Ciclo Bitácora</h4><p>Tu bitácora del viaje. Lo privado queda en tu teléfono y se respalda en tu cuenta.</p></div>
 <div class="cd">
   <h4 style="margin-top:0;font-size:0.9rem">🌅 Inicio del día</h4>
   <p style="font-size:0.78rem;color:#9fb3c8;margin:4px 0 6px">¿Cómo amaneciste hoy?</p>
@@ -513,7 +521,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='4.6';
+const APP_VERSION='4.7';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -943,6 +951,7 @@ function toggleGPS(){
     ig=false; lpWakeLock.disable();
     if(btn){ btn.innerText="📍 GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
     if(currentRoute.length>1){ saveRouteToHistory(currentRoute); h("Ruta guardada. Buen trabajo."); }
+    sincronizarStats();
     if(cu&&!ghostMode) db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true});
   }
 }
@@ -1135,6 +1144,52 @@ function renderReportesComunidad(docs){
 const DIARIO_ESTADOS=[{e:'💪',l:'Excelente'},{e:'🩹',l:'Con molestias'},{e:'🐢',l:'Fatigado'}];
 let diarioEstadoSel=null;
 function diarioHoyKey(){ return 'lp_diario_'+(cu||'anon')+'_'+new Date().toISOString().slice(0,10); }
+/* ===== GAMIFICACIÓN: Logros (gratis) + Ranking Top 10 ===== */
+function statViajesCompletados(){ return (typeof trips!=='undefined'&&trips)?trips.filter(function(t){return t&&t.status==='completed';}).length:0; }
+function statBitacora(){ const pre='lp_diario_'+(cu||'anon')+'_'; return Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).length; }
+const LOGROS=[
+  {e:'🎉',t:'Bienvenido',d:'Te uniste a la comunidad',val:function(){return 1;},meta:1,u:''},
+  {e:'🚲',t:'Primer pedaleo',d:'Tu primer kilómetro',val:function(){return us.di;},meta:1,u:'km'},
+  {e:'🛣️',t:'En ruta',d:'10 km recorridos',val:function(){return us.di;},meta:10,u:'km'},
+  {e:'🏞️',t:'Explorador',d:'50 km recorridos',val:function(){return us.di;},meta:50,u:'km'},
+  {e:'💯',t:'Centenario',d:'100 km recorridos',val:function(){return us.di;},meta:100,u:'km'},
+  {e:'🔥',t:'Fondista',d:'250 km recorridos',val:function(){return us.di;},meta:250,u:'km'},
+  {e:'🏔️',t:'Rutero',d:'500 km recorridos',val:function(){return us.di;},meta:500,u:'km'},
+  {e:'🏅',t:'Cicloviajero',d:'1000 km — ¡elegible a premios!',val:function(){return us.di;},meta:1000,u:'km'},
+  {e:'🌎',t:'Trotamundos',d:'2500 km recorridos',val:function(){return us.di;},meta:2500,u:'km'},
+  {e:'🏆',t:'Leyenda del pedal',d:'5000 km recorridos',val:function(){return us.di;},meta:5000,u:'km'},
+  {e:'🤝',t:'Primer aporte',d:'Gana 10 de Darma aportando',val:function(){return us.d;},meta:10,u:''},
+  {e:'🌱',t:'Colaborador',d:'50 de Darma',val:function(){return us.d;},meta:50,u:''},
+  {e:'⭐',t:'Pilar de la comunidad',d:'150 de Darma',val:function(){return us.d;},meta:150,u:''},
+  {e:'💎',t:'Guardián',d:'500 de Darma',val:function(){return us.d;},meta:500,u:''},
+  {e:'👑',t:'Embajador',d:'1000 de Darma',val:function(){return us.d;},meta:1000,u:''},
+  {e:'🧭',t:'Primer viaje',d:'Completa 1 viaje',val:statViajesCompletados,meta:1,u:''},
+  {e:'🗺️',t:'Viajero',d:'5 viajes completados',val:statViajesCompletados,meta:5,u:''},
+  {e:'🎒',t:'Aventurero',d:'10 viajes completados',val:statViajesCompletados,meta:10,u:''},
+  {e:'🌟',t:'Nómada',d:'25 viajes completados',val:statViajesCompletados,meta:25,u:''},
+  {e:'🔋',t:'Con energía',d:'Quema 1000 calorías',val:function(){return us.c;},meta:1000,u:'cal'},
+  {e:'⚡',t:'Máquina',d:'5000 calorías quemadas',val:function(){return us.c;},meta:5000,u:'cal'},
+  {e:'💪',t:'Imparable',d:'15000 calorías',val:function(){return us.c;},meta:15000,u:'cal'},
+  {e:'📓',t:'Cronista',d:'Escribe en tu Ciclo Bitácora',val:statBitacora,meta:1,u:''},
+  {e:'📖',t:'Memorias',d:'7 días de bitácora',val:statBitacora,meta:7,u:''}
+];
+function mostrarLogros(){
+  let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
+  let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
+  items.forEach(function(it){ const l=it.l; html+='<div style="display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;margin-bottom:6px;background:'+(it.done?'rgba(255,215,0,0.10)':'var(--gl)')+';border:1px solid '+(it.done?'var(--g)':'#242c3e')+';opacity:'+(it.done?'1':'0.78')+'"><div style="font-size:1.6rem;filter:'+(it.done?'none':'grayscale(1)')+'">'+l.e+'</div><div style="flex:1"><div style="font-weight:800;font-size:0.84rem;color:'+(it.done?'var(--g)':'#cfd8e6')+'">'+escapeHTML(l.t)+(it.done?' ✓':'')+'</div><div style="font-size:0.7rem;color:#8695aa">'+escapeHTML(l.d)+'</div>'+(it.done?'':'<div style="height:5px;background:#222b3d;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+it.pct+'%;background:var(--p)"></div></div><div style="font-size:0.62rem;color:#7d8ba0;margin-top:2px">'+(l.u==='km'?it.v.toFixed(1):Math.round(it.v))+' / '+l.meta+' '+l.u+'</div>')+'</div></div>'; });
+  document.getElementById('modalTitle').innerText='🏆 Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
+}
+async function sincronizarStats(){ if(!cu) return; try{ await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista'},{merge:true}); }catch(e){} }
+async function mostrarRanking(){
+  document.getElementById('modalTitle').innerText='🥇 Top 10 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
+  await sincronizarStats();
+  try{ const snap=await db.collection('users').orderBy('km','desc').limit(10).get();
+    if(snap.empty){ c.innerHTML='<p style="color:#888">Aún no hay datos. ¡Activa el GPS y suma kilómetros para entrar al ranking!</p>'; return; }
+    const med=['🥇','🥈','🥉']; let html='<p style="color:#9fb3c8;font-size:0.82rem;margin-top:0">Los cicloviajeros con más kilómetros del mundo 🌎</p>'; let pos=0;
+    snap.forEach(function(doc){ const d=doc.data(); pos++; const yo=doc.id===cu; html+='<div style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;background:'+(yo?'rgba(0,242,255,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-size:1.05rem;font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem;color:'+(yo?'var(--p)':'#dfe7ff')+'">'+escapeHTML(d.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g);font-size:0.9rem">'+(d.km||0).toFixed(0)+' km</div></div>'; });
+    c.innerHTML=html;
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar el ranking. Intenta de nuevo en un momento.</p>'; }
+}
 function openDiario(){ cv('diario'); cargarDiario(); sincronizarDiarioNube().then(function(){ cargarDiario(); }); }
 function renderDiarioEstados(){ const c=document.getElementById('diarioEstado'); if(!c) return; c.innerHTML=DIARIO_ESTADOS.map(function(s){ const sel=diarioEstadoSel===s.l; return '<button onclick="diarioEstadoSel=\''+s.l+'\';renderDiarioEstados()" style="flex:1;min-width:88px;padding:10px;border-radius:10px;border:2px solid '+(sel?'var(--p)':'#2a3147')+';background:'+(sel?'rgba(0,242,255,0.12)':'var(--gl)')+';color:#fff;font-weight:700;font-size:0.78rem;cursor:pointer">'+s.e+' '+s.l+'</button>'; }).join(''); }
 function cargarDiario(){ const km=document.getElementById('diarioKm'); if(km) km.innerText=us.di.toFixed(2); let d={}; try{ d=JSON.parse(localStorage.getItem(diarioHoyKey()))||{}; }catch(e){} diarioEstadoSel=d.estado||null; const meta=document.getElementById('diarioMeta'), comp=document.getElementById('diarioComplejo'), refl=document.getElementById('diarioReflexion'); if(meta) meta.value=d.meta||''; if(comp) comp.value=d.complejo||''; if(refl) refl.value=d.reflexion||''; renderDiarioEstados(); renderDiarioHistorial(); }
