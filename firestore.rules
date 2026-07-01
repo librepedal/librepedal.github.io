@@ -113,6 +113,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Te doy alojo (solo usuarios con 6+ meses, verificado en la app)
+    match /alojo/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && strOk('desc', 600) && strOk('zona', 100);
+      allow update, delete: if false;
+    }
+
     // Todo lo demás: denegado por defecto
     match /{document=**} {
       allow read, write: if false;

@@ -332,7 +332,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon" title="Amazon Music"><i class="fab fa-amazon"></i></a>
 </div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.2</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.3</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -426,6 +426,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="quick-links" style="margin-top:6px">
   <button class="ab sec" style="margin:0" onclick="cv('rec')">💡 Recomendaciones</button>
   <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()">🔍 Buscar ciclistas</button>
+  <button class="ab sec" style="margin:0;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981" onclick="abrirTeDoyAlojo()">🏡 Te doy alojo</button>
 </div>
 <h4 style="margin:14px 0 4px;font-size:0.9rem;color:var(--p)">💬 Chat global de la comunidad</h4>
 <div class="cc">
@@ -492,6 +493,13 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Tutorial</button>
   <button class="ab sec" style="margin:0" onclick="toggleGhost()">👻 Fantasma</button>
 </div>
+<div id="admin-panel" style="display:none;margin-top:12px">
+  <div class="cd">
+    <h4 style="margin-top:0;font-size:0.85rem;color:var(--g)">⚙️ Panel Admin</h4>
+    <p style="font-size:0.73rem;color:#9fb3c8;margin:4px 0 8px">Solo visible para ti como administrador.</p>
+    <button class="ab" onclick="exportarUsuariosAdmin()">⬇️ Exportar lista de usuarios (.csv)</button>
+  </div>
+</div>
 </section>
 
 <section id="v-stats" class="view">
@@ -530,7 +538,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.2';
+const APP_VERSION='5.3';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -883,6 +891,7 @@ window.onload = async function(){
     document.getElementById('auth').style.display='none';
     document.getElementById('logoutBtn').style.display='block';
     document.getElementById('ghostBtn').style.display='block';
+    const adminPanel=document.getElementById('admin-panel'); if(adminPanel) adminPanel.style.display=(cu===ADMIN_ID)?'block':'none';
     await im(); au(); rm(MG); fg('todos');
     loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips();
     initCustomization();
@@ -929,6 +938,7 @@ async function reg(e){
   document.getElementById('auth').style.display='none';
   document.getElementById('logoutBtn').style.display='block';
   document.getElementById('ghostBtn').style.display='block';
+  const _ap=document.getElementById('admin-panel'); if(_ap) _ap.style.display=(cu===ADMIN_ID)?'block':'none';
   document.getElementById('welcome-name').innerText=nombre;
   us=JSON.parse(localStorage.getItem('lp_u_'+cu))||{d:0,n:'Novato',di:0,c:0,la:null,lo:null};
   uj=JSON.parse(localStorage.getItem('lp_j_'+cu))||[];
@@ -1310,6 +1320,71 @@ function guardarDiario(){ const fecha=new Date().toISOString().slice(0,10); cons
 async function sincronizarDiarioNube(){ if(!cu) return; try{ const snap=await db.collection('diarios').where('user','==',cu).get(); snap.forEach(function(doc){ const x=doc.data(); if(x.fecha){ const key='lp_diario_'+cu+'_'+x.fecha; if(!localStorage.getItem(key)){ localStorage.setItem(key, JSON.stringify({estado:x.estado,meta:x.meta,complejo:x.complejo,reflexion:x.reflexion,km:x.km,fecha:x.fecha})); } } }); }catch(e){} }
 function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null}, stats:us, diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){} }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h('Respaldo descargado. Guárdalo a salvo: ahí está todo tu diario e historial.'); }
 function importarMisDatos(input){ const f=input.files&&input.files[0]; if(!f) return; const r=new FileReader(); r.onload=function(){ try{ const data=JSON.parse(r.result); let n=0; if(data.diario&&data.diario.length){ data.diario.forEach(function(d){ if(d&&d.fecha){ localStorage.setItem('lp_diario_'+(cu||'anon')+'_'+d.fecha, JSON.stringify(d)); n++; } }); } h('Respaldo restaurado: '+n+' días recuperados.'); if(typeof cargarDiario==='function') cargarDiario(); }catch(e){ alert('Ese archivo no es un respaldo válido de Libre Pedal.'); } input.value=''; }; r.readAsText(f); }
+
+/* ===== EXPORT ADMIN: lista completa de usuarios registrados ===== */
+const ADMIN_ID = 'intyrivera_a_gmail_com';   // ID del admin (correo transformado)
+async function exportarUsuariosAdmin(){
+  if(cu!==ADMIN_ID){ alert('Solo el administrador puede exportar la lista de usuarios.'); return; }
+  h('Obteniendo lista de usuarios registrados...');
+  try{
+    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    const rows=[['ID','Nombre','Email','Creado','Km','Darma','Casco','Pais']];
+    snap.forEach(function(doc){ const d=doc.data();
+      rows.push([
+        doc.id, d.nombre||'', d.email||'',
+        d.createdAt?new Date(d.createdAt.seconds*1000).toISOString().slice(0,10):'',
+        (d.km||0).toFixed(1), (d.darma||0), d.helmet||'', d.pais||''
+      ]);
+    });
+    const csv=rows.map(function(r){ return r.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+    const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download='LibrePedal-usuarios-'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    h('Descargado: '+( snap.size)+' usuarios en el CSV. Ábrelo en Excel.');
+  }catch(e){ alert('No se pudo exportar: '+(e.message||e)); }
+}
+
+/* ===== TE DOY ALOJO: trueque ciclista, solo usuarios con 6+ meses ===== */
+function mesesDesdeRegistro(){
+  const key='lp_creado_'+cu; let ts=parseInt(localStorage.getItem(key)||'0',10);
+  if(!ts){ ts=Date.now(); localStorage.setItem(key,String(ts)); }
+  return Math.floor((Date.now()-ts)/(1000*60*60*24*30));
+}
+function requiere6Meses(){ return mesesDesdeRegistro()>=6; }
+async function abrirTeDoyAlojo(){
+  document.getElementById('modalTitle').innerText='🏡 Te doy alojo';
+  const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on');
+  const meses=mesesDesdeRegistro();
+  if(!requiere6Meses()){
+    const faltan=6-meses;
+    c.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:3rem">🔒</div><h3 style="color:var(--p)">Función exclusiva</h3><p style="color:#9fb3c8;font-size:0.85rem">Esta opción se desbloquea cuando llevas <strong>6 meses</strong> en la comunidad de Libre Pedal.<br>Te faltan <strong style="color:var(--g)">'+faltan+' mes'+(faltan!==1?'es':'')+'</strong> para acceder.</p><p style="color:#7d8ba0;font-size:0.76rem">Es para garantizar que solo ciclistas comprometidos participen. Sigue pedaleando y aportando a la comunidad. 🚴</p></div>';
+    return;
+  }
+  // Usuario habilitado: ver ofertas y publicar la propia
+  try{
+    const snap=await db.collection('alojo').orderBy('ts','desc').limit(50).get();
+    let html='<p style="font-size:0.8rem;color:#9fb3c8;margin-top:0">🤝 Intercambio de techo, comida y ayuda entre ciclistas de confianza. Comunidad verificada.</p>';
+    if(!snap.empty){
+      html+='<h4 style="font-size:0.85rem;color:var(--p)">Ofertas disponibles</h4>';
+      snap.forEach(function(doc){ const d=doc.data(); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.86rem;color:var(--p)">'+escapeHTML(d.nombre||'Ciclista')+'</div><div style="font-size:0.76rem;color:#9fb3c8">📍 '+escapeHTML(d.zona||'Zona no indicada')+'</div><div style="font-size:0.82rem;color:#dfe7ff;margin-top:4px">'+escapeHTML(d.desc||'')+'</div><button class="ab sec" style="width:auto;padding:6px 12px;margin-top:6px;font-size:0.75rem" onclick="abrirChatAmigo(\''+doc.data().user+'\')">💬 Contactar</button></div>'; });
+    } else { html+='<p style="color:#888;font-size:0.8rem">Aún no hay ofertas. ¡Sé el primero en compartir alojo!</p>'; }
+    html+='<h4 style="font-size:0.85rem;color:var(--g);margin-top:14px">Publicar mi oferta</h4>';
+    html+='<input id="alojoZona" type="text" placeholder="Tu ciudad / zona" style="margin-bottom:6px"><textarea id="alojoDesc" rows="3" placeholder="Qué ofreces: tipo de alojo, comida, cómo contactar..."></textarea><button class="ab" style="margin-top:6px" onclick="publicarAlojo()">🏡 Publicar mi oferta (+20 Darma)</button>';
+    c.innerHTML=html;
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar.</p>'; }
+}
+async function publicarAlojo(){
+  const zona=document.getElementById('alojoZona')?.value.trim();
+  const desc=document.getElementById('alojoDesc')?.value.trim();
+  if(!zona||!desc){ alert('Rellena zona y descripción antes de publicar.'); return; }
+  try{
+    await db.collection('alojo').add({user:cu, nombre:nombreUsuario, zona:zona, desc:desc, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    us.d+=20; au(); sincronizarStats();
+    h('¡Oferta publicada! Otros ciclistas ya pueden contactarte. Veinte de Darma para ti. 🏡');
+    closeModal();
+  }catch(e){ alert('No se pudo publicar: '+(e.message||e)); }
+}
 function renderDiarioHistorial(){ const c=document.getElementById('diarioHistorial'); if(!c) return; const pre='lp_diario_'+(cu||'anon')+'_'; const keys=Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().reverse().filter(function(k){return k!==diarioHoyKey();}); if(!keys.length){ c.innerHTML=''; return; } let html='<h4 style="font-size:0.85rem;color:var(--p)">Días anteriores</h4>'; keys.slice(0,12).forEach(function(k){ let d={}; try{d=JSON.parse(localStorage.getItem(k));}catch(e){return;} const est=DIARIO_ESTADOS.find(function(s){return s.l===d.estado;}); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.76rem;color:#9fb3c8">'+(d.fecha||'')+' · '+(est?est.e+' '+est.l:'')+' · '+(d.km?(+d.km).toFixed(1):0)+' km</div>'+(d.meta?'<div style="font-size:0.78rem;margin-top:3px">🎯 '+d.meta+'</div>':'')+(d.complejo?'<div style="font-size:0.75rem;color:#cdd;margin-top:3px">💪 '+d.complejo+'</div>':'')+(d.reflexion?'<div style="font-size:0.75rem;color:#9fb3c8;font-style:italic;margin-top:3px">🧘 '+d.reflexion+'</div>':'')+'</div>'; }); c.innerHTML=html; }
 function rm(l){ document.getElementById('ml').innerHTML=l.map(function(i){ return '<div class="cd" onclick="h(\''+i.t+'. '+i.s.replace(/'/g,"\\'")+'\')"><b style="color:var(--p);font-size:0.85rem">'+i.t+'</b><p style="margin:6px 0;font-size:0.8rem">'+i.s+'</p><small style="color:#888;font-size:0.7rem">Fuente: '+i.f+'</small></div>'; }).join(''); }
 function fm(){ const v=document.getElementById('bm').value.toLowerCase(); rm(MG.filter(function(i){ return i.t.toLowerCase().indexOf(v)!==-1||i.s.toLowerCase().indexOf(v)!==-1; })); }
