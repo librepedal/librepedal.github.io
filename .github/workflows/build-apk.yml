@@ -1,83 +1,11 @@
-name: Construir APK LibrePedal
+name: Construir APK Android
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
-  workflow_dispatch
-
-permissions:
-  contents: write
-
-env:
-  VER: "5.9.2"
-  VC: 10
-  ID: "io.github.librepedal"
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 12
-
+  no-op:
+    runs-on: ubuntu-latest
     steps:
-      - name: Obtener código
-        uses: actions/checkout@v4
-
-      - name: Instalar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Instalar todo lo necesario
-        run: |
-          npm install --no-audit --no-fund
-          npm install @capacitor/cli@6.1.2 @capacitor/android@6.1.2 --save-dev --no-audit --no-fund
-
-      - name: Crear configuración de Capacitor
-        run: |
-          cat > capacitor.config.json <<EOF
-          {
-            "appId": "${ID}",
-            "appName": "Libre Pedal",
-            "webDir": ".",
-            "server": {
-              "androidScheme": "https"
-            }
-          }
-          EOF
-
-      - name: Generar proyecto Android
-        run: |
-          rm -rf android .capacitor
-          npx cap sync android
-
-      - name: Actualizar versión (comandos seguros)
-        run: |
-          sed -i "s/versionCode [0-9]*/versionCode $VC/" android/app/build.gradle
-          sed -i 's/versionName ".*"/versionName "'"$VER"'"/' android/app/build.gradle
-          sed -i "s/applicationId \".*\"/applicationId \"$ID\"/" android/app/build.gradle
-          sed -i 's/APP_VERSION = ".*"/APP_VERSION = "'"$VER"'"/' index.html
-          sed -i "s/librepedal-v[0-9]*/librepedal-v26/g" index.html sw.js
-          echo "$VER" > version.txt
-
-      - name: Compilar APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew clean assembleDebug --no-daemon -Dorg.gradle.jvmargs=-Xmx2048m
-
-      - name: Verificar que el APK existe
-        run: test -f android/app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Guardar archivo
-        uses: actions/upload-artifact@v4
-        with:
-          name: LibrePedal-v${{ env.VER }}
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Publicar versión
-        uses: softprops/action-gh-release@v2
-        if: success()
-        with:
-          tag_name: v${{ env.VER }}
-          name: Libre Pedal v${{ env.VER }}
-          files: android/app/build/outputs/apk/debug/app-debug.apk
-          make_latest: true
+      - run: echo "Flujo limpio, compila en equipo local"
