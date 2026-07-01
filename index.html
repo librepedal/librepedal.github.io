@@ -118,8 +118,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .route-item-info{flex:1}.route-item-actions{display:flex;gap:4px}
 .route-btn{background:var(--p);color:#000;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:0.7rem}
 .route-btn.delete{background:var(--r);color:#fff}
-.music-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
-.music-btn{padding:8px 4px;border-radius:9px;text-decoration:none;color:#fff;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;font-size:0.68rem}
+.music-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:6px}
+.music-btn{padding:8px 0;border-radius:8px;text-decoration:none;color:#fff;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;font-size:0.9rem}
+.music-btn span{display:none}
 .music-spotify{background:#1DB954}.music-youtube{background:#FF0000}.music-apple{background:#FA243C}
 .music-deezer{background:#A2C2E0;color:#000}.music-soundcloud{background:#FF5500}.music-amazon{background:#25D1DA;color:#000}
 .section-info{background:rgba(0,242,255,0.08);border:1px solid var(--p);padding:10px;border-radius:10px;margin-bottom:12px;font-size:0.8rem;line-height:1.4}
@@ -324,15 +325,14 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div style="text-align:center;font-size:0.68rem;color:#7d8ba0;margin-top:10px;line-height:1.4">🤝 Libre Pedal se construye <strong style="color:var(--p)">gracias a la comunidad</strong>: cada punto que compartes hace crecer a todos.</div>
 <h3 style="margin-top:14px;font-size:0.95rem">Música</h3>
 <div class="music-grid">
-<a href="https://open.spotify.com/search/cycling%20music" target="_blank" class="music-btn music-spotify"><i class="fab fa-spotify"></i> Spotify</a>
-<a href="https://music.youtube.com/search?q=cycling+music" target="_blank" class="music-btn music-youtube"><i class="fab fa-youtube"></i> YouTube</a>
-<a href="https://music.apple.com/search?term=cycling" target="_blank" class="music-btn music-apple"><i class="fab fa-apple"></i> Apple</a>
-<a href="https://www.deezer.com/search/cycling" target="_blank" class="music-btn music-deezer"><i class="fab fa-deezer"></i> Deezer</a>
-<a href="https://soundcloud.com/search?q=cycling" target="_blank" class="music-btn music-soundcloud"><i class="fab fa-soundcloud"></i> SoundCloud</a>
-<a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
+<a href="https://open.spotify.com/search/cycling%20music" target="_blank" class="music-btn music-spotify" title="Spotify"><i class="fab fa-spotify"></i></a>
+<a href="https://music.youtube.com/search?q=cycling+music" target="_blank" class="music-btn music-youtube" title="YouTube Music"><i class="fab fa-youtube"></i></a>
+<a href="https://music.apple.com/search?term=cycling" target="_blank" class="music-btn music-apple" title="Apple Music"><i class="fab fa-apple"></i></a>
+<a href="https://www.deezer.com/search/cycling" target="_blank" class="music-btn music-deezer" title="Deezer"><i class="fab fa-deezer"></i></a>
+<a href="https://soundcloud.com/search?q=cycling" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
+<a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon" title="Amazon Music"><i class="fab fa-amazon"></i></a>
 </div>
-<button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.0</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.1</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -374,15 +374,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="cv('trips')">🗺️ Mis Viajes</button>
 </div>
 <div id="map"></div>
-<div class="map-controls">
-<button class="map-btn" onclick="toggleRadarOnMap()">Ciclistas</button>
-<button class="map-btn" onclick="reportarEnRuta()" style="background:#f59e0b">📍 Reportar</button>
-<button class="map-btn" onclick="showAllRoutesOnMap()">Rutas</button>
-</div>
-<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">Agregar Punto</h4>
-<input type="text" id="np" placeholder="Nombre">
-<select id="cp"><option value="agua">Agua</option><option value="camping">Camping</option><option value="taller">Taller</option><option value="mirador">Mirador</option><option value="hostel">Hostel</option></select>
-<button class="ab" onclick="ap()">Agregar (+20 Darma)</button></div>
 <div id="reportes-comunidad"></div>
 <div id="route-alerts"></div>
 </section>
@@ -419,12 +410,19 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </section>
 
 <section id="v-chat" class="view">
-<div class="section-info"><h4>Social</h4><p>Chat, amigos y recomendaciones de la comunidad.</p></div>
-<div class="quick-links"><button class="ab sec" style="margin:0" onclick="cv('rec')">💬 Recomendaciones</button><button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()">🔍 Cerca (10km)</button></div>
+<div class="section-info"><h4>Social</h4><p>Tus amigos, solicitudes y el chat global de la comunidad.</p></div>
+<div class="quick-links">
+  <button class="btrip" style="margin:0" onclick="showFriendsList()">👥 Amigos y mensajes</button>
+  <button class="bd" style="margin:0" onclick="showFriendRequests()">📨 Solicitudes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
+</div>
+<div class="quick-links" style="margin-top:6px">
+  <button class="ab sec" style="margin:0" onclick="cv('rec')">💡 Recomendaciones</button>
+  <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()">🔍 Buscar ciclistas</button>
+</div>
+<h4 style="margin:14px 0 4px;font-size:0.9rem;color:var(--p)">💬 Chat global de la comunidad</h4>
 <div class="cc">
 <div class="cm" id="chm"></div>
-<div class="cia"><input type="text" id="chi" placeholder="Mensaje..." onkeypress="if(event.key==='Enter')em()"><button class="ab" onclick="em()"><i class="fas fa-paper-plane"></i></button></div>
-<div class="quick-links" style="margin-top:8px"><button class="ab sec" style="margin:0" onclick="showFriendsList()">👥 Amigos</button><button class="ab sec" style="margin:0" onclick="showFriendRequests()">📨 Solicitudes</button></div>
+<div class="cia"><input type="text" id="chi" placeholder="Escribe a la comunidad..." onkeypress="if(event.key==='Enter')em()"><button class="ab" onclick="em()"><i class="fas fa-paper-plane"></i></button></div>
 </div>
 </section>
 
@@ -524,7 +522,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.0';
+const APP_VERSION='5.1';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -947,7 +945,7 @@ function subscribeToChat(){ db.collection('chat').orderBy('ts','asc').limit(100)
 function escapeHTML(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function subscribeToRouteAlerts(){ db.collection('routeAlerts').orderBy('timestamp','desc').limit(20).onSnapshot(async function(snapshot){ const c=document.getElementById('route-alerts'); if(!c) return; c.innerHTML=''; for(const doc of snapshot.docs){ const data=doc.data(); const nombre=await getNombreUsuario(data.user); c.innerHTML+='<div class="route-alert"><strong>'+escapeHTML(data.type)+'</strong><p>'+escapeHTML(data.desc)+'</p><small>'+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small></div>'; } }); }
 function subscribeToComments(){ db.collection('guiComments').orderBy('ts','desc').limit(50).onSnapshot(async function(snapshot){ const c=document.getElementById('gui-comments'); if(!c) return; c.innerHTML=''; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero en comentar</p>'; return; } for(const doc of snapshot.docs){ const data=doc.data(); const nombre=await getNombreUsuario(data.user); c.innerHTML+='<div class="global-comment"><div class="author">'+escapeHTML(nombre)+'</div><div class="time">'+escapeHTML(data.h)+'</div><div class="text">'+escapeHTML(data.text)+'</div></div>'; } }); }
-function subscribeToFriendRequests(){ db.collection('friendRequests').where('to','==',cu).onSnapshot(function(snapshot){ const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}).length; if(pend>0) h('Tienes '+pend+' solicitud de amistad.'); }); }
+function subscribeToFriendRequests(){ db.collection('friendRequests').where('to','==',cu).onSnapshot(function(snapshot){ const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}).length; const b=document.getElementById('solicBadge'); if(b){ if(pend>0){ b.innerText=pend; b.style.display='inline-block'; } else { b.style.display='none'; } } const nav=document.querySelector('.nb[onclick*="chat"]'); if(nav){ nav.style.position='relative'; let dot=nav.querySelector('.nav-dot'); if(pend>0){ if(!dot){ dot=document.createElement('span'); dot.className='nav-dot'; dot.style.cssText='position:absolute;top:4px;right:calc(50% - 18px);width:9px;height:9px;background:var(--r);border-radius:50%'; nav.appendChild(dot); } } else if(dot){ dot.remove(); } } if(pend>0) h('Tienes '+pend+' solicitud de amistad pendiente. Míralas en Social.'); }); }
 
 function sd(){ us.d+=10; au(); h("Diez puntos de Darma para ti."); }
 
@@ -1532,20 +1530,21 @@ function handleVoiceCommand(raw){
 }
 
 const tutorialSteps=[
-  {d:'¡Hola! Soy Pistero, tu copiloto. Sube el volumen y déjame mostrarte la aplicación. El brillo de la pantalla te indica de qué te estoy hablando. Avanza con Siguiente.'},
-  {view:'dash', sel:'.speed-display', d:'Aquí en el Inicio ves tu velocidad en vivo. Más abajo aparecen tus kilómetros, las calorías y tu nivel.'},
-  {view:'dash', sel:'.quick-links .bg', d:'Este botón GPS empieza a grabar tu recorrido en el mapa. Tócalo cuando salgas a rodar.'},
-  {view:'dash', sel:'.darma-badge', d:'Esta es tu Darma: tu premio por aportar a la comunidad. Mientras más ayudas a otros ciclistas, más sube.'},
-  {sel:'#micBtn', d:'Toca el micrófono y háblame. Por ejemplo: llévame a Valparaíso, o abre el mapa. Yo me encargo del resto.'},
-  {view:'dash', sel:'button[onclick="toggleSaver()"]', d:'El modo ahorro deja la pantalla casi negra para cuidar tu batería, pero yo sigo guiándote por voz.'},
-  {view:'trips', sel:'#quick-dest', d:'Aquí escribes un destino y te guío paso a paso, igual que Waze, marcando la ruta en el mapa.'},
-  {view:'map', sel:'#v-map .section-info', d:'El mapa global muestra a otros ciclistas, puntos de agua, talleres y miradores cerca de ti.'},
-  {view:'map', sel:'.map-controls', d:'Con el botón Reportar avisas a la comunidad: alojamiento, peligros, picadas o miradores. Tu dato queda en el mapa de tu zona para ayudar a otros.'},
-  {view:'diario', sel:'#v-diario .section-info', d:'En Mi Diario registras cómo amaneciste, tu meta del día y tu reflexión del viaje. Es privado: queda solo en tu teléfono.'},
-  {view:'routes', sel:'#v-routes .section-info', d:'Tus recorridos grabados quedan guardados aquí. Puedes verlos, combinarlos y exportarlos como archivo GPX.'},
-  {view:'chat', sel:'#v-chat .section-info', d:'En Social chateas con la comunidad, agregas amigos y dejas recomendaciones para los demás.'},
+  {d:'¡Hola! Soy Pistero, tu copiloto. Sube el volumen y déjame mostrarte la app. El brillo te indica de qué te hablo. Avanza con Siguiente.'},
+  {view:'dash', sel:'.speed-display', d:'Aquí en el Inicio ves tu velocidad en vivo. Debajo, tus kilómetros, calorías y nivel.'},
+  {view:'dash', sel:'.quick-links .bg', d:'Este botón GPS empieza a grabar tu recorrido. Funciona incluso con la pantalla apagada.'},
+  {view:'dash', sel:'.darma-badge', d:'Esta es tu Darma: tu premio por aportar a la comunidad. Con ella desbloqueas skins y accesorios en la Tienda.'},
+  {sel:'#micBtn', d:'Toca el micrófono y dime a dónde quieres ir. Yo busco la ruta y te guío por voz, como Waze.'},
+  {view:'dash', sel:'button[onclick="mostrarLogros()"]', d:'En Logros ves tu avance en la comunidad: hay muchos y son gratis. Y en Ranking compites por los kilómetros del Top 10.'},
+  {view:'dash', sel:'button[onclick="mostrarTienda()"]', d:'En la Tienda desbloqueas colores, lentes, accesorios y cascos premium con tu Darma.'},
+  {view:'dash', sel:'button[onclick="openDiario()"]', d:'Tu Ciclo Bitácora: registra cómo amaneciste, tu meta y tu reflexión del viaje. Se respalda en tu cuenta.'},
+  {view:'dash', sel:'button[onclick="toggleSaver()"]', d:'El modo Ahorro deja la pantalla casi negra para cuidar la batería, pero sigo guiándote por voz.'},
+  {view:'trips', sel:'#quick-dest', d:'Escribe un destino y te aparecen sugerencias. Elige una y te guío paso a paso marcando la ruta.'},
+  {view:'map', sel:'button[onclick="reportarEnRuta()"]', d:'Con Reportar avisas a la comunidad: alojamiento, peligros, picadas o miradores. Tu dato queda en el mapa y ganas Darma.'},
+  {view:'map', sel:'button[onclick="toggleRadarOnMap()"]', d:'Con Ciclistas ves en el mapa a otros pedaleros del mundo. Tócalos para ver su perfil y por dónde han rodado.'},
+  {view:'chat', sel:'#v-chat .quick-links', d:'En Social están tus Amigos y las Solicitudes de amistad. Con un amigo puedes tener chat privado.'},
   {view:'mac', sel:'#v-mac .section-info', d:'El Taller MacGyver tiene trucos para reparar tu bici con lo que tengas a mano en plena ruta.'},
-  {view:'customize', sel:'#helmetGrid', d:'En Perfil eliges tu casco, el color, los lentes y accesorios. Tu personaje aparece en todos los mapas. ¡Listo, a pedalear!'}
+  {view:'customize', sel:'#helmetGrid', d:'En Perfil armas tu personaje: casco, color, lentes y accesorios. Aparece en todos los mapas. ¡Listo, a pedalear!'}
 ];
 let tutorialIdx=0;
 function tutSetPanel(el,x,y,w,h2){ el.style.left=x+'px'; el.style.top=y+'px'; el.style.width=Math.max(0,w)+'px'; el.style.height=Math.max(0,h2)+'px'; el.style.display='block'; }
