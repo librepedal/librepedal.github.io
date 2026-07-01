@@ -329,7 +329,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.7</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.8</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -521,7 +521,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='4.7';
+const APP_VERSION='4.8';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -674,13 +674,20 @@ function mostrarBocadillo(t){ const b=document.getElementById('pisteroBubble'); 
    suele no sonar; usamos el motor TTS del sistema. En web no hace nada. */
 const lpTTS = (function(){
   let TTS=null;
-  const nativo=(typeof window.Capacitor!=='undefined') && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
-  if(nativo){ try{ TTS=Capacitor.registerPlugin('TextToSpeech'); }catch(e){} }
+  // Si existe el puente de Capacitor, estamos en la app nativa (funciona en TODOS
+  // los Android). No dependemos de isNativePlatform (a veces falla con web remota).
+  if(typeof window.Capacitor!=='undefined'){ try{ TTS=Capacitor.registerPlugin('TextToSpeech'); }catch(e){} }
+  function intentar(texto, langs){
+    if(!langs.length){ try{ TTS.speak({text:texto, rate:1.0, pitch:1.05, volume:1.0}); }catch(e){} return; }
+    const opts={text:texto, lang:langs[0], rate:1.0, pitch:1.05, volume:1.0, category:'playback'};
+    try{ const p=TTS.speak(opts); if(p&&p.catch){ p.catch(function(){ intentar(texto, langs.slice(1)); }); } }
+    catch(e){ intentar(texto, langs.slice(1)); }
+  }
   return {
     disponible:function(){ return !!TTS; },
     hablar:function(texto){ if(!TTS) return; try{ TTS.stop(); }catch(e){}
-      try{ TTS.speak({text:texto, lang:'es-ES', rate:1.0, pitch:1.05, volume:1.0, category:'playback'}); }
-      catch(e){ try{ TTS.speak({text:texto, lang:'es'}); }catch(e2){} } },
+      // prueba varios idiomas de voz según lo que tenga instalado el teléfono
+      intentar(texto, ['es-CL','es-MX','es-ES','es-US','es']); },
     stop:function(){ if(TTS){ try{ TTS.stop(); }catch(e){} } }
   };
 })();
@@ -892,7 +899,7 @@ function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+c
 function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText=ghostMode?'👻 ON':'👻 OFF'; btn.style.background=ghostMode?'rgba(255,0,0,0.6)':'rgba(155,89,182,0.85)'; }
 function gd(){ if(!cu) return; localStorage.setItem('lp_u_'+cu,JSON.stringify(us)); localStorage.setItem('lp_j_'+cu,JSON.stringify(uj)); localStorage.setItem('lp_r_'+cu,JSON.stringify(rh)); }
 async function getNombreUsuario(userId){ if(userId===cu) return nombreUsuario; try{ const doc=await db.collection('users').doc(userId).get(); if(doc.exists && doc.data().nombre) return doc.data().nombre; }catch(e){} return userId; }
-function subscribeToUsers(){ ulp=db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ if(!mp) return; sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(mp).bindPopup('<b>'+escapeHTML(nombre)+'</b>'); sm.push(marker); } } }); }
+function subscribeToUsers(){ ulp=db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ if(!mp) return; sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(mp).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#00f2ff;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); } } }); }
 function subscribeToChat(){ db.collection('chat').orderBy('ts','asc').limit(100).onSnapshot(async function(snapshot){ cm=[]; for(const doc of snapshot.docs){ const data=doc.data(); const nombre=await getNombreUsuario(data.a); cm.push(Object.assign({},data,{nombre:nombre})); } rc(); }); }
 /* Escapa texto de usuarios para evitar inyección HTML/XSS al meterlo en innerHTML. */
 function escapeHTML(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -1081,7 +1088,7 @@ function enviarDM(){
   inp.value='';
 }
 function cerrarChatAmigo(){ if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; showFriendsList(); }
-async function showFriendsList(){ document.getElementById('modalTitle').innerText='Amigos'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); const snapshot=await db.collection('friendships').where('users','array-contains',cu).get(); if(snapshot.empty){ c.innerHTML='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; return; } let html=''; for(const doc of snapshot.docs){ const data=doc.data(); const friendId=data.users.find(function(u){return u!==cu;}); const nombre=await getNombreUsuario(friendId); html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa">Amigo</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')">💬 Chat</button></div>'; } c.innerHTML=html+'<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>'; }
+async function showFriendsList(){ document.getElementById('modalTitle').innerText='Amigos'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); const snapshot=await db.collection('friendships').where('users','array-contains',cu).get(); if(snapshot.empty){ c.innerHTML='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; return; } let html=''; for(const doc of snapshot.docs){ const data=doc.data(); const friendId=data.users.find(function(u){return u!==cu;}); const nombre=await getNombreUsuario(friendId); html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1;cursor:pointer" onclick="verPerfilUsuario(\''+friendId+'\')"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa;text-decoration:underline">Ver perfil</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')">💬 Chat</button></div>'; } c.innerHTML=html+'<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>'; }
 async function showFriendRequests(){ document.getElementById('modalTitle').innerText='Solicitudes'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); const snapshot=await db.collection('friendRequests').where('to','==',cu).get(); const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}); if(pend.length===0){ c.innerHTML='<p style="color:#888">Sin solicitudes</p>'; return; } let html=''; for(const doc of pend){ const data=doc.data(); const nombre=await getNombreUsuario(data.from); html+='<div class="friend-request"><span><strong>'+nombre+'</strong></span><div><button class="ab" style="width:auto;padding:6px 10px;margin:2px;font-size:0.75rem" onclick="acceptFriendRequest(\''+doc.id+'\',\''+data.from+'\')">Aceptar</button><button class="ab" style="width:auto;padding:6px 10px;margin:2px;background:#dc2626;font-size:0.75rem" onclick="rejectFriendRequest(\''+doc.id+'\')">Rechazar</button></div></div>'; } c.innerHTML=html; }
 function acceptFriendRequest(reqId,fromUser){ db.collection('friendRequests').doc(reqId).update({status:'accepted'}); db.collection('friendships').add({users:[cu,fromUser],createdAt:firebase.firestore.FieldValue.serverTimestamp()}); h("¡Nuevo amigo agregado!"); showFriendsList(); }
 function rejectFriendRequest(reqId){ db.collection('friendRequests').doc(reqId).update({status:'rejected'}); h("Solicitud rechazada."); showFriendRequests(); }
@@ -1186,9 +1193,44 @@ async function mostrarRanking(){
   try{ const snap=await db.collection('users').orderBy('km','desc').limit(10).get();
     if(snap.empty){ c.innerHTML='<p style="color:#888">Aún no hay datos. ¡Activa el GPS y suma kilómetros para entrar al ranking!</p>'; return; }
     const med=['🥇','🥈','🥉']; let html='<p style="color:#9fb3c8;font-size:0.82rem;margin-top:0">Los cicloviajeros con más kilómetros del mundo 🌎</p>'; let pos=0;
-    snap.forEach(function(doc){ const d=doc.data(); pos++; const yo=doc.id===cu; html+='<div style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;background:'+(yo?'rgba(0,242,255,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-size:1.05rem;font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem;color:'+(yo?'var(--p)':'#dfe7ff')+'">'+escapeHTML(d.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g);font-size:0.9rem">'+(d.km||0).toFixed(0)+' km</div></div>'; });
+    snap.forEach(function(doc){ const d=doc.data(); pos++; const yo=doc.id===cu; html+='<div onclick="verPerfilUsuario(\''+doc.id+'\')" style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;cursor:pointer;background:'+(yo?'rgba(0,242,255,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-size:1.05rem;font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem;color:'+(yo?'var(--p)':'#dfe7ff')+'">'+escapeHTML(d.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g);font-size:0.9rem">'+(d.km||0).toFixed(0)+' km</div></div>'; });
+    html+='<p style="font-size:0.68rem;color:#7d8ba0;text-align:center;margin-top:8px">Toca un ciclista para ver su perfil y sus rutas.</p>';
     c.innerHTML=html;
   }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar el ranking. Intenta de nuevo en un momento.</p>'; }
+}
+/* ===== PERFIL PÚBLICO: ver desempeño, logros y rutas de otros ciclistas ===== */
+async function verPerfilUsuario(userId){
+  document.getElementById('modalTitle').innerText='🚴 Perfil de ciclista';
+  const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando perfil...</p>'; document.getElementById('userModal').classList.add('on');
+  try{
+    const doc=await db.collection('users').doc(userId).get(); const d=doc.exists?doc.data():{};
+    const nombre=d.nombre||userId, km=d.km||0, darma=d.darma||0;
+    let nivel='Novato'; if(darma>50)nivel='Explorador'; if(darma>150)nivel='Nómada'; if(darma>500)nivel='Leyenda';
+    const kmMetas=[1,10,50,100,250,500,1000,2500,5000], darmaMetas=[10,50,150,500,1000];
+    const logrosPub=kmMetas.filter(function(m){return km>=m;}).length + darmaMetas.filter(function(m){return darma>=m;}).length;
+    // rutas del ciclista
+    let rutas=[], totalKm=0; try{ const rs=await db.collection('routes').where('user','==',userId).limit(50).get(); rs.forEach(function(r){ const x=r.data(); rutas.push(x); totalKm+=(x.distance||0); }); }catch(e){}
+    const avatar=(typeof generateCharacterSVG==='function')?generateCharacterSVG(d.helmet||'giro','none',d.skin||'cyan',[]):'';
+    let html='<div style="text-align:center"><div style="width:110px;height:110px;margin:0 auto">'+avatar+'</div><h3 style="margin:6px 0;color:var(--p)">'+escapeHTML(nombre)+'</h3><div style="color:var(--g);font-weight:800;font-size:0.85rem">'+escapeHTML(nivel)+'</div></div>';
+    html+='<div class="stats-grid" style="margin:12px 0"><div class="stat-card"><div class="stat-value">'+km.toFixed(0)+'</div><div class="stat-label">Km totales</div></div><div class="stat-card"><div class="stat-value">'+darma+'</div><div class="stat-label">Darma</div></div><div class="stat-card"><div class="stat-value">'+logrosPub+'</div><div class="stat-label">Logros</div></div><div class="stat-card"><div class="stat-value">'+rutas.length+'</div><div class="stat-label">Rutas</div></div></div>';
+    html+='<p style="font-size:0.8rem;color:#9fb3c8;text-align:center">Ha recorrido y grabado <strong style="color:var(--p)">'+totalKm.toFixed(1)+' km</strong> en '+rutas.length+' ruta'+(rutas.length===1?'':'s')+'.</p>';
+    if(rutas.length){ html+='<button class="ab" onclick="mostrarRutasDe(\''+userId+'\',\''+encodeURIComponent(nombre)+'\')">🗺️ Ver por dónde ha pedaleado</button>'; }
+    if(userId!==cu){ html+='<button class="ab sec" style="margin-top:6px" onclick="abrirChatAmigo(\''+userId+'\')">💬 Enviar mensaje</button>'; }
+    c.innerHTML=html;
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar el perfil.</p>'; }
+}
+async function mostrarRutasDe(userId,nombreEnc){
+  const nombre=nombreEnc?decodeURIComponent(nombreEnc):'este ciclista';
+  closeModal(); cv('map');
+  h('Cargando las rutas de '+nombre+'...');
+  try{
+    const rs=await db.collection('routes').where('user','==',userId).limit(40).get();
+    if(rs.empty){ h(nombre+' aún no tiene rutas grabadas.'); return; }
+    if(!mp) return; let bounds=[];
+    rs.forEach(function(doc){ const r=doc.data(); if(r.points&&r.points.length){ const latlngs=r.points.map(function(p){return [p.lat,p.lon];}); L.polyline(latlngs,{color:'#ff9800',weight:4,opacity:0.75}).addTo(mp); bounds=bounds.concat(latlngs); } });
+    if(bounds.length){ mp.fitBounds(L.latLngBounds(bounds).pad(0.2)); }
+    h('Estas son las rutas de '+nombre+', marcadas en naranja. 🧡');
+  }catch(e){ h('No pude cargar sus rutas.'); }
 }
 function openDiario(){ cv('diario'); cargarDiario(); sincronizarDiarioNube().then(function(){ cargarDiario(); }); }
 function renderDiarioEstados(){ const c=document.getElementById('diarioEstado'); if(!c) return; c.innerHTML=DIARIO_ESTADOS.map(function(s){ const sel=diarioEstadoSel===s.l; return '<button onclick="diarioEstadoSel=\''+s.l+'\';renderDiarioEstados()" style="flex:1;min-width:88px;padding:10px;border-radius:10px;border:2px solid '+(sel?'var(--p)':'#2a3147')+';background:'+(sel?'rgba(0,242,255,0.12)':'var(--gl)')+';color:#fff;font-weight:700;font-size:0.78rem;cursor:pointer">'+s.e+' '+s.l+'</button>'; }).join(''); }
@@ -1339,7 +1381,7 @@ function checkFuel(distKm){
   if(distKm>=nextHydrateKm){ h("Llevas "+Math.round(distKm)+" kilómetros. Toma un par de tragos de agua para no deshidratarte."); nextHydrateKm+=5; }
   if(distKm>=nextEatKm){ h("Vas en "+Math.round(distKm)+" kilómetros. Come algo ligero, una fruta o una barra, para recargar energía."); nextEatKm+=20; }
 }
-function subscribeToUsersOnNavMap(){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b>'); navUserMarkers.push(marker); } } }); }
+function subscribeToUsersOnNavMap(){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#00f2ff;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } } }); }
 function getTurnInstruction(type,modifier,street){ const s=street?' por '+street:''; switch(type){ case 'depart':return 'Comienza el recorrido'+s; case 'arrive':return 'Has llegado a tu destino'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return 'Gira a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'Gira a la derecha'+s; if(modifier&&modifier.indexOf('sharp')!==-1) return 'Giro pronunciado'+s; return 'Gira'+s; case 'roundabout': case 'rotary': return 'Toma la rotonda'+s; case 'merge': return 'Incorpórate'+s; case 'fork': if(modifier&&modifier.indexOf('left')!==-1) return 'En la bifurcación, mantente a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'En la bifurcación, mantente a la derecha'+s; return 'Toma la bifurcación'+s; case 'end of road': return 'Al final del camino'+s; case 'continue': return 'Sigue recto'+s; case 'new name': return 'Continúa'+s; default: return 'Continúa'+s; } }
 function checkNavigationSteps(lat,lon){ if(currentStepIndex>=navSteps.length) return; const step=navSteps[currentStepIndex]; const loc=getStepLocation(step); if(!loc) return; const dist=calculateDistance(lat,lon,loc.lat,loc.lon); let rem=0; for(let i=currentStepIndex;i<navSteps.length;i++) rem+=navSteps[i].distance; document.getElementById('navDist').innerText=formatDistance(rem); document.getElementById('etaDist').innerText=(rem/1000).toFixed(2)+' km'; if(dist<100&&lastSpokenStep!==currentStepIndex){ showStepInstruction(currentStepIndex); lastSpokenStep=currentStepIndex; } if(dist<20){ currentStepIndex++; if(currentStepIndex<navSteps.length){ setTimeout(function(){ showStepInstruction(currentStepIndex); },2000); } else { showArrival(); } } }
 function getStepLocation(step){ if(!step.geometry||!step.geometry.coordinates||!step.geometry.coordinates.length) return null; const c=step.geometry.coordinates[step.geometry.coordinates.length-1]; return {lat:c[1],lon:c[0]}; }
