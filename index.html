@@ -332,7 +332,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon" title="Amazon Music"><i class="fab fa-amazon"></i></a>
 </div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.1</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.2</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -393,6 +393,14 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <textarea id="diarioReflexion" rows="3" placeholder="El viaje interno: tu reflexión del día... (privado)" style="margin-top:6px"></textarea>
 </div>
 <button class="ab" onclick="guardarDiario()">💾 Guardar mi día</button>
+<div class="cd" style="margin-top:10px">
+  <h4 style="margin-top:0;font-size:0.9rem">📍 Comparte un Punto de Interés</h4>
+  <p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Busca un lugar (agua, comida, mirador, taller, alojamiento…) y compártelo. Queda en el mapa para toda la comunidad y ganas Darma. 🤝</p>
+  <input type="text" id="poi-buscar" placeholder="🔎 Busca el lugar o dirección...">
+  <div id="poi-cats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0"></div>
+  <textarea id="poi-desc" rows="2" placeholder="Cuéntalo con detalle (ej: agua gratis en la bencinera, o mirador con vista al lago)..."></textarea>
+  <button class="ab" style="margin-top:6px" onclick="agregarPOI()">📍 Compartir con la comunidad (+15 Darma)</button>
+</div>
 <div class="cd" style="margin-top:8px"><h4 style="margin-top:0;font-size:0.85rem">☁️ Respaldo de tus datos</h4><p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Tu diario se respalda en tu cuenta. También puedes descargar una copia a un archivo y restaurarla.</p>
 <button class="ab sec" style="margin:0 0 6px" onclick="exportarMisDatos()">⬇️ Descargar respaldo (archivo)</button>
 <label class="ab sec" style="display:block;margin:0;cursor:pointer;text-align:center">⬆️ Restaurar desde archivo<input type="file" accept="application/json,.json" onchange="importarMisDatos(this)" style="display:none"></label></div>
@@ -522,7 +530,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.1';
+const APP_VERSION='5.2';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1272,7 +1280,30 @@ async function mostrarRutasDe(userId,nombreEnc){
     h('Estas son las rutas de '+nombre+', marcadas en naranja. 🧡');
   }catch(e){ h('No pude cargar sus rutas.'); }
 }
-function openDiario(){ cv('diario'); cargarDiario(); sincronizarDiarioNube().then(function(){ cargarDiario(); }); }
+/* ===== PUNTOS DE INTERÉS (POI) desde Ciclo Bitácora: buscar un lugar, marcarlo
+   en el mapa comunitario y ganar Darma. Reusa REPORTE_CATS + la colección reportes. */
+let poiCatSel=null;
+function renderPoiCats(){ const c=document.getElementById('poi-cats'); if(!c) return; c.innerHTML=Object.keys(REPORTE_CATS).map(function(k){ const x=REPORTE_CATS[k]; const sel=poiCatSel===k; return '<div onclick="seleccionarPoiCat(\''+k+'\')" style="border:2px solid '+(sel?x.c:'#2a3147')+';background:'+(sel?'rgba(255,255,255,0.05)':'transparent')+';border-radius:10px;padding:8px;cursor:pointer;text-align:center"><div style="font-size:1.4rem">'+x.e+'</div><div style="font-size:0.72rem;font-weight:800;color:'+x.c+'">'+x.l+'</div></div>'; }).join(''); }
+function seleccionarPoiCat(k){ poiCatSel=k; renderPoiCats(); }
+async function agregarPOI(){
+  const q=document.getElementById('poi-buscar').value.trim();
+  const desc=document.getElementById('poi-desc').value.trim();
+  if(!q){ alert('Escribe el lugar o dirección a buscar.'); return; }
+  if(!poiCatSel){ alert('Elige una categoría para el punto.'); return; }
+  if(!desc){ alert('Cuenta brevemente qué es este punto.'); return; }
+  h('Buscando "'+q+'" en el mapa...');
+  let dest=null; try{ dest=await geocodeDestino(q); }catch(e){}
+  if(!dest){ alert('No encontré "'+q+'". Prueba con más detalle (agrega la ciudad o comuna).'); return; }
+  let comuna='Mi zona';
+  try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+dest.lat+'&lon='+dest.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
+  try{
+    await db.collection('reportes').add({cat:poiCatSel, text:desc, lugar:q, user:cu, nombre:nombreUsuario, lat:dest.lat, lon:dest.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    us.d+=15; au(); if(typeof sincronizarStats==='function') sincronizarStats();
+    document.getElementById('poi-buscar').value=''; document.getElementById('poi-desc').value=''; poiCatSel=null; renderPoiCats();
+    h('¡Punto compartido en '+comuna+'! Ya está en el mapa para toda la comunidad. Quince de Darma para ti. 🙌');
+  }catch(err){ alert('No se pudo compartir: '+(err.code||err.message)); }
+}
+function openDiario(){ cv('diario'); cargarDiario(); renderPoiCats(); sincronizarDiarioNube().then(function(){ cargarDiario(); }); }
 function renderDiarioEstados(){ const c=document.getElementById('diarioEstado'); if(!c) return; c.innerHTML=DIARIO_ESTADOS.map(function(s){ const sel=diarioEstadoSel===s.l; return '<button onclick="diarioEstadoSel=\''+s.l+'\';renderDiarioEstados()" style="flex:1;min-width:88px;padding:10px;border-radius:10px;border:2px solid '+(sel?'var(--p)':'#2a3147')+';background:'+(sel?'rgba(0,242,255,0.12)':'var(--gl)')+';color:#fff;font-weight:700;font-size:0.78rem;cursor:pointer">'+s.e+' '+s.l+'</button>'; }).join(''); }
 function cargarDiario(){ const km=document.getElementById('diarioKm'); if(km) km.innerText=us.di.toFixed(2); let d={}; try{ d=JSON.parse(localStorage.getItem(diarioHoyKey()))||{}; }catch(e){} diarioEstadoSel=d.estado||null; const meta=document.getElementById('diarioMeta'), comp=document.getElementById('diarioComplejo'), refl=document.getElementById('diarioReflexion'); if(meta) meta.value=d.meta||''; if(comp) comp.value=d.complejo||''; if(refl) refl.value=d.reflexion||''; renderDiarioEstados(); renderDiarioHistorial(); }
 function guardarDiario(){ const fecha=new Date().toISOString().slice(0,10); const d={estado:diarioEstadoSel, meta:document.getElementById('diarioMeta').value, complejo:document.getElementById('diarioComplejo').value, reflexion:document.getElementById('diarioReflexion').value, km:us.di, fecha:fecha}; localStorage.setItem(diarioHoyKey(),JSON.stringify(d)); /* respaldo en la nube (tu cuenta) para no perderlo al cambiar de teléfono */ if(cu){ try{ db.collection('diarios').doc(cu+'_'+fecha).set({user:cu, fecha:fecha, estado:d.estado||'', meta:d.meta||'', complejo:d.complejo||'', reflexion:d.reflexion||'', km:d.km||0, ts:firebase.firestore.FieldValue.serverTimestamp()}); }catch(e){} } h('Diario guardado y respaldado en tu cuenta. Buen camino.'); renderDiarioHistorial(); }
