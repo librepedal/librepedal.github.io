@@ -332,7 +332,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.9</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.0</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -524,7 +524,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='4.9';
+const APP_VERSION='5.0';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -673,13 +673,18 @@ function limpiarParaVoz(t){
 function cargarVoces(){ try{ const vs=speechSynthesis.getVoices(); vozPref = vs.find(function(v){return /es(-|_)(CL|419|MX)/i.test(v.lang);}) || vs.find(function(v){return (v.lang||'').toLowerCase().indexOf('es')===0;}) || null; }catch(e){} }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
 function mostrarBocadillo(t){ const b=document.getElementById('pisteroBubble'); if(!b) return; b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },4500); }
-/* Voz NATIVA de Android (app Capacitor). En el WebView nativo, speechSynthesis
-   suele no sonar; usamos el motor TTS del sistema. En web no hace nada. */
+/* Obtiene un plugin nativo de Capacitor. CLAVE: con la web en vivo (server.url) el
+   puente inyectado NO tiene registerPlugin; los plugins viven en Capacitor.Plugins. */
+function lpPlugin(nombre){
+  if(typeof window.Capacitor==='undefined') return null;
+  if(Capacitor.Plugins && Capacitor.Plugins[nombre]) return Capacitor.Plugins[nombre];
+  if(typeof Capacitor.registerPlugin==='function'){ try{ return Capacitor.registerPlugin(nombre); }catch(e){} }
+  return null;
+}
+/* Voz NATIVA de Android (motor TTS del sistema). */
 const lpTTS = (function(){
   let TTS=null;
-  // Registro PEREZOSO: busca el motor nativo al momento de usarlo (no al cargar),
-  // porque con la web en vivo el puente de Capacitor se inyecta un poco después.
-  function getTTS(){ if(!TTS && typeof window.Capacitor!=='undefined'){ try{ TTS=Capacitor.registerPlugin('TextToSpeech'); }catch(e){} } return TTS; }
+  function getTTS(){ if(!TTS){ TTS=lpPlugin('TextToSpeech'); } return TTS; }
   function intentar(t, texto, langs){
     if(!langs.length){ try{ t.speak({text:texto, rate:1.0, pitch:1.05, volume:1.0}); }catch(e){} return; }
     const opts={text:texto, lang:langs[0], rate:1.0, pitch:1.05, volume:1.0, category:'playback'};
@@ -698,7 +703,8 @@ async function diagnosticoVoz(){
   info.push('Capacitor (motor nativo): '+(typeof window.Capacitor!=='undefined'?'SÍ':'NO — estás en la web, no en el APK'));
   if(typeof window.Capacitor!=='undefined'){
     try{ info.push('Plataforma: '+(Capacitor.getPlatform?Capacitor.getPlatform():'?')); }catch(e){}
-    let TTS=null; try{ TTS=Capacitor.registerPlugin('TextToSpeech'); info.push('Plugin de voz: registrado'); }catch(e){ info.push('Plugin de voz: ERROR '+(e.message||e)); }
+    info.push('Capacitor.Plugins: '+(Capacitor.Plugins?Object.keys(Capacitor.Plugins).join(', ').slice(0,80):'no expuesto'));
+    let TTS=lpPlugin('TextToSpeech'); info.push('Plugin de voz: '+(TTS?'OK ✓':'NO encontrado'));
     if(TTS){
       try{ const l=await TTS.getSupportedLanguages(); const arr=(l&&l.languages)?l.languages:[]; const es=arr.filter(function(x){return String(x).toLowerCase().indexOf('es')===0;}); info.push('Voces instaladas: '+arr.length); info.push('Voces en español: '+(es.length?es.slice(0,6).join(', '):'NINGUNA (instala voz en español)')); }catch(e){ info.push('Idiomas: '+(e.message||e)); }
       try{ await TTS.speak({text:'Hola, soy Pistero. Prueba de voz.', lang:'es-ES'}); info.push('Reproducción: ejecutada (¿la escuchaste?)'); }catch(e){ info.push('Reproducción ERROR: '+(e.message||e)); }
@@ -951,14 +957,13 @@ function sd(){ us.d+=10; au(); h("Diez puntos de Darma para ti."); }
    En la web no hace nada: disponible() devuelve false. */
 const lpBackgroundGeo = (function(){
   let watcherId=null, BG=null;
-  const esNativo = (typeof window.Capacitor!=='undefined') && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
-  if(esNativo){ try{ BG=Capacitor.registerPlugin('BackgroundGeolocation'); }catch(e){} }
+  function getBG(){ if(!BG){ BG=lpPlugin('BackgroundGeolocation'); } return BG; }
   return {
-    disponible: function(){ return !!BG; },
+    disponible: function(){ return !!getBG(); },
     start: async function(){
-      if(!BG || watcherId) return;
+      const bg=getBG(); if(!bg || watcherId) return;
       try{
-        watcherId = await BG.addWatcher({
+        watcherId = await bg.addWatcher({
           backgroundMessage: "Registrando tu ruta. Toca para volver a Libre Pedal.",
           backgroundTitle: "Libre Pedal pedaleando contigo 🚴",
           requestPermissions: true,
@@ -970,7 +975,8 @@ const lpBackgroundGeo = (function(){
         });
       }catch(e){}
     },
-    stop: async function(){ if(BG && watcherId){ try{ await BG.removeWatcher({id:watcherId}); }catch(e){} watcherId=null; } }
+    stop: async function(){ if(BG && watcherId){ try{ await BG.removeWatcher({id:watcherId}); }catch(e){} watcherId=null; } },
+    _p:function(){ return getBG(); }
   };
 })();
 function toggleGPS(){
