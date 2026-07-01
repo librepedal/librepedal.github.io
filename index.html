@@ -44,6 +44,8 @@ body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);co
 .custom-option .label{font-size:0.6rem;color:#888;font-weight:700}
 .custom-option .check{position:absolute;top:3px;right:3px;background:var(--g);color:#000;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;font-weight:bold}
 .custom-option.selected .check{display:flex}
+.custom-option.locked{opacity:0.6}
+.custom-option.locked .lock-badge{position:absolute;top:3px;left:3px;background:rgba(0,0,0,0.8);color:var(--g);font-size:0.55rem;font-weight:800;padding:2px 5px;border-radius:8px;border:1px solid var(--g);z-index:2}
 .skin-swatch{width:100%;height:42px;border-radius:8px;margin-bottom:4px}
 header{padding:8px 12px;background:rgba(10,15,29,0.98);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;position:sticky;top:0;z-index:1000}
 header h2{margin:0;font-size:1rem;font-weight:800}
@@ -316,6 +318,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="bd" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
   <button class="ab sec" style="margin:0" onclick="mostrarLogros()">🏆 Logros</button>
   <button class="ab sec" style="margin:0" onclick="mostrarRanking()">🥇 Ranking</button>
+  <button class="ab sec" style="margin:0" onclick="mostrarTienda()">✨ Tienda</button>
 </div>
 <button class="ab sec" style="margin-top:6px;background:rgba(0,242,255,0.08);border:1px solid var(--p)" onclick="startTutorial()">🎓 Ver tutorial</button>
 <div style="text-align:center;font-size:0.68rem;color:#7d8ba0;margin-top:10px;line-height:1.4">🤝 Libre Pedal se construye <strong style="color:var(--p)">gracias a la comunidad</strong>: cada punto que compartes hace crecer a todos.</div>
@@ -329,7 +332,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon"><i class="fab fa-amazon"></i> Amazon</a>
 </div>
 <button class="bpdf" style="margin-top:10px" onclick="generarPDFBromas()">📄 Descargar PDF de frases</button>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer">🔄 Actualizar app a la última versión</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.8</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v4.9</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -521,7 +524,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='4.8';
+const APP_VERSION='4.9';
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -674,23 +677,37 @@ function mostrarBocadillo(t){ const b=document.getElementById('pisteroBubble'); 
    suele no sonar; usamos el motor TTS del sistema. En web no hace nada. */
 const lpTTS = (function(){
   let TTS=null;
-  // Si existe el puente de Capacitor, estamos en la app nativa (funciona en TODOS
-  // los Android). No dependemos de isNativePlatform (a veces falla con web remota).
-  if(typeof window.Capacitor!=='undefined'){ try{ TTS=Capacitor.registerPlugin('TextToSpeech'); }catch(e){} }
-  function intentar(texto, langs){
-    if(!langs.length){ try{ TTS.speak({text:texto, rate:1.0, pitch:1.05, volume:1.0}); }catch(e){} return; }
+  // Registro PEREZOSO: busca el motor nativo al momento de usarlo (no al cargar),
+  // porque con la web en vivo el puente de Capacitor se inyecta un poco después.
+  function getTTS(){ if(!TTS && typeof window.Capacitor!=='undefined'){ try{ TTS=Capacitor.registerPlugin('TextToSpeech'); }catch(e){} } return TTS; }
+  function intentar(t, texto, langs){
+    if(!langs.length){ try{ t.speak({text:texto, rate:1.0, pitch:1.05, volume:1.0}); }catch(e){} return; }
     const opts={text:texto, lang:langs[0], rate:1.0, pitch:1.05, volume:1.0, category:'playback'};
-    try{ const p=TTS.speak(opts); if(p&&p.catch){ p.catch(function(){ intentar(texto, langs.slice(1)); }); } }
-    catch(e){ intentar(texto, langs.slice(1)); }
+    try{ const p=t.speak(opts); if(p&&p.catch){ p.catch(function(){ intentar(t, texto, langs.slice(1)); }); } }
+    catch(e){ intentar(t, texto, langs.slice(1)); }
   }
   return {
-    disponible:function(){ return !!TTS; },
-    hablar:function(texto){ if(!TTS) return; try{ TTS.stop(); }catch(e){}
-      // prueba varios idiomas de voz según lo que tenga instalado el teléfono
-      intentar(texto, ['es-CL','es-MX','es-ES','es-US','es']); },
+    disponible:function(){ return !!getTTS(); },
+    hablar:function(texto){ const t=getTTS(); if(!t) return; try{ t.stop(); }catch(e){}
+      intentar(t, texto, ['es-CL','es-MX','es-ES','es-US','es']); },
     stop:function(){ if(TTS){ try{ TTS.stop(); }catch(e){} } }
   };
 })();
+async function diagnosticoVoz(){
+  let info=[];
+  info.push('Capacitor (motor nativo): '+(typeof window.Capacitor!=='undefined'?'SÍ':'NO — estás en la web, no en el APK'));
+  if(typeof window.Capacitor!=='undefined'){
+    try{ info.push('Plataforma: '+(Capacitor.getPlatform?Capacitor.getPlatform():'?')); }catch(e){}
+    let TTS=null; try{ TTS=Capacitor.registerPlugin('TextToSpeech'); info.push('Plugin de voz: registrado'); }catch(e){ info.push('Plugin de voz: ERROR '+(e.message||e)); }
+    if(TTS){
+      try{ const l=await TTS.getSupportedLanguages(); const arr=(l&&l.languages)?l.languages:[]; const es=arr.filter(function(x){return String(x).toLowerCase().indexOf('es')===0;}); info.push('Voces instaladas: '+arr.length); info.push('Voces en español: '+(es.length?es.slice(0,6).join(', '):'NINGUNA (instala voz en español)')); }catch(e){ info.push('Idiomas: '+(e.message||e)); }
+      try{ await TTS.speak({text:'Hola, soy Pistero. Prueba de voz.', lang:'es-ES'}); info.push('Reproducción: ejecutada (¿la escuchaste?)'); }catch(e){ info.push('Reproducción ERROR: '+(e.message||e)); }
+    }
+  } else {
+    try{ if('speechSynthesis' in window){ speechSynthesis.speak(new SpeechSynthesisUtterance('Prueba de voz web')); info.push('Voz web probada'); } }catch(e){}
+  }
+  alert('🔊 DIAGNÓSTICO DE VOZ\n\n'+info.join('\n')+'\n\n(Sácale una foto y mándamela)');
+}
 function h(t){
   mostrarBocadillo(t);
   if(!vozActiva) return;
@@ -765,13 +782,32 @@ function generateCharacterSVG(helmetId, lensId, skinId, extras){
   return s;
 }
 
+/* ===== TIENDA DE DARMA: desbloquear skins, lentes, accesorios y cascos ===== */
+const PRECIOS = {
+  amarillo:30, morado:40, naranja:40, azul:50, negro:70,
+  aviator:50, mirrored:80, amber:60, pink:60,
+  faro:60, antena:90, calco:40, bandana:70,
+  poc:80, kask:90, lazer:100, rudy:120, abus:140, limar:150
+};
+function getDesbloqueados(){ try{ return JSON.parse(localStorage.getItem('lp_unlocked_'+(cu||'anon'))||'[]'); }catch(e){ return []; } }
+function estaDesbloqueado(id){ return !(id in PRECIOS) || getDesbloqueados().indexOf(id)!==-1; }
+function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ alert('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){} au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
+function mostrarTienda(){
+  document.getElementById('modalTitle').innerText='✨ Tienda de Darma';
+  let html='<p style="color:#9fb3c8;font-size:0.84rem;margin-top:0">Tienes <strong style="color:var(--g)">'+us.d+' de Darma ✨</strong>. Gánala aportando a la comunidad y desbloquea skins, lentes, accesorios y cascos.</p>';
+  const grupos=[['🎨 Colores premium',skinOptions],['🕶️ Lentes',lensOptions],['✨ Accesorios',extrasOptions],['🪖 Cascos premium',helmetDesigns]];
+  grupos.forEach(function(gp){ const items=gp[1].filter(function(it){return it.id in PRECIOS;}); if(!items.length) return; html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 6px">'+gp[0]+'</h4>'; items.forEach(function(it){ const unlocked=estaDesbloqueado(it.id); const costo=PRECIOS[it.id]; const puede=us.d>=costo; html+='<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;margin-bottom:5px;background:var(--gl);border:1px solid '+(unlocked?'var(--g)':'#242c3e')+'"><div style="flex:1"><div style="font-weight:700;font-size:0.84rem;color:#dfe7ff">'+escapeHTML((it.brand?it.brand+' ':'')+it.name)+'</div><div style="font-size:0.68rem;color:'+(unlocked?'var(--g)':'#7d8ba0')+'">'+(unlocked?'Desbloqueado ✓':(costo+' ✨ Darma'))+'</div></div>'+(unlocked?'<span style="color:var(--g);font-weight:800;font-size:1.1rem">✓</span>':'<button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.76rem;'+(puede?'':'opacity:0.45')+'" onclick="comprarItem(\''+it.id+'\')">Desbloquear</button>')+'</div>'; }); });
+  document.getElementById('modalContent').innerHTML=html;
+  document.getElementById('userModal').classList.add('on');
+}
 function gridHTML(items, selectedId, onclickName, multi){
   return items.map(function(it){
     const sel = multi ? (selectedExtras.indexOf(it.id)!==-1) : (selectedId===it.id);
     let inner;
     if(it.c){ inner='<div class="skin-swatch" style="background:'+it.c+'"></div>'; }
     else { inner='<svg viewBox="0 0 200 130">'+(it.svg||'<text x="100" y="80" text-anchor="middle" font-size="26" fill="#888">--</text>')+'</svg>'; }
-    return '<div class="custom-option'+(sel?' selected':'')+'" onclick="'+onclickName+'(\''+it.id+'\')"><div class="check">OK</div>'+inner+'<div class="label">'+(it.brand?it.brand+' ':'')+it.name+'</div></div>';
+    const locked = !estaDesbloqueado(it.id);
+    return '<div class="custom-option'+(sel?' selected':'')+(locked?' locked':'')+'" onclick="'+onclickName+'(\''+it.id+'\')">'+(locked?'<div class="lock-badge">🔒 '+PRECIOS[it.id]+'✨</div>':'')+'<div class="check">OK</div>'+inner+'<div class="label">'+(it.brand?it.brand+' ':'')+it.name+'</div></div>';
   }).join('');
 }
 function initCustomization(){
@@ -785,10 +821,10 @@ function initCustomization(){
   map.forEach(function(m){ const el=document.getElementById(m[0]); if(el) el.innerHTML=gridHTML(m[1],m[2],m[3],m[4]); });
   updatePreview(); updateCustomizePreview();
 }
-function selectHelmet(id){ selectedHelmet=id; initCustomization(); }
-function selectSkin(id){ selectedSkin=id; initCustomization(); }
-function toggleLens(id){ selectedLens = (selectedLens===id) ? 'none' : id; initCustomization(); }
-function toggleExtra(id){ const i=selectedExtras.indexOf(id); if(i===-1) selectedExtras.push(id); else selectedExtras.splice(i,1); initCustomization(); }
+function selectHelmet(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedHelmet=id; initCustomization(); }
+function selectSkin(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedSkin=id; initCustomization(); }
+function toggleLens(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedLens = (selectedLens===id) ? 'none' : id; initCustomization(); }
+function toggleExtra(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } const i=selectedExtras.indexOf(id); if(i===-1) selectedExtras.push(id); else selectedExtras.splice(i,1); initCustomization(); }
 function updatePreview(){ const p=document.getElementById('preview-svg'); if(p) p.innerHTML=generateCharacterSVG(selectedHelmet,selectedLens,selectedSkin,selectedExtras); const n=document.getElementById('characterNameDisplay'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
 function updateCustomizePreview(){ const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=generateCharacterSVG(selectedHelmet,selectedLens,selectedSkin,selectedExtras); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
 function saveCustomization(){
