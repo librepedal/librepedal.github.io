@@ -1,8 +1,8 @@
-name: Construir APK Android
+name: Construir APK LibrePedal
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch
 
 permissions:
   contents: write
@@ -10,35 +10,35 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 10
+    timeout-minutes: 12
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Obtener código
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Instalar dependencias sin errores
+      - name: Instalar todo lo necesario
         run: |
-          npm config set audit false
-          npm config set fund false
           npm install --no-audit --no-fund
-          npm install --save-dev @capacitor/cli@6 @capacitor/android@6
+          npm install @capacitor/cli@6.1.2 @capacitor/android@6.1.2 --save-dev --no-audit --no-fund
 
-      - name: Crear proyecto Android limpio
+      - name: Crear proyecto Android desde cero
         run: |
           rm -rf android .capacitor
           npx cap init --web-dir "." --app-id "io.github.librepedal" --app-name "Libre Pedal"
           npx cap add android
           npx cap sync android
 
-      - name: Cambiar versión definitivamente
+      - name: Cambiar versión y eliminar 5.3
         run: |
-          sed -i "s/versionCode [0-9]*/versionCode 10/" android/app/build.gradle
-          sed -i "s/versionName \".*\"/versionName \"5.9.2\"/" android/app/build.gradle
-          sed -i "s/APP_VERSION = \".*\"/APP_VERSION = \"5.9.2\"/" index.html
-          sed -i "s/librepedal-v[0-9]*/librepedal-v26/g" index.html sw.js
+          sed -i 's/versionCode [0-9]*/versionCode 10/' android/app/build.gradle
+          sed -i 's/versionName ".*"/versionName "5.9.2"/' android/app/build.gradle
+          sed -i 's/APP_VERSION = ".*"/APP_VERSION = "5.9.2"/' index.html
+          sed -i 's/librepedal-v[0-9]*/librepedal-v26/g' index.html sw.js
           echo "5.9.2" > version.txt
 
       - name: Compilar APK
@@ -47,13 +47,13 @@ jobs:
           chmod +x gradlew
           ./gradlew clean assembleDebug --no-daemon -Dorg.gradle.jvmargs=-Xmx2048m
 
-      - name: Guardar archivo
+      - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
           name: LibrePedal-v5.9.2
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publicar versión
+      - name: Publicar
         uses: softprops/action-gh-release@v2
         if: success()
         with:
