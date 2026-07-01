@@ -8,39 +8,93 @@ env:
   VER: "5.9.2"
   VC: 10
   ID: "io.github.librepedal"
+  NODE_VERSION: "20.15.0"
+  JAVA_OPTS: "-Xmx2048m -XX:MaxMetaspaceSize=1024m"
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -Dorg.gradle.daemon=false"
+
+permissions:
+  contents: write
+  actions: read
+  checks: read
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
+    timeout-minutes: 10
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: 1. Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: 2. Instalar Node.js version fija y probada
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
-      - run: npm install
-      - run: |
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: false
+
+      - name: 3. Instalar dependencias ✅ SOLO CON package.json, SIN ARCHIVOS EXTRAS
+        run: |
+          npm config set audit false
+          npm config set fund false
+          npm config set update-notifier false
+          npm install --no-audit --no-fund --silent
+
+      - name: 4. Limpiar y crear proyecto Android DESDE CERO
+        run: |
+          rm -rf android/ ios/ .capacitor/
+          npm install --save-dev @capacitor/cli@6.1.2 @capacitor/android@6.1.2
+          npx cap init --web-dir . --app-id "$ID" --app-name "Libre Pedal" || true
           npx cap add android || true
           npx cap sync android
-      - run: |
-          sed -i "s/versionCode [0-9]*/versionCode $VC/" android/app/build.gradle
-          sed -i 's/versionName ".*"/versionName "'"$VER"'"/' android/app/build.gradle
-          sed -i 's/APP_VERSION = ".*"/APP_VERSION = "'"$VER"'"/' index.html
-          sed -i "s/librepedal-v[0-9]*/librepedal-v26/g" index.html sw.js
+
+      - name: 5. ✅ CAMBIAR VERSION EN TODOS LADOS - AQUI MUERE EL 5.3 DEFINITIVAMENTE
+        run: |
+          # ANDROID - ESTE ERA EL QUE NUNCA CAMBIABA
+          sed -i -E "s/versionCode [0-9]+/versionCode $VC/" android/app/build.gradle
+          sed -i -E "s/versionName \"[^\"]+\"/versionName \"$VER\"/" android/app/build.gradle
+          sed -i -E "s/applicationId \"[^\"]+\"/applicationId \"$ID\"/" android/app/build.gradle
+          # WEB
+          sed -i -E "s/APP_VERSION = \"[^\"]+\"/APP_VERSION = \"$VER\"/" index.html
+          sed -i -E "s/librepedal-v[0-9]+/librepedal-v26/g" index.html sw.js
           echo "$VER" > version.txt
-      - run: |
-          cd android && chmod +x gradlew
-          ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
+          # MOSTRAR EN PANTALLA PARA CONFIRMAR
+          echo "--- ANDROID VERSION ---"
+          grep -E "versionCode|versionName" android/app/build.gradle
+          echo "--- WEB VERSION ---"
+          grep "APP_VERSION" index.html
+          cat version.txt
+
+      - name: 6. Dar permisos y COMPILAR APK
+        run: |
+          cd android
+          chmod 755 gradlew
+          ./gradlew clean assembleDebug --no-daemon --max-workers 2
+
+      - name: 7. ✅ CONFIRMAR QUE EL APK EXISTE ANTES DE SEGUIR
+        run: |
+          ls -la android/app/build/outputs/apk/debug/app-debug.apk
+          test -f android/app/build/outputs/apk/debug/app-debug.apk || exit 99
+
+      - name: 8. Guardar archivo en la ejecucion
+        uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: LibrePedal-v${{ env.VER }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
-      - uses: softprops/action-gh-release@v2
+          compression-level: 9
+
+      - name: 9. 🚀 PUBLICAR VERSION OFICIAL EN RELEASES
+        uses: softprops/action-gh-release@v2
         if: success()
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v${{ env.VER }}
-          name: Libre Pedal v${{ env.VER }}
+          name: "Libre Pedal v${{ env.VER }}"
+          body: |
+            Versión ${{ env.VER }}
+            - VersionCode: ${{ env.VC }}
+            - Rueda animada de carga reemplazando circulo
+            - Version 5.3 eliminada completamente
           files: android/app/build/outputs/apk/debug/app-debug.apk
+          fail_on_unmatched_files: false
           make_latest: true
+          generate_release_notes: false
