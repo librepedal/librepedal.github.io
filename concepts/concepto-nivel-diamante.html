@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Libre Pedal - Nivel Diamante</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
+    
+    :root { --neon-cyan: #00f3ff; --neon-gold: #ffcc00; --neon-red: #ff3333; }
+    
+    body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Rajdhani', sans-serif; background-color: #050505; color: #fff; overflow: hidden; }
+
+    #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+    #plasma-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 15; pointer-events: none; }
+
+    /* NAV BAR TÁCTICA IZQUIERDA */
+    .tactical-nav {
+      position: absolute; left: 15px; top: 50%; transform: translateY(-50%); z-index: 40;
+      display: flex; flex-direction: column; gap: 15px;
+    }
+    .nav-btn {
+      width: 50px; height: 50px; border-radius: 12px; background: rgba(10, 10, 15, 0.8);
+      border: 1px solid var(--neon-cyan); color: #fff; font-size: 20px; cursor: pointer;
+      box-shadow: 0 0 10px rgba(0,243,255,0.3); backdrop-filter: blur(5px);
+      transition: all 0.3s;
+    }
+    .nav-btn:hover, .nav-btn.active { background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px var(--neon-cyan); transform: scale(1.1); }
+
+    /* HUD SUPERIOR Y S.O.S */
+    .btn-sos {
+      position: absolute; top: 20px; left: 20px; z-index: 40; background: var(--neon-red); color: #fff;
+      font-family: 'Orbitron', sans-serif; font-weight: bold; border: 2px solid #ffaaaa;
+      border-radius: 50px; padding: 10px 20px; cursor: pointer; box-shadow: 0 0 15px rgba(255, 0, 0, 0.6); animation: pulseSOS 2s infinite;
+    }
+    @keyframes pulseSOS { 0%, 100% { box-shadow: 0 0 10px rgba(255,0,0,0.5); transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(255,0,0,1); transform: scale(1.05); } }
+
+    .hud-speedometer {
+      position: absolute; top: 20px; right: 20px; z-index: 40; background: rgba(10, 10, 15, 0.8);
+      border: 2px solid var(--neon-cyan); border-radius: 10px; padding: 15px; text-align: center;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.5); backdrop-filter: blur(8px); min-width: 120px; pointer-events: none;
+    }
+    .hud-header { display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid rgba(0, 243, 255, 0.3); padding-bottom: 5px; margin-bottom: 8px; }
+    .hud-km { color: var(--neon-gold); font-weight: bold; }
+    .hud-speedometer h3 { margin: 0; color: var(--neon-cyan); font-family: 'Orbitron', sans-serif; font-size: 12px; }
+    .hud-speedometer .speed-value { color: var(--neon-gold); font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: bold; text-shadow: 0 0 10px rgba(255,204,0,0.8); }
+
+    /* LA ESFERA 3D CENTRAL */
+    #sphere-ui { position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%); width: 300px; height: 300px; z-index: 20; pointer-events: none; }
+    .core-supernova {
+      position: absolute; top: 50%; left: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px;
+      background: radial-gradient(circle, #ffffff 10%, var(--neon-cyan) 40%, transparent 80%); border-radius: 50%;
+      box-shadow: 0 0 40px var(--neon-cyan), inset 0 0 20px #fff; animation: implode 1.5s infinite alternate ease-in-out; pointer-events: auto; cursor: pointer;
+    }
+    @keyframes implode { 0% { transform: scale(0.9); } 100% { transform: scale(1.2); box-shadow: 0 0 60px var(--neon-cyan), inset 0 0 30px #fff; } }
+
+    .orbit-node {
+      position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px;
+      background: rgba(10, 10, 15, 0.9); border: 2px solid var(--neon-gold); border-radius: 50%;
+      display: flex; justify-content: center; align-items: center; font-size: 20px; color: #fff; cursor: pointer; pointer-events: auto;
+      transform: rotate(var(--angle)) translate(110px) rotate(calc(-1 * var(--angle)));
+      will-change: transform; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s;
+    }
+    .orbit-node:hover { transform: rotate(var(--angle)) translate(110px) rotate(calc(-1 * var(--angle))) scale(1.4); border-color: var(--neon-cyan); z-index: 30; }
+
+    /* AVATAR PISTERO */
+    #pistero-avatar {
+      position: fixed; bottom: 120px; right: -150px; width: 80px; height: 80px; background: linear-gradient(135deg, rgba(20,15,0,0.9), rgba(10,10,15,0.9));
+      border: 3px solid var(--neon-gold); border-radius: 50%; box-shadow: 0 0 20px rgba(255, 204, 0, 0.6); display: flex; justify-content: center; align-items: center; font-size: 40px; z-index: 100; transition: right 0.4s;
+    }
+    #pistero-avatar.talking { right: 20px; animation: avatarBounce 0.4s infinite alternate; }
+    @keyframes avatarBounce { 0% { transform: scale(1); } 100% { transform: scale(1.1); box-shadow: 0 0 30px var(--neon-gold); } }
+
+    /* MODALES DE PANTALLA (PERFIL Y ARSENAL) */
+    .modal-overlay {
+      position: absolute; inset: 0; background: rgba(5,5,10,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+      z-index: 80; display: flex; flex-direction: column; align-items: center; padding-top: 50px;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both; }
+    
+    @keyframes glitch {
+      0% { transform: translate(0) } 20% { transform: translate(-5px, 5px) } 40% { transform: translate(-5px, -5px) }
+      60% { transform: translate(5px, 5px) } 80% { transform: translate(5px, -5px) } 100% { transform: translate(0) }
+    }
+
+    .modal-title { font-family: 'Orbitron', sans-serif; color: var(--neon-gold); font-size: 32px; text-shadow: 0 0 15px var(--neon-gold); text-transform: uppercase; margin-bottom: 30px; letter-spacing: 2px;}
+
+    /* PERFIL HEXAGONAL */
+    .hex-avatar {
+      width: 150px; height: 170px; background: url('https://i.pravatar.cc/300') center/cover;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      border: 4px solid var(--neon-cyan); box-shadow: 0 0 20px var(--neon-cyan); margin-bottom: 20px;
+    }
+    .darma-badge { background: rgba(255,204,0,0.2); border: 1px solid var(--neon-gold); color: var(--neon-gold); padding: 8px 16px; border-radius: 20px; font-family: 'Orbitron'; font-weight: bold; font-size: 18px;}
+    .stats-container { width: 80%; max-width: 500px; margin-top: 30px; }
+    .stat-row { margin-bottom: 20px; }
+    .stat-label { display: flex; justify-content: space-between; font-family: 'Orbitron'; color: var(--neon-cyan); margin-bottom: 5px; }
+    .stat-bar-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+    .stat-bar-fill { height: 100%; background: linear-gradient(90deg, var(--neon-cyan), #00ffaa); width: 0%; transition: width 1.5s ease-out; box-shadow: 0 0 10px var(--neon-cyan); }
+
+    /* ARSENAL 3D GRID */
+    .arsenal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; width: 80%; max-width: 800px; perspective: 1000px; }
+    .arsenal-card {
+      background: rgba(20,20,25,0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center;
+      transition: transform 0.1s, border-color 0.3s; transform-style: preserve-3d; cursor: pointer;
+    }
+    .arsenal-card h3 { font-family: 'Orbitron'; color: #fff; margin: 10px 0; }
+    .arsenal-card p { font-size: 14px; color: #aaa; }
+    .btn-unlock { background: var(--neon-gold); color: #000; border: none; padding: 8px 15px; font-family: 'Orbitron'; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;}
+    
+    .arsenal-card.locked { filter: grayscale(100%); opacity: 0.7; }
+    .arsenal-card.unlocked { border-color: var(--neon-cyan); box-shadow: 0 0 20px rgba(0,243,255,0.2); filter: none; opacity: 1; }
+    .arsenal-card.unlocked .btn-unlock { background: var(--neon-cyan); color: #000; cursor: default; }
+
+    /* FANTASMAS Y REPRODUCTOR */
+    .ghost-marker { background-color: var(--neon-gold); width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px var(--neon-gold); }
+    .neon-marker { background-color: var(--neon-cyan); width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 15px var(--neon-cyan), 0 0 30px var(--neon-cyan); border: 2px solid #fff; }
+    .music-player { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(5,5,10,0.9); border-top: 2px solid var(--neon-cyan); padding: 15px; display: flex; flex-direction: column; align-items: center; z-index: 90; }
+    .music-player audio { width: 100%; max-width: 400px; outline: none; border-radius: 20px; }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+  <canvas id="plasma-canvas"></canvas>
+
+  <button class="btn-sos" onclick="activarSOS()">🚨 S.O.S</button>
+
+  <div class="hud-speedometer">
+    <div class="hud-header"><span id="weather-display">☁️ --°C</span><span class="hud-km" id="km-display">0.0 KM</span></div>
+    <h3>VELOCIDAD</h3><div class="speed-value" id="speed-display">0.0</div><h3>KM/H</h3>
+  </div>
+
+  <!-- NAV TÁCTICO -->
+  <div class="tactical-nav">
+    <button class="nav-btn active" onclick="switchScreen('map')" title="Radar GPS">🗺️</button>
+    <button class="nav-btn" onclick="switchScreen('perfil')" title="Perfil de Piloto">👤</button>
+    <button class="nav-btn" onclick="switchScreen('arsenal')" title="Arsenal Holográfico">🛒</button>
+  </div>
+
+  <!-- PANTALLA 1: MAPA (ESFERA) -->
+  <div id="sphere-ui">
+    <div class="core-supernova" id="core-node" onclick="pisteroHabla('Sistemas centrales en línea. ¿A dónde vamos, capitán?')"></div>
+    <div class="orbit-node" style="--angle: 0deg;" onclick="activarMicrofono()">🎙️</div>
+    <div class="orbit-node" style="--angle: 72deg;" onclick="reportarEvento('bache')">🕳️</div>
+    <div class="orbit-node" style="--angle: 144deg;" onclick="reportarEvento('policia')">👮</div>
+    <div class="orbit-node" style="--angle: 216deg;" onclick="reportarEvento('trafico')">🚗</div>
+    <div class="orbit-node" style="--angle: 288deg;" onclick="pisteroHabla('Jerga adaptativa lista.')">🌎</div>
+  </div>
+
+  <!-- PANTALLA 2: PERFIL DE PILOTO -->
+  <div id="perfil-screen" class="modal-overlay">
+    <div class="modal-title">PILOTO CLASIFICADO</div>
+    <div class="hex-avatar"></div>
+    <div class="darma-badge">DARMA: <span id="darma-count">1500</span> 💎</div>
+    
+    <div class="stats-container">
+      <div class="stat-row">
+        <div class="stat-label"><span>DISTANCIA TOTAL</span> <span id="stat-km-text">0 KM</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-km"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label"><span>RANGO DE PILOTO</span> <span>NIVEL <span id="stat-lvl">1</span></span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-lvl"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA 3: ARSENAL HOLOGRÁFICO (TIENDA) -->
+  <div id="arsenal-screen" class="modal-overlay">
+    <div class="modal-title">ARSENAL TÁCTICO</div>
+    <div class="arsenal-grid">
+      
+      <!-- ITEM 1 -->
+      <div class="arsenal-card unlocked" data-id="style1">
+        <div style="font-size:40px;">⚡</div>
+        <h3>Arcos Neón</h3>
+        <p>Rayos básicos de navegación.</p>
+        <button class="btn-unlock">EQUIPADO</button>
+      </div>
+
+      <!-- ITEM 2 -->
+      <div class="arsenal-card locked" data-id="style2" data-cost="500">
+        <div style="font-size:40px;">🌩️</div>
+        <h3>Relámpago Tesla</h3>
+        <p>Energía pura inestable. (500 💎)</p>
+        <button class="btn-unlock" onclick="desbloquearItem(this, 500)">🔒 DESBLOQUEAR</button>
+      </div>
+
+      <!-- ITEM 3 -->
+      <div class="arsenal-card locked" data-id="style3" data-cost="1000">
+        <div style="font-size:40px;">🌐</div>
+        <h3>Tentáculos de Plasma</h3>
+        <p>Materia suave y fluida. (1000 💎)</p>
+        <button class="btn-unlock" onclick="desbloquearItem(this, 1000)">🔒 DESBLOQUEAR</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="pistero-avatar">😎</div>
+  <div class="music-player"><span id="track-title">▶ ONDA CORTA: LIBRE PEDAL RADIO</span><audio id="app-audio" controls src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio></div>
+
+  <script>
+    // ==========================================
+    // 1. LÓGICA DE PANTALLAS Y TRANSICIONES
+    // ==========================================
+    function switchScreen(screenName) {
+      // Actualizar botones nav
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      // Ocultar todo
+      document.getElementById('sphere-ui').style.opacity = screenName === 'map' ? '1' : '0';
+      document.getElementById('sphere-ui').style.pointerEvents = screenName === 'map' ? 'auto' : 'none';
+      document.getElementById('perfil-screen').classList.remove('active');
+      document.getElementById('arsenal-screen').classList.remove('active');
+
+      // Mostrar seleccionado con glitch
+      if (screenName !== 'map') {
+        const screen = document.getElementById(screenName + '-screen');
+        screen.classList.remove('active'); 
+        void screen.offsetWidth; // Forzar reflow para reiniciar animación CSS
+        screen.classList.add('active');
+        
+        if(screenName === 'perfil') animarEstadisticas();
+      }
+    }
+
+    // Animación de números en Perfil
+    function animarEstadisticas() {
+      const targetKm = parseFloat(localStorage.getItem('lp_total_km')) || 15.5; // Demo data si es 0
+      const duration = 1500;
+      const start = performance.now();
+      
+      requestAnimationFrame(function animate(time) {
+        let timeFraction = (time - start) / duration;
+        if (timeFraction > 1) timeFraction = 1;
+        const progress = 1 - Math.pow(1 - timeFraction, 3); // easeOutCubic
+        
+        const currentKm = (targetKm * progress).toFixed(1);
+        document.getElementById('stat-km-text').innerText = currentKm + ' KM';
+        
+        // Llenado de barras
+        document.getElementById('bar-km').style.width = Math.min((currentKm / 100) * 100, 100) + '%';
+        document.getElementById('bar-lvl').style.width = Math.min((currentKm / 50) * 100, 100) + '%';
+
+        if (timeFraction < 1) requestAnimationFrame(animate);
+      });
+    }
+
+    // Efecto 3D Tilt en Tienda
+    document.querySelectorAll('.arsenal-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width/2;
+        const y = e.clientY - rect.top - rect.height/2;
+        card.style.transform = `perspective(1000px) rotateX(${-y/10}deg) rotateY(${x/10}deg) scale3d(1.05, 1.05, 1.05)`;
+      });
+      card.addEventListener('mouseleave', () => card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`);
+    });
+
+    // Lógica de Darma
+    let darma = parseInt(localStorage.getItem('lp_darma')) || 1500;
+    document.getElementById('darma-count').innerText = darma;
+
+    function desbloquearItem(btn, costo) {
+      if (darma >= costo) {
+        darma -= costo;
+        localStorage.setItem('lp_darma', darma);
+        document.getElementById('darma-count').innerText = darma;
+        
+        const card = btn.parentElement;
+        card.classList.remove('locked');
+        card.classList.add('unlocked');
+        btn.innerText = "EQUIPADO";
+        btn.onclick = null;
+        pisteroHabla("Transacción aprobada. Arsenal actualizado.");
+      } else {
+        pisteroHabla("Darma insuficiente para esta mejora táctica.");
+      }
+    }
+
+    // ==========================================
+    // 2. NÚCLEO ORIGINAL: MAPA, PLASMA, IA, GPS
+    // ==========================================
+    const map = L.map('map', { zoomControl: false }).setView([-33.4489, -70.6693], 12); 
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 20 }).addTo(map);
+
+    const ghostIcon = L.divIcon({ className: 'ghost-marker', iconSize: [12, 12] });
+    const neonIcon = L.divIcon({ className: 'neon-marker', iconSize: [16, 16] });
+    const ciclistas = [{lat:-33.448, lng:-70.669}, {lat:-33.435, lng:-70.650}, {lat:-33.455, lng:-70.680}];
+    ciclistas.forEach(c => { c.m = L.marker([c.lat, c.lng], {icon: ghostIcon}).addTo(map); });
+    setInterval(() => ciclistas.forEach(c => { c.lat+=(Math.random()-0.5)*0.001; c.lng+=(Math.random()-0.5)*0.001; c.m.setLatLng([c.lat, c.lng]); }), 2000);
+
+    let userMarker, totalKmTracker = parseFloat(localStorage.getItem('lp_total_km')) || 0;
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const lat = pos.coords.latitude, lon = pos.coords.longitude;
+          document.getElementById('speed-display').innerText = ((pos.coords.speed || 0) * 3.6).toFixed(1);
+          if(!userMarker) { userMarker = L.marker([lat, lon], {icon: neonIcon}).addTo(map); map.setView([lat, lon], 14); } 
+          else { userMarker.setLatLng([lat, lon]); map.panTo([lat, lon]); }
+        }, (e) => {}, { enableHighAccuracy: true }
+      );
+    }
+
+    // Plasma Canvas GPU
+    const canvas = document.getElementById('plasma-canvas'), ctx = canvas.getContext('2d');
+    const core = document.getElementById('core-node'), nodes = document.querySelectorAll('.orbit-node');
+    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    window.dispatchEvent(new Event('resize'));
+    function drawPlasma() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cx = core.getBoundingClientRect().left + 35, cy = core.getBoundingClientRect().top + 35;
+      nodes.forEach(n => {
+        const r = n.getBoundingClientRect(), nx = r.left + 22, ny = r.top + 22;
+        ctx.beginPath(); ctx.moveTo(cx, cy);
+        ctx.lineTo((cx+nx)/2 + (Math.random()-0.5)*15, (cy+ny)/2 + (Math.random()-0.5)*15);
+        ctx.lineTo(nx, ny);
+        ctx.strokeStyle = "rgba(0, 243, 255, 0.5)"; ctx.lineWidth = 4; ctx.stroke();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)"; ctx.lineWidth = 1.5; ctx.stroke();
+      });
+      requestAnimationFrame(drawPlasma);
+    }
+    drawPlasma();
+
+    const audioPlayer = document.getElementById('app-audio');
+    const avatar = document.getElementById('pistero-avatar');
+    function pisteroHabla(texto) {
+      if ('speechSynthesis' in window) {
+        const msg = new SpeechSynthesisUtterance(texto); msg.lang = 'es-LA'; 
+        if (avatar) avatar.classList.add('talking'); if (audioPlayer) audioPlayer.volume = 0.15;
+        msg.onend = msg.onerror = () => { if (avatar) avatar.classList.remove('talking'); if (audioPlayer) audioPlayer.volume = 1.0; };
+        window.speechSynthesis.speak(msg);
+      }
+    }
+    function reportarEvento(t) { pisteroHabla(t === 'bache' ? "¡Evento brígido adelante!" : t === 'policia' ? "Pacos controlando." : "Taco infernal."); }
+    function activarSOS() { window.open(`https://api.whatsapp.com/send?text=🚨 ¡S.O.S! Apoyo requerido.`, '_blank'); pisteroHabla("Enviando señal."); }
+    function activarMicrofono() { pisteroHabla("Te escucho, capitán. Di: Llévame a..."); }
+  </script>
+</body>
+</html>

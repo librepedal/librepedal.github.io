@@ -120,6 +120,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Votación de comunidad (un voto por usuario, id del doc = su propio usuario)
+    match /votacionComunidad/{id} {
+      allow read: if true;
+      allow create, update: if signedIn() && strOk('opcion', 40);
+      allow delete: if false;
+    }
+
     // Todo lo demás: denegado por defecto
     match /{document=**} {
       allow read, write: if false;

@@ -479,7 +479,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.apple.com/search?term=cycling" target="_blank" class="music-btn music-apple" title="Apple Music"><i class="fab fa-apple"></i></a>
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon" title="Amazon Music"><i class="fab fa-amazon"></i></a>
 </div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.13</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.14</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -510,6 +510,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div style="margin-top:12px"><h4 style="color:var(--g);font-size:0.9rem">Orden</h4><div id="added-dests"></div></div>
 <button class="ab" style="margin-top:12px" onclick="reporteDeViaje()">📋 Ver reporte + clima</button>
 <button class="ab sec" style="margin-top:6px" onclick="toggleGastosPanel()">💰 Calcular gastos del viaje</button>
+<button class="ab sec" style="margin-top:6px" onclick="mostrarPlanificadorPresupuesto()">🎒 Planificador por presupuesto</button>
 <div id="gastos-panel" style="display:none;background:rgba(0,0,0,0.3);border:1px solid rgba(0,242,255,0.25);padding:12px;border-radius:10px;margin-top:6px">
   <h4 style="color:var(--p);margin:0 0 8px 0;font-size:0.85rem">💰 Presupuesto cicloviajero</h4>
   <input type="number" id="gasto-km" placeholder="Kilómetros del viaje (ej: 250)" min="1">
@@ -704,7 +705,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.13'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.14'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1129,6 +1130,12 @@ function mostrarTienda(){
   let html='<p style="color:#9fb3c8;font-size:0.84rem;margin-top:0">Tienes <strong style="color:var(--g)">'+us.d+' de Darma ✨</strong>. Gánala aportando a la comunidad y desbloquea skins, lentes, accesorios y cascos.</p>';
   const grupos=[['🎨 Colores premium',skinOptions],['🕶️ Lentes',lensOptions],['✨ Accesorios',extrasOptions],['🪖 Cascos premium',helmetDesigns]];
   grupos.forEach(function(gp){ const items=gp[1].filter(function(it){return it.id in PRECIOS;}); if(!items.length) return; html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 6px">'+gp[0]+'</h4>'; items.forEach(function(it){ const unlocked=estaDesbloqueado(it.id); const costo=PRECIOS[it.id]; const puede=us.d>=costo; html+='<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;margin-bottom:5px;background:var(--gl);border:1px solid '+(unlocked?'var(--g)':'#242c3e')+'"><div style="flex:1"><div style="font-weight:700;font-size:0.84rem;color:#dfe7ff">'+escapeHTML((it.brand?it.brand+' ':'')+it.name)+'</div><div style="font-size:0.68rem;color:'+(unlocked?'var(--g)':'#7d8ba0')+'">'+(unlocked?'Desbloqueado ✓':(costo+' ✨ Darma'))+'</div></div>'+(unlocked?'<span style="color:var(--g);font-weight:800;font-size:1.1rem">✓</span>':'<button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.76rem;'+(puede?'':'opacity:0.45')+'" onclick="comprarItem(\''+it.id+'\')">Desbloquear</button>')+'</div>'; }); });
+  html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(0,242,255,0.08));border:1px solid var(--g)">'+
+    '<h4 style="color:var(--g);font-size:0.9rem;margin:0 0 6px">🚴 Libre Pedal Pro <span style="font-size:0.62rem;background:#333;color:#aaa;padding:2px 7px;border-radius:8px;vertical-align:middle">Muy pronto</span></h4>'+
+    '<p style="font-size:0.78rem;color:#9fb3c8;margin:0 0 8px">Todo lo esencial de Libre Pedal seguirá siendo <strong style="color:#dfe7ff">gratis para siempre</strong>: mapa, voz, GPS, comunidad. Pro será un aporte voluntario para quien quiera más, sin ensuciar la experiencia gratuita.</p>'+
+    '<div style="font-size:0.76rem;color:#cfe8ff;line-height:1.7">✓ Mapas offline sin conexión<br>✓ Colección completa de cascos y voces<br>✓ Estadísticas y respaldo avanzado del historial<br>✓ Insignia de apoyo a la comunidad</div>'+
+    '<button class="ab sec" style="margin-top:10px" disabled onclick="return false">Disponible próximamente</button>'+
+    '</div>';
   document.getElementById('modalContent').innerHTML=html;
   document.getElementById('userModal').classList.add('on');
 }
@@ -1351,7 +1358,10 @@ async function reg(e){
   localStorage.setItem('lp_lens_'+cu,selectedLens);
   localStorage.setItem('lp_skin_'+cu,selectedSkin);
   localStorage.setItem('lp_extras_'+cu,JSON.stringify(selectedExtras));
-  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null},{merge:true}); }catch(err){ console.error(err); }
+  // authUid: uid real de Firebase Auth, ademas del id legado (cu, derivado del email).
+  // Se guarda de forma aditiva para migrar mas adelante a reglas de Firestore por-dueno sin romper nada hoy.
+  const _authUid = window.lpUID || (firebase.auth().currentUser && firebase.auth().currentUser.uid) || null;
+  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
   document.getElementById('auth').style.display='none';
   document.getElementById('logoutBtn').style.display='block';
   document.getElementById('ghostBtn').style.display='block';
@@ -1458,8 +1468,11 @@ const lpBackgroundGeo = (function(){
   function getBG(){ if(!BG){ BG=lpPlugin('BackgroundGeolocation'); } return BG; }
   return {
     disponible: function(){ return !!getBG(); },
-    start: async function(){
+    // onLocation es opcional: si no se pasa, alimenta el registro simple (ug).
+    // La navegación turn-by-turn pasa su propio manejador para seguir guiando con la pantalla apagada.
+    start: async function(onLocation){
       const bg=getBG(); if(!bg || watcherId) return;
+      const cb = onLocation || function(location){ if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}}); };
       try{
         watcherId = await bg.addWatcher({
           backgroundMessage: "Registrando tu ruta. Toca para volver a Libre Pedal.",
@@ -1469,7 +1482,7 @@ const lpBackgroundGeo = (function(){
           distanceFilter: 8
         }, function(location, error){
           if(error || !location) return;
-          if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}});
+          cb(location);
         });
       }catch(e){}
     },
@@ -1775,7 +1788,7 @@ function mostrarLogros(){
   items.forEach(function(it){ const l=it.l; html+='<div style="display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;margin-bottom:6px;background:'+(it.done?'rgba(255,215,0,0.10)':'var(--gl)')+';border:1px solid '+(it.done?'var(--g)':'#242c3e')+';opacity:'+(it.done?'1':'0.78')+'"><div style="font-size:1.6rem;filter:'+(it.done?'none':'grayscale(1)')+'">'+l.e+'</div><div style="flex:1"><div style="font-weight:800;font-size:0.84rem;color:'+(it.done?'var(--g)':'#cfd8e6')+'">'+escapeHTML(l.t)+(it.done?' ✓':'')+'</div><div style="font-size:0.7rem;color:#8695aa">'+escapeHTML(l.d)+'</div>'+(it.done?'':'<div style="height:5px;background:#222b3d;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+it.pct+'%;background:var(--p)"></div></div><div style="font-size:0.62rem;color:#7d8ba0;margin-top:2px">'+(l.u==='km'?it.v.toFixed(1):Math.round(it.v))+' / '+l.meta+' '+l.u+'</div>')+'</div></div>'; });
   document.getElementById('modalTitle').innerText='🏆 Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
-async function sincronizarStats(){ if(!cu) return; try{ await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista'},{merge:true}); }catch(e){} }
+async function sincronizarStats(){ if(!cu) return; const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null; try{ await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true}); }catch(e){} }
 async function mostrarRanking(){
   document.getElementById('modalTitle').innerText='🥇 Top 10 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
   await sincronizarStats();
@@ -2084,6 +2097,25 @@ async function geocodeDestino(query){
   return {lat:parseFloat(best.lat), lon:parseFloat(best.lon), name:best.display_name};
 }
 async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); alert("No encontré: "+destInput+". Prueba con más detalle (ciudad o calle)."); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert("Error: "+err.message); } }
+function _navPosUpdate(lat,lon,accuracy,speedKmh){
+  if(accuracy>30) return;
+  // jitter: ignora saltos < 12 m (deriva del GPS estando quieto)
+  if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<12) return; const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
+  const _now=Date.now();
+  gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now}); lastGpsPoint={lat:lat,lon:lon};
+  // velocidad VERIFICADA por desplazamiento (centroides, ventana 10s)
+  const _spWin=velocidadVentana(gpsPoints);
+  const speed=(_spWin<6)?0:_spWin;
+  if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]); }
+  L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
+  document.getElementById('navSpeed').innerText=Math.round(speed);
+  document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2);
+  const el=Math.floor((Date.now()-tripStartTime)/1000), mm=Math.floor(el/60), ss=el%60;
+  document.getElementById('navTime').innerText=mm+':'+(ss<10?'0':'')+ss;
+  checkFuel(totalDistance);
+  actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
+  checkNavigationSteps(lat,lon);
+}
 async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
   document.getElementById('nav-screen').classList.add('active');
   if(navMap) navMap.remove();
@@ -2111,28 +2143,17 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     helmetMarker=L.marker([startLat,startLon],{icon:L.divIcon({className:'',html:riderMarkerHTML(selectedHelmet,skinColor(selectedSkin),true),iconSize:[50,34],iconAnchor:[25,17]})}).addTo(navMap);
     tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon}; totalDistance=0;
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+    if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop();
     lpWakeLock.enable();
-    gpsWatchId=navigator.geolocation.watchPosition(function(pos){
-      const lat=pos.coords.latitude, lon=pos.coords.longitude;
-      if(pos.coords.accuracy>30) return;
-      // jitter: ignora saltos < 12 m (deriva del GPS estando quieto)
-      if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<12) return; const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
-      const _now=Date.now();
-      const _spGps=(pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0;
-      gpsPoints.push({lat:lat,lon:lon,speed:_spGps,timestamp:_now}); lastGpsPoint={lat:lat,lon:lon};
-      // velocidad VERIFICADA por desplazamiento (centroides, ventana 10s)
-      const _spWin=velocidadVentana(gpsPoints);
-      const speed=(_spWin<6)?0:_spWin;
-      helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]);
-      L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
-      document.getElementById('navSpeed').innerText=Math.round(speed);
-      document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2);
-      const el=Math.floor((Date.now()-tripStartTime)/1000), mm=Math.floor(el/60), ss=el%60;
-      document.getElementById('navTime').innerText=mm+':'+(ss<10?'0':'')+ss;
-      checkFuel(totalDistance);
-      actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
-      checkNavigationSteps(lat,lon);
-    },function(err){ console.error("GPS:",err); },{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
+    if(lpBackgroundGeo.disponible()){
+      // Nativo: el GPS sigue guiando la navegación aunque la pantalla esté apagada.
+      lpBackgroundGeo.start(function(location){ _navPosUpdate(location.latitude, location.longitude, location.accuracy, (location.speed&&location.speed>0.7)?location.speed*3.6:0); });
+    } else {
+      gpsWatchId=navigator.geolocation.watchPosition(function(pos){
+        if(pos.coords.accuracy>30) return;
+        _navPosUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, (pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0);
+      },function(err){ console.error("GPS:",err); },{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
+    }
     if(navSteps.length>0) showStepInstruction(0);
     showSpeechBubble("En ruta a "+destName.split(',')[0]);
     h("Vamos a "+destName.split(',')[0]+". Yo te voy guiando, tú disfruta el camino.");
@@ -2157,7 +2178,7 @@ function showHostelsOnNavMap(){ allHostels.forEach(function(hh){ if(hh.lat&&hh.l
 function drawGpsRoute(){ if(gpsPoints.length<2) return; if(routeLine) navMap.removeLayer(routeLine); routeLine=L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#00f2ff',weight:5,opacity:0.8}).addTo(navMap); if(gpsPoints.length>10) navMap.fitBounds(routeLine.getBounds(),{padding:[50,50]}); }
 function showSpeechBubble(text){ const b=document.getElementById('speechBubble'); if(!b) return; b.innerText=text; b.classList.add('show'); setTimeout(function(){ b.classList.remove('show'); },4000); }
 async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigation(); return; } if(confirm("¿Terminar y guardar el viaje?")){ if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; if(currentTrip){ await db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}); } else { guardarRutaNavegada(); } showSpeechBubble("Guardado: "+totalDistance.toFixed(2)+" km"); setTimeout(endNavigation,2500); } }
-function endNavigation(){ lpWakeLock.disable(); if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; loadTrips(); }
+function endNavigation(){ lpWakeLock.disable(); if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; loadTrips(); }
 function interactuarPistero(){ const f=obtenerFrasePorVelocidad(15); if(f) h(f); }
 function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.invalidateSize(); },120); if(id==='routes') setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 function updateStatsView(){
@@ -2304,6 +2325,97 @@ function enviarSOS(){
 }
 function wmoTexto(c){ const m={0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'neblina',48:'neblina',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',66:'lluvia helada',67:'lluvia helada',71:'nieve ligera',73:'nieve',75:'nieve intensa',77:'nieve',80:'chubascos',81:'chubascos',82:'chubascos fuertes',85:'nevadas',86:'nevadas',95:'tormenta',96:'tormenta con granizo',99:'tormenta con granizo'}; return m[c]||'clima variable'; }
 async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=3'); return await r.json(); }catch(e){ return null; } }
+async function mostrarPlanificadorPresupuesto(){
+  document.getElementById('modalTitle').innerText='🎒 Planificador por presupuesto';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="font-size:0.85rem;color:#9fb3c8;margin-bottom:8px">Te ayudo a armar el viaje según lo que quieras gastar, buscando opciones reales de la comunidad cerca de tu destino.</p>'+
+    '<input type="number" id="plan-presupuesto" placeholder="Presupuesto total (tu moneda, ej: 40000)" min="0">'+
+    '<input type="number" id="plan-dias" placeholder="Días de viaje (ej: 3)" min="1">'+
+    '<select id="plan-pref"><option value="todos">Camping o alojamiento, lo que salga</option><option value="camping">Prefiero camping</option><option value="hospedaje">Prefiero alojamiento</option></select>'+
+    '<button class="ab" style="margin-top:8px" onclick="buscarPlanPresupuesto()">Buscar opciones</button>'+
+    '<div id="plan-resultado" style="margin-top:10px"></div>';
+  document.getElementById('userModal').classList.add('on');
+}
+async function buscarPlanPresupuesto(){
+  const presupuesto=parseFloat(document.getElementById('plan-presupuesto').value)||0;
+  const dias=Math.max(1,parseInt(document.getElementById('plan-dias').value)||1);
+  const pref=document.getElementById('plan-pref').value;
+  const res=document.getElementById('plan-resultado');
+  if(!presupuesto){ res.innerHTML='<p style="color:#888">Dime cuánto quieres gastar en total.</p>'; return; }
+  res.innerHTML='<p style="color:#888">Buscando opciones cerca de tu destino...</p>';
+  let lat=null, lon=null;
+  if(addedDests && addedDests.length){
+    const last=addedDests[addedDests.length-1];
+    lat=last.lat; lon=last.lon;
+    if(!lat||!lon){ try{ const g=await geocodeDestino(last.addr||last.name); if(g){ lat=g.lat; lon=g.lon; } }catch(e){} }
+  }
+  if((!lat||!lon) && currentUserLocation){ lat=currentUserLocation.lat; lon=currentUserLocation.lon; }
+  const dNoches=Math.max(0,dias-1);
+  const partAloj = pref==='camping' ? 0.15 : 0.4;
+  const presupAloj=presupuesto*partAloj, presupComida=presupuesto-presupAloj;
+  const porNoche=dNoches>0?Math.round(presupAloj/dNoches):0, porDiaComida=Math.round(presupComida/dias);
+  let html='<div style="background:var(--gl);padding:10px;border-radius:10px;margin-bottom:10px">'+
+    '<div style="font-size:0.8rem;color:#9fb3c8">Referencia con tu presupuesto:</div>'+
+    '<div style="font-weight:800;color:var(--p)">🍜 ~'+porDiaComida.toLocaleString('es')+' /día en comida · 🏕️ ~'+porNoche.toLocaleString('es')+' /noche en alojamiento</div></div>';
+  try{
+    const snap=await db.collection('hostels').limit(60).get();
+    let items=[];
+    snap.forEach(function(doc){ const d=doc.data(); if(/^TEST-/.test(d.name||'')) return; if(pref!=='todos' && d.tipo!==pref) return; let dist=null; if(lat&&lon&&d.lat&&d.lon) dist=calculateDistance(lat,lon,d.lat,d.lon)/1000; items.push({data:d,dist:dist}); });
+    items.sort(function(a,b){ if(a.dist==null) return 1; if(b.dist==null) return -1; return a.dist-b.dist; });
+    items=items.slice(0,5);
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:10px 0 6px">🏕️ Opciones de alojamiento cerca (de la comunidad)</h4>';
+    html += items.length ? items.map(function(it){ const d=it.data; return '<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.name)+'</strong><span style="color:#8aa;font-size:0.7rem"> · '+escapeHTML(d.tipo||'')+'</span>'+(it.dist!=null?' <span style="color:var(--p);font-size:0.7rem">'+it.dist.toFixed(1)+' km</span>':'')+'<div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(d.location||'')+'</div></div>'; }).join('') : '<p style="color:#888;font-size:0.8rem">Aún no hay opciones cargadas por la comunidad en esa zona. ¡Sé el primero en aportar en CicloGuía!</p>';
+  }catch(e){ html+='<p style="color:#888;font-size:0.8rem">No pude cargar alojamientos ahora.</p>'; }
+  try{
+    const snap=await db.collection('recommendations').orderBy('likes','desc').limit(30).get();
+    let items=[];
+    snap.forEach(function(doc){ const d=doc.data(); if(/^TEST-/.test(d.title||'')) return; let dist=null; if(lat&&lon&&d.lat&&d.lon) dist=calculateDistance(lat,lon,d.lat,d.lon)/1000; items.push({data:d,dist:dist}); });
+    items=items.filter(function(it){ return it.dist==null || it.dist<80; });
+    items.sort(function(a,b){ if(a.dist==null) return 1; if(b.dist==null) return -1; return a.dist-b.dist; });
+    items=items.slice(0,5);
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:10px 0 6px">📸 Panoramas y actividades cerca</h4>';
+    html += items.length ? items.map(function(it){ const d=it.data; return '<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.title)+'</strong>'+(it.dist!=null?' <span style="color:var(--p);font-size:0.7rem">'+it.dist.toFixed(1)+' km</span>':'')+'<div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(d.desc||'')+'</div></div>'; }).join('') : '<p style="color:#888;font-size:0.8rem">Aún no hay recomendaciones cargadas en esa zona.</p>';
+  }catch(e){ html+='<p style="color:#888;font-size:0.8rem">No pude cargar recomendaciones ahora.</p>'; }
+  res.innerHTML=html;
+  h('Listo, armé un plan de referencia con tu presupuesto y opciones reales de la comunidad cerca de tu destino.');
+}
+async function mostrarComunidad(){
+  document.getElementById('modalTitle').innerText='🤝 Comunidad Libre Pedal';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="color:#888">Cargando...</p>';
+  document.getElementById('userModal').classList.add('on');
+  const META=5000;
+  let total=0;
+  try{ const snap=await db.collection('users').get(); total=snap.size; }catch(e){}
+  const pct=Math.min(100,Math.round((total/META)*100));
+  const opciones=[
+    {id:'rutas',texto:'🗺️ Mapear más rutas seguras'},
+    {id:'refugios',texto:'🏕️ Financiar refugios/paradores para ciclistas'},
+    {id:'seguridad',texto:'🚨 Botón SOS con central de emergencia'},
+    {id:'bicis',texto:'🚲 Fondo de bicicletas para quien no tiene'}
+  ];
+  let votos={}; opciones.forEach(function(o){ votos[o.id]=0; });
+  let miVoto=null;
+  try{
+    const snap=await db.collection('votacionComunidad').get();
+    snap.forEach(function(doc){ const d=doc.data(); if(votos[d.opcion]!=null) votos[d.opcion]++; if(doc.id===cu) miVoto=d.opcion; });
+  }catch(e){}
+  const totalVotos=Object.values(votos).reduce(function(a,b){return a+b;},0)||1;
+  let html='<div style="background:var(--gl);padding:12px;border-radius:10px;margin-bottom:10px">'+
+    '<div style="font-size:0.85rem;color:#9fb3c8">Somos <strong style="color:var(--p)">'+total+'</strong> pedaleando juntos</div>'+
+    '<div style="background:#111;border-radius:8px;height:10px;margin-top:6px;overflow:hidden"><div style="background:var(--p);height:100%;width:'+pct+'%"></div></div>'+
+    '<div style="font-size:0.72rem;color:#8aa;margin-top:4px">'+pct+'% del camino a 5.000 — cuando lleguemos, la comunidad vota qué hacer con parte de las ganancias</div></div>'+
+    '<h4 style="color:var(--p);font-size:0.85rem;margin-bottom:6px">¿En qué priorizamos cuando lleguemos?</h4>';
+  opciones.forEach(function(o){
+    const p=Math.round((votos[o.id]/totalVotos)*100), sel=(miVoto===o.id);
+    html+='<div class="custom-option'+(sel?' selected':'')+'" style="text-align:left;margin-bottom:6px;padding:10px" onclick="votarComunidad(\''+o.id+'\')"><div class="check">OK</div><strong style="font-size:0.85rem">'+o.texto+'</strong><div style="background:#111;border-radius:6px;height:7px;margin-top:5px;overflow:hidden"><div style="background:var(--g);height:100%;width:'+p+'%"></div></div><div style="font-size:0.68rem;color:#8aa;margin-top:2px">'+p+'% ('+votos[o.id]+' votos)</div></div>';
+  });
+  c.innerHTML=html;
+}
+async function votarComunidad(opcionId){
+  if(!cu) return;
+  try{ await db.collection('votacionComunidad').doc(cu).set({opcion:opcionId,ts:firebase.firestore.FieldValue.serverTimestamp()}); h('¡Voto registrado! Gracias por construir la comunidad.'); mostrarComunidad(); }catch(e){ alert('No se pudo registrar tu voto, intenta de nuevo.'); }
+}
 async function reporteDeViaje(){
   if(!addedDests || addedDests.length===0){ alert('Agrega al menos un destino primero'); return; }
   document.getElementById('modalTitle').innerText='🗺️ Reporte del viaje';
@@ -2337,7 +2449,7 @@ const esferaItems=[
  {i:'💬',t:'Social',v:'chat'},{i:'🛠️',t:'Taller',v:'mac'},{i:'📖',t:'Guía',v:'gui'},
  {i:'📋',t:'Rutas',v:'routes'},{i:'📊',t:'Stats',v:'stats'},{i:'🎨',t:'Perfil',v:'customize'},
  {i:'⭐',t:'Recom.',v:'rec'},{i:'🏆',t:'Logros',fn:'mostrarLogros'},{i:'🥇',t:'Ranking',fn:'mostrarRanking'},
- {i:'✨',t:'Tienda',fn:'mostrarTienda'},{i:'🆘',t:'SOS',fn:'enviarSOS'}
+ {i:'✨',t:'Tienda',fn:'mostrarTienda'},{i:'🆘',t:'SOS',fn:'enviarSOS'},{i:'🤝',t:'Comunidad',fn:'mostrarComunidad'}
 ];
 let esEls=[], esRotX=-0.2, esRotY=0, esVelX=0, esVelY=0.004, esDrag=false, esLast=null, esMoved=0, esRAF=null, esBound=false, esCanvas=null, esPairs=[];
 let esAudioCtx=null, esIntroStart=0, esEstilo=parseInt(localStorage.getItem('lp_estilo')||'1')||1;

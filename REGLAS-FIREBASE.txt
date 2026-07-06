@@ -1,0 +1,36 @@
+========================================================
+LIBRE PEDAL — REGLAS DE FIRESTORE (pega esto en Firebase)
+========================================================
+
+POR QUÉ: Las reglas actuales bloquean varias colecciones
+(friendships, points, miradores, logros...). Por eso NO se
+registran los amigos, la lista se queda "cargando", y no
+quedan los puntos/miradores en el mapa.
+
+CÓMO APLICARLO (2 minutos, gratis):
+1. Entra a  https://console.firebase.google.com
+2. Elige el proyecto  librepedal-cb983
+3. Menú izquierdo:  Firestore Database  ->  pestaña  Reglas (Rules)
+4. Borra TODO lo que haya y pega EXACTAMENTE esto:
+
+------------------------------------------------------------
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+------------------------------------------------------------
+
+5. Presiona  Publicar (Publish).
+6. Listo. Vuelve a la app: los amigos, mensajes, puntos,
+   miradores y logros ya quedarán registrados.
+
+NOTA DE SEGURIDAD (importante, no urgente):
+Esta regla deja la base ABIERTA (cualquiera puede leer/
+escribir). Es lo normal mientras la app no tiene login de
+Firebase y estás en desarrollo con la comunidad. Cuando la
+app crezca y quieras protegerla, se agrega autenticación y
+se cierran las reglas. Te aviso cuándo conviene hacerlo.

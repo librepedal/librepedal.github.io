@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Libre Pedal - Red Táctica</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
+    
+    body, html {
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      font-family: 'Rajdhani', sans-serif;
+      background-color: #050505; color: #fff;
+      overflow: hidden;
+    }
+
+    #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+
+    /* HUD SUPERIOR */
+    .hud-speedometer {
+      position: absolute; top: 20px; right: 20px; z-index: 20;
+      background: rgba(10, 10, 15, 0.8); border: 2px solid #00f3ff;
+      border-radius: 10px; padding: 15px; text-align: center;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.5); backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+    .hud-header { display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid rgba(0, 243, 255, 0.3); padding-bottom: 5px; margin-bottom: 8px; }
+    .hud-weather { color: #fff; }
+    .hud-km { color: #ffcc00; font-weight: bold; }
+    .hud-speedometer h3 { margin: 0; color: #00f3ff; font-family: 'Orbitron', sans-serif; font-size: 12px; }
+    .hud-speedometer .speed-value { color: #ffcc00; font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: bold; text-shadow: 0 0 10px rgba(255,204,0,0.8); }
+
+    /* CANVAS DE RAYOS TESLA/PLASMA */
+    #plasma-canvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 15; pointer-events: none;
+    }
+
+    /* ESFERA 3D Y NODOS */
+    #sphere-ui {
+      position: absolute; bottom: 150px; left: 50%;
+      transform: translateX(-50%);
+      width: 300px; height: 300px;
+      z-index: 20; pointer-events: none; /* Dejamos que los clicks pasen al mapa si no tocan la esfera */
+    }
+
+    /* EL NÚCLEO (SUPERNOVA IMPLOSIONANDO) */
+    .core-supernova {
+      position: absolute; top: 50%; left: 50%;
+      width: 70px; height: 70px;
+      margin-top: -35px; margin-left: -35px;
+      background: radial-gradient(circle, #ffffff 10%, #00f3ff 40%, transparent 80%);
+      border-radius: 50%;
+      box-shadow: 0 0 40px #00f3ff, inset 0 0 20px #fff;
+      animation: implode 1.5s infinite alternate ease-in-out;
+      pointer-events: auto; cursor: pointer;
+    }
+    @keyframes implode {
+      0% { transform: scale(0.9); filter: brightness(1); }
+      100% { transform: scale(1.2); filter: brightness(1.5); box-shadow: 0 0 60px #00f3ff, inset 0 0 30px #fff; }
+    }
+
+    /* ICONOS ORBITALES (CERO LAG GPU) */
+    .orbit-node {
+      position: absolute; top: 50%; left: 50%;
+      width: 44px; height: 44px;
+      margin-top: -22px; margin-left: -22px;
+      background: rgba(10, 10, 15, 0.9);
+      border: 2px solid #ffcc00; border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 20px; color: #fff; cursor: pointer;
+      pointer-events: auto;
+      
+      /* Posicionamiento radial con CSS Vars */
+      transform: rotate(var(--angle)) translate(110px) rotate(calc(-1 * var(--angle)));
+      
+      /* Animación a escala GPU (ultra barata y fluida) */
+      will-change: transform;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s;
+    }
+    .orbit-node:hover {
+      /* Mantiene la órbita pero escala el icono fluido */
+      transform: rotate(var(--angle)) translate(110px) rotate(calc(-1 * var(--angle))) scale(1.4);
+      border-color: #00f3ff;
+      z-index: 30;
+    }
+    
+    /* TOOLTIP FLOTANTE DE LOS NODOS */
+    .orbit-node::after {
+      content: attr(data-label);
+      position: absolute; bottom: -25px;
+      background: rgba(0,0,0,0.8); color: #00f3ff; font-family: 'Rajdhani', sans-serif;
+      font-size: 12px; padding: 2px 6px; border-radius: 4px;
+      opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap;
+    }
+    .orbit-node:hover::after { opacity: 1; }
+
+    /* AVATAR PISTERO */
+    #pistero-avatar {
+      position: fixed; bottom: 20px; right: -150px; width: 80px; height: 80px;
+      background: linear-gradient(135deg, rgba(20,15,0,0.9), rgba(10,10,15,0.9));
+      border: 3px solid #ffcc00; border-radius: 50%; box-shadow: 0 0 20px rgba(255, 204, 0, 0.6);
+      display: flex; justify-content: center; align-items: center; font-size: 40px;
+      z-index: 1000; transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #pistero-avatar.talking { right: 20px; animation: avatarBounce 0.4s infinite alternate; }
+    @keyframes avatarBounce { 0% { transform: scale(1); } 100% { transform: scale(1.1); box-shadow: 0 0 30px rgba(255, 204, 0, 1); } }
+
+    /* MARCADORES FANTASMAS (Usuarios simulados) */
+    .ghost-marker {
+      background-color: #ffcc00; width: 12px; height: 12px; border-radius: 50%;
+      box-shadow: 0 0 10px #ffcc00; border: 2px solid #000;
+    }
+    .neon-marker {
+      background-color: #00f3ff; width: 16px; height: 16px; border-radius: 50%;
+      box-shadow: 0 0 15px #00f3ff, 0 0 30px #00f3ff; border: 2px solid #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+  
+  <canvas id="plasma-canvas"></canvas>
+
+  <div class="hud-speedometer">
+    <div class="hud-header">
+      <span class="hud-weather" id="weather-display">☁️ --°C</span>
+      <span class="hud-km" id="km-display">0.0 KM</span>
+    </div>
+    <h3>VELOCIDAD</h3>
+    <div class="speed-value" id="speed-display">0.0</div>
+    <h3>KM/H</h3>
+  </div>
+
+  <!-- LA ESFERA 3D (CERO LAG) -->
+  <div id="sphere-ui">
+    <div class="core-supernova" id="core-node" onclick="pisteroHabla('Sistemas centrales en línea. ¿A dónde vamos, capitán?')"></div>
+    
+    <div class="orbit-node" style="--angle: 0deg;" data-label="Micrófono" onclick="activarMicrofono()">🎙️</div>
+    <div class="orbit-node" style="--angle: 51deg;" data-label="S.O.S." onclick="activarSOS()">🚨</div>
+    <div class="orbit-node" style="--angle: 102deg;" data-label="Bache" onclick="reportarEvento('bache')">🕳️</div>
+    <div class="orbit-node" style="--angle: 154deg;" data-label="Policía" onclick="reportarEvento('policia')">👮</div>
+    <div class="orbit-node" style="--angle: 205deg;" data-label="Tráfico" onclick="reportarEvento('trafico')">🚗</div>
+    <div class="orbit-node" style="--angle: 257deg;" data-label="Gastos" onclick="pisteroHabla('Telemetría en desarrollo.')">🧮</div>
+    <div class="orbit-node" style="--angle: 308deg;" data-label="Jerga Local" onclick="pisteroHabla('Jerga Chilena activada por defecto.')">🇨🇱</div>
+  </div>
+
+  <div id="pistero-avatar">😎</div>
+
+  <script>
+    // ==========================================
+    // 1. INICIALIZACIÓN MAPA Y USUARIOS VIRTUALES
+    // ==========================================
+    const map = L.map('map', { zoomControl: false }).setView([-33.4489, -70.6693], 12); 
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors', maxZoom: 20
+    }).addTo(map);
+
+    const ghostIcon = L.divIcon({ className: 'ghost-marker', iconSize: [12, 12], iconAnchor: [6, 6] });
+    const neonIcon = L.divIcon({ className: 'neon-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
+
+    // CICLISTAS FANTASMAS EN CHILE
+    const ciclistasVirtuales = [
+      { lat: -33.448, lng: -70.669, name: "🚴 Leo_Ruta (SCL)", marker: null },
+      { lat: -33.435, lng: -70.650, name: "🚴 Cata_MTB (SCL)", marker: null },
+      { lat: -33.455, lng: -70.680, name: "🚴 Seba_Fixie (SCL)", marker: null },
+      { lat: -33.047, lng: -71.612, name: "🚴 Valpo_Ride", marker: null },
+      { lat: -36.820, lng: -73.044, name: "🚴 Conce_Downhill", marker: null },
+      { lat: -29.902, lng: -71.251, name: "🚴 Norte_Pedal", marker: null }
+    ];
+
+    ciclistasVirtuales.forEach(c => {
+      c.marker = L.marker([c.lat, c.lng], {icon: ghostIcon}).addTo(map)
+                  .bindPopup(`<b style="color:black;">${c.name}</b>`);
+    });
+
+    // Motor de movimiento simulado fluido (Cambia sus coordenadas levemente cada 2s)
+    setInterval(() => {
+      ciclistasVirtuales.forEach(c => {
+        c.lat += (Math.random() - 0.5) * 0.0005; // Movimiento aleatorio
+        c.lng += (Math.random() - 0.5) * 0.0005;
+        c.marker.setLatLng([c.lat, c.lng]);
+      });
+    }, 2000);
+
+    let userMarker, routeLayer;
+    let currentLat = null, currentLon = null;
+    let lastLat = null, lastLon = null;
+    let totalKm = parseFloat(localStorage.getItem('lp_total_km')) || 0;
+    document.getElementById('km-display').innerText = totalKm.toFixed(1) + ' KM';
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(
+        (position) => {
+          currentLat = position.coords.latitude; currentLon = position.coords.longitude;
+          const speedMpS = position.coords.speed || 0;
+          document.getElementById('speed-display').innerText = (speedMpS * 3.6).toFixed(1);
+
+          if(!userMarker) {
+            userMarker = L.marker([currentLat, currentLon], {icon: neonIcon}).addTo(map);
+            map.setView([currentLat, currentLon], 14);
+            consultarClima(currentLat, currentLon);
+          } else {
+            userMarker.setLatLng([currentLat, currentLon]);
+            map.panTo([currentLat, currentLon]);
+          }
+        }, 
+        (error) => console.log("Error GPS"), { enableHighAccuracy: true }
+      );
+    }
+
+    // ==========================================
+    // 2. RAYOS TESLA/PLASMA (CANVAS GPU LOOP)
+    // ==========================================
+    const canvas = document.getElementById('plasma-canvas');
+    const ctx = canvas.getContext('2d');
+    const core = document.getElementById('core-node');
+    const nodes = document.querySelectorAll('.orbit-node');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Loop de animación a 60fps
+    function drawPlasma() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const coreRect = core.getBoundingClientRect();
+      const cx = coreRect.left + coreRect.width / 2;
+      const cy = coreRect.top + coreRect.height / 2;
+
+      nodes.forEach(node => {
+        const rect = node.getBoundingClientRect();
+        const nx = rect.left + rect.width / 2;
+        const ny = rect.top + rect.height / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+
+        // Estilo Tesla Azul (Ramificación y ZigZag)
+        const midX = (cx + nx) / 2 + (Math.random() - 0.5) * 15;
+        const midY = (cy + ny) / 2 + (Math.random() - 0.5) * 15;
+        
+        ctx.lineTo(midX, midY);
+        ctx.lineTo(nx, ny);
+
+        // Glow Plasma
+        ctx.strokeStyle = "rgba(0, 243, 255, 0.5)";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Núcleo del rayo
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+
+      requestAnimationFrame(drawPlasma);
+    }
+    drawPlasma();
+
+    // ==========================================
+    // 3. IA, JERGA Y FUNCIONES
+    // ==========================================
+    const avatar = document.getElementById('pistero-avatar');
+    
+    function pisteroHabla(texto) {
+      if ('speechSynthesis' in window) {
+        const mensaje = new SpeechSynthesisUtterance(texto);
+        mensaje.lang = 'es-LA'; 
+        if (avatar) avatar.classList.add('talking');
+        mensaje.onend = () => { if (avatar) avatar.classList.remove('talking'); };
+        mensaje.onerror = () => { if (avatar) avatar.classList.remove('talking'); };
+        window.speechSynthesis.speak(mensaje);
+      }
+    }
+
+    function reportarEvento(tipo) {
+      const frases = {
+        bache: "¡Frena! Evento brígido adelante, cuidado con el hoyo.",
+        policia: "Suelta el pedal, andan los pacos controlando.",
+        trafico: "Taco infernal a la vista. Ármate de paciencia."
+      };
+      pisteroHabla(frases[tipo]);
+    }
+
+    async function consultarClima(lat, lon) {
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const data = await res.json();
+        document.getElementById('weather-display').innerText = `🌡️ ${data.current_weather.temperature}°C`;
+      } catch(e) {}
+    }
+
+    function activarSOS() {
+      if (!currentLat) return alert("Buscando GPS...");
+      const link = `https://www.google.com/maps?q=${currentLat},${currentLon}`;
+      window.open(`https://api.whatsapp.com/send?text=🚨 ¡S.O.S! Apoyo táctico requerido en: ${link}`, '_blank');
+      pisteroHabla("Enviando señal de auxilio.");
+    }
+
+    function limpiarDestino(raw) {
+      let dest = raw.toLowerCase();
+      ["llévame a", "llevame a", "busca", "ir a", "pistero"].forEach(p => dest = dest.replace(p, ""));
+      return dest.trim();
+    }
+
+    async function buscarYTrazaRuta(destinoBruto) {
+      if (!currentLat) return pisteroHabla("Falta señal GPS.");
+      const destLimpio = limpiarDestino(destinoBruto);
+      pisteroHabla(`Calculando salto hacia ${destLimpio}...`);
+
+      try {
+        const r1 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${destLimpio}&limit=1`);
+        const d1 = await r1.json();
+        if(!d1.length) return pisteroHabla("Destino desconocido.");
+
+        const r2 = await fetch(`https://router.project-osrm.org/route/v1/driving/${currentLon},${currentLat};${d1[0].lon},${d1[0].lat}?geometries=geojson`);
+        const d2 = await r2.json();
+
+        if (d2.routes && d2.routes.length > 0) {
+          if (routeLayer) map.removeLayer(routeLayer);
+          routeLayer = L.geoJSON(d2.routes[0].geometry, { style: { color: '#ffcc00', weight: 6, opacity: 0.8 } }).addTo(map);
+          map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+          pisteroHabla("Ruta fijada. Agárrate que nos fuimos.");
+        }
+      } catch (e) { pisteroHabla("Error en la matriz de ruteo."); }
+    }
+
+    function activarMicrofono() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return alert("Voz no compatible.");
+      const rec = new SR(); rec.lang = 'es-ES';
+      
+      pisteroHabla("Te escucho, capitán.");
+      setTimeout(() => rec.start(), 1500);
+
+      rec.onresult = (e) => {
+        const txt = e.results[0][0].transcript.toLowerCase();
+        if (txt.includes("llévame") || txt.includes("ir a") || txt.includes("busca")) buscarYTrazaRuta(txt);
+        else pisteroHabla("Comando denegado. Di: Llévame a...");
+      };
+    }
+  </script>
+</body>
+</html>
