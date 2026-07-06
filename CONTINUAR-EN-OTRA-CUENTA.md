@@ -23,7 +23,9 @@ Proceso de deploy (repetir cada vez que se sube una versión):
 ```bash
 # 1. Bump version.txt, APP_VERSION en index.html, y CACHE en sw.js (todos +1)
 # 2. Copiar SOLO estos archivos a una carpeta limpia (NUNCA la carpeta completa, tiene tokens):
-#    index.html sw.js manifest.json icon.svg version.txt como-funciona.html _headers
+#    index.html sw.js manifest.json icon.svg version.txt como-funciona.html _headers logo.jpg
+#    (si agregas un archivo nuevo referenciado en index.html, agrégalo TAMBIÉN aquí y al
+#    array CORE en sw.js — si no, queda roto en producción aunque funcione en local)
 # 3. Deploy:
 source <(cat MI-CLOUDFLARE.txt)   # exporta TOKEN y ACCOUNT_ID
 export CLOUDFLARE_API_TOKEN="$TOKEN"
@@ -34,9 +36,14 @@ npx --yes wrangler pages deploy <carpeta_limpia> --project-name=librepedal --com
 ```
 Netlify (`MI-TOKEN-NETLIFY.txt`) está roto (sin permiso de deploy) — usar Cloudflare, no Netlify.
 
-## Estado actual: v5.16, todo commiteado y en producción
+## Estado actual: v5.28, todo commiteado, pusheado a GitHub y en producción (Cloudflare Pages)
 
-Hecho recientemente (sesión del 2026-07-06): esfera 3D con fondo de postales/espacial, tutorial corregido (ya no tapa elementos, texto por paso, se muestra solo el aviso de volumen que desaparece solo), sonido de apertura cálido (acorde en Sol con eco, antes era un zap eléctrico "8-bit"), rueda de carga con textura real, clima real por cada parada de la ruta (no solo la última), calculadora de gastos que auto-calcula los km reales de la ruta (OSRM), GPS nativo conectado a la navegación turn-by-turn (antes solo usaba la API web que se corta con pantalla apagada), `authUid` real de Firebase Auth guardado en paralelo al id legado por email (aditivo, no rompe nada), Comunidad con votación real + sorteo transparente al llegar a 5.000, Planificador por presupuesto (usa datos reales de hostales/recomendaciones de la comunidad), sección "Libre Pedal Pro" honesta (marcada "muy pronto", sin pasarela de pago aún), y **mapa offline real**: botón "Descargar mapa de la ruta" que precachea los mosaicos de la ruta calculada (zoom 13-16) para andar sin señal — el cache de mosaicos (`librepedal-tiles`) ahora es independiente del cache de la app y sobrevive a las actualizaciones de versión (antes se borraba todo con cada deploy, un bug real que afectaba justo el caso de uso de cicloturismo).
+Hecho hasta ahora (sesiones del 2026-07-06): esfera 3D con fondo de postales/espacial, tutorial corregido y sincronizado exacto con la voz, rueda de carga con textura real, clima real por cada parada de la ruta Y al poner un destino (antes de salir), calculadora de gastos que auto-calcula los km reales de la ruta (OSRM), GPS nativo conectado a la navegación turn-by-turn, `authUid` real de Firebase Auth guardado en paralelo (aditivo), Comunidad con votación real + sorteo transparente al llegar a 5.000, Planificador por presupuesto, sección "Libre Pedal Pro" honesta, **mapa offline real** (botón "Descargar mapa de la ruta", cache de mosaicos independiente que sobrevive a actualizaciones), **persistencia offline de Firestore activada** (crítico: antes se podían perder viajes grabados sin señal), ritmo lento/normal/rápido **adaptativo a la ruta** (ya no umbrales fijos: se adapta solo a subidas/bajadas), ciclistas ficticios eliminados del mapa, exportación de usuarios (admin) simplificada a solo Nombre+Email, **logo real** de Libre Pedal en el login, **sonido de cadena rehecho** (trinquete de piñón libre realista, velocidad variable, coast al soltar), **motor de audio atmosférico con reverb compartido** (todo suena más cinematográfico, incluido el sonido de apertura de la esfera), **sonido táctil global** (sonidoTap + vibración corta en casi todos los botones de la app).
+
+**Workflow de compilación del APK restaurado** (2026-07-06): se había desactivado por completo en algún punto (quedó un placeholder "no-op" en `build-apk.yml`). Se restauró el flujo completo. Link de descarga directo y fijo (se actualiza solo en cada push a main):
+**https://github.com/librepedal/librepedal.github.io/releases/download/latest-apk/app-debug.apk**
+
+**Nota para la próxima sesión**: revisar si `sonidoSwipe()` (definida en index.html, cerca de sonidoArco/sonidoTap) se debe conectar a algo o eliminar — quedó sin usar en ningún lado, no rompe nada pero es código muerto.
 
 ## Pendiente — en orden de prioridad (así lo dejamos acordado)
 
