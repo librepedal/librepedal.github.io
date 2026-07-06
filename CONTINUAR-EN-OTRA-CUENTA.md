@@ -40,14 +40,15 @@ Hecho recientemente (sesión del 2026-07-06): esfera 3D con fondo de postales/es
 
 ## Pendiente — en orden de prioridad (así lo dejamos acordado)
 
-1. **Probar en un celular real, ahora con varios ciclistas** (gratis, lo más urgente). El usuario va a pasarle la app a varios ciclistas para que la prueben en condiciones reales — nunca se ha verificado GPS con pantalla apagada, voz nativa, el APK, ni el mapa offline recién agregado, en un dispositivo real.
+1. **Seguir probando en celulares reales con varios ciclistas** (gratis, lo más urgente). El usuario ya probó una vez y encontramos bugs reales que en el navegador de escritorio no se notaban (desfase de scroll/voz en el tutorial, ya corregido en v5.18). Va a seguir pasándole la app a más ciclistas.
 2. **Pegar `firestore.rules` actualizado en la consola de Firebase** — sin esto, la votación de comunidad y el sorteo fallan con permission-denied (el resto de la app funciona igual). El archivo ya está listo en el repo.
 3. **Sentry** (monitoreo de errores) — gratis hasta 5.000 errores/mes. Requiere crear la cuenta (email) — no lo pude hacer yo mismo, necesita que el usuario la cree.
-4. **Voz offline de verdad** (sin depender de internet) — sigue pendiente, es trabajo de desarrollo nativo (Android) más grande, no se alcanzó a hacer en esta sesión.
+4. **Voz offline de verdad**: SE INVESTIGÓ (2026-07-06) y se decidió NO hacerla por ahora. El plugin obvio (`@capacitor-community/speech-recognition`) se revisó a nivel de código fuente real y NO activa el modo on-device de Android — instalarlo no habría resuelto nada, sigue dependiendo de internet igual que hoy. La alternativa real (motor Vosk embebido) implica +40-50MB de APK, peor precisión y un plugin nativo desde cero — el usuario prefirió no pagar ese costo. En su lugar se implementó un fallback honesto: si el reconocimiento de voz falla por falta de señal, la app te lleva directo a escribir el destino a mano (v5.20). No re-investigar esto sin que cambien las circunstancias (ej. si aparece un plugin Capacitor que sí exponga on-device recognition).
 5. **Reemplazar Nominatim/OSRM públicos** por algo con SLA (LocationIQ/Geoapify para geocoding, GraphHopper/OpenRouteService o self-host para ruteo) — recién cuando tengamos ~100-200 usuarios activos regulares, hoy los servicios públicos gratuitos alcanzan pero no escalan.
 6. **Migrar identidad completa a `auth.uid`** (hoy es aditivo, falta terminar la migración para reglas de Firestore realmente por-dueño).
 7. **Distribución real**: Google Play (US$25 único) y evaluar iOS (Apple US$99/año + necesita Mac o CI tipo Codemagic) — hoy solo hay APK sideload.
 8. **Monetización real** (Stripe/Mercado Pago) cuando se decida activar Pro de verdad.
+9. **Multi-idioma**: el usuario preguntó y confirmó que hoy la app (incluido el tutorial) está solo en español — queda marcado como pendiente a futuro, no se aborda por ahora.
 
 ## Cómo prefiero trabajar (importante)
 - Modo autónomo: actuar de punta a punta, avisar pero no pedir permiso para cambios de código — **excepto** pagos, cuentas de terceros, acciones irreversibles o decisiones de negocio reales, ahí sí hay que consultarme primero.
