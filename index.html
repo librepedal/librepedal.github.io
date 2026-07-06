@@ -492,7 +492,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling%20music" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 </div>
 <div class="lp-player-note" style="margin-top:6px">Al tocar un ícono se abre esa app (si la tienes instalada) o su web. El navegador no puede controlar el volumen de otra app — baja el volumen de Pistero desde ella si se superponen.</div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.28</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.29</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -677,7 +677,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="cd">
     <h4 style="margin-top:0;font-size:0.85rem;color:var(--g)">⚙️ Panel Admin</h4>
     <p style="font-size:0.73rem;color:#9fb3c8;margin:4px 0 8px">Solo visible para ti como administrador.</p>
+    <div id="adminNuevosBadge" style="display:none;background:rgba(255,215,0,0.12);border:1px solid var(--g);color:var(--g);border-radius:8px;padding:8px 10px;font-size:0.78rem;font-weight:700;margin-bottom:8px"></div>
     <button class="ab" onclick="exportarUsuariosAdmin()">⬇️ Exportar lista de usuarios (.csv)</button>
+    <button class="ab sec" onclick="mostrarTodosRegistrados()">👥 Ver todos los registrados</button>
   </div>
 </div>
 </section>
@@ -718,7 +720,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.28'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.29'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1182,6 +1184,40 @@ function initCustomization(){
                ['customizeExtrasGrid',extrasOptions,null,'toggleExtra',true]];
   map.forEach(function(m){ const el=document.getElementById(m[0]); if(el) el.innerHTML=gridHTML(m[1],m[2],m[3],m[4]); });
   updatePreview(); updateCustomizePreview(); renderEstilos(); renderFondosEsfera();
+  actualizarBadgeAdmin();
+}
+// Aviso de nuevos registros desde la ultima vez que el admin miro el Panel Admin
+// (sin servicios externos: se compara con la fecha guardada localmente).
+async function actualizarBadgeAdmin(){
+  if(cu!==ADMIN_ID) return;
+  const badge=document.getElementById('adminNuevosBadge'); if(!badge) return;
+  const lastSeen=parseInt(localStorage.getItem('lp_admin_last_seen')||'0');
+  try{
+    const snap=await db.collection('users').orderBy('createdAt','desc').limit(200).get();
+    let nuevos=0;
+    snap.forEach(function(doc){ const d=doc.data(); const t=(d.createdAt&&d.createdAt.seconds)?d.createdAt.seconds*1000:0; if(t>lastSeen) nuevos++; });
+    if(nuevos>0){ badge.innerText='🔔 '+nuevos+' registro'+(nuevos>1?'s':'')+' nuevo'+(nuevos>1?'s':'')+' desde tu última visita'; badge.style.display='block'; }
+    else { badge.style.display='none'; }
+  }catch(e){}
+  localStorage.setItem('lp_admin_last_seen', Date.now());
+}
+async function mostrarTodosRegistrados(){
+  if(cu!==ADMIN_ID){ alert('Solo el administrador puede ver esta lista.'); return; }
+  document.getElementById('modalTitle').innerText='👥 Todos los registrados';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="color:#888">Cargando...</p>';
+  document.getElementById('userModal').classList.add('on');
+  try{
+    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    let html='<p style="font-size:0.8rem;color:var(--p);margin-bottom:8px">Total: '+snap.size+' registrados</p>';
+    snap.forEach(function(doc){
+      const d=doc.data();
+      const fecha=d.createdAt?new Date(d.createdAt.seconds*1000).toLocaleDateString():'—';
+      const compartiendo=(d.lat&&d.lon)?'<span style="color:var(--g)">📍 comparte ubicación</span>':'<span style="color:#888">sin ubicación compartida</span>';
+      html+='<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.nombre||'(sin nombre)')+'</strong><div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(d.email||'')+'</div><div style="font-size:0.68rem;color:#7d8ba0;margin-top:2px">'+fecha+' · '+compartiendo+'</div></div>';
+    });
+    c.innerHTML=html;
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar la lista.</p>'; }
 }
 function selectHelmet(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedHelmet=id; initCustomization(); }
 function selectSkin(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedSkin=id; initCustomization(); }
