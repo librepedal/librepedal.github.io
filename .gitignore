@@ -1,6 +1,13 @@
 LibrePedal-deploy.zip
+LibrePedal-publicar.zip
 .DS_Store
 Thumbs.db
+
+# Tokens/credenciales locales — nunca deben subirse al repo
+MI-CLOUDFLARE.txt
+MI-CLOUDFLARE-IA.txt
+MI-TOKEN-NETLIFY.txt
+.netlify-token.txt
 
 # Generados por el build nativo (Capacitor / Android)
 node_modules/
@@ -8,3 +15,6 @@ www/
 android/
 .gradle/
 package-lock.json
+
+# Cache local de Wrangler (Cloudflare Pages deploy)
+.wrangler/
