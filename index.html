@@ -479,7 +479,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.apple.com/search?term=cycling" target="_blank" class="music-btn music-apple" title="Apple Music"><i class="fab fa-apple"></i></a>
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon" title="Amazon Music"><i class="fab fa-amazon"></i></a>
 </div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.11</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.12</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -704,7 +704,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.11'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.12'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -2392,21 +2392,23 @@ function _ac(){ esAudioCtx = esAudioCtx || new (window.AudioContext||window.webk
 function sonidoArco(){
   try{
     const ac=_ac(), t0=ac.currentTime;
-    // Arpegio cálido (Do-Mi-Sol-Do) con armónico suave, tipo campanita luminosa
-    const notas=[523.25,659.25,783.99,1046.5];
+    // Eco/delay sutil compartido por todo el acorde
+    const delay=ac.createDelay(1.0); delay.delayTime.value=0.26;
+    const feedback=ac.createGain(); feedback.gain.value=0.3;
+    const wet=ac.createGain(); wet.gain.value=0.28;
+    delay.connect(feedback); feedback.connect(delay); delay.connect(wet); wet.connect(ac.destination);
+    // Acorde de armónicos en Sol (Sol-Si-Re-Sol), volumen bajo y suave
+    const notas=[196.00,246.94,293.66,392.00];
     notas.forEach(function(freq,i){
-      const start=t0+i*0.1;
+      const start=t0+i*0.05;
       const o=ac.createOscillator(); o.type='sine'; o.frequency.value=freq;
-      const o2=ac.createOscillator(); o2.type='triangle'; o2.frequency.value=freq*2;
-      const g=ac.createGain(); g.gain.setValueAtTime(0,start); g.gain.linearRampToValueAtTime(0.22,start+0.06); g.gain.exponentialRampToValueAtTime(0.0001,start+0.9);
-      const g2=ac.createGain(); g2.gain.setValueAtTime(0,start); g2.gain.linearRampToValueAtTime(0.05,start+0.06); g2.gain.exponentialRampToValueAtTime(0.0001,start+0.7);
-      o.connect(g); g.connect(ac.destination); o.start(start); o.stop(start+1);
-      o2.connect(g2); g2.connect(ac.destination); o2.start(start); o2.stop(start+0.8);
+      const g=ac.createGain(); g.gain.setValueAtTime(0,start); g.gain.linearRampToValueAtTime(0.07,start+0.15); g.gain.exponentialRampToValueAtTime(0.0001,start+1.4);
+      o.connect(g); g.connect(ac.destination); g.connect(delay); o.start(start); o.stop(start+1.5);
     });
-    // Pad grave suave de fondo, da calidez y cuerpo
-    const pad=ac.createOscillator(); pad.type='sine'; pad.frequency.value=130.81;
-    const gp=ac.createGain(); gp.gain.setValueAtTime(0,t0); gp.gain.linearRampToValueAtTime(0.1,t0+0.18); gp.gain.exponentialRampToValueAtTime(0.0001,t0+1.2);
-    pad.connect(gp); gp.connect(ac.destination); pad.start(t0); pad.stop(t0+1.3);
+    // Fundamental grave (Sol una octava abajo), da cuerpo sin subir el volumen general
+    const pad=ac.createOscillator(); pad.type='sine'; pad.frequency.value=98.00;
+    const gp=ac.createGain(); gp.gain.setValueAtTime(0,t0); gp.gain.linearRampToValueAtTime(0.045,t0+0.2); gp.gain.exponentialRampToValueAtTime(0.0001,t0+1.6);
+    pad.connect(gp); gp.connect(ac.destination); gp.connect(delay); pad.start(t0); pad.stop(t0+1.7);
   }catch(e){}
 }
 // El navegador bloquea el audio hasta el primer toque: al primer gesto despertamos el motor.
