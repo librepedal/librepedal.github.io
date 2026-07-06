@@ -492,7 +492,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling%20music" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 </div>
 <div class="lp-player-note" style="margin-top:6px">Al tocar un ícono se abre esa app (si la tienes instalada) o su web. El navegador no puede controlar el volumen de otra app — baja el volumen de Pistero desde ella si se superponen.</div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.29</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.30</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -720,7 +720,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.29'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.30'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -2550,6 +2550,10 @@ const esferaItems=[
  {i:'✨',t:'Tienda',fn:'mostrarTienda'},{i:'🆘',t:'SOS',fn:'enviarSOS'},{i:'🤝',t:'Comunidad',fn:'mostrarComunidad'}
 ];
 let esEls=[], esRotX=-0.2, esRotY=0, esVelX=0, esVelY=0.004, esDrag=false, esLast=null, esMoved=0, esRAF=null, esBound=false, esCanvas=null, esPairs=[];
+// Logo real en el nucleo de la esfera (reemplaza la bola de plasma blanca/cian de antes).
+let _esLogoImg=null, _esLogoReady=false;
+function _esLogoCargar(){ if(_esLogoImg) return; _esLogoImg=new Image(); _esLogoImg.onload=function(){ _esLogoReady=true; }; _esLogoImg.src='logo.jpg'; }
+_esLogoCargar();
 let esAudioCtx=null, esIntroStart=0, esEstilo=parseInt(localStorage.getItem('lp_estilo')||'1')||1;
 let esStarsList=null, esComets=[], esExplosions=[], esNextComet=0, esNextExplosion=0, esToques=[];
 let esFondoModo=parseInt(localStorage.getItem('lp_fondo_esfera')||'1')||1; // 1=postales de Chile (gratis), 2=espacial (Darma)
@@ -2809,14 +2813,23 @@ function esLoop(){
       return true;
     });
     ctx.globalAlpha=1; ctx.shadowBlur=0;
-    // 2) Bola de plasma: aura morada + núcleo cyan/blanco, palpitante
+    // 2) Núcleo: aura morada de fondo (igual que antes) + el logo real en el centro, palpitante
     const pulso=1+Math.sin(now*1.7)*0.2, cr=42*pulso;
     let g2=ctx.createRadialGradient(cx,cy,0,cx,cy,cr*1.75);
     g2.addColorStop(0,'rgba(190,0,255,0.42)'); g2.addColorStop(0.5,'rgba(120,0,255,0.16)'); g2.addColorStop(1,'rgba(120,0,255,0)');
     ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(cx,cy,cr*1.75,0,6.2832); ctx.fill();
-    let g=ctx.createRadialGradient(cx,cy,0,cx,cy,cr);
-    g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.2,'rgba(130,245,255,0.95)'); g.addColorStop(0.5,'rgba(0,150,255,0.55)'); g.addColorStop(0.8,'rgba(150,60,255,0.28)'); g.addColorStop(1,'rgba(120,0,255,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,cr,0,6.2832); ctx.fill();
+    if(_esLogoReady){
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx,cy,cr,0,6.2832); ctx.clip();
+      ctx.drawImage(_esLogoImg,cx-cr,cy-cr,cr*2,cr*2);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(cx,cy,cr,0,6.2832);
+      ctx.lineWidth=3; ctx.strokeStyle='rgba(0,242,255,0.85)'; ctx.shadowColor='rgba(0,242,255,0.9)'; ctx.shadowBlur=16; ctx.stroke(); ctx.shadowBlur=0;
+    } else {
+      let g=ctx.createRadialGradient(cx,cy,0,cx,cy,cr);
+      g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.2,'rgba(130,245,255,0.95)'); g.addColorStop(0.5,'rgba(0,150,255,0.55)'); g.addColorStop(0.8,'rgba(150,60,255,0.28)'); g.addColorStop(1,'rgba(120,0,255,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,cr,0,6.2832); ctx.fill();
+    }
   }
   esRAF=requestAnimationFrame(esLoop);
 }
