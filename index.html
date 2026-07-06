@@ -483,7 +483,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling%20music" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 </div>
 <div class="lp-player-note" style="margin-top:6px">Al tocar un ícono se abre esa app (si la tienes instalada) o su web. El navegador no puede controlar el volumen de otra app — baja el volumen de Pistero desde ella si se superponen.</div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.22</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.23</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -709,7 +709,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.22'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.23'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -845,6 +845,11 @@ let navSteps = [], currentStepIndex = 0, lastSpokenStep = -1, routeTotalDistance
 let currentUserLocation = null;
 let selectedHelmet = 'giro', selectedLens = 'none', selectedSkin = 'cyan', selectedExtras = [];
 let navUserMarkers = [], maxSpeed = 0, speedReadings = [];
+// Ritmo base: promedio movil del pedaleo REAL en este tramo (no un umbral fijo).
+// Se adapta solo a la ruta: en una subida baja solo, en una bajada sube solo,
+// y "lento/normal/rapido" se miden siempre relativos a como vienes pedaleando hoy.
+let ritmoBase = 15;
+function actualizarRitmoBase(sp){ if(sp<=0) return; const alpha=0.04; ritmoBase = ritmoBase*(1-alpha) + sp*alpha; ritmoBase = Math.max(6, Math.min(35, ritmoBase)); }
 let nextHydrateKm = 5, nextEatKm = 20;
 let recognition = null, micOn = false;
 let vozPref = null, vozActiva = (localStorage.getItem('lp_voz') !== 'off');
@@ -1223,7 +1228,7 @@ function obtenerFraseUnica(categoria){
   return frase;
 }
 /* Umbrales realistas de ciclismo: <7 subida/tranco lento · 7-18 ritmo de paseo/ruta · 18+ ya es volar (bajada o viento a favor). */
-function obtenerFrasePorVelocidad(v){ if(v===0) return obtenerFraseUnica('parado'); if(v<7) return obtenerFraseUnica('lento'); if(v<18) return obtenerFraseUnica('normal'); return obtenerFraseUnica('rapido'); }
+function obtenerFrasePorVelocidad(v){ if(v===0) return obtenerFraseUnica('parado'); if(v<ritmoBase*0.65) return obtenerFraseUnica('lento'); if(v>ritmoBase*1.35) return obtenerFraseUnica('rapido'); return obtenerFraseUnica('normal'); }
 // Frases para ciclista URBANO (términos chilenos), separadas de las de carretera.
 const frasesCiudad = ["Ojo con las puertas de los autos estacionados, no te vayan a abrir una.","Respeta el semáforo, aunque andes apurado.","En la ciudad todos andan a mil; tú lleva tu propio ritmo.","Cuidado con el peatón pegado al celular.","Esquiva el bache, que la calle anda pelada.","Un ciclista menos es un taco menos: vas aportando a Chile.","Hazte notar, toca la campanilla si tienes.","Ojo con la micro, que esa no te espera a nadie.","Vas ganándole al taco, campeón.","En las esquinas mira siempre antes de cruzar, no confíes.","En la ciudad el casco no es opcional, es tu mejor amigo.","Si hay ciclovía, úsala, que para eso está.","Ojo con los quiltros del barrio, salúdalos de lejitos.","La ciudad se ve distinta desde la bici, disfrútala.","Cuidado con el auto que dobla sin poner la señal."];
 // Detección de zona: ciudad vs carretera (reverse-geocoding, con throttle para no saturar).
@@ -1523,7 +1528,7 @@ const lpBackgroundGeo = (function(){
 function toggleGPS(){
   const btn=document.querySelector('#v-dash .bg');
   if(!ig){
-    rutaDocId=null; puntosGuardados=0; spAnterior=0;
+    rutaDocId=null; puntosGuardados=0; spAnterior=0; ritmoBase=15;
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
       if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
@@ -1570,6 +1575,7 @@ function ug(p){
   // completo la "velocidad" que reporta el GPS (es la que se vuelve fantasma en casa).
   const spVentana=velocidadVentana(posHistory);
   let sp = (spVentana<6) ? 0 : spVentana;
+  actualizarRitmoBase(sp);
   lastFixTime=Date.now();
   document.getElementById('spd').innerText=Math.round(sp);
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
@@ -1637,7 +1643,7 @@ function velocidadVentana(pts){
   if(dt<2) return 0;
   return (gd2(c1.lat,c1.lon,c2.lat,c2.lon)*1000/dt)*3.6;
 }
-function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<7?'lento':v<18?'normal':'rapido'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
+function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<ritmoBase*0.65?'lento':v>ritmoBase*1.35?'rapido':'normal'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd(); }
 async function im(){ if(mp) return; mp=L.map('map',{zoomControl:true}).setView([20,0],2); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp); if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); iniciarCiclistasDemo(); }
@@ -2193,7 +2199,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     document.getElementById('etaDuration').innerText=routeTotalDuration+' min';
     if(helmetMarker) navMap.removeLayer(helmetMarker);
     helmetMarker=L.marker([startLat,startLon],{icon:L.divIcon({className:'',html:riderMarkerHTML(selectedHelmet,skinColor(selectedSkin),true),iconSize:[50,34],iconAnchor:[25,17]})}).addTo(navMap);
-    tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon}; totalDistance=0;
+    tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon}; totalDistance=0; ritmoBase=15;
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
     if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop();
     lpWakeLock.enable();
@@ -2744,9 +2750,9 @@ function esLoop(){
   esRAF=requestAnimationFrame(esLoop);
 }
 function _esXY(e){ const t=e.touches&&e.touches[0]; return {x:t?t.clientX:e.clientX, y:t?t.clientY:e.clientY}; }
-function _esStart(e){ esDrag=true; esMoved=0; esLast=_esXY(e); }
+function _esStart(e){ esDrag=true; esMoved=0; esLast=_esXY(e); sonidoCadenaIniciar(); }
 function _esMove(e){ if(!esDrag) return; const p=_esXY(e), dx=p.x-esLast.x, dy=p.y-esLast.y; esMoved+=Math.abs(dx)+Math.abs(dy); esRotY+=dx*0.006; esRotX-=dy*0.006; esVelY=dx*0.0005; esVelX=-dy*0.0005; esLast=p; }
-function _esEnd(){ esDrag=false; }
+function _esEnd(){ esDrag=false; sonidoCadenaDetener(); }
 function _esTap(e){
   if(esMoved>12) return; // fue un arrastre, no un toque
   const wrap=document.getElementById('esferaWrap'); if(!wrap) return;
