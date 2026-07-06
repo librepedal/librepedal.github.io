@@ -457,7 +457,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </div>
 <div class="section-info"><h4>Desempeño</h4><div class="performance-bar"><div class="performance-fill" id="performanceFill" style="width:0%">0%</div></div></div>
 <div class="quick-links">
-  <button class="bg" onclick="toggleGPS()">📍 GPS</button>
   <button class="btrip" onclick="cv('trips')">🗺️ Mis Viajes</button>
   <button class="btrip" onclick="openDiario()">📓 Ciclo Bitácora</button>
   <button class="bd" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
@@ -492,7 +491,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling%20music" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 </div>
 <div class="lp-player-note" style="margin-top:6px">Al tocar un ícono se abre esa app (si la tienes instalada) o su web. El navegador no puede controlar el volumen de otra app — baja el volumen de Pistero desde ella si se superponen.</div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.30</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.31</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -720,7 +719,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.30'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.31'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1373,6 +1372,7 @@ window.onload = async function(){
     subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes();
     getCurrentLocation();
     publicarUbicacionInicial();
+    solicitarPermisosEsenciales();
   } else {
     document.getElementById('auth').style.display='flex';
     rm(MG); fg('todos'); initCustomization();
@@ -1471,6 +1471,7 @@ async function reg(e){
   subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes();
   getCurrentLocation();
   publicarUbicacionInicial();
+  solicitarPermisosEsenciales();
   if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(startTutorial, 700); }
   else { setTimeout(function(){ h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
 }
@@ -1531,6 +1532,17 @@ const lpBackgroundGeo = (function(){
     _p:function(){ return getBG(); }
   };
 })();
+// Pide GPS y micrófono de una vez al entrar (antes había que tocar un botón de GPS
+// manual; ahora el único control de privacidad es el modo fantasma). El GPS arranca
+// solo; el micrófono se "precalienta" para no sorprender la primera vez que se use.
+function solicitarPermisosEsenciales(){
+  if(!ig) toggleGPS();
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      stream.getTracks().forEach(function(t){ t.stop(); });
+    }).catch(function(){});
+  }
+}
 function toggleGPS(){
   const btn=document.querySelector('#v-dash .bg');
   if(!ig){
@@ -2557,11 +2569,15 @@ _esLogoCargar();
 let esAudioCtx=null, esIntroStart=0, esEstilo=parseInt(localStorage.getItem('lp_estilo')||'1')||1;
 let esStarsList=null, esComets=[], esExplosions=[], esNextComet=0, esNextExplosion=0, esToques=[];
 let esFondoModo=parseInt(localStorage.getItem('lp_fondo_esfera')||'1')||1; // 1=postales de Chile (gratis), 2=espacial (Darma)
-const ES_POSTALES_TITULOS=['Carretera Austral','Valparaíso','Torres del Paine','Valle de la Luna (Chile)','Chiloé','Cuesta Lo Prado','Volcán Villarrica','Lago General Carrera','Desierto de Atacama','Ruta 5 (Chile)','Ruta 68 (Chile)','Paso Los Libertadores','Cuesta Barriga','Valle Nevado','Ruta 9 (Chile)','Parque Nacional Conguillío','Laguna San Rafael','Cajón del Maipo','Paso Pehuenche'];
-let esPostUrls=[], esPostOrden=[], esPostOrdenPos=0, esPostTimer=null, esPostLoading=false, esPostActiveLayer='A';
+// Nota: se sacaron a propósito los que resultaron ser collage/montaje/mapa/señalética
+// en vez de una foto real y completa (Torres del Paine, Chiloé, Desierto de Atacama, Ruta 9).
+const ES_POSTALES_TITULOS=['Carretera Austral','Valparaíso','Valle de la Luna (Chile)','Cuesta Lo Prado','Volcán Villarrica','Lago General Carrera','Ruta 5 (Chile)','Ruta 68 (Chile)','Paso Los Libertadores','Cuesta Barriga','Valle Nevado','Parque Nacional Conguillío','Laguna San Rafael','Cajón del Maipo','Paso Pehuenche','San Pedro de Atacama','Pucón','Volcán Osorno','Puerto Varas','Isla de Pascua','Coyhaique','Ancud','Iquique'];
+let esPostUrls=[], esPostOrden=[], esPostOrdenPos=0, esPostTimer=null, esPostLoading=false, esPostActiveLayer='A', esPostUltimoIdx=-1;
 function esBarajarPostales(){
   esPostOrden=esPostUrls.map(function(_,i){return i;});
   for(let i=esPostOrden.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=esPostOrden[i]; esPostOrden[i]=esPostOrden[j]; esPostOrden[j]=tmp; }
+  // evita que la primera de la vuelta nueva sea la misma que la ultima que se mostro (si no, se ve como una repetida)
+  if(esPostOrden.length>1 && esPostOrden[0]===esPostUltimoIdx){ const tmp=esPostOrden[0]; esPostOrden[0]=esPostOrden[1]; esPostOrden[1]=tmp; }
   esPostOrdenPos=0;
 }
 async function esCargarPostales(){
@@ -2583,7 +2599,8 @@ async function esCargarPostales(){
 function esSiguientePostal(){
   if(!esPostUrls.length) return;
   if(!esPostOrden.length || esPostOrdenPos>=esPostOrden.length) esBarajarPostales(); // baraja de nuevo cuando se muestran todas: random real, sin repetir antes de agotarlas
-  const url=esPostUrls[esPostOrden[esPostOrdenPos]]; esPostOrdenPos++;
+  const idx=esPostOrden[esPostOrdenPos]; esPostUltimoIdx=idx;
+  const url=esPostUrls[idx]; esPostOrdenPos++;
   const nextId=esPostActiveLayer==='A'?'esPostB':'esPostA', prevId=esPostActiveLayer==='A'?'esPostA':'esPostB';
   const showEl=document.getElementById(nextId), hideEl=document.getElementById(prevId);
   if(!showEl) return;
@@ -2813,18 +2830,26 @@ function esLoop(){
       return true;
     });
     ctx.globalAlpha=1; ctx.shadowBlur=0;
-    // 2) Núcleo: aura morada de fondo (igual que antes) + el logo real en el centro, palpitante
-    const pulso=1+Math.sin(now*1.7)*0.2, cr=42*pulso;
+    // 2) Núcleo: aura morada de fondo (igual que antes) + el logo real en el centro, respiración lenta y suave
+    const pulso=1+Math.sin(now*0.4)*0.06, cr=42*pulso;
     let g2=ctx.createRadialGradient(cx,cy,0,cx,cy,cr*1.75);
     g2.addColorStop(0,'rgba(190,0,255,0.42)'); g2.addColorStop(0.5,'rgba(120,0,255,0.16)'); g2.addColorStop(1,'rgba(120,0,255,0)');
     ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(cx,cy,cr*1.75,0,6.2832); ctx.fill();
     if(_esLogoReady){
+      // Aura propia que respira junto con el logo (reemplaza el anillo blanco fijo)
+      const auraPulso=(pulso-1)/0.06; // -1..1 según la respiración
+      const auraR=cr*(1.25+auraPulso*0.12), auraOp=0.3+Math.max(0,auraPulso)*0.25;
+      const auraG=ctx.createRadialGradient(cx,cy,cr*0.85,cx,cy,auraR);
+      auraG.addColorStop(0,'rgba(0,242,255,'+auraOp.toFixed(2)+')'); auraG.addColorStop(1,'rgba(0,242,255,0)');
+      ctx.fillStyle=auraG; ctx.beginPath(); ctx.arc(cx,cy,auraR,0,6.2832); ctx.fill();
       ctx.save();
       ctx.beginPath(); ctx.arc(cx,cy,cr,0,6.2832); ctx.clip();
-      ctx.drawImage(_esLogoImg,cx-cr,cy-cr,cr*2,cr*2);
+      // recorta al cuadrado central Y le quita el margen negro + anillo blanco propios del logo
+      const iw=_esLogoImg.naturalWidth||1251, ih=_esLogoImg.naturalHeight||1280;
+      const side=Math.min(iw,ih), baseX=(iw-side)/2, baseY=(ih-side)/2;
+      const inset=side*0.15, cropSide=side-inset*2;
+      ctx.drawImage(_esLogoImg,baseX+inset,baseY+inset,cropSide,cropSide,cx-cr,cy-cr,cr*2,cr*2);
       ctx.restore();
-      ctx.beginPath(); ctx.arc(cx,cy,cr,0,6.2832);
-      ctx.lineWidth=3; ctx.strokeStyle='rgba(0,242,255,0.85)'; ctx.shadowColor='rgba(0,242,255,0.9)'; ctx.shadowBlur=16; ctx.stroke(); ctx.shadowBlur=0;
     } else {
       let g=ctx.createRadialGradient(cx,cy,0,cx,cy,cr);
       g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.2,'rgba(130,245,255,0.95)'); g.addColorStop(0.5,'rgba(0,150,255,0.55)'); g.addColorStop(0.8,'rgba(150,60,255,0.28)'); g.addColorStop(1,'rgba(120,0,255,0)');
@@ -2899,8 +2924,7 @@ function handleVoiceCommand(raw){
 const tutorialSteps=[
   {d:'¡Hola! Soy Pistero, tu copiloto. Sube el volumen y te muestro la app. El brillo te indica de qué te hablo. Avanza con Siguiente.'},
   {sel:'.es-globe', d:'Al abrir la app ves la Esfera de Aplicaciones: tus iconos favoritos, flotando. Gírala con el dedo y toca un ícono para entrar. Este botón la reabre cuando quieras.'},
-  {view:'dash', sel:'.speed-display', d:'En Inicio ves tu velocidad en vivo. Debajo: kilómetros, calorías y tu nivel.'},
-  {view:'dash', sel:'.quick-links .bg', d:'Este botón GPS graba tu recorrido. Se guarda solo cada vez que te detienes, y si sigues, lo sigo registrando.'},
+  {view:'dash', sel:'.speed-display', d:'En Inicio ves tu velocidad en vivo. El GPS ya está grabando tu recorrido solo, no necesitas prender nada: se guarda cada vez que te detienes, y si sigues, lo sigo registrando. Debajo: kilómetros, calorías y tu nivel.'},
   {sel:'#micBtn', d:'Toca el micrófono y háblame. Dime una dirección y te llevo como Waze. También entiendo: guarda el viaje, sigamos, sigue trackeando, o cuántos kilómetros llevo.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'El botón SOS: guarda tus contactos de emergencia una vez, y al tocarlo les mando tu ubicación por WhatsApp con un toque.'},
   {view:'dash', sel:'.darma-badge', d:'Tu Darma: tu premio por aportar a la comunidad. Con ella desbloqueas skins, cascos y estilos de energía.'},
