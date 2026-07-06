@@ -480,7 +480,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.apple.com/search?term=cycling" target="_blank" class="music-btn music-apple" title="Apple Music"><i class="fab fa-apple"></i></a>
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon" title="Amazon Music"><i class="fab fa-amazon"></i></a>
 </div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.17</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.18</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -706,7 +706,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.17'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.18'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -857,7 +857,7 @@ function limpiarParaVoz(t){
 }
 function cargarVoces(){ try{ const vs=speechSynthesis.getVoices(); vozPref = vs.find(function(v){return /es(-|_)(CL|419|MX)/i.test(v.lang);}) || vs.find(function(v){return (v.lang||'').toLowerCase().indexOf('es')===0;}) || null; }catch(e){} }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
-function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
+function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
 /* Obtiene un plugin nativo de Capacitor. CLAVE: con la web en vivo (server.url) el
    puente inyectado NO tiene registerPlugin; los plugins viven en Capacitor.Plugins. */
 function lpPlugin(nombre){
@@ -1339,8 +1339,29 @@ function getCurrentLocation(){
     {enableHighAccuracy:true, timeout:15000, maximumAge:0});
   });
 }
-function showLoading(t){ document.getElementById('loadingText').innerText=t; const ov=document.getElementById('loadingOverlay'); ov.classList.add('show'); ov.onclick=hideLoading; /* escape de emergencia: un toque la cierra si algo queda pegado */ }
-function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); }
+function showLoading(t){ document.getElementById('loadingText').innerText=t; const ov=document.getElementById('loadingOverlay'); ov.classList.add('show'); ov.onclick=hideLoading; /* escape de emergencia: un toque la cierra si algo queda pegado */ sonidoCadenaIniciar(); }
+function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); sonidoCadenaDetener(); }
+let _cadenaLoopActivo=false, _cadenaTimer=null;
+function sonidoCadenaIniciar(){
+  if(_cadenaLoopActivo) return;
+  _cadenaLoopActivo=true;
+  try{
+    const ac=_ac();
+    (function tick(){
+      if(!_cadenaLoopActivo) return;
+      const t0=ac.currentTime;
+      const buf=ac.createBuffer(1,Math.ceil(ac.sampleRate*0.03),ac.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<d.length;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2); }
+      const src=ac.createBufferSource(); src.buffer=buf;
+      const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1300+Math.random()*500; bp.Q.value=3.2;
+      const g=ac.createGain(); g.gain.setValueAtTime(0.05,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.03);
+      src.connect(bp); bp.connect(g); g.connect(ac.destination); src.start(t0);
+      _cadenaTimer=setTimeout(tick,95+Math.random()*35); // cadencia irregular, como una cadena corriendo de verdad
+    })();
+  }catch(e){}
+}
+function sonidoCadenaDetener(){ _cadenaLoopActivo=false; clearTimeout(_cadenaTimer); }
 
 async function reg(e){
   e.preventDefault();
@@ -2761,7 +2782,7 @@ function handleVoiceCommand(raw){
 
 const tutorialSteps=[
   {d:'¡Hola! Soy Pistero, tu copiloto. Sube el volumen y te muestro la app. El brillo te indica de qué te hablo. Avanza con Siguiente.'},
-  {sel:'.es-globe', d:'Al abrir la app ves la Esfera de Aplicaciones: iconos flotando con rayos de energía. Gírala con el dedo y toca un ícono para entrar. Este botón la reabre cuando quieras.'},
+  {sel:'.es-globe', d:'Al abrir la app ves la Esfera de Aplicaciones: tus iconos favoritos, flotando. Gírala con el dedo y toca un ícono para entrar. Este botón la reabre cuando quieras.'},
   {view:'dash', sel:'.speed-display', d:'En Inicio ves tu velocidad en vivo. Debajo: kilómetros, calorías y tu nivel.'},
   {view:'dash', sel:'.quick-links .bg', d:'Este botón GPS graba tu recorrido. Se guarda solo cada vez que te detienes, y si sigues, lo sigo registrando.'},
   {sel:'#micBtn', d:'Toca el micrófono y háblame. Dime una dirección y te llevo como Waze. También entiendo: guarda el viaje, sigamos, sigue trackeando, o cuántos kilómetros llevo.'},
@@ -2806,9 +2827,13 @@ function renderTutorial(){
   // pequeño retardo para que la vista cambie y el elemento exista/posicione
   setTimeout(function(){
     const el=s.sel?document.querySelector(s.sel):null;
-    if(el) el.scrollIntoView({block:'center',behavior:'smooth'});
-    setTimeout(function(){ tutSpotlight(el); h(s.d); },s.sel?320:0); // el brillo y la voz arrancan exactamente juntos
-  }, s.view?260:60);
+    // scroll INSTANTÁNEO (sin 'smooth'): en celulares reales la animación suave
+    // seguía en movimiento cuando medíamos la posición, y el brillo quedaba
+    // desfasado sobre otro botón. Esperamos dos frames de pintado reales
+    // (no un tiempo fijo adivinado) para que el layout ya esté asentado.
+    if(el) el.scrollIntoView({block:'center'});
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ tutSpotlight(el); h(s.d); }); });
+  }, s.view?260:0);
 }
 function tutNext(){ if(tutorialIdx<tutorialSteps.length-1){ tutorialIdx++; renderTutorial(); } else { closeTutorial(); } }
 function tutPrev(){ if(tutorialIdx>0){ tutorialIdx--; renderTutorial(); } }
