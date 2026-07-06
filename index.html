@@ -479,7 +479,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.apple.com/search?term=cycling" target="_blank" class="music-btn music-apple" title="Apple Music"><i class="fab fa-apple"></i></a>
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon" title="Amazon Music"><i class="fab fa-amazon"></i></a>
 </div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.12</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.13</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -509,7 +509,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <button class="ab" onclick="addCustomDest()">Agregar</button></div></div>
 <div style="margin-top:12px"><h4 style="color:var(--g);font-size:0.9rem">Orden</h4><div id="added-dests"></div></div>
 <button class="ab" style="margin-top:12px" onclick="reporteDeViaje()">📋 Ver reporte + clima</button>
-<button class="ab sec" style="margin-top:6px" onclick="var g=document.getElementById('gastos-panel');g.style.display=g.style.display==='none'?'block':'none'">💰 Calcular gastos del viaje</button>
+<button class="ab sec" style="margin-top:6px" onclick="toggleGastosPanel()">💰 Calcular gastos del viaje</button>
 <div id="gastos-panel" style="display:none;background:rgba(0,0,0,0.3);border:1px solid rgba(0,242,255,0.25);padding:12px;border-radius:10px;margin-top:6px">
   <h4 style="color:var(--p);margin:0 0 8px 0;font-size:0.85rem">💰 Presupuesto cicloviajero</h4>
   <input type="number" id="gasto-km" placeholder="Kilómetros del viaje (ej: 250)" min="1">
@@ -704,7 +704,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.12'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.13'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -935,6 +935,40 @@ const lpMusic=(function(){
 })();
 
 /* ===== CALCULADORA DE GASTOS DEL VIAJE ===== */
+async function calcularKmRutaPlanificada(){
+  try{
+    const start=(document.getElementById('trip-start').value||'').trim();
+    const puntos=[];
+    if(start){ try{ const g0=await geocodeDestino(start); if(g0) puntos.push({lat:g0.lat,lon:g0.lon}); }catch(e){} }
+    for(const d of addedDests){
+      if(d.lat&&d.lon){ puntos.push({lat:d.lat,lon:d.lon}); }
+      else{ try{ const g=await geocodeDestino(d.addr||d.name); if(g) puntos.push({lat:g.lat,lon:g.lon}); }catch(e){} }
+    }
+    if(puntos.length<2) return null;
+    let total=0;
+    for(let i=0;i<puntos.length-1;i++){
+      const a=puntos[i], b=puntos[i+1];
+      const url='https://router.project-osrm.org/route/v1/cycling/'+a.lon+','+a.lat+';'+b.lon+','+b.lat+'?overview=false';
+      const r=await fetch(url); const j=await r.json();
+      if(j.code==='Ok' && j.routes && j.routes[0]) total+=j.routes[0].distance/1000;
+    }
+    return total?Math.round(total):null;
+  }catch(e){ return null; }
+}
+async function toggleGastosPanel(){
+  const g=document.getElementById('gastos-panel');
+  const abrir = g.style.display==='none' || !g.style.display;
+  g.style.display = abrir ? 'block' : 'none';
+  if(abrir){
+    const kmInput=document.getElementById('gasto-km');
+    if(!kmInput.value && addedDests && addedDests.length){
+      kmInput.placeholder='Calculando distancia real de tu ruta...';
+      const km=await calcularKmRutaPlanificada();
+      if(km){ kmInput.value=km; kmInput.placeholder='Kilómetros del viaje (ej: 250)'; h('Calculé '+km+' km reales para tu ruta según tus paradas. Puedes ajustarlo si quieres.'); }
+      else { kmInput.placeholder='Kilómetros del viaje (ej: 250)'; }
+    }
+  }
+}
 function calcularGastos(){
   const km=parseFloat(document.getElementById('gasto-km').value)||0;
   const dias=Math.max(1,parseInt(document.getElementById('gasto-dias').value)||1);
@@ -2273,26 +2307,29 @@ async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-
 async function reporteDeViaje(){
   if(!addedDests || addedDests.length===0){ alert('Agrega al menos un destino primero'); return; }
   document.getElementById('modalTitle').innerText='🗺️ Reporte del viaje';
-  const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Preparando el reporte y el clima de la zona...</p>'; document.getElementById('userModal').classList.add('on');
-  let dest=null;
-  for(let i=addedDests.length-1;i>=0;i--){ if(addedDests[i].lat&&addedDests[i].lon){ dest={lat:addedDests[i].lat,lon:addedDests[i].lon,name:addedDests[i].name}; break; } }
-  if(!dest){ try{ const u=addedDests[addedDests.length-1]; const d=await geocodeDestino(u.addr||u.name); if(d) dest={lat:d.lat,lon:d.lon,name:u.name}; }catch(e){} }
+  const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Preparando el reporte y el clima de cada parada...</p>'; document.getElementById('userModal').classList.add('on');
   let html='<div style="background:var(--gl);padding:10px;border-radius:10px;margin-bottom:10px"><strong style="color:var(--p)">📍 Paradas ('+addedDests.length+')</strong>';
   addedDests.forEach(function(d,i){ html+='<div style="font-size:0.85rem;padding:3px 0;border-bottom:1px solid #222">'+(i+1)+'. '+escapeHTML(d.name)+(d.addr?(' — '+escapeHTML(d.addr)):'')+'</div>'; });
   html+='</div>';
-  if(dest){
-    const w=await climaDeZona(dest.lat,dest.lon);
-    if(w&&w.current){
-      html+='<div style="background:rgba(0,242,255,0.08);border:1px solid var(--p);padding:10px;border-radius:10px"><strong style="color:var(--p)">🌤️ Clima en '+escapeHTML(dest.name||'el destino')+'</strong>';
-      html+='<div style="font-size:1.5rem;font-weight:800;margin:4px 0">'+Math.round(w.current.temperature_2m)+'° · '+wmoTexto(w.current.weather_code)+'</div>';
+  let vozResumen='';
+  // Clima de CADA parada (no solo la última), geolocalizando las que aún no tengan coordenadas.
+  for(let i=0;i<addedDests.length;i++){
+    const d=addedDests[i];
+    let lat=d.lat, lon=d.lon;
+    if(!lat||!lon){ try{ const g=await geocodeDestino(d.addr||d.name); if(g){ lat=g.lat; lon=g.lon; } }catch(e){} }
+    if(!lat||!lon){ html+='<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+(i+1)+'. '+escapeHTML(d.name)+'</strong><div style="color:#888;font-size:0.78rem">No pude ubicar esta parada para el clima.</div></div>'; continue; }
+    const w=await climaDeZona(lat,lon);
+    if(w && w.current){
+      html+='<div style="background:rgba(0,242,255,0.08);border:1px solid var(--p);padding:10px;border-radius:10px;margin-bottom:8px"><strong style="color:var(--p);font-size:0.85rem">🌤️ '+(i+1)+'. '+escapeHTML(d.name)+'</strong>';
+      html+='<div style="font-size:1.3rem;font-weight:800;margin:4px 0">'+Math.round(w.current.temperature_2m)+'° · '+wmoTexto(w.current.weather_code)+'</div>';
       html+='<div style="font-size:0.78rem;color:#9fb3c8">Viento '+Math.round(w.current.wind_speed_10m)+' km/h</div>';
-      if(w.daily && w.daily.time){ const dias=['Hoy','Mañana','Pasado']; html+='<div style="margin-top:8px;display:flex;gap:6px">'; for(let i=0;i<3&&i<w.daily.time.length;i++){ html+='<div style="flex:1;background:var(--gl);border-radius:8px;padding:6px;text-align:center"><div style="font-size:0.7rem;color:#8aa">'+dias[i]+'</div><div style="font-weight:700;font-size:0.8rem">'+Math.round(w.daily.temperature_2m_max[i])+'° / '+Math.round(w.daily.temperature_2m_min[i])+'°</div><div style="font-size:0.62rem;color:#7dd">'+wmoTexto(w.daily.weather_code[i])+'</div><div style="font-size:0.62rem;color:#6ad">☔ '+(w.daily.precipitation_probability_max[i]||0)+'%</div></div>'; } html+='</div>'; }
-      html+='</div>';
-      const lluvia=(w.daily&&w.daily.precipitation_probability_max&&w.daily.precipitation_probability_max[0])||0;
-      h('Reporte listo. En '+(dest.name||'tu destino')+' hay '+Math.round(w.current.temperature_2m)+' grados, '+wmoTexto(w.current.weather_code)+(lluvia>50?'. Ojo, alta probabilidad de lluvia, lleva capa.':'.'));
-    } else { html+='<p style="color:#888">No pude traer el clima de la zona ahora.</p>'; }
-  } else { html+='<p style="color:#888">Agrega un destino con ubicación para ver el clima.</p>'; }
+      if(w.daily && w.daily.time){ const dias=['Hoy','Mañana','Pasado']; html+='<div style="margin-top:8px;display:flex;gap:6px">'; for(let k=0;k<3&&k<w.daily.time.length;k++){ html+='<div style="flex:1;background:var(--gl);border-radius:8px;padding:6px;text-align:center"><div style="font-size:0.7rem;color:#8aa">'+dias[k]+'</div><div style="font-weight:700;font-size:0.8rem">'+Math.round(w.daily.temperature_2m_max[k])+'° / '+Math.round(w.daily.temperature_2m_min[k])+'°</div><div style="font-size:0.62rem;color:#7dd">'+wmoTexto(w.daily.weather_code[k])+'</div><div style="font-size:0.62rem;color:#6ad">☔ '+(w.daily.precipitation_probability_max[k]||0)+'%</div></div>'; } html+='</div>'; }
+      html+='<div style="font-size:0.6rem;color:#556;margin-top:6px">Datos en vivo · Open-Meteo</div></div>';
+      if(i===addedDests.length-1){ const lluvia=(w.daily&&w.daily.precipitation_probability_max&&w.daily.precipitation_probability_max[0])||0; vozResumen='En '+(d.name||'tu destino')+' hay '+Math.round(w.current.temperature_2m)+' grados, '+wmoTexto(w.current.weather_code)+(lluvia>50?'. Ojo, alta probabilidad de lluvia, lleva capa.':'.'); }
+    } else { html+='<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+(i+1)+'. '+escapeHTML(d.name)+'</strong><div style="color:#888;font-size:0.78rem">No pude traer el clima de esta parada ahora.</div></div>'; }
+  }
   c.innerHTML=html;
+  if(vozResumen) h('Reporte listo. '+vozResumen);
 }
 // ===== Esfera de aplicaciones 3D (lanzador) =====
 const esferaItems=[
