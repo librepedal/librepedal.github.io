@@ -34,7 +34,12 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .pistero-hablando .pboca{transform-box:fill-box;transform-origin:center;animation:phablar 0.18s ease-in-out infinite alternate}
 /* Esfera de aplicaciones 3D (lanzador tipo DNA Launcher) */
 #esferaScreen{position:fixed;inset:0;z-index:4500;display:none;background:radial-gradient(circle at 50% 42%,#04060b 0%,#000 62%)}
-#esStars{position:absolute;inset:0}
+#esStars{position:absolute;inset:0;display:none}
+#esStars.on{display:block}
+#esPostales{position:absolute;inset:0;overflow:hidden;display:none}
+#esPostales.on{display:block}
+.es-post-layer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.4s ease;filter:brightness(0.5) saturate(1.15) contrast(1.05)}
+.es-post-layer.on{opacity:1}
 #esFlash{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 44%,rgba(255,255,255,0.98) 0%,rgba(0,242,255,0.55) 18%,rgba(180,0,255,0.3) 34%,transparent 60%)}
 #esFlash.boom{animation:supernova 1.05s ease-out forwards}
 @keyframes supernova{0%{opacity:0;transform:scale(0.05)}10%{opacity:1}55%{opacity:0.8}100%{opacity:0;transform:scale(2.8)}}
@@ -266,7 +271,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .tut-dim{position:fixed;background:rgba(5,8,18,0.86);z-index:7000;pointer-events:auto}
 #tutRing{position:fixed;z-index:7001;border:3px solid var(--p);border-radius:12px;box-shadow:0 0 18px 3px var(--p);pointer-events:none;display:none;animation:tutPulse 1.3s ease-in-out infinite}
 @keyframes tutPulse{0%,100%{box-shadow:0 0 14px 2px var(--p)}50%{box-shadow:0 0 26px 7px var(--p)}}
-.tut-banner{position:fixed;top:14px;left:14px;right:14px;z-index:7003;background:linear-gradient(135deg,var(--p),#0aa6c9);color:#021;padding:11px 14px;border-radius:13px;font-weight:800;font-size:0.82rem;text-align:center;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,0.5);line-height:1.35;transition:top 0.25s ease}
+.tut-banner{position:fixed;top:14px;left:14px;right:14px;z-index:7003;background:linear-gradient(135deg,var(--p),#0aa6c9);color:#021;padding:11px 14px;border-radius:13px;font-weight:800;font-size:0.82rem;text-align:center;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,0.5);line-height:1.35;transition:opacity 0.5s ease;opacity:1}
+.tut-banner.hide{opacity:0;pointer-events:none}
 .tut-bar{position:fixed;bottom:18px;left:12px;right:12px;z-index:7003;display:flex;align-items:center;gap:8px;justify-content:center;pointer-events:auto}
 .tut-bar button{padding:12px 14px;border:none;border-radius:11px;font-weight:800;font-size:0.85rem;cursor:pointer}
 #tutPrev{background:#2a3147;color:#fff}#tutNext{background:var(--p);color:#000;flex:1}
@@ -331,7 +337,26 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <button id="pwaInstall" onclick="instalarPWA()" style="display:none;position:fixed;left:14px;bottom:80px;z-index:2100;align-items:center;gap:7px;background:var(--p);color:#03121a;border:none;padding:10px 14px;border-radius:24px;font-weight:800;font-size:0.82rem;box-shadow:0 4px 14px rgba(0,242,255,0.35);cursor:pointer"><i class="fas fa-download"></i> Instalar app</button>
 
 <div class="loading-overlay" id="loadingOverlay">
-  <svg class="bikewheel" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="41" fill="none" stroke="#0a0a0a" stroke-width="13"/><circle cx="50" cy="50" r="47" fill="none" stroke="#00f2ff" stroke-width="1.5" opacity="0.55"/><circle cx="50" cy="50" r="35" fill="none" stroke="#00f2ff" stroke-width="1.5" opacity="0.55"/><circle cx="50" cy="50" r="33" fill="none" stroke="#cfd8e6" stroke-width="2.5"/><g stroke="#cfd8e6" stroke-width="2"><line x1="50" y1="50" x2="50" y2="18"/><line x1="50" y1="50" x2="50" y2="82"/><line x1="50" y1="50" x2="18" y2="50"/><line x1="50" y1="50" x2="82" y2="50"/><line x1="50" y1="50" x2="27" y2="27"/><line x1="50" y1="50" x2="73" y2="73"/><line x1="50" y1="50" x2="27" y2="73"/><line x1="50" y1="50" x2="73" y2="27"/></g><circle cx="50" cy="50" r="7.5" fill="#ffd700"/><circle cx="50" cy="50" r="3" fill="#0a0a0a"/></svg>
+  <svg class="bikewheel" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="tireGrad" cx="42%" cy="38%" r="65%"><stop offset="0%" stop-color="#3d3d3d"/><stop offset="55%" stop-color="#161616"/><stop offset="100%" stop-color="#000"/></radialGradient>
+    <linearGradient id="rimGrad" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#fbfdff"/><stop offset="45%" stop-color="#93a2b6"/><stop offset="100%" stop-color="#dfe6f0"/></linearGradient>
+    <radialGradient id="hubGrad" cx="38%" cy="35%" r="70%"><stop offset="0%" stop-color="#fff3b0"/><stop offset="55%" stop-color="#ffd700"/><stop offset="100%" stop-color="#b8860b"/></radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="41" fill="none" stroke="url(#tireGrad)" stroke-width="13"/>
+  <circle cx="50" cy="50" r="41" fill="none" stroke="#000" stroke-width="13" stroke-dasharray="2.1 2.5" opacity="0.4"/>
+  <circle cx="50" cy="50" r="33" fill="none" stroke="url(#rimGrad)" stroke-width="2.6"/>
+  <circle cx="50" cy="50" r="33" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.5" stroke-dasharray="18 46"/>
+  <g stroke="#cfd8e6" stroke-width="1.5" opacity="0.95">
+    <line x1="50" y1="50" x2="50" y2="18"/><line x1="50" y1="50" x2="50" y2="82"/>
+    <line x1="50" y1="50" x2="18" y2="50"/><line x1="50" y1="50" x2="82" y2="50"/>
+    <line x1="50" y1="50" x2="27" y2="27"/><line x1="50" y1="50" x2="73" y2="73"/>
+    <line x1="50" y1="50" x2="27" y2="73"/><line x1="50" y1="50" x2="73" y2="27"/>
+  </g>
+  <g fill="#e7ecf3"><circle cx="50" cy="18" r="1.3"/><circle cx="50" cy="82" r="1.3"/><circle cx="18" cy="50" r="1.3"/><circle cx="82" cy="50" r="1.3"/><circle cx="27" cy="27" r="1.3"/><circle cx="73" cy="73" r="1.3"/><circle cx="27" cy="73" r="1.3"/><circle cx="73" cy="27" r="1.3"/></g>
+  <circle cx="50" cy="50" r="7.5" fill="url(#hubGrad)"/>
+  <circle cx="50" cy="50" r="3" fill="#3a2a00"/>
+  </svg>
   <p style="margin-top:12px;color:var(--p);font-weight:700;font-size:0.9rem" id="loadingText">Cargando...</p>
 </div>
 
@@ -381,6 +406,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <div id="esferaScreen">
 <canvas id="esStars"></canvas>
+<div id="esPostales"><div class="es-post-layer" id="esPostA"></div><div class="es-post-layer" id="esPostB"></div></div>
 <div id="esFlash"></div>
 <div class="es-title">Libre Pedal</div>
 <div class="es-hint">Gira con el dedo · toca un ícono para entrar</div>
@@ -453,7 +479,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://music.apple.com/search?term=cycling" target="_blank" class="music-btn music-apple" title="Apple Music"><i class="fab fa-apple"></i></a>
 <a href="https://music.amazon.com/search/cycling" target="_blank" class="music-btn music-amazon" title="Amazon Music"><i class="fab fa-amazon"></i></a>
 </div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.10</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.11</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -625,6 +651,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="customization-section"><h3>Lentes</h3><div class="accessory-grid" id="customizeAccessoryGrid"></div></div>
 <div class="customization-section"><h3>Extras</h3><div class="accessory-grid" id="customizeExtrasGrid"></div></div>
 <div class="customization-section"><h3>⚡ Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
+<div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
 <button class="bg" onclick="saveCustomization()">💾 Guardar personaje</button>
 <div class="quick-links" style="margin-top:10px">
   <button class="ab sec" style="margin:0" onclick="cv('stats')">📊 Estadísticas</button>
@@ -677,7 +704,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.10'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.11'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1054,10 +1081,12 @@ const PRECIOS = {
   aviator:50, mirrored:80, amber:60, pink:60,
   faro:60, antena:90, calco:40, bandana:70,
   poc:80, kask:90, lazer:100, rudy:120, abus:140, limar:150,
-  estilo2:60, estilo3:90
+  estilo2:60, estilo3:90, fondoespacial:70
 };
 function seleccionarEstilo(n){ const id='estilo'+n; if(n>1 && !estaDesbloqueado(id)){ comprarItem(id); if(!estaDesbloqueado(id)) return; } esEstilo=n; try{ localStorage.setItem('lp_estilo',n); }catch(e){} h('Estilo de energía activado.'); renderEstilos(); }
 function renderEstilos(){ const c=document.getElementById('estilosGrid'); if(!c) return; const nombres=['Arcos neón','Tesla azul','Plasma']; let html=''; for(let n=1;n<=3;n++){ const id='estilo'+n; const lock=(n>1 && !estaDesbloqueado(id)); const sel=(esEstilo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarEstilo('+n+')">'+(lock?'<div class="lock-badge">🔒 '+PRECIOS[id]+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4">⚡</div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
+function seleccionarFondoEsfera(n){ if(n===2 && !estaDesbloqueado('fondoespacial')){ comprarItem('fondoespacial'); if(!estaDesbloqueado('fondoespacial')) return; } esFondoModo=n; try{ localStorage.setItem('lp_fondo_esfera',n); }catch(e){} h('Fondo de la esfera actualizado.'); renderFondosEsfera(); }
+function renderFondosEsfera(){ const c=document.getElementById('fondosEsferaGrid'); if(!c) return; const nombres=['Postales de Chile','Espacial'], emojis=['🏞️','🌌']; let html=''; for(let n=1;n<=2;n++){ const lock=(n===2 && !estaDesbloqueado('fondoespacial')); const sel=(esFondoModo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarFondoEsfera('+n+')">'+(lock?'<div class="lock-badge">🔒 '+PRECIOS.fondoespacial+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4">'+emojis[n-1]+'</div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
 function getDesbloqueados(){ try{ return JSON.parse(localStorage.getItem('lp_unlocked_'+(cu||'anon'))||'[]'); }catch(e){ return []; } }
 function estaDesbloqueado(id){ return !(id in PRECIOS) || getDesbloqueados().indexOf(id)!==-1; }
 function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ alert('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){} au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
@@ -1088,7 +1117,7 @@ function initCustomization(){
                ['customizeAccessoryGrid',lensOptions,selectedLens,'toggleLens',false],
                ['customizeExtrasGrid',extrasOptions,null,'toggleExtra',true]];
   map.forEach(function(m){ const el=document.getElementById(m[0]); if(el) el.innerHTML=gridHTML(m[1],m[2],m[3],m[4]); });
-  updatePreview(); updateCustomizePreview(); renderEstilos();
+  updatePreview(); updateCustomizePreview(); renderEstilos(); renderFondosEsfera();
 }
 function selectHelmet(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedHelmet=id; initCustomization(); }
 function selectSkin(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedSkin=id; initCustomization(); }
@@ -2276,6 +2305,46 @@ const esferaItems=[
 let esEls=[], esRotX=-0.2, esRotY=0, esVelX=0, esVelY=0.004, esDrag=false, esLast=null, esMoved=0, esRAF=null, esBound=false, esCanvas=null, esPairs=[];
 let esAudioCtx=null, esIntroStart=0, esEstilo=parseInt(localStorage.getItem('lp_estilo')||'1')||1;
 let esStarsList=null, esComets=[], esExplosions=[], esNextComet=0, esNextExplosion=0, esToques=[];
+let esFondoModo=parseInt(localStorage.getItem('lp_fondo_esfera')||'1')||1; // 1=postales de Chile (gratis), 2=espacial (Darma)
+const ES_POSTALES_TITULOS=['Carretera Austral','Valparaíso','Torres del Paine','Valle de la Luna (Chile)','Chiloé','Cuesta Lo Prado','Volcán Villarrica','Lago General Carrera','Desierto de Atacama','Ruta 5 (Chile)'];
+let esPostUrls=[], esPostIdx=-1, esPostTimer=null, esPostLoading=false, esPostActiveLayer='A';
+async function esCargarPostales(){
+  if(esPostUrls.length || esPostLoading) return;
+  esPostLoading=true;
+  try{
+    const results=await Promise.all(ES_POSTALES_TITULOS.map(async function(t){
+      try{
+        const r=await fetch('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(t)+'?redirect=true');
+        const j=await r.json();
+        const src=(j.originalimage&&j.originalimage.source)||(j.thumbnail&&j.thumbnail.source)||'';
+        return src?src.replace(/\/\d+px-([^\/]+)$/,'/1280px-$1'):null;
+      }catch(e){ return null; }
+    }));
+    esPostUrls=results.filter(Boolean);
+  }catch(e){}
+  esPostLoading=false;
+}
+function esSiguientePostal(){
+  if(!esPostUrls.length) return;
+  esPostIdx=(esPostIdx+1)%esPostUrls.length;
+  const url=esPostUrls[esPostIdx];
+  const nextId=esPostActiveLayer==='A'?'esPostB':'esPostA', prevId=esPostActiveLayer==='A'?'esPostA':'esPostB';
+  const showEl=document.getElementById(nextId), hideEl=document.getElementById(prevId);
+  if(!showEl) return;
+  const im=new Image();
+  im.onload=function(){ showEl.style.backgroundImage='url("'+url+'")'; showEl.classList.add('on'); if(hideEl) hideEl.classList.remove('on'); esPostActiveLayer=(esPostActiveLayer==='A'?'B':'A'); };
+  im.src=url;
+}
+function esIniciarPostales(){
+  const cont=document.getElementById('esPostales'); if(cont) cont.classList.add('on');
+  esCargarPostales().then(function(){ esSiguientePostal(); clearInterval(esPostTimer); esPostTimer=setInterval(esSiguientePostal,3000); });
+}
+function esDetenerPostales(){ clearInterval(esPostTimer); esPostTimer=null; const cont=document.getElementById('esPostales'); if(cont) cont.classList.remove('on'); }
+function esAplicarFondoModo(){
+  const stars=document.getElementById('esStars');
+  if(esFondoModo===2){ esDetenerPostales(); if(stars) stars.classList.add('on'); }
+  else { if(stars) stars.classList.remove('on'); esIniciarPostales(); }
+}
 function esInitStars(w,h){
   esStarsList=[];
   const layers=[{n:40,speed:0.15,size:[0.5,1.1],alpha:0.5},{n:26,speed:0.35,size:[1,1.8],alpha:0.75},{n:14,speed:0.7,size:[1.6,2.6],alpha:1}];
@@ -2322,29 +2391,22 @@ function esDrawBackground(ctx,w,h){
 function _ac(){ esAudioCtx = esAudioCtx || new (window.AudioContext||window.webkitAudioContext)(); if(esAudioCtx.state==='suspended'){ try{ esAudioCtx.resume(); }catch(e){} } return esAudioCtx; }
 function sonidoArco(){
   try{
-    const ac=_ac(), sr=ac.sampleRate, dur=0.9, t0=ac.currentTime;
-    // 1) Descarga: ráfaga de crujidos eléctricos (crepitar del arco)
-    const buf=ac.createBuffer(1,Math.ceil(sr*dur),sr); const d=buf.getChannelData(0);
-    let t=0;
-    while(t<dur){
-      const len=Math.floor(sr*(0.004+Math.random()*0.012));
-      const i0=Math.floor(t*sr); const amp=1-(t/dur)*0.85;
-      for(let i=0;i<len && (i0+i)<d.length;i++){ d[i0+i]=(Math.random()*2-1)*amp*Math.pow(1-i/len,0.6); }
-      t+=0.006+Math.random()*0.03*(0.3+t/dur); // crujidos densos al inicio, se abren al final
-    }
-    const src=ac.createBufferSource(); src.buffer=buf;
-    const hp=ac.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=900;
-    const g=ac.createGain(); g.gain.setValueAtTime(0.6,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-    src.connect(hp); hp.connect(g); g.connect(ac.destination); src.start(t0);
-    // 2) Zap resonante: el "TZZAK" que barre de agudo a grave
-    const o=ac.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(2800,t0); o.frequency.exponentialRampToValueAtTime(140,t0+0.5);
-    const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.setValueAtTime(2200,t0); bp.frequency.exponentialRampToValueAtTime(300,t0+0.5); bp.Q.value=9;
-    const g2=ac.createGain(); g2.gain.setValueAtTime(0.0001,t0); g2.gain.exponentialRampToValueAtTime(0.5,t0+0.02); g2.gain.exponentialRampToValueAtTime(0.0001,t0+0.55);
-    o.connect(bp); bp.connect(g2); g2.connect(ac.destination); o.start(t0); o.stop(t0+0.6);
-    // 3) Golpe grave: cuerpo y pegada
-    const o2=ac.createOscillator(); o2.type='sine'; o2.frequency.setValueAtTime(120,t0); o2.frequency.exponentialRampToValueAtTime(40,t0+0.25);
-    const g3=ac.createGain(); g3.gain.setValueAtTime(0.45,t0); g3.gain.exponentialRampToValueAtTime(0.0001,t0+0.3);
-    o2.connect(g3); g3.connect(ac.destination); o2.start(t0); o2.stop(t0+0.35);
+    const ac=_ac(), t0=ac.currentTime;
+    // Arpegio cálido (Do-Mi-Sol-Do) con armónico suave, tipo campanita luminosa
+    const notas=[523.25,659.25,783.99,1046.5];
+    notas.forEach(function(freq,i){
+      const start=t0+i*0.1;
+      const o=ac.createOscillator(); o.type='sine'; o.frequency.value=freq;
+      const o2=ac.createOscillator(); o2.type='triangle'; o2.frequency.value=freq*2;
+      const g=ac.createGain(); g.gain.setValueAtTime(0,start); g.gain.linearRampToValueAtTime(0.22,start+0.06); g.gain.exponentialRampToValueAtTime(0.0001,start+0.9);
+      const g2=ac.createGain(); g2.gain.setValueAtTime(0,start); g2.gain.linearRampToValueAtTime(0.05,start+0.06); g2.gain.exponentialRampToValueAtTime(0.0001,start+0.7);
+      o.connect(g); g.connect(ac.destination); o.start(start); o.stop(start+1);
+      o2.connect(g2); g2.connect(ac.destination); o2.start(start); o2.stop(start+0.8);
+    });
+    // Pad grave suave de fondo, da calidez y cuerpo
+    const pad=ac.createOscillator(); pad.type='sine'; pad.frequency.value=130.81;
+    const gp=ac.createGain(); gp.gain.setValueAtTime(0,t0); gp.gain.linearRampToValueAtTime(0.1,t0+0.18); gp.gain.exponentialRampToValueAtTime(0.0001,t0+1.2);
+    pad.connect(gp); gp.connect(ac.destination); pad.start(t0); pad.stop(t0+1.3);
   }catch(e){}
 }
 // El navegador bloquea el audio hasta el primer toque: al primer gesto despertamos el motor.
@@ -2394,7 +2456,7 @@ function esRayo(ctx,x1,y1,x2,y2,seed,dep,col){
 function esLoop(){
   const wrap=document.getElementById('esferaWrap'); if(!wrap){ esRAF=null; return; }
   const starsEl=document.getElementById('esStars');
-  if(starsEl){
+  if(starsEl && esFondoModo===2){
     const sw=window.innerWidth, sh=window.innerHeight;
     if(starsEl.width!==sw||starsEl.height!==sh){ starsEl.width=sw; starsEl.height=sh; esStarsList=null; }
     esDrawBackground(starsEl.getContext('2d'), sw, sh);
@@ -2457,11 +2519,12 @@ function abrirEsfera(){
   esIntroStart=Date.now();
   const fl=document.getElementById('esFlash'); if(fl){ fl.classList.remove('boom'); void fl.offsetWidth; fl.classList.add('boom'); }
   sonidoArco();
+  esAplicarFondoModo();
   const k=document.getElementById('esKm'); if(k) k.innerText=(us.di||0).toFixed(1);
   const v=document.getElementById('esViajes'); if(v) v.innerText=trips.filter(function(t){return t.status==='completed';}).length;
   if(!esRAF) esLoop();
 }
-function cerrarEsfera(){ const sc=document.getElementById('esferaScreen'); if(sc) sc.classList.remove('on'); if(esRAF){ cancelAnimationFrame(esRAF); esRAF=null; } }
+function cerrarEsfera(){ const sc=document.getElementById('esferaScreen'); if(sc) sc.classList.remove('on'); if(esRAF){ cancelAnimationFrame(esRAF); esRAF=null; } esDetenerPostales(); }
 function handleVoiceCommand(raw){
   const t=normalizar(raw);
   if(/esfera|men[uú] esfera|lanzador|aplicaciones/.test(t)){ abrirEsfera(); h('Aquí está la esfera de aplicaciones.'); return; }
@@ -2516,18 +2579,9 @@ const tutorialSteps=[
 ];
 let tutorialIdx=0;
 function tutSetPanel(el,x,y,w,h2){ el.style.left=x+'px'; el.style.top=y+'px'; el.style.width=Math.max(0,w)+'px'; el.style.height=Math.max(0,h2)+'px'; el.style.display='block'; }
-function tutPlaceBanner(y,h2){
-  const banner=document.getElementById('tutBanner'); if(!banner) return;
-  if(y==null){ banner.style.top='14px'; return; }
-  const bh=banner.offsetHeight||70, barSpace=90;
-  const spaceBelow=window.innerHeight-(y+h2)-12-barSpace, spaceAbove=y-12;
-  if(spaceBelow>=bh) banner.style.top=(y+h2+12)+'px';
-  else if(spaceAbove>=bh) banner.style.top=Math.max(14,y-12-bh)+'px';
-  else banner.style.top='14px';
-}
 function tutSpotlight(el){
   const T=document.getElementById('tutDimT'),B=document.getElementById('tutDimB'),L=document.getElementById('tutDimL'),R=document.getElementById('tutDimR'),ring=document.getElementById('tutRing');
-  if(!el){ tutSetPanel(T,0,0,window.innerWidth,window.innerHeight); [B,L,R].forEach(function(p){p.style.display='none';}); ring.style.display='none'; tutPlaceBanner(null); return; }
+  if(!el){ tutSetPanel(T,0,0,window.innerWidth,window.innerHeight); [B,L,R].forEach(function(p){p.style.display='none';}); ring.style.display='none'; return; }
   const r=el.getBoundingClientRect(), pad=8;
   const x=Math.max(0,r.left-pad), y=Math.max(0,r.top-pad), w=r.width+pad*2, h2=r.height+pad*2;
   tutSetPanel(T,0,0,window.innerWidth,y);
@@ -2535,12 +2589,16 @@ function tutSpotlight(el){
   tutSetPanel(L,0,y,x,h2);
   tutSetPanel(R,x+w,y,window.innerWidth-(x+w),h2);
   ring.style.display='block'; ring.style.left=x+'px'; ring.style.top=y+'px'; ring.style.width=w+'px'; ring.style.height=h2+'px';
-  tutPlaceBanner(y,h2);
 }
-function startTutorial(){ tutorialIdx=0; document.getElementById('tutorialOverlay').classList.add('on'); renderTutorial(); }
+function startTutorial(){
+  tutorialIdx=0;
+  document.getElementById('tutorialOverlay').classList.add('on');
+  const banner=document.getElementById('tutBanner');
+  if(banner){ banner.classList.remove('hide'); clearTimeout(banner._hideTO); banner._hideTO=setTimeout(function(){ banner.classList.add('hide'); },4500); }
+  renderTutorial();
+}
 function renderTutorial(){
   const s=tutorialSteps[tutorialIdx];
-  const banner=document.getElementById('tutBanner'); if(banner) banner.innerHTML='🎓 '+s.d;
   document.getElementById('tutProgress').innerText=(tutorialIdx+1)+' / '+tutorialSteps.length;
   document.getElementById('tutPrev').style.visibility=tutorialIdx===0?'hidden':'visible';
   document.getElementById('tutNext').innerText=tutorialIdx===tutorialSteps.length-1?'¡A pedalear!':'Siguiente ▶';
