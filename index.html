@@ -289,10 +289,19 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </head>
 <body>
 
+<style>
+.lp-logo-wrap{display:flex;justify-content:center;margin:2px 0 8px}
+.lp-logo{width:168px;height:168px;border-radius:50%;object-fit:cover;mix-blend-mode:screen;
+  filter:drop-shadow(0 0 10px rgba(0,242,255,0.55)) drop-shadow(0 0 22px rgba(232,73,43,0.35));
+  animation:lpLogoFloat 4.5s ease-in-out infinite;will-change:transform,filter}
+@keyframes lpLogoFloat{
+  0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 0 9px rgba(0,242,255,0.5)) drop-shadow(0 0 18px rgba(232,73,43,0.3))}
+  50%{transform:translateY(-7px) scale(1.035);filter:drop-shadow(0 0 16px rgba(0,242,255,0.85)) drop-shadow(0 0 32px rgba(232,73,43,0.5))}}
+</style>
 <form id="auth" onsubmit="reg(event)">
 <div class="auth-box">
-<div style="font-size:2rem">🚲</div>
-<h1>Libre Pedal</h1>
+<div class="lp-logo-wrap"><img src="logo.jpg" alt="Libre Pedal" class="lp-logo"></div>
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Crea tu personaje ciclista</p>
 <input type="text" id="nombre-input" placeholder="Tu nombre" required style="border:2px solid var(--g)">
 <input type="email" id="em" placeholder="correo@ejemplo.com" required>
@@ -483,7 +492,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling%20music" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 </div>
 <div class="lp-player-note" style="margin-top:6px">Al tocar un ícono se abre esa app (si la tienes instalada) o su web. El navegador no puede controlar el volumen de otra app — baja el volumen de Pistero desde ella si se superponen.</div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.24</div></div>
+<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(0,242,255,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v5.28</div></div>
 </section>
 
 <section id="v-trips" class="view">
@@ -709,7 +718,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.24'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.28'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1352,29 +1361,44 @@ function getCurrentLocation(){
     {enableHighAccuracy:true, timeout:15000, maximumAge:0});
   });
 }
-function showLoading(t){ document.getElementById('loadingText').innerText=t; const ov=document.getElementById('loadingOverlay'); ov.classList.add('show'); ov.onclick=hideLoading; /* escape de emergencia: un toque la cierra si algo queda pegado */ sonidoCadenaIniciar(); }
-function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); sonidoCadenaDetener(); }
-let _cadenaLoopActivo=false, _cadenaTimer=null;
-function sonidoCadenaIniciar(){
-  if(_cadenaLoopActivo) return;
-  _cadenaLoopActivo=true;
+function showLoading(t){ document.getElementById('loadingText').innerText=t; const ov=document.getElementById('loadingOverlay'); ov.classList.add('show'); ov.onclick=hideLoading; /* escape de emergencia: un toque la cierra si algo queda pegado */ cadenaIniciar(0.5); }
+function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); cadenaDetener(); }
+
+/* ===== SONIDO DE CADENA EN EL PIÑÓN (trinquete metálico realista, alta calidad) =====
+   Un piñón libre = tren de clics metálicos que aceleran/frenan con la velocidad.
+   Se usa al girar la rueda de carga y al tocar/mover la esfera. */
+function cadenaClick(v){
   try{
-    const ac=_ac();
-    (function tick(){
-      if(!_cadenaLoopActivo) return;
-      const t0=ac.currentTime;
-      const buf=ac.createBuffer(1,Math.ceil(ac.sampleRate*0.03),ac.sampleRate);
-      const d=buf.getChannelData(0);
-      for(let i=0;i<d.length;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2); }
-      const src=ac.createBufferSource(); src.buffer=buf;
-      const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1300+Math.random()*500; bp.Q.value=3.2;
-      const g=ac.createGain(); g.gain.setValueAtTime(0.05,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.03);
-      src.connect(bp); bp.connect(g); g.connect(ac.destination); src.start(t0);
-      _cadenaTimer=setTimeout(tick,95+Math.random()*35); // cadencia irregular, como una cadena corriendo de verdad
-    })();
+    const ac=_ac(), t0=ac.currentTime, verb=_reverb();
+    // Burst de ruido muy corto con decay = el "tic" del trinquete
+    const len=Math.floor(ac.sampleRate*0.011);
+    const buf=ac.createBuffer(1,len,ac.sampleRate); const d=buf.getChannelData(0);
+    for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
+    const src=ac.createBufferSource(); src.buffer=buf;
+    // Dos resonancias metálicas (le dan el timbre de metal, no de ruido plano)
+    const bp1=ac.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value=2900+Math.random()*500; bp1.Q.value=9;
+    const bp2=ac.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value=5000+Math.random()*700; bp2.Q.value=14;
+    const g=ac.createGain(); g.gain.value=(v==null?0.1:v);
+    const send=ac.createGain(); send.gain.value=0.07; // pizca de reverb = "alta calidad", sin embarrar
+    src.connect(bp1); src.connect(bp2); bp1.connect(g); bp2.connect(g); g.connect(ac.destination); g.connect(send); send.connect(verb);
+    src.start(t0);
   }catch(e){}
 }
-function sonidoCadenaDetener(){ _cadenaLoopActivo=false; clearTimeout(_cadenaTimer); }
+let _cad={on:false, timer:0, vel:0, coast:false};
+function _cadTick(){
+  if(!_cad.on) return;
+  cadenaClick(0.05+_cad.vel*0.085);
+  if(_cad.coast){ _cad.vel*=0.90; if(_cad.vel<0.05){ _cad.on=false; return; } } // piñón libre: frena y para solo
+  const gap=62-_cad.vel*44; // rápido → clics juntos (~18ms), lento → separados (~62ms)
+  _cad.timer=setTimeout(_cadTick, Math.max(16, gap+(Math.random()*8-4)));
+}
+function cadenaIniciar(v){ _cad.coast=false; _cad.vel=Math.max(_cad.vel, v||0.4); if(!_cad.on){ _cad.on=true; _cadTick(); } }
+function cadenaVel(v){ _cad.coast=false; _cad.vel=Math.max(0,Math.min(1,v)); if(!_cad.on){ _cad.on=true; _cadTick(); } }
+function cadenaDetener(){ _cad.on=false; clearTimeout(_cad.timer); }
+function cadenaCoast(){ _cad.coast=true; } // soltaste: la cadena desacelera y se detiene sola
+// Compatibilidad con llamadas previas
+function sonidoCadenaIniciar(){ cadenaIniciar(0.4); }
+function sonidoCadenaDetener(){ cadenaCoast(); }
 
 async function reg(e){
   e.preventDefault();
@@ -2579,35 +2603,104 @@ function esDrawBackground(ctx,w,h){
     return true;
   });
 }
-/* ===== SONIDO DE LA ESFERA: un ARCO ELÉCTRICO potente al abrir (único sonido) ===== */
+/* ===== MOTOR DE AUDIO ATMOSFÉRICO =====
+   Reverberación compartida (ConvolverNode con respuesta sintética): TODO pasa por
+   este "espacio" y suena cinematográfico/futurista en vez de chiptune 8-bits. */
 function _ac(){ esAudioCtx = esAudioCtx || new (window.AudioContext||window.webkitAudioContext)(); if(esAudioCtx.state==='suspended'){ try{ esAudioCtx.resume(); }catch(e){} } return esAudioCtx; }
+let _lpVerb=null;
+function _reverb(){
+  if(_lpVerb) return _lpVerb;
+  const ac=_ac(), sr=ac.sampleRate, len=Math.floor(sr*2.8);
+  const buf=ac.createBuffer(2,len,sr);
+  for(let ch=0;ch<2;ch++){ const d=buf.getChannelData(ch); for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3); } }
+  const conv=ac.createConvolver(); conv.buffer=buf;
+  const wet=ac.createGain(); wet.gain.value=0.8; conv.connect(wet); wet.connect(ac.destination);
+  _lpVerb=conv; return _lpVerb;
+}
+/* Arranque cálido y ORGÁNICO en Do mayor: sub suave que respira → pad tibio (sine/triangle,
+   nada de sawtooth metálico) que se eleva → latido grave redondo (sin click) → notas de arpa
+   suaves. Reverb grande + eco, volumen contenido. */
 function sonidoArco(){
   try{
-    const ac=_ac(), t0=ac.currentTime;
-    // Eco/delay sutil compartido por todo el acorde
-    const delay=ac.createDelay(1.0); delay.delayTime.value=0.26;
-    const feedback=ac.createGain(); feedback.gain.value=0.3;
-    const wet=ac.createGain(); wet.gain.value=0.28;
-    delay.connect(feedback); feedback.connect(delay); delay.connect(wet); wet.connect(ac.destination);
-    // Acorde de armónicos en Sol (Sol-Si-Re-Sol), volumen bajo y suave
-    const notas=[196.00,246.94,293.66,392.00];
-    notas.forEach(function(freq,i){
-      const start=t0+i*0.05;
-      const o=ac.createOscillator(); o.type='sine'; o.frequency.value=freq;
-      const g=ac.createGain(); g.gain.setValueAtTime(0,start); g.gain.linearRampToValueAtTime(0.07,start+0.15); g.gain.exponentialRampToValueAtTime(0.0001,start+1.4);
-      o.connect(g); g.connect(ac.destination); g.connect(delay); o.start(start); o.stop(start+1.5);
+    const ac=_ac(), t0=ac.currentTime, verb=_reverb();
+    // Master con compresor suave, volumen contenido
+    const comp=ac.createDynamicsCompressor();
+    comp.threshold.value=-20; comp.knee.value=26; comp.ratio.value=2.5; comp.attack.value=0.01; comp.release.value=0.3;
+    const master=ac.createGain(); master.gain.value=0.42;
+    master.connect(comp); comp.connect(ac.destination); comp.connect(verb);
+    // Eco/delay suave (más espacio, menos golpe)
+    const delay=ac.createDelay(1.0); delay.delayTime.value=0.36;
+    const fb=ac.createGain(); fb.gain.value=0.28; const echo=ac.createGain(); echo.gain.value=0.4;
+    delay.connect(fb); fb.connect(delay); delay.connect(echo); echo.connect(master); echo.connect(verb);
+    // 1) Sub suave que respira (cimiento cálido, sin retumbe fuerte)
+    const sub=ac.createOscillator(); sub.type='sine'; sub.frequency.setValueAtTime(49.00,t0); sub.frequency.linearRampToValueAtTime(65.41,t0+1.1);
+    const subg=ac.createGain(); subg.gain.setValueAtTime(0.0001,t0); subg.gain.linearRampToValueAtTime(0.10,t0+1.0); subg.gain.exponentialRampToValueAtTime(0.0001,t0+3.0);
+    sub.connect(subg); subg.connect(master); sub.start(t0); sub.stop(t0+3.1);
+    // 2) Pad TIBIO (Do mayor) — sine + triangle + un armónico suave, filtro cálido (no brilla metálico)
+    const padLP=ac.createBiquadFilter(); padLP.type='lowpass'; padLP.frequency.setValueAtTime(320,t0); padLP.frequency.exponentialRampToValueAtTime(2200,t0+1.3); padLP.Q.value=0.5;
+    padLP.connect(master); padLP.connect(delay); padLP.connect(verb);
+    [130.81,196.00,261.63,329.63,392.00].forEach(function(f){
+      const o=ac.createOscillator(); o.type='sine'; o.frequency.value=f;              // fundamental cálido
+      const oc=ac.createOscillator(); oc.type='triangle'; oc.frequency.value=f;        // cuerpo suave
+      const oh=ac.createOscillator(); oh.type='sine'; oh.frequency.value=f*2.001;       // armónico natural sutil
+      const g=ac.createGain(); g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(0.035,t0+1.0); g.gain.setValueAtTime(0.035,t0+1.4); g.gain.exponentialRampToValueAtTime(0.0001,t0+2.9);
+      const gc=ac.createGain(); gc.gain.value=0.5; const gh=ac.createGain(); gh.gain.value=0.12;
+      o.connect(g); oc.connect(gc); gc.connect(g); oh.connect(gh); gh.connect(g); g.connect(padLP);
+      o.start(t0); o.stop(t0+3.0); oc.start(t0); oc.stop(t0+3.0); oh.start(t0); oh.stop(t0+3.0);
     });
-    // Fundamental grave (Sol una octava abajo), da cuerpo sin subir el volumen general
-    const pad=ac.createOscillator(); pad.type='sine'; pad.frequency.value=98.00;
-    const gp=ac.createGain(); gp.gain.setValueAtTime(0,t0); gp.gain.linearRampToValueAtTime(0.045,t0+0.2); gp.gain.exponentialRampToValueAtTime(0.0001,t0+1.6);
-    pad.connect(gp); gp.connect(ac.destination); gp.connect(delay); pad.start(t0); pad.stop(t0+1.7);
+    // 3) Latido grave redondo (SIN click metálico) — un solo golpe cálido en el clímax
+    function latido(at,fA,fB,vol){
+      const o=ac.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(fA,at); o.frequency.exponentialRampToValueAtTime(fB,at+0.22);
+      const g=ac.createGain(); g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(vol,at+0.04); g.gain.exponentialRampToValueAtTime(0.0001,at+0.7);
+      o.connect(g); g.connect(master); o.start(at); o.stop(at+0.75);
+    }
+    latido(t0+0.55,90,49,0.16);   // latido suave
+    latido(t0+1.05,110,55,0.22);  // segundo latido (el clímax, cálido)
+    // 4) Notas de arpa suaves (Do mayor, registro medio — nada agudo/cristal), con eco
+    [261.63,329.63,392.00,523.25].forEach(function(f,i){
+      const at=t0+1.05+i*0.11;
+      const o=ac.createOscillator(); o.type='sine'; o.frequency.value=f;
+      const o2=ac.createOscillator(); o2.type='triangle'; o2.frequency.value=f; const g2=ac.createGain(); g2.gain.value=0.25;
+      const g=ac.createGain(); g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(0.045,at+0.02); g.gain.exponentialRampToValueAtTime(0.0001,at+1.6);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(master); g.connect(delay); g.connect(verb);
+      o.start(at); o.stop(at+1.7); o2.start(at); o2.stop(at+1.7);
+    });
   }catch(e){}
 }
-// El navegador bloquea el audio hasta el primer toque: al primer gesto despertamos el motor.
+/* Tap futurista sutil: cada interacción "responde" con un toque de luz sonora + reverb */
+let _lpTapLast=0;
+function sonidoTap(fr){
+  try{
+    const now=Date.now(); if(now-_lpTapLast<40) return; _lpTapLast=now;
+    const ac=_ac(), t0=ac.currentTime, verb=_reverb();
+    const o=ac.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(fr||1180,t0); o.frequency.exponentialRampToValueAtTime((fr||1180)*0.62,t0+0.09);
+    const g=ac.createGain(); g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.05,t0+0.007); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.17);
+    const send=ac.createGain(); send.gain.value=0.22;
+    o.connect(g); g.connect(ac.destination); g.connect(send); send.connect(verb);
+    o.start(t0); o.stop(t0+0.19);
+  }catch(e){}
+}
+/* Swipe atmosférico al girar la esfera (reemplaza los clics 8-bits de la "cadena") */
+function sonidoSwipe(){
+  try{
+    const ac=_ac(), t0=ac.currentTime, verb=_reverb();
+    const o=ac.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(520,t0); o.frequency.exponentialRampToValueAtTime(1600,t0+0.13);
+    const g=ac.createGain(); g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.02,t0+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.22);
+    const send=ac.createGain(); send.gain.value=0.3;
+    o.connect(g); g.connect(ac.destination); g.connect(send); send.connect(verb); o.start(t0); o.stop(t0+0.24);
+  }catch(e){}
+}
+// Desbloqueo del audio al primer gesto + sonido táctil global (acción → reacción en toda la app)
 document.addEventListener('pointerdown', function _unlockAudio(){
   document.removeEventListener('pointerdown', _unlockAudio);
   try{ _ac(); }catch(e){}
 });
+document.addEventListener('click', function(e){
+  const el=e.target.closest('button, .nb, .ab, .bg, .es-ind, .es-icon, .gtt, .music-btn, .route-btn, .rec-btn, .helmet-option');
+  if(!el || el.disabled) return;
+  sonidoTap();
+  if(navigator.vibrate){ try{ navigator.vibrate(7); }catch(_){} }
+}, true);
 function construirEsfera(){
   const wrap=document.getElementById('esferaWrap'); if(!wrap) return; wrap.innerHTML='';
   const n=esferaItems.length;
@@ -2693,7 +2786,7 @@ function esLoop(){
 }
 function _esXY(e){ const t=e.touches&&e.touches[0]; return {x:t?t.clientX:e.clientX, y:t?t.clientY:e.clientY}; }
 function _esStart(e){ esDrag=true; esMoved=0; esLast=_esXY(e); sonidoCadenaIniciar(); }
-function _esMove(e){ if(!esDrag) return; const p=_esXY(e), dx=p.x-esLast.x, dy=p.y-esLast.y; esMoved+=Math.abs(dx)+Math.abs(dy); esRotY+=dx*0.006; esRotX-=dy*0.006; esVelY=dx*0.0005; esVelX=-dy*0.0005; esLast=p; }
+function _esMove(e){ if(!esDrag) return; const p=_esXY(e), dx=p.x-esLast.x, dy=p.y-esLast.y; const mov=Math.abs(dx)+Math.abs(dy); esMoved+=mov; esRotY+=dx*0.006; esRotX-=dy*0.006; esVelY=dx*0.0005; esVelX=-dy*0.0005; esLast=p; cadenaVel(Math.max(0.12,Math.min(1,mov/38))); }
 function _esEnd(){ esDrag=false; sonidoCadenaDetener(); }
 function _esTap(e){
   if(esMoved>12) return; // fue un arrastre, no un toque
