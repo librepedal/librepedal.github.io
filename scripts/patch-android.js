@@ -4,6 +4,8 @@
    - Foreground Service (+ tipo location, Android 14+)
    - WakeLock (mantener el proceso vivo)
    - Ignorar optimización de batería (Xiaomi/Samsung/etc no maten la app)
+   - Micrófono (para el reconocimiento de voz: sin esto en el manifiesto, Android
+     NUNCA deja pedir permiso de mic aunque la app lo solicite desde JS)
    El Foreground Service en sí lo aporta el plugin background-geolocation. */
 const fs = require('fs');
 const path = require('path');
@@ -24,7 +26,8 @@ const permisos = [
   'android.permission.FOREGROUND_SERVICE_LOCATION',
   'android.permission.WAKE_LOCK',
   'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
-  'android.permission.RECEIVE_BOOT_COMPLETED'
+  'android.permission.RECEIVE_BOOT_COMPLETED',
+  'android.permission.RECORD_AUDIO'
 ];
 
 let bloque = '';
