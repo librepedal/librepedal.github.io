@@ -568,6 +568,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="bd" style="margin:0" onclick="reportarEnRuta()">📍 Reportar</button>
   <button class="btrip" style="margin:0" onclick="cv('routes')">🛣️ Rutas</button>
   <button class="ab sec" style="margin:0" onclick="cv('trips')">🗺️ Mis Viajes</button>
+  <button class="ab sec" style="margin:0" id="btnCapaMapa" onclick="toggleCapaMapa()">🏔️ Topográfico</button>
 </div>
 <div id="map"></div>
 <div id="reportes-comunidad"></div>
@@ -744,7 +745,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.41'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.42'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1798,7 +1799,24 @@ function velocidadVentana(pts){
 function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<ritmoBase*0.65?'lento':v>ritmoBase*1.35?'rapido':'normal'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd(); }
-async function im(){ if(mp) return; mp=L.map('map',{zoomControl:true}).setView([20,0],2); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp); if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); }
+// Capa de calles (OSM estándar) vs. topográfica (OpenTopoMap): la de calles no dibuja
+// huellas/senderos rurales que sí existen en OSM pero no se ven en ese estilo. La
+// topográfica los muestra, además de curvas de nivel — útil para caminos interiores.
+let capaMapaMp=null, capaMapaTipo=(function(){ try{ return localStorage.getItem('lp_capa_mapa')||'calles'; }catch(e){ return 'calles'; } })();
+function _tileCalles(){ return L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}); }
+function _tileTopo(){ return L.tileLayer('https://a.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenTopoMap'}); }
+function _actualizarBtnCapaMapa(){ const b=document.getElementById('btnCapaMapa'); if(b) b.innerHTML=(capaMapaTipo==='topo')?'🗺️ Ver calles':'🏔️ Topográfico'; }
+function toggleCapaMapa(){
+  if(!mp) return;
+  capaMapaTipo=(capaMapaTipo==='topo')?'calles':'topo';
+  try{ localStorage.setItem('lp_capa_mapa',capaMapaTipo); }catch(e){}
+  if(capaMapaMp) mp.removeLayer(capaMapaMp);
+  capaMapaMp=(capaMapaTipo==='topo')?_tileTopo():_tileCalles();
+  capaMapaMp.addTo(mp);
+  _actualizarBtnCapaMapa();
+  h(capaMapaTipo==='topo' ? "Mapa topográfico: ahora se ven senderos y caminos rurales." : "Volví al mapa de calles.");
+}
+async function im(){ if(mp) return; mp=L.map('map',{zoomControl:true}).setView([20,0],2); capaMapaMp=(capaMapaTipo==='topo')?_tileTopo():_tileCalles(); capaMapaMp.addTo(mp); _actualizarBtnCapaMapa(); if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); }
 function ap(){
   const n=document.getElementById('np').value.trim(); const cat=document.getElementById('cp').value;
   if(!n) return;
