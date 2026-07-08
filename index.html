@@ -745,7 +745,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.44'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.45'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -2895,15 +2895,6 @@ function sonidoTap(fr){
   }catch(e){}
 }
 /* Swipe atmosférico al girar la esfera (reemplaza los clics 8-bits de la "cadena") */
-function sonidoSwipe(){
-  try{
-    const ac=_ac(), t0=ac.currentTime, verb=_reverb();
-    const o=ac.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(520,t0); o.frequency.exponentialRampToValueAtTime(1600,t0+0.13);
-    const g=ac.createGain(); g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.02,t0+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.22);
-    const send=ac.createGain(); send.gain.value=0.3;
-    o.connect(g); g.connect(ac.destination); g.connect(send); send.connect(verb); o.start(t0); o.stop(t0+0.24);
-  }catch(e){}
-}
 // Desbloqueo del audio al primer gesto + sonido táctil global (acción → reacción en toda la app)
 document.addEventListener('pointerdown', function _unlockAudio(){
   document.removeEventListener('pointerdown', _unlockAudio);
