@@ -746,7 +746,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.46'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.47'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -882,19 +882,17 @@ let navSteps = [], currentStepIndex = 0, lastSpokenStep = -1, routeTotalDistance
 let currentUserLocation = null;
 let selectedHelmet = 'giro', selectedLens = 'none', selectedSkin = 'cyan', selectedExtras = [];
 let navUserMarkers = [], maxSpeed = 0, speedReadings = [];
-// Ritmo base: promedio movil del pedaleo REAL en este tramo (no un umbral fijo).
-// Se adapta solo a la ruta: en una subida baja solo, en una bajada sube solo,
-// y "lento/normal/rapido" se miden siempre relativos a como vienes pedaleando hoy.
-let ritmoBase = 15;
-function actualizarRitmoBase(sp){ if(sp<=0) return; const alpha=0.04; ritmoBase = ritmoBase*(1-alpha) + sp*alpha; ritmoBase = Math.max(6, Math.min(35, ritmoBase)); }
+// Umbrales de ritmo FIJOS (km/h), iguales en frases, ánimo del personaje y el
+// indicador del panel: parado=0, lento 4-8, normal 8-16, rápido 16+.
+const RITMO_LENTO_MAX = 8, RITMO_NORMAL_MAX = 16;
 let nextHydrateKm = 5, nextEatKm = 20;
 let recognition = null, micOn = false;
 let vozPref = null, vozActiva = (localStorage.getItem('lp_voz') !== 'off');
 const viewNav = {dash:0, map:1, routes:1, trips:1, newtrip:1, chat:2, rec:2, mac:3, gui:3, customize:4, stats:4};
 
-const frasesLento = ["¿Vas pedaleando o estás parando la chala?","Oye, te va a adelantar un guarén.","Un corpóreo del Doctor Simi corre más rápido.","¿Vas cansado o andas buscando monedas en el suelo?","Apúrate, que el lanchón de Chiloé te pilla.","Dale un poco más de color al pedaleo.","¿Te dio la pálida o qué pasó?","Hasta el caracol te hizo la señal.","Mi abuelita pedalea más rápido que tú.","Tranquilo: las pirámides se hicieron ladrillo a ladrillo.","Si vas más lento, te van a multar por estorbar.","¿Pedaleas o estás meditando, maestro?","He visto tortugas con más prisa que tú.","Mi sombra ya llegó y te está esperando.","¿Todo bien por ahí?"];
-const frasesNormal = ["¡Eso! Ritmo impecable, vas como avión.","Así da gusto, mantén ese pulso.","Ni don Francisco tenía ese aguante.","Ritmo preciso, me encanta.","Con este tranco te ganaste un completo.","A este paso llegamos a tomar tecito calientito.","La bicicleta es el vehículo perfecto, y tú lo confirmas.","No hay camino largo cuando suena buena música.","Disfruta: el destino importa tanto como el camino.","La felicidad se mide en kilómetros, y vas sumando.","Dos ruedas y un horizonte, no se necesita más.","El asfalto es tu lienzo, sigue pintando.","Cada subida tiene su bajada, recuérdalo.","Pedalear es volver a lo esencial.","La libertad huele a cadena recién aceitada."];
-const frasesRapido = ["¡Pará un poco, fierita!","¿Te creíste el Súper Taldo o qué?","¡Vas hecho un cuete!","Tranquilo, Alexis Sánchez.","Modo Matrix activado, cuidado.","A esa velocidad te sacan parte.","¿Te persigue alguien o por qué tanta prisa?","Modo cohete encendido.","¡Estás volando, respira!","Frena un poquito en las curvas.","Pedaleas como si no hubiera mañana.","El viento ya ni te alcanza.","Cadena limpia, mente clara, piernas locas.","Vas tan rápido que el GPS está mareado."];
+const frasesLento = ["¿Vas pedaleando o estás parando la chala?","Oye, te va a adelantar un guarén.","Un corpóreo del Doctor Simi corre más rápido.","¿Vas cansado o andas buscando monedas en el suelo?","Apúrate, que el lanchón de Chiloé te pilla.","Dale un poco más de color al pedaleo.","¿Te dio la pálida o qué pasó?","Mi abuelita pedalea más rápido que tú.","Tranquilo: las pirámides se hicieron ladrillo a ladrillo.","Si vas más lento, te van a multar por estorbar.","¿Pedaleas o estás meditando, maestro?","He visto tortugas con más prisa que tú.","Mi sombra ya llegó y te está esperando.","¿Todo bien por ahí?"];
+const frasesNormal = ["¡Eso! Ritmo impecable, vas como avión.","Así da gusto, mantén ese pulso.","Ni don Francisco tenía ese aguante.","Ritmo preciso, me encanta.","A este paso llegamos a tomar tecito calientito.","La bicicleta es el vehículo perfecto, y tú lo confirmas.","No hay camino largo cuando suena buena música.","Disfruta: el destino importa tanto como el camino.","La felicidad se mide en kilómetros, y vas sumando.","Dos ruedas y un horizonte, no se necesita más.","El asfalto es tu lienzo, sigue pintando.","Cada subida tiene su bajada, recuérdalo.","Pedalear es volver a lo esencial.","La libertad huele a cadena recién aceitada."];
+const frasesRapido = ["¡Pará un poco, fierita!","¡Vas hecho un cuete!","Modo Matrix activado, cuidado.","A esa velocidad te sacan parte.","¿Te persigue alguien o por qué tanta prisa?","Modo cohete encendido.","¡Estás volando, respira!","Frena un poquito en las curvas.","Pedaleas como si no hubiera mañana.","El viento ya ni te alcanza.","Cadena limpia, mente clara, piernas locas.","Vas tan rápido que el GPS está mareado."];
 const frasesParado = ["¿Se soltó la cadena?","Buen momento para echar la yegua un rato.","Si pinchaste, saca los parches con calma.","¿Descansando o pegado al celular?","Toma agüita, que hidratarse es clave.","Respira hondo, pero no te quedes dormido.","¿Todo bien? Avísame si necesitas algo.","Un pinchazo es solo una excusa para estirar las piernas.","Revisa los radios mientras estás parado.","Aprovecha y ajusta el asiento."];
 const frasesProfundas = ["Mira tus alforjas: si todo lo que necesitas cabe ahí, ¿para qué cargar con tanta m***** en la vida?","En la ciudad todo va a mil. Acá el mundo cambia al ritmo de tus ojos. Habita el presente, mijo.","El viento en contra enseña que no controlamos nada. Fluir es aprender a pedalear con lo que toque.","No estás de visita; tú eres parte de la naturaleza. Siente el aire y conéctate.","El silencio de la ruta no está vacío, está lleno de respuestas. Escúchate de verdad.","Para disfrutar la bajada, primero hay que sudar la subida. Así es la vida también.","El viaje te deja a solas contigo mismo. No le tengas miedo a tus pensamientos, déjalos pasar.","La felicidad es simple: un plato de comida caliente y un lugar donde tirar el saco.","Pedalear aquí es elegir ver el mundo con tus propios ojos, no a través de una pantalla.","La ruta no es cuántos kilómetros dejas atrás, sino cuántas trancas mentales vas botando.","Éxito no es acumular cosas. La verdadera riqueza es elegir dónde armar la carpa hoy.","El camino es un espejo. Lo que te molesta de la ruta, sánalo pedaleando.","El único kilómetro real es el que estás pisando ahora. Deja de pensar en la meta y disfruta.","La bici no miente: te muestra de qué estás hecho cuando las piernas ya no dan más.","La ciudad te enseña a competir; el pedal te enseña a compartir y conectar con la gente.","Desconéctate para conectar. Que tu único mapa sea el que dibujas con el corazón."];
 const frasesMotivacionales = ["¡Vamos, que tú puedes!","El que se rinde no llega, y tú no eres de esos.","La subida está dura, pero la bajada es gloria.","Piensa en la bebida heladita que te espera.","¡Saca la garra!","Rómpete las piernas hoy y agradécelo mañana.","En la ciudad todo va a mil, tú lleva tu propio ritmo.","El viento en contra también enseña.","No estás de visita en este camino, eres parte de él.","Para disfrutar la bajada, primero hay que sudar la subida.","La felicidad es simple: dos ruedas y ganas.","Pedalear es elegir ver el mundo de verdad.","Tu única competencia eres tú mismo.","Cada pedalada cuenta, no lo olvides.","Desconéctate del ruido para conectar contigo.","El presente es un regalo, pedaléalo con calma.","Las cuestas más duras llevan a las mejores vistas.","Tu bicicleta no miente, te lleva donde pones el alma."];
@@ -1046,7 +1044,7 @@ function calcularGastos(){
 
 /* ===== PISTERO TRAVIESO: aparece de sorpresa, saluda y se esconde ===== */
 (function(){
-  const frasesTravieso=["¡Buuu! ¿Me extrañabas?","Pssst… ¿y si salimos a pedalear un rato?","Aquí vigilando que no se oxide la cadena.","Me aburrí de esperar, ¡vamos a rodar!","Revisa el aire de las ruedas, algo me dice que falta un poquito.","Tócame el micrófono y te llevo donde quieras.","¿Sabías que la primera vuelta en bici de la historia terminó en un árbol? Tú lo haces mejor."];
+  const frasesTravieso=["¡Buuu! ¿Me extrañabas?","¿y si salimos a pedalear un rato?","Aquí vigilando que no se oxide la cadena.","Me aburrí de esperar, ¡vamos a rodar!","Revisa el aire de las ruedas","Tócame el micrófono y te llevo donde quieras.","¿Sabías que la primera vuelta en bici de la historia terminó en un árbol? Tú lo haces mejor."];
   let peek=null;
   function crear(){ peek=document.createElement('div'); peek.id='pisteroPeek'; peek.textContent='🚴'; peek.title='¡Pistero!'; peek.onclick=function(){ ocultar(); h('¡Me pillaste! Dime a dónde vamos.'); }; document.body.appendChild(peek); }
   function mostrar(){
@@ -1299,9 +1297,9 @@ function obtenerFraseUnica(categoria){
   return frase;
 }
 /* Umbrales realistas de ciclismo: <7 subida/tranco lento · 7-18 ritmo de paseo/ruta · 18+ ya es volar (bajada o viento a favor). */
-function obtenerFrasePorVelocidad(v){ if(v===0) return obtenerFraseUnica('parado'); if(v<ritmoBase*0.65) return obtenerFraseUnica('lento'); if(v>ritmoBase*1.35) return obtenerFraseUnica('rapido'); return obtenerFraseUnica('normal'); }
+function obtenerFrasePorVelocidad(v){ if(v===0) return obtenerFraseUnica('parado'); if(v<RITMO_LENTO_MAX) return obtenerFraseUnica('lento'); if(v>=RITMO_NORMAL_MAX) return obtenerFraseUnica('rapido'); return obtenerFraseUnica('normal'); }
 // Frases para ciclista URBANO (términos chilenos), separadas de las de carretera.
-const frasesCiudad = ["Ojo con las puertas de los autos estacionados, no te vayan a abrir una.","Respeta el semáforo, aunque andes apurado.","En la ciudad todos andan a mil; tú lleva tu propio ritmo.","Cuidado con el peatón pegado al celular.","Esquiva el bache, que la calle anda pelada.","Un ciclista menos es un taco menos: vas aportando a Chile.","Hazte notar, toca la campanilla si tienes.","Ojo con la micro, que esa no te espera a nadie.","Vas ganándole al taco, campeón.","En las esquinas mira siempre antes de cruzar, no confíes.","En la ciudad el casco no es opcional, es tu mejor amigo.","Si hay ciclovía, úsala, que para eso está.","Ojo con los quiltros del barrio, salúdalos de lejitos.","La ciudad se ve distinta desde la bici, disfrútala.","Cuidado con el auto que dobla sin poner la señal."];
+const frasesCiudad = ["Ojo con las puertas de los autos estacionados, no te vayan a abrir una.","Respeta el semáforo, aunque andes apurado.","En la ciudad todos andan a mil; tú lleva tu propio ritmo.","Cuidado con el peatón pegado al celular.","Esquiva el bache, que la calle anda pelada.","Un ciclista más es un taco menos: vas aportando a Chile.","Hazte notar, toca la campanilla si tienes.","Ojo con la micro, que esa no te espera a nadie.","Vas ganándole al taco, campeón.","En las esquinas mira siempre antes de cruzar, no confíes.","En la ciudad el casco no es opcional, es tu mejor amigo.","Si hay ciclovía, úsala, que para eso está.","Ojo con los quiltros del barrio, salúdalos de lejitos.","La ciudad se ve distinta desde la bici, disfrútala.","Cuidado con el auto que dobla sin poner la señal."];
 // Detección de zona: ciudad vs carretera (reverse-geocoding, con throttle para no saturar).
 let zonaActual='carretera', zonaLastCheck=0, zonaLastPos=null, kmUltimaFrase=0, tFraseCiudad=0;
 let spAnterior=0, rutaDocId=null, puntosGuardados=0, ultimaPosCiudad=null;
@@ -1606,7 +1604,7 @@ function solicitarPermisosEsenciales(){
 function toggleGPS(){
   const btn=document.querySelector('#v-dash .bg');
   if(!ig){
-    rutaDocId=null; puntosGuardados=0; spAnterior=0; ritmoBase=15;
+    rutaDocId=null; puntosGuardados=0; spAnterior=0;
     ultimoMovimientoTime=Date.now(); rutaSegCerrada=true; rutaSegDistIni=us.di;
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
@@ -1666,8 +1664,7 @@ function ug(p){
   // Velocidad SOLO verificada por desplazamiento real (centroides). Ignoramos por
   // completo la "velocidad" que reporta el GPS (es la que se vuelve fantasma en casa).
   const spVentana=velocidadVentana(posHistory);
-  let sp = (spVentana<6) ? 0 : spVentana;
-  actualizarRitmoBase(sp);
+  let sp = (spVentana<4) ? 0 : spVentana;
   lastFixTime=Date.now();
   document.getElementById('spd').innerText=Math.round(sp);
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
@@ -1694,8 +1691,8 @@ function ug(p){
 function updateSpeedStatus(speed){
   const el=document.getElementById('speedStatus'); if(!el) return;
   if(speed===0){ el.innerText='Detenido'; el.style.color='#888'; }
-  else if(speed<8){ el.innerText='Ritmo lento'; el.style.color='#ff9800'; }
-  else if(speed<25){ el.innerText='Ritmo normal'; el.style.color='#10b981'; }
+  else if(speed<RITMO_LENTO_MAX){ el.innerText='Ritmo lento'; el.style.color='#ff9800'; }
+  else if(speed<RITMO_NORMAL_MAX){ el.innerText='Ritmo normal'; el.style.color='#10b981'; }
   else { el.innerText='¡Rápido!'; el.style.color='#ff3333'; }
   pv(speed);
 }
@@ -1726,7 +1723,7 @@ function finalizarRutaPorInactividad(){
   const distSeg=Math.max(0,us.di-rutaSegDistIni);
   autoGuardarRuta(false);
   rutaSegCerrada=true; rutaSegDistIni=us.di;
-  currentRoute=[]; puntosGuardados=0; spAnterior=0; ritmoBase=15;
+  currentRoute=[]; puntosGuardados=0; spAnterior=0;
   if(crl && mp){ mp.removeLayer(crl); crl=L.polyline([],{color:'#fc4c02',weight:5,opacity:0.8}).addTo(mp); }
   if(distSeg>=0.1) h("Como llevas un rato quieto, guardé tu ruta: "+distSeg.toFixed(2)+" km. Cuando sigas pedaleando, empiezo una ruta nueva.");
 }
@@ -1797,7 +1794,7 @@ function velocidadVentana(pts){
   if(dt<2) return 0;
   return (gd2(c1.lat,c1.lon,c2.lat,c2.lon)*1000/dt)*3.6;
 }
-function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<ritmoBase*0.65?'lento':v>ritmoBase*1.35?'rapido':'normal'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
+function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<RITMO_LENTO_MAX?'lento':v>=RITMO_NORMAL_MAX?'rapido':'normal'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd(); }
 // Capa de calles (OSM estándar) vs. topográfica (OpenTopoMap): la de calles no dibuja
@@ -2372,7 +2369,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     document.getElementById('etaDuration').innerText=routeTotalDuration+' min';
     if(helmetMarker) navMap.removeLayer(helmetMarker);
     helmetMarker=L.marker([startLat,startLon],{icon:L.divIcon({className:'',html:riderMarkerHTML(selectedHelmet,skinColor(selectedSkin),true),iconSize:[50,34],iconAnchor:[25,17]})}).addTo(navMap);
-    tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon}; totalDistance=0; ritmoBase=15;
+    tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon}; totalDistance=0;
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
     if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop();
     lpWakeLock.enable();
