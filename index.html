@@ -746,7 +746,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.47'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.48'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -877,6 +877,19 @@ function saludoBienvenida(nombre){
 }
 let frasesUsadas = {lento:[], normal:[], rapido:[], parado:[], motivacional:[], profunda:[], ciudad:[]};
 let lastFraseTime = 0;
+// Frases que manda la comunidad: quedan en revisión (admin) y una vez aprobadas se
+// mezclan en el pool "normal" (chileno y neutro) para que Pistero las diga a cualquiera.
+let frasesComunidadAprobadas = [];
+async function cargarFrasesComunidad(){
+  try{
+    const snap = await db.collection('frasesComunidad').where('aprobada','==',true).get();
+    frasesComunidadAprobadas = snap.docs.map(function(d){ return d.data().texto; }).filter(Boolean);
+    frasesComunidadAprobadas.forEach(function(t){
+      if(frasesNormal.indexOf(t)===-1) frasesNormal.push(t);
+      if(frasesNeutro.normal.indexOf(t)===-1) frasesNeutro.normal.push(t);
+    });
+  }catch(e){}
+}
 const MIN_INTERVALO = 10000;
 let navSteps = [], currentStepIndex = 0, lastSpokenStep = -1, routeTotalDistance = 0, routeTotalDuration = 0;
 let currentUserLocation = null;
@@ -1422,7 +1435,7 @@ window.onload = async function(){
     document.getElementById('ghostBtn').style.display='block';
     const adminPanel=document.getElementById('admin-panel'); if(adminPanel) adminPanel.style.display=(cu===ADMIN_ID)?'block':'none';
     await im(); au(); rm(MG); fg('todos');
-    loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips();
+    loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
     initCustomization();
     setTimeout(function(){ h(saludoBienvenida(nombreUsuario)); },500);
     setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },950);
@@ -1524,7 +1537,7 @@ async function reg(e){
   uj=JSON.parse(localStorage.getItem('lp_j_'+cu))||[];
   rh=JSON.parse(localStorage.getItem('lp_r_'+cu))||[];
   await im(); au(); rm(MG); fg('todos');
-  loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips();
+  loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
   if(!ghostMode) subscribeToUsers();
   subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes();
   getCurrentLocation();
@@ -1945,7 +1958,7 @@ function subscribeToReportes(){
   db.collection('reportes').orderBy('ts','desc').limit(200).onSnapshot(function(snap){
     const docs=[]; snap.forEach(function(d){ docs.push(d.data()); });
     reporteMarkers.forEach(function(m){ if(mp) mp.removeLayer(m); }); reporteMarkers=[];
-    if(mp){ docs.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const ic=L.divIcon({className:'',html:'<div style="background:'+c.c+';border:2px solid #fff;border-radius:50% 50% 50% 0;width:30px;height:30px;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,0.5)"><span style="transform:rotate(45deg);font-size:14px">'+c.e+'</span></div>',iconSize:[30,30],iconAnchor:[15,30]}); const mk=L.marker([r.lat,r.lon],{icon:ic}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b><br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</small>'); reporteMarkers.push(mk); } }); }
+    if(mp){ docs.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const ic=L.divIcon({className:'',html:'<div style="background:'+c.c+';border:2px solid #fff;border-radius:50% 50% 50% 0;width:30px;height:30px;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,0.5)"><span style="transform:rotate(45deg);font-size:14px">'+c.e+'</span></div>',iconSize:[30,30],iconAnchor:[15,30]}); const mk=L.marker([r.lat,r.lon],{icon:ic}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b><br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'); reporteMarkers.push(mk); } }); }
     renderReportesComunidad(docs);
   });
 }
@@ -2671,7 +2684,69 @@ async function mostrarComunidad(){
         : '<button class="ab" onclick="participarSorteo()">🎉 Anotarme al sorteo</button>');
   }
   html+='</div>';
+  // Frases de la comunidad: cada ciclista puede aportar su frase para que Pistero la
+  // diga en la app. Queda en revisión hasta que el admin la aprueba (no sale de inmediato).
+  html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:var(--gl)">'+
+    '<h4 style="color:var(--p);font-size:0.9rem;margin:0 0 6px">✍️ Agrega tus mejores frases</h4>'+
+    '<p style="font-size:0.75rem;color:#9fb3c8;margin:0 0 8px">Escribe una frase para que Pistero la diga en la app. Queda en revisión antes de salir para todos.</p>'+
+    '<textarea id="fraseComunidadInput" rows="2" maxlength="140" placeholder="Ej: A este paso llegamos antes que el bus..."></textarea>'+
+    '<button class="ab" style="margin-top:6px" onclick="enviarFraseComunidad()">Enviar frase</button>'+
+    '<div id="misFrasesComunidad" style="margin-top:10px"></div>'+
+    '</div>';
+  if(cu===ADMIN_ID){
+    let pendientes=0;
+    try{ const psnap=await db.collection('frasesComunidad').where('aprobada','==',false).get(); pendientes=psnap.size; }catch(e){}
+    html+='<button class="ab sec" style="margin-top:10px" onclick="mostrarRevisionFrases()">🔍 Revisar frases pendientes ('+pendientes+')</button>';
+  }
   c.innerHTML=html;
+  renderMisFrasesComunidad();
+}
+async function enviarFraseComunidad(){
+  const inp=document.getElementById('fraseComunidadInput'); if(!inp||!cu) return;
+  const texto=inp.value.trim();
+  if(!texto) return;
+  if(texto.length>140){ alert('Máximo 140 caracteres.'); return; }
+  try{
+    await db.collection('frasesComunidad').add({user:cu, nombre:nombreUsuario||'Ciclista', texto:texto, aprobada:false, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    inp.value='';
+    h('¡Gracias! Tu frase queda en revisión.');
+    renderMisFrasesComunidad();
+  }catch(e){ alert('No se pudo enviar tu frase, intenta de nuevo.'); }
+}
+async function renderMisFrasesComunidad(){
+  const c=document.getElementById('misFrasesComunidad'); if(!c||!cu) return;
+  try{
+    const snap=await db.collection('frasesComunidad').where('user','==',cu).get();
+    const arr=snap.docs.map(function(d){return d.data();}).sort(function(a,b){ return ((b.ts&&b.ts.seconds)||0)-((a.ts&&a.ts.seconds)||0); });
+    if(arr.length===0){ c.innerHTML=''; return; }
+    c.innerHTML='<div style="font-size:0.72rem;color:#8aa;margin-bottom:4px">Tus frases enviadas:</div>'+arr.map(function(f){
+      const estado=f.aprobada?'✅ Ya suena en la app':'⏳ En revisión';
+      return '<div style="background:#111;border-radius:8px;padding:8px;margin-bottom:5px;font-size:0.78rem"><div>"'+escapeHTML(f.texto)+'"</div><div style="color:#8aa;font-size:0.68rem;margin-top:3px">'+estado+'</div></div>';
+    }).join('');
+  }catch(e){}
+}
+async function mostrarRevisionFrases(){
+  if(cu!==ADMIN_ID) return;
+  document.getElementById('modalTitle').innerText='🔍 Revisar frases de la comunidad';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="color:#888">Cargando...</p>';
+  try{
+    const snap=await db.collection('frasesComunidad').where('aprobada','==',false).get();
+    const arr=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());}).sort(function(a,b){ return ((a.ts&&a.ts.seconds)||0)-((b.ts&&b.ts.seconds)||0); });
+    if(arr.length===0){ c.innerHTML='<p style="color:#888">No hay frases pendientes.</p><button class="ab sec" style="margin-top:10px" onclick="mostrarComunidad()">← Volver</button>'; return; }
+    let html=arr.map(function(f){
+      return '<div style="background:var(--gl);border-radius:10px;padding:10px;margin-bottom:8px"><div style="font-size:0.85rem">"'+escapeHTML(f.texto)+'"</div><div style="color:#8aa;font-size:0.68rem;margin:4px 0 8px">de '+escapeHTML(f.nombre||'Ciclista')+'</div><div style="display:flex;gap:6px"><button class="ab" style="margin:0;width:auto;padding:6px 12px;font-size:0.75rem" onclick="aprobarFrase(\''+f.id+'\')">✅ Aprobar</button><button class="ab sec" style="margin:0;width:auto;padding:6px 12px;font-size:0.75rem;background:#dc2626;color:#fff" onclick="rechazarFrase(\''+f.id+'\')">✖ Rechazar</button></div></div>';
+    }).join('');
+    html+='<button class="ab sec" style="margin-top:6px" onclick="mostrarComunidad()">← Volver</button>';
+    c.innerHTML=html;
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar las frases pendientes.</p>'; }
+}
+async function aprobarFrase(id){
+  try{ await db.collection('frasesComunidad').doc(id).update({aprobada:true}); h('Frase aprobada, ya suena en la app.'); cargarFrasesComunidad(); mostrarRevisionFrases(); }catch(e){ alert('No se pudo aprobar.'); }
+}
+async function rechazarFrase(id){
+  if(!confirm('¿Eliminar esta frase?')) return;
+  try{ await db.collection('frasesComunidad').doc(id).delete(); mostrarRevisionFrases(); }catch(e){ alert('No se pudo eliminar.'); }
 }
 async function votarComunidad(opcionId){
   if(!cu) return;

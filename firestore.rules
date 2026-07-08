@@ -134,6 +134,14 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Frases que aporta la comunidad para que Pistero las diga en la app. Quedan en
+    // revisión (aprobada:false) hasta que el admin las aprueba/rechaza desde la app.
+    match /frasesComunidad/{id} {
+      allow read: if true;
+      allow create: if signedIn() && strOk('texto', 140) && strOk('nombre', 60);
+      allow update, delete: if signedIn();
+    }
+
     // Todo lo demás: denegado por defecto
     match /{document=**} {
       allow read, write: if false;
