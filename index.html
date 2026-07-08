@@ -745,7 +745,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.42'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.43'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -2632,11 +2632,10 @@ async function mostrarComunidad(){
   try{ const snap=await db.collection('users').get(); total=snap.size; }catch(e){}
   const pct=Math.min(100,Math.round((total/META)*100));
   const opciones=[
-    {id:'rutas',texto:'🗺️ Mapear más rutas seguras'},
-    {id:'reforestar',texto:'🌳 Reforestar zonas de ruta'},
-    {id:'refugios',texto:'🏕️ Financiar refugios/paradores para ciclistas'},
+    {id:'reforestar',texto:'🌳 Reforestar zonas naturales'},
     {id:'seguridad',texto:'🚨 Botón SOS con central de emergencia'},
-    {id:'bicis',texto:'🚲 Bicicletas y accesorios para quien no tiene'}
+    {id:'bicis',texto:'🚲 Bicicletas y accesorios para quien no tiene'},
+    {id:'deportistas',texto:'🏆 Apoyo a deportistas ciclistas'}
   ];
   let votos={}; opciones.forEach(function(o){ votos[o.id]=0; });
   let miVoto=null;
@@ -2664,10 +2663,10 @@ async function mostrarComunidad(){
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(252,76,2,0.08));border:1px solid '+(total>=META?'var(--g)':'#333')+'">'+
     '<h4 style="color:var(--g);font-size:0.9rem;margin:0 0 6px">🎁 Sorteo de la comunidad</h4>';
   if(total<META){
-    html+='<p style="font-size:0.78rem;color:#9fb3c8;margin:0">Se desbloquea cuando lleguemos a <strong style="color:#dfe7ff">5.000</strong> ciclistas registrados. Vamos en <strong style="color:var(--p)">'+pct+'%</strong>.</p>'+
+    html+='<p style="font-size:0.78rem;color:#9fb3c8;margin:0">Se desbloquea cuando lleguemos a <strong style="color:#dfe7ff">5.000</strong> ciclistas registrados. Vamos en <strong style="color:var(--p)">'+pct+'%</strong>. Una vez desbloqueado, el sorteo se repite <strong style="color:#dfe7ff">2 veces al año</strong>.</p>'+
       '<button class="ab sec" style="margin-top:10px" disabled onclick="return false">🔒 Bloqueado ('+total+' / '+META+')</button>';
   } else {
-    html+='<p style="font-size:0.78rem;color:#9fb3c8;margin:0 0 8px">¡Llegamos a 5.000! Para que sea justo y transparente con todos: una participación por persona, la lista de participantes queda pública (cualquiera puede revisarla), y el premio y la fecha del sorteo se anuncian a toda la comunidad con anticipación antes de sortear.</p>'+
+    html+='<p style="font-size:0.78rem;color:#9fb3c8;margin:0 0 8px">¡Llegamos a 5.000! Este beneficio se ofrece <strong style="color:#dfe7ff">2 veces al año</strong>. Para que sea justo y transparente con todos: una participación por persona, la lista de participantes queda pública (cualquiera puede revisarla), y el premio y la fecha del sorteo se anuncian a toda la comunidad con anticipación antes de sortear.</p>'+
       '<div style="font-size:0.75rem;color:#7dd;margin-bottom:8px">'+sorteoTotal+' ciclistas ya participan</div>'+
       (yaParticipo
         ? '<button class="ab sec" disabled onclick="return false">✅ Ya estás participando</button>'
