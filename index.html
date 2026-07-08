@@ -566,7 +566,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="quick-links">
   <button class="bg" style="margin:0" onclick="toggleRadarOnMap()">🚴 Ciclistas</button>
   <button class="bd" style="margin:0" onclick="reportarEnRuta()">📍 Reportar</button>
-  <button class="btrip" style="margin:0" onclick="showAllRoutesOnMap()">🛣️ Rutas</button>
+  <button class="btrip" style="margin:0" onclick="cv('routes')">🛣️ Rutas</button>
   <button class="ab sec" style="margin:0" onclick="cv('trips')">🗺️ Mis Viajes</button>
 </div>
 <div id="map"></div>
@@ -744,7 +744,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.40'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.41'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -843,7 +843,7 @@ const extrasOptions = [
   {id:'bandana', name:'Pañoleta', svg:'<path d="M64 150 Q100 166 136 150 L132 160 Q100 174 68 160 Z" fill="#e74c3c"/>'}
 ];
 
-let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[];
+let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[],combinedLines=[];
 let categoriaActual='todos', hostelTipoActual='todos';
 let trips=[], currentTrip=null, navMap=null, helmetMarker=null, routeLine=null;
 let addedDests=[], currentFilter='hostel', allHostels=[];
@@ -1748,7 +1748,29 @@ function _rutaPorId(id){ return rutasLocales().find(function(x){return x.localId
 function showSingleRoute(id){ const r=_rutaPorId(id); function pintar(points){ if(!points||!points.length){ h("Esta ruta no tiene puntos guardados."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=L.polyline(points,{color:'#ffd700',weight:6,opacity:0.9}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Aquí está tu ruta."); },300); } if(r&&r.points&&r.points.length){ pintar(r.points.map(function(p){return [p.lat,p.lon];})); return; } db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ pintar((doc.data().points||[]).map(function(p){return [p.lat,p.lon];})); } }).catch(function(){ h("No pude abrir esa ruta."); }); }
 function deleteRoute(id){ if(!confirm("¿Eliminar esta ruta?")) return; const it=_rutaPorId(id); rutasLocalesSet(rutasLocales().filter(function(x){return x.localId!==id;})); if(it&&it.firebaseId){ db.collection('routes').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ db.collection('routes').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
 function showAllRoutesOnMap(){ const arr=rutasLocales().filter(function(d){return d.points&&d.points.length;}); if(!arr.length){ h("No tienes rutas todavía."); return; } cv('routes'); setTimeout(function(){ const mc=document.getElementById('map-routes-all'); if(mc) mc.style.display='block'; if(!mapAllRoutes){ mapAllRoutes=L.map('map-all-routes').setView([20,0],2); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAllRoutes); } mapAllRoutes.eachLayer(function(layer){ if(layer instanceof L.Polyline) mapAllRoutes.removeLayer(layer); }); const colors=['#fc4c02','#ff0055','#ffd700','#2ecc71','#9b59b6','#ff6600','#00ff88']; let ci=0; const allB=[]; arr.forEach(function(d){ const points=d.points.map(function(p){return [p.lat,p.lon];}); const pl=L.polyline(points,{color:colors[ci%colors.length],weight:4,opacity:0.8}).addTo(mapAllRoutes); pl.bindPopup('<b>'+new Date(d.startTime).toLocaleDateString()+'</b><br>'+(d.distance||0).toFixed(2)+' km'); allB.push.apply(allB,points); ci++; }); if(allB.length>0) mapAllRoutes.fitBounds(L.latLngBounds(allB),{padding:[50,50]}); mapAllRoutes.invalidateSize(); h(arr.length+" rutas en el mapa."); },300); }
-function combineAllRoutes(){ const arr=rutasLocales().slice().sort(function(a,b){return (a.startTime||0)-(b.startTime||0);}); let allPoints=[]; arr.forEach(function(d){ if(d.points&&d.points.length>0) allPoints=allPoints.concat(d.points); }); if(allPoints.length===0){ h("No hay rutas para combinar."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=L.polyline(allPoints.map(function(p){return [p.lat,p.lon];}),{color:'#ff0055',weight:5,opacity:0.9}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Combiné tus rutas en una sola."); },300); }
+// Dibuja cada ruta como su PROPIA línea (nunca una sola polilínea continua): si se
+// concatenan todos los puntos de rutas distintas en una sola línea, queda una "línea
+// recta" fea uniendo el final de una ruta con el inicio de la siguiente aunque estén
+// en lugares totalmente distintos del mapa.
+function combineAllRoutes(){
+  const arr=rutasLocales().slice().sort(function(a,b){return (a.startTime||0)-(b.startTime||0);}).filter(function(d){return d.points&&d.points.length>1;});
+  if(arr.length===0){ h("No hay rutas para combinar."); return; }
+  cv('map');
+  setTimeout(function(){
+    if(crl){ mp.removeLayer(crl); crl=null; }
+    if(combinedLines){ combinedLines.forEach(function(l){ mp.removeLayer(l); }); }
+    combinedLines=[];
+    const allB=[];
+    arr.forEach(function(d){
+      const points=d.points.map(function(p){return [p.lat,p.lon];});
+      const pl=L.polyline(points,{color:'#ff0055',weight:5,opacity:0.9}).addTo(mp);
+      combinedLines.push(pl);
+      allB.push.apply(allB,points);
+    });
+    if(allB.length>0) mp.fitBounds(L.latLngBounds(allB),{padding:[50,50]});
+    h("Junté tus "+arr.length+" rutas en el mapa.");
+  },300);
+}
 function hg(e){ h("La señal de GPS está inestable."); }
 function gd2(a,b,c,d){ const R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
 // Velocidad REAL por ventana (~10s): compara el centroide de la 1ª mitad de
@@ -1810,15 +1832,20 @@ function toggleRadarOnMap(){
     cv('map');
     if(radarCircle){ mp.removeLayer(radarCircle); radarCircle=null; }
     if(sm.length===0) subscribeToUsers();
-    h("Radar activado. Buscando ciclistas en todo el mundo.");
-    // Ajusta el mapa para mostrar a TODOS los ciclistas, estén donde estén.
+    h("Radar activado. Buscándote a ti primero.");
+    // Primero te ubica A TI (el usuario principal): si hay un ciclista en la otra
+    // punta del mundo, antes esto hacía zoom out hasta el planeta entero y tu propio
+    // punto quedaba perdido. Ahora siempre centra en tu posición real.
     setTimeout(function(){
       if(!mp) return;
-      const pts=sm.map(function(m){ return m.getLatLng(); });
-      if(currentUserLocation) pts.push(L.latLng(currentUserLocation.lat,currentUserLocation.lon));
-      if(pts.length>=2){ mp.fitBounds(L.latLngBounds(pts).pad(0.3)); }
-      else if(pts.length===1){ mp.setView(pts[0], 4); }
-      else { mp.setView([20,0], 2); }
+      const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+      if(yo){ mp.setView([yo.lat,yo.lon],13); }
+      else {
+        const pts=sm.map(function(m){ return m.getLatLng(); });
+        if(pts.length>=2){ mp.fitBounds(L.latLngBounds(pts).pad(0.3)); }
+        else if(pts.length===1){ mp.setView(pts[0], 4); }
+        else { mp.setView([20,0], 2); }
+      }
       h(sm.length>0 ? ("Encontré "+sm.length+" ciclista"+(sm.length>1?"s":"")+" en el mundo. Tócalos en el mapa para ver quiénes son.") : "Por ahora no hay otros ciclistas con ubicación visible. ¡Pronto se sumarán a la ruta!");
     }, 1300);
   } else {
@@ -2366,7 +2393,7 @@ function showSpeechBubble(text){ const b=document.getElementById('speechBubble')
 async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigation(); return; } if(confirm("¿Terminar y guardar el viaje?")){ if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; if(currentTrip){ try{ await db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}); }catch(e){ } } else { guardarRutaNavegada(); } setTimeout(endNavigation,2500); } }
 function endNavigation(){ lpWakeLock.disable(); if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; loadTrips(); }
 function interactuarPistero(){ const f=obtenerFrasePorVelocidad(15); if(f) h(f); }
-function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.invalidateSize(); },120); if(id==='routes') setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
+function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.invalidateSize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 function updateStatsView(){
   document.getElementById('statKm').innerText=us.di.toFixed(1);
   document.getElementById('statTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length;
