@@ -821,7 +821,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.67'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.68'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -961,7 +961,7 @@ function saludoBienvenida(nombre){
   localStorage.setItem('lp_saludo',String(i));
   return saludosBienvenida[i].replace(/NOMBRE/g, nombre||'ciclista');
 }
-let frasesUsadas = {lento:[], normal:[], rapido:[], parado:[], motivacional:[], profunda:[], ciudad:[]};
+let frasesUsadas = {lento:[], normal:[], rapido:[], parado:[], motivacional:[], profunda:[], ciudad:[], subida:[], bajada:[]};
 let lastFraseTime = 0;
 // El diálogo de "parado" (revisar la bici, tomar agua...) necesita SU PROPIO reloj,
 // igual que ciudad/carretera lo tienen (tFraseCiudad/kmUltimaFrase). Antes reusaba
@@ -1021,6 +1021,8 @@ const frasesLento = ["¿Vas pedaleando o estás parando la chala?","Oye, te va a
 const frasesNormal = ["¡Eso! Ritmo impecable, vas como avión.","Así da gusto, mantén ese pulso.","Ni don Francisco tenía ese aguante.","Ritmo preciso, me encanta.","A este paso llegamos a tomar tecito calientito.","La bicicleta es el vehículo perfecto, y tú lo confirmas.","No hay camino largo cuando suena buena música.","Disfruta: el destino importa tanto como el camino.","La felicidad se mide en kilómetros, y vas sumando.","Dos ruedas y un horizonte, no se necesita más.","El asfalto es tu lienzo, sigue pintando.","Cada subida tiene su bajada, recuérdalo.","Pedalear es volver a lo esencial.","La libertad huele a cadena recién aceitada."];
 const frasesRapido = ["¡Pará un poco, fierita!","¡Vas hecho un cuete!","Modo Matrix activado, cuidado.","A esa velocidad te sacan parte.","¿Te persigue alguien o por qué tanta prisa?","Modo cohete encendido.","¡Estás volando, respira!","Frena un poquito en las curvas.","Pedaleas como si no hubiera mañana.","El viento ya ni te alcanza.","Cadena limpia, mente clara, piernas locas.","Vas tan rápido que el GPS está mareado."];
 const frasesParado = ["¿Se soltó la cadena?","Buen momento para echar la yegua un rato.","Si pinchaste, saca los parches con calma.","¿Descansando o pegado al celular?","Toma agüita, que hidratarse es clave.","Respira hondo, pero no te quedes dormido.","¿Todo bien? Avísame si necesitas algo.","Un pinchazo es solo una excusa para estirar las piernas.","Revisa los radios mientras estás parado.","Aprovecha y ajusta el asiento."];
+const frasesSubida = ["Esto se puso cuesta arriba, ¡dale con todo!","Subida a la vista, baja un cambio y no te apures.","Aquí se separan los pollos de las gallinas: ¡sube esa cuesta!","Un poco de sufrimiento ahora, después bajas volando.","Respira hondo, esta subida se acaba... en algún momento.","Las piernas van a hablar después de esto. ¡Vamos que se puede!","Cuesta arriba: ritmo parejo y no te la juegues toda de una.","Cada pedaleo en esta subida es Darma ganado, campeón."];
+const frasesBajada = ["Bajada a la vista: cuidado con la velocidad y los baches.","Ahora te toca disfrutar, pero ojo con los frenos.","Se viene la bajada, agárrate que esto vuela.","Aprovecha de descansar las piernas, ya te ganaste esta bajada.","Ojo con las curvas en la bajada, no hay apuro.","Bajando rico, pero con la vista bien puesta en el camino."];
 const frasesProfundas = ["Mira tus alforjas: si todo lo que necesitas cabe ahí, ¿para qué cargar con tanta m***** en la vida?","En la ciudad todo va a mil. Acá el mundo cambia al ritmo de tus ojos. Habita el presente, mijo.","El viento en contra enseña que no controlamos nada. Fluir es aprender a pedalear con lo que toque.","No estás de visita; tú eres parte de la naturaleza. Siente el aire y conéctate.","El silencio de la ruta no está vacío, está lleno de respuestas. Escúchate de verdad.","Para disfrutar la bajada, primero hay que sudar la subida. Así es la vida también.","El viaje te deja a solas contigo mismo. No le tengas miedo a tus pensamientos, déjalos pasar.","La felicidad es simple: un plato de comida caliente y un lugar donde tirar el saco.","Pedalear aquí es elegir ver el mundo con tus propios ojos, no a través de una pantalla.","La ruta no es cuántos kilómetros dejas atrás, sino cuántas trancas mentales vas botando.","Éxito no es acumular cosas. La verdadera riqueza es elegir dónde armar la carpa hoy.","El camino es un espejo. Lo que te molesta de la ruta, sánalo pedaleando.","El único kilómetro real es el que estás pisando ahora. Deja de pensar en la meta y disfruta.","La bici no miente: te muestra de qué estás hecho cuando las piernas ya no dan más.","La ciudad te enseña a competir; el pedal te enseña a compartir y conectar con la gente.","Desconéctate para conectar. Que tu único mapa sea el que dibujas con el corazón."];
 const frasesMotivacionales = ["¡Vamos, que tú puedes!","El que se rinde no llega, y tú no eres de esos.","La subida está dura, pero la bajada es gloria.","Piensa en la bebida heladita que te espera.","¡Saca la garra!","Rómpete las piernas hoy y agradécelo mañana.","En la ciudad todo va a mil, tú lleva tu propio ritmo.","El viento en contra también enseña.","No estás de visita en este camino, eres parte de él.","Para disfrutar la bajada, primero hay que sudar la subida.","La felicidad es simple: dos ruedas y ganas.","Pedalear es elegir ver el mundo de verdad.","Tu única competencia eres tú mismo.","Cada pedalada cuenta, no lo olvides.","Desconéctate del ruido para conectar contigo.","El presente es un regalo, pedaléalo con calma.","Las cuestas más duras llevan a las mejores vistas.","Tu bicicleta no miente, te lleva donde pones el alma."];
 
@@ -1392,7 +1394,9 @@ const frasesNeutro={
   rapido:["¡Vas volando! Cuidado en las curvas.","Frena un poco, campeón.","¡A esa velocidad despegas!","Tranquilo, que no es una carrera.","Modo cohete activado.","¡Cómo corres! Respira.","Baja un cambio y disfruta el paisaje."],
   parado:["¿Todo bien? Avísame si necesitas algo.","Buen momento para tomar agua.","Descansa un poco, te lo mereces.","¿Revisando la bici? Bien pensado.","Respira hondo y cuando quieras seguimos.","Aprovecha para estirar las piernas.","Un descanso corto y a seguir."],
   motivacional:["¡Vamos, que tú puedes!","Cada kilómetro cuenta, no lo olvides.","El que se rinde no llega, y tú no eres de esos.","La mejor vista viene después de la subida.","Pedalear es elegir ver el mundo de verdad.","Tu única competencia eres tú mismo.","Disfruta el camino, el destino espera."],
-  ciudad:["Ojo con las puertas de los autos estacionados.","Respeta el semáforo, aunque vayas con prisa.","Cuidado con el peatón distraído con el celular.","Usa la ciclovía si hay, para eso está.","En las esquinas mira siempre antes de cruzar.","El casco no es opcional en la ciudad.","Cuidado con el auto que gira sin señalizar."]
+  ciudad:["Ojo con las puertas de los autos estacionados.","Respeta el semáforo, aunque vayas con prisa.","Cuidado con el peatón distraído con el celular.","Usa la ciclovía si hay, para eso está.","En las esquinas mira siempre antes de cruzar.","El casco no es opcional en la ciudad.","Cuidado con el auto que gira sin señalizar."],
+  subida:["Subida a la vista, baja un cambio y no te apures.","Ánimo, esta cuesta también se acaba.","Ritmo parejo en la subida, sin apurarte.","Cada pedaleo cuesta arriba vale doble.","Respira hondo, ya casi llegas arriba."],
+  bajada:["Bajada a la vista: cuidado con la velocidad.","Ahora te toca disfrutar, pero ojo con los frenos.","Aprovecha de descansar las piernas en la bajada.","Ojo con las curvas en la bajada, no hay apuro."]
 };
 const frasesFlavor={
   ar:{normal:["¡Dale que va, campeón!","Así se pedalea, maestro."],rapido:["¡Pará un poco, loco!"],ciudad:["Ojo con el bondi, que no frena por nadie.","Cuidado con el pozo, la calle está brava."],motivacional:["¡Vamos que se puede!","No aflojes, que ya casi."],parado:["Tomate un mate y seguimos."]},
@@ -1404,7 +1408,7 @@ function paisFrases(){ return (paisUsuario||'').toString().toLowerCase().slice(0
 function poolPais(cat){
   if(cat==='profunda') return frasesProfundas;
   const p=paisFrases();
-  const chil={lento:frasesLento,normal:frasesNormal,rapido:frasesRapido,parado:frasesParado,ciudad:frasesCiudad,motivacional:frasesMotivacionales};
+  const chil={lento:frasesLento,normal:frasesNormal,rapido:frasesRapido,parado:frasesParado,ciudad:frasesCiudad,motivacional:frasesMotivacionales,subida:frasesSubida,bajada:frasesBajada};
   if(p==='cl'||p===''){ return chil[cat]||frasesMotivacionales; }
   const neu=frasesNeutro[cat]||frasesNeutro.motivacional;
   const fl=(frasesFlavor[p]&&frasesFlavor[p][cat])||[];
@@ -1803,6 +1807,7 @@ function toggleGPS(){
     // se ve el tutorial recién logueado, sin haber pedaleado nada todavía).
     lastFraseParadoTime=Date.now();
     viajePausedMs=0; viajePausedDesde=null; posHistory=[]; _gpsBadgeToggle('dashPausaBadge', false);
+    pendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
       if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
@@ -1848,6 +1853,42 @@ function bromasDelCamino(sp){
     if(us.di-kmUltimaFrase>=1.5){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera: cada 1.5 km
   }
 }
+/* ===== PENDIENTE EN VIVO: usa la altitud del GPS (misma fuente del perfil de
+   elevación) para detectar que vas subiendo o bajando, y comentarlo. El buffer
+   guarda solo los puntos de los últimos ~120m (por distancia, no por tiempo: a
+   6km/h una subida corta igual necesita unos segundos para acumular distancia
+   suficiente y no confundir ruido del GPS con una pendiente real). */
+let pendienteHistory=[], navPendienteHistory=[];
+function _actualizarPendienteHistory(buffer, lat, lon, alt){
+  if(alt==null || isNaN(alt)) return;
+  buffer.push({lat:lat,lon:lon,alt:alt});
+  while(buffer.length>2 && calculateDistance(buffer[0].lat,buffer[0].lon,buffer[buffer.length-1].lat,buffer[buffer.length-1].lon)>120) buffer.shift();
+}
+function calcularPendienteActual(buffer){
+  if(buffer.length<5) return null;
+  const dist=calculateDistance(buffer[0].lat,buffer[0].lon,buffer[buffer.length-1].lat,buffer[buffer.length-1].lon);
+  if(dist<35) return null; // muy corto para confiar en el dato
+  // promedia los 2 primeros y 2 últimos puntos para no dejarse engañar por un solo salto de altitud
+  const altIni=(buffer[0].alt+buffer[1].alt)/2, altFin=(buffer[buffer.length-1].alt+buffer[buffer.length-2].alt)/2;
+  return ((altFin-altIni)/dist)*100; // % de pendiente
+}
+// Zona de pendiente con histéresis (entra en subida/bajada con umbral más alto que
+// el que usa para salir) para no estar cambiando de opinión con cada fix del GPS.
+let zonaPendienteActual='plano', tFraseSubida=0, tFraseBajada=0;
+function comentarPendiente(buffer, sp){
+  if(sp===0) return; // parado no hay pendiente que comentar
+  const pend=calcularPendienteActual(buffer);
+  if(pend==null) return;
+  let zonaNueva=zonaPendienteActual;
+  if(zonaPendienteActual==='subida'){ if(pend<2.5) zonaNueva='plano'; }
+  else if(zonaPendienteActual==='bajada'){ if(pend>-2.5) zonaNueva='plano'; }
+  else { if(pend>4.5) zonaNueva='subida'; else if(pend<-4.5) zonaNueva='bajada'; }
+  if(zonaNueva===zonaPendienteActual) return;
+  zonaPendienteActual=zonaNueva;
+  if(!vozActiva || vozOcupada() || vozCola.length) return;
+  if(zonaNueva==='subida' && Date.now()-tFraseSubida>=180000){ const _fr=obtenerFraseUnica('subida'); if(_fr){ h(_fr); tFraseSubida=Date.now(); } }
+  else if(zonaNueva==='bajada' && Date.now()-tFraseBajada>=180000){ const _fr=obtenerFraseUnica('bajada'); if(_fr){ h(_fr); tFraseBajada=Date.now(); } }
+}
 // Antes esto se descartaba en silencio: con mala señal (dentro de un edificio, entre
 // cerros, día nublado) la velocidad se quedaba pegada sin ninguna explicación. Ahora
 // se avisa con una insignia mientras dura, y desaparece sola apenas el GPS mejora.
@@ -1863,6 +1904,7 @@ function ug(p){
   // estamos QUIETOS aunque el GPS reporte velocidad fantasma (caso casa).
   posHistory.push({lat:la,lon:lo,t:Date.now()});
   while(posHistory.length>1 && (Date.now()-posHistory[0].t)>12000) posHistory.shift();
+  _actualizarPendienteHistory(pendienteHistory, la, lo, p.coords.altitude);
   // Velocidad SOLO verificada por desplazamiento real (centroides). Ignoramos por
   // completo la "velocidad" que reporta el GPS (es la que se vuelve fantasma en casa).
   // El piso queda en 6 (no en 4, aunque "lento" arranque ahí en la categoría): bajarlo
@@ -1886,6 +1928,7 @@ function ug(p){
   // normal, rapido). El throttle interno de obtenerFraseUnica evita el spam.
   actualizarZona(la,lo); // detecta ciudad/carretera en segundo plano
   bromasDelCamino(sp);
+  comentarPendiente(pendienteHistory, sp);
   // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
   if(us.la && moved<0.012){ return; }
   if(us.la){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
@@ -2895,6 +2938,7 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   // lo último que marcaba y nunca volvía a 0 (ni se detectaba la pausa).
   navPosHistory.push({lat:lat,lon:lon,t:_now});
   while(navPosHistory.length>1 && (_now-navPosHistory[0].t)>12000) navPosHistory.shift();
+  _actualizarPendienteHistory(navPendienteHistory, lat, lon, altitude);
   const _spWin=velocidadVentana(navPosHistory);
   const speed=(_spWin<6)?0:_spWin;
   _actualizarPausaViaje(speed, 'navPausaBadge');
@@ -2911,6 +2955,7 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   checkFuel(totalDistance);
   actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
+  comentarPendiente(navPendienteHistory, speed);
   checkNavigationSteps(lat,lon);
   verificarDesviacion(lat,lon);
   compararRitmoHistorico(totalDistance, tiempoActivoMs());
@@ -2975,6 +3020,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   lastFraseParadoTime=Date.now();
   navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
   navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
+  navPendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
   try{
     const url='https://router.project-osrm.org/route/v1/cycling/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
     const resp=await fetch(url); const data=await resp.json();
