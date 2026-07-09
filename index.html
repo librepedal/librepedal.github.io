@@ -165,6 +165,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .repair-tip{background:rgba(0,255,100,0.1);border:1px solid #00ff64;padding:10px;border-radius:8px;margin:6px 0}
 .global-comment{background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;margin:6px 0;border-left:3px solid var(--p)}
 .global-comment .author{color:var(--g);font-weight:bold;font-size:0.8rem}
+.novedad-card{background:rgba(255,255,255,0.05);border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:10px}
+.novedad-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.novedad-badge{background:rgba(255,215,0,0.12);color:var(--g);border:1px solid rgba(255,215,0,0.4);border-radius:10px;padding:2px 9px;font-size:0.65rem;font-weight:700;white-space:nowrap}
+.novedad-fecha{color:#7d8ba0;font-size:0.68rem;white-space:nowrap}
+.novedad-card h4{margin:0 0 5px;color:#fff;font-size:0.88rem}
+.novedad-card p{margin:0 0 8px;color:#b8c4d4;font-size:0.78rem;line-height:1.4}
+.novedad-bottom{display:flex;justify-content:space-between;align-items:center}
+.novedad-bottom a{color:var(--p);font-size:0.78rem;font-weight:700;text-decoration:none}
+.novedad-del{background:none;border:none;cursor:pointer;font-size:0.85rem;opacity:0.7;padding:0 4px}
 .global-comment .time{color:#888;font-size:0.7rem}
 .global-comment .text{margin:4px 0;line-height:1.3;font-size:0.85rem}
 .cc{display:flex;flex-direction:column;height:calc(100vh - 210px)}
@@ -657,6 +666,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()">🔍 Buscar ciclistas</button>
   <button class="ab sec" style="margin:0;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981" onclick="abrirTeDoyAlojo()">🏡 Te doy alojo</button>
 </div>
+<div class="quick-links" style="margin-top:6px">
+  <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')">📰 Novedades del ciclismo en Chile</button>
+</div>
 <h4 style="margin:14px 0 4px;font-size:0.9rem;color:var(--p)">💬 Chat global de la comunidad</h4>
 <div class="cc">
 <div class="cm" id="chm"></div>
@@ -676,6 +688,28 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <button class="ab" onclick="addRecommendation()">Publicar</button></div>
 <div id="rec-list"></div>
 <button class="ab sec" onclick="cv('chat')">← Volver a Social</button>
+</section>
+
+<section id="v-novedades" class="view">
+<div class="section-info"><h4>📰 Novedades del ciclismo en Chile</h4><p>Competencias, rodadas y cicloturismo — todo lo que se mueve en el país.</p></div>
+<div class="gt" id="novedadesTabs">
+  <div class="gtt on" onclick="filtrarNovedades('todos',this)">Todos</div>
+  <div class="gtt" onclick="filtrarNovedades('competencia',this)">🏁 Competencias</div>
+  <div class="gtt" onclick="filtrarNovedades('rodada',this)">🚴 Rodadas y encuentros</div>
+  <div class="gtt" onclick="filtrarNovedades('cicloturismo',this)">🌎 Cicloturismo</div>
+  <div class="gtt" onclick="filtrarNovedades('oficial',this)">🏛️ Oficial</div>
+</div>
+<div id="novedades-list"><p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">Cargando novedades...</p></div>
+<div id="novedades-admin" style="display:none;background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-top:16px">
+  <h4 style="margin:0 0 8px;font-size:0.85rem;color:var(--g)">⚙️ Publicar novedad (admin)</h4>
+  <input type="text" id="nov-titulo" placeholder="Título (ej: Gran Fondo Puchuncaví 2026)">
+  <select id="nov-categoria"><option value="competencia">🏁 Competencia</option><option value="rodada">🚴 Rodada / encuentro</option><option value="cicloturismo">🌎 Cicloturismo</option><option value="oficial">🏛️ Oficial</option></select>
+  <input type="text" id="nov-fecha" placeholder="Fecha (ej: 11 de abril, 2026)">
+  <textarea id="nov-desc" rows="2" placeholder="Descripción breve..."></textarea>
+  <input type="text" id="nov-link" placeholder="Link (https://...)">
+  <button class="ab" onclick="publicarNovedad()">Publicar</button>
+</div>
+<button class="ab sec" onclick="cv('chat')" style="margin-top:12px">← Volver a Social</button>
 </section>
 
 <section id="v-mac" class="view">
@@ -777,7 +811,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.63'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.64'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1492,7 +1526,7 @@ window.onload = async function(){
     setTimeout(function(){ h(saludoBienvenida(nombreUsuario)); },500);
     setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },950);
     if(!ghostMode) subscribeToUsers();
-    subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes();
+    subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
@@ -1595,7 +1629,7 @@ async function reg(e){
   await im(); au(); rm(MG); fg('todos');
   loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
   if(!ghostMode) subscribeToUsers();
-  subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes();
+  subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
   getCurrentLocation();
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
@@ -1625,6 +1659,58 @@ function escapeHTML(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
 function subscribeToRouteAlerts(){ db.collection('routeAlerts').orderBy('timestamp','desc').limit(20).onSnapshot(async function(snapshot){ const c=document.getElementById('route-alerts'); if(!c) return; c.innerHTML=''; for(const doc of snapshot.docs){ const data=doc.data(); const nombre=await getNombreUsuario(data.user); c.innerHTML+='<div class="route-alert"><strong>'+escapeHTML(data.type)+'</strong><p>'+escapeHTML(data.desc)+'</p><small>'+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small></div>'; } }); }
 function subscribeToComments(){ db.collection('guiComments').orderBy('ts','desc').limit(50).onSnapshot(async function(snapshot){ const c=document.getElementById('gui-comments'); if(!c) return; c.innerHTML=''; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero en comentar</p>'; return; } for(const doc of snapshot.docs){ const data=doc.data(); if(data.type==='voto'||!data.text) continue; const nombre=await getNombreUsuario(data.user); c.innerHTML+='<div class="global-comment"><div class="author">'+escapeHTML(nombre)+'</div><div class="time">'+escapeHTML(data.h)+'</div><div class="text">'+escapeHTML(data.text)+'</div></div>'; } }); }
 function subscribeToFriendRequests(){ db.collection('friendRequests').where('to','==',cu).onSnapshot(function(snapshot){ const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}).length; const b=document.getElementById('solicBadge'); if(b){ if(pend>0){ b.innerText=pend; b.style.display='inline-block'; } else { b.style.display='none'; } } const nav=document.querySelector('.nb[onclick*="chat"]'); if(nav){ nav.style.position='relative'; let dot=nav.querySelector('.nav-dot'); if(pend>0){ if(!dot){ dot=document.createElement('span'); dot.className='nav-dot'; dot.style.cssText='position:absolute;top:4px;right:calc(50% - 18px);width:9px;height:9px;background:var(--r);border-radius:50%'; nav.appendChild(dot); } } else if(dot){ dot.remove(); } } if(pend>0) h('Tienes '+pend+' solicitud de amistad pendiente. Míralas en Social.'); }); }
+
+/* ===== NOVEDADES: competencias, rodadas y cicloturismo en Chile (curado, admin publica) ===== */
+let novedadesCache=[], novedadesCatActiva='todos';
+const NOVEDADES_CAT_LABEL={competencia:'🏁 Competencia',rodada:'🚴 Rodada',cicloturismo:'🌎 Cicloturismo',oficial:'🏛️ Oficial'};
+function subscribeToNovedades(){
+  db.collection('novedades').orderBy('ts','desc').limit(60).onSnapshot(function(snapshot){
+    novedadesCache=snapshot.docs.map(function(doc){ return Object.assign({id:doc.id},doc.data()); });
+    renderNovedadesList();
+    const admin=document.getElementById('novedades-admin'); if(admin) admin.style.display=(cu===ADMIN_ID)?'block':'none';
+  }, function(){
+    const c=document.getElementById('novedades-list'); if(c) c.innerHTML='<p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">No se pudieron cargar las novedades. Revisa tu conexión.</p>';
+  });
+}
+function filtrarNovedades(cat,el){
+  novedadesCatActiva=cat;
+  const tabs=document.getElementById('novedadesTabs'); if(tabs) tabs.querySelectorAll('.gtt').forEach(function(t){t.classList.remove('on');});
+  if(el) el.classList.add('on');
+  renderNovedadesList();
+}
+function renderNovedadesList(){
+  const c=document.getElementById('novedades-list'); if(!c) return;
+  const items=novedadesCatActiva==='todos'?novedadesCache:novedadesCache.filter(function(n){return n.categoria===novedadesCatActiva;});
+  if(!items.length){ c.innerHTML='<p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">Todavía no hay novedades en esta categoría.</p>'; return; }
+  c.innerHTML=items.map(function(n){
+    const esAdmin=(cu===ADMIN_ID);
+    return '<div class="novedad-card">'
+      +'<div class="novedad-top"><span class="novedad-badge">'+(NOVEDADES_CAT_LABEL[n.categoria]||n.categoria||'')+'</span>'+(n.fecha?'<span class="novedad-fecha">'+escapeHTML(n.fecha)+'</span>':'')+'</div>'
+      +'<h4>'+escapeHTML(n.titulo||'')+'</h4>'
+      +(n.desc?'<p>'+escapeHTML(n.desc)+'</p>':'')
+      +'<div class="novedad-bottom">'+(n.link?'<a href="'+encodeURI(n.link)+'" target="_blank" rel="noopener">Ver más →</a>':'<span></span>')+(esAdmin?'<button class="novedad-del" onclick="eliminarNovedad(\''+n.id+'\')">🗑️</button>':'')+'</div>'
+      +'</div>';
+  }).join('');
+}
+async function publicarNovedad(){
+  if(cu!==ADMIN_ID) return;
+  const titulo=document.getElementById('nov-titulo').value.trim();
+  const categoria=document.getElementById('nov-categoria').value;
+  const fecha=document.getElementById('nov-fecha').value.trim();
+  const desc=document.getElementById('nov-desc').value.trim();
+  const link=document.getElementById('nov-link').value.trim();
+  if(!titulo) return alert('Ponle un título a la novedad');
+  try{
+    await db.collection('novedades').add({titulo:titulo,categoria:categoria,fecha:fecha,desc:desc,link:link,ts:firebase.firestore.FieldValue.serverTimestamp()});
+    document.getElementById('nov-titulo').value=''; document.getElementById('nov-fecha').value=''; document.getElementById('nov-desc').value=''; document.getElementById('nov-link').value='';
+    h('Novedad publicada.');
+  }catch(e){ alert('No se pudo publicar: '+e.message); }
+}
+async function eliminarNovedad(id){
+  if(cu!==ADMIN_ID) return;
+  if(!confirm('¿Borrar esta novedad?')) return;
+  try{ await db.collection('novedades').doc(id).delete(); }catch(e){ alert('No se pudo borrar.'); }
+}
 
 
 /* GPS NATIVO EN SEGUNDO PLANO (solo en la app Android con Capacitor).

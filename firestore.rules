@@ -144,6 +144,14 @@ service cloud.firestore {
       allow update, delete: if signedIn();
     }
 
+    // Novedades del mundo del ciclismo en Chile (competencias, rodadas, cicloturismo).
+    // Las publica el admin desde el panel de Perfil; lectura pública para todos.
+    match /novedades/{id} {
+      allow read: if true;
+      allow create, update: if signedIn() && strOk('titulo', 120) && strOk('desc', 800) && strOk('categoria', 30) && strOk('link', 300) && strOk('fecha', 60);
+      allow delete: if signedIn();
+    }
+
     // Todo lo demás: denegado por defecto
     match /{document=**} {
       allow read, write: if false;
