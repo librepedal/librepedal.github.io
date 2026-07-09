@@ -777,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.57'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.58'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1808,7 +1808,7 @@ function deleteRoute(id){ if(!confirm("¿Eliminar esta ruta?")) return; const it
    (MapLibre GL + Mapterhorn, gratis y sin cuenta) con overlay de stats, grabado con
    MediaRecorder y descargado como archivo de video listo para compartir. ===== */
 const VIDEO_VUELO_MS=18000;
-let videoMap=null, videoRouteData=null, videoRafId=null, videoRecorder=null, videoChunks=[], videoCompositeCtx=null;
+let videoMap=null, videoRouteData=null, videoRafId=null, videoRecorder=null, videoChunks=[], videoCompositeCtx=null, videoStream=null, videoStopTimeoutId=null;
 function abrirVideoRuta(id){
   const r=_rutaPorId(id);
   function conPuntos(pts, meta){
@@ -1894,28 +1894,36 @@ function grabarVideoRuta(){
   const out=document.getElementById('video-canvas-out');
   try{
     const stream=out.captureStream(30);
+    videoStream=stream;
     videoChunks=[];
     const mime=(window.MediaRecorder&&MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))?'video/webm;codecs=vp9':'video/webm';
-    videoRecorder=new MediaRecorder(stream,{mimeType:mime, videoBitsPerSecond:4000000});
-    videoRecorder.ondataavailable=function(e){ if(e.data&&e.data.size>0) videoChunks.push(e.data); };
-    videoRecorder.onstop=function(){
+    // "recorder" local (no solo la variable global videoRecorder): así, si el usuario
+    // cierra y empieza OTRA grabación antes de que se cumplan los 18.6s, el timeout de
+    // abajo nunca puede cortar la grabación nueva por error — solo conoce la suya.
+    const recorder=new MediaRecorder(stream,{mimeType:mime, videoBitsPerSecond:4000000});
+    videoRecorder=recorder;
+    recorder.ondataavailable=function(e){ if(e.data&&e.data.size>0) videoChunks.push(e.data); };
+    recorder.onstop=function(){
       const blob=new Blob(videoChunks,{type:'video/webm'});
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.webm'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(function(){ URL.revokeObjectURL(url); },4000);
       document.getElementById('video-status').innerText='¡Video descargado! Ya lo puedes compartir.';
       document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar';
+      if(videoStream){ videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream=null; }
     };
     document.getElementById('btnGrabarVideo').disabled=true; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabando...';
     document.getElementById('btnReplayVideo').style.display='none';
-    videoRecorder.start();
+    recorder.start();
     iniciarVueloRuta();
-    setTimeout(function(){ if(videoRecorder&&videoRecorder.state==='recording') videoRecorder.stop(); },VIDEO_VUELO_MS+600);
+    videoStopTimeoutId=setTimeout(function(){ if(recorder.state==='recording') recorder.stop(); videoStopTimeoutId=null; },VIDEO_VUELO_MS+600);
   }catch(e){ alert('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar'; }
 }
 function cerrarVideoRuta(){
   if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
+  if(videoStopTimeoutId){ clearTimeout(videoStopTimeoutId); videoStopTimeoutId=null; }
   if(videoRecorder&&videoRecorder.state==='recording'){ try{ videoRecorder.stop(); }catch(e){} }
+  if(videoStream){ try{ videoStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} videoStream=null; }
   if(videoMap){ try{ videoMap.remove(); }catch(e){} videoMap=null; }
   document.getElementById('video-screen').classList.remove('active');
 }
@@ -2030,10 +2038,27 @@ function mlPolyline(latlngs, opts){
   };
 }
 function _prepararMapaCompat(map){
-  map.setView=function(latlng,zoom){ this.jumpTo({center:[latlng[1],latlng[0]],zoom:zoom}); return this; };
+  // Acepta tanto [lat,lon] (array, estilo Leaflet) como {lat,lng}/{lat,lon} (lo que
+  // devuelve getLatLng() de mlMarker) — un solo llamador pasaba el objeto directo y
+  // tiraba una excepción real (Invalid LngLat) porque un objeto no tiene índices [0]/[1].
+  map.setView=function(latlng,zoom){
+    const lat=Array.isArray(latlng)?latlng[0]:latlng.lat;
+    const lon=Array.isArray(latlng)?latlng[1]:(latlng.lng!=null?latlng.lng:latlng.lon);
+    this.jumpTo({center:[lon,lat],zoom:zoom}); return this;
+  };
   const _origFitBounds=map.fitBounds.bind(map);
   map.fitBounds=function(bounds,opts){ opts=opts||{}; const b=bounds&&bounds._b?bounds._b:bounds; const pad=opts.padding?(Array.isArray(opts.padding)?Math.max.apply(null,opts.padding):opts.padding):40; _origFitBounds(b,{padding:pad,maxZoom:16,duration:500}); return this; };
-  map.removeLayer=function(obj){ if(obj&&typeof obj.remove==='function') obj.remove(); return this; };
+  // OJO: mlPolyline.remove() llama internamente a this._map.removeLayer(idString) para
+  // borrar su layer/source nativo — si acá solo aceptáramos objetos con .remove(), esa
+  // llamada con un string nunca haría nada y la ruta vieja quedaría fantasma en el mapa
+  // para siempre (además de generar errores de MapLibre al intentar borrar el source
+  // mientras el layer seguía vivo). Por eso hay que conservar el removeLayer nativo.
+  const _origRemoveLayer=map.removeLayer.bind(map);
+  map.removeLayer=function(obj){
+    if(obj&&typeof obj.remove==='function'){ obj.remove(); }
+    else if(typeof obj==='string'){ try{ _origRemoveLayer(obj); }catch(e){} }
+    return this;
+  };
   return map;
 }
 // Capa de calles (vectorial, sobria) vs. topográfica (OpenTopoMap): la de calles no
@@ -2046,7 +2071,12 @@ function toggleCapaMapa(){
   capaMapaTipo=(capaMapaTipo==='topo')?'calles':'topo';
   try{ localStorage.setItem('lp_capa_mapa',capaMapaTipo); }catch(e){}
   mp.setStyle(capaMapaTipo==='topo'?LP_ESTILO_TOPO:LP_ESTILO_CALLES);
-  mp.once('idle',function(){ if(crl && crl._coords && crl._coords.length>1){ crl._map=null; crl.addTo(mp); } });
+  // setStyle() borra TODO lo agregado con addSource/addLayer (nuestras polilíneas
+  // mlPolyline) — hay que volver a agregar la ruta en curso Y las rutas combinadas.
+  mp.once('idle',function(){
+    if(crl && crl._coords && crl._coords.length>1){ crl._map=null; crl.addTo(mp); }
+    if(combinedLines && combinedLines.length){ combinedLines.forEach(function(l){ if(l._coords && l._coords.length>1){ l._map=null; l.addTo(mp); } }); }
+  });
   _actualizarBtnCapaMapa();
   h(capaMapaTipo==='topo' ? "Mapa topográfico: ahora se ven senderos y caminos rurales." : "Volví al mapa de calles.");
 }
@@ -3051,7 +3081,18 @@ async function mostrarRevisionFrases(){
   }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar las frases pendientes.</p>'; }
 }
 async function aprobarFrase(id){
-  try{ await db.collection('frasesComunidad').doc(id).update({aprobada:true}); h('Frase aprobada, ya suena en la app.'); cargarFrasesComunidad(); mostrarRevisionFrases(); }catch(e){ alert('No se pudo aprobar.'); }
+  // Agrega solo la frase recién aprobada al pool en vez de releer TODA la colección
+  // de nuevo (cargarFrasesComunidad hacía un .get() completo en cada aprobación).
+  try{
+    await db.collection('frasesComunidad').doc(id).update({aprobada:true});
+    const doc=await db.collection('frasesComunidad').doc(id).get();
+    const t=doc.exists?doc.data().texto:null;
+    if(t){
+      if(frasesNormal.indexOf(t)===-1) frasesNormal.push(t);
+      if(frasesNeutro.normal.indexOf(t)===-1) frasesNeutro.normal.push(t);
+    }
+    h('Frase aprobada, ya suena en la app.'); mostrarRevisionFrases();
+  }catch(e){ alert('No se pudo aprobar.'); }
 }
 async function rechazarFrase(id){
   if(!confirm('¿Eliminar esta frase?')) return;
