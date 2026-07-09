@@ -119,6 +119,8 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .gps-signal-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,152,0,0.14);color:#ff9800;border:1px solid rgba(255,152,0,0.4);border-radius:20px;padding:4px 11px;font-size:0.68rem;font-weight:700;margin-top:8px;animation:gpsPulse 1.6s ease-in-out infinite}
 @keyframes gpsPulse{0%,100%{opacity:1}50%{opacity:0.55}}
 #navGpsSignalBadge{margin:0 0 6px}
+.pausa-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(96,165,250,0.14);color:#60a5fa;border:1px solid rgba(96,165,250,0.4);border-radius:20px;padding:4px 11px;font-size:0.68rem;font-weight:700;margin-top:8px}
+#navPausaBadge{margin:0 0 6px}
 .darma-badge{display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;font-weight:800;padding:10px 12px;border-radius:12px;margin-bottom:10px;cursor:pointer;font-size:0.95rem;box-shadow:0 3px 10px rgba(255,215,0,0.25)}
 .darma-badge small{font-weight:700;opacity:0.75;font-size:0.62rem}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
@@ -441,6 +443,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="nav-close" onclick="endNavigation()">✕</button>
   <div class="nav-top">
     <div class="gps-signal-badge" id="navGpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
+    <div class="pausa-badge" id="navPausaBadge" style="display:none">⏸️ En pausa</div>
     <div class="nav-instruction">
       <span class="icon" id="navIcon"></span>
       <div class="text-container">
@@ -526,6 +529,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="speed-label">km/h</div>
   <div class="speed-status" id="speedStatus">Detenido</div>
   <div class="gps-signal-badge" id="gpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
+  <div class="pausa-badge" id="dashPausaBadge" style="display:none">⏸️ En pausa (no cuenta para tu ritmo)</div>
 </div>
 <div class="darma-badge" onclick="cv('stats')">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="stats-grid">
@@ -539,6 +543,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="btrip" onclick="cv('trips')">🗺️ Mis Viajes</button>
   <button class="btrip" onclick="openDiario()">📓 Ciclo Bitácora</button>
   <button class="bd" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
+  <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
   <button class="ab sec" style="margin:0" onclick="mostrarLogros()">🏆 Logros</button>
   <button class="ab sec" style="margin:0" onclick="mostrarRanking()">🥇 Ranking</button>
   <button class="ab sec" style="margin:0" onclick="mostrarTienda()">✨ Tienda</button>
@@ -816,7 +821,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.66'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.67'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -922,11 +927,11 @@ const extrasOptions = [
   {id:'bandana', name:'Pañoleta', svg:'<path d="M64 150 Q100 166 136 150 L132 160 Q100 174 68 160 Z" fill="#e74c3c"/>'}
 ];
 
-let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[],combinedLines=[];
+let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null,sumVelDist:0},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[],combinedLines=[];
 let categoriaActual='todos', hostelTipoActual='todos';
 let trips=[], currentTrip=null, navMap=null, helmetMarker=null, routeLine=null;
 let addedDests=[], currentFilter='hostel', allHostels=[];
-let gpsPoints=[], lastGpsPoint=null, totalDistance=0, gpsWatchId=null, tripStartTime=0;
+let gpsPoints=[], lastGpsPoint=null, totalDistance=0, gpsWatchId=null, tripStartTime=0, navPosHistory=[];
 // Evita perder el track al cerrar la navegación (✕) sin haber guardado explícitamente
 // (con "Terminar" o al llegar). true apenas finishTrip/finishTripAuto/guardarRutaNavegada
 // ya guardaron algo, para que endNavigation() no tenga que re-guardar por su cuenta.
@@ -985,6 +990,22 @@ let navSteps = [], currentStepIndex = 0, lastSpokenStep = -1, routeTotalDistance
 // contador de fixes consecutivos lejos de la ruta para no recalcular por un salto
 // puntual del GPS (solo si se sostiene unos segundos, evitando falsas alarmas).
 let navDestLat=null, navDestLon=null, navDestName='', navRecalculando=false, navFixesFueraDeRuta=0;
+// Auto-pausa: si estás quieto un buen rato (parada de foto, semáforo largo, comer),
+// el reloj del viaje no debería seguir corriendo como si estuvieras pedaleando. Se
+// paran ambas cosas (visual + cómputo) al detectar sp===0 y se retoman solas al moverte.
+let viajePausedMs=0, viajePausedDesde=null;
+function tiempoActivoMs(){
+  if(!tripStartTime) return 0;
+  const elapsedTotal=Date.now()-tripStartTime;
+  const pausadoAhora=viajePausedDesde?(Date.now()-viajePausedDesde):0;
+  return Math.max(0, elapsedTotal-viajePausedMs-pausadoAhora);
+}
+function _actualizarPausaViaje(sp, badgeId){
+  const enPausa = (sp===0);
+  if(enPausa && !viajePausedDesde){ viajePausedDesde=Date.now(); }
+  else if(!enPausa && viajePausedDesde){ viajePausedMs+=(Date.now()-viajePausedDesde); viajePausedDesde=null; }
+  const el=document.getElementById(badgeId); if(el) el.style.display=enPausa?'inline-flex':'none';
+}
 let currentUserLocation = null;
 let selectedHelmet = 'giro', selectedLens = 'none', selectedSkin = 'cyan', selectedExtras = [];
 let navUserMarkers = [], maxSpeed = 0, speedReadings = [];
@@ -1509,6 +1530,7 @@ window.onload = async function(){
   const sesion = localStorage.getItem('lp_session');
   initVoz();
   const _elVer=document.getElementById('lpVerMostrada'); if(_elVer) _elVer.innerText=APP_VERSION;
+  _actualizarBtnAhorroGPS();
   // Espera a saber si la app se va a recargar sola por una actualización (máx. 1.5s)
   // antes de activar GPS/voz de arranque — si se recarga, esta instancia nunca sigue.
   try{ await Promise.race([window.__lpListoParaArrancar, new Promise(function(r){ setTimeout(r,1500); })]); }catch(e){}
@@ -1737,19 +1759,24 @@ const lpBackgroundGeo = (function(){
     start: async function(onLocation){
       const bg=getBG(); if(!bg || watcherId) return;
       const cb = onLocation || function(location){ if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}}); };
+      // Con Ahorro GPS activo pedimos fixes cada 25m en vez de 8m: bastante menos
+      // preciso en curvas cerradas, pero muchas menos lecturas de GPS = más batería
+      // para viajes largos. El usuario elige el trade-off desde Inicio.
+      const df=(typeof gpsAhorro!=='undefined' && gpsAhorro) ? 25 : 8;
       try{
         watcherId = await bg.addWatcher({
           backgroundMessage: "Registrando tu ruta. Toca para volver a Libre Pedal.",
           backgroundTitle: "Libre Pedal pedaleando contigo 🚴",
           requestPermissions: true,
           stale: false,
-          distanceFilter: 8
+          distanceFilter: df
         }, function(location, error){
           if(error || !location) return;
           cb(location);
         });
       }catch(e){}
     },
+    restart: async function(onLocation){ await this.stop(); await this.start(onLocation); },
     stop: async function(){ if(BG && watcherId){ try{ await BG.removeWatcher({id:watcherId}); }catch(e){} watcherId=null; } },
     _p:function(){ return getBG(); }
   };
@@ -1775,6 +1802,7 @@ function toggleGPS(){
     // se disparaba de inmediato con solo estar quieto un instante (ej. mientras
     // se ve el tutorial recién logueado, sin haber pedaleado nada todavía).
     lastFraseParadoTime=Date.now();
+    viajePausedMs=0; viajePausedDesde=null; posHistory=[]; _gpsBadgeToggle('dashPausaBadge', false);
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
       if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
@@ -1782,7 +1810,7 @@ function toggleGPS(){
       lpWakeLock.enable();
       h("GPS activado. Sigo grabando tu ruta aunque apagues la pantalla.");
     } else if("geolocation" in navigator){
-      gw=navigator.geolocation.watchPosition(ug,hg,{enableHighAccuracy:true,maximumAge:1000});
+      gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
       ig=true; if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable();
@@ -1847,6 +1875,7 @@ function ug(p){
   document.getElementById('spd').innerText=Math.round(sp);
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
   updateSpeedStatus(sp);
+  _actualizarPausaViaje(sp, 'dashPausaBadge');
   if(sp>maxSpeed) maxSpeed=sp;
   speedReadings.push(sp);
   // Al DETENERTE (pasar de moverte a 0), guarda automáticamente la ruta hecha (checkpoint).
@@ -1861,7 +1890,7 @@ function ug(p){
   if(us.la && moved<0.012){ return; }
   if(us.la){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
-  currentRoute.push({lat:la,lon:lo,t:Date.now()});
+  currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
   if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ const plat=Math.round(la*100)/100, plon=Math.round(lo*100)/100; /* precisión ~1 km: privacidad, no revela tu ubicación exacta */ db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); lastPos={lat:la,lon:lo}; } }
   /* (las bromas por velocidad ahora se disparan mas arriba, para todas las velocidades) */
@@ -1911,7 +1940,7 @@ function renderRutas(){
   const arr=rutasLocales().slice().sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);}).slice(0,60);
   if(arr.length===0){ c.innerHTML='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas</p>'; return; }
   let html='';
-  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+date+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
+  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+date+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
   c.innerHTML=html;
 }
 // Muestra al toque lo local (garantizado) y fusiona rutas viejas que estén SOLO en la nube.
@@ -1924,6 +1953,65 @@ function loadRoutesList(){ if(!cu) return; renderRutas();
 function _rutaPorId(id){ return rutasLocales().find(function(x){return x.localId===id;}); }
 function showSingleRoute(id){ const r=_rutaPorId(id); function pintar(points){ if(!points||!points.length){ h("Esta ruta no tiene puntos guardados."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=mlPolyline(points,{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Aquí está tu ruta."); },300); } if(r&&r.points&&r.points.length){ pintar(r.points.map(function(p){return [p.lat,p.lon];})); return; } db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ pintar((doc.data().points||[]).map(function(p){return [p.lat,p.lon];})); } }).catch(function(){ h("No pude abrir esa ruta."); }); }
 function deleteRoute(id){ if(!confirm("¿Eliminar esta ruta?")) return; const it=_rutaPorId(id); rutasLocalesSet(rutasLocales().filter(function(x){return x.localId!==id;})); if(it&&it.firebaseId){ db.collection('routes').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ db.collection('routes').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
+
+/* ===== PERFIL DE ELEVACIÓN: usa la altitud que reporta el GPS del celular (gratis,
+   sin servicios externos). Es más ruidosa que un DEM profesional, por eso se suaviza
+   con un promedio móvil antes de sumar subida/bajada — si no, cualquier salto de
+   altitud del GPS (común, hasta parado) infla el desnivel con metros que no existen. */
+function calcularDesnivel(points){
+  const validos=(points||[]).filter(function(p){return p.alt!=null && !isNaN(p.alt);});
+  if(validos.length<5) return null;
+  // Promedio móvil (ventana 5) para suavizar el ruido típico del GPS en altitud.
+  const suavizado=validos.map(function(p,i,arr){
+    const ini=Math.max(0,i-2), fin=Math.min(arr.length,i+3), tramo=arr.slice(ini,fin);
+    return tramo.reduce(function(s,x){return s+x.alt;},0)/tramo.length;
+  });
+  let subida=0, bajada=0, distAcum=0;
+  const perfil=[{dist:0,alt:suavizado[0]}];
+  for(let i=1;i<validos.length;i++){
+    const d=calculateDistance(validos[i-1].lat,validos[i-1].lon,validos[i].lat,validos[i].lon);
+    distAcum+=d;
+    const delta=suavizado[i]-suavizado[i-1];
+    if(delta>1.5) subida+=delta; else if(delta<-1.5) bajada+=-delta;
+    perfil.push({dist:distAcum,alt:suavizado[i]});
+  }
+  return {subida:Math.round(subida), bajada:Math.round(bajada), altMax:Math.round(Math.max.apply(null,suavizado)), altMin:Math.round(Math.min.apply(null,suavizado)), perfil:perfil};
+}
+function _svgPerfilElevacion(d){
+  const W=320, H=110, PAD=6;
+  const distTotal=d.perfil[d.perfil.length-1].dist||1;
+  const altSpan=Math.max(1,d.altMax-d.altMin);
+  const pts=d.perfil.map(function(p){
+    const x=PAD+(p.dist/distTotal)*(W-PAD*2);
+    const y=H-PAD-((p.alt-d.altMin)/altSpan)*(H-PAD*2);
+    return x.toFixed(1)+','+y.toFixed(1);
+  });
+  const linea=pts.join(' ');
+  const relleno='M'+PAD+','+(H-PAD)+' L'+pts.join(' L')+' L'+(W-PAD)+','+(H-PAD)+' Z';
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:110px;display:block">'
+    +'<path d="'+relleno+'" fill="rgba(255,215,0,0.14)"/>'
+    +'<polyline points="'+linea+'" fill="none" stroke="#ffd700" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+    +'</svg>';
+}
+function verPerfilElevacion(id){
+  function conPuntos(points){
+    const d=calcularDesnivel(points);
+    document.getElementById('modalTitle').innerText='📈 Perfil de elevación';
+    const c=document.getElementById('modalContent');
+    if(!d){ c.innerHTML='<p style="color:#888;text-align:center;padding:20px 0">Esta ruta no tiene datos de altitud (se grabó antes de esta función, o tu celular no reporta altitud).</p>'; document.getElementById('userModal').classList.add('on'); return; }
+    c.innerHTML=_svgPerfilElevacion(d)
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">'
+      +'<div class="stat-card"><div class="stat-value" style="color:#10b981">+'+d.subida+'m</div><div class="stat-label">Subida</div></div>'
+      +'<div class="stat-card"><div class="stat-value" style="color:#ff6b6b">-'+d.bajada+'m</div><div class="stat-label">Bajada</div></div>'
+      +'<div class="stat-card"><div class="stat-value">'+d.altMax+'m</div><div class="stat-label">Altura máx.</div></div>'
+      +'<div class="stat-card"><div class="stat-value">'+d.altMin+'m</div><div class="stat-label">Altura mín.</div></div>'
+      +'</div>';
+    document.getElementById('userModal').classList.add('on');
+  }
+  const r=_rutaPorId(id);
+  if(r&&r.points&&r.points.length){ conPuntos(r.points); return; }
+  db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ conPuntos(doc.data().points||[]); } else { h("No pude abrir esa ruta."); } }).catch(function(){ h("No pude abrir esa ruta."); });
+}
 
 /* ===== VIDEO 3D DE LA RUTA (estilo Relive): vuelo de cámara sobre terreno 3D real
    (MapLibre GL + Mapterhorn, gratis y sin cuenta) con overlay de stats, grabado con
@@ -2186,6 +2274,21 @@ function _prepararMapaCompat(map){
 // dibuja huellas/senderos rurales que sí existen en OSM pero no se ven en ese estilo.
 // La topográfica los muestra, además de curvas de nivel — útil para caminos interiores.
 let capaMapaTipo=(function(){ try{ return localStorage.getItem('lp_capa_mapa')||'calles'; }catch(e){ return 'calles'; } })();
+let gpsAhorro=(function(){ try{ return localStorage.getItem('lp_gps_ahorro')==='1'; }catch(e){ return false; } })();
+function _actualizarBtnAhorroGPS(){ const b=document.getElementById('btnAhorroGPS'); if(b){ b.innerText=gpsAhorro?'🔋 Ahorro GPS: ON':'🔋 Ahorro GPS: OFF'; b.style.background=gpsAhorro?'rgba(16,185,129,0.15)':''; b.style.borderColor=gpsAhorro?'#10b981':''; } }
+async function toggleAhorroGPS(){
+  gpsAhorro=!gpsAhorro;
+  try{ localStorage.setItem('lp_gps_ahorro', gpsAhorro?'1':'0'); }catch(e){}
+  _actualizarBtnAhorroGPS();
+  // Si el GPS ya está corriendo (nativo, en segundo plano), lo reinicia con la nueva
+  // frecuencia sin que el usuario tenga que apagar y prender el viaje — cuidando de
+  // mantener el callback correcto (navegación turn-by-turn vs GPS libre).
+  if(lpBackgroundGeo.disponible()){
+    if(document.getElementById('nav-screen').classList.contains('active')){ await lpBackgroundGeo.restart(_navBgCallback); }
+    else if(ig){ await lpBackgroundGeo.restart(); }
+  }
+  h(gpsAhorro?'Ahorro de GPS activado. Va a gastar menos batería, con un poco menos de precisión.':'Ahorro de GPS desactivado. Vuelvo a la máxima precisión.');
+}
 function _actualizarBtnCapaMapa(){ const b=document.getElementById('btnCapaMapa'); if(b) b.innerHTML=(capaMapaTipo==='topo')?'🗺️ Ver calles':'🏔️ Topográfico'; }
 function toggleCapaMapa(){
   if(!mp) return;
@@ -2780,27 +2883,37 @@ async function descargarMapaRuta(){
   navigator.serviceWorker.addEventListener('message',onMsg);
   navigator.serviceWorker.controller.postMessage({type:'PRECACHE_TILES',urls:urls});
 }
-function _navPosUpdate(lat,lon,accuracy,speedKmh){
+function _navBgCallback(location){ _navPosUpdate(location.latitude, location.longitude, location.accuracy, (location.speed&&location.speed>0.7)?location.speed*3.6:0, location.altitude); }
+function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   if(accuracy>30){ _gpsBadgeToggle('navGpsSignalBadge', true); return; }
   _gpsBadgeToggle('navGpsSignalBadge', false);
-  // jitter: ignora saltos < 12 m (deriva del GPS estando quieto)
-  if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<12) return; const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
   const _now=Date.now();
-  gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now}); lastGpsPoint={lat:lat,lon:lon};
-  // velocidad VERIFICADA por desplazamiento (centroides, ventana 10s)
-  const _spWin=velocidadVentana(gpsPoints);
+  // Ventana de velocidad SEPARADA del registro de distancia (mismo patrón que el GPS
+  // libre con posHistory/currentRoute): antes esto se calculaba sobre gpsPoints, que
+  // solo recibía puntos cuando había movimiento real >=12m — como al detenerte del
+  // todo dejaban de llegar puntos nuevos a gpsPoints, la velocidad quedaba pegada en
+  // lo último que marcaba y nunca volvía a 0 (ni se detectaba la pausa).
+  navPosHistory.push({lat:lat,lon:lon,t:_now});
+  while(navPosHistory.length>1 && (_now-navPosHistory[0].t)>12000) navPosHistory.shift();
+  const _spWin=velocidadVentana(navPosHistory);
   const speed=(_spWin<6)?0:_spWin;
+  _actualizarPausaViaje(speed, 'navPausaBadge');
+  // jitter: no suma distancia/calorías si el salto es < 12 m (deriva del GPS quieto),
+  // pero el punto igual queda registrado arriba para la velocidad real.
+  if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist>=12){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon}; } }
+  else { gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon}; }
   if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]); }
   L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
   document.getElementById('navSpeed').innerText=Math.round(speed);
   document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2);
-  const el=Math.floor((Date.now()-tripStartTime)/1000), mm=Math.floor(el/60), ss=el%60;
+  const elS=Math.floor(tiempoActivoMs()/1000), mm=Math.floor(elS/60), ss=elS%60;
   document.getElementById('navTime').innerText=mm+':'+(ss<10?'0':'')+ss;
   checkFuel(totalDistance);
   actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
   checkNavigationSteps(lat,lon);
   verificarDesviacion(lat,lon);
+  compararRitmoHistorico(totalDistance, tiempoActivoMs());
 }
 /* Recalculo automático si te desvías (como Waze): mide la distancia al tramo actual
    de la ruta sugerida. Si te alejas más de 70m durante 3 fixes seguidos (ya filtrados
@@ -2861,6 +2974,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   // última vez (en cualquier contexto anterior, no relacionado a este viaje).
   lastFraseParadoTime=Date.now();
   navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
+  navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
   try{
     const url='https://router.project-osrm.org/route/v1/cycling/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
     const resp=await fetch(url); const data=await resp.json();
@@ -2884,11 +2998,11 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     lpWakeLock.enable();
     if(lpBackgroundGeo.disponible()){
       // Nativo: el GPS sigue guiando la navegación aunque la pantalla esté apagada.
-      lpBackgroundGeo.start(function(location){ _navPosUpdate(location.latitude, location.longitude, location.accuracy, (location.speed&&location.speed>0.7)?location.speed*3.6:0); });
+      lpBackgroundGeo.start(_navBgCallback);
     } else {
       gpsWatchId=navigator.geolocation.watchPosition(function(pos){
-        _navPosUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, (pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0);
-      },function(err){ console.error("GPS:",err); },{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
+        _navPosUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, (pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0, pos.coords.altitude);
+      },function(err){ console.error("GPS:",err); },gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
     }
     if(navSteps.length>0) showStepInstruction(0);
     showSpeechBubble("En ruta a "+destName.split(',')[0]);
@@ -2900,6 +3014,32 @@ function checkFuel(distKm){
   if(distKm>=nextHydrateKm){ h("Llevas "+Math.round(distKm)+" kilómetros. Toma un par de tragos de agua para no deshidratarte."); nextHydrateKm+=5; }
   if(distKm>=nextEatKm){ h("Vas en "+Math.round(distKm)+" kilómetros. Come algo ligero, una fruta o una barra, para recargar energía."); nextEatKm+=20; }
 }
+/* ===== RITMO vs TU PROMEDIO HISTÓRICO ===== */
+// us.sumVelDist guarda la suma de (velocidad media de cada viaje * sus km); dividido
+// por us.di (km totales de siempre) da el promedio histórico ponderado por distancia
+// — un viaje de 40km pesa más en el promedio que uno de 2km, que es lo justo.
+function _actualizarVelocidadHistorica(distanciaKm, duracionActivaMs){
+  if(!distanciaKm || distanciaKm<0.3 || !duracionActivaMs || duracionActivaMs<60000) return; // muy corto para ser representativo
+  const velEsteViaje=distanciaKm/(duracionActivaMs/3600000);
+  if(!isFinite(velEsteViaje) || velEsteViaje<=0 || velEsteViaje>80) return; // descarta outliers imposibles
+  us.sumVelDist=(us.sumVelDist||0)+velEsteViaje*distanciaKm;
+  gd();
+}
+let kmUltimoRitmoComentado=0;
+function compararRitmoHistorico(distanciaKm, duracionActivaMs){
+  if(!vozActiva || vozOcupada() || vozCola.length) return;
+  const kmHistoricos=us.sumVelDist?us.di:0;
+  if(!kmHistoricos || kmHistoricos<10) return; // recién empezando, sin promedio propio confiable todavía
+  if(!distanciaKm || distanciaKm<2 || duracionActivaMs<180000) return; // deja pasar el arranque del viaje
+  if(distanciaKm-kmUltimoRitmoComentado<3) return; // un aviso cada 3km, no más seguido
+  const velHistorica=us.sumVelDist/us.di;
+  if(velHistorica<3) return;
+  const velActual=distanciaKm/(duracionActivaMs/3600000);
+  const diffPct=(velActual-velHistorica)/velHistorica;
+  kmUltimoRitmoComentado=distanciaKm;
+  if(diffPct>0.15) h('Vas más rápido que tu promedio de siempre, ¡buen ritmo!');
+  else if(diffPct<-0.15) h('Vas más lento que tu ritmo habitual. Tranquilo, disfruta el camino.');
+}
 function subscribeToUsersOnNavMap(){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } } }); }
 function getTurnInstruction(type,modifier,street){ const s=street?' por '+street:''; switch(type){ case 'depart':return 'Comienza el recorrido'+s; case 'arrive':return 'Has llegado a tu destino'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return 'Gira a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'Gira a la derecha'+s; if(modifier&&modifier.indexOf('sharp')!==-1) return 'Giro pronunciado'+s; return 'Gira'+s; case 'roundabout': case 'rotary': return 'Toma la rotonda'+s; case 'merge': return 'Incorpórate'+s; case 'fork': if(modifier&&modifier.indexOf('left')!==-1) return 'En la bifurcación, mantente a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'En la bifurcación, mantente a la derecha'+s; return 'Toma la bifurcación'+s; case 'end of road': return 'Al final del camino'+s; case 'continue': return 'Sigue recto'+s; case 'new name': return 'Continúa'+s; default: return 'Continúa'+s; } }
 function checkNavigationSteps(lat,lon){ if(currentStepIndex>=navSteps.length) return; const step=navSteps[currentStepIndex]; const loc=getStepLocation(step); if(!loc) return; const dist=calculateDistance(lat,lon,loc.lat,loc.lon); let rem=0; for(let i=currentStepIndex;i<navSteps.length;i++) rem+=navSteps[i].distance; document.getElementById('navDist').innerText=formatDistance(rem); document.getElementById('etaDist').innerText=(rem/1000).toFixed(2)+' km'; if(dist<100&&lastSpokenStep!==currentStepIndex){ showStepInstruction(currentStepIndex); lastSpokenStep=currentStepIndex; } if(dist<20){ currentStepIndex++; if(currentStepIndex<navSteps.length){ setTimeout(function(){ showStepInstruction(currentStepIndex); },2000); } else { showArrival(); } } }
@@ -2908,8 +3048,8 @@ function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSt
 function getStepIcon(type,modifier){ switch(type){ case 'depart':return '🚴'; case 'arrive':return '🏁'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return '⬅️'; if(modifier&&modifier.indexOf('right')!==-1) return '➡️'; return '🔄'; case 'roundabout': case 'rotary': return '🔁'; case 'fork': return '🔱'; case 'continue': return '⬆️'; default: return '➡️'; } }
 function showAlert(text){ const a=document.getElementById('navAlert'); a.innerText=text; a.classList.add('show'); setTimeout(function(){ a.classList.remove('show'); },3000); }
 function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada(); setTimeout(endNavigation,2500); }
-function guardarRutaNavegada(){ if(!cu||gpsPoints.length<2) return; navGuardado=true; const pts=gpsPoints.map(function(p){return {lat:p.lat,lon:p.lon,t:p.timestamp};}); const localId='n'+pts[0].t; const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*30),savedAt:Date.now()}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}); }
-function finishTripAuto(){ navGuardado=true; const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).then(function(){ }).catch(function(){ }); }
+function guardarRutaNavegada(){ if(!cu||gpsPoints.length<2) return; navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const pts=gpsPoints.map(function(p){return {lat:p.lat,lon:p.lon,t:p.timestamp,alt:(p.alt!=null?p.alt:null)};}); const localId='n'+pts[0].t; const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*30),savedAt:Date.now()}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}); }
+function finishTripAuto(){ navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).then(function(){ }).catch(function(){ }); }
 function formatDistance(m){ if(m<1000) return Math.round(m)+' m'; return (m/1000).toFixed(1)+' km'; }
 function showHostelsOnNavMap(){ allHostels.forEach(function(hh){ if(hh.lat&&hh.lon){ L.marker([hh.lat,hh.lon],{icon:L.divIcon({className:'',html:'<div style="background:#ffd700;width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px #ffd700"></div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(hh.name)+'</b><br>'+escapeHTML(hh.location)); } }); }
 function drawGpsRoute(){ if(gpsPoints.length<2) return; if(routeLine) navMap.removeLayer(routeLine); routeLine=L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#fc4c02',weight:5,opacity:0.8}).addTo(navMap); if(gpsPoints.length>10) navMap.fitBounds(routeLine.getBounds(),{padding:[50,50]}); }
@@ -2920,14 +3060,15 @@ async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigati
 function endNavigation(){
   if(!navGuardado && gpsPoints.length>=2){
     if(currentTrip){
-      const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60, dur=hh>0?hh+'h '+mm+'min':mm+' min';
+      _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs());
+      const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60, dur=hh>0?hh+'h '+mm+'min':mm+' min';
       db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).catch(function(){});
     } else {
       guardarRutaNavegada();
     }
   }
   navGuardado=false;
-  lpWakeLock.disable(); if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; loadTrips();
+  lpWakeLock.disable(); if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
 function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 function updateStatsView(){
