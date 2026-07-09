@@ -444,6 +444,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="nav-top">
     <div class="gps-signal-badge" id="navGpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
     <div class="pausa-badge" id="navPausaBadge" style="display:none">⏸️ En pausa</div>
+    <div class="pausa-badge" id="navBleHR" style="display:none"></div>
+    <div class="pausa-badge" id="navBlePower" style="display:none"></div>
     <div class="nav-instruction">
       <span class="icon" id="navIcon"></span>
       <div class="text-container">
@@ -531,6 +533,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="speed-status" id="speedStatus">Detenido</div>
   <div class="gps-signal-badge" id="gpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
   <div class="pausa-badge" id="dashPausaBadge" style="display:none">⏸️ En pausa (no cuenta para tu ritmo)</div>
+  <div class="pausa-badge" id="dashBleHR" style="display:none"></div>
+  <div class="pausa-badge" id="dashBlePower" style="display:none"></div>
 </div>
 <div class="darma-badge" onclick="cv('stats')">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="stats-grid">
@@ -546,6 +550,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="btrip" onclick="mostrarLogrosComunidad()">🏆 Logros y comunidad</button>
 </div>
 <button class="ab" style="margin-top:6px;background:#dc2626;color:#fff;font-weight:800" onclick="enviarSOS()">🆘 SOS · Compartir mi ubicación</button>
+<button class="ab sec" style="margin-top:6px" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
 <button class="ab sec" style="margin-top:6px" onclick="cv('musica')">🎵 Música</button>
 </section>
 
@@ -585,8 +590,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
 </div>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">📶 Sensores Bluetooth</h4>
+<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Conecta un pulsómetro o potenciómetro estándar BLE para ver tus datos en vivo mientras pedaleas.</p>
+<div class="quick-links">
+  <button class="ab sec" style="margin:0" onclick="conectarPulsometro()">❤️ Conectar pulsómetro</button>
+  <button class="ab sec" style="margin:0" onclick="conectarPotenciometro()">⚡ Conectar potenciómetro</button>
+  <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()">🔌 Desconectar</button>
+</div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.70</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.72</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -595,6 +607,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
     <div id="adminNuevosBadge" style="display:none;background:rgba(255,215,0,0.12);border:1px solid var(--g);color:var(--g);border-radius:8px;padding:8px 10px;font-size:0.78rem;font-weight:700;margin-bottom:8px"></div>
     <button class="ab" onclick="exportarUsuariosAdmin()">⬇️ Exportar lista de usuarios (.csv)</button>
     <button class="ab sec" onclick="mostrarTodosRegistrados()">👥 Ver todos los registrados</button>
+    <h4 style="margin-top:14px;font-size:0.82rem;color:var(--g)">🎯 Crear reto</h4>
+    <input type="text" id="retoTitulo" placeholder="Título (ej: 500km en julio)">
+    <input type="text" id="retoDesc" placeholder="Descripción breve (opcional)">
+    <input type="number" id="retoMeta" placeholder="Meta en km" min="1">
+    <input type="number" id="retoDias" placeholder="Duración en días" min="1">
+    <button class="ab" style="margin-top:6px" onclick="crearReto()">Publicar reto</button>
   </div>
 </div>
 <button class="ab sec" style="margin-top:12px" onclick="cv('dash')">← Volver a Inicio</button>
@@ -696,6 +714,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="cv('rec')">💡 Recomendaciones</button>
   <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()">🔍 Buscar ciclistas</button>
   <button class="ab sec" style="margin:0;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981" onclick="abrirTeDoyAlojo()">🏡 Te doy alojo</button>
+  <button class="ab sec" style="margin:0" onclick="verRodadas()">🚵 Rodadas grupales</button>
 </div>
 <div class="quick-links" style="margin-top:6px">
   <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')">📰 Novedades del ciclismo en Chile</button>
@@ -826,7 +845,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.71'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.72'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1813,6 +1832,8 @@ function toggleGPS(){
     lastFraseParadoTime=Date.now();
     viajePausedMs=0; viajePausedDesde=null; posHistory=[]; _gpsBadgeToggle('dashPausaBadge', false);
     pendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
+    segmentosCargados=false; segmentosActivos=[]; segmentosEstado={};
+    iniciarDeteccionCaidas();
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
       if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
@@ -1828,7 +1849,8 @@ function toggleGPS(){
     } else { alert("Tu dispositivo no soporta GPS"); }
   } else {
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
-    ig=false; lpWakeLock.disable();
+    ig=false; lpWakeLock.disable(); detenerDeteccionCaidas();
+    if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
     if(btn){ btn.innerText="📍 GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
     if(currentRoute.length>1){ autoGuardarRuta(false); }
     sincronizarStats();
@@ -1923,6 +1945,8 @@ function ug(p){
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
   updateSpeedStatus(sp);
   _actualizarPausaViaje(sp, 'dashPausaBadge');
+  _actualizarLiveTrack(la,lo);
+  if(!segmentosCargados){ segmentosCargados=true; iniciarSeguimientoSegmentos(la,lo); } else { _verificarSegmentos(la,lo); }
   if(sp>maxSpeed) maxSpeed=sp;
   speedReadings.push(sp);
   // Al DETENERTE (pasar de moverte a 0), guarda automáticamente la ruta hecha (checkpoint).
@@ -1988,7 +2012,7 @@ function renderRutas(){
   const arr=rutasLocales().slice().sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);}).slice(0,60);
   if(arr.length===0){ c.innerHTML='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas</p>'; return; }
   let html='';
-  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+date+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
+  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+date+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
   c.innerHTML=html;
 }
 // Muestra al toque lo local (garantizado) y fusiona rutas viejas que estén SOLO en la nube.
@@ -2505,19 +2529,22 @@ const REPORTE_CATS={
   alojamiento:{e:'🏕️',l:'Alojamiento',c:'#10b981',h:'Campings, hospedajes, acampada libre y precios'},
   critico:{e:'⚠️',l:'Punto Crítico',c:'#ef4444',h:'Perros sueltos, caminos cortados, peligros, falta de agua'},
   util:{e:'🥖',l:'Dato Útil / Picada',c:'#f59e0b',h:'Almacenes, talleres amigos, agua gratis, comida al paso'},
-  mirador:{e:'📸',l:'Mirador',c:'#3b82f6',h:'Spots para detenerse y registrar el paisaje'}
+  mirador:{e:'📸',l:'Mirador',c:'#3b82f6',h:'Spots para detenerse y registrar el paisaje'},
+  superficie:{e:'🛣️',l:'Estado del camino',c:'#8b5cf6',h:'Asfalto, ripio o tierra — y qué tan exigente está el tramo'}
 };
+const SUPERFICIE_TIPOS={asfalto:'🛣️ Asfalto',ripio:'🪨 Ripio',tierra:'🟤 Tierra',mixto:'🔀 Mixto'};
+const DIFICULTAD_NIVELES={facil:'🟢 Fácil',media:'🟡 Media',dificil:'🔴 Difícil'};
 let reporteCatSel=null, reporteMarkers=[];
 function reportarEnRuta(){
   reporteCatSel=null;
   let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu dato queda público en el mapa de tu zona para ayudar a otros ciclistas. Elige qué reportas:</p><div id="repCats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   Object.keys(REPORTE_CATS).forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+k+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.8rem">'+c.e+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; });
-  html+='</div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea><button class="ab" style="margin-top:8px" onclick="enviarReporte()">📍 Publicar en mi zona (+15 Darma)</button>';
+  html+='</div><div id="repSuperficieExtra" style="display:none;margin-top:10px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea><button class="ab" style="margin-top:8px" onclick="enviarReporte()">📍 Publicar en mi zona (+15 Darma)</button>';
   document.getElementById('modalTitle').innerText='🚴 Reportar en Ruta';
   document.getElementById('modalContent').innerHTML=html;
   document.getElementById('userModal').classList.add('on');
 }
-function seleccionarCatReporte(k){ reporteCatSel=k; document.querySelectorAll('#repCats .rep-cat').forEach(function(el){ el.style.borderColor = el.getAttribute('data-k')===k ? REPORTE_CATS[k].c : '#2a3147'; el.style.background = el.getAttribute('data-k')===k ? 'rgba(255,255,255,0.05)' : 'transparent'; }); }
+function seleccionarCatReporte(k){ reporteCatSel=k; document.querySelectorAll('#repCats .rep-cat').forEach(function(el){ el.style.borderColor = el.getAttribute('data-k')===k ? REPORTE_CATS[k].c : '#2a3147'; el.style.background = el.getAttribute('data-k')===k ? 'rgba(255,255,255,0.05)' : 'transparent'; }); const extra=document.getElementById('repSuperficieExtra'); if(extra) extra.style.display=(k==='superficie')?'block':'none'; }
 async function enviarReporte(){
   if(!reporteCatSel){ alert('Elige primero una categoría'); return; }
   const text=document.getElementById('repText').value.trim();
@@ -2526,8 +2553,14 @@ async function enviarReporte(){
   if(!loc){ alert('Necesito tu ubicación para ubicar el reporte. Activa el GPS.'); getCurrentLocation(); return; }
   let comuna='Mi zona';
   try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+loc.lat+'&lon='+loc.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
+  const data={cat:reporteCatSel, text:text, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()};
+  if(reporteCatSel==='superficie'){
+    const tipoEl=document.getElementById('repSuperficieTipo'), difEl=document.getElementById('repDificultad');
+    if(tipoEl && tipoEl.value) data.superficie=tipoEl.value;
+    if(difEl && difEl.value) data.dificultad=difEl.value;
+  }
   try{
-    await db.collection('reportes').add({cat:reporteCatSel, text:text, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection('reportes').add(data);
     us.d+=15; au(); sincronizarStats();
     closeModal();
     h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
@@ -2538,7 +2571,7 @@ function subscribeToReportes(){
   db.collection('reportes').orderBy('ts','desc').limit(200).onSnapshot(function(snap){
     const docs=[]; snap.forEach(function(d){ docs.push(d.data()); });
     reporteMarkers.forEach(function(m){ if(mp) mp.removeLayer(m); }); reporteMarkers=[];
-    if(mp){ docs.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const badge=lpBadgeHTML(c.e, r.cat==='critico'?c.c:null); const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b><br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'); reporteMarkers.push(mk); } }); }
+    if(mp){ docs.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const badge=lpBadgeHTML(c.e, r.cat==='critico'?c.c:null); const extra=(r.superficie||r.dificultad)?('<br>'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')):''; const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'); reporteMarkers.push(mk); } }); }
     renderReportesComunidad(docs);
   });
 }
@@ -2547,7 +2580,7 @@ function renderReportesComunidad(docs){
   if(!docs.length){ cont.innerHTML='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">📍 Mapa Comunitario</h4><p style="color:#888;font-size:0.8rem;margin:0">Aún no hay reportes. ¡Sé el primero en aportar un dato de tu zona con "Reportar en Ruta"!</p></div>'; return; }
   const byZona={}; docs.forEach(function(r){ const z=r.comuna||'Mi zona'; (byZona[z]=byZona[z]||[]).push(r); });
   let html='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">📍 Mapa Comunitario · datos de la ruta</h4>';
-  Object.keys(byZona).forEach(function(z){ html+='<div style="margin-top:10px"><div style="font-weight:800;color:var(--p);font-size:0.82rem;border-bottom:1px solid #223;padding-bottom:4px;margin-bottom:6px">📌 '+escapeHTML(z)+'</div>'; byZona[z].forEach(function(r){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; html+='<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #15202e"><div style="font-size:1.1rem">'+c.e+'</div><div style="flex:1"><div style="font-size:0.8rem;color:#dfe7ff;line-height:1.3">'+escapeHTML(r.text)+'</div><div style="font-size:0.65rem;color:#7d8ba0;margin-top:2px">'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</div></div></div>'; }); html+='</div>'; });
+  Object.keys(byZona).forEach(function(z){ html+='<div style="margin-top:10px"><div style="font-weight:800;color:var(--p);font-size:0.82rem;border-bottom:1px solid #223;padding-bottom:4px;margin-bottom:6px">📌 '+escapeHTML(z)+'</div>'; byZona[z].forEach(function(r){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const extra=(r.superficie||r.dificultad)?('<div style="font-size:0.68rem;color:#a78bfa;margin-top:2px">'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')+'</div>'):''; html+='<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #15202e"><div style="font-size:1.1rem">'+c.e+'</div><div style="flex:1"><div style="font-size:0.8rem;color:#dfe7ff;line-height:1.3">'+escapeHTML(r.text)+'</div>'+extra+'<div style="font-size:0.65rem;color:#7d8ba0;margin-top:2px">'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</div></div></div>'; }); html+='</div>'; });
   html+='</div>'; cont.innerHTML=html;
 }
 
@@ -2555,7 +2588,7 @@ function renderReportesComunidad(docs){
 const DIARIO_ESTADOS=[{e:'💪',l:'Excelente'},{e:'🩹',l:'Con molestias'},{e:'🐢',l:'Fatigado'}];
 let diarioEstadoSel=null;
 function diarioHoyKey(){ return 'lp_diario_'+(cu||'anon')+'_'+new Date().toISOString().slice(0,10); }
-/* ===== GAMIFICACIÓN: Logros (gratis) + Ranking Top 10 ===== */
+/* ===== GAMIFICACIÓN: Logros (gratis) + Ranking Top 100 ===== */
 function statViajesCompletados(){ return (typeof trips!=='undefined'&&trips)?trips.filter(function(t){return t&&t.status==='completed';}).length:0; }
 function statBitacora(){ const pre='lp_diario_'+(cu||'anon')+'_'; return Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).length; }
 const LOGROS=[
@@ -2589,6 +2622,10 @@ function mostrarLogrosComunidad(){
   document.getElementById('modalContent').innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'
     +'<button class="ab" style="margin:0" onclick="mostrarLogros()">🏆 Mis logros</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarRanking()">🥇 Ranking mundial</button>'
+    +'<button class="ab sec" style="margin:0" onclick="verSegmentos()">🏁 Segmentos y tabla de líderes</button>'
+    +'<button class="ab sec" style="margin:0" onclick="verRetos()">🎯 Retos y temporadas</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarResumenAnual()">📊 Mi año en Libre Pedal</button>'
+    +'<button class="ab sec" style="margin:0" onclick="verRecomendacionRutas()">🧭 Rutas para ti</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarTienda()">✨ Tienda de Darma</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarComunidad()">🤝 Meta de la comunidad (vota)</button>'
     +'</div>';
@@ -2602,9 +2639,9 @@ function mostrarLogros(){
 }
 async function sincronizarStats(){ if(!cu) return; const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null; try{ await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true}); }catch(e){} }
 async function mostrarRanking(){
-  document.getElementById('modalTitle').innerText='🥇 Top 10 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
+  document.getElementById('modalTitle').innerText='🥇 Top 100 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
   await sincronizarStats();
-  try{ const snap=await db.collection('users').orderBy('km','desc').limit(10).get();
+  try{ const snap=await db.collection('users').orderBy('km','desc').limit(100).get();
     if(snap.empty){ c.innerHTML='<p style="color:#888">Aún no hay datos. ¡Activa el GPS y suma kilómetros para entrar al ranking!</p>'; return; }
     const med=['🥇','🥈','🥉']; let html='<p style="color:#9fb3c8;font-size:0.82rem;margin-top:0">Los cicloviajeros con más kilómetros del mundo 🌎</p>'; let pos=0;
     snap.forEach(function(doc){ const d=doc.data(); pos++; const yo=doc.id===cu; html+='<div onclick="verPerfilUsuario(\''+doc.id+'\')" style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;cursor:pointer;background:'+(yo?'rgba(252,76,2,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-size:1.05rem;font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem;color:'+(yo?'var(--p)':'#dfe7ff')+'">'+escapeHTML(d.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g);font-size:0.9rem">'+(d.km||0).toFixed(0)+' km</div></div>'; });
@@ -2960,6 +2997,8 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   const _spWin=velocidadVentana(navPosHistory);
   const speed=(_spWin<6)?0:_spWin;
   _actualizarPausaViaje(speed, 'navPausaBadge');
+  _actualizarLiveTrack(lat,lon);
+  _verificarSegmentos(lat,lon);
   // jitter: no suma distancia/calorías si el salto es < 12 m (deriva del GPS quieto),
   // pero el punto igual queda registrado arriba para la velocidad real.
   if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist>=12){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon}; } }
@@ -3039,6 +3078,8 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
   navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
   navPendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
+  iniciarDeteccionCaidas();
+  iniciarSeguimientoSegmentos(startLat,startLon);
   try{
     const url='https://router.project-osrm.org/route/v1/cycling/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
     const resp=await fetch(url); const data=await resp.json();
@@ -3132,7 +3173,9 @@ function endNavigation(){
     }
   }
   navGuardado=false;
-  lpWakeLock.disable(); if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
+  lpWakeLock.disable(); detenerDeteccionCaidas();
+  if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
+  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
 function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 function updateStatsView(){
@@ -3252,6 +3295,472 @@ function gestionarContactosSOS(){
 }
 function agregarContactoSOS(){ const n=(document.getElementById('sosNombre').value||'').trim(); const f=(document.getElementById('sosFono').value||'').replace(/[^0-9]/g,''); if(!n||f.length<8) return alert('Pon un nombre y un teléfono válido con código de país (ej: 56912345678)'); const cs=contactosSOS(); cs.push({nombre:n,fono:f}); guardarContactosSOS(cs); h('Contacto de emergencia guardado.'); gestionarContactosSOS(); }
 function borrarContactoSOS(i){ const cs=contactosSOS(); cs.splice(i,1); guardarContactosSOS(cs); gestionarContactosSOS(); }
+/* ===== DETECCIÓN DE CAÍDAS =====
+   Usa el acelerómetro del celular (DeviceMotion, gratis, sin hardware extra). Una
+   caída real tiene una firma de dos partes: un impacto fuerte (aceleración total
+   sobre un umbral) seguido de quietud (a diferencia de pasar por un bache, donde
+   seguís pedaleando normal después). Solo corre durante un viaje activo, para no
+   gastar batería ni dar falsas alarmas con el celular guardado sin andar en bici.
+   Nota honesta: WhatsApp no permite mandar un mensaje sin que la persona lo toque
+   dentro de la app (por seguridad/antispam de Meta) — así que "automático" acá
+   significa que preparamos todo y lo dejamos a un toque, no un envío 100% silencioso. */
+let crashDetectorActivo=false, crashUltimoImpacto=0, crashAlertaActiva=false, crashCountdownId=null;
+const CRASH_UMBRAL_G=3.5;
+function _crashMotionHandler(e){
+  if(crashAlertaActiva) return;
+  const a=e.acceleration||e.accelerationIncludingGravity;
+  if(!a) return;
+  const mag=Math.sqrt(Math.pow(a.x||0,2)+Math.pow(a.y||0,2)+Math.pow(a.z||0,2))/9.8;
+  const ahora=Date.now();
+  if(mag>CRASH_UMBRAL_G && ahora-crashUltimoImpacto>4000){
+    crashUltimoImpacto=ahora;
+    setTimeout(_verificarQuietudTrasImpacto, 1500);
+  }
+}
+function _verificarQuietudTrasImpacto(){
+  if(crashAlertaActiva) return;
+  const navActivo=document.getElementById('nav-screen').classList.contains('active');
+  const el=document.getElementById(navActivo?'navSpeed':'spd');
+  const spActual=el?(parseFloat(el.innerText)||0):0;
+  if(spActual<3) mostrarAlertaCaida();
+}
+function iniciarDeteccionCaidas(){
+  if(crashDetectorActivo || typeof DeviceMotionEvent==='undefined') return;
+  crashDetectorActivo=true;
+  // iOS exige pedir permiso con un gesto del usuario; Android no lo necesita y el
+  // request simplemente no existe ahí (por eso el chequeo de función antes de llamar).
+  if(typeof DeviceMotionEvent.requestPermission==='function'){
+    DeviceMotionEvent.requestPermission().then(function(r){ if(r==='granted') window.addEventListener('devicemotion', _crashMotionHandler); }).catch(function(){});
+  } else {
+    window.addEventListener('devicemotion', _crashMotionHandler);
+  }
+}
+function detenerDeteccionCaidas(){
+  crashDetectorActivo=false;
+  window.removeEventListener('devicemotion', _crashMotionHandler);
+}
+function mostrarAlertaCaida(){
+  crashAlertaActiva=true;
+  let restante=30;
+  const overlay=document.createElement('div');
+  overlay.id='crashAlertOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(180,0,0,0.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:#fff';
+  overlay.innerHTML='<div style="font-size:3rem">🚨</div><h2 style="margin:10px 0">¿Estás bien?</h2><p style="font-size:0.95rem;max-width:320px">Detectamos un golpe fuerte. Si no respondes, dejamos listo el SOS para tus contactos en <strong id="crashCountdown">30</strong>s.</p><button id="crashCancelBtn" style="margin-top:20px;background:#fff;color:#b91c1c;border:none;border-radius:30px;padding:16px 32px;font-size:1.1rem;font-weight:800;cursor:pointer">✅ Estoy bien</button>';
+  document.body.appendChild(overlay);
+  document.getElementById('crashCancelBtn').onclick=cancelarAlertaCaida;
+  try{ if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]); }catch(e){}
+  if(typeof h==='function') h('Detecté un golpe fuerte. Toca "Estoy bien" si estás bien, o preparo el SOS.');
+  crashCountdownId=setInterval(function(){
+    restante--;
+    const el=document.getElementById('crashCountdown'); if(el) el.innerText=restante;
+    if(restante<=0){ clearInterval(crashCountdownId); crashCountdownId=null; _dispararSOSPorCaida(); }
+  },1000);
+}
+function cancelarAlertaCaida(){
+  crashAlertaActiva=false;
+  if(crashCountdownId){ clearInterval(crashCountdownId); crashCountdownId=null; }
+  const overlay=document.getElementById('crashAlertOverlay'); if(overlay) overlay.remove();
+  if(typeof h==='function') h('Qué bueno que estás bien. Sigo grabando tu ruta.');
+}
+function _dispararSOSPorCaida(){
+  const overlay=document.getElementById('crashAlertOverlay');
+  const cs=contactosSOS();
+  const loc=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+  const url=loc?('https://www.google.com/maps?q='+loc.lat+','+loc.lon):'';
+  const msg='🚨 Posible caída en bicicleta. Soy '+(nombreUsuario||'un ciclista')+' y podría necesitar ayuda.'+(url?(' Mi ubicación: '+url):'');
+  if(overlay) overlay.innerHTML='<div style="font-size:3rem">📲</div><h2 style="margin:10px 0">Toca para avisar</h2><p style="font-size:0.85rem;max-width:320px">Por seguridad, WhatsApp exige un toque tuyo para mandar el mensaje — ya está todo listo, solo toca abajo.</p><div id="crashSosLinks" style="margin-top:16px;width:100%;max-width:320px"></div><button onclick="cancelarAlertaCaida()" style="margin-top:16px;background:none;border:1px solid #fff;color:#fff;border-radius:20px;padding:10px 20px;font-size:0.85rem;cursor:pointer">Cerrar</button>';
+  const cont=document.getElementById('crashSosLinks');
+  if(!cont) return;
+  if(cs.length===0){ cont.innerHTML='<p style="color:#ffd0d0;font-size:0.85rem">No tienes contactos de emergencia guardados. Toca el botón SOS en Inicio para agregarlos.</p>'; }
+  else { cont.innerHTML=cs.map(function(x){ return '<a href="https://wa.me/'+x.fono+'?text='+encodeURIComponent(msg)+'" target="_blank" style="display:block;text-align:center;text-decoration:none;background:#25D366;color:#03301a;border-radius:10px;padding:12px;font-weight:800;margin-bottom:8px">📲 Enviar a '+escapeHTML(x.nombre)+'</a>'; }).join(''); }
+  try{ if(navigator.vibrate) navigator.vibrate([500,200,500,200,500]); }catch(e){}
+}
+/* ===== SEGUIMIENTO EN VIVO: comparte tu ubicación con un link, sin que la otra
+   persona necesite cuenta ni la app instalada. Va "a caballo" de las actualizaciones
+   de posición normales del GPS (con su propio throttle de 15s para no saturar
+   Firestore de escrituras). Se marca inactivo (no se borra) al detener el GPS, así
+   quien tiene el link ve "dejó de compartir" en vez de una ubicación vieja sin aviso. */
+let liveTrackId=null, liveTrackActivo=false, liveTrackUltimoEnvio=0;
+function _actualizarBtnSeguimientoVivo(){ const b=document.getElementById('btnSeguimientoVivo'); if(b) b.innerText=liveTrackActivo?'🔴 Compartiendo ubicación (toca para detener)':'📡 Compartir ubicación en vivo'; }
+async function toggleSeguimientoVivo(){
+  if(!cu) return;
+  if(liveTrackActivo){
+    liveTrackActivo=false;
+    if(liveTrackId){ try{ await db.collection('liveTracking').doc(liveTrackId).update({activo:false}); }catch(e){} }
+    _actualizarBtnSeguimientoVivo();
+    h('Dejé de compartir tu ubicación en vivo.');
+    return;
+  }
+  if(!liveTrackId){ try{ liveTrackId=localStorage.getItem('lp_livetrack_'+cu); }catch(e){} }
+  if(!liveTrackId){ liveTrackId=cu.replace(/[^a-zA-Z0-9]/g,'')+'_'+Date.now().toString(36); try{ localStorage.setItem('lp_livetrack_'+cu, liveTrackId); }catch(e){} }
+  const loc=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+  try{
+    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    liveTrackActivo=true; liveTrackUltimoEnvio=0;
+    _actualizarBtnSeguimientoVivo();
+    const url=location.origin+location.pathname.replace(/index\.html$/,'')+'seguir.html?id='+liveTrackId;
+    mostrarLinkSeguimientoVivo(url);
+  }catch(e){ alert('No se pudo activar el seguimiento en vivo. Revisa tu conexión.'); }
+}
+function mostrarLinkSeguimientoVivo(url){
+  document.getElementById('modalTitle').innerText='📡 Ubicación en vivo';
+  document.getElementById('modalContent').innerHTML='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Comparte este link con quien quieras que vea tu posición en tiempo real. No necesita cuenta ni tener la app instalada.</p>'
+    +'<input type="text" readonly value="'+url+'" style="margin-bottom:8px" onclick="this.select()">'
+    +'<button class="ab" onclick="navigator.clipboard.writeText(\''+url+'\').then(function(){h(\'Link copiado.\');})">📋 Copiar link</button>'
+    +(navigator.share?'<button class="ab sec" onclick="navigator.share({title:\'Sígueme en vivo por Libre Pedal\',url:\''+url+'\'})">📤 Compartir</button>':'')
+    +'<p style="font-size:0.7rem;color:#7d8ba0;margin-top:10px">Se actualiza mientras estés con el GPS activo. Toca "Compartir ubicación en vivo" de nuevo para detenerlo.</p>';
+  document.getElementById('userModal').classList.add('on');
+}
+function _actualizarLiveTrack(lat,lon){
+  if(!liveTrackActivo || !liveTrackId) return;
+  const ahora=Date.now();
+  if(ahora-liveTrackUltimoEnvio<15000) return;
+  liveTrackUltimoEnvio=ahora;
+  db.collection('liveTracking').doc(liveTrackId).update({lat:lat,lon:lon,ts:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(){});
+}
+/* ===== SENSORES BLUETOOTH (pulsómetro / potenciómetro) =====
+   Web Bluetooth, gratis, sin apps ni hardware propietario — cualquier sensor
+   estándar BLE (Heart Rate Service 0x180D, Cycling Power Service 0x1818) sirve. */
+let bleHRDevice=null, blePowerDevice=null, bleHR=null, blePower=null;
+function _bleDisponible(){ return typeof navigator!=='undefined' && !!navigator.bluetooth; }
+function _parseHR(dataview){
+  const flags=dataview.getUint8(0);
+  const es16bits=(flags & 0x01)!==0;
+  return es16bits ? dataview.getUint16(1,true) : dataview.getUint8(1);
+}
+function _parsePower(dataview){
+  // La potencia instantánea (int16) va siempre justo después de los 2 bytes de
+  // flags, sin importar qué otros campos opcionales traiga el sensor.
+  return dataview.getInt16(2,true);
+}
+async function conectarPulsometro(){
+  if(!_bleDisponible()){ alert('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
+  try{
+    const device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});
+    const server=await device.gatt.connect();
+    const service=await server.getPrimaryService('heart_rate');
+    const char=await service.getCharacteristic('heart_rate_measurement');
+    await char.startNotifications();
+    char.addEventListener('characteristicvaluechanged', function(e){ bleHR=_parseHR(e.target.value); _actualizarBleUI(); });
+    bleHRDevice=device;
+    device.addEventListener('gattserverdisconnected', function(){ bleHR=null; bleHRDevice=null; _actualizarBleUI(); });
+    _actualizarBleUI();
+    h('Pulsómetro conectado.');
+  }catch(e){ if(e.name!=='NotFoundError') alert('No se pudo conectar el pulsómetro: '+e.message); }
+}
+async function conectarPotenciometro(){
+  if(!_bleDisponible()){ alert('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
+  try{
+    const device=await navigator.bluetooth.requestDevice({filters:[{services:['cycling_power']}]});
+    const server=await device.gatt.connect();
+    const service=await server.getPrimaryService('cycling_power');
+    const char=await service.getCharacteristic('cycling_power_measurement');
+    await char.startNotifications();
+    char.addEventListener('characteristicvaluechanged', function(e){ blePower=_parsePower(e.target.value); _actualizarBleUI(); });
+    blePowerDevice=device;
+    device.addEventListener('gattserverdisconnected', function(){ blePower=null; blePowerDevice=null; _actualizarBleUI(); });
+    _actualizarBleUI();
+    h('Potenciómetro conectado.');
+  }catch(e){ if(e.name!=='NotFoundError') alert('No se pudo conectar el potenciómetro: '+e.message); }
+}
+function desconectarBluetooth(){
+  if(bleHRDevice && bleHRDevice.gatt.connected) bleHRDevice.gatt.disconnect();
+  if(blePowerDevice && blePowerDevice.gatt.connected) blePowerDevice.gatt.disconnect();
+  bleHR=null; blePower=null; bleHRDevice=null; blePowerDevice=null;
+  _actualizarBleUI();
+  h('Sensores Bluetooth desconectados.');
+}
+function _actualizarBleUI(){
+  [
+    {id:'dashBleHR', val:bleHR, icon:'❤️', suf:' bpm'},
+    {id:'navBleHR', val:bleHR, icon:'❤️', suf:' bpm'},
+    {id:'dashBlePower', val:blePower, icon:'⚡', suf:'W'},
+    {id:'navBlePower', val:blePower, icon:'⚡', suf:'W'}
+  ].forEach(function(x){
+    const el=document.getElementById(x.id); if(!el) return;
+    if(x.val!=null){ el.style.display='inline-flex'; el.innerText=x.icon+' '+x.val+x.suf; }
+    else { el.style.display='none'; }
+  });
+}
+/* ===== SEGMENTOS Y TABLA DE LÍDERES (estilo Strava) =====
+   Un segmento es un tramo con inicio y fin fijos: los mismos puntos con los que
+   arrancó y terminó alguna ruta ya grabada (no hace falta mapear calles aparte).
+   Mientras andás, si pasás cerca del punto de inicio se "arma" el cronómetro; al
+   pasar cerca del fin, se guarda tu marca. Todo con el mismo GPS que ya corre. */
+const SEGMENTO_RADIO_M=40;
+let segmentosActivos=[], segmentosEstado={}, segmentosCargados=false;
+async function iniciarSeguimientoSegmentos(lat,lon){
+  segmentosEstado={}; segmentosActivos=[];
+  try{
+    // Bounding box aproximado (~5km) alrededor del punto de partida: Firestore no
+    // tiene geo-queries nativas sin infraestructura extra, y para esta escala alcanza
+    // con un rango en latitud (indexado solo, sin índice compuesto) + filtro de
+    // longitud en el cliente.
+    const delta=0.045;
+    const snap=await db.collection('segmentos').where('inicio.lat','>=',lat-delta).where('inicio.lat','<=',lat+delta).limit(50).get();
+    segmentosActivos=snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); }).filter(function(s){ return s.inicio && s.inicio.lon!=null && s.inicio.lon>=lon-delta && s.inicio.lon<=lon+delta; });
+  }catch(e){ segmentosActivos=[]; }
+}
+function _verificarSegmentos(lat,lon){
+  if(!segmentosActivos.length) return;
+  segmentosActivos.forEach(function(s){
+    if(!s.inicio||!s.fin) return;
+    const est=segmentosEstado[s.id]||(segmentosEstado[s.id]={armado:false,inicioMs:null});
+    if(!est.armado){
+      if(calculateDistance(lat,lon,s.inicio.lat,s.inicio.lon)<SEGMENTO_RADIO_M){ est.armado=true; est.inicioMs=Date.now(); h('Entraste al segmento '+s.nombre+'. ¡Dale con todo!'); }
+    } else if(calculateDistance(lat,lon,s.fin.lat,s.fin.lon)<SEGMENTO_RADIO_M){
+      const tiempoMs=Date.now()-est.inicioMs;
+      est.armado=false;
+      _guardarTiempoSegmento(s, tiempoMs);
+    }
+  });
+}
+async function _guardarTiempoSegmento(segmento, tiempoMs){
+  try{
+    await db.collection('segmentoTiempos').add({segmentoId:segmento.id, user:cu, nombre:nombreUsuario||'Ciclista', tiempoMs:tiempoMs, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    const mins=Math.floor(tiempoMs/60000), segs=Math.floor((tiempoMs%60000)/1000);
+    h('¡Terminaste el segmento '+segmento.nombre+' en '+mins+' minutos '+segs+' segundos! Revisa la tabla de líderes.');
+    us.d+=10; au(); sincronizarStats();
+  }catch(e){}
+}
+async function crearSegmentoDesdeRuta(localId){
+  const r=_rutaPorId(localId);
+  if(!r || !r.points || r.points.length<2){ alert('Esta ruta no tiene suficientes puntos para ser un segmento.'); return; }
+  const nombre=prompt('Nombre del segmento (ej: Subida al mirador):');
+  if(!nombre || !nombre.trim()) return;
+  const inicio=r.points[0], fin=r.points[r.points.length-1];
+  try{
+    await db.collection('segmentos').add({nombre:nombre.trim(), desc:'', inicio:{lat:inicio.lat,lon:inicio.lon}, fin:{lat:fin.lat,lon:fin.lon}, distanciaKm:r.distance||0, creadoPor:cu, nombreCreador:nombreUsuario||'Ciclista', ts:firebase.firestore.FieldValue.serverTimestamp()});
+    h('Segmento "'+nombre.trim()+'" creado. Ya cualquiera puede competir por el mejor tiempo ahí.');
+  }catch(e){ alert('No se pudo crear el segmento.'); }
+}
+async function verSegmentos(){
+  document.getElementById('modalTitle').innerText='🏁 Segmentos';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="color:#888">Cargando segmentos...</p>';
+  document.getElementById('userModal').classList.add('on');
+  try{
+    const snap=await db.collection('segmentos').orderBy('ts','desc').limit(50).get();
+    if(snap.empty){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Aún no hay segmentos. Crea uno desde Historial de rutas → elige una ruta → 🏁 Crear segmento.</p>'; return; }
+    c.innerHTML=snap.docs.map(function(d){ const s=d.data(); const nom=escapeHTML(s.nombre||'').replace(/'/g,"\\'"); return '<div class="novedad-card"><h4>'+escapeHTML(s.nombre||'')+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" onclick="verTablaLideresSegmento(\''+d.id+'\',\''+nom+'\')">🏆 Ver tabla de líderes</button></div>'; }).join('');
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los segmentos.</p>'; }
+}
+async function verTablaLideresSegmento(segmentoId, nombre){
+  document.getElementById('modalTitle').innerText='🏆 '+nombre;
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="color:#888">Cargando tabla de líderes...</p>';
+  document.getElementById('userModal').classList.add('on');
+  try{
+    // Sin orderBy en la consulta (evita necesitar un índice compuesto): se ordena
+    // en el cliente, liviano porque son pocas marcas por segmento.
+    const snap=await db.collection('segmentoTiempos').where('segmentoId','==',segmentoId).limit(300).get();
+    const tiempos=snap.docs.map(function(d){return d.data();}).sort(function(a,b){return a.tiempoMs-b.tiempoMs;}).slice(0,20);
+    if(!tiempos.length){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Nadie ha marcado tiempo todavía. ¡Sé el primero!</p>'; return; }
+    const med=['🥇','🥈','🥉']; let pos=0;
+    c.innerHTML=tiempos.map(function(t){ pos++; const mins=Math.floor(t.tiempoMs/60000), segs=Math.floor((t.tiempoMs%60000)/1000); const yo=t.user===cu; return '<div style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;background:'+(yo?'rgba(252,76,2,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem">'+escapeHTML(t.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g)">'+mins+'m '+segs+'s</div></div>'; }).join('');
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar la tabla.</p>'; }
+}
+/* ===== RETOS Y TEMPORADAS =====
+   Desafíos con fecha límite sobre el Darma que ya existe (ej: "500km en julio").
+   El progreso se calcula sumando las rutas guardadas del celular (rutasLocales, la
+   fuente de verdad de siempre) que caen dentro de las fechas del reto — no hace
+   falta llevar un contador aparte. Cubre las rutas del "viaje rápido"/GPS libre,
+   que es el flujo principal de la app; los viajes multi-destino no suman acá. */
+function calcularProgresoReto(reto){
+  const ini=reto.fechaInicio, fin=reto.fechaFin;
+  return rutasLocales().filter(function(r){ return r.startTime>=ini && r.startTime<=fin; }).reduce(function(s,r){ return s+(r.distance||0); },0);
+}
+async function verRetos(){
+  document.getElementById('modalTitle').innerText='🎯 Retos y temporadas';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="color:#888">Cargando retos...</p>';
+  document.getElementById('userModal').classList.add('on');
+  try{
+    const ahora=Date.now();
+    const snap=await db.collection('retos').orderBy('fechaFin','desc').limit(30).get();
+    const activos=[], pasados=[];
+    snap.forEach(function(d){ const r=Object.assign({id:d.id},d.data()); (r.fechaFin>=ahora?activos:pasados).push(r); });
+    if(!activos.length && !pasados.length){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Todavía no hay retos activos.</p>'; return; }
+    function tarjeta(r){
+      const km=calcularProgresoReto(r);
+      const pct=Math.min(100, Math.round((km/r.metaKm)*100));
+      const diasRestantes=Math.max(0, Math.ceil((r.fechaFin-ahora)/86400000));
+      return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4>'+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')
+        +'<div style="height:8px;background:#222b3d;border-radius:4px;overflow:hidden;margin:8px 0"><div style="height:100%;width:'+pct+'%;background:var(--p)"></div></div>'
+        +'<p style="font-size:0.75rem;color:#9fb3c8;margin:0">'+km.toFixed(1)+' / '+(r.metaKm||0)+' km · '+(r.fechaFin>=ahora?(diasRestantes+' días restantes'):'Terminado')+(pct>=100?' · ✅ ¡Cumplido!':'')+'</p></div>';
+    }
+    c.innerHTML=(activos.length?'<h4 style="color:var(--p);margin:0 0 8px">Activos</h4>'+activos.map(tarjeta).join(''):'')
+      +(pasados.length?'<h4 style="color:#7d8ba0;margin:14px 0 8px">Terminados</h4>'+pasados.slice(0,5).map(tarjeta).join(''):'');
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los retos.</p>'; }
+}
+async function crearReto(){
+  const titulo=(document.getElementById('retoTitulo').value||'').trim();
+  const desc=(document.getElementById('retoDesc').value||'').trim();
+  const metaKm=parseFloat(document.getElementById('retoMeta').value);
+  const dias=parseInt(document.getElementById('retoDias').value,10);
+  if(!titulo || !metaKm || !dias){ alert('Completa título, meta en km y duración en días'); return; }
+  try{
+    await db.collection('retos').add({titulo:titulo, desc:desc, metaKm:metaKm, fechaInicio:Date.now(), fechaFin:Date.now()+dias*86400000, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    document.getElementById('retoTitulo').value=''; document.getElementById('retoDesc').value=''; document.getElementById('retoMeta').value=''; document.getElementById('retoDias').value='';
+    h('Reto publicado.');
+  }catch(e){ alert('No se pudo crear el reto.'); }
+}
+/* ===== RECAPITULACIÓN ANUAL (estilo "Wrapped") =====
+   Resumen visual y compartible del año, armado como imagen con Canvas 2D — nada de
+   servicios externos, se calcula con las rutas que ya están guardadas en el celular. */
+function calcularResumenAnual(anio){
+  const ini=new Date(anio,0,1).getTime(), fin=new Date(anio+1,0,1).getTime();
+  const rutas=rutasLocales().filter(function(r){ return r.startTime>=ini && r.startTime<fin; });
+  const totalKm=rutas.reduce(function(s,r){return s+(r.distance||0);},0);
+  const totalCal=rutas.reduce(function(s,r){return s+(r.calories||0);},0);
+  const viajeMax=rutas.reduce(function(m,r){return (r.distance||0)>m?(r.distance||0):m;},0);
+  const porMes={};
+  rutas.forEach(function(r){ const m=new Date(r.startTime).getMonth(); porMes[m]=(porMes[m]||0)+(r.distance||0); });
+  let mesTop=-1, mesTopKm=0;
+  Object.keys(porMes).forEach(function(m){ if(porMes[m]>mesTopKm){ mesTopKm=porMes[m]; mesTop=parseInt(m,10); } });
+  const nombresMes=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return { anio:anio, viajes:rutas.length, totalKm:totalKm, totalCal:totalCal, viajeMax:viajeMax, mesTop: mesTop>=0?nombresMes[mesTop]:null, mesTopKm:mesTopKm };
+}
+function _dibujarTarjetaAnual(ctx, W, H, r){
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#151b2e'); grad.addColorStop(1,'#0a0f1d');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle='#fc4c02'; ctx.font='bold 42px sans-serif';
+  ctx.fillText('🚲 Libre Pedal', W/2, 90);
+  ctx.fillStyle='#ffd700'; ctx.font='bold 28px sans-serif';
+  ctx.fillText('Mi año '+r.anio, W/2, 140);
+  ctx.fillStyle='#fff'; ctx.font='bold 88px sans-serif';
+  ctx.fillText(r.totalKm.toFixed(0), W/2, 280);
+  ctx.fillStyle='#9fb3c8'; ctx.font='28px sans-serif';
+  ctx.fillText('kilómetros recorridos', W/2, 320);
+  const stats=[
+    ['🚴 Viajes', r.viajes],
+    ['🔥 Calorías', Math.round(r.totalCal).toLocaleString('es-CL')],
+    ['🏆 Viaje más largo', r.viajeMax.toFixed(1)+' km'],
+    ['📅 Mes más activo', r.mesTop?(r.mesTop+' ('+r.mesTopKm.toFixed(0)+' km)'):'--']
+  ];
+  let y=400;
+  stats.forEach(function(s){
+    ctx.fillStyle='#7d8ba0'; ctx.font='22px sans-serif'; ctx.fillText(s[0], W/2, y);
+    ctx.fillStyle='#ffd700'; ctx.font='bold 30px sans-serif'; ctx.fillText(String(s[1]), W/2, y+38);
+    y+=100;
+  });
+  ctx.fillStyle='#3a4a5a'; ctx.font='18px sans-serif';
+  ctx.fillText('librepedal.pages.dev', W/2, H-40);
+}
+function mostrarResumenAnual(){
+  const anio=new Date().getFullYear();
+  const r=calcularResumenAnual(anio);
+  if(r.viajes===0){ alert('Todavía no tienes viajes registrados este '+anio+'. ¡Sal a pedalear y vuelve más adelante!'); return; }
+  const overlay=document.createElement('div');
+  overlay.id='wrappedOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px';
+  const canvas=document.createElement('canvas');
+  canvas.width=800; canvas.height=1000;
+  canvas.style.cssText='max-width:100%;max-height:75vh;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.6)';
+  const ctx=canvas.getContext('2d');
+  _dibujarTarjetaAnual(ctx, canvas.width, canvas.height, r);
+  overlay.appendChild(canvas);
+  const botones=document.createElement('div');
+  botones.style.cssText='display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center';
+  botones.innerHTML='<button id="wrappedDescargar" class="ab" style="width:auto;padding:12px 20px">📥 Descargar</button>'+(navigator.share?'<button id="wrappedCompartir" class="ab sec" style="width:auto;padding:12px 20px">📤 Compartir</button>':'')+'<button id="wrappedCerrar" class="ab sec" style="width:auto;padding:12px 20px;background:none;border:1px solid #555">✕ Cerrar</button>';
+  overlay.appendChild(botones);
+  document.body.appendChild(overlay);
+  document.getElementById('wrappedCerrar').onclick=function(){ overlay.remove(); };
+  document.getElementById('wrappedDescargar').onclick=function(){
+    canvas.toBlob(function(blob){
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download='libre-pedal-'+anio+'.png'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); },4000);
+    });
+  };
+  if(navigator.share){
+    document.getElementById('wrappedCompartir').onclick=function(){
+      canvas.toBlob(function(blob){
+        const file=new File([blob], 'libre-pedal-'+anio+'.png', {type:'image/png'});
+        if(navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file], title:'Mi año en Libre Pedal', text:'Mi resumen '+anio+' pedaleando 🚴'}).catch(function(){}); }
+        else { navigator.share({title:'Mi año en Libre Pedal', text:'Recorrí '+r.totalKm.toFixed(0)+' km en '+anio+' con Libre Pedal 🚴'}).catch(function(){}); }
+      });
+    };
+  }
+}
+/* ===== RODADAS GRUPALES ===== */
+async function crearRodada(){
+  const titulo=(document.getElementById('rodadaTitulo').value||'').trim();
+  const desc=(document.getElementById('rodadaDesc').value||'').trim();
+  const puntoEncuentro=(document.getElementById('rodadaPunto').value||'').trim();
+  const fechaStr=document.getElementById('rodadaFecha').value;
+  if(!titulo || !puntoEncuentro || !fechaStr){ alert('Completa título, punto de encuentro y fecha'); return; }
+  const fecha=new Date(fechaStr).getTime();
+  if(!fecha || isNaN(fecha)){ alert('Fecha inválida'); return; }
+  try{
+    await db.collection('rodadas').add({titulo:titulo, desc:desc, puntoEncuentro:puntoEncuentro, fecha:fecha, creadoPor:cu, nombreCreador:nombreUsuario||'Ciclista', asistentes:[cu], ts:firebase.firestore.FieldValue.serverTimestamp()});
+    document.getElementById('rodadaTitulo').value=''; document.getElementById('rodadaDesc').value=''; document.getElementById('rodadaPunto').value=''; document.getElementById('rodadaFecha').value='';
+    h('Rodada creada. Ya se avisa a la comunidad.');
+    verRodadas();
+  }catch(e){ alert('No se pudo crear la rodada.'); }
+}
+async function verRodadas(){
+  document.getElementById('modalTitle').innerText='🚵 Rodadas grupales';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin-bottom:12px"><h4 style="margin:0 0 8px;font-size:0.85rem;color:var(--p)">Organizar una rodada</h4><input type="text" id="rodadaTitulo" placeholder="Título (ej: Rodada nocturna Providencia)"><input type="text" id="rodadaPunto" placeholder="Punto de encuentro"><input type="datetime-local" id="rodadaFecha"><textarea id="rodadaDesc" rows="2" placeholder="Detalles (opcional)..."></textarea><button class="ab" style="margin-top:6px" onclick="crearRodada()">Publicar rodada</button></div><div id="rodadasList"><p style="color:#888">Cargando rodadas...</p></div>';
+  document.getElementById('userModal').classList.add('on');
+  try{
+    const ahora=Date.now();
+    const snap=await db.collection('rodadas').orderBy('fecha','asc').limit(50).get();
+    const cont=document.getElementById('rodadasList');
+    const futuras=[]; snap.forEach(function(d){ const r=Object.assign({id:d.id},d.data()); if(r.fecha>=ahora-3600000) futuras.push(r); });
+    if(!futuras.length){ cont.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">No hay rodadas próximas. ¡Organiza la primera!</p>'; return; }
+    cont.innerHTML=futuras.map(function(r){
+      const asistentes=r.asistentes||[];
+      const voy=asistentes.indexOf(cu)!==-1;
+      const fecha=new Date(r.fecha).toLocaleString('es-CL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4><p>📅 '+fecha+' · 📍 '+escapeHTML(r.puntoEncuentro||'')+'</p>'+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')+'<p style="color:#7d8ba0;font-size:0.72rem">Organiza: '+escapeHTML(r.nombreCreador||'Ciclista')+' · '+asistentes.length+' confirmados</p><button class="ab '+(voy?'sec':'')+'" style="margin:0" onclick="toggleAsistenciaRodada(\''+r.id+'\')">'+(voy?'✅ Vas · toca para cancelar':'🚴 Confirmar asistencia')+'</button></div>';
+    }).join('');
+  }catch(e){ document.getElementById('rodadasList').innerHTML='<p style="color:#888">No se pudieron cargar las rodadas.</p>'; }
+}
+async function toggleAsistenciaRodada(id){
+  try{
+    const ref=db.collection('rodadas').doc(id);
+    const doc=await ref.get();
+    if(!doc.exists) return;
+    const asistentes=doc.data().asistentes||[];
+    const idx=asistentes.indexOf(cu);
+    if(idx===-1){ asistentes.push(cu); } else { asistentes.splice(idx,1); }
+    await ref.update({asistentes:asistentes});
+    verRodadas();
+  }catch(e){ alert('No se pudo actualizar tu asistencia.'); }
+}
+/* ===== RECOMENDACIÓN DE RUTAS INTELIGENTE =====
+   Heurística gratuita (sin IA de pago): mira tu propio historial — cuántos km
+   sueles andar — y te sugiere rutas de otros ciclistas un poco más largas que tu
+   promedio (10-35% más, la regla clásica de progresión: sumar sin pasarse). */
+function _perfilCiclista(){
+  const rutas=rutasLocales();
+  if(!rutas.length) return null;
+  const totalKm=rutas.reduce(function(s,r){return s+(r.distance||0);},0);
+  return { avgKm:totalKm/rutas.length, totalViajes:rutas.length };
+}
+async function verRecomendacionRutas(){
+  document.getElementById('modalTitle').innerText='🧭 Rutas para ti';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="color:#888">Analizando tu historial...</p>';
+  document.getElementById('userModal').classList.add('on');
+  const perfil=_perfilCiclista();
+  if(!perfil){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Todavía no tienes viajes registrados. ¡Sal a pedalear y vuelve para tus recomendaciones!</p>'; return; }
+  try{
+    const minKm=perfil.avgKm*1.1, maxKm=perfil.avgKm*1.35;
+    const snap=await db.collection('routes').orderBy('distance','desc').limit(200).get();
+    const candidatas=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());})
+      .filter(function(r){ return r.user!==cu && r.distance>=minKm && r.distance<=maxKm && r.points && r.points.length; })
+      .slice(0,8);
+    let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu promedio es <strong style="color:var(--g)">'+perfil.avgKm.toFixed(1)+' km</strong> en '+perfil.totalViajes+' viajes. Estas rutas de otros ciclistas te ayudan a subir el nivel de a poco:</p>';
+    if(!candidatas.length){ html+='<p style="color:#7d8ba0;font-size:0.82rem">Todavía no hay rutas de otros ciclistas en ese rango de distancia. Vuelve más adelante.</p>'; }
+    else { html+=candidatas.map(function(r){ return '<div class="novedad-card"><h4>'+(r.distance||0).toFixed(1)+' km</h4><p>De '+escapeHTML(r.nombre||'un ciclista')+'</p><button class="ab sec" style="margin:0" onclick="closeModal();showSingleRoute(\''+r.id+'\')">👀 Ver en el mapa</button></div>'; }).join(''); }
+    c.innerHTML=html;
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar recomendaciones.</p>'; }
+}
 function enviarSOS(){
   const cs=contactosSOS();
   function seguir(lat,lon){
@@ -3874,7 +4383,7 @@ const tutorialSteps=[
   {view:'dash', sel:'.speed-display', d:'Tu velocidad en vivo. El GPS graba tu ruta solo: se guarda al detenerte, no prendas nada.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'SOS: guarda tus contactos y les mando tu ubicación por WhatsApp al toque.'},
   {view:'dash', sel:'.darma-badge', d:'Tu Darma: premio por aportar. Desbloquea cascos, skins y estilos.'},
-  {view:'dash', sel:'button[onclick="mostrarLogrosComunidad()"]', d:'Logros, Ranking y Tienda: tu avance y el Top 10 por kilómetros.'},
+  {view:'dash', sel:'button[onclick="mostrarLogrosComunidad()"]', d:'Logros, Ranking y Tienda: tu avance y el Top 100 por kilómetros.'},
   {view:'musica', sel:'#lpPlayer', d:'Música: radios gratis o tu propia carpeta. Baja sola cuando hablo y sube cuando termino.'},
   {view:'ajustes', sel:'#vozBtn', d:'En Ajustes controlas la voz de Pistero, el ahorro de pantalla y de GPS.'},
   {view:'map', sel:'#btnCapaMapa', d:'Tu mapa, más limpio: calles o topográfico con un toque, y tu ruta se marca en dorado a medida que avanzas.'},

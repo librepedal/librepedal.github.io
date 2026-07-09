@@ -152,6 +152,42 @@ service cloud.firestore {
       allow delete: if signedIn();
     }
 
+    // Seguimiento en vivo: comparte tu ubicación con un link (quien lo abre no
+    // necesita cuenta ni la app instalada). Lectura pública a propósito.
+    match /liveTracking/{id} {
+      allow read: if true;
+      allow create, update: if signedIn() && strOk('nombre', 60);
+      allow delete: if signedIn();
+    }
+
+    // Segmentos (tramos para competir por mejor tiempo, estilo Strava) y sus marcas.
+    match /segmentos/{id} {
+      allow read: if true;
+      allow create: if signedIn() && strOk('nombre', 80) && strOk('desc', 300);
+      allow update, delete: if false;
+    }
+    match /segmentoTiempos/{id} {
+      allow read: if true;
+      allow create: if signedIn() && strOk('nombre', 60) && strOk('segmentoId', 100);
+      allow update, delete: if false;
+    }
+
+    // Retos y temporadas (desafíos con fecha límite sobre el Darma existente).
+    // Los publica el admin desde Ajustes; lectura pública para todos.
+    match /retos/{id} {
+      allow read: if true;
+      allow create: if signedIn() && strOk('titulo', 100) && strOk('desc', 400);
+      allow update, delete: if signedIn();
+    }
+
+    // Rodadas grupales (salidas con fecha/hora/punto de encuentro). update permitido:
+    // es como se marca "voy"/"no voy" (lista de asistentes).
+    match /rodadas/{id} {
+      allow read: if true;
+      allow create, update: if signedIn() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400);
+      allow delete: if false;
+    }
+
     // Todo lo demás: denegado por defecto
     match /{document=**} {
       allow read, write: if false;

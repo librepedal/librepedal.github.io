@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Seguimiento en vivo · Libre Pedal</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%;background:#0a0f1d;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow:hidden}
+  #map{position:absolute;inset:0}
+  header{position:absolute;top:0;left:0;right:0;z-index:5;padding:12px 16px;background:linear-gradient(180deg,rgba(10,15,29,0.92),rgba(10,15,29,0));display:flex;align-items:center;gap:8px}
+  header h1{font-size:1rem;margin:0;font-weight:800;color:#fc4c02}
+  #card{position:absolute;left:12px;right:12px;bottom:16px;z-index:5;background:rgba(10,15,29,0.94);border:1px solid #242c3e;border-radius:14px;padding:14px 16px;backdrop-filter:blur(6px)}
+  #nombre{font-size:1.05rem;font-weight:800;margin:0 0 4px}
+  #estado{display:inline-flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:6px}
+  #estado.activo{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.4)}
+  #estado.inactivo{background:rgba(255,255,255,0.08);color:#9fb3c8;border:1px solid #333}
+  #actualizado{font-size:0.72rem;color:#7d8ba0;margin:0}
+  #error{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;text-align:center;background:#0a0f1d}
+  #error p{color:#9fb3c8;font-size:0.9rem;max-width:320px}
+  .pulso{width:14px;height:14px;border-radius:50%;background:#fc4c02;box-shadow:0 0 0 rgba(252,76,2,0.5);animation:pulso 2s infinite}
+  @keyframes pulso{0%{box-shadow:0 0 0 0 rgba(252,76,2,0.5)}70%{box-shadow:0 0 0 14px rgba(252,76,2,0)}100%{box-shadow:0 0 0 0 rgba(252,76,2,0)}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<header><h1>🚴 Libre Pedal</h1></header>
+<div id="card" style="display:none">
+  <p id="nombre">Ciclista</p>
+  <div id="estado" class="activo">🟢 En vivo</div>
+  <p id="actualizado">Última actualización: --</p>
+</div>
+<div id="error" style="display:none"><div style="font-size:2.5rem;margin-bottom:10px">🚴</div><p id="errorTexto">Este link de seguimiento no existe o ya no está disponible.</p></div>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBIhhvyhRR0ekVmOXmVDx7C_J-TBfVGCbQ",
+  authDomain: "librepedal-cb983.firebaseapp.com",
+  projectId: "librepedal-cb983",
+  storageBucket: "librepedal-cb983.firebasestorage.app",
+  messagingSenderId: "857811917976",
+  appId: "1:857811917976:web:d088c2b9ea7f45e4ee84ed"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function mostrarError(msg){
+  document.getElementById('errorTexto').innerText = msg;
+  document.getElementById('error').style.display = 'flex';
+  document.getElementById('card').style.display = 'none';
+}
+
+const params = new URLSearchParams(location.search);
+const id = params.get('id');
+if(!id){
+  mostrarError('Falta el link de seguimiento. Pídele a la persona que te lo vuelva a compartir.');
+} else {
+  let map = null, marker = null, ultimoTs = null;
+  function tiempoDesde(ts){
+    if(!ts) return '--';
+    const seg = Math.floor((Date.now() - ts) / 1000);
+    if(seg < 60) return 'hace ' + seg + ' s';
+    if(seg < 3600) return 'hace ' + Math.floor(seg/60) + ' min';
+    return 'hace ' + Math.floor(seg/3600) + ' h';
+  }
+  // El texto "hace X" queda viejo si no llega una posición nueva; lo refrescamos
+  // solos cada 15s aunque Firestore no mande un snapshot nuevo.
+  setInterval(function(){
+    if(ultimoTs) document.getElementById('actualizado').innerText = 'Última actualización: ' + tiempoDesde(ultimoTs);
+  }, 15000);
+  db.collection('liveTracking').doc(id).onSnapshot(function(doc){
+    if(!doc.exists){ mostrarError('Este link de seguimiento no existe o ya no está disponible.'); return; }
+    const d = doc.data();
+    if(d.lat == null || d.lon == null){ mostrarError('Todavía no hay una ubicación para mostrar. Espera un momento.'); return; }
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('card').style.display = 'block';
+    document.getElementById('nombre').innerText = d.nombre || 'Ciclista';
+    const estadoEl = document.getElementById('estado');
+    estadoEl.className = d.activo ? 'activo' : 'inactivo';
+    estadoEl.innerText = d.activo ? '🟢 En vivo' : '⚪ Dejó de compartir';
+    const ts = d.ts && d.ts.toMillis ? d.ts.toMillis() : null;
+    ultimoTs = ts;
+    document.getElementById('actualizado').innerText = 'Última actualización: ' + tiempoDesde(ts);
+    if(!map){
+      map = new maplibregl.Map({ container:'map', style:'https://tiles.openfreemap.org/styles/dark', center:[d.lon, d.lat], zoom:14 });
+      map.addControl(new maplibregl.NavigationControl({showCompass:false}), 'top-right');
+      map.once('load', function(){
+        const el = document.createElement('div');
+        el.innerHTML = '<div class="pulso"></div>';
+        marker = new maplibregl.Marker({element: el}).setLngLat([d.lon, d.lat]).addTo(map);
+      });
+    } else if(marker){
+      marker.setLngLat([d.lon, d.lat]);
+      map.easeTo({center:[d.lon, d.lat], duration:800});
+    }
+  }, function(){
+    mostrarError('No se pudo cargar el seguimiento. Revisa tu conexión e intenta de nuevo.');
+  });
+}
+</script>
+</body>
+</html>
