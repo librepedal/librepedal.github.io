@@ -507,7 +507,16 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <main>
 <section id="v-dash" class="view on">
-<div class="section-info"><h4>Inicio</h4><p><strong id="welcome-name"></strong>, toca el micrófono y dime a dónde quieres ir.</p></div>
+<div class="section-info"><h4>Inicio</h4><p><strong id="welcome-name"></strong>, toca el micrófono o escribe abajo a dónde quieres ir.</p></div>
+<div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-bottom:14px">
+<h4 style="color:var(--p);margin:0 0 8px 0;font-size:0.9rem">▶️ Iniciar viaje</h4>
+<input type="text" id="quick-start" placeholder="Origen (automático)" readonly>
+<div style="position:relative">
+  <input type="text" id="quick-dest" placeholder="¿A dónde vamos?" autocomplete="off" oninput="sugerirDestino(this.value)">
+  <div id="sugerencias-dest"></div>
+</div>
+<button class="bg" style="margin-top:6px" onclick="startQuickTrip()">▶️ Iniciar navegación</button>
+</div>
 <div class="speed-display">
   <div class="speed-value" id="spd">0</div>
   <div class="speed-label">km/h</div>
@@ -561,16 +570,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </section>
 
 <section id="v-trips" class="view">
-<div class="section-info"><h4>Viajes y navegación</h4><p>Escribe un destino y te guío paso a paso, como Waze.</p></div>
-<div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-bottom:12px">
-<h4 style="color:var(--p);margin:0 0 8px 0;font-size:0.9rem">Viaje Rápido</h4>
-<input type="text" id="quick-start" placeholder="Origen (automático)" readonly>
-<div style="position:relative">
-  <input type="text" id="quick-dest" placeholder="¿A dónde vamos?" autocomplete="off" oninput="sugerirDestino(this.value)">
-  <div id="sugerencias-dest"></div>
-</div>
-<button class="bg" style="margin-top:6px" onclick="startQuickTrip()">▶️ Iniciar navegación</button>
-</div>
+<div class="section-info"><h4>Viajes y navegación</h4><p>El viaje rápido ahora está en Inicio. Aquí armas viajes con varias paradas y ves tu historial.</p></div>
 <button class="ab" onclick="showNewTripForm()">➕ Viaje Multi-Destino</button>
 <div id="trips-list" style="margin-top:12px"></div>
 </section>
@@ -811,7 +811,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.64'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.65'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -3607,13 +3607,13 @@ function handleVoiceCommand(raw){
 const tutorialSteps=[
   {d:'¡Hola! Soy Pistero. Sube el volumen y te muestro la app en un minuto.'},
   {sel:'.es-globe', d:'Tu Esfera: los accesos flotando. Gírala y toca un ícono. Este botón la reabre.'},
+  {view:'dash', sel:'#quick-dest', d:'Escribe o dicta un destino del mundo y te guío paso a paso, aquí mismo en Inicio.'},
+  {sel:'#micBtn', d:'O toca el micrófono y dime un destino de viva voz: te guío como Waze.'},
   {view:'dash', sel:'.speed-display', d:'Tu velocidad en vivo. El GPS graba tu ruta solo: se guarda al detenerte, no prendas nada.'},
-  {sel:'#micBtn', d:'Toca el micrófono y dime un destino: te guío como Waze.'},
   {view:'dash', sel:'#lpPlayer', d:'Música: radios gratis o tu propia carpeta. Baja sola cuando hablo y sube cuando termino.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'SOS: guarda tus contactos y les mando tu ubicación por WhatsApp al toque.'},
   {view:'dash', sel:'.darma-badge', d:'Tu Darma: premio por aportar. Desbloquea cascos, skins y estilos.'},
   {view:'dash', sel:'button[onclick="mostrarLogros()"]', d:'Logros y Ranking: tu avance y el Top 10 por kilómetros.'},
-  {view:'trips', sel:'#quick-dest', d:'Escribe o dicta un destino del mundo y te guío paso a paso.'},
   {view:'map', sel:'#btnCapaMapa', d:'Tu mapa, más limpio: calles o topográfico con un toque, y tu ruta se marca en dorado a medida que avanzas.'},
   {view:'map', sel:'button[onclick="reportarEnRuta()"]', d:'Reporta a la comunidad: peligros, picadas o miradores. Ganas Darma.'},
   {view:'map', sel:'button[onclick="toggleRadarOnMap()"]', d:'Ciclistas: mira a otros pedaleros en el mapa, cada uno con su casco.'},
