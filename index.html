@@ -507,6 +507,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="hdr-right">
 <button class="es-globe" onclick="abrirEsfera()" title="Esfera de apps">🌐</button>
 <button class="ghost-toggle" id="ghostBtn" onclick="toggleGhost()">👻 OFF</button>
+<button class="es-globe" onclick="cv('ajustes')" title="Ajustes">⚙️</button>
 <div class="ulvl"><span id="nv">Novato</span></div>
 <button class="logout-btn" id="logoutBtn" onclick="cerrarSesion()">Salir</button>
 </div>
@@ -540,20 +541,16 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </div>
 <div class="section-info"><h4>Desempeño</h4><div class="performance-bar"><div class="performance-fill" id="performanceFill" style="width:0%">0%</div></div></div>
 <div class="quick-links">
-  <button class="btrip" onclick="cv('trips')">🗺️ Mis Viajes</button>
-  <button class="btrip" onclick="cv('routes')">🛣️ Mis Rutas (perfil, video)</button>
-  <button class="btrip" onclick="openDiario()">📓 Ciclo Bitácora</button>
-  <button class="bd" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
-  <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
-  <button class="ab sec" style="margin:0" onclick="mostrarLogros()">🏆 Logros</button>
-  <button class="ab sec" style="margin:0" onclick="mostrarRanking()">🥇 Ranking</button>
-  <button class="ab sec" style="margin:0" onclick="mostrarTienda()">✨ Tienda</button>
-  <button class="ab sec" style="margin:0" onclick="mostrarComunidad()">🤝 Comunidad</button>
+  <button class="btrip" onclick="cv('trips')">🗺️ Planificar viaje</button>
+  <button class="btrip" onclick="cv('routes')">🛣️ Historial de rutas</button>
+  <button class="btrip" onclick="mostrarLogrosComunidad()">🏆 Logros y comunidad</button>
 </div>
 <button class="ab" style="margin-top:6px;background:#dc2626;color:#fff;font-weight:800" onclick="enviarSOS()">🆘 SOS · Compartir mi ubicación</button>
-<button class="ab sec" style="margin-top:6px;background:rgba(252,76,2,0.08);border:1px solid var(--p)" onclick="startTutorial()">🎓 Ver tutorial</button>
-<div style="text-align:center;font-size:0.68rem;color:#7d8ba0;margin-top:10px;line-height:1.4">🤝 Libre Pedal se construye <strong style="color:var(--p)">gracias a la comunidad</strong>: cada punto que compartes hace crecer a todos.</div>
-<h3 style="margin-top:14px;font-size:0.95rem">Música</h3>
+<button class="ab sec" style="margin-top:6px" onclick="cv('musica')">🎵 Música</button>
+</section>
+
+<section id="v-musica" class="view">
+<div class="section-info"><h4>🎵 Música</h4><p>Radios gratis, tu propia música, o abre tu app favorita.</p></div>
 <div class="lp-player" id="lpPlayer">
   <div class="lp-player-top">
     <span class="lp-player-eq" id="lpEq"><i></i><i></i><i></i></span>
@@ -577,7 +574,30 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling%20music" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 </div>
 <div class="lp-player-note" style="margin-top:6px">Al tocar un ícono se abre esa app (si la tienes instalada) o su web. El navegador no puede controlar el volumen de otra app — baja el volumen de Pistero desde ella si se superponen.</div>
-<div style="text-align:center;margin-top:16px"><button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.60</span></div></div>
+<button class="ab sec" style="margin-top:14px" onclick="cv('dash')">← Volver a Inicio</button>
+</section>
+
+<section id="v-ajustes" class="view">
+<div class="section-info"><h4>⚙️ Ajustes</h4><p>Voz, pantalla, GPS y mantenimiento de la app.</p></div>
+<div class="quick-links">
+  <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
+  <button class="ab sec" style="margin:0" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
+  <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
+  <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
+</div>
+<div style="text-align:center;margin-top:16px">
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.70</span></div>
+</div>
+<div id="admin-panel" style="display:none;margin-top:16px">
+  <div class="cd">
+    <h4 style="margin-top:0;font-size:0.85rem;color:var(--g)">⚙️ Panel Admin</h4>
+    <p style="font-size:0.73rem;color:#9fb3c8;margin:4px 0 8px">Solo visible para ti como administrador.</p>
+    <div id="adminNuevosBadge" style="display:none;background:rgba(255,215,0,0.12);border:1px solid var(--g);color:var(--g);border-radius:8px;padding:8px 10px;font-size:0.78rem;font-weight:700;margin-bottom:8px"></div>
+    <button class="ab" onclick="exportarUsuariosAdmin()">⬇️ Exportar lista de usuarios (.csv)</button>
+    <button class="ab sec" onclick="mostrarTodosRegistrados()">👥 Ver todos los registrados</button>
+  </div>
+</div>
+<button class="ab sec" style="margin-top:12px" onclick="cv('dash')">← Volver a Inicio</button>
 </section>
 
 <section id="v-trips" class="view">
@@ -618,8 +638,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="quick-links">
   <button class="bg" style="margin:0" onclick="toggleRadarOnMap()">🚴 Ciclistas</button>
   <button class="bd" style="margin:0" onclick="reportarEnRuta()">📍 Reportar</button>
-  <button class="btrip" style="margin:0" onclick="cv('routes')">🛣️ Rutas</button>
-  <button class="ab sec" style="margin:0" onclick="cv('trips')">🗺️ Mis Viajes</button>
+  <button class="btrip" style="margin:0" onclick="cv('gui')">🧭 CicloGuía</button>
   <button class="ab sec" style="margin:0" id="btnCapaMapa" onclick="toggleCapaMapa()">🏔️ Topográfico</button>
 </div>
 <div id="map"></div>
@@ -658,11 +677,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </section>
 
 <section id="v-routes" class="view">
-<div class="section-info"><h4>Mis Rutas</h4><p>Recorridos grabados.</p></div>
+<div class="section-info"><h4>Historial de rutas</h4><p>Recorridos grabados: video, perfil de elevación y tu bitácora.</p></div>
+<button class="ab sec" style="margin-bottom:10px" onclick="openDiario()">📓 Ciclo Bitácora</button>
 <div id="routes-list"></div>
 <button class="ab" style="margin-top:10px" onclick="showAllRoutesOnMap()">Ver todas en el mapa</button>
 <button class="ab sec" onclick="combineAllRoutes()">Combinar todas en una</button>
-<button class="ab sec" onclick="cv('map')">← Volver al mapa</button>
+<button class="ab sec" onclick="cv('dash')">← Volver a Inicio</button>
 <div id="map-routes-all" style="margin-top:12px;display:none"><div id="map-all-routes"></div></div>
 </section>
 
@@ -725,7 +745,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-mac" class="view">
 <div class="section-info"><h4>Taller MacGyver</h4><p>Arregla tu bici con lo que tengas.</p></div>
-<div class="quick-links"><button class="ab sec" style="margin:0" onclick="cv('gui')">🧭 CicloGuía</button></div>
 <input type="text" id="bm" placeholder="Buscar reparación..." onkeyup="fm()">
 <div id="ml"></div>
 <h3 style="margin-top:15px;font-size:0.95rem">Comparte tu truco</h3>
@@ -756,7 +775,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="gps-status" id="gpsStatus">Esperando...</div>
 <div id="map-hostel-select"></div>
 <button class="ab" onclick="addHostel()" style="margin-top:8px">Publicar</button>
-<button class="ab sec" onclick="cv('mac')">← Volver al taller</button>
+<button class="ab sec" onclick="cv('map')">← Volver al mapa</button>
 </section>
 
 <section id="v-customize" class="view">
@@ -769,21 +788,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="customization-section"><h3>⚡ Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
 <div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
 <button class="bg" onclick="saveCustomization()">💾 Guardar personaje</button>
-<div class="quick-links" style="margin-top:10px">
-  <button class="ab sec" style="margin:0" onclick="cv('stats')">📊 Estadísticas</button>
-  <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
-  <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Tutorial</button>
-  <button class="ab sec" style="margin:0" onclick="toggleGhost()">👻 Fantasma</button>
-</div>
-<div id="admin-panel" style="display:none;margin-top:12px">
-  <div class="cd">
-    <h4 style="margin-top:0;font-size:0.85rem;color:var(--g)">⚙️ Panel Admin</h4>
-    <p style="font-size:0.73rem;color:#9fb3c8;margin:4px 0 8px">Solo visible para ti como administrador.</p>
-    <div id="adminNuevosBadge" style="display:none;background:rgba(255,215,0,0.12);border:1px solid var(--g);color:var(--g);border-radius:8px;padding:8px 10px;font-size:0.78rem;font-weight:700;margin-bottom:8px"></div>
-    <button class="ab" onclick="exportarUsuariosAdmin()">⬇️ Exportar lista de usuarios (.csv)</button>
-    <button class="ab sec" onclick="mostrarTodosRegistrados()">👥 Ver todos los registrados</button>
-  </div>
-</div>
 </section>
 
 <section id="v-stats" class="view">
@@ -822,7 +826,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.70'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.71'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1016,7 +1020,7 @@ const RITMO_LENTO_MAX = 8, RITMO_NORMAL_MAX = 16;
 let nextHydrateKm = 5, nextEatKm = 20;
 let recognition = null, micOn = false;
 let vozPref = null, vozActiva = (localStorage.getItem('lp_voz') !== 'off');
-const viewNav = {dash:0, map:1, routes:1, trips:1, newtrip:1, chat:2, rec:2, mac:3, gui:3, customize:4, stats:4};
+const viewNav = {dash:0, routes:0, trips:0, newtrip:0, musica:0, ajustes:0, map:1, gui:1, chat:2, rec:2, novedades:2, mac:3, customize:4, stats:4};
 
 const frasesLento = ["¿Vas pedaleando o estás parando la chala?","Oye, te va a adelantar un guarén.","Un corpóreo del Doctor Simi corre más rápido.","¿Vas cansado o andas buscando monedas en el suelo?","Apúrate, que el lanchón de Chiloé te pilla.","Dale un poco más de color al pedaleo.","¿Te dio la pálida o qué pasó?","Mi abuelita pedalea más rápido que tú.","Tranquilo: las pirámides se hicieron ladrillo a ladrillo.","Si vas más lento, te van a multar por estorbar.","¿Pedaleas o estás meditando, maestro?","He visto tortugas con más prisa que tú.","Mi sombra ya llegó y te está esperando.","¿Todo bien por ahí?"];
 const frasesNormal = ["¡Eso! Ritmo impecable, vas como avión.","Así da gusto, mantén ese pulso.","Ni don Francisco tenía ese aguante.","Ritmo preciso, me encanta.","A este paso llegamos a tomar tecito calientito.","La bicicleta es el vehículo perfecto, y tú lo confirmas.","No hay camino largo cuando suena buena música.","Disfruta: el destino importa tanto como el camino.","La felicidad se mide en kilómetros, y vas sumando.","Dos ruedas y un horizonte, no se necesita más.","El asfalto es tu lienzo, sigue pintando.","Cada subida tiene su bajada, recuérdalo.","Pedalear es volver a lo esencial.","La libertad huele a cadena recién aceitada."];
@@ -2580,6 +2584,16 @@ const LOGROS=[
   {e:'📓',t:'Cronista',d:'Escribe en tu Ciclo Bitácora',val:statBitacora,meta:1,u:''},
   {e:'📖',t:'Memorias',d:'7 días de bitácora',val:statBitacora,meta:7,u:''}
 ];
+function mostrarLogrosComunidad(){
+  document.getElementById('modalTitle').innerText='🏆 Logros y comunidad';
+  document.getElementById('modalContent').innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<button class="ab" style="margin:0" onclick="mostrarLogros()">🏆 Mis logros</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarRanking()">🥇 Ranking mundial</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda()">✨ Tienda de Darma</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarComunidad()">🤝 Meta de la comunidad (vota)</button>'
+    +'</div>';
+  document.getElementById('userModal').classList.add('on');
+}
 function mostrarLogros(){
   let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
   let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
@@ -3858,10 +3872,11 @@ const tutorialSteps=[
   {view:'dash', sel:'#quick-dest', d:'Escribe o dicta un destino del mundo y te guío paso a paso, aquí mismo en Inicio.'},
   {sel:'#micBtn', d:'O toca el micrófono y dime un destino de viva voz: te guío como Waze.'},
   {view:'dash', sel:'.speed-display', d:'Tu velocidad en vivo. El GPS graba tu ruta solo: se guarda al detenerte, no prendas nada.'},
-  {view:'dash', sel:'#lpPlayer', d:'Música: radios gratis o tu propia carpeta. Baja sola cuando hablo y sube cuando termino.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'SOS: guarda tus contactos y les mando tu ubicación por WhatsApp al toque.'},
   {view:'dash', sel:'.darma-badge', d:'Tu Darma: premio por aportar. Desbloquea cascos, skins y estilos.'},
-  {view:'dash', sel:'button[onclick="mostrarLogros()"]', d:'Logros y Ranking: tu avance y el Top 10 por kilómetros.'},
+  {view:'dash', sel:'button[onclick="mostrarLogrosComunidad()"]', d:'Logros, Ranking y Tienda: tu avance y el Top 10 por kilómetros.'},
+  {view:'musica', sel:'#lpPlayer', d:'Música: radios gratis o tu propia carpeta. Baja sola cuando hablo y sube cuando termino.'},
+  {view:'ajustes', sel:'#vozBtn', d:'En Ajustes controlas la voz de Pistero, el ahorro de pantalla y de GPS.'},
   {view:'map', sel:'#btnCapaMapa', d:'Tu mapa, más limpio: calles o topográfico con un toque, y tu ruta se marca en dorado a medida que avanzas.'},
   {view:'map', sel:'button[onclick="reportarEnRuta()"]', d:'Reporta a la comunidad: peligros, picadas o miradores. Ganas Darma.'},
   {view:'map', sel:'button[onclick="toggleRadarOnMap()"]', d:'Ciclistas: mira a otros pedaleros en el mapa, cada uno con su casco.'},
