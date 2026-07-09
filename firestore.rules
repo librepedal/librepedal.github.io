@@ -79,11 +79,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Rutas grabadas (públicas, no se editan)
+    // Rutas grabadas (públicas). update/delete permitidos: la app actualiza la
+    // misma ruta mientras la vas grabando (checkpoints) y el usuario puede borrar
+    // las suyas desde "Mis Rutas" — con "if false" ninguna de las dos cosas
+    // funcionaba de verdad (la app lo ocultaba con un catch silencioso).
     match /routes/{id} {
       allow read: if true;
-      allow create: if signedIn();
-      allow update, delete: if false;
+      allow create, update, delete: if signedIn();
     }
 
     // Viajes planificados (el usuario gestiona los suyos desde la app)
