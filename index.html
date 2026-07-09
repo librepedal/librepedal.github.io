@@ -254,7 +254,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-stat .val{font-size:1rem;font-weight:800;color:var(--p)}
 .nav-stat .lbl{font-size:0.6rem;color:#888}
 .nav-close{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;border:none;width:35px;height:35px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:600}
-.nav-end-btn{position:absolute;top:12px;left:12px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:6px 12px;border-radius:15px;font-size:0.75rem;font-weight:700;cursor:pointer;z-index:600}
+.nav-end-btn{width:100%;margin-top:8px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:10px 12px;border-radius:12px;font-size:0.85rem;font-weight:800;cursor:pointer}
 .nav-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(10,15,29,0.95);padding:12px;border-top:2px solid var(--p)}
 .nav-eta{display:flex;justify-content:space-around}
 .nav-eta-item{text-align:center}
@@ -427,7 +427,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="speech-bubble" id="speechBubble">¡Hola!</div>
   <div class="nav-alert" id="navAlert"></div>
   <button class="nav-close" onclick="endNavigation()">✕</button>
-  <button class="nav-end-btn" onclick="finishTrip()">Terminar</button>
   <div class="nav-top">
     <div class="nav-instruction">
       <span class="icon" id="navIcon"></span>
@@ -448,6 +447,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
       <div class="nav-eta-item"><div class="val" id="etaDist">0 km</div><div class="lbl">Restante</div></div>
       <div class="nav-eta-item"><div class="val" id="etaDuration">0 min</div><div class="lbl">Duración</div></div>
     </div>
+    <button class="nav-end-btn" onclick="finishTrip()">✅ Terminar y guardar</button>
     <button class="ab sec" id="btnDescargarMapa" style="margin-top:8px" onclick="descargarMapaRuta()">📥 Descargar mapa de la ruta (para andar sin señal)</button>
   </div>
 </div>
@@ -777,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.53'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.54'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
