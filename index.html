@@ -541,6 +541,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="section-info"><h4>Desempeño</h4><div class="performance-bar"><div class="performance-fill" id="performanceFill" style="width:0%">0%</div></div></div>
 <div class="quick-links">
   <button class="btrip" onclick="cv('trips')">🗺️ Mis Viajes</button>
+  <button class="btrip" onclick="cv('routes')">🛣️ Mis Rutas (perfil, video)</button>
   <button class="btrip" onclick="openDiario()">📓 Ciclo Bitácora</button>
   <button class="bd" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
   <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
@@ -821,7 +822,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.69'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.70'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
