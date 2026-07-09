@@ -90,20 +90,20 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .character-preview-large svg{width:110px;height:110px;filter:drop-shadow(0 0 15px rgba(252,76,2,0.5));animation:float 3s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 .character-name{font-size:1rem;font-weight:800;color:var(--g);margin-top:10px}
-.customization-section{margin:15px 0}
-.customization-section h3{color:var(--g);font-size:0.95rem;margin-bottom:10px}
-.helmet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px}
-.accessory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
-.skin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
-.custom-option{background:var(--gl);border:2px solid #333;border-radius:10px;padding:6px;cursor:pointer;text-align:center;transition:all 0.3s;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.35)}
+.customization-section{margin:22px 0}
+.customization-section h3{color:var(--g);font-size:0.95rem;margin-bottom:12px}
+.helmet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
+.accessory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
+.skin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
+.custom-option{background:var(--gl);border:2px solid #333;border-radius:10px;padding:8px 6px;cursor:pointer;text-align:center;transition:all 0.3s;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.35);min-height:96px;display:flex;flex-direction:column;justify-content:center}
 .custom-option::before{content:'';position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.16) 0%,rgba(255,255,255,0.04) 35%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.2) 100%);pointer-events:none}
 .custom-option.selected{border-color:var(--g);box-shadow:0 0 15px var(--g);background:rgba(255,215,0,0.14)}
-.custom-option svg{width:100%;height:50px;margin-bottom:4px}
-.custom-option .label{font-size:0.6rem;color:#888;font-weight:700}
-.custom-option .check{position:absolute;top:3px;right:3px;background:var(--g);color:#000;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;font-weight:bold}
+.custom-option svg{width:100%;height:44px;margin-bottom:6px}
+.custom-option .label{font-size:0.6rem;color:#888;font-weight:700;line-height:1.25}
+.custom-option .check{position:absolute;top:4px;right:4px;background:var(--g);color:#000;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;font-weight:bold}
 .custom-option.selected .check{display:flex}
 .custom-option.locked{opacity:0.6}
-.custom-option.locked .lock-badge{position:absolute;top:3px;left:3px;background:rgba(0,0,0,0.8);color:var(--g);font-size:0.55rem;font-weight:800;padding:2px 5px;border-radius:8px;border:1px solid var(--g);z-index:2}
+.custom-option.locked .lock-badge{position:static;display:block;margin-bottom:4px;background:rgba(0,0,0,0.8);color:var(--g);font-size:0.55rem;font-weight:800;padding:2px 5px;border-radius:8px;border:1px solid var(--g);z-index:2;width:fit-content;margin-left:auto;margin-right:auto}
 .skin-swatch{width:100%;height:42px;border-radius:8px;margin-bottom:4px}
 header{padding:8px 12px;background:rgba(10,15,29,0.98);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;position:sticky;top:0;z-index:1000}
 header h2{margin:0;font-size:1rem;font-weight:800}
@@ -777,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.62'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.63'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1515,6 +1515,10 @@ function getCurrentLocation(){
     navigator.geolocation.getCurrentPosition(function(pos){
       currentUserLocation={lat:pos.coords.latitude, lon:pos.coords.longitude, accuracy:pos.coords.accuracy};
       const qs=document.getElementById('quick-start'); if(qs) qs.value="Mi ubicación actual";
+      // El mapa arranca centrado en un punto genérico (aún no sabe dónde estás);
+      // apenas llega el GPS real, hace zoom hasta tu ubicación en vez de dejarte
+      // mirando medio país o medio Chile.
+      if(mp) mp.flyTo({center:[pos.coords.longitude,pos.coords.latitude], zoom:15, duration:1800});
       showSpeechBubble("Ubicación detectada"); fin(currentUserLocation);
     }, function(){ const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; showSpeechBubble("No se pudo obtener el GPS"); fin(null); },
     {enableHighAccuracy:true, timeout:15000, maximumAge:0});
