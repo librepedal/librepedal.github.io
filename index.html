@@ -16,6 +16,8 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -231,6 +233,16 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 #nav-screen{position:fixed;inset:0;background:#000;z-index:4000;display:none}
 #nav-screen.active{display:block}
 #nav-map{width:100%;height:100%}
+#video-screen{position:fixed;inset:0;background:#000;z-index:4200;display:none}
+#video-screen.active{display:block}
+#video-map{width:100%;height:100%}
+#video-canvas-out{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.video-top-bar{position:absolute;top:0;left:0;right:0;padding:16px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(0,0,0,.6),transparent);z-index:2}
+.video-close{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.3);color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.1rem;cursor:pointer}
+.video-bottom-bar{position:absolute;bottom:0;left:0;right:0;padding:18px 16px 22px;display:flex;flex-direction:column;gap:10px;align-items:center;background:linear-gradient(0deg,rgba(0,0,0,.7),transparent);z-index:2}
+.video-progress{width:100%;max-width:420px;height:5px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden}
+.video-progress-fill{height:100%;width:0%;background:var(--p);transition:width .1s linear}
+#video-status{color:#fff;font-size:0.8rem;text-align:center}
 .nav-top{position:absolute;top:0;left:0;right:0;z-index:500;background:linear-gradient(180deg,rgba(0,0,0,0.95),rgba(0,0,0,0.7) 70%,transparent);padding:12px}
 .nav-instruction{background:rgba(252,76,2,0.95);color:#000;padding:12px 15px;border-radius:12px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:flex;align-items:center;gap:12px;min-height:60px}
 .nav-instruction .icon{font-size:2rem;min-width:40px;text-align:center}
@@ -437,6 +449,24 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
       <div class="nav-eta-item"><div class="val" id="etaDuration">0 min</div><div class="lbl">Duración</div></div>
     </div>
     <button class="ab sec" id="btnDescargarMapa" style="margin-top:8px" onclick="descargarMapaRuta()">📥 Descargar mapa de la ruta (para andar sin señal)</button>
+  </div>
+</div>
+
+<div id="video-screen">
+  <div id="video-map"></div>
+  <canvas id="video-canvas-out"></canvas>
+  <div class="video-top-bar">
+    <button class="video-close" onclick="cerrarVideoRuta()">✕</button>
+    <div style="color:#fff;font-weight:800;font-size:0.9rem">🎬 Video de tu ruta</div>
+    <div style="width:38px"></div>
+  </div>
+  <div class="video-bottom-bar">
+    <div id="video-status">Preparando el vuelo 3D...</div>
+    <div class="video-progress"><div class="video-progress-fill" id="videoProgressFill"></div></div>
+    <div style="display:flex;gap:10px">
+      <button class="ab sec" id="btnReplayVideo" style="margin:0;width:auto;padding:9px 16px;display:none" onclick="iniciarVueloRuta()">🔁 Repetir</button>
+      <button class="ab" id="btnGrabarVideo" style="margin:0;width:auto;padding:9px 16px" onclick="grabarVideoRuta()">⏺️ Grabar y descargar</button>
+    </div>
   </div>
 </div>
 
@@ -747,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.50'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.51'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1749,7 +1779,7 @@ function renderRutas(){
   const arr=rutasLocales().slice().sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);}).slice(0,60);
   if(arr.length===0){ c.innerHTML='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas</p>'; return; }
   let html='';
-  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+date+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
+  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+date+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
   c.innerHTML=html;
 }
 // Muestra al toque lo local (garantizado) y fusiona rutas viejas que estén SOLO en la nube.
@@ -1762,6 +1792,122 @@ function loadRoutesList(){ if(!cu) return; renderRutas();
 function _rutaPorId(id){ return rutasLocales().find(function(x){return x.localId===id;}); }
 function showSingleRoute(id){ const r=_rutaPorId(id); function pintar(points){ if(!points||!points.length){ h("Esta ruta no tiene puntos guardados."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=L.polyline(points,{color:'#ffd700',weight:6,opacity:0.9}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Aquí está tu ruta."); },300); } if(r&&r.points&&r.points.length){ pintar(r.points.map(function(p){return [p.lat,p.lon];})); return; } db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ pintar((doc.data().points||[]).map(function(p){return [p.lat,p.lon];})); } }).catch(function(){ h("No pude abrir esa ruta."); }); }
 function deleteRoute(id){ if(!confirm("¿Eliminar esta ruta?")) return; const it=_rutaPorId(id); rutasLocalesSet(rutasLocales().filter(function(x){return x.localId!==id;})); if(it&&it.firebaseId){ db.collection('routes').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ db.collection('routes').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
+
+/* ===== VIDEO 3D DE LA RUTA (estilo Relive): vuelo de cámara sobre terreno 3D real
+   (MapLibre GL + Mapterhorn, gratis y sin cuenta) con overlay de stats, grabado con
+   MediaRecorder y descargado como archivo de video listo para compartir. ===== */
+const VIDEO_VUELO_MS=18000;
+let videoMap=null, videoRouteData=null, videoRafId=null, videoRecorder=null, videoChunks=[], videoCompositeCtx=null;
+function abrirVideoRuta(id){
+  const r=_rutaPorId(id);
+  function conPuntos(pts, meta){
+    if(!pts||pts.length<2){ h("Esta ruta no tiene suficientes puntos para el video."); return; }
+    // Por si ya había un video abierto/grabando de otra ruta: corta todo antes de empezar de nuevo.
+    if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
+    if(videoRecorder&&videoRecorder.state==='recording'){ try{ videoRecorder.stop(); }catch(e){} }
+    videoRouteData={points:pts, distance:meta.distance||0, calories:meta.calories||0};
+    document.getElementById('video-screen').classList.add('active');
+    document.getElementById('video-status').innerText='Preparando el vuelo 3D...';
+    document.getElementById('videoProgressFill').style.width='0%';
+    document.getElementById('btnReplayVideo').style.display='none';
+    document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar';
+    setTimeout(initVideoMap,50);
+  }
+  if(r&&r.points&&r.points.length){ conPuntos(r.points, r); return; }
+  db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ const d=doc.data(); conPuntos(d.points||[], d); } else { h("No pude abrir esa ruta."); } }).catch(function(){ h("No pude abrir esa ruta."); });
+}
+function initVideoMap(){
+  if(videoMap){ try{ videoMap.remove(); }catch(e){} videoMap=null; }
+  const pts=videoRouteData.points, start=pts[0];
+  videoMap=new maplibregl.Map({
+    container:'video-map',
+    style:{
+      version:8,
+      sources:{
+        osm:{type:'raster',tiles:['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png','https://b.tile.openstreetmap.org/{z}/{x}/{y}.png','https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap · terreno © Mapterhorn'},
+        terreno:{type:'raster-dem',url:'https://tiles.mapterhorn.com/tilejson.json'}
+      },
+      layers:[{id:'osm',type:'raster',source:'osm'}]
+    },
+    center:[start.lon,start.lat],
+    zoom:14, pitch:65, bearing:0,
+    interactive:false
+  });
+  videoMap.on('load',function(){
+    try{ videoMap.setTerrain({source:'terreno',exaggeration:1.4}); }catch(e){}
+    videoMap.addSource('ruta-recorrida',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[]}}});
+    videoMap.addLayer({id:'ruta-recorrida-line',type:'line',source:'ruta-recorrida',paint:{'line-color':'#fc4c02','line-width':5,'line-opacity':0.95}});
+    const out=document.getElementById('video-canvas-out'), mc=videoMap.getCanvas();
+    out.width=mc.width; out.height=mc.height; videoCompositeCtx=out.getContext('2d');
+    setTimeout(iniciarVueloRuta,400);
+  });
+}
+function _bearingEntrePuntos(a,b){ const toRad=Math.PI/180, toDeg=180/Math.PI; const lat1=a.lat*toRad, lat2=b.lat*toRad, dLon=(b.lon-a.lon)*toRad; const y=Math.sin(dLon)*Math.cos(lat2); const x=Math.cos(lat1)*Math.sin(lat2)-Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon); return (Math.atan2(y,x)*toDeg+360)%360; }
+function iniciarVueloRuta(){
+  const pts=videoRouteData&&videoRouteData.points;
+  if(!videoMap||!pts||pts.length<2) return;
+  if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
+  document.getElementById('btnReplayVideo').style.display='none';
+  document.getElementById('video-status').innerText='Volando sobre tu recorrido...';
+  const t0=performance.now(), total=pts.length;
+  function frame(now){
+    const progreso=Math.min(1,(now-t0)/VIDEO_VUELO_MS);
+    const idxF=progreso*(total-1), i=Math.floor(idxF), frac=idxF-i;
+    const a=pts[i], b=pts[Math.min(i+1,total-1)];
+    const lat=a.lat+(b.lat-a.lat)*frac, lon=a.lon+(b.lon-a.lon)*frac;
+    videoMap.jumpTo({center:[lon,lat], zoom:15.5, pitch:65, bearing:_bearingEntrePuntos(a,b)});
+    const recorridos=pts.slice(0,i+1).map(function(p){return [p.lon,p.lat];}); recorridos.push([lon,lat]);
+    const src=videoMap.getSource('ruta-recorrida'); if(src) src.setData({type:'Feature',geometry:{type:'LineString',coordinates:recorridos}});
+    _dibujarCompositeVideo(progreso);
+    document.getElementById('videoProgressFill').style.width=(progreso*100)+'%';
+    if(progreso<1){ videoRafId=requestAnimationFrame(frame); }
+    else { videoRafId=null; document.getElementById('video-status').innerText='¡Listo! Repítelo o graba el video.'; document.getElementById('btnReplayVideo').style.display=''; }
+  }
+  videoRafId=requestAnimationFrame(frame);
+}
+function _dibujarCompositeVideo(progreso){
+  if(!videoCompositeCtx||!videoMap) return;
+  const out=document.getElementById('video-canvas-out'), mc=videoMap.getCanvas();
+  if(out.width!==mc.width||out.height!==mc.height){ out.width=mc.width; out.height=mc.height; }
+  const ctx=videoCompositeCtx, d=videoRouteData;
+  ctx.clearRect(0,0,out.width,out.height);
+  ctx.drawImage(mc,0,0,out.width,out.height);
+  const barH=out.height*0.16, pad=out.width*0.045, fs=out.width*0.028;
+  ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,out.height-barH,out.width,barH);
+  ctx.fillStyle='#fc4c02'; ctx.font='700 '+fs+'px system-ui,sans-serif'; ctx.textAlign='left'; ctx.fillText('Libre Pedal', pad, out.height-barH*0.62);
+  ctx.fillStyle='#fff'; ctx.font='800 '+(fs*1.6)+'px system-ui,sans-serif'; ctx.fillText(((d.distance||0)*progreso).toFixed(2)+' km', pad, out.height-barH*0.2);
+  if(d.calories){ ctx.textAlign='right'; ctx.font='600 '+fs+'px system-ui,sans-serif'; ctx.fillText(Math.round((d.calories||0)*progreso)+' cal', out.width-pad, out.height-barH*0.2); }
+}
+function grabarVideoRuta(){
+  if(!videoMap){ return; }
+  const out=document.getElementById('video-canvas-out');
+  try{
+    const stream=out.captureStream(30);
+    videoChunks=[];
+    const mime=(window.MediaRecorder&&MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))?'video/webm;codecs=vp9':'video/webm';
+    videoRecorder=new MediaRecorder(stream,{mimeType:mime, videoBitsPerSecond:4000000});
+    videoRecorder.ondataavailable=function(e){ if(e.data&&e.data.size>0) videoChunks.push(e.data); };
+    videoRecorder.onstop=function(){
+      const blob=new Blob(videoChunks,{type:'video/webm'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.webm'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); },4000);
+      document.getElementById('video-status').innerText='¡Video descargado! Ya lo puedes compartir.';
+      document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar';
+    };
+    document.getElementById('btnGrabarVideo').disabled=true; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabando...';
+    document.getElementById('btnReplayVideo').style.display='none';
+    videoRecorder.start();
+    iniciarVueloRuta();
+    setTimeout(function(){ if(videoRecorder&&videoRecorder.state==='recording') videoRecorder.stop(); },VIDEO_VUELO_MS+600);
+  }catch(e){ alert('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar'; }
+}
+function cerrarVideoRuta(){
+  if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
+  if(videoRecorder&&videoRecorder.state==='recording'){ try{ videoRecorder.stop(); }catch(e){} }
+  if(videoMap){ try{ videoMap.remove(); }catch(e){} videoMap=null; }
+  document.getElementById('video-screen').classList.remove('active');
+}
 function showAllRoutesOnMap(){ const arr=rutasLocales().filter(function(d){return d.points&&d.points.length;}); if(!arr.length){ h("No tienes rutas todavía."); return; } cv('routes'); setTimeout(function(){ const mc=document.getElementById('map-routes-all'); if(mc) mc.style.display='block'; if(!mapAllRoutes){ mapAllRoutes=L.map('map-all-routes').setView([20,0],2); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAllRoutes); } mapAllRoutes.eachLayer(function(layer){ if(layer instanceof L.Polyline) mapAllRoutes.removeLayer(layer); }); const colors=['#fc4c02','#ff0055','#ffd700','#2ecc71','#9b59b6','#ff6600','#00ff88']; let ci=0; const allB=[]; arr.forEach(function(d){ const points=d.points.map(function(p){return [p.lat,p.lon];}); const pl=L.polyline(points,{color:colors[ci%colors.length],weight:4,opacity:0.8}).addTo(mapAllRoutes); pl.bindPopup('<b>'+new Date(d.startTime).toLocaleDateString()+'</b><br>'+(d.distance||0).toFixed(2)+' km'); allB.push.apply(allB,points); ci++; }); if(allB.length>0) mapAllRoutes.fitBounds(L.latLngBounds(allB),{padding:[50,50]}); mapAllRoutes.invalidateSize(); h(arr.length+" rutas en el mapa."); },300); }
 // Dibuja cada ruta como su PROPIA línea (nunca una sola polilínea continua): si se
 // concatenan todos los puntos de rutas distintas en una sola línea, queda una "línea
