@@ -777,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.56'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.57'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -912,6 +912,13 @@ function saludoBienvenida(nombre){
 }
 let frasesUsadas = {lento:[], normal:[], rapido:[], parado:[], motivacional:[], profunda:[], ciudad:[]};
 let lastFraseTime = 0;
+// El diálogo de "parado" (revisar la bici, tomar agua...) necesita SU PROPIO reloj,
+// igual que ciudad/carretera lo tienen (tFraseCiudad/kmUltimaFrase). Antes reusaba
+// lastFraseTime, que es global a TODAS las categorías: si acababas de escuchar
+// cualquier otra frase mientras andabas, tenían que pasar 20 min de silencio total
+// desde esa última frase (de cualquier tipo) para que "parado" pudiera hablar — en la
+// práctica eso casi nunca se daba salvo al arrancar la ruta, cuando aún no había hablado nada.
+let lastFraseParadoTime = 0;
 // Frases que manda la comunidad: quedan en revisión (admin) y una vez aprobadas se
 // mezclan en el pool "normal" (chileno y neutro) para que Pistero las diga a cualquiera.
 let frasesComunidadAprobadas = [];
@@ -1690,7 +1697,7 @@ function bromasDelCamino(sp){
   if(!vozActiva) return;
   if(vozOcupada()||vozCola.length) return;
   if(sp===0){
-    if(Date.now()-lastFraseTime>=1200000){ const _fr=obtenerFraseUnica('parado'); if(_fr) h(_fr); } // parado: cada 20 min
+    if(Date.now()-lastFraseParadoTime>=1200000){ const _fr=obtenerFraseUnica('parado'); if(_fr){ h(_fr); lastFraseParadoTime=Date.now(); } } // parado: cada 20 min
   } else if(zonaActual==='ciudad'){
     if(Date.now()-tFraseCiudad>=240000){ const _fr=(Math.random()<0.25)?obtenerFraseUnica('profunda'):obtenerFraseUnica('ciudad'); if(_fr){ h(_fr); tFraseCiudad=Date.now(); } } // ciudad: cada 4 min
   } else {
