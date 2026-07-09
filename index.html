@@ -116,6 +116,9 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .speed-value{font-size:2.5rem;font-weight:800;color:var(--p);line-height:1}
 .speed-label{font-size:0.8rem;color:#888;margin-top:3px}
 .speed-status{font-size:0.75rem;color:var(--g);margin-top:6px;font-weight:700}
+.gps-signal-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,152,0,0.14);color:#ff9800;border:1px solid rgba(255,152,0,0.4);border-radius:20px;padding:4px 11px;font-size:0.68rem;font-weight:700;margin-top:8px;animation:gpsPulse 1.6s ease-in-out infinite}
+@keyframes gpsPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+#navGpsSignalBadge{margin:0 0 6px}
 .darma-badge{display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;font-weight:800;padding:10px 12px;border-radius:12px;margin-bottom:10px;cursor:pointer;font-size:0.95rem;box-shadow:0 3px 10px rgba(255,215,0,0.25)}
 .darma-badge small{font-weight:700;opacity:0.75;font-size:0.62rem}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
@@ -437,6 +440,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="nav-alert" id="navAlert"></div>
   <button class="nav-close" onclick="endNavigation()">✕</button>
   <div class="nav-top">
+    <div class="gps-signal-badge" id="navGpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
     <div class="nav-instruction">
       <span class="icon" id="navIcon"></span>
       <div class="text-container">
@@ -521,6 +525,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="speed-value" id="spd">0</div>
   <div class="speed-label">km/h</div>
   <div class="speed-status" id="speedStatus">Detenido</div>
+  <div class="gps-signal-badge" id="gpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
 </div>
 <div class="darma-badge" onclick="cv('stats')">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="stats-grid">
@@ -811,7 +816,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.65'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.66'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -975,6 +980,11 @@ async function cargarFrasesComunidad(){
 }
 const MIN_INTERVALO = 10000;
 let navSteps = [], currentStepIndex = 0, lastSpokenStep = -1, routeTotalDistance = 0, routeTotalDuration = 0;
+// Recálculo automático si te desvías de la ruta sugerida (como Waze): guardamos el
+// destino activo para poder recalcular sin pedírselo de nuevo al usuario, y un
+// contador de fixes consecutivos lejos de la ruta para no recalcular por un salto
+// puntual del GPS (solo si se sostiene unos segundos, evitando falsas alarmas).
+let navDestLat=null, navDestLon=null, navDestName='', navRecalculando=false, navFixesFueraDeRuta=0;
 let currentUserLocation = null;
 let selectedHelmet = 'giro', selectedLens = 'none', selectedSkin = 'cyan', selectedExtras = [];
 let navUserMarkers = [], maxSpeed = 0, speedReadings = [];
@@ -1810,10 +1820,15 @@ function bromasDelCamino(sp){
     if(us.di-kmUltimaFrase>=1.5){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera: cada 1.5 km
   }
 }
+// Antes esto se descartaba en silencio: con mala señal (dentro de un edificio, entre
+// cerros, día nublado) la velocidad se quedaba pegada sin ninguna explicación. Ahora
+// se avisa con una insignia mientras dura, y desaparece sola apenas el GPS mejora.
+function _gpsBadgeToggle(id, mostrar){ const el=document.getElementById(id); if(el) el.style.display=mostrar?'inline-flex':'none'; }
 function ug(p){
   const la=p.coords.latitude, lo=p.coords.longitude;
   // Descarta fixes imprecisos: el GPS "salta" varios metros aunque estés quieto.
-  if(p.coords.accuracy && p.coords.accuracy>35) return;
+  if(p.coords.accuracy && p.coords.accuracy>35){ _gpsBadgeToggle('gpsSignalBadge', true); return; }
+  _gpsBadgeToggle('gpsSignalBadge', false);
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
   // VELOCIDAD VERIFICADA POR DESPLAZAMIENTO REAL (ventana ~10s). Es la fuente de
   // verdad: promedia el ruido del GPS. Si en 10s no nos desplazamos de verdad,
@@ -2766,7 +2781,8 @@ async function descargarMapaRuta(){
   navigator.serviceWorker.controller.postMessage({type:'PRECACHE_TILES',urls:urls});
 }
 function _navPosUpdate(lat,lon,accuracy,speedKmh){
-  if(accuracy>30) return;
+  if(accuracy>30){ _gpsBadgeToggle('navGpsSignalBadge', true); return; }
+  _gpsBadgeToggle('navGpsSignalBadge', false);
   // jitter: ignora saltos < 12 m (deriva del GPS estando quieto)
   if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist<12) return; const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
   const _now=Date.now();
@@ -2784,6 +2800,47 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh){
   actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
   checkNavigationSteps(lat,lon);
+  verificarDesviacion(lat,lon);
+}
+/* Recalculo automático si te desvías (como Waze): mide la distancia al tramo actual
+   de la ruta sugerida. Si te alejas más de 70m durante 3 fixes seguidos (ya filtrados
+   por precisión más arriba, así que no es ruido) recalcula desde donde estás. */
+function verificarDesviacion(lat,lon){
+  if(navRecalculando || !navSteps.length || currentStepIndex>=navSteps.length) return;
+  const step=navSteps[currentStepIndex];
+  const coords=(step.geometry && step.geometry.coordinates)||[];
+  if(!coords.length) return;
+  let minDist=Infinity;
+  for(let i=0;i<coords.length;i++){ const d=calculateDistance(lat,lon,coords[i][1],coords[i][0]); if(d<minDist) minDist=d; }
+  if(minDist>70){
+    navFixesFueraDeRuta++;
+    if(navFixesFueraDeRuta>=3) recalcularRuta(lat,lon);
+  } else {
+    navFixesFueraDeRuta=0;
+  }
+}
+async function recalcularRuta(lat,lon){
+  if(navRecalculando || navDestLat==null) return;
+  navRecalculando=true; navFixesFueraDeRuta=0;
+  showSpeechBubble('Recalculando ruta...');
+  h('Te desviaste del camino, dame un segundo que te recalculo.');
+  try{
+    const url='https://router.project-osrm.org/route/v1/cycling/'+lon+','+lat+';'+navDestLon+','+navDestLat+'?overview=full&geometries=geojson&steps=true';
+    const resp=await fetch(url); const data=await resp.json();
+    if(data.code!=='Ok'||!data.routes||!data.routes.length){ navRecalculando=false; return; }
+    const route=data.routes[0], steps=route.legs[0].steps;
+    const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
+    if(routeLine && navMap) navMap.removeLayer(routeLine);
+    if(navMap) routeLine=L.polyline(latlngs,{color:'#fc4c02',weight:6,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(navMap);
+    navSteps=steps.map(function(step,index){ return {instruction:getTurnInstruction(step.maneuver.type,step.maneuver.modifier,step.name),distance:step.distance,maneuver:step.maneuver,geometry:step.geometry,index:index}; });
+    currentStepIndex=0; lastSpokenStep=-1; routeTotalDistance=route.distance/1000; routeTotalDuration=Math.round(route.duration/60);
+    const arrival=new Date(Date.now()+route.duration*1000);
+    document.getElementById('etaTime').innerText=arrival.getHours().toString().padStart(2,'0')+':'+arrival.getMinutes().toString().padStart(2,'0');
+    document.getElementById('etaDist').innerText=routeTotalDistance.toFixed(2)+' km';
+    document.getElementById('etaDuration').innerText=routeTotalDuration+' min';
+    if(navSteps.length>0) showStepInstruction(0);
+  }catch(e){ /* si falla, seguimos con la ruta anterior y lo reintenta el próximo desvío */ }
+  navRecalculando=false;
 }
 async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
   // Si ya había una navegación en curso (ej. el usuario pide por voz un destino nuevo
@@ -2803,6 +2860,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   // la bici" justo al arrancar la ruta con solo con que hubieran pasado 20 min desde la
   // última vez (en cualquier contexto anterior, no relacionado a este viaje).
   lastFraseParadoTime=Date.now();
+  navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
   try{
     const url='https://router.project-osrm.org/route/v1/cycling/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
     const resp=await fetch(url); const data=await resp.json();
@@ -2829,7 +2887,6 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
       lpBackgroundGeo.start(function(location){ _navPosUpdate(location.latitude, location.longitude, location.accuracy, (location.speed&&location.speed>0.7)?location.speed*3.6:0); });
     } else {
       gpsWatchId=navigator.geolocation.watchPosition(function(pos){
-        if(pos.coords.accuracy>30) return;
         _navPosUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, (pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0);
       },function(err){ console.error("GPS:",err); },{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
     }
