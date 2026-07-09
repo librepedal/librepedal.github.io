@@ -777,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.61'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.62'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1670,6 +1670,11 @@ function toggleGPS(){
   if(!ig){
     rutaDocId=null; puntosGuardados=0; spAnterior=0;
     ultimoMovimientoTime=Date.now(); rutaSegCerrada=true; rutaSegDistIni=us.di;
+    // Reinicia el reloj de "parado" al prender el GPS: si no, como este reloj
+    // arranca en 0 en una sesión nueva, el aviso de "revisa la bici/pinchazo"
+    // se disparaba de inmediato con solo estar quieto un instante (ej. mientras
+    // se ve el tutorial recién logueado, sin haber pedaleado nada todavía).
+    lastFraseParadoTime=Date.now();
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
       if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
@@ -3514,10 +3519,12 @@ const tutorialSteps=[
   {sel:'.es-globe', d:'Tu Esfera: los accesos flotando. Gírala y toca un ícono. Este botón la reabre.'},
   {view:'dash', sel:'.speed-display', d:'Tu velocidad en vivo. El GPS graba tu ruta solo: se guarda al detenerte, no prendas nada.'},
   {sel:'#micBtn', d:'Toca el micrófono y dime un destino: te guío como Waze.'},
+  {view:'dash', sel:'#lpPlayer', d:'Música: radios gratis o tu propia carpeta. Baja sola cuando hablo y sube cuando termino.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'SOS: guarda tus contactos y les mando tu ubicación por WhatsApp al toque.'},
   {view:'dash', sel:'.darma-badge', d:'Tu Darma: premio por aportar. Desbloquea cascos, skins y estilos.'},
   {view:'dash', sel:'button[onclick="mostrarLogros()"]', d:'Logros y Ranking: tu avance y el Top 10 por kilómetros.'},
   {view:'trips', sel:'#quick-dest', d:'Escribe o dicta un destino del mundo y te guío paso a paso.'},
+  {view:'map', sel:'#btnCapaMapa', d:'Tu mapa, más limpio: calles o topográfico con un toque, y tu ruta se marca en dorado a medida que avanzas.'},
   {view:'map', sel:'button[onclick="reportarEnRuta()"]', d:'Reporta a la comunidad: peligros, picadas o miradores. Ganas Darma.'},
   {view:'map', sel:'button[onclick="toggleRadarOnMap()"]', d:'Ciclistas: mira a otros pedaleros en el mapa, cada uno con su casco.'},
   {view:'chat', sel:'#v-chat .quick-links', d:'Social: tus amigos, solicitudes y chats privados.'},
