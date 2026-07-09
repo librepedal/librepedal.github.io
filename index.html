@@ -821,7 +821,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.68'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.69'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -2367,6 +2367,9 @@ async function im(){
     mp=new maplibregl.Map({container:'map',style:capaMapaTipo==='topo'?LP_ESTILO_TOPO:LP_ESTILO_CALLES,center:_centroInicial,zoom:_zoomInicial,attributionControl:true});
     _prepararMapaCompat(mp);
     mp.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    // Botón "ubícame": lo tocas y el mapa vuela hasta tu posición real con un punto
+    // azul que se mueve solo mientras te desplazas (control nativo de MapLibre).
+    mp.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true,showAccuracyCircle:true}),'top-right');
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
     mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); });
   }catch(err){
