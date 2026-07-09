@@ -777,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.55'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.56'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -1709,8 +1709,12 @@ function ug(p){
   while(posHistory.length>1 && (Date.now()-posHistory[0].t)>12000) posHistory.shift();
   // Velocidad SOLO verificada por desplazamiento real (centroides). Ignoramos por
   // completo la "velocidad" que reporta el GPS (es la que se vuelve fantasma en casa).
+  // El piso queda en 6 (no en 4, aunque "lento" arranque ahí en la categoría): bajarlo
+  // a 4 dejaba pasar ruido del GPS como si fuera movimiento real estando quieto, y por
+  // eso nunca se detectaba "parado" (que habla cada 20 min) — se quedaba pegado en modo
+  // ciudad/carretera, que comenta mucho más seguido.
   const spVentana=velocidadVentana(posHistory);
-  let sp = (spVentana<4) ? 0 : spVentana;
+  let sp = (spVentana<6) ? 0 : spVentana;
   lastFixTime=Date.now();
   document.getElementById('spd').innerText=Math.round(sp);
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
