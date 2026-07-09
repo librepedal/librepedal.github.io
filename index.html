@@ -777,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.54'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.55'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -2050,7 +2050,13 @@ async function im(){
     if(typeof maplibregl==='undefined'){ _mapaFalloVisible('No se pudo cargar el motor del mapa (sin conexión a unpkg.com). Revisa tu internet y vuelve a intentar.'); return; }
     const canvasTest=document.createElement('canvas');
     if(!canvasTest.getContext('webgl2') && !canvasTest.getContext('webgl')){ _mapaFalloVisible('Tu dispositivo no soporta el mapa 3D (WebGL). Avísanos para revisarlo.'); return; }
-    mp=new maplibregl.Map({container:'map',style:capaMapaTipo==='topo'?LP_ESTILO_TOPO:LP_ESTILO_CALLES,center:[0,20],zoom:2,attributionControl:true});
+    // Arranca centrado en tu zona real (si ya la tenemos) en vez de una vista del
+    // mundo entero — con el estilo vectorial nuevo, verlo tan alejado se lee como
+    // un bloque de color plano porque el detalle de calles recién aparece más cerca.
+    const _yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+    const _centroInicial=_yo?[_yo.lon,_yo.lat]:[-70.65,-33.45];
+    const _zoomInicial=_yo?12:5;
+    mp=new maplibregl.Map({container:'map',style:capaMapaTipo==='topo'?LP_ESTILO_TOPO:LP_ESTILO_CALLES,center:_centroInicial,zoom:_zoomInicial,attributionControl:true});
     _prepararMapaCompat(mp);
     mp.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
