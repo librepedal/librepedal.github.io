@@ -777,7 +777,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.52'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.53'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -2039,12 +2039,27 @@ function toggleCapaMapa(){
   _actualizarBtnCapaMapa();
   h(capaMapaTipo==='topo' ? "Mapa topográfico: ahora se ven senderos y caminos rurales." : "Volví al mapa de calles.");
 }
+function _mapaFalloVisible(msg){
+  const c=document.getElementById('map'); if(!c) return;
+  c.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:24px;text-align:center;color:#9fb3c8;font-size:0.85rem;background:#0a0f1d">'+escapeHTML(msg)+'</div>';
+  try{ if(window.Sentry) Sentry.captureMessage('Mapa principal no cargó: '+msg); }catch(e){}
+}
 async function im(){
   if(mp) return;
-  mp=new maplibregl.Map({container:'map',style:capaMapaTipo==='topo'?LP_ESTILO_TOPO:LP_ESTILO_CALLES,center:[0,20],zoom:2,attributionControl:true});
-  _prepararMapaCompat(mp);
-  mp.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
-  mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); });
+  try{
+    if(typeof maplibregl==='undefined'){ _mapaFalloVisible('No se pudo cargar el motor del mapa (sin conexión a unpkg.com). Revisa tu internet y vuelve a intentar.'); return; }
+    const canvasTest=document.createElement('canvas');
+    if(!canvasTest.getContext('webgl2') && !canvasTest.getContext('webgl')){ _mapaFalloVisible('Tu dispositivo no soporta el mapa 3D (WebGL). Avísanos para revisarlo.'); return; }
+    mp=new maplibregl.Map({container:'map',style:capaMapaTipo==='topo'?LP_ESTILO_TOPO:LP_ESTILO_CALLES,center:[0,20],zoom:2,attributionControl:true});
+    _prepararMapaCompat(mp);
+    mp.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
+    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); });
+  }catch(err){
+    mp=null;
+    _mapaFalloVisible('No se pudo iniciar el mapa: '+(err&&err.message?err.message:'error desconocido'));
+    try{ if(window.Sentry) Sentry.captureException(err); }catch(e2){}
+  }
 }
 function ap(){
   const n=document.getElementById('np').value.trim(); const cat=document.getElementById('cp').value;
