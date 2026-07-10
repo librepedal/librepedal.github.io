@@ -590,6 +590,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
 </div>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🚨 Detección de caídas</h4>
+<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Detecta un golpe fuerte seguido de quietud y prepara el aviso a tus contactos de emergencia. Corre solo mientras el GPS está activo.</p>
+<div class="quick-links">
+  <button class="ab sec" style="margin:0" id="btnCrashToggle" onclick="toggleDeteccionCaidas()">🚨 Detección de caídas: ON</button>
+  <button class="ab sec" style="margin:0" onclick="mostrarAlertaCaida()">🧪 Probar alerta</button>
+</div>
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">📶 Sensores Bluetooth</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Conecta un pulsómetro o potenciómetro estándar BLE para ver tus datos en vivo mientras pedaleas.</p>
 <div class="quick-links">
@@ -598,7 +604,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()">🔌 Desconectar</button>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.73</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.74</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -845,7 +851,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.73'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.74'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1559,6 +1565,7 @@ window.onload = async function(){
   initVoz();
   const _elVer=document.getElementById('lpVerMostrada'); if(_elVer) _elVer.innerText=APP_VERSION;
   _actualizarBtnAhorroGPS();
+  _actualizarBtnCrash();
   // Espera a saber si la app se va a recargar sola por una actualización (máx. 1.5s)
   // antes de activar GPS/voz de arranque — si se recarga, esta instancia nunca sigue.
   try{ await Promise.race([window.__lpListoParaArrancar, new Promise(function(r){ setTimeout(r,1500); })]); }catch(e){}
@@ -3306,6 +3313,18 @@ function borrarContactoSOS(i){ const cs=contactosSOS(); cs.splice(i,1); guardarC
    significa que preparamos todo y lo dejamos a un toque, no un envío 100% silencioso. */
 let crashDetectorActivo=false, crashUltimoImpacto=0, crashAlertaActiva=false, crashCountdownId=null;
 const CRASH_UMBRAL_G=3.5;
+// Se puede apagar desde Ajustes (ej: si vas a hacer MTB agresivo, donde los baches
+// fuertes son parte normal del andar y darían demasiadas falsas alarmas).
+let crashDeteccionOn=(function(){ try{ return localStorage.getItem('lp_crash_on')!=='0'; }catch(e){ return true; } })();
+function _actualizarBtnCrash(){ const b=document.getElementById('btnCrashToggle'); if(b) b.innerText=crashDeteccionOn?'🚨 Detección de caídas: ON':'🚨 Detección de caídas: OFF'; }
+function toggleDeteccionCaidas(){
+  crashDeteccionOn=!crashDeteccionOn;
+  try{ localStorage.setItem('lp_crash_on', crashDeteccionOn?'1':'0'); }catch(e){}
+  _actualizarBtnCrash();
+  if(!crashDeteccionOn) detenerDeteccionCaidas();
+  else if(ig || document.getElementById('nav-screen').classList.contains('active')) iniciarDeteccionCaidas();
+  h(crashDeteccionOn?'Detección de caídas activada.':'Detección de caídas desactivada.');
+}
 function _crashMotionHandler(e){
   if(crashAlertaActiva) return;
   const a=e.acceleration||e.accelerationIncludingGravity;
@@ -3314,18 +3333,23 @@ function _crashMotionHandler(e){
   const ahora=Date.now();
   if(mag>CRASH_UMBRAL_G && ahora-crashUltimoImpacto>4000){
     crashUltimoImpacto=ahora;
-    setTimeout(_verificarQuietudTrasImpacto, 1500);
+    setTimeout(function(){ _verificarQuietudTrasImpacto(1); }, 1500);
   }
 }
-function _verificarQuietudTrasImpacto(){
+// Dos chequeos de quietud (1.5s y 3s después del golpe), no uno solo: un bache fuerte
+// puede dejarte "lento" un instante sin que sea una caída real — exigir que sigas
+// quieto un rato más filtra ese caso sin demorar tanto la alerta si sí fue una caída.
+function _verificarQuietudTrasImpacto(intento){
   if(crashAlertaActiva) return;
   const navActivo=document.getElementById('nav-screen').classList.contains('active');
   const el=document.getElementById(navActivo?'navSpeed':'spd');
   const spActual=el?(parseFloat(el.innerText)||0):0;
-  if(spActual<3) mostrarAlertaCaida();
+  if(spActual>=3) return; // ya te moviste de nuevo, no era caída
+  if(intento===1){ setTimeout(function(){ _verificarQuietudTrasImpacto(2); }, 1500); return; }
+  mostrarAlertaCaida();
 }
 function iniciarDeteccionCaidas(){
-  if(crashDetectorActivo || typeof DeviceMotionEvent==='undefined') return;
+  if(!crashDeteccionOn || crashDetectorActivo || typeof DeviceMotionEvent==='undefined') return;
   crashDetectorActivo=true;
   // iOS exige pedir permiso con un gesto del usuario; Android no lo necesita y el
   // request simplemente no existe ahí (por eso el chequeo de función antes de llamar).
@@ -3349,6 +3373,7 @@ function mostrarAlertaCaida(){
   document.body.appendChild(overlay);
   document.getElementById('crashCancelBtn').onclick=cancelarAlertaCaida;
   try{ if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]); }catch(e){}
+  _sonidoAlarmaCaida();
   if(typeof h==='function') h('Detecté un golpe fuerte. Toca "Estoy bien" si estás bien, o preparo el SOS.');
   crashCountdownId=setInterval(function(){
     restante--;
@@ -3359,9 +3384,32 @@ function mostrarAlertaCaida(){
 function cancelarAlertaCaida(){
   crashAlertaActiva=false;
   if(crashCountdownId){ clearInterval(crashCountdownId); crashCountdownId=null; }
+  _detenerAlarmaCaida();
   const overlay=document.getElementById('crashAlertOverlay'); if(overlay) overlay.remove();
   if(typeof h==='function') h('Qué bueno que estás bien. Sigo grabando tu ruta.');
 }
+// Alarma sonora fuerte además de la vibración: si te caíste y quedaste inconsciente
+// o aturdido, un sonido intermitente ayuda a que alguien cerca note que pasa algo,
+// no solo que tú mismo veas la pantalla. Se repite hasta que se cancela la alerta.
+let crashAlarmaId=null;
+function _sonidoAlarmaCaida(){
+  try{
+    const ac=_ac();
+    function beep(){
+      if(!crashAlertaActiva) return;
+      const osc=ac.createOscillator(), gain=ac.createGain();
+      osc.type='square'; osc.frequency.value=880;
+      gain.gain.setValueAtTime(0.0001, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.3, ac.currentTime+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+0.35);
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.start(); osc.stop(ac.currentTime+0.4);
+    }
+    beep();
+    crashAlarmaId=setInterval(beep, 900);
+  }catch(e){}
+}
+function _detenerAlarmaCaida(){ if(crashAlarmaId){ clearInterval(crashAlarmaId); crashAlarmaId=null; } }
 function _dispararSOSPorCaida(){
   const overlay=document.getElementById('crashAlertOverlay');
   const cs=contactosSOS();
@@ -3387,15 +3435,19 @@ async function toggleSeguimientoVivo(){
   if(liveTrackActivo){
     liveTrackActivo=false;
     if(liveTrackId){ try{ await db.collection('liveTracking').doc(liveTrackId).update({activo:false}); }catch(e){} }
+    liveTrackId=null;
     _actualizarBtnSeguimientoVivo();
-    h('Dejé de compartir tu ubicación en vivo.');
+    h('Dejé de compartir tu ubicación en vivo. Ese link ya no sirve — la próxima vez que compartas te doy uno nuevo.');
     return;
   }
-  if(!liveTrackId){ try{ liveTrackId=localStorage.getItem('lp_livetrack_'+cu); }catch(e){} }
-  if(!liveTrackId){ liveTrackId=cu.replace(/[^a-zA-Z0-9]/g,'')+'_'+Date.now().toString(36); try{ localStorage.setItem('lp_livetrack_'+cu, liveTrackId); }catch(e){} }
+  // Un link NUEVO cada vez (no se reutiliza ni se guarda en el celular): si alguna
+  // vez compartiste este link con alguien en quien ya no confías, no puede volver a
+  // verte solo porque reactivaste el seguimiento — necesitaría el link nuevo, que
+  // solo tú vas a tener.
+  liveTrackId=cu.replace(/[^a-zA-Z0-9]/g,'')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
   const loc=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
   try{
-    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, ts:firebase.firestore.FieldValue.serverTimestamp()});
     liveTrackActivo=true; liveTrackUltimoEnvio=0;
     _actualizarBtnSeguimientoVivo();
     const url=location.origin+location.pathname.replace(/index\.html$/,'')+'seguir.html?id='+liveTrackId;
