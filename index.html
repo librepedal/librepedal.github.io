@@ -606,7 +606,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()">🔌 Desconectar</button>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.75</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.76</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -691,6 +691,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <h4 style="margin-top:0;font-size:0.9rem">📍 Comparte un Punto de Interés</h4>
   <p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Busca un lugar (agua, comida, mirador, taller, alojamiento…) y compártelo. Queda en el mapa para toda la comunidad y ganas Darma. 🤝</p>
   <input type="text" id="poi-buscar" placeholder="🔎 Busca el lugar o dirección...">
+  <button class="ab sec" type="button" style="margin:6px 0" id="btnPoiMapaManual" onclick="togglePoiMapaManual()">📍 No lo encuentra: márcalo directo en el mapa</button>
+  <div id="poi-mapa-manual" style="display:none;margin-bottom:8px">
+    <div id="poi-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div>
+    <p id="poiMapaManualEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto.</p>
+  </div>
   <div id="poi-cats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0"></div>
   <textarea id="poi-desc" rows="2" placeholder="Cuéntalo con detalle (ej: agua gratis en la bencinera, o mirador con vista al lago)..."></textarea>
   <button class="ab" style="margin-top:6px" onclick="agregarPOI()">📍 Compartir con la comunidad (+15 Darma)</button>
@@ -853,7 +858,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.75'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.76'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -2702,21 +2707,51 @@ async function mostrarRutasDe(userId,nombreEnc){
 let poiCatSel=null;
 function renderPoiCats(){ const c=document.getElementById('poi-cats'); if(!c) return; c.innerHTML=Object.keys(REPORTE_CATS).map(function(k){ const x=REPORTE_CATS[k]; const sel=poiCatSel===k; return '<div onclick="seleccionarPoiCat(\''+k+'\')" style="border:2px solid '+(sel?x.c:'#2a3147')+';background:'+(sel?'rgba(255,255,255,0.05)':'transparent')+';border-radius:10px;padding:8px;cursor:pointer;text-align:center"><div style="font-size:1.4rem">'+x.e+'</div><div style="font-size:0.72rem;font-weight:800;color:'+x.c+'">'+x.l+'</div></div>'; }).join(''); }
 function seleccionarPoiCat(k){ poiCatSel=k; renderPoiCats(); }
+// Mini-mapa para marcar el punto a mano: la búsqueda por texto (Nominatim) no
+// encuentra lugares sin nombre oficial (un aguada, una entrada de camino sin
+// dirección) — acá tocas el mapa directo y usamos esas coordenadas, sin buscar nada.
+let poiMapaManual=null, poiManualCoords=null, poiManualMarker=null;
+function togglePoiMapaManual(){
+  const cont=document.getElementById('poi-mapa-manual'), btn=document.getElementById('btnPoiMapaManual');
+  const abrir=cont.style.display==='none';
+  cont.style.display=abrir?'block':'none';
+  btn.innerText=abrir?'✖️ Cerrar mapa':'📍 No lo encuentra: márcalo directo en el mapa';
+  if(!abrir) return;
+  if(!poiMapaManual){
+    const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+    poiMapaManual=new maplibregl.Map({container:'poi-mapa-manual-inner', style:LP_ESTILO_CALLES, center:yo?[yo.lon,yo.lat]:[-70.65,-33.45], zoom:yo?14:5});
+    poiMapaManual.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    poiMapaManual.on('click', function(e){
+      poiManualCoords={lat:e.lngLat.lat, lon:e.lngLat.lng};
+      if(poiManualMarker) poiManualMarker.remove();
+      poiManualMarker=new maplibregl.Marker({color:'#fc4c02'}).setLngLat(e.lngLat).addTo(poiMapaManual);
+      document.getElementById('poiMapaManualEstado').innerText='📍 Punto marcado — listo para compartir.';
+    });
+  }
+  setTimeout(function(){ poiMapaManual.resize(); },250);
+}
 async function agregarPOI(){
   const q=document.getElementById('poi-buscar').value.trim();
   const desc=document.getElementById('poi-desc').value.trim();
-  if(!q){ alert('Escribe el lugar o dirección a buscar.'); return; }
+  if(!poiManualCoords && !q){ alert('Escribe el lugar o dirección, o márcalo directo en el mapa.'); return; }
   if(!poiCatSel){ alert('Elige una categoría para el punto.'); return; }
   if(!desc){ alert('Cuenta brevemente qué es este punto.'); return; }
-  h('Buscando "'+q+'" en el mapa...');
-  let dest=null; try{ dest=await geocodeDestino(q); }catch(e){}
-  if(!dest){ alert('No encontré "'+q+'". Prueba con más detalle (agrega la ciudad o comuna).'); return; }
+  let dest=null;
+  if(poiManualCoords){ dest=poiManualCoords; }
+  else{
+    h('Buscando "'+q+'" en el mapa...');
+    try{ dest=await geocodeDestino(q); }catch(e){}
+    if(!dest){ alert('No encontré "'+q+'". Prueba con más detalle, o márcalo directo en el mapa con el botón de abajo.'); return; }
+  }
   let comuna='Mi zona';
   try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+dest.lat+'&lon='+dest.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
   try{
-    await db.collection('reportes').add({cat:poiCatSel, text:desc, lugar:q, user:cu, nombre:nombreUsuario, lat:dest.lat, lon:dest.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection('reportes').add({cat:poiCatSel, text:desc, lugar:q||'Marcado en el mapa', user:cu, nombre:nombreUsuario, lat:dest.lat, lon:dest.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()});
     us.d+=15; au(); if(typeof sincronizarStats==='function') sincronizarStats();
     document.getElementById('poi-buscar').value=''; document.getElementById('poi-desc').value=''; poiCatSel=null; renderPoiCats();
+    poiManualCoords=null; if(poiManualMarker){ poiManualMarker.remove(); poiManualMarker=null; }
+    document.getElementById('poi-mapa-manual').style.display='none';
+    document.getElementById('btnPoiMapaManual').innerText='📍 No lo encuentra: márcalo directo en el mapa';
     h('¡Punto compartido en '+comuna+'! Ya está en el mapa para toda la comunidad. Quince de Darma para ti. 🙌');
   }catch(err){ alert('No se pudo compartir: '+(err.code||err.message)); }
 }
