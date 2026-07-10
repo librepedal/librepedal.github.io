@@ -606,7 +606,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()">🔌 Desconectar</button>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.77</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.78</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -719,6 +719,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-chat" class="view">
 <div class="section-info"><h4>Social</h4><p>Tus amigos, solicitudes y el chat global de la comunidad.</p></div>
+<button class="ab" style="margin-bottom:10px;background:linear-gradient(135deg,var(--p),#ff8a4c);font-weight:800" onclick="invitarAmigos()">📤 Invita a un amigo a pedalear</button>
 <div class="quick-links">
   <button class="btrip" style="margin:0" onclick="showFriendsList()">👥 Amigos y mensajes</button>
   <button class="bd" style="margin:0" onclick="showFriendRequests()">📨 Solicitudes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
@@ -858,7 +859,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.77'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.78'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -2025,7 +2026,7 @@ setInterval(finalizarRutaPorInactividad,60000);
 function renderRutas(){
   const c=document.getElementById('routes-list'); if(!c) return;
   const arr=rutasLocales().slice().sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);}).slice(0,60);
-  if(arr.length===0){ c.innerHTML='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas</p>'; return; }
+  if(arr.length===0){ c.innerHTML='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; return; }
   let html='';
   arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+date+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
   c.innerHTML=html;
@@ -3267,7 +3268,7 @@ function updateStatsView(){
   { const sp=document.getElementById('statPerformanceFill'); if(sp.parentElement) sp.parentElement.setAttribute('data-pct',perf+'%'); }
   const ct=trips.filter(function(t){return t.status==='completed'&&t.gpsData;});
   const ck=document.getElementById('chartKm'), cd=document.getElementById('chartDuration'), cc=document.getElementById('chartCal');
-  if(ct.length===0){ ck.innerHTML=cd.innerHTML=cc.innerHTML='<p style="color:#888;font-size:0.8rem;text-align:center;width:100%">Sin datos todavía</p>'; return; }
+  if(ct.length===0){ ck.innerHTML=cd.innerHTML=cc.innerHTML='<p style="color:#888;font-size:0.8rem;text-align:center;width:100%">Todavía no hay viajes multi-destino completados. Estos gráficos se llenan solos cuando termines uno.</p>'; return; }
   const maxKm=Math.max.apply(null,ct.map(function(t){return t.gpsData.distance||0;}));
   const maxDur=Math.max.apply(null,ct.map(function(t){return parseInt((t.gpsData.duration||'0').replace(/[^0-9]/g,''))||0;}));
   const maxCal=Math.max.apply(null,ct.map(function(t){return t.gpsData.calories||0;}));
@@ -3523,6 +3524,26 @@ async function toggleSeguimientoVivo(){
     const url=location.origin+location.pathname.replace(/index\.html$/,'')+'seguir.html?id='+liveTrackId;
     mostrarLinkSeguimientoVivo(url);
   }catch(e){ alert('No se pudo activar el seguimiento en vivo. Revisa tu conexión.'); }
+}
+// Invitar amigos: mensaje corto, honesto, sin exagerar ("comunidad enorme" cuando
+// recién está empezando) — solo lo que la app de verdad hace hoy.
+function invitarAmigos(){
+  const url='https://librepedal.pages.dev';
+  const msg='Ando pedaleando con Libre Pedal: te guía como Waze, te graba la ruta sola y tiene comunidad de ciclistas. Es gratis, pruébala: '+url;
+  if(navigator.share){
+    navigator.share({title:'Libre Pedal', text:msg}).catch(function(){});
+    return;
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(msg).then(function(){ h('Copié el mensaje de invitación. Pégalo donde quieras compartirlo.'); }).catch(function(){ _mostrarInvitacionManual(msg); });
+    return;
+  }
+  _mostrarInvitacionManual(msg);
+}
+function _mostrarInvitacionManual(msg){
+  document.getElementById('modalTitle').innerText='📤 Invita a un amigo';
+  document.getElementById('modalContent').innerHTML='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Copia este mensaje y compártelo donde quieras:</p><textarea readonly rows="4" style="width:100%" onclick="this.select()">'+escapeHTML(msg)+'</textarea>';
+  document.getElementById('userModal').classList.add('on');
 }
 function mostrarLinkSeguimientoVivo(url){
   document.getElementById('modalTitle').innerText='📡 Ubicación en vivo';
@@ -4092,7 +4113,7 @@ async function buscarPlanPresupuesto(){
     items.sort(function(a,b){ if(a.dist==null) return 1; if(b.dist==null) return -1; return a.dist-b.dist; });
     items=items.slice(0,5);
     html+='<h4 style="color:var(--p);font-size:0.85rem;margin:10px 0 6px">📸 Panoramas y actividades cerca</h4>';
-    html += items.length ? items.map(function(it){ const d=it.data; return '<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.title)+'</strong>'+(it.dist!=null?' <span style="color:var(--p);font-size:0.7rem">'+it.dist.toFixed(1)+' km</span>':'')+'<div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(d.desc||'')+'</div></div>'; }).join('') : '<p style="color:#888;font-size:0.8rem">Aún no hay recomendaciones cargadas en esa zona.</p>';
+    html += items.length ? items.map(function(it){ const d=it.data; return '<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.title)+'</strong>'+(it.dist!=null?' <span style="color:var(--p);font-size:0.7rem">'+it.dist.toFixed(1)+' km</span>':'')+'<div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(d.desc||'')+'</div></div>'; }).join('') : '<p style="color:#888;font-size:0.8rem">Aún no hay recomendaciones cargadas en esa zona. ¡Comparte una desde Comparte un Punto de Interés en tu Bitácora!</p>';
   }catch(e){ html+='<p style="color:#888;font-size:0.8rem">No pude cargar recomendaciones ahora.</p>'; }
   res.innerHTML=html;
   h('Listo, armé un plan de referencia con tu presupuesto y opciones reales de la comunidad cerca de tu destino.');
