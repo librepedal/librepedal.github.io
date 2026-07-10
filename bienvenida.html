@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Libre Pedal — Tu compañero de ruta en bicicleta</title>
+<meta name="description" content="Libre Pedal es una app gratuita para ciclistas: navegación por voz con Pistero, mapa vivo de la comunidad, seguridad y progreso. Esta comunidad la hacemos todos. Hecha en Chile, para toda Latinoamérica.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#0a0f1d; --bg2:#101728; --bg3:#151d33;
+  --ink:#eef2fb; --muted:#93a3c4; --faint:#5c6a8c;
+  --p:#fc4c02; --p2:#ff8a4c; --gold:#ffd700;
+  --line:#1f2b45;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+a{color:inherit}
+::selection{background:rgba(252,76,2,0.35)}
+
+/* Scroll reveal */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:translateY(0)}
+.stagger>*:nth-child(1){transition-delay:.02s}
+.stagger>*:nth-child(2){transition-delay:.08s}
+.stagger>*:nth-child(3){transition-delay:.14s}
+.stagger>*:nth-child(4){transition-delay:.20s}
+.stagger>*:nth-child(5){transition-delay:.26s}
+.stagger>*:nth-child(6){transition-delay:.32s}
+.stagger>*:nth-child(7){transition-delay:.38s}
+@media (prefers-reduced-motion: reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  *{animation-duration:.001s !important;animation-iteration-count:1 !important}
+}
+
+/* Nav */
+nav.top{position:sticky;top:0;z-index:40;background:rgba(10,15,29,0.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.01em;font-size:1.05rem}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--p);box-shadow:0 0 12px var(--p)}
+.navlinks{display:flex;gap:22px;align-items:center;font-size:.88rem;color:var(--muted)}
+.navlinks a:hover{color:var(--ink)}
+.cta-mini{background:var(--p);color:#fff;padding:9px 16px;border-radius:20px;font-weight:700;text-decoration:none;font-size:.85rem;white-space:nowrap;transition:transform .15s ease,box-shadow .15s ease}
+.cta-mini:hover{transform:translateY(-1px);box-shadow:0 8px 18px -8px rgba(252,76,2,.7)}
+@media(max-width:640px){.navlinks a:not(.cta-mini){display:none}}
+
+/* Hero */
+.hero{position:relative;padding:76px 0 54px;overflow:hidden}
+.hero-road{position:absolute;inset:0;pointer-events:none;opacity:.55}
+.hero-road svg{width:100%;height:100%}
+.hero-road .dash{animation:roadMove 2.4s linear infinite}
+@keyframes roadMove{to{stroke-dashoffset:-48}}
+.hero .wrap{position:relative;z-index:2;display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr;text-align:center}.hero-visual{order:-1}}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.25);padding:5px 12px;border-radius:20px;margin-bottom:20px}
+h1{font-size:clamp(2.1rem,5vw,3.3rem);line-height:1.08;letter-spacing:-.02em;font-weight:800;text-wrap:balance}
+h1 span{color:var(--p)}
+.hero p.lead{margin-top:18px;font-size:1.08rem;color:var(--muted);max-width:52ch;text-wrap:pretty}
+@media(max-width:860px){.hero p.lead{margin-inline:auto}}
+.hero-ctas{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap}
+@media(max-width:860px){.hero-ctas{justify-content:center}}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;border-radius:12px;font-weight:800;font-size:.95rem;text-decoration:none;border:1px solid transparent;transition:transform .15s ease,box-shadow .15s ease}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;box-shadow:0 10px 26px -8px rgba(252,76,2,0.55)}
+.btn-primary:hover{box-shadow:0 14px 32px -8px rgba(252,76,2,0.75)}
+.btn-ghost{border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--p2);background:rgba(252,76,2,.06)}
+.hero-note{margin-top:16px;font-size:.78rem;color:var(--faint)}
+
+.hero-visual{position:relative;display:flex;align-items:center;justify-content:center;perspective:900px}
+.hero-logo-wrap{position:relative;width:min(300px,70vw);aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.hero-logo-glow{position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(252,76,2,.38),transparent 68%);filter:blur(6px);animation:pulseGlow 4.5s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.9;transform:scale(1.07)}}
+.hero-logo-tilt{width:100%;height:100%;transition:transform .18s ease-out;transform-style:preserve-3d}
+.hero-logo{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 14px 34px rgba(0,0,0,.55));animation:floatLogo 5.2s ease-in-out infinite;display:block}
+@keyframes floatLogo{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-11px) rotate(-1.4deg)}}
+@media (hover:none){.hero-logo-tilt{transform:none !important}}
+
+/* Live stat bar (right after hero) */
+.quickstats{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.quickstats .wrap{display:grid;grid-template-columns:repeat(4,1fr);padding:26px 24px}
+@media(max-width:720px){.quickstats .wrap{grid-template-columns:repeat(2,1fr);gap:20px 0}}
+.qstat{text-align:center;padding:6px 10px}
+.qstat .n{font-size:clamp(1.5rem,3vw,2rem);font-weight:800;color:var(--p2);font-variant-numeric:tabular-nums}
+.qstat .l{margin-top:2px;font-size:.76rem;color:var(--muted)}
+
+/* Section head */
+.sec-head{max-width:60ch;margin-bottom:38px}
+.sec-head.center{max-width:60ch;margin-inline:auto;text-align:center}
+.sec-eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--p2);font-weight:700;margin-bottom:10px}
+.sec-head h2{font-size:clamp(1.5rem,3vw,2rem);letter-spacing:-.01em;font-weight:800;text-wrap:balance}
+.sec-head p{margin-top:12px;color:var(--muted);font-size:1rem}
+
+/* La hacemos todos — live community section */
+.alive{padding:76px 0 60px;background:var(--bg2);border-top:1px solid var(--line)}
+.alive-panel{background:var(--bg3);border:1px solid var(--line);border-radius:20px;padding:28px clamp(20px,4vw,40px);margin-bottom:26px}
+.ap-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.95rem;color:var(--muted)}
+.ap-top .big{font-size:1.5rem;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.ap-goal{color:var(--faint);font-size:.82rem}
+.ap-bar{background:#0c1220;border:1px solid var(--line);border-radius:10px;height:14px;margin-top:12px;overflow:hidden}
+.ap-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--p),var(--gold));border-radius:10px;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.ap-msg{margin-top:10px;font-size:.82rem;color:var(--faint)}
+
+.votes-head{font-size:.92rem;color:var(--muted);margin:30px 0 14px;text-align:center}
+.votes-grid{display:grid;gap:12px}
+.vote-row{background:var(--bg3);border:1px solid var(--line);border-radius:14px;padding:16px 18px;transition:border-color .2s ease}
+.vote-row.leading{border-color:rgba(255,215,0,0.5)}
+.vr-top{display:flex;justify-content:space-between;gap:10px;font-size:.92rem;font-weight:700}
+.vr-top strong{color:var(--gold);font-variant-numeric:tabular-nums}
+.vote-row.leading .vr-top strong{color:var(--gold)}
+.vr-bar{background:#0c1220;border-radius:8px;height:9px;margin-top:9px;overflow:hidden}
+.vr-fill{height:100%;width:0%;background:var(--p);border-radius:8px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.vote-row.leading .vr-fill{background:linear-gradient(90deg,var(--p),var(--gold))}
+.vr-n{margin-top:6px;font-size:.74rem;color:var(--faint)}
+.votes-empty{text-align:center;padding:26px 20px;color:var(--muted);font-size:.92rem}
+.alive-cta{text-align:center;margin-top:30px}
+
+.pledges-head{text-align:center;margin:56px 0 24px}
+.pledges-head h3{font-size:1.1rem;font-weight:800}
+.pledges-head p{margin-top:8px;color:var(--muted);font-size:.9rem}
+.pledges{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:920px){.pledges{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.pledges{grid-template-columns:1fr}}
+.pledge{background:var(--bg3);border:1px solid var(--line);border-radius:16px;padding:20px 22px;transition:transform .2s ease,border-color .2s ease}
+.pledge:hover{transform:translateY(-3px);border-color:rgba(255,255,255,0.14)}
+.pledge .ic{font-size:1.3rem;margin-bottom:9px;display:block}
+.pledge h4{font-size:.95rem;font-weight:700;margin-bottom:5px}
+.pledge p{color:var(--muted);font-size:.84rem}
+
+/* Features */
+.features{padding:70px 0}
+.world-groups{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:920px){.world-groups{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.world-groups{grid-template-columns:1fr}}
+.feat-card{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:22px 24px;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.feat-card:hover{transform:translateY(-4px);box-shadow:0 18px 32px -16px rgba(0,0,0,.55);border-color:rgba(252,76,2,.35)}
+.feat-card .num{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.7rem;color:var(--p2);font-weight:700;letter-spacing:.06em}
+.feat-card h3{font-size:1.02rem;font-weight:800;margin:4px 0 3px}
+.feat-card .tagline{color:var(--faint);font-size:.8rem;font-style:italic;margin-bottom:12px}
+.feat-card ul{list-style:none}
+.feat-card li{position:relative;padding:5px 0 5px 20px;color:var(--muted);font-size:.86rem}
+.feat-card li::before{content:"";position:absolute;left:0;top:14px;width:6px;height:6px;background:var(--p);border-radius:2px;transform:rotate(45deg)}
+.feat-card li strong{color:var(--ink)}
+.feat-card li .sub{color:var(--faint)}
+.oro{display:inline-flex;align-items:center;gap:3px;margin-left:6px;font-size:.66rem;font-weight:800;color:#3a2a00;background:var(--gold);padding:1px 6px;border-radius:8px;letter-spacing:.02em;vertical-align:1px}
+
+/* Proof strip */
+.proof{padding:52px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg2)}
+.proof .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+@media(max-width:720px){.proof .wrap{grid-template-columns:repeat(2,1fr)}}
+.stat .n{font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.stat .l{margin-top:4px;font-size:.8rem;color:var(--muted)}
+.proof-note{text-align:center;margin-top:26px;font-size:.8rem;color:var(--faint);max-width:56ch;margin-inline:auto}
+
+/* Final CTA */
+.final{padding:84px 0;text-align:center}
+.final h2{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+.final p{margin:14px auto 30px;color:var(--muted);max-width:46ch}
+.final .hero-ctas{justify-content:center}
+
+footer{border-top:1px solid var(--line);padding:36px 0;background:var(--bg2)}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--faint)}
+footer .flinks{display:flex;gap:18px;flex-wrap:wrap}
+footer a{color:var(--faint);text-decoration:none}
+footer a:hover{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span> LIBRE PEDAL</div>
+    <div class="navlinks">
+      <a href="#comunidad">Comunidad</a>
+      <a href="#funciones">Qué ofrece</a>
+      <a href="como-funciona.html">Manual</a>
+      <a href="index.html" class="cta-mini">Entrar</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-road" aria-hidden="true">
+    <svg viewBox="0 0 1080 500" preserveAspectRatio="xMidYMid slice">
+      <path d="M-50,420 C 220,380 300,470 560,420 S 900,340 1130,400" fill="none" stroke="#1f2b45" stroke-width="2"/>
+      <path class="dash" d="M-50,420 C 220,380 300,470 560,420 S 900,340 1130,400" fill="none" stroke="#fc4c02" stroke-width="2" stroke-dasharray="10 14" opacity="0.4"/>
+    </svg>
+  </div>
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">🇨🇱 Hecho en Chile · esta comunidad la hacemos todos</div>
+      <h1>Pedalea con un <span>copiloto</span>, no solo con una app.</h1>
+      <p class="lead">Libre Pedal te guía por voz como Waze, graba tu ruta sola, y te conecta con una comunidad real de ciclistas. Las decisiones importantes —como en qué se invierte cuando crezcamos— las vota la comunidad, no nosotros.</p>
+      <div class="hero-ctas">
+        <a href="index.html" class="btn btn-primary">🚲 Crear mi personaje — es gratis</a>
+        <a href="#comunidad" class="btn btn-ghost">Ver la votación en vivo</a>
+      </div>
+      <p class="hero-note">Sin tarjeta, sin letra chica. Funciona en el navegador y como app.</p>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-logo-wrap" id="heroLogoWrap">
+        <div class="hero-logo-glow"></div>
+        <div class="hero-logo-tilt" id="heroLogoTilt">
+          <img src="logo-transparent.png" class="hero-logo" alt="Libre Pedal">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="quickstats">
+  <div class="wrap stagger">
+    <div class="qstat reveal"><div class="n" data-count="7">0</div><div class="l">mundos</div></div>
+    <div class="qstat reveal"><div class="n" data-count="45" data-suffix="+">0</div><div class="l">funciones reales</div></div>
+    <div class="qstat reveal"><div class="n" data-count="1">0</div><div class="l">copiloto con voz</div></div>
+    <div class="qstat reveal"><div class="n" data-count="100" data-suffix="%">0</div><div class="l">en vivo y gratis</div></div>
+  </div>
+</section>
+
+<section class="alive" id="comunidad">
+  <div class="wrap">
+    <div class="sec-head center">
+      <div class="sec-eyebrow">Esta comunidad la hacemos todos</div>
+      <h2>No decidimos nosotros solos. Vota la comunidad.</h2>
+      <p>Esto no es una maqueta: son los datos reales de la app, ahora mismo.</p>
+    </div>
+
+    <div class="alive-panel reveal">
+      <div class="ap-top">
+        <span>Somos <span class="big" id="apUsers">—</span> pedaleando juntos</span>
+        <span class="ap-goal">meta: 5.000 para desbloquear el sorteo comunitario</span>
+      </div>
+      <div class="ap-bar"><div class="ap-fill" id="apFill"></div></div>
+      <div class="ap-msg" id="apMsg">Cargando datos en vivo…</div>
+    </div>
+
+    <div class="votes-head">¿En qué priorizamos cuando lleguemos a la meta? Así vota la comunidad hoy:</div>
+    <div class="votes-grid reveal" id="votesGrid">
+      <div class="votes-empty">Cargando votos en vivo…</div>
+    </div>
+    <div class="alive-cta">
+      <a href="index.html" class="btn btn-primary">🗳️ Entrar y votar tú también</a>
+    </div>
+
+    <div class="pledges-head">
+      <h3>Cómo lo cuidamos</h3>
+      <p>Lo que prometemos mientras la comunidad crece:</p>
+    </div>
+    <div class="pledges stagger">
+      <div class="pledge reveal">
+        <span class="ic">🚫🤖</span>
+        <h4>Cero usuarios falsos</h4>
+        <p>Cada voto y comentario lo puso una persona real pedaleando. Si el mapa se ve vacío en tu zona, es porque nadie ha pasado aún — no lo disfrazamos.</p>
+      </div>
+      <div class="pledge reveal">
+        <span class="ic">🔒</span>
+        <h4>Tu ubicación, a tu criterio</h4>
+        <p>En el mapa comunitario tu posición se comparte aproximada, nunca exacta. Modo fantasma disponible cuando quieras.</p>
+      </div>
+      <div class="pledge reveal">
+        <span class="ic">🆓</span>
+        <h4>Gratis en lo esencial</h4>
+        <p>Navegación, mapa, comunidad, seguridad y estadísticas no tienen costo. Si algo premium aparece, se avisa antes de cobrar.</p>
+      </div>
+      <div class="pledge reveal">
+        <span class="ic">🗺️</span>
+        <h4>Datos reales y abiertos</h4>
+        <p>Sembramos el mapa con miles de puntos reales de OpenStreetMap, el mapa colaborativo libre — no inventados.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="funciones">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Qué ofrecemos</div>
+      <h2>Todo lo que necesitas arriba de la bici, en una sola app.</h2>
+      <p>Siete mundos, un solo lugar. Esto es lo que ya funciona hoy, no una lista de promesas.</p>
+    </div>
+    <div class="world-groups stagger">
+      <div class="feat-card reveal">
+        <div class="num">01 · COMPAÑERO</div>
+        <h3>Pistero, tu copiloto</h3>
+        <div class="tagline">El alma de la app: voz con personalidad.</div>
+        <ul>
+          <li>Habla contigo con voz mientras pedaleas<span class="oro">oro</span></li>
+          <li>Tallas según tu ritmo <span class="sub">— lento, normal, rápido, parado</span></li>
+          <li>Datos reales del lugar <span class="sub">— vía Wikipedia geolocalizada</span><span class="oro">oro</span></li>
+          <li>Comandos de voz <span class="sub">— llévame a, guarda la ruta, cuántos km, SOS</span></li>
+          <li>Clima y chequeo de bici al iniciar el recorrido</li>
+          <li>Se adapta a tu país <span class="sub">— jerga y frases locales</span></li>
+        </ul>
+      </div>
+      <div class="feat-card reveal">
+        <div class="num">02 · RUTA</div>
+        <h3>Navegación y recorridos</h3>
+        <div class="tagline">Ir de A a B sin perderte ni perder datos.</div>
+        <ul>
+          <li>Navegación por voz a cualquier destino del mundo<span class="oro">oro</span></li>
+          <li>Graba tu ruta sola <span class="sub">— y no se pierde nunca (celular + nube)</span></li>
+          <li>Viajes multi-destino con reporte y clima</li>
+          <li>Historial de rutas <span class="sub">— ver, combinar y mapear</span></li>
+          <li>Mapa topográfico <span class="sub">— relieve del terreno</span></li>
+        </ul>
+      </div>
+      <div class="feat-card reveal">
+        <div class="num">03 · RENDIMIENTO</div>
+        <h3>Datos de nivel pro</h3>
+        <div class="tagline">Lo que buscan los ciclistas serios.</div>
+        <ul>
+          <li>Sensores Bluetooth <span class="sub">— potenciómetro (watts) y pulsómetro</span><span class="oro">oro</span></li>
+          <li>Segmentos con tabla de líderes <span class="sub">— compite por el récord</span><span class="oro">oro</span></li>
+          <li>Estadísticas y gráficos <span class="sub">— km, calorías, velocidad, duración</span></li>
+          <li>Video recap del recorrido para descargar</li>
+        </ul>
+      </div>
+      <div class="feat-card reveal">
+        <div class="num">04 · COMUNIDAD</div>
+        <h3>No pedaleas solo</h3>
+        <div class="tagline">El corazón social de Libre Pedal.</div>
+        <ul>
+          <li>Mapa de ciclistas en vivo <span class="sub">— cada uno con su casco</span><span class="oro">oro</span></li>
+          <li>Rodadas grupales, retos y temporadas</li>
+          <li>Amigos y chat privado</li>
+          <li>Votaciones y sorteos de la comunidad</li>
+          <li>"Te doy alojo" <span class="sub">— alojamiento entre ciclistas</span></li>
+          <li>Reportar en ruta <span class="sub">— peligros, picadas, miradores</span></li>
+          <li>Novedades y frases de la comunidad</li>
+        </ul>
+      </div>
+      <div class="feat-card reveal">
+        <div class="num">05 · SEGURIDAD Y AYUDA</div>
+        <h3>Tranquilidad en el camino</h3>
+        <div class="tagline">Lo que convence a las familias.</div>
+        <ul>
+          <li>SOS <span class="sub">— manda tu ubicación por WhatsApp al toque</span><span class="oro">oro</span></li>
+          <li>Taller MacGyver <span class="sub">— arreglar la bici con lo que tengas</span></li>
+          <li>Planificador por presupuesto</li>
+          <li>Calculadora de gastos del viaje</li>
+          <li>Ciclo Bitácora <span class="sub">— tu diario de cada día</span></li>
+        </ul>
+      </div>
+      <div class="feat-card reveal">
+        <div class="num">06 · EXPERIENCIA</div>
+        <h3>Se siente distinta</h3>
+        <div class="tagline">Diseño y detalle que enganchan.</div>
+        <ul>
+          <li>Esfera 3D de apps <span class="sub">— estilos de energía y sonido cinematográfico</span><span class="oro">oro</span></li>
+          <li>Personaje a tu pinta <span class="sub">— cascos, colores, lentes, accesorios</span></li>
+          <li>Música integrada <span class="sub">— baja sola cuando Pistero habla</span></li>
+          <li>Gamificación <span class="sub">— Darma, Logros, Ranking, Tienda</span></li>
+          <li>CicloGuía <span class="sub">— hostales y miradores con fotos y estrellas</span></li>
+        </ul>
+      </div>
+      <div class="feat-card reveal">
+        <div class="num">07 · TECNOLOGÍA</div>
+        <h3>Lista para el mundo</h3>
+        <div class="tagline">La base que lo sostiene todo.</div>
+        <ul>
+          <li>Instalable <span class="sub">— app web (PWA) y APK Android</span></li>
+          <li>Funciona sin señal <span class="sub">— offline</span></li>
+          <li>Multi-país e idiomas</li>
+          <li>Respaldo de tus datos descargable</li>
+          <li>Gratis, sin muros de pago</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="proof">
+  <div class="wrap stagger">
+    <div class="stat reveal"><div class="n" data-prefix="+" data-count="4000">+0</div><div class="l">puntos reales en el mapa, todo Chile</div></div>
+    <div class="stat reveal"><div class="n" data-count="17">0</div><div class="l">trucos de taller de la comunidad</div></div>
+    <div class="stat reveal"><div class="n" data-count="18" data-suffix="+">0</div><div class="l">cascos para tu personaje</div></div>
+    <div class="stat reveal"><div class="n">$0</div><div class="l">costo para lo esencial</div></div>
+  </div>
+  <p class="proof-note">Los puntos del mapa vienen de OpenStreetMap y de ciclistas que ya usan la app — no son cifras de marketing.</p>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>Tu próxima ruta empieza con Pistero.</h2>
+    <p>Crea tu personaje, elige tu casco y sal a rodar. La comunidad se construye entre todos, incluido tú.</p>
+    <div class="hero-ctas">
+      <a href="index.html" class="btn btn-primary">🚲 Entrar a Libre Pedal</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>© <span id="yr"></span> Libre Pedal · Chile</div>
+    <div class="flinks">
+      <a href="como-funciona.html">Cómo funciona</a>
+      <a href="terminos.html">Términos</a>
+      <a href="privacidad.html">Privacidad</a>
+      <a href="index.html">Entrar</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Scroll reveal */
+(function(){
+  const els = document.querySelectorAll('.reveal');
+  if(reducedMotion){ els.forEach(function(el){ el.classList.add('in'); }); return; }
+  const io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:.15});
+  els.forEach(function(el){ io.observe(el); });
+})();
+
+/* Count-up numbers */
+(function(){
+  const nodes = document.querySelectorAll('[data-count]');
+  function run(el){
+    const target = parseFloat(el.dataset.count);
+    const suffix = el.dataset.suffix || '';
+    const prefix = el.dataset.prefix || '';
+    if(reducedMotion){ el.textContent = prefix + target.toLocaleString('es-CL') + suffix; return; }
+    const dur = 1000, t0 = performance.now();
+    function tick(t){
+      const p = Math.min(1, (t - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = prefix + Math.round(target * eased).toLocaleString('es-CL') + suffix;
+      if(p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  const io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ run(e.target); io.unobserve(e.target); } });
+  }, {threshold:.6});
+  nodes.forEach(function(el){ io.observe(el); });
+})();
+
+/* Hero logo mouse parallax (desktop only) */
+(function(){
+  if(reducedMotion || !window.matchMedia('(hover:hover)').matches) return;
+  const wrap = document.getElementById('heroLogoWrap');
+  const tilt = document.getElementById('heroLogoTilt');
+  if(!wrap || !tilt) return;
+  wrap.addEventListener('mousemove', function(e){
+    const r = wrap.getBoundingClientRect();
+    const dx = (e.clientX - r.left) / r.width - 0.5;
+    const dy = (e.clientY - r.top) / r.height - 0.5;
+    tilt.style.transform = 'rotateY(' + (dx * 16) + 'deg) rotateX(' + (dy * -16) + 'deg)';
+  });
+  wrap.addEventListener('mouseleave', function(){ tilt.style.transform = 'rotateY(0deg) rotateX(0deg)'; });
+})();
+
+/* Comunidad viva: datos reales de Firestore, sin login, solo lectura */
+(function(){
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyBIhhvyhRR0ekVmOXmVDx7C_J-TBfVGCbQ",
+      authDomain: "librepedal-cb983.firebaseapp.com",
+      projectId: "librepedal-cb983",
+      storageBucket: "librepedal-cb983.firebasestorage.app",
+      messagingSenderId: "857811917976",
+      appId: "1:857811917976:web:d088c2b9ea7f45e4ee84ed"
+    });
+    const db = firebase.firestore();
+    const META = 5000;
+    const OPCIONES = [
+      {id:'reforestar', texto:'🌳 Reforestar zonas naturales'},
+      {id:'seguridad', texto:'🚨 Botón SOS con central de emergencia'},
+      {id:'bicis', texto:'🚲 Bicicletas y accesorios para quien no tiene'},
+      {id:'deportistas', texto:'🏆 Apoyo a deportistas ciclistas'}
+    ];
+
+    Promise.all([
+      db.collection('users').get(),
+      db.collection('votacionComunidad').get()
+    ]).then(function(res){
+      const usersSnap = res[0], votosSnap = res[1];
+      const total = usersSnap.size;
+      const pct = Math.min(100, Math.round((total / META) * 100));
+
+      document.getElementById('apUsers').textContent = total.toLocaleString('es-CL');
+      document.getElementById('apMsg').textContent = pct + '% del camino a 5.000 usuarios — cuando lleguemos, se desbloquea el sorteo comunitario';
+      requestAnimationFrame(function(){
+        setTimeout(function(){ document.getElementById('apFill').style.width = pct + '%'; }, 80);
+      });
+
+      const votos = {}; OPCIONES.forEach(function(o){ votos[o.id] = 0; });
+      votosSnap.forEach(function(doc){ const d = doc.data(); if(votos[d.opcion] != null) votos[d.opcion]++; });
+      const rawTotal = Object.values(votos).reduce(function(a,b){ return a+b; }, 0);
+      const grid = document.getElementById('votesGrid');
+
+      if(rawTotal === 0){
+        grid.innerHTML = '<div class="votes-empty">Todavía nadie ha votado — sé el primero en decidir hacia dónde va la comunidad.</div>';
+        return;
+      }
+
+      const max = Math.max.apply(null, OPCIONES.map(function(o){ return votos[o.id]; }));
+      grid.innerHTML = OPCIONES.map(function(o){
+        const p = Math.round((votos[o.id] / rawTotal) * 100);
+        const leading = votos[o.id] === max && max > 0;
+        return '<div class="vote-row' + (leading ? ' leading' : '') + '">' +
+          '<div class="vr-top"><span>' + o.texto + '</span><strong>' + p + '%</strong></div>' +
+          '<div class="vr-bar"><div class="vr-fill" data-w="' + p + '"></div></div>' +
+          '<div class="vr-n">' + votos[o.id] + (votos[o.id] === 1 ? ' voto' : ' votos') + '</div>' +
+        '</div>';
+      }).join('');
+
+      const fillIo = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if(e.isIntersecting){
+            grid.querySelectorAll('.vr-fill').forEach(function(f){ f.style.width = f.dataset.w + '%'; });
+            fillIo.disconnect();
+          }
+        });
+      }, {threshold:.3});
+      fillIo.observe(grid);
+    }).catch(function(){
+      document.getElementById('apMsg').textContent = 'No pudimos cargar los datos en vivo ahora mismo.';
+      document.getElementById('votesGrid').innerHTML = '<div class="votes-empty">No pudimos cargar la votación en vivo — entra a la app para verla.</div>';
+    });
+  }catch(e){
+    const m = document.getElementById('apMsg'); if(m) m.textContent = 'No pudimos cargar los datos en vivo ahora mismo.';
+    const g = document.getElementById('votesGrid'); if(g) g.innerHTML = '<div class="votes-empty">No pudimos cargar la votación en vivo — entra a la app para verla.</div>';
+  }
+})();
+</script>
+</body>
+</html>
