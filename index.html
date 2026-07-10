@@ -607,7 +607,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()">🔌 Desconectar</button>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.79</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.80</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -860,7 +860,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.79'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.80'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -2447,12 +2447,14 @@ function irAlPuntoYNavegar(lat,lon,name){
   setTimeout(function(){ if(confirm('¿Iniciar navegación hacia '+name+'?')){ if(!currentUserLocation){ alert('Necesito tu GPS para navegar'); return; } currentTrip=null; calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,lat,lon,name); } },450);
 }
 // Con puntos de todo Chile (miles), pintarlos TODOS como marcadores DOM sin importar
-// el zoom trababa el mapa en celulares modestos. Ahora se guarda la lista completa
-// en memoria y solo se dibujan los que caen dentro de lo que se ve en pantalla, y
-// solo si estás razonablemente acercado (con el país entero a la vista no tiene
-// sentido pintar miles de puntos amontonados unos sobre otros de todas formas).
+// el zoom trababa el mapa en celulares modestos. La primera versión de esto cortaba
+// duro por zoom (nada visible hasta acercarte mucho) — pero eso hacía que con el país
+// a la vista no se viera NADA, que se leía como "los puntos no aparecen". Ahora en vez
+// de esconderlos, se limita CUÁNTOS se dibujan a la vez (tope fijo) tomando una
+// muestra pareja de los que están en pantalla: con poco zoom ves igual cobertura por
+// todo Chile (salteado), y a medida que te acercas terminas viendo todos, sin saltos.
 let pointsUnsub=null, mapPointsData=[], mapPointsRenderTimer=null;
-const MAPPOINTS_ZOOM_MIN=10;
+const MAPPOINTS_MAX_RENDER=350;
 function subscribeToMapPoints(){
   if(pointsUnsub) return;
   pointsUnsub=db.collection('recommendations').onSnapshot(function(snap){
@@ -2473,12 +2475,13 @@ function _renderizarPuntosVisibles(){
   if(!mp) return;
   if(mp._pts){ mp._pts.forEach(function(m){ mp.removeLayer(m); }); }
   mp._pts=[];
-  if(mp.getZoom()<MAPPOINTS_ZOOM_MIN) return;
   const b=mp.getBounds(), margen=0.08;
   const w=b.getWest()-margen, e=b.getEast()+margen, s=b.getSouth()-margen, n=b.getNorth()+margen;
+  const enVista=mapPointsData.filter(function(d){ return !(d.lon<w||d.lon>e||d.lat<s||d.lat>n); });
+  const paso=Math.max(1, Math.ceil(enVista.length/MAPPOINTS_MAX_RENDER));
   const iconos={agua:'💧',comida:'🍔',vista:'📸',mirador:'📸',camping:'⛺',taller:'🔧',hostel:'🏠',seguridad:'🛡️'};
-  mapPointsData.forEach(function(d){
-    if(d.lon<w||d.lon>e||d.lat<s||d.lat>n) return;
+  enVista.forEach(function(d,i){
+    if(i%paso!==0) return;
     const ic=iconos[d.cat]||'📍';
     const m=mlMarker([d.lat,d.lon],{icon:{html:lpBadgeHTML(ic)}}).addTo(mp);
     m.bindPopup('<b>'+escapeHTML(d.title||'Punto')+'</b><br><small>'+escapeHTML(d.desc||'')+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+d.lat+','+d.lon+');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>');
