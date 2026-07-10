@@ -188,8 +188,23 @@ footer a:hover{color:var(--muted)}
 <section class="hero">
   <div class="hero-road" aria-hidden="true">
     <svg viewBox="0 0 1080 500" preserveAspectRatio="xMidYMid slice">
-      <path d="M-50,420 C 220,380 300,470 560,420 S 900,340 1130,400" fill="none" stroke="#1f2b45" stroke-width="2"/>
+      <path id="heroRoadPath" d="M-50,420 C 220,380 300,470 560,420 S 900,340 1130,400" fill="none" stroke="#1f2b45" stroke-width="2"/>
       <path class="dash" d="M-50,420 C 220,380 300,470 560,420 S 900,340 1130,400" fill="none" stroke="#fc4c02" stroke-width="2" stroke-dasharray="10 14" opacity="0.4"/>
+      <g id="pisteroRider">
+        <g transform="scale(0.62)">
+          <ellipse cx="0" cy="15" rx="25" ry="4" fill="rgba(0,0,0,0.28)"/>
+          <path d="M-22 -4 Q-22 12 0 13 Q22 12 22 -4 Z" fill="#f4c9a0"/>
+          <path d="M-25 -6 A25 24 0 0 1 25 -6 Z" fill="#eef2fb"/>
+          <path d="M-25 -6 Q0 3 25 -6 L25 -10 Q0 -1 -25 -10 Z" fill="rgba(0,0,0,0.28)"/>
+          <path d="M0 -21 L0 -5" stroke="#fc4c02" stroke-width="3.6" stroke-linecap="round"/>
+          <ellipse cx="-7" cy="1" rx="3.4" ry="3.7" fill="#fff"/><ellipse cx="7" cy="1" rx="3.4" ry="3.7" fill="#fff"/>
+          <circle cx="-7" cy="1.6" r="1.6" fill="#16203a"/><circle cx="7" cy="1.6" r="1.6" fill="#16203a"/>
+          <path d="M-6 8 Q0 12 6 8" stroke="#7a4a2a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        </g>
+        <animateMotion id="pisteroMotion" dur="7s" repeatCount="indefinite" rotate="0">
+          <mpath href="#heroRoadPath"/>
+        </animateMotion>
+      </g>
     </svg>
   </div>
   <div class="wrap">
@@ -412,6 +427,10 @@ footer a:hover{color:var(--muted)}
 <script>
 document.getElementById('yr').textContent = new Date().getFullYear();
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reducedMotion){
+  const rider = document.getElementById('pisteroRider');
+  if(rider) rider.style.display = 'none';
+}
 
 /* Scroll reveal */
 (function(){
