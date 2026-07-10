@@ -446,6 +446,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
     <div class="pausa-badge" id="navPausaBadge" style="display:none">⏸️ En pausa</div>
     <div class="pausa-badge" id="navBleHR" style="display:none"></div>
     <div class="pausa-badge" id="navBlePower" style="display:none"></div>
+    <div class="gps-signal-badge" id="navSegmentoBadge" style="display:none;background:rgba(255,215,0,0.14);color:var(--g);border-color:rgba(255,215,0,0.4);animation:none"></div>
     <div class="nav-instruction">
       <span class="icon" id="navIcon"></span>
       <div class="text-container">
@@ -535,6 +536,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="pausa-badge" id="dashPausaBadge" style="display:none">⏸️ En pausa (no cuenta para tu ritmo)</div>
   <div class="pausa-badge" id="dashBleHR" style="display:none"></div>
   <div class="pausa-badge" id="dashBlePower" style="display:none"></div>
+  <div class="gps-signal-badge" id="segmentoBadge" style="display:none;background:rgba(255,215,0,0.14);color:var(--g);border-color:rgba(255,215,0,0.4);animation:none"></div>
 </div>
 <div class="darma-badge" onclick="cv('stats')">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="stats-grid">
@@ -604,7 +606,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()">🔌 Desconectar</button>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.74</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.75</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -851,7 +853,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.74'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.75'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1593,7 +1595,7 @@ window.onload = async function(){
     setTimeout(function(){ h(saludoBienvenida(nombreUsuario)); },500);
     setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },950);
     if(!ghostMode) subscribeToUsers();
-    subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
+    subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
@@ -1998,6 +2000,7 @@ function autoGuardarRuta(conVoz){
   const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:us.di,calories:us.c,savedAt:Date.now()};
   guardarRutaLocalObj(data); renderRutas(); puntosGuardados=currentRoute.length;
   _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:us.di,calories:us.c,savedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  revisarRetosCumplidos();
   /* guardado silencioso */
 }
 // Si llevas UMBRAL_INACTIVIDAD_RUTA quieto, la ruta actual se da por TERMINADA: se
@@ -2563,7 +2566,11 @@ async function enviarReporte(){
   const data={cat:reporteCatSel, text:text, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()};
   if(reporteCatSel==='superficie'){
     const tipoEl=document.getElementById('repSuperficieTipo'), difEl=document.getElementById('repDificultad');
-    if(tipoEl && tipoEl.value) data.superficie=tipoEl.value;
+    // Antes eran opcionales: se podía publicar "Estado del camino" sin decir ni el
+    // tipo de superficie ni la dificultad, dejando el dato sin nada útil para filtrar
+    // o mostrar en el mapa (solo texto libre). Ahora se exige al menos el tipo.
+    if(!tipoEl || !tipoEl.value){ alert('Elige el tipo de superficie (asfalto, ripio, tierra o mixto)'); return; }
+    data.superficie=tipoEl.value;
     if(difEl && difEl.value) data.dificultad=difEl.value;
   }
   try{
@@ -3160,7 +3167,7 @@ function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSt
 function getStepIcon(type,modifier){ switch(type){ case 'depart':return '🚴'; case 'arrive':return '🏁'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return '⬅️'; if(modifier&&modifier.indexOf('right')!==-1) return '➡️'; return '🔄'; case 'roundabout': case 'rotary': return '🔁'; case 'fork': return '🔱'; case 'continue': return '⬆️'; default: return '➡️'; } }
 function showAlert(text){ const a=document.getElementById('navAlert'); a.innerText=text; a.classList.add('show'); setTimeout(function(){ a.classList.remove('show'); },3000); }
 function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada(); setTimeout(endNavigation,2500); }
-function guardarRutaNavegada(){ if(!cu||gpsPoints.length<2) return; navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const pts=gpsPoints.map(function(p){return {lat:p.lat,lon:p.lon,t:p.timestamp,alt:(p.alt!=null?p.alt:null)};}); const localId='n'+pts[0].t; const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*30),savedAt:Date.now()}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}); }
+function guardarRutaNavegada(){ if(!cu||gpsPoints.length<2) return; navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const pts=gpsPoints.map(function(p){return {lat:p.lat,lon:p.lon,t:p.timestamp,alt:(p.alt!=null?p.alt:null)};}); const localId='n'+pts[0].t; const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*30),savedAt:Date.now()}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}); revisarRetosCumplidos(); }
 function finishTripAuto(){ navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).then(function(){ }).catch(function(){ }); }
 function formatDistance(m){ if(m<1000) return Math.round(m)+' m'; return (m/1000).toFixed(1)+' km'; }
 function showHostelsOnNavMap(){ allHostels.forEach(function(hh){ if(hh.lat&&hh.lon){ L.marker([hh.lat,hh.lon],{icon:L.divIcon({className:'',html:'<div style="background:#ffd700;width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px #ffd700"></div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(hh.name)+'</b><br>'+escapeHTML(hh.location)); } }); }
@@ -3485,17 +3492,29 @@ function _parsePower(dataview){
   // flags, sin importar qué otros campos opcionales traiga el sensor.
   return dataview.getInt16(2,true);
 }
+// El Bluetooth de bici se corta seguido (el sensor se aleja un segundo, hay
+// interferencia, etc.) — sin reconexión automática, cada corte esporádico te
+// obligaba a ir hasta Ajustes y tocar "Conectar" de nuevo en plena ruta.
+async function _reconectarBLE(device, onReady, tipo, sigueActivo){
+  for(let intento=0; intento<5; intento++){
+    await new Promise(function(r){ setTimeout(r, 2000); });
+    if(!sigueActivo()) return; // el usuario desconectó a propósito mientras reintentábamos
+    try{ const server=await device.gatt.connect(); await onReady(server); h(tipo+' reconectado.'); return; }catch(e){}
+  }
+}
 async function conectarPulsometro(){
   if(!_bleDisponible()){ alert('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
   try{
     const device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});
-    const server=await device.gatt.connect();
-    const service=await server.getPrimaryService('heart_rate');
-    const char=await service.getCharacteristic('heart_rate_measurement');
-    await char.startNotifications();
-    char.addEventListener('characteristicvaluechanged', function(e){ bleHR=_parseHR(e.target.value); _actualizarBleUI(); });
+    async function suscribir(server){
+      const service=await server.getPrimaryService('heart_rate');
+      const char=await service.getCharacteristic('heart_rate_measurement');
+      await char.startNotifications();
+      char.addEventListener('characteristicvaluechanged', function(e){ bleHR=_parseHR(e.target.value); _actualizarBleUI(); });
+    }
+    await suscribir(await device.gatt.connect());
     bleHRDevice=device;
-    device.addEventListener('gattserverdisconnected', function(){ bleHR=null; bleHRDevice=null; _actualizarBleUI(); });
+    device.addEventListener('gattserverdisconnected', function(){ bleHR=null; _actualizarBleUI(); if(bleHRDevice===device) _reconectarBLE(device, suscribir, 'Pulsómetro', function(){ return bleHRDevice===device; }); });
     _actualizarBleUI();
     h('Pulsómetro conectado.');
   }catch(e){ if(e.name!=='NotFoundError') alert('No se pudo conectar el pulsómetro: '+e.message); }
@@ -3504,13 +3523,15 @@ async function conectarPotenciometro(){
   if(!_bleDisponible()){ alert('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
   try{
     const device=await navigator.bluetooth.requestDevice({filters:[{services:['cycling_power']}]});
-    const server=await device.gatt.connect();
-    const service=await server.getPrimaryService('cycling_power');
-    const char=await service.getCharacteristic('cycling_power_measurement');
-    await char.startNotifications();
-    char.addEventListener('characteristicvaluechanged', function(e){ blePower=_parsePower(e.target.value); _actualizarBleUI(); });
+    async function suscribir(server){
+      const service=await server.getPrimaryService('cycling_power');
+      const char=await service.getCharacteristic('cycling_power_measurement');
+      await char.startNotifications();
+      char.addEventListener('characteristicvaluechanged', function(e){ blePower=_parsePower(e.target.value); _actualizarBleUI(); });
+    }
+    await suscribir(await device.gatt.connect());
     blePowerDevice=device;
-    device.addEventListener('gattserverdisconnected', function(){ blePower=null; blePowerDevice=null; _actualizarBleUI(); });
+    device.addEventListener('gattserverdisconnected', function(){ blePower=null; _actualizarBleUI(); if(blePowerDevice===device) _reconectarBLE(device, suscribir, 'Potenciómetro', function(){ return blePowerDevice===device; }); });
     _actualizarBleUI();
     h('Potenciómetro conectado.');
   }catch(e){ if(e.name!=='NotFoundError') alert('No se pudo conectar el potenciómetro: '+e.message); }
@@ -3522,15 +3543,29 @@ function desconectarBluetooth(){
   _actualizarBleUI();
   h('Sensores Bluetooth desconectados.');
 }
+// Zonas de esfuerzo genéricas (sin pedirte edad ni FC máxima, que no tenemos):
+// umbrales típicos de un adulto en bici, solo para dar una referencia de color,
+// no un dato clínico. Da más contexto que ver un número pelado.
+function _zonaHR(bpm){
+  if(bpm<100) return {c:'#9fb3c8',l:'suave'};
+  if(bpm<130) return {c:'#10b981',l:'moderado'};
+  if(bpm<155) return {c:'#f59e0b',l:'intenso'};
+  return {c:'#ef4444',l:'máximo'};
+}
 function _actualizarBleUI(){
+  const zonaHR=bleHR!=null?_zonaHR(bleHR):null;
   [
-    {id:'dashBleHR', val:bleHR, icon:'❤️', suf:' bpm'},
-    {id:'navBleHR', val:bleHR, icon:'❤️', suf:' bpm'},
+    {id:'dashBleHR', val:bleHR, icon:'❤️', suf:' bpm', color:zonaHR?zonaHR.c:null},
+    {id:'navBleHR', val:bleHR, icon:'❤️', suf:' bpm', color:zonaHR?zonaHR.c:null},
     {id:'dashBlePower', val:blePower, icon:'⚡', suf:'W'},
     {id:'navBlePower', val:blePower, icon:'⚡', suf:'W'}
   ].forEach(function(x){
     const el=document.getElementById(x.id); if(!el) return;
-    if(x.val!=null){ el.style.display='inline-flex'; el.innerText=x.icon+' '+x.val+x.suf; }
+    if(x.val!=null){
+      el.style.display='inline-flex';
+      el.innerText=x.icon+' '+x.val+x.suf;
+      if(x.color){ el.style.color=x.color; el.style.borderColor=x.color; }
+    }
     else { el.style.display='none'; }
   });
 }
@@ -3553,6 +3588,16 @@ async function iniciarSeguimientoSegmentos(lat,lon){
     segmentosActivos=snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); }).filter(function(s){ return s.inicio && s.inicio.lon!=null && s.inicio.lon>=lon-delta && s.inicio.lon<=lon+delta; });
   }catch(e){ segmentosActivos=[]; }
 }
+function _fmtSegmentoTiempo(ms){ const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000); return m+':'+(s<10?'0':'')+s; }
+function _actualizarBadgeSegmento(){
+  let armado=null;
+  segmentosActivos.forEach(function(s){ const est=segmentosEstado[s.id]; if(est&&est.armado) armado={s:s,est:est}; });
+  ['segmentoBadge','navSegmentoBadge'].forEach(function(id){
+    const el=document.getElementById(id); if(!el) return;
+    if(armado){ el.style.display='inline-flex'; el.innerText='🏁 '+armado.s.nombre+' · '+_fmtSegmentoTiempo(Date.now()-armado.est.inicioMs); }
+    else { el.style.display='none'; }
+  });
+}
 function _verificarSegmentos(lat,lon){
   if(!segmentosActivos.length) return;
   segmentosActivos.forEach(function(s){
@@ -3566,13 +3611,27 @@ function _verificarSegmentos(lat,lon){
       _guardarTiempoSegmento(s, tiempoMs);
     }
   });
+  _actualizarBadgeSegmento();
 }
 async function _guardarTiempoSegmento(segmento, tiempoMs){
   try{
+    // Compara contra tu propia mejor marca ANTES de guardar la nueva, para poder
+    // avisar si fue récord personal — de otra forma solo sabrías el tiempo pelado,
+    // sin nada con qué compararlo hasta entrar a la tabla de líderes.
+    let esRecord=false, mejoraSeg=null;
+    try{
+      const prevSnap=await db.collection('segmentoTiempos').where('segmentoId','==',segmento.id).where('user','==',cu).get();
+      const prevMin=prevSnap.docs.reduce(function(m,d){ const t=d.data().tiempoMs; return (t!=null && t<m)?t:m; }, Infinity);
+      if(prevMin!==Infinity && tiempoMs<prevMin){ esRecord=true; mejoraSeg=Math.round((prevMin-tiempoMs)/1000); }
+      else if(prevMin===Infinity){ esRecord=true; } // primera vez que lo corres
+    }catch(e){}
     await db.collection('segmentoTiempos').add({segmentoId:segmento.id, user:cu, nombre:nombreUsuario||'Ciclista', tiempoMs:tiempoMs, ts:firebase.firestore.FieldValue.serverTimestamp()});
-    const mins=Math.floor(tiempoMs/60000), segs=Math.floor((tiempoMs%60000)/1000);
-    h('¡Terminaste el segmento '+segmento.nombre+' en '+mins+' minutos '+segs+' segundos! Revisa la tabla de líderes.');
+    const tiempoTxt=_fmtSegmentoTiempo(tiempoMs);
+    if(esRecord && mejoraSeg){ h('¡Nuevo récord personal en '+segmento.nombre+'! '+tiempoTxt+', '+mejoraSeg+' segundos más rápido que tu mejor marca.'); }
+    else if(esRecord){ h('¡Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'! Primera vez que lo corres, esa es tu marca a superar.'); }
+    else { h('Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'. Revisa la tabla de líderes.'); }
     us.d+=10; au(); sincronizarStats();
+    _actualizarBadgeSegmento();
   }catch(e){}
 }
 async function crearSegmentoDesdeRuta(localId){
@@ -3621,6 +3680,29 @@ async function verTablaLideresSegmento(segmentoId, nombre){
 function calcularProgresoReto(reto){
   const ini=reto.fechaInicio, fin=reto.fechaFin;
   return rutasLocales().filter(function(r){ return r.startTime>=ini && r.startTime<=fin; }).reduce(function(s,r){ return s+(r.distance||0); },0);
+}
+// Antes de esto, "cumplir" un reto solo se notaba si entrabas a mirar la pantalla de
+// Retos por curiosidad — nadie te avisaba justo cuando de verdad lo lograbas pedaleando.
+// Se revisa al terminar cada viaje (cuando recién se guardó el km que pudo completarlo).
+function _retosCumplidosLS(){ try{ return JSON.parse(localStorage.getItem('lp_retos_cumplidos_'+cu))||[]; }catch(e){ return []; } }
+async function revisarRetosCumplidos(){
+  if(!cu) return;
+  try{
+    const ahora=Date.now();
+    const snap=await db.collection('retos').where('fechaFin','>=',ahora).limit(30).get();
+    const yaAvisados=_retosCumplidosLS();
+    for(const doc of snap.docs){
+      const r=doc.data();
+      if(yaAvisados.indexOf(doc.id)!==-1) continue;
+      const km=calcularProgresoReto(r);
+      if(km>=(r.metaKm||Infinity)){
+        yaAvisados.push(doc.id);
+        h('¡Cumpliste el reto "'+r.titulo+'"! Sumaste '+km.toFixed(0)+' de '+r.metaKm+' km. +30 Darma extra por lograrlo.');
+        us.d+=30; au(); sincronizarStats();
+      }
+    }
+    try{ localStorage.setItem('lp_retos_cumplidos_'+cu, JSON.stringify(yaAvisados)); }catch(e){}
+  }catch(e){}
 }
 async function verRetos(){
   document.getElementById('modalTitle').innerText='🎯 Retos y temporadas';
@@ -3698,6 +3780,14 @@ function _dibujarTarjetaAnual(ctx, W, H, r){
     ctx.fillStyle='#ffd700'; ctx.font='bold 30px sans-serif'; ctx.fillText(String(s[1]), W/2, y+38);
     y+=100;
   });
+  // Comparación relatable (referencia chilena conocida) — el número pelado de km no
+  // dice mucho de un vistazo; compararlo con una ruta famosa sí, y hace la tarjeta
+  // más compartible (que es todo el punto de un "wrapped").
+  if(r.totalKm>=10){
+    const veces=r.totalKm/120;
+    ctx.fillStyle='#fc4c02'; ctx.font='italic 22px sans-serif';
+    ctx.fillText('🗺️ Como pedalear Santiago–Valparaíso '+(veces<1?veces.toFixed(1):Math.round(veces))+' '+(veces<2?'vez':'veces'), W/2, y+10);
+  }
   ctx.fillStyle='#3a4a5a'; ctx.font='18px sans-serif';
   ctx.fillText('librepedal.pages.dev', W/2, H-40);
 }
@@ -3789,6 +3879,28 @@ async function toggleAsistenciaRodada(id){
     verRodadas();
   }catch(e){ alert('No se pudo actualizar tu asistencia.'); }
 }
+// Antes, confirmar "voy" a una rodada era mudo: no había ningún aviso el día que
+// tocaba, así que era fácil olvidarla entre todo lo demás. Revisa al abrir la app
+// si hay alguna rodada confirmada dentro de las próximas 24h y la recuerda por voz,
+// una sola vez por rodada (para no repetirla cada vez que abres la app ese día).
+function _rodadasAvisadasLS(){ try{ return JSON.parse(localStorage.getItem('lp_rodadas_avisadas_'+cu))||[]; }catch(e){ return []; } }
+async function revisarRodadasProximas(){
+  if(!cu) return;
+  try{
+    const ahora=Date.now(), en24h=ahora+86400000;
+    const snap=await db.collection('rodadas').where('fecha','>=',ahora).where('fecha','<=',en24h).limit(20).get();
+    const avisadas=_rodadasAvisadasLS();
+    for(const doc of snap.docs){
+      const r=doc.data();
+      if((r.asistentes||[]).indexOf(cu)===-1) continue;
+      if(avisadas.indexOf(doc.id)!==-1) continue;
+      avisadas.push(doc.id);
+      const cuando=new Date(r.fecha).toLocaleString('es-CL',{weekday:'long',hour:'2-digit',minute:'2-digit'});
+      h('Recuerda: mañana tienes la rodada "'+r.titulo+'" en '+(r.puntoEncuentro||'el punto de encuentro')+', '+cuando+'.');
+    }
+    try{ localStorage.setItem('lp_rodadas_avisadas_'+cu, JSON.stringify(avisadas.slice(-50))); }catch(e){}
+  }catch(e){}
+}
 /* ===== RECOMENDACIÓN DE RUTAS INTELIGENTE =====
    Heurística gratuita (sin IA de pago): mira tu propio historial — cuántos km
    sueles andar — y te sugiere rutas de otros ciclistas un poco más largas que tu
@@ -3806,15 +3918,26 @@ async function verRecomendacionRutas(){
   document.getElementById('userModal').classList.add('on');
   const perfil=_perfilCiclista();
   if(!perfil){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Todavía no tienes viajes registrados. ¡Sal a pedalear y vuelve para tus recomendaciones!</p>'; return; }
+  // Sin filtro de cercanía, esto podía sugerir una ruta preciosa... al otro lado del
+  // país, solo porque calzaba con tu distancia habitual. Se descarta lo que esté a
+  // más de 80km de donde estás — nadie maneja horas solo para ir a pedalear.
+  const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+  if(!yo){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Necesito tu ubicación para buscar rutas cerca tuyo. Activa el GPS e inténtalo de nuevo.</p>'; return; }
   try{
     const minKm=perfil.avgKm*1.1, maxKm=perfil.avgKm*1.35;
+    const RADIO_CERCANIA_KM=80;
     const snap=await db.collection('routes').orderBy('distance','desc').limit(200).get();
     const candidatas=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());})
-      .filter(function(r){ return r.user!==cu && r.distance>=minKm && r.distance<=maxKm && r.points && r.points.length; })
+      .filter(function(r){
+        if(r.user===cu || r.distance<minKm || r.distance>maxKm || !r.points || !r.points.length) return false;
+        const p0=r.points[0];
+        if(p0.lat==null || p0.lon==null) return false;
+        return calculateDistance(yo.lat, yo.lon, p0.lat, p0.lon)/1000 <= RADIO_CERCANIA_KM;
+      })
       .slice(0,8);
-    let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu promedio es <strong style="color:var(--g)">'+perfil.avgKm.toFixed(1)+' km</strong> en '+perfil.totalViajes+' viajes. Estas rutas de otros ciclistas te ayudan a subir el nivel de a poco:</p>';
-    if(!candidatas.length){ html+='<p style="color:#7d8ba0;font-size:0.82rem">Todavía no hay rutas de otros ciclistas en ese rango de distancia. Vuelve más adelante.</p>'; }
-    else { html+=candidatas.map(function(r){ return '<div class="novedad-card"><h4>'+(r.distance||0).toFixed(1)+' km</h4><p>De '+escapeHTML(r.nombre||'un ciclista')+'</p><button class="ab sec" style="margin:0" onclick="closeModal();showSingleRoute(\''+r.id+'\')">👀 Ver en el mapa</button></div>'; }).join(''); }
+    let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu promedio es <strong style="color:var(--g)">'+perfil.avgKm.toFixed(1)+' km</strong> en '+perfil.totalViajes+' viajes. Estas rutas de otros ciclistas cerca tuyo te ayudan a subir el nivel de a poco:</p>';
+    if(!candidatas.length){ html+='<p style="color:#7d8ba0;font-size:0.82rem">Todavía no hay rutas de otros ciclistas en ese rango de distancia cerca tuyo. Vuelve más adelante.</p>'; }
+    else { html+=candidatas.map(function(r){ const distCerca=(calculateDistance(yo.lat,yo.lon,r.points[0].lat,r.points[0].lon)/1000).toFixed(0); return '<div class="novedad-card"><h4>'+(r.distance||0).toFixed(1)+' km</h4><p>De '+escapeHTML(r.nombre||'un ciclista')+' · a '+distCerca+' km de ti</p><button class="ab sec" style="margin:0" onclick="closeModal();showSingleRoute(\''+r.id+'\')">👀 Ver en el mapa</button></div>'; }).join(''); }
     c.innerHTML=html;
   }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar recomendaciones.</p>'; }
 }
