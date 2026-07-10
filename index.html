@@ -538,6 +538,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="pausa-badge" id="dashBlePower" style="display:none"></div>
   <div class="gps-signal-badge" id="segmentoBadge" style="display:none;background:rgba(255,215,0,0.14);color:var(--g);border-color:rgba(255,215,0,0.4);animation:none"></div>
 </div>
+<button class="ab" id="btnGPSLibre" style="margin-top:8px" onclick="toggleGPS()">📍 GPS</button>
 <div class="darma-badge" onclick="cv('stats')">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="stats-grid">
   <div class="stat-card"><div class="stat-value" id="dt">0.0</div><div class="stat-label">Km totales</div></div>
@@ -606,7 +607,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()">🔌 Desconectar</button>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.78</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.79</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -859,7 +860,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.78'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.79'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1574,6 +1575,7 @@ window.onload = async function(){
   const _elVer=document.getElementById('lpVerMostrada'); if(_elVer) _elVer.innerText=APP_VERSION;
   _actualizarBtnAhorroGPS();
   _actualizarBtnCrash();
+  _actualizarBtnGPS();
   // Espera a saber si la app se va a recargar sola por una actualización (máx. 1.5s)
   // antes de activar GPS/voz de arranque — si se recarga, esta instancia nunca sigue.
   try{ await Promise.race([window.__lpListoParaArrancar, new Promise(function(r){ setTimeout(r,1500); })]); }catch(e){}
@@ -1835,8 +1837,13 @@ function solicitarPermisosEsenciales(){
     }).catch(function(){});
   }
 }
+function _actualizarBtnGPS(){
+  const btn=document.getElementById('btnGPSLibre'); if(!btn) return;
+  if(ig){ btn.innerText='⏹️ Detener GPS'; btn.style.background='#dc2626'; btn.style.color='#fff'; }
+  else { btn.innerText='📍 Iniciar GPS'; btn.style.background='#10b981'; btn.style.color='#000'; }
+}
 function toggleGPS(){
-  const btn=document.querySelector('#v-dash .bg');
+  const btn=document.getElementById('btnGPSLibre');
   if(!ig){
     rutaDocId=null; puntosGuardados=0; spAnterior=0;
     ultimoMovimientoTime=Date.now(); rutaSegCerrada=true; rutaSegDistIni=us.di;
@@ -1851,13 +1858,13 @@ function toggleGPS(){
     iniciarDeteccionCaidas();
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
-      if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
+      if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable();
       h("GPS activado. Sigo grabando tu ruta aunque apagues la pantalla.");
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
-      ig=true; if(btn){ btn.innerText="⏹️ Detener"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
+      ig=true; if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable();
       h("GPS activado. Estoy grabando tu ruta.");
@@ -1866,7 +1873,7 @@ function toggleGPS(){
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
     ig=false; lpWakeLock.disable(); detenerDeteccionCaidas();
     if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
-    if(btn){ btn.innerText="📍 GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
+    if(btn){ btn.innerText="📍 Iniciar GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
     if(currentRoute.length>1){ autoGuardarRuta(false); }
     sincronizarStats();
     if(cu&&!ghostMode) db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true});
