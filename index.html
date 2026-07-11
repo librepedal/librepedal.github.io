@@ -528,6 +528,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div id="sugerencias-dest"></div>
 </div>
 <button class="bg" style="margin-top:6px" onclick="startQuickTrip()">▶️ Iniciar navegación</button>
+<button class="ab sec" type="button" style="margin-top:6px" id="btnPuntoMapaViaje" onclick="togglePuntoMapaViaje()">📍 No lo encuentro: elegir en el mapa</button>
+<div id="punto-mapa-viaje" style="display:none;margin-top:8px">
+  <div id="punto-mapa-viaje-inner" style="height:220px;border-radius:10px;overflow:hidden"></div>
+  <p id="puntoMapaViajeEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto. Te llevo por el camino real más cerca de ahí; si no hay camino marcado hasta el punto, el último tramo puede que lo tengas que hacer a pie.</p>
+  <button class="bg" style="margin-top:6px;display:none" id="btnNavegarPuntoMapa" onclick="navegarAPuntoMapaElegido()">🧭 Navegar hasta este punto</button>
+</div>
 </div>
 <div class="speed-display">
   <div class="speed-value" id="spd">0</div>
@@ -612,7 +618,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.86</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.87</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -866,7 +872,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.86'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.87'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -2838,6 +2844,48 @@ function togglePoiMapaManual(){
     });
   }
   setTimeout(function(){ poiMapaManual.resize(); },250);
+}
+// Elegir un destino de navegación tocando el mapa (como "seleccionar en el mapa" de
+// Google Maps): para puntos que no aparecen en ninguna búsqueda porque no están
+// mapeados como lugar (una toma de agua escondida, una picada sin nombre, etc.).
+// No hace falta snapping propio: OSRM ya rutea por el camino real más cercano al
+// punto elegido, así que el usuario llega hasta donde el mapa tenga camino, y el
+// resto (si el punto está fuera de cualquier camino mapeado) lo hace por su cuenta.
+let puntoMapaViaje=null, puntoViajeCoords=null, puntoViajeMarker=null;
+function togglePuntoMapaViaje(){
+  const cont=document.getElementById('punto-mapa-viaje');
+  const abrir=cont.style.display==='none';
+  cont.style.display=abrir?'block':'none';
+  if(!abrir) return;
+  if(!puntoMapaViaje){
+    const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+    puntoMapaViaje=new maplibregl.Map({container:'punto-mapa-viaje-inner', style:LP_ESTILO_CALLES, center:yo?[yo.lon,yo.lat]:[-70.65,-33.45], zoom:yo?14:5});
+    puntoMapaViaje.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    puntoMapaViaje.on('click', function(e){
+      puntoViajeCoords={lat:e.lngLat.lat, lon:e.lngLat.lng};
+      if(puntoViajeMarker) puntoViajeMarker.remove();
+      puntoViajeMarker=new maplibregl.Marker({color:'#fc4c02'}).setLngLat(e.lngLat).addTo(puntoMapaViaje);
+      document.getElementById('puntoMapaViajeEstado').innerText='📍 Punto marcado. Te llevo por el camino real más cerca de ahí; si no hay camino mapeado hasta el punto, el último tramo puede que sea a pie.';
+      const btn=document.getElementById('btnNavegarPuntoMapa'); if(btn) btn.style.display='block';
+    });
+  }
+  setTimeout(function(){ puntoMapaViaje.resize(); },250);
+}
+async function navegarAPuntoMapaElegido(){
+  if(!puntoViajeCoords){ alert('Marca un punto en el mapa primero.'); return; }
+  if(!currentUserLocation){
+    showLoading("Obteniendo ubicación...");
+    await getCurrentLocation();
+    hideLoading();
+    if(!currentUserLocation){ alert("Necesito tu GPS"); return; }
+  }
+  currentTrip=null;
+  const lat=puntoViajeCoords.lat, lon=puntoViajeCoords.lon;
+  const cont=document.getElementById('punto-mapa-viaje'); if(cont) cont.style.display='none';
+  if(puntoViajeMarker){ puntoViajeMarker.remove(); puntoViajeMarker=null; }
+  puntoViajeCoords=null;
+  const btn=document.getElementById('btnNavegarPuntoMapa'); if(btn) btn.style.display='none';
+  await calculateAndStartNavigation(currentUserLocation.lat, currentUserLocation.lon, lat, lon, 'Punto marcado en el mapa');
 }
 async function agregarPOI(){
   const q=document.getElementById('poi-buscar').value.trim();
