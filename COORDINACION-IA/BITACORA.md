@@ -4,6 +4,39 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.02 — 2026-07-11 — Claude (sesión 2)
+**Personalidad seleccionable, predicción real (lluvia+cansancio) y escalabilidad a otros deportes.**
+De la Visión Maestra: implementados los 3 módulos que Inty aprobó (⬜→✅), Visión
+Artificial descartada explícitamente por Inty ("no va").
+
+- **Personalidad de Pistero** (Perfil → 🎭): 6 tonos (cercano/aventurero/entrenador/
+  relajado/humorístico/guía turístico). `elegirPersonalidad()`, guardado en
+  localStorage, se manda al Worker (`usuario.personalidad`). Default "cercano" =
+  comportamiento de siempre, cero regresión. Worker: dict `TONOS` ajusta el registro
+  del system prompt sin cambiar la identidad de Pistero.
+- **Escalabilidad a otros deportes** (Perfil → 🧭): 4 actividades (Ciclismo/MTB/
+  Trekking/Moto-Auto). `elegirActividad()` cambia el **perfil real de OSRM**
+  (cycling/foot/driving — verificado en vivo que los 3 responden 200 en
+  router.project-osrm.org) en las 3 URLs de ruteo, y el lenguaje de Pistero se adapta
+  (gentilicio + prohibición explícita de mencionar "pedalear/bicicleta" si no aplica).
+  ⚠️ Primer intento el modelo IGNORÓ la instrucción de actividad (siguió hablando de
+  pedalear en modo trekking) porque estaba enterrada al final del prompt — se
+  solucionó moviéndola al INICIO del system prompt con máxima énfasis. Reverificado
+  en vivo: trekking/moto ya no mencionan bicicleta, ciclismo default intacto.
+- **Predicción real — lluvia proactiva**: `_avisoLluviaProactivo()` chequea el
+  pronóstico HORARIO (nuevo: `climaDeZona` ahora pide `hourly=precipitation_probability`)
+  cada ~20 min durante la navegación; si las próximas 2h superan 60% de probabilidad,
+  avisa UNA vez por viaje, antes de que llueva (no solo "hoy hay X% de lluvia" al salir).
+- **Predicción real — cansancio**: `_verificarFatiga()` compara tu ritmo de los
+  primeros ~15 min (referencia "fresco") contra una ventana móvil de los últimos 15
+  min; si cae ≥25% y llevas 40+ min activo, sugiere un respiro UNA vez por viaje.
+- Todo con reset por viaje (mismo patrón que `puntosAvisados`), guards de cola de voz
+  existentes, y sin tocar ninguna función que ya funcionaba.
+- **Verificado**: Worker en vivo (6 escenarios: 2 tonos, trekking antes/después del
+  fix, moto, control ciclismo), navegador (grids renderizan, OSRM cambia de perfil
+  real y vuelve al default, fatiga detecta caída de 40% y no repite, lluvia detecta
+  75% de probabilidad simulada y no repite), sintaxis OK, 0 errores de consola.
+
 ## v6.01 — 2026-07-11 — Claude (sesión 2)
 **Fix: videos de ruta descargados no se veían.**
 - `grabarVideoRuta()` grababa SIEMPRE en WebM/VP9 y lo descargaba como `.webm`. Ese

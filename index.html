@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.01</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.02</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -876,6 +876,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="customization-section"><h3>Extras</h3><div class="accessory-grid" id="customizeExtrasGrid"></div></div>
 <div class="customization-section"><h3>⚡ Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
 <div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
+<div class="customization-section"><h3>🧭 Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
+<div class="customization-section"><h3>🎭 Personalidad de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Sigue siendo Pistero, solo cambia el tono con el que te habla.</p><div id="personalidadGrid"></div></div>
 <button class="bg" onclick="saveCustomization()">💾 Guardar personaje</button>
 </section>
 
@@ -916,7 +918,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.01'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.02'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* ===== RED DE SEGURIDAD: ninguna eventualidad debe romper la app en plena ruta =====
    Un error suelto o una promesa rechazada se registran (Sentry) y la app SIGUE andando. */
 window.addEventListener('error', function(e){ try{ if(window.Sentry && e && e.error) Sentry.captureException(e.error); }catch(_){} });
@@ -1153,6 +1155,50 @@ function togglePausaViaje(){
 }
 let currentUserLocation = null;
 let selectedHelmet = 'giro', selectedLens = 'none', selectedSkin = 'cyan', selectedExtras = [];
+// ===== Tipo de actividad: arquitectura para escalar más allá del ciclismo (moto,
+// trekking, etc.) sin tocar el comportamiento de nadie que no lo elija. 'ciclismo' es
+// el default de SIEMPRE — cero cambio para quien no toque este selector. Verificado en
+// vivo que router.project-osrm.org responde 200 en los 3 perfiles (cycling/foot/driving).
+const ACTIVIDADES=[
+  {id:'ciclismo', label:'🚴 Ciclismo de ruta', icono:'🚴', osrm:'cycling', gentilicio:'ciclista', verbo:'pedaleando'},
+  {id:'mtb', label:'🚵 MTB / Gravel', icono:'🚵', osrm:'cycling', gentilicio:'ciclista de montaña', verbo:'rodando'},
+  {id:'trekking', label:'🎒 Senderismo / Trekking', icono:'🎒', osrm:'foot', gentilicio:'caminante', verbo:'caminando'},
+  {id:'moto', label:'🏍️ Moto / Auto (viaje)', icono:'🏍️', osrm:'driving', gentilicio:'viajero', verbo:'viajando'}
+];
+let actividadTipo=localStorage.getItem('lp_actividad')||'ciclismo';
+function _actividadActual(){ return ACTIVIDADES.find(function(a){return a.id===actividadTipo;})||ACTIVIDADES[0]; }
+function _osrmPerfil(){ return _actividadActual().osrm; }
+function elegirActividad(id){
+  if(!ACTIVIDADES.some(function(a){return a.id===id;})) return;
+  actividadTipo=id; try{ localStorage.setItem('lp_actividad',id); }catch(e){}
+  renderActividadGrid();
+  h('Listo, ahora te acompaño como '+_actividadActual().gentilicio+'.');
+}
+function renderActividadGrid(){
+  const c=document.getElementById('actividadGrid'); if(!c) return;
+  c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\')"><div class="check">OK</div><div style="font-size:1.4rem">'+a.icono+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
+}
+// ===== Personalidad de Pistero: el tono cambia, la identidad (Pistero, chileno,
+// experto) no. 'cercano' es el default — mismo tono que siempre tuvo la app.
+const PERSONALIDADES=[
+  {id:'cercano', label:'😊 Cercano (el de siempre)'},
+  {id:'aventurero', label:'🏔️ Aventurero'},
+  {id:'entrenador', label:'💪 Entrenador'},
+  {id:'relajado', label:'🧘 Relajado'},
+  {id:'humoristico', label:'😄 Humorístico'},
+  {id:'guia', label:'📖 Guía turístico'}
+];
+let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
+function elegirPersonalidad(id){
+  if(!PERSONALIDADES.some(function(p){return p.id===id;})) return;
+  pisteroPersonalidad=id; try{ localStorage.setItem('lp_personalidad',id); }catch(e){}
+  renderPersonalidadGrid();
+  h('Listo, así te hablo de ahora en adelante.');
+}
+function renderPersonalidadGrid(){
+  const c=document.getElementById('personalidadGrid'); if(!c) return;
+  c.innerHTML=PERSONALIDADES.map(function(p){ return '<div class="custom-option'+(p.id===pisteroPersonalidad?' selected':'')+'" onclick="elegirPersonalidad(\''+p.id+'\')" style="text-align:left;padding:9px 12px"><div class="check">OK</div><strong style="font-size:0.82rem">'+p.label+'</strong></div>'; }).join('');
+}
 let navUserMarkers = [], maxSpeed = 0, speedReadings = [];
 // Umbrales de ritmo FIJOS (km/h), iguales en frases, ánimo del personaje y el
 // indicador del panel: parado=0, lento 4-8, normal 8-16, rápido 16+.
@@ -1289,7 +1335,7 @@ async function calcularKmRutaPlanificada(){
     let total=0;
     for(let i=0;i<puntos.length-1;i++){
       const a=puntos[i], b=puntos[i+1];
-      const url='https://router.project-osrm.org/route/v1/cycling/'+a.lon+','+a.lat+';'+b.lon+','+b.lat+'?overview=false';
+      const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+a.lon+','+a.lat+';'+b.lon+','+b.lat+'?overview=false';
       const r=await fetch(url); const j=await r.json();
       if(j.code==='Ok' && j.routes && j.routes[0]) total+=j.routes[0].distance/1000;
     }
@@ -1498,6 +1544,7 @@ function initCustomization(){
                ['customizeExtrasGrid',extrasOptions,null,'toggleExtra',true]];
   map.forEach(function(m){ const el=document.getElementById(m[0]); if(el) el.innerHTML=gridHTML(m[1],m[2],m[3],m[4]); });
   updatePreview(); updateCustomizePreview(); renderEstilos(); renderFondosEsfera();
+  renderActividadGrid(); renderPersonalidadGrid();
   actualizarBadgeAdmin();
 }
 // Aviso de nuevos registros desde la ultima vez que el admin miro el Panel Admin
@@ -1700,7 +1747,7 @@ async function preguntarPistero(){
   const gustos=(typeof selectedHelmet!=='undefined'&&selectedHelmet)?('estilo/casco '+selectedHelmet):'';
   const payload={
     mensaje:msg,
-    usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos },
+    usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos, personalidad:pisteroPersonalidad, actividad:actividadTipo },
     contexto:_pisteroContexto(),
     hospedajes:hosp,
     historial:pisteroHistorial.slice(-6)
@@ -2127,6 +2174,7 @@ function toggleGPS(){
     viajePausedMs=0; viajePausedDesde=null; posHistory=[]; _gpsBadgeToggle('dashPausaBadge', false);
     pendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
     puntosAvisados=new Set();
+    _avisoLluviaHecho=false; _ultimoChequeoLluvia=0; _fatigaBuffer=[]; _avisoFatigaHecho=false; _velPromInicioFatiga=null;
     segmentosCargados=false; segmentosActivos=[]; segmentosEstado={};
     iniciarDeteccionCaidas();
     if(lpBackgroundGeo.disponible()){
@@ -2270,6 +2318,8 @@ function ug(p){
   bromasDelCamino(sp);
   comentarPendiente(pendienteHistory, sp);
   avisarPuntosCercanos(la,lo);
+  _avisoLluviaProactivo(la,lo);
+  _verificarFatiga(tiempoActivoMs(), sp);
   // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
   if(us.la && moved<0.012){ return; }
   if(us.la){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
@@ -3555,6 +3605,8 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
   comentarPendiente(navPendienteHistory, speed);
   avisarPuntosCercanos(lat,lon);
+  _avisoLluviaProactivo(lat,lon);
+  _verificarFatiga(tiempoActivoMs(), speed);
   checkNavigationSteps(lat,lon);
   verificarDesviacion(lat,lon);
   compararRitmoHistorico(totalDistance, tiempoActivoMs());
@@ -3610,7 +3662,7 @@ async function recalcularRuta(lat,lon){
     h('Por esta zona no tengo un camino claro marcado. Sigue no más, cualquier cosa te aviso.');
   }
   try{
-    const url='https://router.project-osrm.org/route/v1/cycling/'+lon+','+lat+';'+navDestLon+','+navDestLat+'?overview=full&geometries=geojson&steps=true';
+    const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+lon+','+lat+';'+navDestLon+','+navDestLat+'?overview=full&geometries=geojson&steps=true';
     const resp=await _fetchT(url, 15000); const data=await resp.json();
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ navRecalculando=false; return; }
     const route=data.routes[0], steps=route.legs[0].steps;
@@ -3649,13 +3701,14 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
   navRecalcIntentos=0; navUltimoRecalcTime=0; navRecalcSilencioHasta=0;
   puntosAvisados=new Set();
+  _avisoLluviaHecho=false; _ultimoChequeoLluvia=0; _fatigaBuffer=[]; _avisoFatigaHecho=false; _velPromInicioFatiga=null;
   navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
   (function(){ const b=document.getElementById('btnPausaViaje'); if(b){ b.innerText='⏸️ Pausar'; b.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; } })();
   navPendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
   iniciarDeteccionCaidas();
   iniciarSeguimientoSegmentos(startLat,startLon);
   try{
-    const url='https://router.project-osrm.org/route/v1/cycling/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
+    const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
     const resp=await _fetchT(url, 15000); const data=await resp.json();
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ alert("No pude calcular la ruta"); endNavigation(); return; }
     const route=data.routes[0], steps=route.legs[0].steps;
@@ -4611,7 +4664,51 @@ function enviarSOS(){
   else { seguir(null,null); }
 }
 function wmoTexto(c){ const m={0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'neblina',48:'neblina',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',66:'lluvia helada',67:'lluvia helada',71:'nieve ligera',73:'nieve',75:'nieve intensa',77:'nieve',80:'chubascos',81:'chubascos',82:'chubascos fuertes',85:'nevadas',86:'nevadas',95:'tormenta',96:'tormenta con granizo',99:'tormenta con granizo'}; return m[c]||'clima variable'; }
-async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=3'); return await r.json(); }catch(e){ return null; } }
+async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weather_code,wind_speed_10m&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=3'); return await r.json(); }catch(e){ return null; } }
+// ===== Predicción real: lluvia ANTES de que caiga, no solo "hoy hay % de lluvia" al
+// salir. Mira las próximas 2 horas del pronóstico horario y avisa una sola vez por
+// viaje si viene fuerte, con tiempo para buscar techo o cambiar de planes.
+let _ultimoChequeoLluvia=0, _avisoLluviaHecho=false;
+async function _avisoLluviaProactivo(lat,lon){
+  if(_avisoLluviaHecho || !vozActiva) return;
+  const ahora=Date.now();
+  if(ahora-_ultimoChequeoLluvia<1200000) return; // no chequear más de 1 vez cada 20 min
+  _ultimoChequeoLluvia=ahora;
+  try{
+    const w=await climaDeZona(lat,lon);
+    const horas=w&&w.hourly&&w.hourly.precipitation_probability, tiempos=w&&w.hourly&&w.hourly.time;
+    if(!horas||!tiempos) return;
+    const ahoraISO=new Date().toISOString().slice(0,13);
+    let idx=tiempos.findIndex(function(t){ return t.slice(0,13)>=ahoraISO; });
+    if(idx<0) idx=0;
+    const proximas2h=horas.slice(idx,idx+2);
+    const maxProb=Math.max.apply(null, proximas2h.length?proximas2h:[0]);
+    if(maxProb>=60){
+      _avisoLluviaHecho=true;
+      if(!vozOcupada() && !vozCola.length) h('Ojo, viene probabilidad alta de lluvia en las próximas horas — '+Math.round(maxProb)+' por ciento. Si puedes, busca techo o apúrate.');
+    }
+  }catch(e){}
+}
+// ===== Predicción real: cansancio ANTES de que sea evidente. Compara tu ritmo de
+// los primeros ~15 min (fresco) contra una ventana móvil de los últimos 15 min; si
+// cayó fuerte y llevas rato activo, sugiere un respiro — una sola vez por viaje.
+let _fatigaBuffer=[], _avisoFatigaHecho=false, _velPromInicioFatiga=null;
+function _verificarFatiga(duracionActivaMs, speedActual){
+  if(!vozActiva || _avisoFatigaHecho || !speedActual || speedActual<=0) return;
+  _fatigaBuffer.push({t:Date.now(), v:speedActual});
+  const VENTANA=15*60000;
+  while(_fatigaBuffer.length>1 && Date.now()-_fatigaBuffer[0].t>VENTANA) _fatigaBuffer.shift();
+  if(!duracionActivaMs || duracionActivaMs<15*60000) return; // necesita referencia fresca de al menos 15 min
+  const prom=function(arr){ return arr.reduce(function(a,b){return a+b.v;},0)/arr.length; };
+  if(_velPromInicioFatiga==null){ if(_fatigaBuffer.length>=5) _velPromInicioFatiga=prom(_fatigaBuffer); return; }
+  if(duracionActivaMs<40*60000 || _fatigaBuffer.length<5) return; // deja pasar tiempo real desde la referencia
+  const velActual=prom(_fatigaBuffer);
+  const caidaPct=(_velPromInicioFatiga-velActual)/_velPromInicioFatiga;
+  if(caidaPct>=0.25){
+    _avisoFatigaHecho=true;
+    if(!vozOcupada() && !vozCola.length) h('Se nota que bajaste harto el ritmo respecto a como arrancaste. Si puedes, date un respiro corto, toma agua y sigue con calma.');
+  }
+}
 // Pronostico al registrar una ruta: se anuncia al poner un destino (antes de salir)
 // y de nuevo al guardar/terminar el viaje (util para lo que viene despues de pedalear).
 async function anunciarClimaRuta(lat,lon,intro){
