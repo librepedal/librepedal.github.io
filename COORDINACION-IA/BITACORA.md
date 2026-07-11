@@ -184,6 +184,20 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.04 — 2026-07-11 — Claude (AUTOCRÍTICA: corrijo trabajo propio)
+Revisión crítica honesta de mis propios cambios de estos días. 3 correcciones:
+1. **Quité la "red de seguridad global"** que puse en v6.00 (`window.error`/`unhandledrejection`→Sentry):
+   era REDUNDANTE — el Loader Script de Sentry ya instala esos handlers (con stack trace + dedup); los
+   míos solo DUPLICABAN reportes y no evitaban ningún crash. Las defensas que SÍ sirven quedan: `_lsJSON`
+   (localStorage seguro) y `_fetchT` (timeouts de red).
+2. **Revertí el tuning de pendientes de v5.98** que quedó demasiado sensible (`dist 24m` / umbral `3.2%`):
+   con ruido de altitud ±5 m sobre 24 m salían pendientes falsas ~20% → avisos de subida/bajada fantasma en
+   plano. Ahora robusto: `dist 35m`, entrada `4.0%`, salida `2.0%`, ventana 90m. El fix REAL para "avisar
+   antes sin ruido" es el **perfil de elevación adelantado** (anticipatorio) — queda en PENDIENTES.
+3. **Variantes fonéticas** de `geocodeDestino`: `slice(0,4)→slice(0,2)` para no saturar Nominatim (~1 req/seg).
+   Sigue encontrando "Quimán".
+Nota: `_lsJSON`, `_fetchT`, `verificarDesviacion` (ruta completa) y el resto siguen intactos y son sólidos.
+
 ## v6.00 — 2026-07-11 — Claude (blindaje de robustez)
 **Que ninguna eventualidad rompa la app.** Ver `CONTINGENCIA.md` para el mapa completo.
 - **Red de seguridad global:** `window.error` + `unhandledrejection` → Sentry, la app sigue andando (no había ninguna; era el hueco más grave).

@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.03</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.04</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -918,11 +918,10 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.03'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
-/* ===== RED DE SEGURIDAD: ninguna eventualidad debe romper la app en plena ruta =====
-   Un error suelto o una promesa rechazada se registran (Sentry) y la app SIGUE andando. */
-window.addEventListener('error', function(e){ try{ if(window.Sentry && e && e.error) Sentry.captureException(e.error); }catch(_){} });
-window.addEventListener('unhandledrejection', function(e){ try{ if(window.Sentry && e && e.reason) Sentry.captureException(e.reason); }catch(_){} });
+const APP_VERSION='6.04'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+/* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
+   (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
+   Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
 /* Lectura segura de localStorage: datos corruptos NO deben crashear el arranque. */
 function _lsJSON(key, fb){ try{ const v=localStorage.getItem(key); if(v==null) return fb; const p=JSON.parse(v); return (p==null)?fb:p; }catch(e){ return fb; } }
 /* fetch con timeout: sin señal, una petición no debe colgar la app para siempre. */
@@ -2271,7 +2270,7 @@ function _altitudConFallback(buffer, lat, lon, altitudeGPS){
 function calcularPendienteActual(buffer){
   if(buffer.length<5) return null;
   const dist=calculateDistance(buffer[0].lat,buffer[0].lon,buffer[buffer.length-1].lat,buffer[buffer.length-1].lon);
-  if(dist<24) return null; // muy corto para confiar en el dato (baja = detecta la pendiente antes)
+  if(dist<35) return null; // span mínimo para que el ruido de altitud no invente pendientes falsas
   // promedia los 2 primeros y 2 últimos puntos para no dejarse engañar por un solo salto de altitud
   const altIni=(buffer[0].alt+buffer[1].alt)/2, altFin=(buffer[buffer.length-1].alt+buffer[buffer.length-2].alt)/2;
   return ((altFin-altIni)/dist)*100; // % de pendiente
@@ -2284,9 +2283,9 @@ function comentarPendiente(buffer, sp){
   const pend=calcularPendienteActual(buffer);
   if(pend==null) return;
   let zonaNueva=zonaPendienteActual;
-  if(zonaPendienteActual==='subida'){ if(pend<1.8) zonaNueva='plano'; }
-  else if(zonaPendienteActual==='bajada'){ if(pend>-1.8) zonaNueva='plano'; }
-  else { if(pend>3.2) zonaNueva='subida'; else if(pend<-3.2) zonaNueva='bajada'; }
+  if(zonaPendienteActual==='subida'){ if(pend<2.0) zonaNueva='plano'; }
+  else if(zonaPendienteActual==='bajada'){ if(pend>-2.0) zonaNueva='plano'; }
+  else { if(pend>4.0) zonaNueva='subida'; else if(pend<-4.0) zonaNueva='bajada'; }
   if(zonaNueva===zonaPendienteActual) return;
   zonaPendienteActual=zonaNueva;
   if(!vozActiva || vozOcupada() || vozCola.length) return;
@@ -3565,7 +3564,7 @@ function _variantesFoneticas(q){
   add(q.replace(/[kK]/g,'c'));
   add(q.replace(/\bw/gi,'gu'));           // "wilson" -> "guilson"
   add(q.replace(/qu([eiéí])/gi,'k$1'));   // por si viene al revés
-  return Array.from(set).slice(0,4);
+  return Array.from(set).slice(0,2); // solo las 2 mejores: no saturar Nominatim (~1 req/seg)
 }
 async function geocodeDestino(query){
   const cc=await paisDelUsuario();
