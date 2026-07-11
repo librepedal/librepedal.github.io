@@ -612,7 +612,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.85</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.86</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -866,7 +866,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.85'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.86'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1866,6 +1866,7 @@ function toggleGPS(){
     lastFraseParadoTime=Date.now();
     viajePausedMs=0; viajePausedDesde=null; posHistory=[]; _gpsBadgeToggle('dashPausaBadge', false);
     pendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
+    puntosAvisados=new Set();
     segmentosCargados=false; segmentosActivos=[]; segmentosEstado={};
     iniciarDeteccionCaidas();
     if(lpBackgroundGeo.disponible()){
@@ -2008,6 +2009,7 @@ function ug(p){
   actualizarZona(la,lo); // detecta ciudad/carretera en segundo plano
   bromasDelCamino(sp);
   comentarPendiente(pendienteHistory, sp);
+  avisarPuntosCercanos(la,lo);
   // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
   if(us.la && moved<0.012){ return; }
   if(us.la){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
@@ -2487,7 +2489,7 @@ function subscribeToMapPoints(){
   if(pointsUnsub) return;
   pointsUnsub=db.collection('recommendations').onSnapshot(function(snap){
     mapPointsData=[];
-    snap.forEach(function(doc){ const d=doc.data(); if(d.lat&&d.lon) mapPointsData.push(d); });
+    snap.forEach(function(doc){ const d=doc.data(); if(d.lat&&d.lon){ d.id=doc.id; mapPointsData.push(d); } });
     _renderizarPuntosVisibles();
   }, function(e){});
   if(mp){
@@ -2499,6 +2501,17 @@ function _renderizarPuntosVisiblesThrottled(){
   if(mapPointsRenderTimer) clearTimeout(mapPointsRenderTimer);
   mapPointsRenderTimer=setTimeout(_renderizarPuntosVisibles, 250);
 }
+// Con miles de puntos sembrados desde OpenStreetMap, mostrarlos todos apenas se abre
+// el mapa a nivel país los inunda de íconos de mirador. El tope ahora escala con el
+// zoom: casi nada a nivel país, más a nivel ciudad, todos los que entren en pantalla
+// a nivel calle. Los puntos que aportó la comunidad (no sembrados) siempre se
+// muestran sin importar el zoom: son pocos y valen más vistos siempre.
+function _maxRenderParaZoom(zoom){
+  if(zoom<6) return 0;
+  if(zoom<9) return 40;
+  if(zoom<12) return 150;
+  return MAPPOINTS_MAX_RENDER;
+}
 function _renderizarPuntosVisibles(){
   if(!mp) return;
   if(mp._pts){ mp._pts.forEach(function(m){ mp.removeLayer(m); }); }
@@ -2506,15 +2519,44 @@ function _renderizarPuntosVisibles(){
   const b=mp.getBounds(), margen=0.08;
   const w=b.getWest()-margen, e=b.getEast()+margen, s=b.getSouth()-margen, n=b.getNorth()+margen;
   const enVista=mapPointsData.filter(function(d){ return !(d.lon<w||d.lon>e||d.lat<s||d.lat>n); });
-  const paso=Math.max(1, Math.ceil(enVista.length/MAPPOINTS_MAX_RENDER));
+  const comunidad=enVista.filter(function(d){ return d.user!=='osm-data'; });
+  const sembrados=enVista.filter(function(d){ return d.user==='osm-data'; });
+  const maxSembrados=_maxRenderParaZoom(mp.getZoom());
+  const paso=Math.max(1, Math.ceil(sembrados.length/Math.max(1,maxSembrados)));
   const iconos={agua:'💧',comida:'🍔',vista:'📸',mirador:'📸',camping:'⛺',taller:'🔧',hostel:'🏠',seguridad:'🛡️'};
-  enVista.forEach(function(d,i){
-    if(i%paso!==0) return;
+  const pintar=function(d){
     const ic=iconos[d.cat]||'📍';
     const m=mlMarker([d.lat,d.lon],{icon:{html:lpBadgeHTML(ic)}}).addTo(mp);
     m.bindPopup('<b>'+escapeHTML(d.title||'Punto')+'</b><br><small>'+escapeHTML(d.desc||'')+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+d.lat+','+d.lon+');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>');
     mp._pts.push(m);
-  });
+  };
+  comunidad.forEach(pintar);
+  if(maxSembrados>0) sembrados.forEach(function(d,i){ if(i%paso===0) pintar(d); });
+}
+// Aviso anticipado por voz: cuando te acercas a ~300m de un mirador, punto de agua u
+// hospedaje real del mapa (sembrado o de la comunidad), Pistero avisa una sola vez
+// por punto (no se repite ni satura si hay varios seguidos: uno por tick como máximo).
+let puntosAvisados=new Set();
+const CATEGORIAS_AVISO={agua:'agua', mirador:'mirador', vista:'mirador', hostel:'hospedaje'};
+const FRASES_AVISO={agua:'Ojo, a unos metros hay un punto de agua marcado por la comunidad.', mirador:'Ojo, a unos metros hay un mirador marcado por la comunidad.', hospedaje:'Ojo, a unos metros hay un hospedaje marcado por la comunidad.'};
+function avisarPuntosCercanos(lat,lon){
+  // Los puntos se suscriben normalmente al abrir el mapa; si el ciclista nunca lo
+  // abrió (arrancó directo a navegar), los pedimos igual aquí para que el aviso
+  // funcione sin depender de haber visitado esa pantalla primero.
+  if(!pointsUnsub) subscribeToMapPoints();
+  if(!mapPointsData.length || !vozActiva || vozOcupada() || vozCola.length) return;
+  for(let i=0;i<mapPointsData.length;i++){
+    const d=mapPointsData[i], tipo=CATEGORIAS_AVISO[d.cat];
+    if(!tipo) continue;
+    const id=d.id||(d.lat+','+d.lon);
+    if(puntosAvisados.has(id)) continue;
+    if(calculateDistance(lat,lon,d.lat,d.lon)<=300){
+      puntosAvisados.add(id);
+      const nombre=(d.title||'').replace(/^[^\wÁÉÍÓÚáéíóúñÑ]+/,'').trim();
+      h(FRASES_AVISO[tipo]+(nombre?(' '+nombre+'.'):''));
+      return;
+    }
+  }
 }
 function toggleRadarOnMap(){
   radarActive=!radarActive;
@@ -3129,6 +3171,7 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
   comentarPendiente(navPendienteHistory, speed);
+  avisarPuntosCercanos(lat,lon);
   checkNavigationSteps(lat,lon);
   verificarDesviacion(lat,lon);
   compararRitmoHistorico(totalDistance, tiempoActivoMs());
@@ -3210,6 +3253,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   lastFraseParadoTime=Date.now();
   navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
   navRecalcIntentos=0; navUltimoRecalcTime=0; navRecalcSilencioHasta=0;
+  puntosAvisados=new Set();
   navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
   navPendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
   iniciarDeteccionCaidas();
