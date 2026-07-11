@@ -58,6 +58,18 @@ Sube el número en cada cambio (la app se auto-repara comparando con `version.tx
 4. Anota lo que haces en `BITACORA.md` y actualiza `PENDIENTES.md`.
 5. Sube SIEMPRE la versión (evita el bucle de auto-reparación).
 
+## 🛡️ PROTEGIDO — funciones ya resueltas que NO se deben romper
+Inty reporta que "cosas ya solucionadas" se rompen entre versiones. Antes de commitear, verifica
+que estas siguen intactas (si tocas algo cerca, PRUÉBALO). No borrar ni "simplificar" sin avisar:
+- **Rastreo con pantalla apagada** → módulo `lpBackgroundGeo` (usa `BackgroundGeolocation.addWatcher` con notificación) + `lpWakeLock`. Se llama en `toggleGPS` y `calculateAndStartNavigation`. OBLIGATORIO en el APK. (El APK debe traer el plugin — ver PENDIENTES.)
+- **Anti recálculo falso** → `verificarDesviacion` mide contra TODA la ruta (`rutaLatLngs`) con `_distPuntoASegmento`, NO solo el paso actual.
+- **Freno anti-loop del recálculo rural** (cooldown 22s / 4 fixes / backoff 3min).
+- **Pausa manual** (`viajePausaManual` / `togglePausaViaje`) que congela km/tiempo.
+- **Variantes fonéticas** en `geocodeDestino` (voz "Kiman"→"Quimán").
+- **Chat Pistero** `v-pistero` (actúa/te conoce/chips) y el mic nativo wireado.
+- **Video 3D** estable (mira adelantada + topográfico) y **frases/bromas** (`bromasDelCamino`).
+Regla de oro: si vas a cambiar una de estas, primero léela completa y deja la mejora, no el reemplazo.
+
 ## 📂 Archivos de esta carpeta
 - `LEEME.md` — esto (reglas y estado).
 - `BITACORA.md` — registro de cambios por fecha/versión.

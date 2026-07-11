@@ -49,6 +49,16 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v5.99 — 2026-07-11 — Claude
+**Pantalla apagada + botones del mapa + anti-regresiones.**
+- **Rastreo con pantalla apagada:** revisado — el código web (`lpBackgroundGeo` + `lpWakeLock`) está
+  INTACTO y correcto (el wake-lock ya se re-adquiere en `visibilitychange`). Si se rompió, es que el
+  APK perdió el plugin nativo. Se agregó **`diagnosticoGPS()`** + botón "📡 Probar GPS" en Ajustes para
+  confirmarlo en el teléfono, y se marcó como URGENTE para Gemini en PENDIENTES (plugin + permisos).
+- **Botones +/− del mapa de navegación:** estaban tapados por la tarjeta de instrucciones (zoom Leaflet
+  arriba-izq por defecto). CSS: `#nav-map .leaflet-top{top:150px}` + botones más grandes (38px) para tocar rodando.
+- **Anti-regresiones:** sección "🛡️ PROTEGIDO" en `LEEME.md` con las funciones ya resueltas que NO se deben romper.
+
 ## v5.98 — 2026-07-11 — Claude (feedback de rodada real)
 **1) Recálculo falso corregido (importante).** `verificarDesviacion` medía distancia SOLO al
 `navSteps[currentStepIndex]`; si el índice de paso iba atrasado, creía que te salías estando en

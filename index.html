@@ -247,6 +247,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 #nav-screen{position:fixed;inset:0;background:#000;z-index:4000;display:none}
 #nav-screen.active{display:block}
 #nav-map{width:100%;height:100%}
+#nav-map .leaflet-top{top:150px}/* baja el zoom para que no lo tape la tarjeta de instrucciones */
+#nav-map .leaflet-control-zoom a{width:38px;height:38px;line-height:38px;font-size:22px;font-weight:800}
 #video-screen{position:fixed;inset:0;background:#000;z-index:4200;display:none}
 #video-screen.active{display:block}
 #video-map{width:100%;height:100%}
@@ -617,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.98</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.99</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -914,7 +916,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.98'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.99'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1197,6 +1199,21 @@ const lpTTS = (function(){
     stop:function(){ if(TTS){ try{ TTS.stop(); }catch(e){} } }
   };
 })();
+function diagnosticoGPS(){
+  const info=[];
+  const cap=(typeof window.Capacitor!=='undefined');
+  const bg=lpPlugin('BackgroundGeolocation');
+  info.push('Capacitor (APK): '+(cap?'SÍ':'NO — estás en la web/navegador'));
+  info.push('Plugin de segundo plano: '+(bg?'OK ✓':'NO ENCONTRADO'));
+  info.push('Grabar con pantalla apagada: '+(lpBackgroundGeo.disponible()?'DISPONIBLE ✓':'NO'));
+  info.push('GPS activo ahora: '+((ig||document.getElementById('nav-screen').classList.contains('active'))?'sí':'no'));
+  info.push('Mantener pantalla (WakeLock): '+(('wakeLock' in navigator)?'sí':'no'));
+  let veredicto;
+  if(!cap) veredicto='⚠️ Estás en el NAVEGADOR. Con la pantalla apagada el sistema suspende el GPS; el rastreo real con pantalla apagada SOLO funciona en la APP instalada.';
+  else if(!bg) veredicto='⚠️ La APP no trae el plugin de segundo plano. Hay que reconstruir el APK con @capacitor-community/background-geolocation (+ permiso de ubicación en segundo plano).';
+  else veredicto='✅ Todo listo: graba con la pantalla apagada.';
+  alert('📡 DIAGNÓSTICO GPS\n\n'+info.join('\n')+'\n\n'+veredicto+'\n\n(Sácale una foto y mándamela)');
+}
 async function diagnosticoVoz(){
   let info=[];
   info.push('Capacitor (motor nativo): '+(typeof window.Capacitor!=='undefined'?'SÍ':'NO — estás en la web, no en el APK'));

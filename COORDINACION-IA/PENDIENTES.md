@@ -31,6 +31,7 @@ Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
 ---
 
 ## 🤖 Para GEMINI (build del APK — Claude no puede compilar el APK)
+- [ ] **URGENTE — Rastreo con pantalla apagada (Inty dice que se rompió).** El código web está intacto (`lpBackgroundGeo`), pero SOLO funciona si el APK trae el plugin nativo. Verifica que el build incluya `@capacitor-community/background-geolocation`, que `npx cap sync android` corrió, y que el `AndroidManifest.xml` tenga `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `FOREGROUND_SERVICE` y `FOREGROUND_SERVICE_LOCATION`. Si un rebuild reciente lo dejó fuera, ESA es la regresión. Inty puede confirmarlo en la app con **Ajustes → 📡 Probar GPS** (dice si el plugin está o no).
 - [ ] **Micrófono nativo en la app.** El código web (v5.92) ya llama al plugin `SpeechRecognition`. Falta meterlo al APK:
   1. `npm install @capacitor-community/speech-recognition`
   2. `npx cap sync android`
