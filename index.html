@@ -357,8 +357,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="lp-logo-wrap"><img src="logo.jpg" alt="Libre Pedal" class="lp-logo"></div>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Crea tu personaje ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
-<input type="text" id="nombre-input" placeholder="Tu nombre" required style="border:2px solid var(--g)">
-<input type="email" id="em" placeholder="correo@ejemplo.com" required>
+<input type="text" id="nombre-input" placeholder="Tu nombre" required maxlength="60" style="border:2px solid var(--g)">
+<input type="email" id="em" placeholder="correo@ejemplo.com" required maxlength="100">
 <select id="pais-input" title="Tu país (adapta las frases a tu jerga)">
 <option value="auto">🌎 Detectar mi país automáticamente</option>
 <option value="cl">🇨🇱 Chile</option>
@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.02</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.03</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -629,8 +629,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
     <button class="ab" onclick="exportarUsuariosAdmin()">⬇️ Exportar lista de usuarios (.csv)</button>
     <button class="ab sec" onclick="mostrarTodosRegistrados()">👥 Ver todos los registrados</button>
     <h4 style="margin-top:14px;font-size:0.82rem;color:var(--g)">🎯 Crear reto</h4>
-    <input type="text" id="retoTitulo" placeholder="Título (ej: 500km en julio)">
-    <input type="text" id="retoDesc" placeholder="Descripción breve (opcional)">
+    <input type="text" id="retoTitulo" placeholder="Título (ej: 500km en julio)" maxlength="80">
+    <input type="text" id="retoDesc" placeholder="Descripción breve (opcional)" maxlength="200">
     <input type="number" id="retoMeta" placeholder="Meta en km" min="1">
     <input type="number" id="retoDias" placeholder="Duración en días" min="1">
     <button class="ab" style="margin-top:6px" onclick="crearReto()">Publicar reto</button>
@@ -651,13 +651,13 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-newtrip" class="view">
 <div class="section-info"><h4>Planificar viaje</h4><p>Agrega destinos en orden.</p></div>
-<input type="text" id="trip-name" placeholder="Nombre del viaje">
-<input type="text" id="trip-start" placeholder="Punto de partida">
+<input type="text" id="trip-name" placeholder="Nombre del viaje" maxlength="80">
+<input type="text" id="trip-start" placeholder="Punto de partida" maxlength="100">
 <div style="margin-top:12px"><h4 style="color:var(--p);font-size:0.9rem">Destinos</h4>
 <div class="gt"><div class="gtt on" onclick="filterDestType('hostel',this)">Hostels</div><div class="gtt" onclick="filterDestType('custom',this)">Personal</div></div>
 <div id="dest-options"></div>
 <div id="custom-dest-form" style="display:none;margin-top:8px">
-<input type="text" id="custom-dest-name" placeholder="Nombre"><input type="text" id="custom-dest-addr" placeholder="Dirección">
+<input type="text" id="custom-dest-name" placeholder="Nombre" maxlength="80"><input type="text" id="custom-dest-addr" placeholder="Dirección" maxlength="150">
 <button class="ab" onclick="addCustomDest()">Agregar</button></div></div>
 <div style="margin-top:12px"><h4 style="color:var(--g);font-size:0.9rem">Orden</h4><div id="added-dests"></div></div>
 <button class="ab" style="margin-top:12px" onclick="reporteDeViaje()">📋 Ver reporte + clima</button>
@@ -695,26 +695,26 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <h4 style="margin-top:0;font-size:0.9rem">🌅 Inicio del día</h4>
   <p style="font-size:0.78rem;color:#9fb3c8;margin:4px 0 6px">¿Cómo amaneciste hoy?</p>
   <div id="diarioEstado" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-  <input type="text" id="diarioMeta" placeholder="🎯 Meta del día: ¿a dónde vas?" style="margin-top:10px">
+  <input type="text" id="diarioMeta" placeholder="🎯 Meta del día: ¿a dónde vas?" maxlength="150" style="margin-top:10px">
 </div>
 <div class="cd">
   <h4 style="margin-top:0;font-size:0.9rem">⛺ Cierre del día</h4>
   <p style="font-size:0.78rem;color:#9fb3c8;margin:4px 0">Hoy pedaleaste <strong id="diarioKm" style="color:var(--p)">0.00</strong> km.</p>
-  <textarea id="diarioComplejo" rows="2" placeholder="Lo más complejo del tramo... (privado)"></textarea>
-  <textarea id="diarioReflexion" rows="3" placeholder="El viaje interno: tu reflexión del día... (privado)" style="margin-top:6px"></textarea>
+  <textarea id="diarioComplejo" rows="2" placeholder="Lo más complejo del tramo... (privado)" maxlength="500"></textarea>
+  <textarea id="diarioReflexion" rows="3" placeholder="El viaje interno: tu reflexión del día... (privado)" maxlength="800" style="margin-top:6px"></textarea>
 </div>
 <button class="ab" onclick="guardarDiario()">💾 Guardar mi día</button>
 <div class="cd" style="margin-top:10px">
   <h4 style="margin-top:0;font-size:0.9rem">📍 Comparte un Punto de Interés</h4>
   <p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Busca un lugar (agua, comida, mirador, taller, alojamiento…) y compártelo. Queda en el mapa para toda la comunidad y ganas Darma. 🤝</p>
-  <input type="text" id="poi-buscar" placeholder="🔎 Busca el lugar o dirección...">
+  <input type="text" id="poi-buscar" placeholder="🔎 Busca el lugar o dirección..." maxlength="150">
   <button class="ab sec" type="button" style="margin:6px 0" id="btnPoiMapaManual" onclick="togglePoiMapaManual()">📍 No lo encuentra: márcalo directo en el mapa</button>
   <div id="poi-mapa-manual" style="display:none;margin-bottom:8px">
     <div id="poi-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div>
     <p id="poiMapaManualEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto.</p>
   </div>
   <div id="poi-cats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0"></div>
-  <textarea id="poi-desc" rows="2" placeholder="Cuéntalo con detalle (ej: agua gratis en la bencinera, o mirador con vista al lago)..."></textarea>
+  <textarea id="poi-desc" rows="2" placeholder="Cuéntalo con detalle (ej: agua gratis en la bencinera, o mirador con vista al lago)..." maxlength="500"></textarea>
   <button class="ab" style="margin-top:6px" onclick="agregarPOI()">📍 Compartir con la comunidad (+15 Darma)</button>
 </div>
 <div class="cd" style="margin-top:8px"><h4 style="margin-top:0;font-size:0.85rem">☁️ Respaldo de tus datos</h4><p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Tu diario se respalda en tu cuenta. También puedes descargar una copia a un archivo y restaurarla.</p>
@@ -794,9 +794,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <section id="v-rec" class="view">
 <div class="section-info"><h4>Recomendaciones</h4><p>Lugares útiles con "Me gusta".</p></div>
 <div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-bottom:15px">
-<input type="text" id="rec-title" placeholder="Título">
+<input type="text" id="rec-title" placeholder="Título" maxlength="80">
 <select id="rec-cat"><option value="agua">Agua</option><option value="comida">Comida</option><option value="vista">Vista</option><option value="seguridad">Seguridad</option><option value="otro">Otro</option></select>
-<textarea id="rec-desc" rows="2" placeholder="Descripción..."></textarea>
+<textarea id="rec-desc" rows="2" placeholder="Descripción..." maxlength="500"></textarea>
 <label for="rec-foto" style="display:inline-flex;align-items:center;gap:6px;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.4);color:var(--p);border-radius:10px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;margin:4px 0">📷 Agregar foto</label>
 <input type="file" id="rec-foto" accept="image/*" style="display:none" onchange="previewFoto(this,'rec')">
 <img id="rec-foto-prev" style="display:none;width:100%;border-radius:10px;margin:4px 0;max-height:160px;object-fit:cover" alt="">
@@ -833,7 +833,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div id="ml"></div>
 <h3 style="margin-top:15px;font-size:0.95rem">Comparte tu truco</h3>
 <button class="secret-btn" onclick="toggleSecretForm()">Compartir</button>
-<div class="secret-form" id="secretForm"><input type="text" id="repair-title" placeholder="Problema"><textarea id="repair-desc" rows="2" placeholder="Solución..."></textarea><button class="ab" onclick="addRepairTip()">Compartir</button></div>
+<div class="secret-form" id="secretForm"><input type="text" id="repair-title" placeholder="Problema" maxlength="80"><textarea id="repair-desc" rows="2" placeholder="Solución..." maxlength="500"></textarea><button class="ab" onclick="addRepairTip()">Compartir</button></div>
 <div id="repair-tips" style="margin-top:12px"></div>
 </section>
 
@@ -846,12 +846,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div id="hostel-list"></div>
 <h3 style="margin-top:15px;font-size:0.95rem">Comentarios</h3>
 <div id="gui-comments"></div>
-<div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:8px;margin-top:8px"><input type="text" id="comment-input" placeholder="Comentario..."><button class="ab" onclick="addComment()">Publicar</button></div>
+<div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:8px;margin-top:8px"><input type="text" id="comment-input" placeholder="Comentario..." maxlength="300"><button class="ab" onclick="addComment()">Publicar</button></div>
 <h3 style="margin-top:15px;font-size:0.95rem">Nuevo alojamiento</h3>
-<input type="text" id="hostel-name" placeholder="Nombre">
+<input type="text" id="hostel-name" placeholder="Nombre" maxlength="80">
 <select id="hostel-type"><option value="hostel">Hostel</option><option value="camping">Camping</option><option value="casa">Casa</option></select>
-<input type="text" id="hostel-location" placeholder="Dirección">
-<textarea id="hostel-desc" rows="2" placeholder="Descripción..."></textarea>
+<input type="text" id="hostel-location" placeholder="Dirección" maxlength="150">
+<textarea id="hostel-desc" rows="2" placeholder="Descripción..." maxlength="500"></textarea>
 <label for="hostel-foto" style="display:inline-flex;align-items:center;gap:6px;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.4);color:var(--p);border-radius:10px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;margin:4px 0">📷 Agregar foto</label>
 <input type="file" id="hostel-foto" accept="image/*" style="display:none" onchange="previewFoto(this,'hostel')">
 <img id="hostel-foto-prev" style="display:none;width:100%;border-radius:10px;margin:4px 0;max-height:160px;object-fit:cover" alt="">
@@ -918,7 +918,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.02'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.03'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* ===== RED DE SEGURIDAD: ninguna eventualidad debe romper la app en plena ruta =====
    Un error suelto o una promesa rechazada se registran (Sentry) y la app SIGUE andando. */
 window.addEventListener('error', function(e){ try{ if(window.Sentry && e && e.error) Sentry.captureException(e.error); }catch(_){} });
@@ -1171,6 +1171,9 @@ function _osrmPerfil(){ return _actividadActual().osrm; }
 function elegirActividad(id){
   if(!ACTIVIDADES.some(function(a){return a.id===id;})) return;
   actividadTipo=id; try{ localStorage.setItem('lp_actividad',id); }catch(e){}
+  // Antes solo quedaba en localStorage: si el usuario cambiaba de celular perdía la
+  // preferencia sin ningún aviso. Se sube a su perfil igual que casco/lentes/skin.
+  if(cu){ try{ db.collection('users').doc(cu).set({actividad:id},{merge:true}).catch(function(){}); }catch(e){} }
   renderActividadGrid();
   h('Listo, ahora te acompaño como '+_actividadActual().gentilicio+'.');
 }
@@ -1192,6 +1195,8 @@ let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
 function elegirPersonalidad(id){
   if(!PERSONALIDADES.some(function(p){return p.id===id;})) return;
   pisteroPersonalidad=id; try{ localStorage.setItem('lp_personalidad',id); }catch(e){}
+  // Igual que la actividad: se sube al perfil para no perderla al cambiar de celular.
+  if(cu){ try{ db.collection('users').doc(cu).set({personalidad:id},{merge:true}).catch(function(){}); }catch(e){} }
   renderPersonalidadGrid();
   h('Listo, así te hablo de ahora en adelante.');
 }
@@ -1208,7 +1213,7 @@ let recognition = null, micOn = false;
 let vozPref = null, vozActiva = (localStorage.getItem('lp_voz') !== 'off');
 // Índices de la barra inferior: 0=Inicio 1=Mapa 2=Pistero 3=Social 4=Perfil.
 // Taller/diario no aparecen: viven en la esfera, no marcan ningún botón de la barra.
-const viewNav = {dash:0, routes:0, trips:0, newtrip:0, musica:0, ajustes:0, map:1, gui:1, pistero:2, chat:3, rec:3, novedades:3, customize:4, stats:4};
+const viewNav = {dash:0, routes:0, trips:0, newtrip:0, musica:0, ajustes:0, diario:0, mac:0, map:1, gui:1, pistero:2, chat:3, rec:3, novedades:3, customize:4, stats:4};
 
 const frasesLento = ["¿Vas pedaleando o estás parando la chala?","Oye, te va a adelantar un guarén.","Un corpóreo del Doctor Simi corre más rápido.","¿Vas cansado o andas buscando monedas en el suelo?","Apúrate, que el lanchón de Chiloé te pilla.","Dale un poco más de color al pedaleo.","¿Te dio la pálida o qué pasó?","Mi abuelita pedalea más rápido que tú.","Tranquilo: las pirámides se hicieron ladrillo a ladrillo.","Si vas más lento, te van a multar por estorbar.","¿Pedaleas o estás meditando, maestro?","He visto tortugas con más prisa que tú.","Mi sombra ya llegó y te está esperando.","¿Todo bien por ahí?"];
 const frasesNormal = ["¡Eso! Ritmo impecable, vas como avión.","Así da gusto, mantén ese pulso.","Ni don Francisco tenía ese aguante.","Ritmo preciso, me encanta.","A este paso llegamos a tomar tecito calientito.","La bicicleta es el vehículo perfecto, y tú lo confirmas.","No hay camino largo cuando suena buena música.","Disfruta: el destino importa tanto como el camino.","La felicidad se mide en kilómetros, y vas sumando.","Dos ruedas y un horizonte, no se necesita más.","El asfalto es tu lienzo, sigue pintando.","Cada subida tiene su bajada, recuérdalo.","Pedalear es volver a lo esencial.","La libertad huele a cadena recién aceitada."];
@@ -1415,7 +1420,7 @@ function hAmbiente(t){ if(vozOcupada()||vozCola.length) return; h(t); }
 function hCorta(t){ pararVoz(); h(t); }
 function _reproducirVoz(item){
   vozHablando=true;
-  const durEst=Math.min(14000, Math.max(1800, item.limpio.length*75));
+  const durEst=Math.min(55000, Math.max(1800, item.limpio.length*75));
   mostrarBocadillo(item.t, durEst+600);
   _pisteroHabla(durEst);
   clearTimeout(vozTimerFin); vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado, nunca antes del fin natural
@@ -1681,8 +1686,19 @@ function _pisteroContexto(){
 // Pistero OBEDECE órdenes: el Worker devuelve etiquetas [ACCION:...] al final de la
 // respuesta. Regla anti-invasivo: si TÚ lo pediste (tu mensaje suena a orden), se
 // ejecuta al tiro; si fue idea del modelo, queda como botón opcional y tú decides.
-const PISTERO_VISTAS_OK={map:1,trips:1,routes:1,diario:1,mac:1,gui:1,chat:1,customize:1,stats:1,musica:1,ajustes:1};
-const PISTERO_NOMBRES={map:'el Mapa',trips:'Mis viajes',routes:'el Historial de rutas',diario:'la Bitácora',mac:'el Taller',gui:'la CicloGuía',chat:'Social',customize:'tu Perfil',stats:'Estadísticas',musica:'Música',ajustes:'Ajustes'};
+const PISTERO_VISTAS_OK={dash:1,map:1,trips:1,routes:1,diario:1,mac:1,gui:1,chat:1,customize:1,stats:1,musica:1,ajustes:1};
+const PISTERO_NOMBRES={dash:'Inicio',map:'el Mapa',trips:'Mis viajes',routes:'el Historial de rutas',diario:'la Bitácora',mac:'el Taller',gui:'la CicloGuía',chat:'Social',customize:'tu Perfil',stats:'Estadísticas',musica:'Música',ajustes:'Ajustes'};
+// El modelo a veces manda un id "natural" en vez del id EXACTO que le dimos en el
+// prompt (dice "perfil" en vez de "customize", "inicio" en vez de "dash") — sin esto,
+// la orden se rechazaba en silencio y el ciclista no se enteraba de que no pasó nada.
+const PISTERO_ALIAS={inicio:'dash',home:'dash',perfil:'customize',personaje:'customize',social:'chat',amigos:'chat',mapa:'map',taller:'mac',mecanica:'mac',guia:'gui',cicloguia:'gui',hospedaje:'gui',hospedajes:'gui',viajes:'trips','mis viajes':'trips',rutas:'routes',historial:'routes',bitacora:'diario',diario:'diario',estadisticas:'stats',estadistica:'stats'};
+function _pisteroResolverVista(arg){
+  if(!arg) return null;
+  if(PISTERO_VISTAS_OK[arg]) return arg;
+  const norm=normalizar(arg);
+  if(PISTERO_VISTAS_OK[norm]) return norm;
+  return PISTERO_ALIAS[norm]||null;
+}
 function _pisteroBotonAccion(txt, fn){
   const cont=document.getElementById('pisteroMsgs'); if(!cont) return;
   const wrap=document.createElement('div'); wrap.className='pmsg-acciones';
@@ -1699,9 +1715,11 @@ function _pisteroObedecer(acciones, pedido){
     if(a.tipo==='navegar' && a.arg){
       if(pidioIr){ pisteroNavegar(a.arg); }
       else _pisteroBotonAccion('🧭 Iniciar navegación a '+a.arg, function(){ pisteroNavegar(a.arg); });
-    } else if(a.tipo==='abrir' && PISTERO_VISTAS_OK[a.arg]){
-      if(pidioAbrir||pidioIr){ cv(a.arg); }
-      else _pisteroBotonAccion('👉 Abrir '+(PISTERO_NOMBRES[a.arg]||a.arg), function(){ cv(a.arg); });
+    } else if(a.tipo==='abrir'){
+      const destino=_pisteroResolverVista(a.arg);
+      if(!destino) return;
+      if(pidioAbrir||pidioIr){ cv(destino); }
+      else _pisteroBotonAccion('👉 Abrir '+(PISTERO_NOMBRES[destino]||destino), function(){ cv(destino); });
     } else if(a.tipo==='gps'){
       if(pidioGps){ toggleGPS(); }
       else _pisteroBotonAccion('📍 GPS: grabar mi ruta', function(){ toggleGPS(); });
@@ -2013,7 +2031,7 @@ async function reg(e){
   // authUid: uid real de Firebase Auth, ademas del id legado (cu, derivado del email).
   // Se guarda de forma aditiva para migrar mas adelante a reglas de Firestore por-dueno sin romper nada hoy.
   const _authUid = window.lpUID || (firebase.auth().currentUser && firebase.auth().currentUser.uid) || null;
-  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
+  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
   document.getElementById('auth').style.display='none';
   document.getElementById('logoutBtn').style.display='block';
   document.getElementById('ghostBtn').style.display='block';
@@ -2279,12 +2297,29 @@ function comentarPendiente(buffer, sp){
 // cerros, día nublado) la velocidad se quedaba pegada sin ninguna explicación. Ahora
 // se avisa con una insignia mientras dura, y desaparece sola apenas el GPS mejora.
 function _gpsBadgeToggle(id, mostrar){ const el=document.getElementById(id); if(el) el.style.display=mostrar?'inline-flex':'none'; }
+// Techo de velocidad plausible entre dos fixes de GPS: si un salto de posición
+// implica ir más rápido que esto, es ruido/corrupción del GPS (rebote de señal al
+// salir de un túnel, error del chip), no un desplazamiento real — se descarta ANTES
+// de sumarlo al kilometraje, que si no queda corrupto para siempre (silenciosamente,
+// sin ningún error visible). 90 km/h cubre hasta la bajada más rápida en bici; en modo
+// moto/auto se permite más.
+function _velMaxPlausibleKmh(){ return (typeof actividadTipo!=='undefined' && actividadTipo==='moto') ? 200 : 90; }
+function _saltoEsPlausible(distMetros, msTranscurridos){
+  if(!msTranscurridos || msTranscurridos<=0) return true; // sin referencia de tiempo confiable, no hay como objetar
+  const kmh=(distMetros/1000)/(msTranscurridos/3600000);
+  return kmh<=_velMaxPlausibleKmh();
+}
 function ug(p){
   const la=p.coords.latitude, lo=p.coords.longitude;
+  // Descarta fixes con coordenadas corruptas (null/NaN, típico con señal muy débil en
+  // Android): sin este chequeo, null se convierte en 0 al hacer cuentas y la distancia
+  // al (0,0) se suma de golpe al kilometraje total, silenciosamente, sin ningún error.
+  if(!Number.isFinite(la) || !Number.isFinite(lo)) return;
   // Descarta fixes imprecisos: el GPS "salta" varios metros aunque estés quieto.
   if(p.coords.accuracy && p.coords.accuracy>35){ _gpsBadgeToggle('gpsSignalBadge', true); return; }
   _gpsBadgeToggle('gpsSignalBadge', false);
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
+  const _msDesdeUltimoFix=lastFixTime?(Date.now()-lastFixTime):0; // para el chequeo de velocidad plausible más abajo
   // VELOCIDAD VERIFICADA POR DESPLAZAMIENTO REAL (ventana ~10s). Es la fuente de
   // verdad: promedia el ruido del GPS. Si en 10s no nos desplazamos de verdad,
   // estamos QUIETOS aunque el GPS reporte velocidad fantasma (caso casa).
@@ -2322,7 +2357,11 @@ function ug(p){
   _verificarFatiga(tiempoActivoMs(), sp);
   // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
   if(us.la && moved<0.012){ return; }
-  if(us.la){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  // Salto implausible (rebote de señal, glitch del chip GPS): no lo sumamos al
+  // kilometraje, pero igual re-anclamos la posición para que el PRÓXIMO fix se
+  // calcule bien (si no, un solo glitch dejaría todos los fixes siguientes también
+  // "implausibles" por comparar contra un punto viejo).
+  if(us.la && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
@@ -3030,36 +3069,40 @@ function reportarEnRuta(){
   reporteCatSel=null;
   let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu dato queda público en el mapa de tu zona para ayudar a otros ciclistas. Elige qué reportas:</p><div id="repCats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   Object.keys(REPORTE_CATS).forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+k+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.8rem">'+c.e+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; });
-  html+='</div><div id="repSuperficieExtra" style="display:none;margin-top:10px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea><button class="ab" style="margin-top:8px" onclick="enviarReporte()">📍 Publicar en mi zona (+15 Darma)</button>';
+  html+='</div><div id="repSuperficieExtra" style="display:none;margin-top:10px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." maxlength="500" style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea><button class="ab" style="margin-top:8px" onclick="enviarReporte()">📍 Publicar en mi zona (+15 Darma)</button>';
   document.getElementById('modalTitle').innerText='🚴 Reportar en Ruta';
   document.getElementById('modalContent').innerHTML=html;
   document.getElementById('userModal').classList.add('on');
 }
 function seleccionarCatReporte(k){ reporteCatSel=k; document.querySelectorAll('#repCats .rep-cat').forEach(function(el){ el.style.borderColor = el.getAttribute('data-k')===k ? REPORTE_CATS[k].c : '#2a3147'; el.style.background = el.getAttribute('data-k')===k ? 'rgba(255,255,255,0.05)' : 'transparent'; }); const extra=document.getElementById('repSuperficieExtra'); if(extra) extra.style.display=(k==='superficie')?'block':'none'; }
+let _enviandoReporte=false;
 async function enviarReporte(){
   if(!reporteCatSel){ alert('Elige primero una categoría'); return; }
   const text=document.getElementById('repText').value.trim();
   if(!text){ alert('Escribe el dato que quieres compartir'); return; }
   let loc=currentUserLocation || (us.la?{lat:us.la,lon:us.lo}:null);
   if(!loc){ alert('Necesito tu ubicación para ubicar el reporte. Activa el GPS.'); getCurrentLocation(); return; }
-  let comuna='Mi zona';
-  try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+loc.lat+'&lon='+loc.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
-  const data={cat:reporteCatSel, text:text, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()};
-  if(reporteCatSel==='superficie'){
-    const tipoEl=document.getElementById('repSuperficieTipo'), difEl=document.getElementById('repDificultad');
-    // Antes eran opcionales: se podía publicar "Estado del camino" sin decir ni el
-    // tipo de superficie ni la dificultad, dejando el dato sin nada útil para filtrar
-    // o mostrar en el mapa (solo texto libre). Ahora se exige al menos el tipo.
-    if(!tipoEl || !tipoEl.value){ alert('Elige el tipo de superficie (asfalto, ripio, tierra o mixto)'); return; }
-    data.superficie=tipoEl.value;
-    if(difEl && difEl.value) data.dificultad=difEl.value;
-  }
+  if(_enviandoReporte) return; // evita duplicar el documento y el Darma con doble-tap
+  _enviandoReporte=true;
   try{
+    let comuna='Mi zona';
+    try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+loc.lat+'&lon='+loc.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
+    const data={cat:reporteCatSel, text:text, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()};
+    if(reporteCatSel==='superficie'){
+      const tipoEl=document.getElementById('repSuperficieTipo'), difEl=document.getElementById('repDificultad');
+      // Antes eran opcionales: se podía publicar "Estado del camino" sin decir ni el
+      // tipo de superficie ni la dificultad, dejando el dato sin nada útil para filtrar
+      // o mostrar en el mapa (solo texto libre). Ahora se exige al menos el tipo.
+      if(!tipoEl || !tipoEl.value){ alert('Elige el tipo de superficie (asfalto, ripio, tierra o mixto)'); return; }
+      data.superficie=tipoEl.value;
+      if(difEl && difEl.value) data.dificultad=difEl.value;
+    }
     await db.collection('reportes').add(data);
     us.d+=15; au(); sincronizarStats();
     closeModal();
     h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
   }catch(err){ alert('No se pudo enviar: '+err.message); }
+  finally{ _enviandoReporte=false; }
 }
 function tiempoTranscurrido(ts){ if(!ts||!ts.seconds) return 'recién'; const s=Math.floor(Date.now()/1000)-ts.seconds; if(s<60) return 'recién'; const m=Math.floor(s/60); if(m<60) return 'hace '+m+' min'; const h2=Math.floor(m/60); if(h2<24) return 'hace '+h2+' h'; const d=Math.floor(h2/24); if(d<7) return 'hace '+d+' día'+(d>1?'s':''); const w=Math.floor(d/7); return 'hace '+w+' sem'; }
 function subscribeToReportes(){
@@ -3250,22 +3293,25 @@ async function navegarAPuntoMapaElegido(){
   const btn=document.getElementById('btnNavegarPuntoMapa'); if(btn) btn.style.display='none';
   await calculateAndStartNavigation(currentUserLocation.lat, currentUserLocation.lon, lat, lon, 'Punto marcado en el mapa');
 }
+let _agregandoPOI=false;
 async function agregarPOI(){
   const q=document.getElementById('poi-buscar').value.trim();
   const desc=document.getElementById('poi-desc').value.trim();
   if(!poiManualCoords && !q){ alert('Escribe el lugar o dirección, o márcalo directo en el mapa.'); return; }
   if(!poiCatSel){ alert('Elige una categoría para el punto.'); return; }
   if(!desc){ alert('Cuenta brevemente qué es este punto.'); return; }
-  let dest=null;
-  if(poiManualCoords){ dest=poiManualCoords; }
-  else{
-    h('Buscando "'+q+'" en el mapa...');
-    try{ dest=await geocodeDestino(q); }catch(e){}
-    if(!dest){ alert('No encontré "'+q+'". Prueba con más detalle, o márcalo directo en el mapa con el botón de abajo.'); return; }
-  }
-  let comuna='Mi zona';
-  try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+dest.lat+'&lon='+dest.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
+  if(_agregandoPOI) return; // evita duplicar el punto y el Darma con doble-tap
+  _agregandoPOI=true;
   try{
+    let dest=null;
+    if(poiManualCoords){ dest=poiManualCoords; }
+    else{
+      h('Buscando "'+q+'" en el mapa...');
+      try{ dest=await geocodeDestino(q); }catch(e){}
+      if(!dest){ alert('No encontré "'+q+'". Prueba con más detalle, o márcalo directo en el mapa con el botón de abajo.'); return; }
+    }
+    let comuna='Mi zona';
+    try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+dest.lat+'&lon='+dest.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
     await db.collection('reportes').add({cat:poiCatSel, text:desc, lugar:q||'Marcado en el mapa', user:cu, nombre:nombreUsuario, lat:dest.lat, lon:dest.lon, comuna:comuna, ts:firebase.firestore.FieldValue.serverTimestamp()});
     us.d+=15; au(); if(typeof sincronizarStats==='function') sincronizarStats();
     document.getElementById('poi-buscar').value=''; document.getElementById('poi-desc').value=''; poiCatSel=null; renderPoiCats();
@@ -3274,6 +3320,7 @@ async function agregarPOI(){
     document.getElementById('btnPoiMapaManual').innerText='📍 No lo encuentra: márcalo directo en el mapa';
     h('¡Punto compartido en '+comuna+'! Ya está en el mapa para toda la comunidad. Quince de Darma para ti. 🙌');
   }catch(err){ alert('No se pudo compartir: '+(err.code||err.message)); }
+  finally{ _agregandoPOI=false; }
 }
 function openDiario(){ cv('diario'); cargarDiario(); renderPoiCats(); sincronizarDiarioNube().then(function(){ cargarDiario(); }); }
 function renderDiarioEstados(){ const c=document.getElementById('diarioEstado'); if(!c) return; c.innerHTML=DIARIO_ESTADOS.map(function(s){ const sel=diarioEstadoSel===s.l; return '<button onclick="diarioEstadoSel=\''+s.l+'\';renderDiarioEstados()" style="flex:1;min-width:88px;padding:10px;border-radius:10px;border:2px solid '+(sel?'var(--p)':'#2a3147')+';background:'+(sel?'rgba(252,76,2,0.12)':'var(--gl)')+';color:#fff;font-weight:700;font-size:0.78rem;cursor:pointer">'+s.e+' '+s.l+'</button>'; }).join(''); }
@@ -3345,26 +3392,31 @@ async function abrirTeDoyAlojo(){
       snap.forEach(function(doc){ const d=doc.data(); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.86rem;color:var(--p)">'+escapeHTML(d.nombre||'Ciclista')+'</div><div style="font-size:0.76rem;color:#9fb3c8">📍 '+escapeHTML(d.zona||'Zona no indicada')+'</div><div style="font-size:0.82rem;color:#dfe7ff;margin-top:4px">'+escapeHTML(d.desc||'')+'</div><button class="ab sec" style="width:auto;padding:6px 12px;margin-top:6px;font-size:0.75rem" onclick="abrirChatAmigo(\''+doc.data().user+'\')">💬 Contactar</button></div>'; });
     } else { html+='<p style="color:#888;font-size:0.8rem">Aún no hay ofertas. ¡Sé el primero en compartir alojo!</p>'; }
     html+='<h4 style="font-size:0.85rem;color:var(--g);margin-top:14px">Publicar mi oferta</h4>';
-    html+='<input id="alojoZona" type="text" placeholder="Tu ciudad / zona" style="margin-bottom:6px"><textarea id="alojoDesc" rows="3" placeholder="Qué ofreces: tipo de alojo, comida, cómo contactar..."></textarea><button class="ab" style="margin-top:6px" onclick="publicarAlojo()">🏡 Publicar mi oferta (+20 Darma)</button>';
+    html+='<input id="alojoZona" type="text" placeholder="Tu ciudad / zona" maxlength="80" style="margin-bottom:6px"><textarea id="alojoDesc" rows="3" placeholder="Qué ofreces: tipo de alojo, comida, cómo contactar..." maxlength="500"></textarea><button class="ab" style="margin-top:6px" onclick="publicarAlojo()">🏡 Publicar mi oferta (+20 Darma)</button>';
     c.innerHTML=html;
   }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar.</p>'; }
 }
+let _publicandoAlojo=false;
 async function publicarAlojo(){
   const zona=document.getElementById('alojoZona')?.value.trim();
   const desc=document.getElementById('alojoDesc')?.value.trim();
   if(!zona||!desc){ alert('Rellena zona y descripción antes de publicar.'); return; }
+  if(_publicandoAlojo) return; // evita duplicar la oferta y el Darma con doble-tap
+  _publicandoAlojo=true;
   try{
     await db.collection('alojo').add({user:cu, nombre:nombreUsuario, zona:zona, desc:desc, ts:firebase.firestore.FieldValue.serverTimestamp()});
     us.d+=20; au(); sincronizarStats();
     h('¡Oferta publicada! Otros ciclistas ya pueden contactarte. Veinte de Darma para ti. 🏡');
     closeModal();
   }catch(e){ alert('No se pudo publicar: '+(e.message||e)); }
+  finally{ _publicandoAlojo=false; }
 }
 function renderDiarioHistorial(){ const c=document.getElementById('diarioHistorial'); if(!c) return; const pre='lp_diario_'+(cu||'anon')+'_'; const keys=Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().reverse().filter(function(k){return k!==diarioHoyKey();}); if(!keys.length){ c.innerHTML=''; return; } let html='<h4 style="font-size:0.85rem;color:var(--p)">Días anteriores</h4>'; keys.slice(0,12).forEach(function(k){ let d={}; try{d=JSON.parse(localStorage.getItem(k));}catch(e){return;} const est=DIARIO_ESTADOS.find(function(s){return s.l===d.estado;}); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.76rem;color:#9fb3c8">'+(d.fecha||'')+' · '+(est?est.e+' '+est.l:'')+' · '+(d.km?(+d.km).toFixed(1):0)+' km</div>'+(d.meta?'<div style="font-size:0.78rem;margin-top:3px">🎯 '+d.meta+'</div>':'')+(d.complejo?'<div style="font-size:0.75rem;color:#cdd;margin-top:3px">💪 '+d.complejo+'</div>':'')+(d.reflexion?'<div style="font-size:0.75rem;color:#9fb3c8;font-style:italic;margin-top:3px">🧘 '+d.reflexion+'</div>':'')+'</div>'; }); c.innerHTML=html; }
 function rm(l){ document.getElementById('ml').innerHTML=l.map(function(i){ return '<div class="cd" onclick="h(\''+i.t+'. '+i.s.replace(/'/g,"\\'")+'\')"><b style="color:var(--p);font-size:0.85rem">'+i.t+'</b><p style="margin:6px 0;font-size:0.8rem">'+i.s+'</p><small style="color:#888;font-size:0.7rem">Fuente: '+i.f+'</small></div>'; }).join(''); }
 function fm(){ const v=document.getElementById('bm').value.toLowerCase(); rm(MG.filter(function(i){ return i.t.toLowerCase().indexOf(v)!==-1||i.s.toLowerCase().indexOf(v)!==-1; })); }
 function toggleSecretForm(){ document.getElementById('secretForm').classList.toggle('show'); }
-function addRepairTip(){ const title=document.getElementById('repair-title').value; const desc=document.getElementById('repair-desc').value; if(!title||!desc) return alert("Completa los campos"); db.collection('repairTips').add({user:cu,nombre:nombreUsuario,title:title,desc:desc,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}); document.getElementById('repair-title').value=''; document.getElementById('repair-desc').value=''; toggleSecretForm(); h("Truco compartido. ¡Gracias!"); }
+let _agregandoRepairTip=false;
+async function addRepairTip(){ const title=document.getElementById('repair-title').value.trim(); const desc=document.getElementById('repair-desc').value.trim(); if(!title||!desc) return alert("Completa los campos"); if(_agregandoRepairTip) return; _agregandoRepairTip=true; try{ await db.collection('repairTips').add({user:cu,nombre:nombreUsuario,title:title,desc:desc,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}); document.getElementById('repair-title').value=''; document.getElementById('repair-desc').value=''; toggleSecretForm(); h("Truco compartido. ¡Gracias!"); }catch(e){ alert('No se pudo compartir: '+(e.message||e)); } finally{ _agregandoRepairTip=false; } }
 function loadRepairTips(){ db.collection('repairTips').orderBy('ts','desc').limit(20).onSnapshot(async function(snapshot){ const c=document.getElementById('repair-tips'); if(!c) return; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero en compartir</p>'; return; } let html='<h4 style="margin:12px 0 8px 0;color:var(--g);font-size:0.9rem">Trucos de la comunidad</h4>'; for(const doc of snapshot.docs){ const data=doc.data(); const nombre=await getNombreUsuario(data.user); html+='<div class="repair-tip"><strong style="font-size:0.85rem">'+escapeHTML(data.title)+'</strong><p style="font-size:0.8rem">'+escapeHTML(data.desc)+'</p><small style="color:#888;font-size:0.7rem">Por: '+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small></div>'; } c.innerHTML=html; }); }
 function filtrarCategoria(cat,btn){ categoriaActual=cat; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); fg(cat); }
 function fg(c){ const f=c==='todos'?CG:CG.filter(function(i){return i.cat===c;}); const el=document.getElementById('gl'); if(!el) return; el.innerHTML=f.map(function(i){ return '<div class="gi" onclick="h(\''+i.t+'. '+i.d.replace(/'/g,"\\'")+'\')"><h4 style="margin:0 0 6px 0;color:var(--p);font-size:0.85rem">'+i.t+'</h4><p style="margin:0 0 6px 0;font-size:0.8rem">'+i.d+'</p><div>'+i.tg.map(function(t){return '<span style="background:#333;padding:2px 5px;border-radius:5px;font-size:0.6rem;margin-right:3px">'+t+'</span>';}).join('')+'</div></div>'; }).join(''); }
@@ -3446,7 +3498,7 @@ async function valorar(col,id,n){
 }
 function filtrarHostels(tipo,btn){ hostelTipoActual=tipo; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); renderHostelsLista(); }
 function addHostel(){ const name=document.getElementById('hostel-name').value; const tipo=document.getElementById('hostel-type').value; const location=document.getElementById('hostel-location').value; const desc=document.getElementById('hostel-desc').value; if(!name||!location) return alert("Completa nombre y dirección"); const d={user:cu,nombre:nombreUsuario,tipo:tipo,name:name,location:location,desc:desc,ratingSum:0,votes:0,ratedBy:{},h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}; if(hostelCoords){ d.lat=hostelCoords.lat; d.lon=hostelCoords.lon; } if(fotosPendientes.hostel){ d.foto=fotosPendientes.hostel; } db.collection('hostels').add(d); document.getElementById('hostel-name').value=''; document.getElementById('hostel-location').value=''; document.getElementById('hostel-desc').value=''; limpiarFoto('hostel'); hostelCoords=null; document.getElementById('map-hostel-select').classList.remove('show'); document.getElementById('gpsStatus').classList.remove('show'); h("Alojamiento publicado."); }
-function loadHostels(){ if(!loadHostels._votos){ loadHostels._votos=true; initVotosHostels(); } db.collection('hostels').orderBy('ts','desc').limit(50).onSnapshot(function(snapshot){ allHostels=[]; snapshot.forEach(function(doc){ const d=doc.data(); if(/^TEST-/.test(d.name||'')) return; allHostels.push(Object.assign({id:doc.id},d)); }); renderHostelsLista(); }); }
+function loadHostels(){ if(!loadHostels._votos){ loadHostels._votos=true; initVotosHostels(); } db.collection('hostels').orderBy('ts','desc').limit(50).onSnapshot(function(snapshot){ allHostels=[]; snapshot.forEach(function(doc){ const d=doc.data(); if(/^TEST-/.test(d.name||'')) return; allHostels.push(Object.assign({id:doc.id},d)); }); renderHostelsLista(); }, function(){ const c=document.getElementById('hostel-list'); if(c) c.innerHTML='<p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">No se pudieron cargar los alojamientos. Revisa tu conexión.</p>'; }); }
 async function renderHostelsLista(){ const c=document.getElementById('hostel-list'); if(!c) return; if(allHostels.length===0){ c.innerHTML='<p style="color:#888">Sin alojamientos</p>'; return; } let html='', count=0; for(const data of allHostels){ if(hostelTipoActual!=='todos'&&data.tipo!==hostelTipoActual) continue; const nombre=await getNombreUsuario(data.user); const coords=data.lat&&data.lon?'<div style="font-size:0.7rem;color:#aaa;margin-top:3px">GPS: '+data.lat.toFixed(5)+', '+data.lon.toFixed(5)+'</div>':''; const irBtn=(data.lat&&data.lon)?'<button class="ab" style="margin-top:6px;padding:7px;font-size:0.78rem" onclick="irAlPuntoYNavegar('+data.lat+','+data.lon+')">🧭 Ir / Navegar</button>':''; const foto=data.foto?'<img src="'+escapeHTML(data.foto)+'" loading="lazy" alt="" style="width:100%;border-radius:10px;margin:6px 0;max-height:170px;object-fit:cover">':''; html+='<div class="hostel-card"><h4>'+escapeHTML(data.name)+'</h4>'+foto+'<p style="font-size:0.8rem">'+escapeHTML(data.location||'')+'</p><p style="font-size:0.8rem">'+escapeHTML(data.desc||'')+'</p>'+coords+estrellasHTML('hostels',data.id,data)+'<small style="color:#888;font-size:0.7rem">Por: '+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small>'+irBtn+'</div>'; count++; } c.innerHTML = count===0 ? '<p style="color:#888">Sin alojamientos de ese tipo</p>' : html; }
 function toggleHostelMap(){ const mapDiv=document.getElementById('map-hostel-select'); const st=document.getElementById('gpsStatus'); if(mapDiv.classList.contains('show')){ mapDiv.classList.remove('show'); st.classList.remove('show'); return; } mapDiv.classList.add('show'); st.classList.add('show'); st.innerText='Obteniendo ubicación...'; if(!mapHostelSelect){ mapHostelSelect=L.map('map-hostel-select').setView([-34.6037,-58.3816],13); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapHostelSelect); } if(!navigator.geolocation){ st.innerText='GPS no disponible'; return; } navigator.geolocation.getCurrentPosition(function(pos){ const lat=pos.coords.latitude, lon=pos.coords.longitude; hostelCoords={lat:lat,lon:lon}; mapHostelSelect.setView([lat,lon],16); if(mapHostelSelect._um) mapHostelSelect.removeLayer(mapHostelSelect._um); mapHostelSelect._um=L.marker([lat,lon]).addTo(mapHostelSelect); st.innerText='Ubicación: '+lat.toFixed(5)+', '+lon.toFixed(5); mapHostelSelect.on('click',function(e){ hostelCoords={lat:e.latlng.lat,lon:e.latlng.lng}; if(mapHostelSelect._um) mapHostelSelect.removeLayer(mapHostelSelect._um); mapHostelSelect._um=L.marker([e.latlng.lat,e.latlng.lng]).addTo(mapHostelSelect); st.innerText='Punto: '+e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5); }); setTimeout(function(){ mapHostelSelect.invalidateSize(); },300); }, function(err){ st.innerText='Error: '+err.message; }, {enableHighAccuracy:true,timeout:10000}); }
 function addComment(){ const input=document.getElementById('comment-input'); const text=input.value.trim(); if(!text) return; const hora=new Date().toLocaleTimeString(); db.collection('guiComments').add({user:cu,nombre:nombreUsuario,text:text,h:hora,ts:firebase.firestore.FieldValue.serverTimestamp()}); input.value=''; h("Comentario publicado."); }
@@ -3461,7 +3513,7 @@ function addCustomDest(){ const name=document.getElementById('custom-dest-name')
 function removeDest(idx){ addedDests.splice(idx,1); renderAddedDests(); }
 function renderAddedDests(){ const c=document.getElementById('added-dests'); if(addedDests.length===0){ c.innerHTML='<p style="color:#888">Agrega destinos</p>'; return; } c.innerHTML=addedDests.map(function(d,i){ return '<div class="added-dest-item"><div style="background:var(--p);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem">'+(i+1)+'</div><div style="flex:1"><strong style="font-size:0.8rem">'+escapeHTML(d.name)+'</strong><div style="font-size:0.7rem;color:#888">'+escapeHTML(d.addr)+'</div></div><button onclick="removeDest('+i+')" style="background:#dc2626;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.7rem">X</button></div>'; }).join(''); }
 async function saveAndStartTrip(){ const name=document.getElementById('trip-name').value.trim(); const start=document.getElementById('trip-start').value.trim(); if(!name) return alert("Ponle nombre al viaje"); if(!start) return alert("Indica el origen"); if(addedDests.length===0) return alert("Agrega al menos un destino"); try{ await db.collection('trips').add({user:cu,nombre:nombreUsuario,name:name,start:start,destinations:addedDests,createdAt:firebase.firestore.FieldValue.serverTimestamp(),status:'pending'}); h("Viaje guardado: "+name); cv('trips'); }catch(err){ alert("Error: "+err.message); } }
-function loadTrips(){ db.collection('trips').where('user','==',cu).onSnapshot(function(snapshot){ trips=[]; snapshot.forEach(function(doc){ trips.push(Object.assign({id:doc.id},doc.data())); }); trips.sort(function(a,b){ return ((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0); }); renderTrips(); }); }
+function loadTrips(){ db.collection('trips').where('user','==',cu).onSnapshot(function(snapshot){ trips=[]; snapshot.forEach(function(doc){ trips.push(Object.assign({id:doc.id},doc.data())); }); trips.sort(function(a,b){ return ((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0); }); renderTrips(); }, function(){ const c=document.getElementById('trips-list'); if(c) c.innerHTML='<p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">No se pudieron cargar tus viajes. Revisa tu conexión.</p>'; }); }
 function renderTrips(){ const c=document.getElementById('trips-list'); if(!c) return; if(trips.length===0){ c.innerHTML='<p style="color:#888;text-align:center;padding:15px">Aún no tienes viajes</p>'; return; } let html=''; for(let t=0;t<trips.length;t++){ const trip=trips[t]; let dests=''; for(let d=0;d<trip.destinations.length;d++){ dests+='<div>'+(d+1)+'. '+escapeHTML(trip.destinations[d].name)+'</div>'; } const badge=trip.status==='completed'?'(completado)':trip.status==='active'?'(en curso)':'(pendiente)'; html+='<div class="trip-card"><h3>'+escapeHTML(trip.name)+' <span style="font-size:0.7rem;color:#888">'+badge+'</span></h3><div class="meta">Desde: '+escapeHTML(trip.start)+' · '+trip.destinations.length+' destinos</div>'; if(trip.gpsData&&trip.gpsData.distance){ html+='<div style="color:var(--p);font-size:0.8rem;margin-bottom:8px">'+trip.gpsData.distance.toFixed(2)+' km · '+trip.gpsData.duration+'</div>'; } html+='<div class="dest-list">'+dests+'</div><div class="actions">'; if(trip.status!=='completed'){ html+='<button class="btn btn-start" onclick="startNavigation(\''+trip.id+'\')">Iniciar</button>'; } else { html+='<button class="btn btn-view" onclick="viewCompletedTrip(\''+trip.id+'\')">Ver</button>'; } html+='<button class="btn btn-delete" onclick="deleteTrip(\''+trip.id+'\')">Borrar</button></div></div>'; } c.innerHTML=html; }
 function deleteTrip(id){ if(confirm("¿Eliminar este viaje?")){ db.collection('trips').doc(id).delete(); } }
 function viewCompletedTrip(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip||!trip.gpsData||!trip.gpsData.points) return alert("Este viaje no tiene ruta grabada"); currentTrip=trip; gpsPoints=trip.gpsData.points; totalDistance=trip.gpsData.distance||0; document.getElementById('nav-screen').classList.add('active'); if(navMap) navMap.remove(); navMap=L.map('nav-map').setView([gpsPoints[0].lat,gpsPoints[0].lon],15); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(navMap); showHostelsOnNavMap(); drawGpsRoute(); document.getElementById('navText').innerText="Ruta completada"; document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2); document.getElementById('navTime').innerText=trip.gpsData.duration||'0 min'; document.getElementById('navSpeed').innerText='0'; document.getElementById('etaDist').innerText=totalDistance.toFixed(2)+' km'; document.getElementById('etaDuration').innerText=trip.gpsData.duration||'0 min'; document.getElementById('etaTime').innerText='--:--'; showSpeechBubble("Recorriste "+totalDistance.toFixed(2)+" km"); }
@@ -3572,6 +3624,10 @@ async function descargarMapaRuta(){
 }
 function _navBgCallback(location){ _navPosUpdate(location.latitude, location.longitude, location.accuracy, (location.speed&&location.speed>0.7)?location.speed*3.6:0, location.altitude); }
 function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
+  // Mismo resguardo que ug(): coordenadas corruptas (null/NaN) no deben tocar ningún
+  // cálculo de distancia ni mover el marcador (Leaflet lanza excepción con NaN, lo
+  // que cortaría en seco todo lo que viene después en esta misma función).
+  if(!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   if(accuracy>30){ _gpsBadgeToggle('navGpsSignalBadge', true); return; }
   _gpsBadgeToggle('navGpsSignalBadge', false);
   // Pausa manual: seguimos mostrando tu posición pero NO contamos km, tiempo ni recalculamos.
@@ -3592,8 +3648,16 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   _verificarSegmentos(lat,lon);
   // jitter: no suma distancia/calorías si el salto es < 12 m (deriva del GPS quieto),
   // pero el punto igual queda registrado arriba para la velocidad real.
-  if(lastGpsPoint){ const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon); if(dist>=12){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon}; } }
-  else { gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon}; }
+  if(lastGpsPoint){
+    const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon);
+    if(dist>=12){
+      // Salto implausible (glitch del GPS): no suma al kilometraje, pero re-ancla la
+      // posición igual para que el próximo fix se calcule contra el punto correcto.
+      if(_saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
+      gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
+    }
+  }
+  else { gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now}; }
   if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]); }
   L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
   document.getElementById('navSpeed').innerText=Math.round(speed);
@@ -3725,7 +3789,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     document.getElementById('etaDuration').innerText=routeTotalDuration+' min';
     if(helmetMarker) navMap.removeLayer(helmetMarker);
     helmetMarker=L.marker([startLat,startLon],{icon:L.divIcon({className:'',html:riderMarkerHTML(selectedHelmet,skinColor(selectedSkin),true),iconSize:[50,34],iconAnchor:[25,17]})}).addTo(navMap);
-    tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon}; totalDistance=0;
+    tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon,t:Date.now()}; totalDistance=0;
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
     if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop();
     lpWakeLock.enable();
@@ -3773,7 +3837,15 @@ function compararRitmoHistorico(distanciaKm, duracionActivaMs){
   if(diffPct>0.15) h('Vas más rápido que tu promedio de siempre, ¡buen ritmo!');
   else if(diffPct<-0.15) h('Vas más lento que tu ritmo habitual. Tranquilo, disfruta el camino.');
 }
-function subscribeToUsersOnNavMap(){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } } }); }
+let _unsubUsersOnNavMap=null;
+function subscribeToUsersOnNavMap(){
+  navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[];
+  // Antes se creaba un listener nuevo cada vez que empezaba una navegación sin cerrar
+  // el anterior: en un viaje con varios destinos (o si el usuario reinicia navegación
+  // varias veces) se iban acumulando listeners activos para siempre — fuga real.
+  if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; }
+  _unsubUsersOnNavMap=db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } } });
+}
 function getTurnInstruction(type,modifier,street){ const s=street?' por '+street:''; switch(type){ case 'depart':return 'Comienza el recorrido'+s; case 'arrive':return 'Has llegado a tu destino'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return 'Gira a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'Gira a la derecha'+s; if(modifier&&modifier.indexOf('sharp')!==-1) return 'Giro pronunciado'+s; return 'Gira'+s; case 'roundabout': case 'rotary': return 'Toma la rotonda'+s; case 'merge': return 'Incorpórate'+s; case 'fork': if(modifier&&modifier.indexOf('left')!==-1) return 'En la bifurcación, mantente a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'En la bifurcación, mantente a la derecha'+s; return 'Toma la bifurcación'+s; case 'end of road': return 'Al final del camino'+s; case 'continue': return 'Sigue recto'+s; case 'new name': return 'Continúa'+s; default: return 'Continúa'+s; } }
 function checkNavigationSteps(lat,lon){ if(currentStepIndex>=navSteps.length) return; const step=navSteps[currentStepIndex]; const loc=getStepLocation(step); if(!loc) return; const dist=calculateDistance(lat,lon,loc.lat,loc.lon); let rem=0; for(let i=currentStepIndex;i<navSteps.length;i++) rem+=navSteps[i].distance; document.getElementById('navDist').innerText=formatDistance(rem); document.getElementById('etaDist').innerText=(rem/1000).toFixed(2)+' km'; if(dist<100&&lastSpokenStep!==currentStepIndex){ showStepInstruction(currentStepIndex); lastSpokenStep=currentStepIndex; } if(dist<20){ currentStepIndex++; if(currentStepIndex<navSteps.length){ setTimeout(function(){ showStepInstruction(currentStepIndex); },2000); } else { showArrival(); } } }
 function getStepLocation(step){ if(!step.geometry||!step.geometry.coordinates||!step.geometry.coordinates.length) return null; const c=step.geometry.coordinates[step.geometry.coordinates.length-1]; return {lat:c[1],lon:c[0]}; }
@@ -3808,6 +3880,10 @@ async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigati
 // Si el usuario cierra con "✕" sin haber pasado por "Terminar" ni por la llegada
 // automática, igual guardamos lo recorrido hasta ahí (nunca se pierde el track).
 function endNavigation(){
+  // Corta a Pistero YA: sin esto, si estaba hablando o tenía frases en cola cuando
+  // cerraste la navegación, seguía sonando (o la cola se seguía vaciando) de un viaje
+  // que ya terminó — instrucciones de giro sonando segundos después de cerrar el mapa.
+  pararVoz();
   if(!navGuardado && gpsPoints.length>=2){
     if(currentTrip){
       _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs());
@@ -3820,9 +3896,21 @@ function endNavigation(){
   navGuardado=false;
   lpWakeLock.disable(); detenerDeteccionCaidas();
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
-  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
+  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
-function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
+function cv(id){
+  const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */
+  const el=document.getElementById('v-'+id);
+  if(!el){
+    // Vista inexistente (id con typo, o una vista que se renombró y quedó un botón
+    // viejo apuntando al nombre anterior): antes esto dejaba la pantalla COMPLETAMENTE
+    // en blanco (se le quitaba "on" a todas las secciones y nunca se le volvía a poner
+    // a ninguna), sin ningún mensaje ni forma de volver salvo adivinar otro botón.
+    console.warn('cv(): vista inexistente "'+id+'", volviendo a Inicio.');
+    if(id!=='dash') return cv('dash');
+    return;
+  }
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 // Puesto real en el ranking general (no solo si estás en el Top 100): cuenta cuántos
 // ciclistas tienen más km que tú y le suma 1. Se calcula aparte porque mostrarRanking()
 // solo trae el Top 100, así que alguien fuera de esa lista antes no tenía forma de
@@ -4424,17 +4512,23 @@ async function verRetos(){
       +(pasados.length?'<h4 style="color:#7d8ba0;margin:14px 0 8px">Terminados</h4>'+pasados.slice(0,5).map(tarjeta).join(''):'');
   }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los retos.</p>'; }
 }
+let _creandoReto=false;
 async function crearReto(){
+  if(cu!==ADMIN_ID) return; // el botón solo se muestra al admin, pero la función se re-verifica igual
   const titulo=(document.getElementById('retoTitulo').value||'').trim();
   const desc=(document.getElementById('retoDesc').value||'').trim();
   const metaKm=parseFloat(document.getElementById('retoMeta').value);
   const dias=parseInt(document.getElementById('retoDias').value,10);
-  if(!titulo || !metaKm || !dias){ alert('Completa título, meta en km y duración en días'); return; }
+  // Números negativos son "truthy" en JS (!(-5) es false): el chequeo anterior los dejaba pasar.
+  if(!titulo || !(metaKm>0) || !(dias>0)){ alert('Completa título, meta en km y duración en días (ambos mayores a cero)'); return; }
+  if(_creandoReto) return; // evita duplicar el reto con doble-tap
+  _creandoReto=true;
   try{
     await db.collection('retos').add({titulo:titulo, desc:desc, metaKm:metaKm, fechaInicio:Date.now(), fechaFin:Date.now()+dias*86400000, ts:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('retoTitulo').value=''; document.getElementById('retoDesc').value=''; document.getElementById('retoMeta').value=''; document.getElementById('retoDias').value='';
     h('Reto publicado.');
   }catch(e){ alert('No se pudo crear el reto.'); }
+  finally{ _creandoReto=false; }
 }
 /* ===== RECAPITULACIÓN ANUAL (estilo "Wrapped") =====
    Resumen visual y compartible del año, armado como imagen con Canvas 2D — nada de
@@ -4678,7 +4772,10 @@ async function _avisoLluviaProactivo(lat,lon){
     const w=await climaDeZona(lat,lon);
     const horas=w&&w.hourly&&w.hourly.precipitation_probability, tiempos=w&&w.hourly&&w.hourly.time;
     if(!horas||!tiempos) return;
-    const ahoraISO=new Date().toISOString().slice(0,13);
+    // Open-Meteo con timezone=auto devuelve current.time y hourly.time en la MISMA hora
+    // local de la zona consultada — comparar contra current.time (no contra un ISO UTC
+    // del navegador) evita el desfase de varias horas que rompía esto en Chile/LatAm.
+    const ahoraISO=(w.current&&w.current.time)?w.current.time.slice(0,13):new Date().toISOString().slice(0,13);
     let idx=tiempos.findIndex(function(t){ return t.slice(0,13)>=ahoraISO; });
     if(idx<0) idx=0;
     const proximas2h=horas.slice(idx,idx+2);
@@ -4694,20 +4791,27 @@ async function _avisoLluviaProactivo(lat,lon){
 // cayó fuerte y llevas rato activo, sugiere un respiro — una sola vez por viaje.
 let _fatigaBuffer=[], _avisoFatigaHecho=false, _velPromInicioFatiga=null;
 function _verificarFatiga(duracionActivaMs, speedActual){
-  if(!vozActiva || _avisoFatigaHecho || !speedActual || speedActual<=0) return;
-  _fatigaBuffer.push({t:Date.now(), v:speedActual});
-  const VENTANA=15*60000;
-  while(_fatigaBuffer.length>1 && Date.now()-_fatigaBuffer[0].t>VENTANA) _fatigaBuffer.shift();
-  if(!duracionActivaMs || duracionActivaMs<15*60000) return; // necesita referencia fresca de al menos 15 min
-  const prom=function(arr){ return arr.reduce(function(a,b){return a+b.v;},0)/arr.length; };
-  if(_velPromInicioFatiga==null){ if(_fatigaBuffer.length>=5) _velPromInicioFatiga=prom(_fatigaBuffer); return; }
-  if(duracionActivaMs<40*60000 || _fatigaBuffer.length<5) return; // deja pasar tiempo real desde la referencia
-  const velActual=prom(_fatigaBuffer);
-  const caidaPct=(_velPromInicioFatiga-velActual)/_velPromInicioFatiga;
-  if(caidaPct>=0.25){
-    _avisoFatigaHecho=true;
-    if(!vozOcupada() && !vozCola.length) h('Se nota que bajaste harto el ritmo respecto a como arrancaste. Si puedes, date un respiro corto, toma agua y sigue con calma.');
-  }
+  try{
+    if(!vozActiva || _avisoFatigaHecho || !speedActual || speedActual<=0) return;
+    if(typeof actividadTipo!=='undefined' && actividadTipo==='moto') return; // la velocidad de un vehículo no refleja el cansancio del conductor
+    _fatigaBuffer.push({t:Date.now(), v:speedActual});
+    const VENTANA=15*60000;
+    while(_fatigaBuffer.length>1 && Date.now()-_fatigaBuffer[0].t>VENTANA) _fatigaBuffer.shift();
+    if(!duracionActivaMs || duracionActivaMs<15*60000) return; // necesita referencia fresca de al menos 15 min
+    const prom=function(arr){ return arr.reduce(function(a,b){return a+b.v;},0)/arr.length; };
+    if(_velPromInicioFatiga==null){ if(_fatigaBuffer.length>=5) _velPromInicioFatiga=prom(_fatigaBuffer); return; }
+    if(duracionActivaMs<40*60000 || _fatigaBuffer.length<5) return; // deja pasar tiempo real desde la referencia
+    const velActual=prom(_fatigaBuffer);
+    const caidaPct=(_velPromInicioFatiga-velActual)/_velPromInicioFatiga;
+    // Piso absoluto: si la referencia inicial se capturó en una bajada rápida, una caída
+    // porcentual de 25% puede seguir siendo un ritmo llano totalmente normal. Solo
+    // avisamos si, además, el ritmo ACTUAL es genuinamente bajo para la actividad.
+    const pisoAbsoluto=(typeof actividadTipo!=='undefined' && actividadTipo==='trekking')?2.5:10;
+    if(caidaPct>=0.25 && velActual<=pisoAbsoluto){
+      _avisoFatigaHecho=true;
+      if(!vozOcupada() && !vozCola.length) h('Se nota que bajaste harto el ritmo respecto a como arrancaste. Si puedes, date un respiro corto, toma agua y sigue con calma.');
+    }
+  }catch(e){}
 }
 // Pronostico al registrar una ruta: se anuncia al poner un destino (antes de salir)
 // y de nuevo al guardar/terminar el viaje (util para lo que viene despues de pedalear).

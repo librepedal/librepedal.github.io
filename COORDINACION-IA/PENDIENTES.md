@@ -4,7 +4,16 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
 
 ---
 
-## 🧭 EN CURSO — Simplificación de navegación/UX (TOMADO por Claude sesión 2, NO tocar en paralelo)
+## ✅ CERRADO — QA adversarial pre-lanzamiento (Claude sesión 2, v6.03)
+Inty pidió una pasada de calidad total antes de lanzar ("no quiero fallas... la app no
+debe presentar fallas de ningún tipo"). 3 agentes Explore auditaron el código completo
+como QA rompiendo cosas. Los 15 hallazgos (2 críticos, 5 altos, 5 medios, 3 bajos) se
+corrigieron y verificaron — ver el detalle completo en la entrada **v6.03** de
+`BITACORA.md`. Nada quedó pendiente de esa ronda.
+
+---
+
+## 🧭 Simplificación de navegación/UX — ✅ YA HECHO (v5.95)
 Inty pidió simplificar toda la navegación ("hasta para mí se complica"). Auditoría UX completa hecha
 (2026-07-11): 16 vistas, 4 sistemas de navegación solapados (barra 5 + esfera 15 + es-bottom 5 + botones
 cruzados), Inicio con ~21 objetivos táctiles, Pistero/Rutas/Bitácora enterrados a 2-3 toques.

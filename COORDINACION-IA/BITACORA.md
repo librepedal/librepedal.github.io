@@ -4,6 +4,88 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.03 — 2026-07-11 — Claude (sesión 2)
+**QA adversarial completa pre-lanzamiento.** Inty pidió actuar como alguien probando la
+app para dar el OK de lanzamiento ("no quiero fallas... la app no debe presentar fallas
+de ningún tipo"). Se lanzaron 3 agentes Explore en paralelo a auditar todo el código
+como QA rompiendo cosas, no confirmando que funcionan. Encontraron bugs reales que el
+uso normal no habría mostrado hasta fallar en producción. Los 15 se corrigieron y se
+verificó sintaxis completa (0 errores) antes de este release.
+
+**CRÍTICOS (podían corromper datos en silencio, sin ningún error visible):**
+- **GPS null/NaN corrompía la distancia para siempre**: un fix con coordenadas
+  `null`/`NaN` (señal muy débil) se sumaba igual al kilometraje porque JS convierte
+  `null` a `0` en aritmética — sin excepción, sin aviso, imposible de notar sin probar
+  a propósito. `ug()` y `_navPosUpdate()` ahora descartan el fix con
+  `Number.isFinite()` antes de tocar cualquier cuenta.
+- **Sin techo de velocidad plausible por salto de GPS**: un rebote de señal (salir de
+  un túnel, error del chip) podía sumar un salto de posición imposible (cientos de
+  km/h) al kilometraje total. Nuevo `_saltoEsPlausible(distancia, tiempo)`: descarta
+  el salto si implica más de 90 km/h (200 en modo moto) — no se suma a la distancia,
+  pero sí se re-ancla la posición para no arrastrar el error al siguiente fix.
+
+**ALTOS:**
+- `endNavigation()` no llamaba a `pararVoz()`: Pistero podía seguir hablando de un
+  viaje que ya se cerró. Ahora es la primera línea de la función.
+- El timeout de la cola de voz (`durEst`) tenía un techo de 14s sin importar el largo
+  del texto. Para el TTS nativo (`lpTTS`, sin evento `onend`) ese timeout es el
+  **único** mecanismo que avanza la cola — cualquier respuesta de Pistero IA de más de
+  ~186 caracteres se cortaba a mitad de frase en la app instalada (no es un caso raro,
+  es el camino normal de cualquier respuesta larga). Techo subido a 55s.
+- **Lluvia proactiva con desfase horario**: `_avisoLluviaProactivo` comparaba
+  `hourly.time` (hora LOCAL de Open-Meteo, `timezone=auto`) contra
+  `new Date().toISOString()` (UTC) — ~4h de desfase en Chile/LatAm, rompiendo la
+  predicción para el público objetivo. Ahora compara contra `current.time` (misma
+  zona horaria que `hourly.time`, lo entrega la propia API).
+- **Doble-submit duplicaba documentos y Darma**: `enviarReporte`, `agregarPOI`,
+  `publicarAlojo`, `crearReto` y `addRepairTip` no tenían guarda contra doble-tap
+  durante el `await` a Firestore. Cada uno tiene ahora una bandera de "en curso" que
+  bloquea el reenvío hasta que termine (éxito o error).
+- **Pantalla en blanco sin conexión**: `loadTrips()` y `loadHostels()` no tenían
+  callback de error en su `onSnapshot` — si la primera carga ocurría sin señal, la
+  lista quedaba en blanco para siempre sin ninguna explicación. Ahora muestran el
+  mismo mensaje de "revisa tu conexión" que ya tenía `subscribeToNovedades()`.
+
+**MEDIOS:**
+- Falsos positivos de fatiga: si la referencia de ritmo se capturaba en una bajada
+  rápida, una caída porcentual del 25% podía disparar el aviso de cansancio en un
+  ritmo llano totalmente normal. Ahora exige además un piso absoluto de velocidad
+  (10 km/h ciclismo/MTB, 2.5 km/h trekking) y se desactiva en modo moto (la velocidad
+  de un vehículo no refleja el cansancio del conductor).
+- `personalidad`/`actividad` solo vivían en localStorage, se perdían al cambiar de
+  celular. Ahora se suben también al perfil en Firestore (`elegirPersonalidad`,
+  `elegirActividad`, y el registro inicial).
+- `subscribeToUsersOnNavMap()` creaba un listener de Firestore nuevo cada vez que
+  arrancaba una navegación sin cerrar el anterior — fuga real en viajes con varios
+  destinos o reinicios de navegación. Ahora guarda y cierra el listener previo antes
+  de abrir uno nuevo, y también se cierra en `endNavigation()`.
+- `crearReto()` validaba con `!metaKm`/`!dias`, que deja pasar números negativos (son
+  "truthy" en JS). Ahora exige `>0` explícito, y re-verifica `ADMIN_ID` dentro de la
+  función (antes solo lo ocultaba el botón).
+- Formularios sin `maxlength`: se agregó a los ~20 campos de texto/textarea de toda la
+  app (reportes, POI, alojamiento, retos, trucos, hospedajes, recomendaciones,
+  comentarios, viajes, diario, registro).
+
+**BAJOS (rematados de paso):**
+- `viewNav` no tenía entradas para `diario`/`mac` — la barra inferior perdía el
+  resaltado en esas pantallas.
+- `cv(id)` no tenía guarda ante un id de vista inexistente — dejaba la pantalla
+  completamente en blanco sin forma de recuperarse. Ahora avisa por consola y vuelve
+  a Inicio.
+- `_verificarFatiga` ahora tiene `try/catch` (igual que `_avisoLluviaProactivo`);
+  `addRepairTip` ahora hace `.trim()` a los campos.
+
+**Descartado tras verificar (no era un bug real):** un agente marcó como inconsistencia
+que cambiar de actividad a mitad de navegación no recalcula la ruta. Se verificó que
+`#nav-screen{position:fixed;inset:0;z-index:4000}` hace que Perfil sea físicamente
+inalcanzable durante una navegación a destino fijo, y que el modo GPS-libre nunca
+calcula ruta — el escenario no puede ocurrir por la UI real, no se tocó nada.
+
+Verificación: sintaxis completa del `<script>` re-extraída y ejecutada con
+`new Function()` tras cada tanda de cambios — 0 errores en el bloque final.
+
+---
+
 ## v6.02 — 2026-07-11 — Claude (sesión 2)
 **Personalidad seleccionable, predicción real (lluvia+cansancio) y escalabilidad a otros deportes.**
 De la Visión Maestra: implementados los 3 módulos que Inty aprobó (⬜→✅), Visión
