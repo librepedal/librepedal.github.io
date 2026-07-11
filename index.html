@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.04</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.05</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -918,7 +918,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.04'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.05'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3666,7 +3666,7 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   checkFuel(totalDistance);
   actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
-  comentarPendiente(navPendienteHistory, speed);
+  if(rutaPerfil.length) avisarPendienteAnticipada(lat,lon); else comentarPendiente(navPendienteHistory, speed);
   avisarPuntosCercanos(lat,lon);
   _avisoLluviaProactivo(lat,lon);
   _verificarFatiga(tiempoActivoMs(), speed);
@@ -3679,6 +3679,49 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
    miraba el paso actual: si el índice de paso iba atrasado creía que te habías salido
    aunque estuvieras en plena carretera, y recalculaba en falso. */
 let rutaLatLngs=[];
+// ===== PENDIENTE ANTICIPADA: lee el perfil de elevación de la ruta HACIA ADELANTE
+// (una llamada por lotes a Open-Meteo, gratis) y avisa la subida/bajada ANTES de llegar,
+// sin depender del ruido de altitud del GPS. Si el perfil no se cargó, la navegación
+// usa igual el método reactivo (comentarPendiente) como respaldo. =====
+let rutaPerfil=[], pendAntCooldown=0; const pendAntAvisadas=new Set();
+async function _prefetchPerfilRuta(){
+  rutaPerfil=[]; pendAntAvisadas.clear(); pendAntCooldown=0;
+  try{
+    const pts=rutaLatLngs; if(!pts||pts.length<2) return;
+    let total=0; const acum=[0];
+    for(let i=1;i<pts.length;i++){ total+=calculateDistance(pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1]); acum.push(total); }
+    if(total<250) return; // ruta muy corta para avisos anticipados
+    const step=Math.max(120, total/95); // <=100 muestras (límite de Open-Meteo)
+    const muestras=[]; let next=0;
+    for(let i=0;i<pts.length;i++){ if(acum[i]>=next-1){ muestras.push({d:acum[i], lat:pts[i][0], lon:pts[i][1]}); next+=step; if(muestras.length>=100) break; } }
+    if(muestras.length<3) return;
+    const lats=muestras.map(function(m){return m.lat.toFixed(5);}).join(',');
+    const lons=muestras.map(function(m){return m.lon.toFixed(5);}).join(',');
+    const r=await _fetchT('https://api.open-meteo.com/v1/elevation?latitude='+lats+'&longitude='+lons, 12000);
+    const j=await r.json(); const ele=(j&&j.elevation)||[];
+    if(ele.length!==muestras.length) return;
+    rutaPerfil=muestras.map(function(m,i){ return {d:m.d, ele:ele[i], lat:m.lat, lon:m.lon}; });
+  }catch(e){ rutaPerfil=[]; }
+}
+function avisarPendienteAnticipada(lat,lon){
+  if(!rutaPerfil.length || !vozActiva || vozOcupada() || vozCola.length) return;
+  const ahora=Date.now();
+  if(ahora-pendAntCooldown<40000) return; // no más de un aviso anticipado cada 40s
+  let iNow=0, best=Infinity;
+  for(let i=0;i<rutaPerfil.length;i++){ const dd=calculateDistance(lat,lon,rutaPerfil[i].lat,rutaPerfil[i].lon); if(dd<best){ best=dd; iNow=i; } }
+  if(best>150) return; // lejos del perfil (fuera de ruta): no opino
+  const dNow=rutaPerfil[iNow].d, eleNow=rutaPerfil[iNow].ele;
+  let iAhead=-1;
+  for(let i=iNow+1;i<rutaPerfil.length;i++){ if(rutaPerfil[i].d-dNow>=180){ iAhead=i; break; } }
+  if(iAhead<0) return;
+  const dSeg=rutaPerfil[iAhead].d-dNow;
+  const grade=((rutaPerfil[iAhead].ele-eleNow)/dSeg)*100;
+  const key=Math.round(rutaPerfil[iAhead].d/150);
+  if(pendAntAvisadas.has(key)) return;
+  const dist=Math.round(dSeg/10)*10;
+  if(grade>=5){ pendAntAvisadas.add(key); pendAntCooldown=ahora; h('Ojo, se viene una subida en los próximos '+dist+' metros. Baja un cambio y dosifica.'); }
+  else if(grade<=-5){ pendAntAvisadas.add(key); pendAntCooldown=ahora; h('Prepárate: viene una bajada en unos '+dist+' metros. Ojo con la velocidad y los frenos.'); }
+}
 function _distPuntoASegmento(plat,plon, alat,alon, blat,blon){
   const R=6371000, tr=Math.PI/180, cl=Math.cos(plat*tr);
   const px=plon*tr*cl*R, py=plat*tr*R, ax=alon*tr*cl*R, ay=alat*tr*R, bx=blon*tr*cl*R, by=blat*tr*R;
@@ -3730,7 +3773,7 @@ async function recalcularRuta(lat,lon){
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ navRecalculando=false; return; }
     const route=data.routes[0], steps=route.legs[0].steps;
     const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
-    rutaLatLngs=latlngs;
+    rutaLatLngs=latlngs; _prefetchPerfilRuta();
     if(routeLine && navMap) navMap.removeLayer(routeLine);
     if(navMap) routeLine=L.polyline(latlngs,{color:'#fc4c02',weight:6,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(navMap);
     navSteps=steps.map(function(step,index){ return {instruction:getTurnInstruction(step.maneuver.type,step.maneuver.modifier,step.name),distance:step.distance,maneuver:step.maneuver,geometry:step.geometry,index:index}; });
@@ -3776,7 +3819,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ alert("No pude calcular la ruta"); endNavigation(); return; }
     const route=data.routes[0], steps=route.legs[0].steps;
     const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
-    rutaLatLngs=latlngs;
+    rutaLatLngs=latlngs; _prefetchPerfilRuta();
     if(routeLine) navMap.removeLayer(routeLine);
     routeLine=L.polyline(latlngs,{color:'#fc4c02',weight:6,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(navMap);
     navMap.fitBounds(routeLine.getBounds(),{padding:[80,80]});
@@ -3895,7 +3938,7 @@ function endNavigation(){
   navGuardado=false;
   lpWakeLock.disable(); detenerDeteccionCaidas();
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
-  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
+  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; rutaPerfil=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
 function cv(id){
   const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */

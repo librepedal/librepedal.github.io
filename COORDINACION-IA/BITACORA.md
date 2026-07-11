@@ -184,6 +184,21 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.05 — 2026-07-11 — Claude (mejora estrella: pendiente ANTICIPADA)
+El fix REAL prometido para "las subidas/bajadas las toma muy encima": ahora en navegación
+Pistero **lee el perfil de elevación de la ruta hacia adelante** y avisa ANTES de llegar,
+sin depender del ruido de altitud del GPS.
+- `_prefetchPerfilRuta()`: al calcular/recalcular la ruta, muestrea `rutaLatLngs` a ≤100 puntos
+  por distancia acumulada y pide todas las elevaciones en **una** llamada por lotes a Open-Meteo
+  (gratis). Guarda `rutaPerfil=[{d,ele,lat,lon}]`.
+- `avisarPendienteAnticipada(lat,lon)`: ubica tu posición en el perfil, mira ~180 m adelante y si
+  la grada ≥5% (subida) o ≤−5% (bajada) avisa con la distancia ("se viene una subida en los próximos
+  X metros"). Dedup por segmento + cooldown 40s.
+- En `_navPosUpdate`: si hay perfil usa el anticipado; si no cargó, cae al reactivo `comentarPendiente`
+  (respaldo). El GPS libre (sin ruta) sigue con el reactivo. Reset en `endNavigation`.
+- Verificado con datos reales (cordillera): al pie de la cuesta avisa "SUBIDA en 300m"; en plano NO
+  inventa (−0.3% → silencio). Falta confirmar el "feel" en una rodada real.
+
 ## v6.04 — 2026-07-11 — Claude (AUTOCRÍTICA: corrijo trabajo propio)
 Revisión crítica honesta de mis propios cambios de estos días. 3 correcciones:
 1. **Quité la "red de seguridad global"** que puse en v6.00 (`window.error`/`unhandledrejection`→Sentry):
