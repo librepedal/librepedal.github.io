@@ -4,6 +4,16 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v5.95 — 2026-07-11 — Claude (sesión 2)
+**Navegación simplificada (aprobada por Inty vía `concepts/concepto-navegacion-simple.html`).**
+Cero funciones eliminadas — solo se reubicaron accesos:
+- **Barra inferior**: Inicio · Mapa · **🤖 Pistero** (nuevo, al centro — antes enterrado a 2+ toques) · Social · Perfil. Taller salió de la barra (queda en esfera + voz "taller" + chip de Pistero). `viewNav` remapeado (pistero:2, chat:3; mac/diario sin highlight, correcto).
+- **Inicio adelgazado**: de ~11 acciones a 5 (destino+iniciar, elegir en mapa, GPS, "Mis viajes", SOS). Se movieron: badge Darma y "Logros y comunidad" → **Perfil**; "Compartir en vivo" (id `btnSeguimientoVivo` intacto) → **Ajustes**; Música y botón Pistero fuera (tienen hogar en esfera/barra).
+- **Esfera**: de 15 íconos (9 duplicados) a 11 únicos — ahora COMPLEMENTA la barra en vez de repetirla. Logros/Ranking/Tienda/Comunidad colapsados en un solo 🏆 → `mostrarLogrosComunidad`. Ganaron acceso global: **Bitácora** (estaba a 3 toques), **Música**, **Novedades**, **Ajustes**.
+- **Nomenclatura**: `v-trips` = "🗺️ Mis viajes" en todos lados (antes 3 nombres distintos); dentro agrupa planificador multi-destino + Historial + Bitácora.
+- **Tutorial**: pasos de Darma/Logros reapuntados a Perfil, paso nuevo para Pistero en la barra. Verificado que TODOS los selectores del tutorial resuelven.
+- **Verificación anti-regresión** (todo en navegador antes de desplegar): 15/15 vistas navegan con highlight correcto, esfera abre con 11 items válidos (cada `v:` es vista real, cada `fn:` función real), `darmaDash`/`btnSeguimientoVivo` únicos y funcionando en su nueva casa, `au()` corre OK, 0 errores de consola, 0 selectores de tutorial rotos.
+
 ## v5.94 — 2026-07-11 — Claude (otra sesión/cuenta, recién sumada a la coordinación)
 **Corrección de la alerta de seguridad + dosificación de Darma + sincronía de versión.**
 - **⚠️ Corrección sobre la "fuga de tokens" anotada en v5.90**: verifiqué en vivo y **no es una fuga real**.

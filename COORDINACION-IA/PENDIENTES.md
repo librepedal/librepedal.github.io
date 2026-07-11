@@ -8,15 +8,14 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
 Inty pidió simplificar toda la navegación ("hasta para mí se complica"). Auditoría UX completa hecha
 (2026-07-11): 16 vistas, 4 sistemas de navegación solapados (barra 5 + esfera 15 + es-bottom 5 + botones
 cruzados), Inicio con ~21 objetivos táctiles, Pistero/Rutas/Bitácora enterrados a 2-3 toques.
-**Propuesta visual esperando aprobación de Inty**: `concepts/concepto-navegacion-simple.html`.
-Plan (cada paso = 1 versión + commit verificado, cero funciones eliminadas, solo reubicar accesos):
-- [ ] (a) Esfera sin duplicados de la barra ni de "Logros y comunidad" (editar `esferaItems` ~4728).
-- [ ] (b) Barra inferior: Social→pos.4, **Pistero al centro**, Taller sale (queda en esfera+voz+chip de Pistero).
-- [ ] (c) Inicio adelgazado: quedan destino/velocímetro/GPS/SOS + chip "Mis viajes"; Darma/Logros→Perfil,
-      Compartir en vivo→Ajustes, Música→esfera, Historial+Bitácora+Planificador agrupados en "Mis viajes".
-- [ ] (d) Nomenclatura: `v-trips`="Mis viajes" en todos lados (hoy: "Planificar viaje"/"Viajes y navegación"/"Viajes").
-⚠️ Si la otra sesión toca `esferaItems`, la barra `.nb`, `viewNav` o el HTML de `v-dash` antes de que esto
-termine, coordinarse por acá primero.
+Concepto aprobado por Inty e IMPLEMENTADO COMPLETO en **v5.95** (ver BITÁCORA):
+- [x] (a) Esfera sin duplicados (15→11 íconos únicos, +Bitácora/Música/Novedades/Ajustes con acceso global).
+- [x] (b) Barra inferior: **Pistero al centro**, Taller a la esfera.
+- [x] (c) Inicio adelgazado (~11→5 acciones; Darma/Logros→Perfil, Compartir en vivo→Ajustes).
+- [x] (d) Nomenclatura unificada: `v-trips`="Mis viajes" (agrupa planificador+historial+bitácora).
+- [ ] Falta: probar en dispositivo real (tutorial completo + esfera táctil) — cualquiera de las dos sesiones.
+⚠️ Estructura nueva de navegación: antes de tocar `esferaItems`, `nav .nb`, `viewNav` o `v-dash`, leer la
+entrada v5.95 de la BITÁCORA para no deshacer la reorganización.
 
 ---
 
