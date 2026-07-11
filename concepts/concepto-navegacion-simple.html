@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concepto: Navegación simplificada · Libre Pedal</title>
+<style>
+:root{--bg:#0a0f1d;--card:#121829;--line:#233;--p:#fc4c02;--g:#ffd700;--ink:#e8eeff;--muted:#9fb0d0;--ok:#10b981;--bad:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.5;padding:24px 16px 60px}
+.wrap{max-width:1000px;margin:0 auto}
+h1{font-size:1.4rem;color:var(--p);margin-bottom:4px}
+.sub{color:var(--muted);font-size:.85rem;margin-bottom:28px}
+h2{font-size:1.05rem;color:var(--g);margin:36px 0 14px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:700px){.compare{grid-template-columns:1fr}}
+.phone{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px 12px 10px;position:relative}
+.phone .tag{position:absolute;top:-11px;left:14px;font-size:.68rem;font-weight:800;padding:3px 10px;border-radius:10px;letter-spacing:.04em}
+.tag.antes{background:var(--bad);color:#fff}
+.tag.despues{background:var(--ok);color:#03130c}
+.screen{background:#0a0f1d;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:.72rem}
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--muted)}
+.hdr b{color:var(--ink)}
+.hdr .icons{display:flex;gap:7px}
+.body{padding:10px;display:flex;flex-direction:column;gap:7px;min-height:330px}
+.blk{background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:9px;padding:7px 9px;color:var(--muted)}
+.blk.main{border-color:var(--p);background:rgba(252,76,2,0.08)}
+.blk.main b{color:var(--p)}
+.btnrow{display:flex;gap:5px;flex-wrap:wrap}
+.chip{background:rgba(255,255,255,0.07);border:1px solid var(--line);border-radius:14px;padding:3px 8px;font-size:.62rem;color:var(--muted);white-space:nowrap}
+.chip.hot{border-color:var(--p);color:var(--p)}
+.chip.gone{text-decoration:line-through;opacity:.45}
+.navbar{display:flex;border-top:1px solid var(--line);background:#0d1424}
+.navbar div{flex:1;text-align:center;padding:8px 2px;font-size:.6rem;color:var(--muted)}
+.navbar div.on{color:var(--p);font-weight:800}
+.navbar div.new{color:var(--g);font-weight:800}
+.note{font-size:.72rem;color:var(--muted);margin-top:8px;padding-left:4px}
+.note b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.78rem}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--p);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+td b{color:var(--g)}
+.pill{display:inline-block;font-size:.62rem;font-weight:800;border-radius:9px;padding:1px 7px;margin-right:4px}
+.pill.si{background:rgba(16,185,129,0.15);color:var(--ok);border:1px solid rgba(16,185,129,0.4)}
+.pill.mueve{background:rgba(255,215,0,0.12);color:var(--g);border:1px solid rgba(255,215,0,0.35)}
+.resumen{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--p);border-radius:12px;padding:14px 18px;margin-top:30px;font-size:.85rem}
+.resumen b{color:var(--p)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🚲 Concepto: navegación simplificada</h1>
+<div class="sub">Referencia visual para aprobar ANTES de tocar la app. Nada se elimina — solo se reubica el acceso. v5.94 → propuesta</div>
+
+<h2>1 · Pantalla de Inicio: de ~21 cosas tocables a lo esencial</h2>
+<div class="compare">
+  <div class="phone"><span class="tag antes">HOY</span>
+    <div class="screen">
+      <div class="hdr"><b>🚲 Libre Pedal</b><span class="icons">🌐 👻 ⚙️ ⏻</span></div>
+      <div class="body">
+        <div class="blk main"><b>▶️ Iniciar viaje</b><br>destino + iniciar + elegir en mapa</div>
+        <div class="blk">🏎️ Velocímetro + 4 tarjetas de stats</div>
+        <div class="blk">📍 GPS (grabar ruta)</div>
+        <div class="btnrow">
+          <span class="chip">✨ Darma → stats</span>
+          <span class="chip">🗺️ Planificar viaje</span>
+          <span class="chip">📋 Historial de rutas</span>
+          <span class="chip">🏆 Logros y comunidad</span>
+          <span class="chip">🤖 Pregúntale a Pistero</span>
+          <span class="chip">🆘 SOS</span>
+          <span class="chip">📡 Compartir en vivo</span>
+          <span class="chip">🎵 Música</span>
+        </div>
+        <div class="blk" style="border-style:dashed">🎙️ mic flotante + 💬 burbuja + botón instalar…</div>
+      </div>
+      <div class="navbar"><div class="on">Inicio</div><div>Mapa</div><div>Social</div><div>Taller</div><div>Perfil</div></div>
+    </div>
+    <p class="note">11 acciones dentro de la vista + 4 en header + 5 en barra + flotantes = <b>~21 objetivos táctiles</b> compitiendo.</p>
+  </div>
+
+  <div class="phone"><span class="tag despues">PROPUESTA</span>
+    <div class="screen">
+      <div class="hdr"><b>🚲 Libre Pedal</b><span class="icons">🌐 👻 ⚙️</span></div>
+      <div class="body">
+        <div class="blk main"><b>▶️ ¿A dónde vamos?</b><br>destino + iniciar + elegir en mapa</div>
+        <div class="blk">🏎️ Velocímetro + stats del día</div>
+        <div class="blk main"><b>📍 GPS</b> (grabar sin destino)</div>
+        <div class="btnrow">
+          <span class="chip hot">🆘 SOS</span>
+          <span class="chip hot">🗺️ Mis viajes</span>
+        </div>
+        <div class="btnrow">
+          <span class="chip gone">Darma</span>
+          <span class="chip gone">Logros</span>
+          <span class="chip gone">Música</span>
+          <span class="chip gone">Compartir en vivo</span>
+          <span class="chip gone">Historial</span>
+          <span class="chip gone">Pistero (botón)</span>
+        </div>
+      </div>
+      <div class="navbar"><div class="on">Inicio</div><div>Mapa</div><div class="new">🤖 Pistero</div><div>Social</div><div>Perfil</div></div>
+    </div>
+    <p class="note">Inicio enfocado en <b>salir a pedalear</b>: destino, velocidad, GPS, SOS. Todo lo demás sigue existiendo — reubicado (tabla abajo).</p>
+  </div>
+</div>
+
+<h2>2 · Barra inferior: Pistero al centro, Taller a la esfera</h2>
+<table>
+  <tr><th>Botón</th><th>Hoy</th><th>Propuesta</th></tr>
+  <tr><td>1</td><td>Inicio</td><td>Inicio</td></tr>
+  <tr><td>2</td><td>Mapa</td><td>Mapa</td></tr>
+  <tr><td>3</td><td>Social</td><td><b>🤖 Pistero</b> — el copiloto IA, estrella de la app, hoy enterrado a 2+ toques</td></tr>
+  <tr><td>4</td><td>Taller</td><td>Social</td></tr>
+  <tr><td>5</td><td>Perfil</td><td>Perfil</td></tr>
+</table>
+<p class="note">El Taller NO desaparece: queda en la esfera 🌐 (ya está) y Pistero también te lleva ("arregla mi bici"). Un ciclista pincha una vez al mes; le habla a Pistero todos los días.</p>
+
+<h2>3 · Dónde queda cada cosa que sale del Inicio</h2>
+<table>
+  <tr><th>Función</th><th>Se va a</th><th>Toques</th></tr>
+  <tr><td>🤖 Pregúntale a Pistero</td><td><span class="pill si">SUBE</span> barra inferior, siempre visible</td><td>1 desde cualquier lado</td></tr>
+  <tr><td>📋 Historial de rutas + 📓 Bitácora</td><td><span class="pill mueve">MUEVE</span> "Mis viajes" (chip en Inicio) agrupa: historial, bitácora y planificador multi-destino en una sola sección</td><td>2</td></tr>
+  <tr><td>🏆 Logros y comunidad, ✨ Darma, 🥇 Ranking, Tienda</td><td><span class="pill mueve">MUEVE</span> Perfil (donde ya vive tu personaje y stats) — un solo hub, se quitan los duplicados de la esfera</td><td>2</td></tr>
+  <tr><td>📡 Compartir en vivo</td><td><span class="pill mueve">MUEVE</span> Ajustes ⚙️ (ya tiene los toggles de GPS/privacidad)</td><td>2</td></tr>
+  <tr><td>🎵 Música</td><td><span class="pill mueve">MUEVE</span> esfera 🌐 + sigue el comando de voz "pon música"</td><td>2</td></tr>
+  <tr><td>🆘 SOS</td><td><span class="pill si">QUEDA</span> en Inicio (emergencia = acceso inmediato) + esfera + voz</td><td>1</td></tr>
+</table>
+
+<h2>4 · La esfera 3D: de menú duplicado a cajón de descubrimiento</h2>
+<p class="note" style="margin-bottom:8px">Hoy la esfera repite 5 íconos que YA están en la barra (Inicio, Mapa, Social, Taller, Perfil) + 4 modales que también están en "Logros y comunidad". <b>Propuesta: la esfera muestra solo lo que NO está en la barra</b> — Taller, Guía, Rutas, Stats, Bitácora, Novedades, Música, SOS, Ajustes. Se mantiene la marca (postales de Chile, giro 3D), deja de competir con la barra.</p>
+
+<div class="resumen">
+<b>Resumen:</b> 3 cambios de bajo riesgo — (1) barra con Pistero, (2) Inicio adelgazado, (3) esfera sin duplicados — cada uno como versión/commit aparte, verificado antes del siguiente. Cero funciones eliminadas. Si apruebas, parto por el de menor riesgo (esfera) y termino con el Inicio.
+</div>
+</div>
+</body>
+</html>

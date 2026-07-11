@@ -4,7 +4,23 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
 
 ---
 
-## 🎯 FOCO ACTUAL: pulir para el LANZAMIENTO — capacidades de la IA avanzada de Pistero
+## 🧭 EN CURSO — Simplificación de navegación/UX (TOMADO por Claude sesión 2, NO tocar en paralelo)
+Inty pidió simplificar toda la navegación ("hasta para mí se complica"). Auditoría UX completa hecha
+(2026-07-11): 16 vistas, 4 sistemas de navegación solapados (barra 5 + esfera 15 + es-bottom 5 + botones
+cruzados), Inicio con ~21 objetivos táctiles, Pistero/Rutas/Bitácora enterrados a 2-3 toques.
+**Propuesta visual esperando aprobación de Inty**: `concepts/concepto-navegacion-simple.html`.
+Plan (cada paso = 1 versión + commit verificado, cero funciones eliminadas, solo reubicar accesos):
+- [ ] (a) Esfera sin duplicados de la barra ni de "Logros y comunidad" (editar `esferaItems` ~4728).
+- [ ] (b) Barra inferior: Social→pos.4, **Pistero al centro**, Taller sale (queda en esfera+voz+chip de Pistero).
+- [ ] (c) Inicio adelgazado: quedan destino/velocímetro/GPS/SOS + chip "Mis viajes"; Darma/Logros→Perfil,
+      Compartir en vivo→Ajustes, Música→esfera, Historial+Bitácora+Planificador agrupados en "Mis viajes".
+- [ ] (d) Nomenclatura: `v-trips`="Mis viajes" en todos lados (hoy: "Planificar viaje"/"Viajes y navegación"/"Viajes").
+⚠️ Si la otra sesión toca `esferaItems`, la barra `.nb`, `viewNav` o el HTML de `v-dash` antes de que esto
+termine, coordinarse por acá primero.
+
+---
+
+## 🎯 FOCO ANTERIOR: pulir para el LANZAMIENTO — capacidades de la IA avanzada de Pistero
 El chat de Pistero (`v-pistero`, v5.91) ya conversa. Ahora subirlo de nivel para el lanzamiento.
 Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
 - [x] **A) Pistero que ACTÚA** — v5.93: botones de acción bajo la respuesta (navegar a un lugar, ver hospedajes, abrir planificador).
