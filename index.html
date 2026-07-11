@@ -467,7 +467,10 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
       <div class="nav-eta-item"><div class="val" id="etaDist">0 km</div><div class="lbl">Restante</div></div>
       <div class="nav-eta-item"><div class="val" id="etaDuration">0 min</div><div class="lbl">Duración</div></div>
     </div>
-    <button class="nav-end-btn" onclick="finishTrip()">✅ Terminar y guardar</button>
+    <div style="display:flex;gap:8px">
+      <button class="nav-end-btn" id="btnPausaViaje" onclick="togglePausaViaje()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706)">⏸️ Pausar</button>
+      <button class="nav-end-btn" onclick="finishTrip()" style="flex:1">✅ Terminar</button>
+    </div>
     <button class="ab sec" id="btnDescargarMapa" style="margin-top:8px" onclick="descargarMapaRuta()">📥 Descargar mapa de la ruta (para andar sin señal)</button>
   </div>
 </div>
@@ -618,7 +621,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.89</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.90</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -872,7 +875,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.89'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.90'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1058,11 +1061,11 @@ let navDestLat=null, navDestLon=null, navDestName='', navRecalculando=false, nav
 // entraba en bucle recalculando y avisando por voz sin parar. Tras varios intentos
 // seguidos, hace una pausa larga y silenciosa antes de volver a intentar.
 let navRecalcIntentos=0, navUltimoRecalcTime=0, navRecalcSilencioHasta=0;
-const NAV_RECALC_COOLDOWN_MS=15000, NAV_RECALC_MAX_SEGUIDOS=3, NAV_RECALC_BACKOFF_MS=180000;
+const NAV_RECALC_COOLDOWN_MS=22000, NAV_RECALC_MAX_SEGUIDOS=3, NAV_RECALC_BACKOFF_MS=180000;
 // Auto-pausa: si estás quieto un buen rato (parada de foto, semáforo largo, comer),
 // el reloj del viaje no debería seguir corriendo como si estuvieras pedaleando. Se
 // paran ambas cosas (visual + cómputo) al detectar sp===0 y se retoman solas al moverte.
-let viajePausedMs=0, viajePausedDesde=null;
+let viajePausedMs=0, viajePausedDesde=null, viajePausaManual=false;
 function tiempoActivoMs(){
   if(!tripStartTime) return 0;
   const elapsedTotal=Date.now()-tripStartTime;
@@ -1070,10 +1073,34 @@ function tiempoActivoMs(){
   return Math.max(0, elapsedTotal-viajePausedMs-pausadoAhora);
 }
 function _actualizarPausaViaje(sp, badgeId){
+  // Si el ciclista puso pausa MANUAL, mandamos nosotros: la auto-pausa por velocidad
+  // no debe reanudar sola ni apagar el aviso. Se queda pausado hasta tocar Reanudar.
+  if(viajePausaManual){ const elm=document.getElementById(badgeId); if(elm) elm.style.display='inline-flex'; return; }
   const enPausa = (sp===0);
   if(enPausa && !viajePausedDesde){ viajePausedDesde=Date.now(); }
   else if(!enPausa && viajePausedDesde){ viajePausedMs+=(Date.now()-viajePausedDesde); viajePausedDesde=null; }
   const el=document.getElementById(badgeId); if(el) el.style.display=enPausa?'inline-flex':'none';
+}
+// Pausa/Reanuda el viaje a mano: congela reloj, km y calorías; no recalcula ni cuenta
+// el movimiento hecho durante la pausa (empujar la bici, subir a una micro, etc.).
+function togglePausaViaje(){
+  viajePausaManual=!viajePausaManual;
+  const btn=document.getElementById('btnPausaViaje');
+  if(viajePausaManual){
+    if(!viajePausedDesde) viajePausedDesde=Date.now();   // congela el tiempo activo
+    lastGpsPoint=null;                                    // al reanudar no cuenta el tramo de la pausa
+    _gpsBadgeToggle('navPausaBadge', true);
+    if(btn){ btn.innerText='▶️ Reanudar'; btn.style.background='linear-gradient(135deg,#10b981,#059669)'; }
+    try{ showSpeechBubble('Viaje en pausa'); }catch(e){}
+    h('Viaje en pausa. Cuando quieras seguir, toca Reanudar.');
+  } else {
+    if(viajePausedDesde){ viajePausedMs+=(Date.now()-viajePausedDesde); viajePausedDesde=null; }
+    lastGpsPoint=null;
+    _gpsBadgeToggle('navPausaBadge', false);
+    if(btn){ btn.innerText='⏸️ Pausar'; btn.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; }
+    try{ showSpeechBubble('¡Seguimos!'); }catch(e){}
+    h('Seguimos pedaleando.');
+  }
 }
 let currentUserLocation = null;
 let selectedHelmet = 'giro', selectedLens = 'none', selectedSkin = 'cyan', selectedExtras = [];
@@ -1905,7 +1932,7 @@ function toggleGPS(){
     ig=false; lpWakeLock.disable(); detenerDeteccionCaidas();
     if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
     if(btn){ btn.innerText="📍 Iniciar GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
-    if(currentRoute.length>1){ autoGuardarRuta(false); }
+    if(currentRoute.length>1){ autoGuardarRuta(false,false); }
     sincronizarStats();
     if(cu&&!ghostMode) db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true});
   }
@@ -2019,7 +2046,7 @@ function ug(p){
   if(sp>maxSpeed) maxSpeed=sp;
   speedReadings.push(sp);
   // Al DETENERTE (pasar de moverte a 0), guarda automáticamente la ruta hecha (checkpoint).
-  if(sp===0 && spAnterior>0 && currentRoute.length>=2 && currentRoute.length>puntosGuardados){ autoGuardarRuta(true); }
+  if(sp===0 && spAnterior>0 && currentRoute.length>=2 && currentRoute.length>puntosGuardados){ autoGuardarRuta(true,true); }
   if(sp>0){ ultimoMovimientoTime=Date.now(); rutaSegCerrada=false; }
   spAnterior=sp;
   // Bromas segun velocidad: se disparan para TODAS las velocidades (parado, lento,
@@ -2052,15 +2079,44 @@ function rutasLocalesSet(arr){ try{ localStorage.setItem(_rutasKey(), JSON.strin
 function guardarRutaLocalObj(data){ const arr=rutasLocales(); const i=arr.findIndex(function(r){return r.localId===data.localId;}); if(i>=0){ arr[i]=Object.assign(arr[i],data); } else { arr.push(data); } rutasLocalesSet(arr); return arr; }
 /* Respaldo best-effort en Firebase; enlaza firebaseId a la ruta local para no duplicar. */
 function _subirRutaNube(localId, fb){ try{ const it=rutasLocales().find(function(r){return r.localId===localId;}); const fid=it&&it.firebaseId; if(fid){ db.collection('routes').doc(fid).update(fb).catch(function(){}); } else { db.collection('routes').add(fb).then(function(ref){ const a=rutasLocales(); const x=a.find(function(r){return r.localId===localId;}); if(x){ x.firebaseId=ref.id; rutasLocalesSet(a); } }).catch(function(){}); } }catch(e){} }
+// Nombre real de un lugar a partir de sus coordenadas (reverse geocoding, con caché
+// por coordenada redondeada para no repetir la misma consulta). Timeout corto: si
+// Nominatim no contesta rápido, sigue con un nombre genérico en vez de trabar el
+// guardado de la ruta.
+const _cacheNombreLugar={};
+async function nombreDeLugar(lat,lon){
+  const key=lat.toFixed(3)+','+lon.toFixed(3);
+  if(_cacheNombreLugar[key]) return _cacheNombreLugar[key];
+  try{
+    const ctrl=new AbortController(); const to=setTimeout(function(){ ctrl.abort(); },4000);
+    const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+lat+'&lon='+lon,{signal:ctrl.signal});
+    clearTimeout(to);
+    const j=await r.json(); const a=j.address||{};
+    const nombre=a.city||a.town||a.village||a.municipality||a.county||a.state||'punto sin nombre';
+    _cacheNombreLugar[key]=nombre;
+    return nombre;
+  }catch(e){ return 'punto sin nombre'; }
+}
 function saveRouteToHistory(route){ if(!cu||!route||route.length<2) return; const localId='l'+route[0].t; const data={localId:localId,user:cu,nombre:nombreUsuario,points:route.slice(),startTime:route[0].t,endTime:route[route.length-1].t,distance:us.di,calories:us.c,savedAt:Date.now()}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:data.points,startTime:data.startTime,endTime:data.endTime,distance:us.di,calories:us.c,savedAt:firebase.firestore.FieldValue.serverTimestamp()}); }
 // Auto-guardado: SIEMPRE queda en el celular (sí o sí); la nube es respaldo. El id estable
 // es el timestamp del 1er punto, así se ACTUALIZA la misma ruta y no se duplica.
-function autoGuardarRuta(conVoz){
+// El nombre "Origen → Destino" solo se calcula (pide geocoding real) en los guardados
+// de CIERRE de ruta (esCheckpoint=false): al apagar el GPS, cerrarse por inactividad,
+// o pedirlo por voz. Los guardados de paso (cada vez que te detienes un momento
+// mientras sigues pedaleando) no lo tocan — si no, "el destino" cambiaría en cada
+// semáforo y Nominatim recibiría una consulta por cada parada del viaje.
+async function autoGuardarRuta(conVoz, esCheckpoint){
   if(!cu || currentRoute.length<2) return;
   const pts=currentRoute.slice(), localId='l'+pts[0].t;
   const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:us.di,calories:us.c,savedAt:Date.now()};
+  const fb={user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:us.di,calories:us.c,savedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  if(!esCheckpoint){
+    const origenNombre=await nombreDeLugar(pts[0].lat,pts[0].lon);
+    const destinoNombre=await nombreDeLugar(pts[pts.length-1].lat,pts[pts.length-1].lon);
+    data.nombreRuta=fb.nombreRuta=origenNombre+' → '+destinoNombre;
+  }
   guardarRutaLocalObj(data); renderRutas(); puntosGuardados=currentRoute.length;
-  _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:us.di,calories:us.c,savedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  _subirRutaNube(localId,fb);
   revisarRetosCumplidos();
   /* guardado silencioso */
 }
@@ -2071,7 +2127,7 @@ function finalizarRutaPorInactividad(){
   if(!ig || rutaSegCerrada || currentRoute.length<2) return;
   if(Date.now()-ultimoMovimientoTime<UMBRAL_INACTIVIDAD_RUTA) return;
   const distSeg=Math.max(0,us.di-rutaSegDistIni);
-  autoGuardarRuta(false);
+  autoGuardarRuta(false,false);
   rutaSegCerrada=true; rutaSegDistIni=us.di;
   currentRoute=[]; puntosGuardados=0; spAnterior=0;
   if(crl && mp){ mp.removeLayer(crl); crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp); }
@@ -2083,7 +2139,7 @@ function renderRutas(){
   const arr=rutasLocales().slice().sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);}).slice(0,60);
   if(arr.length===0){ c.innerHTML='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; return; }
   let html='';
-  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+date+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
+  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
   c.innerHTML=html;
 }
 // Muestra al toque lo local (garantizado) y fusiona rutas viejas que estén SOLO en la nube.
@@ -2159,8 +2215,9 @@ function verPerfilElevacion(id){
 /* ===== VIDEO 3D DE LA RUTA (estilo Relive): vuelo de cámara sobre terreno 3D real
    (MapLibre GL + Mapterhorn, gratis y sin cuenta) con overlay de stats, grabado con
    MediaRecorder y descargado como archivo de video listo para compartir. ===== */
-const VIDEO_VUELO_MS=18000;
+let videoVueloMs=18000, videoBearing=0;
 let videoMap=null, videoRouteData=null, videoRafId=null, videoRecorder=null, videoChunks=[], videoCompositeCtx=null, videoStream=null, videoStopTimeoutId=null;
+function _lerpAng(a,b,k){ let d=((b-a+540)%360)-180; return (a+d*k+360)%360; }
 function abrirVideoRuta(id){
   const r=_rutaPorId(id);
   function conPuntos(pts, meta){
@@ -2169,6 +2226,8 @@ function abrirVideoRuta(id){
     if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
     if(videoRecorder&&videoRecorder.state==='recording'){ try{ videoRecorder.stop(); }catch(e){} }
     videoRouteData={points:pts, distance:meta.distance||0, calories:meta.calories||0};
+    // Duración del vuelo proporcional a la ruta (para que se vea TODO el viaje sin apuro).
+    videoVueloMs=Math.round(Math.max(14000,Math.min(34000,((meta.distance||3)*2400)+6000)));
     document.getElementById('video-screen').classList.add('active');
     document.getElementById('video-status').innerText='Preparando el vuelo 3D...';
     document.getElementById('videoProgressFill').style.width='0%';
@@ -2187,7 +2246,7 @@ function initVideoMap(){
     style:{
       version:8,
       sources:{
-        osm:{type:'raster',tiles:['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png','https://b.tile.openstreetmap.org/{z}/{x}/{y}.png','https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap · terreno © Mapterhorn'},
+        osm:{type:'raster',tiles:['https://a.tile.opentopomap.org/{z}/{x}/{y}.png','https://b.tile.opentopomap.org/{z}/{x}/{y}.png','https://c.tile.opentopomap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:17,attribution:'© OpenTopoMap (CC-BY-SA) · terreno © Mapterhorn'},
         terreno:{type:'raster-dem',url:'https://tiles.mapterhorn.com/tilejson.json'}
       },
       layers:[{id:'osm',type:'raster',source:'osm'}]
@@ -2213,12 +2272,19 @@ function iniciarVueloRuta(){
   document.getElementById('btnReplayVideo').style.display='none';
   document.getElementById('video-status').innerText='Volando sobre tu recorrido...';
   const t0=performance.now(), total=pts.length;
+  const _la0=Math.min(total-1, Math.max(2,Math.round(total*0.04)));
+  videoBearing=_bearingEntrePuntos(pts[0], pts[_la0]);   // rumbo inicial estable
   function frame(now){
-    const progreso=Math.min(1,(now-t0)/VIDEO_VUELO_MS);
+    const progreso=Math.min(1,(now-t0)/videoVueloMs);
     const idxF=progreso*(total-1), i=Math.floor(idxF), frac=idxF-i;
     const a=pts[i], b=pts[Math.min(i+1,total-1)];
     const lat=a.lat+(b.lat-a.lat)*frac, lon=a.lon+(b.lon-a.lon)*frac;
-    videoMap.jumpTo({center:[lon,lat], zoom:15.5, pitch:65, bearing:_bearingEntrePuntos(a,b)});
+    // Mirar hacia un punto ADELANTADO (no al vecino inmediato) y suavizar el giro:
+    // así la cámara no vibra con el ruido del GPS entre puntos consecutivos.
+    const jLA=Math.min(total-1, i+Math.max(2,Math.round(total*0.045)));
+    const tgtB=_bearingEntrePuntos({lat:lat,lon:lon}, pts[jLA]);
+    videoBearing=_lerpAng(videoBearing, tgtB, 0.05);
+    videoMap.jumpTo({center:[lon,lat], zoom:15.4, pitch:64, bearing:videoBearing});
     const recorridos=pts.slice(0,i+1).map(function(p){return [p.lon,p.lat];}); recorridos.push([lon,lat]);
     const src=videoMap.getSource('ruta-recorrida'); if(src) src.setData({type:'Feature',geometry:{type:'LineString',coordinates:recorridos}});
     _dibujarCompositeVideo(progreso);
@@ -2268,7 +2334,7 @@ function grabarVideoRuta(){
     document.getElementById('btnReplayVideo').style.display='none';
     recorder.start();
     iniciarVueloRuta();
-    videoStopTimeoutId=setTimeout(function(){ if(recorder.state==='recording') recorder.stop(); videoStopTimeoutId=null; },VIDEO_VUELO_MS+600);
+    videoStopTimeoutId=setTimeout(function(){ if(recorder.state==='recording') recorder.stop(); videoStopTimeoutId=null; },videoVueloMs+600);
   }catch(e){ alert('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar'; }
 }
 function cerrarVideoRuta(){
@@ -2857,6 +2923,7 @@ function togglePoiMapaManual(){
     const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
     poiMapaManual=new maplibregl.Map({container:'poi-mapa-manual-inner', style:LP_ESTILO_CALLES, center:yo?[yo.lon,yo.lat]:[-70.65,-33.45], zoom:yo?14:5});
     poiMapaManual.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    poiMapaManual.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true,showAccuracyCircle:true}),'top-right');
     poiMapaManual.on('click', function(e){
       poiManualCoords={lat:e.lngLat.lat, lon:e.lngLat.lng};
       if(poiManualMarker) poiManualMarker.remove();
@@ -2882,6 +2949,7 @@ function togglePuntoMapaViaje(){
     const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
     puntoMapaViaje=new maplibregl.Map({container:'punto-mapa-viaje-inner', style:LP_ESTILO_CALLES, center:yo?[yo.lon,yo.lat]:[-70.65,-33.45], zoom:yo?14:5});
     puntoMapaViaje.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    puntoMapaViaje.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true,showAccuracyCircle:true}),'top-right');
     puntoMapaViaje.on('click', function(e){
       puntoViajeCoords={lat:e.lngLat.lat, lon:e.lngLat.lng};
       if(puntoViajeMarker) puntoViajeMarker.remove();
@@ -3212,6 +3280,8 @@ function _navBgCallback(location){ _navPosUpdate(location.latitude, location.lon
 function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   if(accuracy>30){ _gpsBadgeToggle('navGpsSignalBadge', true); return; }
   _gpsBadgeToggle('navGpsSignalBadge', false);
+  // Pausa manual: seguimos mostrando tu posición pero NO contamos km, tiempo ni recalculamos.
+  if(viajePausaManual){ if(helmetMarker&&navMap){ helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]); } document.getElementById('navSpeed').innerText='0'; return; }
   const _now=Date.now();
   // Ventana de velocidad SEPARADA del registro de distancia (mismo patrón que el GPS
   // libre con posHistory/currentRoute): antes esto se calculaba sobre gpsPoints, que
@@ -3255,9 +3325,9 @@ function verificarDesviacion(lat,lon){
   if(!coords.length) return;
   let minDist=Infinity;
   for(let i=0;i<coords.length;i++){ const d=calculateDistance(lat,lon,coords[i][1],coords[i][0]); if(d<minDist) minDist=d; }
-  if(minDist>70){
+  if(minDist>95){
     navFixesFueraDeRuta++;
-    if(navFixesFueraDeRuta<3) return;
+    if(navFixesFueraDeRuta<4) return;
     const ahora=Date.now();
     if(ahora<navRecalcSilencioHasta) return; // en pausa: zona sin camino claro, no insistir
     if(ahora-navUltimoRecalcTime<NAV_RECALC_COOLDOWN_MS) return; // no recalcular más de 1 vez cada 15s
@@ -3323,7 +3393,8 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
   navRecalcIntentos=0; navUltimoRecalcTime=0; navRecalcSilencioHasta=0;
   puntosAvisados=new Set();
-  navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
+  navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
+  (function(){ const b=document.getElementById('btnPausaViaje'); if(b){ b.innerText='⏸️ Pausar'; b.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; } })();
   navPendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
   iniciarDeteccionCaidas();
   iniciarSeguimientoSegmentos(startLat,startLon);
@@ -3400,7 +3471,24 @@ function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSt
 function getStepIcon(type,modifier){ switch(type){ case 'depart':return '🚴'; case 'arrive':return '🏁'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return '⬅️'; if(modifier&&modifier.indexOf('right')!==-1) return '➡️'; return '🔄'; case 'roundabout': case 'rotary': return '🔁'; case 'fork': return '🔱'; case 'continue': return '⬆️'; default: return '➡️'; } }
 function showAlert(text){ const a=document.getElementById('navAlert'); a.innerText=text; a.classList.add('show'); setTimeout(function(){ a.classList.remove('show'); },3000); }
 function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada(); setTimeout(endNavigation,2500); }
-function guardarRutaNavegada(){ if(!cu||gpsPoints.length<2) return; navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const pts=gpsPoints.map(function(p){return {lat:p.lat,lon:p.lon,t:p.timestamp,alt:(p.alt!=null?p.alt:null)};}); const localId='n'+pts[0].t; const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*30),savedAt:Date.now()}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}); revisarRetosCumplidos(); }
+async function guardarRutaNavegada(){
+  if(!cu||gpsPoints.length<2) return;
+  navGuardado=true;
+  _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs());
+  const pts=gpsPoints.map(function(p){return {lat:p.lat,lon:p.lon,t:p.timestamp,alt:(p.alt!=null?p.alt:null)};});
+  const localId='n'+pts[0].t;
+  // Origen: nunca tiene nombre propio (solo coordenadas del primer fix), así que se
+  // geocodifica igual que en el guardado de GPS libre. Destino: ya tenemos el nombre
+  // real (navDestName, el lugar que se buscó/marcó al iniciar la navegación) — no
+  // hace falta adivinarlo con el último punto del GPS.
+  const origenNombre=await nombreDeLugar(pts[0].lat,pts[0].lon);
+  const destinoNombre=navDestName?navDestName.split(',')[0].trim():await nombreDeLugar(pts[pts.length-1].lat,pts[pts.length-1].lon);
+  const nombreRuta=origenNombre+' → '+destinoNombre;
+  const data={localId:localId,user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*30),savedAt:Date.now()};
+  guardarRutaLocalObj(data); renderRutas();
+  _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  revisarRetosCumplidos();
+}
 function finishTripAuto(){ navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).then(function(){ }).catch(function(){ }); }
 function formatDistance(m){ if(m<1000) return Math.round(m)+' m'; return (m/1000).toFixed(1)+' km'; }
 function showHostelsOnNavMap(){ allHostels.forEach(function(hh){ if(hh.lat&&hh.lon){ L.marker([hh.lat,hh.lon],{icon:L.divIcon({className:'',html:'<div style="background:#ffd700;width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px #ffd700"></div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(hh.name)+'</b><br>'+escapeHTML(hh.location)); } }); }
@@ -3422,7 +3510,7 @@ function endNavigation(){
   navGuardado=false;
   lpWakeLock.disable(); detenerDeteccionCaidas();
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
-  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
+  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
 function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 // Puesto real en el ranking general (no solo si estás en el Top 100): cuenta cuántos
@@ -4836,7 +4924,7 @@ function handleVoiceCommand(raw){
   // en el comando de emergencia real solo por contener la palabra "sos".
   if(responderPreguntaGeneral(t)) return;
   if(/esfera|men[uú] esfera|lanzador|aplicaciones/.test(t)){ abrirEsfera(); h('Aquí está la esfera de aplicaciones.'); return; }
-  if(/(guarda|guardar|graba|grabar)( el| la| mi)? (viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
+  if(/(guarda|guardar|graba|grabar)( el| la| mi)? (viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
   if(/sigamos|sigue con el viaje|continuar el viaje|contin[uú]a el viaje|retoma|reanuda/.test(t)){ if(!ig && !document.getElementById('nav-screen').classList.contains('active')){ toggleGPS(); } else { h('Seguimos, ya estoy registrando tu viaje.'); } return; }
   if(/treki|trakea|trackea|\btrack|sigue la ruta|sigue registrando|sigue grabando/.test(t)){ if(!ig){ toggleGPS(); } else { h('Sigo registrando tu ruta, tranquilo.'); } return; }
   let m=t.match(/(?:planifica(?:r)?(?:me)?(?: mi| el| un)? viaje (?:a|hasta|hacia|para)|ir (?:a|hasta|hacia)|llevame (?:a|hasta|hacia)|llevarme a|lleva(?:me)? (?:a|hasta|hacia)|anda(?:me)? a|navega(?:r|me)? (?:a|hasta|hacia)|guia(?:r|me)? (?:a|hasta|hacia)|vamos (?:a|hasta)|vamonos a|quiero (?:ir|llegar) (?:a|hasta|hacia)|voy a|ruta (?:a|hasta|hacia|para)|como (?:llego|voy) a|llegar a|necesito ir a|busca(?:r|me)?(?: la| el)?(?: direccion(?: de)?| ruta a| lugar)?|encuentra(?: la)?(?: direccion(?: de)?)?|direccion de)\s+(.+)/);
