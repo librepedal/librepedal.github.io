@@ -184,6 +184,18 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.07 — 2026-07-11 — Claude (mapas nivel apps grandes)
+Pedido de Inty: que los mapas tengan todas las funciones de otras apps y se vean espectaculares.
+En el mapa principal MapLibre (`im()`):
+- **Capa Satélite** (`LP_ESTILO_SAT`, Esri World Imagery, gratis). El toggle `toggleCapaMapa` ahora
+  cicla 3 capas: calles → topográfico → satélite (`_estiloDeCapa`, botón se actualiza). Verificado tile 200.
+- **Brújula + rotación + tilt 3D**: `NavigationControl({showCompass:true, visualizePitch:true})` +
+  `pitchWithRotate:true` → rotas con 2 dedos, inclinas para vista 3D, brújula vuelve al norte.
+- **Pantalla completa** (`FullscreenControl`) y **barra de escala** (`ScaleControl`, métrica).
+- **Mantén presionado (o clic derecho) → "Navegar aquí"**: `mp.on('contextmenu')` abre popup con botón que
+  llama `irAlPuntoYNavegar` (confirma e inicia navegación). Como Google Maps.
+Nota: el GeolocateControl (ubícame/seguir) ya estaba. El mapa de navegación es Leaflet turn-by-turn (aparte).
+
 ## v6.06 — 2026-07-11 — Claude (el micrófono OBEDECE todo, desde donde sea)
 Pedido de Inty: sin importar dónde se toque el mic, debe OBEDECER lo que se pida (no solo
 planear/marcar ruta); si no entiende, recomendar escribir con una broma sutil.

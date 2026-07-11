@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.06</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.07</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -918,7 +918,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.06'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.07'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2715,6 +2715,7 @@ function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); documen
    resto de las funciones seguidoras del mapa casi no cambien de forma. */
 const LP_ESTILO_CALLES='https://tiles.openfreemap.org/styles/dark';
 const LP_ESTILO_TOPO={version:8,sources:{topo:{type:'raster',tiles:['https://a.tile.opentopomap.org/{z}/{x}/{y}.png','https://b.tile.opentopomap.org/{z}/{x}/{y}.png','https://c.tile.opentopomap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:17,attribution:'© OpenTopoMap'}},layers:[{id:'topo',type:'raster',source:'topo'}]};
+const LP_ESTILO_SAT={version:8,sources:{sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'© Esri, Maxar, Earthstar Geographics'}},layers:[{id:'sat',type:'raster',source:'sat'}]};
 function mlLatLngBounds(arr){
   let minLat=Infinity,maxLat=-Infinity,minLon=Infinity,maxLon=-Infinity;
   arr.forEach(function(p){ const lat=(p.lat!=null)?p.lat:p[0], lon=(p.lon!=null)?p.lon:(p.lng!=null?p.lng:p[1]); if(lat<minLat)minLat=lat; if(lat>maxLat)maxLat=lat; if(lon<minLon)minLon=lon; if(lon>maxLon)maxLon=lon; });
@@ -2810,12 +2811,13 @@ async function toggleAhorroGPS(){
   }
   h(gpsAhorro?'Ahorro de GPS activado. Va a gastar menos batería, con un poco menos de precisión.':'Ahorro de GPS desactivado. Vuelvo a la máxima precisión.');
 }
-function _actualizarBtnCapaMapa(){ const b=document.getElementById('btnCapaMapa'); if(b) b.innerHTML=(capaMapaTipo==='topo')?'🗺️ Ver calles':'🏔️ Topográfico'; }
+function _estiloDeCapa(t){ return t==='topo'?LP_ESTILO_TOPO:t==='sat'?LP_ESTILO_SAT:LP_ESTILO_CALLES; }
+function _actualizarBtnCapaMapa(){ const b=document.getElementById('btnCapaMapa'); if(b) b.innerHTML=(capaMapaTipo==='calles')?'🏔️ Topográfico':(capaMapaTipo==='topo')?'🛰️ Satélite':'🗺️ Ver calles'; }
 function toggleCapaMapa(){
   if(!mp) return;
-  capaMapaTipo=(capaMapaTipo==='topo')?'calles':'topo';
+  capaMapaTipo=(capaMapaTipo==='calles')?'topo':(capaMapaTipo==='topo')?'sat':'calles';
   try{ localStorage.setItem('lp_capa_mapa',capaMapaTipo); }catch(e){}
-  mp.setStyle(capaMapaTipo==='topo'?LP_ESTILO_TOPO:LP_ESTILO_CALLES);
+  mp.setStyle(_estiloDeCapa(capaMapaTipo));
   // setStyle() borra TODO lo agregado con addSource/addLayer (nuestras polilíneas
   // mlPolyline) — hay que volver a agregar la ruta en curso Y las rutas combinadas.
   mp.once('idle',function(){
@@ -2823,7 +2825,7 @@ function toggleCapaMapa(){
     if(combinedLines && combinedLines.length){ combinedLines.forEach(function(l){ if(l._coords && l._coords.length>1){ l._map=null; l.addTo(mp); } }); }
   });
   _actualizarBtnCapaMapa();
-  h(capaMapaTipo==='topo' ? "Mapa topográfico: ahora se ven senderos y caminos rurales." : "Volví al mapa de calles.");
+  h(capaMapaTipo==='topo' ? "Mapa topográfico: se ven senderos y caminos rurales." : capaMapaTipo==='sat' ? "Vista satélite: el terreno real desde el cielo." : "Volví al mapa de calles.");
 }
 function _mapaFalloVisible(msg){
   const c=document.getElementById('map'); if(!c) return;
@@ -2842,12 +2844,17 @@ async function im(){
     const _yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
     const _centroInicial=_yo?[_yo.lon,_yo.lat]:[-70.65,-33.45];
     const _zoomInicial=_yo?12:5;
-    mp=new maplibregl.Map({container:'map',style:capaMapaTipo==='topo'?LP_ESTILO_TOPO:LP_ESTILO_CALLES,center:_centroInicial,zoom:_zoomInicial,attributionControl:true});
+    mp=new maplibregl.Map({container:'map',style:_estiloDeCapa(capaMapaTipo),center:_centroInicial,zoom:_zoomInicial,attributionControl:true,pitchWithRotate:true});
     _prepararMapaCompat(mp);
-    mp.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    // Brújula + tilt: rotas el mapa con dos dedos y lo inclinas (vista 3D); la brújula lo vuelve al norte.
+    mp.addControl(new maplibregl.NavigationControl({showCompass:true, visualizePitch:true}),'top-right');
+    mp.addControl(new maplibregl.FullscreenControl(),'top-right');
+    mp.addControl(new maplibregl.ScaleControl({maxWidth:110, unit:'metric'}),'bottom-left');
     // Botón "ubícame": lo tocas y el mapa vuela hasta tu posición real con un punto
     // azul que se mueve solo mientras te desplazas (control nativo de MapLibre).
     mp.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true,showAccuracyCircle:true}),'top-right');
+    // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
+    mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222">📍 Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer">🧭 Navegar aquí</button>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
     mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); });
   }catch(err){
