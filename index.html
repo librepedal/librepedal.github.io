@@ -562,6 +562,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="btrip" onclick="cv('routes')">🛣️ Historial de rutas</button>
   <button class="btrip" onclick="mostrarLogrosComunidad()">🏆 Logros y comunidad</button>
 </div>
+<button class="ab" style="margin-top:6px;background:linear-gradient(135deg,var(--p),#ff8a4c);color:#2a0e02;font-weight:800" onclick="abrirPistero()">🤖 Pregúntale a Pistero</button>
 <button class="ab" style="margin-top:6px;background:#dc2626;color:#fff;font-weight:800" onclick="enviarSOS()">🆘 SOS · Compartir mi ubicación</button>
 <button class="ab sec" style="margin-top:6px" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
 <button class="ab sec" style="margin-top:6px" onclick="cv('musica')">🎵 Música</button>
@@ -621,7 +622,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.90</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.91</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -755,6 +756,27 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </div>
 </section>
 
+<style>
+#pisteroMsgs{display:flex;flex-direction:column;gap:2px;overflow-y:auto;height:calc(100vh - 250px);min-height:320px;padding:6px 2px}
+.pmsg{max-width:86%;padding:9px 13px;border-radius:15px;margin:5px 0;font-size:0.87rem;line-height:1.45;word-wrap:break-word;white-space:pre-wrap}
+.pmsg-yo{background:var(--p);color:#2a0e02;align-self:flex-end;border-bottom-right-radius:5px;font-weight:600}
+.pmsg-pistero{background:rgba(255,255,255,0.07);border:1px solid rgba(252,76,2,0.28);color:#e9edf3;align-self:flex-start;border-bottom-left-radius:5px}
+.pmsg-pistero.pensando{opacity:0.65;font-style:italic}
+#pisteroMic.grabando{background:#dc2626;color:#fff}
+</style>
+<section id="v-pistero" class="view">
+<div class="section-info"><h4>🤖 Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
+<div class="cc">
+  <div class="cm" id="pisteroMsgs"></div>
+  <div class="cia">
+    <input type="text" id="pisteroInput" placeholder="Pregúntale lo que quieras..." onkeypress="if(event.key==='Enter')preguntarPistero()">
+    <button class="ab" id="pisteroMic" onclick="pisteroPorVoz()" title="Preguntar hablando"><i class="fas fa-microphone"></i></button>
+    <button class="ab" onclick="preguntarPistero()"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+<button class="ab sec" style="margin-top:8px" onclick="cv('dash')">← Volver al inicio</button>
+</section>
+
 <section id="v-rec" class="view">
 <div class="section-info"><h4>Recomendaciones</h4><p>Lugares útiles con "Me gusta".</p></div>
 <div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-bottom:15px">
@@ -875,7 +897,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.90'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.91'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1536,7 +1558,71 @@ const UMBRAL_INACTIVIDAD_RUTA=12*60*1000;
 let ultimoMovimientoTime=0, rutaSegCerrada=true, rutaSegDistIni=0;
 // Anécdotas FIDEDIGNAS: datos REALES del lugar sacados de Wikipedia (geolocalizados).
 // Nada inventado; si no hay dato real cercano, Pistero se queda callado.
-const IA_URL='https://librepedal-ia.librepedal.workers.dev'; // (legado, ya no se usa para anécdotas)
+const IA_URL='https://librepedal-ia.librepedal.workers.dev';
+// ===== Chat con Pistero IA: le manda tu perfil + los hospedajes de la comunidad y
+// responde de rutas, mecánica, gastos de viaje y todo lo de la app (por texto y voz). =====
+let pisteroHistorial=[];
+function _pisteroBurbuja(txt, quien, pensando){
+  const cont=document.getElementById('pisteroMsgs'); if(!cont) return null;
+  const div=document.createElement('div');
+  div.className='pmsg '+(quien==='yo'?'pmsg-yo':'pmsg-pistero')+(pensando?' pensando':'');
+  div.innerHTML=(quien==='pistero'?'<b>Pistero:</b> ':'')+escapeHTML(txt);
+  cont.appendChild(div); cont.scrollTop=cont.scrollHeight;
+  return div;
+}
+function abrirPistero(){
+  cv('pistero');
+  if(!abrirPistero._saludo){
+    abrirPistero._saludo=true;
+    _pisteroBurbuja('¡Hola'+(nombreUsuario?(' '+nombreUsuario):'')+'! Soy Pistero 🚴. Pregúntame por rutas, arreglos de bici, dónde alojar o cómo planear tu viaje con gastos. ¿En qué te ayudo?','pistero');
+  }
+  setTimeout(function(){ const i=document.getElementById('pisteroInput'); if(i) i.focus(); },250);
+}
+async function preguntarPistero(){
+  const inp=document.getElementById('pisteroInput'); if(!inp) return;
+  const msg=inp.value.trim(); if(!msg) return;
+  inp.value='';
+  _pisteroBurbuja(msg,'yo');
+  const pensando=_pisteroBurbuja('Pistero está pensando…','pistero',true);
+  const hosp=(typeof allHostels!=='undefined'&&allHostels?allHostels:[]).slice(0,12).map(function(hh){
+    return {name:hh.name, tipo:hh.tipo, location:hh.location, desc:(hh.desc||'').toString().slice(0,120)};
+  });
+  const gustos=(typeof selectedHelmet!=='undefined'&&selectedHelmet)?('estilo/casco '+selectedHelmet):'';
+  const payload={
+    mensaje:msg,
+    usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), gustos:gustos },
+    hospedajes:hosp,
+    historial:pisteroHistorial.slice(-6)
+  };
+  try{
+    const r=await fetch(IA_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const data=await r.json();
+    const resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
+    if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML(resp); }
+    else _pisteroBurbuja(resp,'pistero');
+    const cont=document.getElementById('pisteroMsgs'); if(cont) cont.scrollTop=cont.scrollHeight;
+    pisteroHistorial.push({role:'user',content:msg}); pisteroHistorial.push({role:'pistero',content:resp});
+    if(pisteroHistorial.length>12) pisteroHistorial=pisteroHistorial.slice(-12);
+    try{ h(resp); }catch(e){}
+  }catch(e){
+    if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML('Se me cortó la señal. Inténtalo de nuevo en un ratito.'); }
+  }
+}
+let pisteroRec=null;
+function pisteroPorVoz(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ h('Tu navegador no permite hablar aquí. Escríbeme no más.'); return; }
+  if(!window.isSecureContext){ h('La voz solo funciona desde la página publicada.'); return; }
+  try{ pararVoz(); }catch(e){}
+  try{
+    pisteroRec=new SR(); pisteroRec.lang='es-CL'; pisteroRec.continuous=false; pisteroRec.interimResults=false; pisteroRec.maxAlternatives=1;
+    const btn=document.getElementById('pisteroMic'); if(btn) btn.classList.add('grabando');
+    pisteroRec.onresult=function(e){ const t=e.results[0][0].transcript; const i=document.getElementById('pisteroInput'); if(i){ i.value=t; } preguntarPistero(); };
+    pisteroRec.onend=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); };
+    pisteroRec.onerror=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); };
+    pisteroRec.start();
+  }catch(e){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); }
+}
 let ultimoLugarAnecdota='';
 function _anecdotasContadas(){ try{ return JSON.parse(localStorage.getItem('lp_anecdotas'))||[]; }catch(e){ return []; } }
 function _marcarAnecdota(t){ try{ const a=_anecdotasContadas(); if(a.indexOf(t)===-1){ a.push(t); localStorage.setItem('lp_anecdotas', JSON.stringify(a.slice(-250))); } }catch(e){} }
