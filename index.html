@@ -622,7 +622,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.91</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.92</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -897,7 +897,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.91'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.92'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1609,9 +1609,20 @@ async function preguntarPistero(){
   }
 }
 let pisteroRec=null;
-function pisteroPorVoz(){
+async function pisteroPorVoz(){
+  // App instalada: micrófono NATIVO si el APK trae el plugin.
+  const _nat=lpPlugin('SpeechRecognition');
+  if(_nat&&_nat.start){
+    const btn=document.getElementById('pisteroMic'); if(btn) btn.classList.add('grabando');
+    try{ pararVoz(); }catch(e){}
+    const t=await _micNativoEscuchar();
+    if(btn) btn.classList.remove('grabando');
+    if(t){ const i=document.getElementById('pisteroInput'); if(i) i.value=t; preguntarPistero(); }
+    else h('No te escuché bien. Escríbeme la pregunta no más.');
+    return;
+  }
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ h('Tu navegador no permite hablar aquí. Escríbeme no más.'); return; }
+  if(!SR){ h('En la app escríbeme la pregunta aquí abajo; la voz funciona en Chrome.'); const i=document.getElementById('pisteroInput'); if(i){ try{ i.focus(); }catch(e){} } return; }
   if(!window.isSecureContext){ h('La voz solo funciona desde la página publicada.'); return; }
   try{ pararVoz(); }catch(e){}
   try{
@@ -3701,8 +3712,41 @@ const llamadosAlViaje=[
   "¿A qué rincón vamos hoy?",
   "Soy todo oídos: ¿tu destino?"
 ];
-function toggleMic(){
-  if(!recognition){ h("Tu navegador no permite comandos de voz. Usa Google Chrome."); return; }
+// Micrófono NATIVO para la app instalada: el WebView de Android NO trae
+// webkitSpeechRecognition, así que si el APK incluye el plugin
+// @capacitor-community/speech-recognition, escuchamos por ahí. Devuelve el texto
+// reconocido, '' si no captó nada, o null si no hay plugin nativo (usar web).
+async function _micNativoEscuchar(){
+  const SR=lpPlugin('SpeechRecognition');
+  if(!SR||!SR.start) return null;
+  try{
+    if(SR.requestPermissions){ try{ await SR.requestPermissions(); }catch(e){} }
+    else if(SR.requestPermission){ try{ await SR.requestPermission(); }catch(e){} }
+    const res=await SR.start({language:'es-CL', maxResults:1, partialResults:false, popup:false});
+    return (res&&res.matches&&res.matches[0])||'';
+  }catch(e){ return ''; }
+}
+async function toggleMic(){
+  // 1) App instalada: intenta el micrófono NATIVO (si el APK trae el plugin).
+  const _nat=lpPlugin('SpeechRecognition');
+  if(_nat&&_nat.start){
+    if(micOn) return;
+    try{ pararVoz(); }catch(e){}
+    try{ lpMusic.duck(); }catch(e){}
+    micOn=true; updateMicBtn(); beepMic();
+    mostrarBocadillo('🎙️ '+llamadosAlViaje[Math.floor(Math.random()*llamadosAlViaje.length)]);
+    const t=await _micNativoEscuchar();
+    micOn=false; updateMicBtn(); try{ lpMusic.unduck(); }catch(e){}
+    if(t){ const sinEco=quitarEcoPistero(t); mostrarBocadillo('Te escuché: "'+(sinEco||t)+'"'); if(sinEco) handleVoiceCommand(sinEco); else h('¿A dónde vamos? Toca el micrófono y dime solo el lugar.'); }
+    else h('No te escuché bien. Toca el micrófono y dime tu destino de nuevo.');
+    return;
+  }
+  // 2) Web (Chrome): reconocimiento del navegador.
+  if(!recognition){
+    h("En la app instalada el micrófono aún no está disponible; escríbeme aquí abajo a dónde vamos. (En Chrome la voz sí funciona.)");
+    const qd=document.getElementById('quick-dest'); if(qd){ try{ qd.focus(); }catch(e){} }
+    return;
+  }
   if(!window.isSecureContext){ h("Los comandos de voz solo funcionan con candado de seguridad, es decir desde la página publicada, no abriendo el archivo directo."); return; }
   if(micOn){ try{recognition.stop();}catch(e){} micOn=false; updateMicBtn(); return; }
   try{
