@@ -612,7 +612,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.84</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.85</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -838,6 +838,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="stat-card"><div class="stat-value" id="statDarma">0</div><div class="stat-label">Darma</div></div>
   <div class="stat-card"><div class="stat-value" id="statAvgSpeed">0</div><div class="stat-label">Vel. media</div></div>
   <div class="stat-card"><div class="stat-value" id="statMaxSpeed">0</div><div class="stat-label">Vel. máxima</div></div>
+  <div class="stat-card"><div class="stat-value" id="statPuesto">—</div><div class="stat-label">Puesto en el ranking</div></div>
 </div>
 <div class="section-info"><h4>Desempeño general</h4><div class="performance-bar"><div class="performance-fill" id="statPerformanceFill" style="width:0%">0%</div></div></div>
 <div class="chart-container"><h4 style="margin:0 0 8px 0;color:var(--p);font-size:0.9rem">Km por viaje</h4><div class="chart-bar" id="chartKm"></div></div>
@@ -865,7 +866,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.84'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.85'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -3311,6 +3312,19 @@ function endNavigation(){
   if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
 function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
+// Puesto real en el ranking general (no solo si estás en el Top 100): cuenta cuántos
+// ciclistas tienen más km que tú y le suma 1. Se calcula aparte porque mostrarRanking()
+// solo trae el Top 100, así que alguien fuera de esa lista antes no tenía forma de
+// saber en qué puesto va.
+async function actualizarMiPuesto(){
+  const el=document.getElementById('statPuesto'); if(!el || !cu) return;
+  el.innerText='…';
+  try{
+    const miKm=us.di||0;
+    const snap=await db.collection('users').where('km','>',miKm).get();
+    el.innerText='#'+(snap.size+1);
+  }catch(e){ el.innerText='—'; }
+}
 function updateStatsView(){
   document.getElementById('statKm').innerText=us.di.toFixed(1);
   document.getElementById('statTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length;
@@ -3318,6 +3332,7 @@ function updateStatsView(){
   document.getElementById('statDarma').innerText=us.d;
   document.getElementById('statAvgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0';
   document.getElementById('statMaxSpeed').innerText=maxSpeed.toFixed(1);
+  actualizarMiPuesto();
   const perf=Math.min(100,Math.round((us.di/10)*100));
   document.getElementById('statPerformanceFill').style.width=perf+'%';
   { const sp=document.getElementById('statPerformanceFill'); if(sp.parentElement) sp.parentElement.setAttribute('data-pct',perf+'%'); }
@@ -3584,7 +3599,7 @@ async function toggleSeguimientoVivo(){
 // recién está empezando) — solo lo que la app de verdad hace hoy.
 function invitarAmigos(){
   const url='https://librepedal.pages.dev';
-  const msg='Ando pedaleando con Libre Pedal: te guía como Waze, te graba la ruta sola y tiene comunidad de ciclistas. Es gratis, pruébala: '+url;
+  const msg='Ando pedaleando con Libre Pedal: te guía como Waze, te graba la ruta sola y tiene comunidad de ciclistas. Pruébala gratis: '+url;
   if(navigator.share){
     navigator.share({title:'Libre Pedal', text:msg}).catch(function(){});
     return;
@@ -4201,14 +4216,16 @@ async function mostrarComunidad(){
     sorteoTotal=snap.size;
     snap.forEach(function(doc){ if(doc.id===cu) yaParticipo=true; });
   }catch(e){}
+  const votoDesbloqueado=total>=META;
   let html='<div style="background:var(--gl);padding:12px;border-radius:10px;margin-bottom:10px">'+
     '<div style="font-size:0.85rem;color:#9fb3c8">Somos <strong style="color:var(--p)">'+total+'</strong> pedaleando juntos</div>'+
     '<div style="background:#111;border-radius:8px;height:10px;margin-top:6px;overflow:hidden"><div style="background:var(--p);height:100%;width:'+pct+'%"></div></div>'+
-    '<div style="font-size:0.72rem;color:#8aa;margin-top:4px">'+pct+'% del camino a 5.000 usuarios suscritos — cuando lleguemos, la comunidad vota qué hacer con parte de las ganancias</div></div>'+
-    '<h4 style="color:var(--p);font-size:0.85rem;margin-bottom:6px">¿En qué priorizamos cuando lleguemos?</h4>';
+    '<div style="font-size:0.72rem;color:#8aa;margin-top:4px">'+pct+'% del camino a 5.000 usuarios suscritos — al llegar se activa el botón de votar y la comunidad decide qué hacer con parte de las ganancias</div></div>'+
+    '<h4 style="color:var(--p);font-size:0.85rem;margin-bottom:6px">¿En qué priorizamos cuando lleguemos?</h4>'+
+    (votoDesbloqueado?'':'<p style="font-size:0.72rem;color:#8aa;margin:0 0 8px">La votación se activa al llegar a 5.000 usuarios suscritos. Por ahora puedes ver cómo va, pero el botón de votar todavía está bloqueado.</p>');
   opciones.forEach(function(o){
     const p=Math.round((votos[o.id]/totalVotos)*100), sel=(miVoto===o.id);
-    html+='<div class="custom-option'+(sel?' selected':'')+'" style="text-align:left;margin-bottom:6px;padding:10px" onclick="votarComunidad(\''+o.id+'\')"><div class="check">OK</div><strong style="font-size:0.85rem">'+o.texto+'</strong><div style="background:#111;border-radius:6px;height:7px;margin-top:5px;overflow:hidden"><div style="background:var(--g);height:100%;width:'+p+'%"></div></div><div style="font-size:0.68rem;color:#8aa;margin-top:2px">'+p+'% ('+votos[o.id]+' votos)</div></div>';
+    html+='<div class="custom-option'+(sel?' selected':'')+(votoDesbloqueado?'':' locked')+'" style="text-align:left;margin-bottom:6px;padding:10px'+(votoDesbloqueado?'':';opacity:0.6;cursor:not-allowed')+'" onclick="'+(votoDesbloqueado?('votarComunidad(\''+o.id+'\')'):'return false')+'">'+(votoDesbloqueado?'<div class="check">OK</div>':'<div class="lock-badge">🔒</div>')+'<strong style="font-size:0.85rem">'+o.texto+'</strong><div style="background:#111;border-radius:6px;height:7px;margin-top:5px;overflow:hidden"><div style="background:var(--g);height:100%;width:'+p+'%"></div></div><div style="font-size:0.68rem;color:#8aa;margin-top:2px">'+p+'% ('+votos[o.id]+' votos)</div></div>';
   });
   // Sorteo: se desbloquea recien al llegar a la meta, para que sea justo y transparente con toda la comunidad.
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(252,76,2,0.08));border:1px solid '+(total>=META?'var(--g)':'#333')+'">'+
@@ -4301,6 +4318,10 @@ async function rechazarFrase(id){
 }
 async function votarComunidad(opcionId){
   if(!cu) return;
+  try{
+    const snap=await db.collection('users').get();
+    if(snap.size<5000){ h('La votación se activa al llegar a 5.000 usuarios suscritos. Todavía no llegamos.'); return; }
+  }catch(e){ return; }
   try{ await db.collection('votacionComunidad').doc(cu).set({opcion:opcionId,ts:firebase.firestore.FieldValue.serverTimestamp()}); h('¡Voto registrado! Gracias por construir la comunidad.'); mostrarComunidad(); }catch(e){ alert('No se pudo registrar tu voto, intenta de nuevo.'); }
 }
 async function participarSorteo(){
@@ -4659,8 +4680,48 @@ function abrirEsfera(){
   if(!esRAF) esLoop();
 }
 function cerrarEsfera(){ const sc=document.getElementById('esferaScreen'); if(sc) sc.classList.remove('on'); if(esRAF){ cancelAnimationFrame(esRAF); esRAF=null; } esDetenerPostales(); }
+/* ===== FAQ de Pistero: preguntas sobre la app y sobre ciclismo en general.
+   Reglas simples por patrón (nada de servidor ni IA externa: gratis y offline-friendly).
+   Se revisan justo antes de asumir que dijiste un destino, así una pregunta nunca
+   termina armando un viaje por error. ===== */
+const FAQ_APP=[
+  {r:/qui[eé]n eres|qu[eé] eres tu|qu[eé] es pistero/, a:"Soy Pistero, tu copiloto ciclista. Te guío por voz, te acompaño en cada ruta y te cuento datos reales de los lugares por donde pasas."},
+  {r:/qu[eé] es (el )?darma|c[oó]mo gano darma|c[oó]mo consigo darma/, a:"Darma son los puntos que ganas aportando a la comunidad: reportando peligros, agregando puntos en el mapa o completando retos. Con Darma desbloqueas cascos, colores y accesorios en la tienda."},
+  {r:/qu[eé] es (el )?modo fantasma/, a:"El modo fantasma te oculta del mapa de otros ciclistas. Lo activas y desactivas cuando quieras desde el botón de arriba, junto a tu nivel."},
+  {r:/c[oó]mo funciona el sos|qu[eé] hace el bot[oó]n sos/, a:"El botón SOS abre WhatsApp con tu ubicación lista para mandar a tus contactos de emergencia. No reemplaza a Carabineros ni al SAMU, pero avisa rápido a quien tú elijas."},
+  {r:/qu[eé] es (la )?cicloguia|d[oó]nde busco hostales|d[oó]nde busco alojamiento/, a:"La CicloGuía tiene hostales, camping y panoramas cerca tuyo, con comentarios de otros ciclistas. También puedes publicar un alojamiento nuevo marcándolo en el mapa."},
+  {r:/qu[eé] es (el )?taller macgyver|c[oó]mo arreglo (la bici|un pinchazo|la cadena)/, a:"El Taller MacGyver tiene diecisiete trucos para reparar tu bici con lo que tengas a mano: pinchazos, cadena, frenos y más. Lo encuentras en la sección Taller."},
+  {r:/qu[eé] es (el )?seguimiento en vivo|c[oó]mo comparto mi ubicaci[oó]n/, a:"El seguimiento en vivo genera un link temporal para que alguien te siga en tiempo real mientras pedaleas. Lo activas desde Ajustes y se desactiva solo cuando terminas."},
+  {r:/qu[eé] son los segmentos|c[oó]mo compito por un r[eé]cord/, a:"Los segmentos son tramos fijos donde compites por el mejor tiempo con otros ciclistas, con tabla de líderes. Se marcan automático cuando pasas por uno."},
+  {r:/qu[eé] cascos hay|c[oó]mo cambio (mi casco|de casco)/, a:"Tienes más de dieciocho cascos para elegir, con colores y accesorios. Entra a Perfil y toca Personalizar para probártelos."},
+  {r:/qu[eé] es la esfera/, a:"La esfera es el lanzador de aplicaciones de Libre Pedal: gira con el dedo y toca un ícono para entrar a cualquier sección."},
+  {r:/en qu[eé] puesto (voy|estoy)|cu[aá]l es mi (puesto|posici[oó]n|ranking)/, a:"Entra a Estadísticas y ahí te muestro tu puesto actual en el ranking general."},
+  {r:/qu[eé] (funciones tiene|puedes hacer|hace) (la app|libre pedal)|para qu[eé] sirve (esta app|libre pedal)/, a:"Te guío por voz como Waze, grabo tu ruta sola, te conecto con la comunidad de ciclistas, te aviso peligros y pendientes, y llevo tus estadísticas. Pregúntame por cualquier función y te explico."},
+];
+const FAQ_CICLISMO=[
+  {r:/cada cu[aá]nto (debo|hay que|tengo que) (hidratarme|tomar agua|beber agua)/, a:"Lo ideal es hidratarte cada quince a veinte minutos, unos quinientos a setecientos cincuenta mililitros por hora. Yo te lo recuerdo solo durante la ruta."},
+  {r:/qu[eé] (como|debo comer) antes de (una ruta|salir a pedalear|andar en bici)/, a:"Antes de salir, algo con carbohidratos de fácil digestión: pan, plátano o avena. En rutas de más de una hora, come algo liviano cada cuarenta y cinco minutos."},
+  {r:/qu[eé] presi[oó]n (de|le pongo a) (los neum[aá]ticos|las ruedas|la bici)/, a:"Depende del neumático, pero como referencia: entre sesenta y ochenta psi en ruta, y menos, entre treinta y cinco y cincuenta, si andas en camino de tierra."},
+  {r:/c[oó]mo elijo (un casco|el casco)|qu[eé] casco (compro|uso)/, a:"Lo más importante es que te quede firme sin apretar, cubra bien la frente, y tenga certificación de seguridad vigente. La ventilación y el peso son gusto personal."},
+  {r:/me duelen las rodillas|dolor de rodillas pedaleando/, a:"Casi siempre es la altura del asiento. Prueba subirlo un poco: con el pedal abajo, la pierna debería quedar casi estirada, sin bloquear la rodilla."},
+  {r:/cada cu[aá]nto (reviso|cambio) la cadena/, a:"Revisa el estiramiento de la cadena cada mil kilómetros más o menos, y límpiala seguido. Una cadena gastada desgasta los piñones más rápido."},
+  {r:/c[oó]mo evito (que se me duerman las manos|el dolor de manos)/, a:"Cambia la posición de las manos en el manubrio de vez en cuando, y revisa que el manubrio no quede más bajo que el asiento."},
+];
+function responderPreguntaGeneral(t){
+  for(let i=0;i<FAQ_APP.length;i++){ if(FAQ_APP[i].r.test(t)){ h(FAQ_APP[i].a); return true; } }
+  for(let i=0;i<FAQ_CICLISMO.length;i++){ if(FAQ_CICLISMO[i].r.test(t)){ h(FAQ_CICLISMO[i].a); return true; } }
+  return false;
+}
 function handleVoiceCommand(raw){
   const t=normalizar(raw);
+  // Comando de interrupción inmediata: corta lo que Pistero esté diciendo YA (no
+  // espera a que termine la frase) y de paso silencia la voz hasta que digas "habla".
+  // Antes "cállate/silencio" solo apagaba la voz a futuro, sin cortar lo que sonaba.
+  if(/^(detente|para|ya|c[aá]llate|calla|silencio|guarda silencio|c[aá]llate ya|ya callate)\.?$/.test(t)){ pararVoz(); vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
+  // Las preguntas ("qué es...", "cómo...", "cada cuánto...") se resuelven ANTES que
+  // los comandos sueltos de más abajo: si no, por ejemplo "qué hace el botón SOS" caía
+  // en el comando de emergencia real solo por contener la palabra "sos".
+  if(responderPreguntaGeneral(t)) return;
   if(/esfera|men[uú] esfera|lanzador|aplicaciones/.test(t)){ abrirEsfera(); h('Aquí está la esfera de aplicaciones.'); return; }
   if(/(guarda|guardar|graba|grabar)( el| la| mi)? (viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
   if(/sigamos|sigue con el viaje|continuar el viaje|contin[uú]a el viaje|retoma|reanuda/.test(t)){ if(!ig && !document.getElementById('nav-screen').classList.contains('active')){ toggleGPS(); } else { h('Seguimos, ya estoy registrando tu viaje.'); } return; }
@@ -4683,7 +4744,6 @@ function handleVoiceCommand(raw){
   if(/pausa la m[uú]sica|para la m[uú]sica|detén la m[uú]sica|apaga la m[uú]sica/.test(t)){ lpMusic.pause(); h("Música pausada."); return; }
   if(/pon m[uú]sica|reproduce m[uú]sica|dale m[uú]sica|m[uú]sica por favor|^m[uú]sica$/.test(t)){ lpMusic.play(); h("¡Que suene!"); return; }
   if(/cambia la (m[uú]sica|radio|canci[oó]n)|siguiente (canci[oó]n|radio)|otra (canci[oó]n|radio)/.test(t)){ lpMusic.next(); h("Cambiando."); return; }
-  if(/silencio|callate|calla|guarda silencio/.test(t)){ vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
   if(/activa la voz|enciende la voz|\bhabla\b/.test(t)){ vozActiva=true; localStorage.setItem('lp_voz','on'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-high"></i> Voz: ON'; h("Voz activada."); return; }
   if(/\bsos\b|emergencia|auxilio|socorro|ayuda urgente|tuve un accidente|me accidente/.test(t)){ enviarSOS(); return; }
   if(/tutorial|ayuda|como funciona/.test(t)){ startTutorial(); return; }
