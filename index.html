@@ -618,7 +618,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.87</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.88</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -872,7 +872,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.87'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.88'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -2496,6 +2496,11 @@ function subscribeToMapPoints(){
   pointsUnsub=db.collection('recommendations').onSnapshot(function(snap){
     mapPointsData=[];
     snap.forEach(function(doc){ const d=doc.data(); if(d.lat&&d.lon){ d.id=doc.id; mapPointsData.push(d); } });
+    // Subconjunto para el aviso de voz (solo agua/mirador/hospedaje): se arma UNA vez
+    // acá, no en cada fix de GPS, porque recorrer los ~4.000 puntos completos cálculo
+    // de distancia incluido en cada actualización de posición era pesado de más para
+    // un celular andando en bici (batería/CPU en un recorrido de varias horas).
+    puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
     _renderizarPuntosVisibles();
   }, function(e){});
   if(mp){
@@ -2542,18 +2547,22 @@ function _renderizarPuntosVisibles(){
 // Aviso anticipado por voz: cuando te acercas a ~300m de un mirador, punto de agua u
 // hospedaje real del mapa (sembrado o de la comunidad), Pistero avisa una sola vez
 // por punto (no se repite ni satura si hay varios seguidos: uno por tick como máximo).
-let puntosAvisados=new Set();
+let puntosAvisados=new Set(), puntosAvisoRelevantes=[];
 const CATEGORIAS_AVISO={agua:'agua', mirador:'mirador', vista:'mirador', hostel:'hospedaje'};
 const FRASES_AVISO={agua:'Ojo, a unos metros hay un punto de agua marcado por la comunidad.', mirador:'Ojo, a unos metros hay un mirador marcado por la comunidad.', hospedaje:'Ojo, a unos metros hay un hospedaje marcado por la comunidad.'};
+// ~300m de margen grueso en grados (sobra, es solo para descartar barato antes del
+// cálculo real de distancia, que es harto más caro por la trigonometría).
+const AVISO_MARGEN_DEG=0.01;
 function avisarPuntosCercanos(lat,lon){
   // Los puntos se suscriben normalmente al abrir el mapa; si el ciclista nunca lo
   // abrió (arrancó directo a navegar), los pedimos igual aquí para que el aviso
   // funcione sin depender de haber visitado esa pantalla primero.
   if(!pointsUnsub) subscribeToMapPoints();
-  if(!mapPointsData.length || !vozActiva || vozOcupada() || vozCola.length) return;
-  for(let i=0;i<mapPointsData.length;i++){
-    const d=mapPointsData[i], tipo=CATEGORIAS_AVISO[d.cat];
-    if(!tipo) continue;
+  if(!puntosAvisoRelevantes.length || !vozActiva || vozOcupada() || vozCola.length) return;
+  for(let i=0;i<puntosAvisoRelevantes.length;i++){
+    const d=puntosAvisoRelevantes[i];
+    if(Math.abs(d.lat-lat)>AVISO_MARGEN_DEG || Math.abs(d.lon-lon)>AVISO_MARGEN_DEG) continue; // descarte barato
+    const tipo=CATEGORIAS_AVISO[d.cat];
     const id=d.id||(d.lat+','+d.lon);
     if(puntosAvisados.has(id)) continue;
     if(calculateDistance(lat,lon,d.lat,d.lon)<=300){
