@@ -49,6 +49,14 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v5.97 — 2026-07-11 — Claude
+**Fix: destinos por voz mal transcritos (K en vez de QU/C).** La voz escribía "Kiman" y
+el buscador no encontraba nada (el lugar es **Quimán**, Futrono). `geocodeDestino` ahora,
+si no encuentra tal cual, reintenta con **variantes fonéticas** (`_variantesFoneticas`):
+k+e/i→qu, k→c, w→gu, etc. Solo se activa cuando la búsqueda directa falla (0 costo en el
+caso normal). Verificado contra Nominatim real: "Kiman"→sin resultados, "Quiman"→Quimán ✓.
+Arreglado en el punto central → sirve para voz, texto, chips y órdenes a Pistero.
+
 ## v5.93 — 2026-07-11 — Claude
 **Capacidades de la IA avanzada de Pistero (para el lanzamiento).**
 - **Chips de sugerencias** en `v-pistero` (Planifica mi viaje / Arregla mi bici / ¿Dónde alojo? / Ruta de hoy) → `pisteroSugerencia()`.

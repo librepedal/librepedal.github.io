@@ -617,7 +617,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.96</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.97</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -914,7 +914,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.96'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.97'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -3418,30 +3418,50 @@ async function paisDelUsuario(){
   try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=3&lat='+currentUserLocation.lat+'&lon='+currentUserLocation.lon); const j=await r.json(); const cc=(j.address&&j.address.country_code)?j.address.country_code:null; if(cc){ paisUsuario=cc; try{ localStorage.setItem('lp_pais',cc); }catch(e){} } }catch(e){}
   return paisUsuario;
 }
+// Variantes de escritura para cuando la VOZ transcribe mal un lugar: "qui/que" suena
+// igual que "ki/ke" (ej: "Kiman" -> "Quimán"), y "ca/co/cu" como "ka/ko/ku". Solo se
+// usan si la búsqueda tal cual no encuentra nada, así no molestan en el caso normal.
+function _variantesFoneticas(q){
+  const orig=(q||'').toLowerCase(), set=new Set();
+  const add=function(s){ s=(s||'').trim(); if(s && s.toLowerCase()!==orig) set.add(s); };
+  add(q.replace(/[kK]([eiéíEIÉÍ])/g,'qu$1').replace(/[kK]/g,'c')); // k+e/i -> qu ; resto k -> c
+  add(q.replace(/[kK]/g,'qu'));
+  add(q.replace(/[kK]/g,'c'));
+  add(q.replace(/\bw/gi,'gu'));           // "wilson" -> "guilson"
+  add(q.replace(/qu([eiéí])/gi,'k$1'));   // por si viene al revés
+  return Array.from(set).slice(0,4);
+}
 async function geocodeDestino(query){
-  const baseUrl='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=8&q='+encodeURIComponent(query);
-  async function buscar(extra){ try{ const r=await fetch(baseUrl+extra); const j=await r.json(); return j||[]; }catch(e){ return []; } }
-  const impOf=function(x){ return parseFloat((x&&x.importance)||0); };
-  const porImp=function(a,b){ return impOf(b)-impOf(a); };
-  const porDist=function(a,b){ if(!currentUserLocation) return 0; return calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(a.lat),parseFloat(a.lon)) - calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(b.lat),parseFloat(b.lon)); };
   const cc=await paisDelUsuario();
-  // Buscamos en tu país Y en el mundo, y elegimos con criterio.
-  const local = cc ? await buscar('&countrycodes='+cc) : [];
-  const global = await buscar('');
-  if(!local.length && !global.length) return null;
-  const localBest = local.length ? local.slice().sort(porImp)[0] : null;
-  const globalBest = global.length ? global.slice().sort(porImp)[0] : null;
-  let best;
-  // Si hay un buen match en TU país y no existe uno global MUCHO más relevante,
-  // se prefiere el local (así "Santiago" => tu país, no otra del mundo).
-  if(localBest && impOf(localBest)>=0.35 && (!globalBest || (impOf(globalBest)-impOf(localBest))<0.25)){
-    best = (impOf(localBest)<0.45 && currentUserLocation) ? local.slice().sort(porDist)[0] : localBest;
-  } else if(globalBest){
-    best = globalBest; // hito mundial famoso (Torre Eiffel, Machu Picchu, etc.)
-  } else {
-    best = localBest;
+  async function intentar(q){
+    const baseUrl='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=8&q='+encodeURIComponent(q);
+    async function buscar(extra){ try{ const r=await fetch(baseUrl+extra); const j=await r.json(); return j||[]; }catch(e){ return []; } }
+    const impOf=function(x){ return parseFloat((x&&x.importance)||0); };
+    const porImp=function(a,b){ return impOf(b)-impOf(a); };
+    const porDist=function(a,b){ if(!currentUserLocation) return 0; return calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(a.lat),parseFloat(a.lon)) - calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(b.lat),parseFloat(b.lon)); };
+    // Buscamos en tu país Y en el mundo, y elegimos con criterio.
+    const local = cc ? await buscar('&countrycodes='+cc) : [];
+    const global = await buscar('');
+    if(!local.length && !global.length) return null;
+    const localBest = local.length ? local.slice().sort(porImp)[0] : null;
+    const globalBest = global.length ? global.slice().sort(porImp)[0] : null;
+    let best;
+    // Si hay un buen match en TU país y no existe uno global MUCHO más relevante,
+    // se prefiere el local (así "Santiago" => tu país, no otra del mundo).
+    if(localBest && impOf(localBest)>=0.35 && (!globalBest || (impOf(globalBest)-impOf(localBest))<0.25)){
+      best = (impOf(localBest)<0.45 && currentUserLocation) ? local.slice().sort(porDist)[0] : localBest;
+    } else if(globalBest){
+      best = globalBest; // hito mundial famoso (Torre Eiffel, Machu Picchu, etc.)
+    } else {
+      best = localBest;
+    }
+    return {lat:parseFloat(best.lat), lon:parseFloat(best.lon), name:best.display_name};
   }
-  return {lat:parseFloat(best.lat), lon:parseFloat(best.lon), name:best.display_name};
+  let r=await intentar(query);
+  if(r) return r;
+  // No se encontró tal cual: la voz suele escribir "ki/ka" donde va "qui/ca". Reintenta.
+  for(const v of _variantesFoneticas(query)){ r=await intentar(v); if(r) return r; }
+  return null;
 }
 async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); alert("No encontré: "+destInput+". Prueba con más detalle (ciudad o calle)."); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert("Error: "+err.message); } }
 function _tileXY(lat,lon,zoom){ const n=Math.pow(2,zoom); const x=Math.floor((lon+180)/360*n); const latRad=lat*Math.PI/180; const y=Math.floor((1-Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n); return {x:x,y:y}; }
