@@ -49,6 +49,15 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.00 — 2026-07-11 — Claude (blindaje de robustez)
+**Que ninguna eventualidad rompa la app.** Ver `CONTINGENCIA.md` para el mapa completo.
+- **Red de seguridad global:** `window.error` + `unhandledrejection` → Sentry, la app sigue andando (no había ninguna; era el hueco más grave).
+- **Lectura segura de localStorage** (`_lsJSON`): datos corruptos ya no crashean el arranque. Se blindaron `us/uj/rh` en sus 2 ubicaciones (estaban con `JSON.parse` pelado → un dato corrupto = app no abre).
+- **fetch con timeout** (`_fetchT`, 12–15s) en buscar destino (geocode) y ruteo (OSRM): sin señal ya no se cuelga para siempre; falla rápido con mensaje amable.
+- **Mensajes amables** en fallos de ruta/geocode (antes mostraban "Error: aborted"): detecta AbortError/offline y explica "estás sin señal".
+- SOS revisado: ya era robusto (WhatsApp/share, con o sin GPS) — NO se tocó.
+- Nuevo doc `CONTINGENCIA.md` con el plan ante cada situación adversa.
+
 ## v5.99 — 2026-07-11 — Claude
 **Pantalla apagada + botones del mapa + anti-regresiones.**
 - **Rastreo con pantalla apagada:** revisado — el código web (`lpBackgroundGeo` + `lpWakeLock`) está

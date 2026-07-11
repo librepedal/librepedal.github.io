@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.99</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.00</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -916,7 +916,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.99'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.00'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+/* ===== RED DE SEGURIDAD: ninguna eventualidad debe romper la app en plena ruta =====
+   Un error suelto o una promesa rechazada se registran (Sentry) y la app SIGUE andando. */
+window.addEventListener('error', function(e){ try{ if(window.Sentry && e && e.error) Sentry.captureException(e.error); }catch(_){} });
+window.addEventListener('unhandledrejection', function(e){ try{ if(window.Sentry && e && e.reason) Sentry.captureException(e.reason); }catch(_){} });
+/* Lectura segura de localStorage: datos corruptos NO deben crashear el arranque. */
+function _lsJSON(key, fb){ try{ const v=localStorage.getItem(key); if(v==null) return fb; const p=JSON.parse(v); return (p==null)?fb:p; }catch(e){ return fb; } }
+/* fetch con timeout: sin señal, una petición no debe colgar la app para siempre. */
+function _fetchT(url, ms){ let c=null,t=null; try{ c=new AbortController(); t=setTimeout(function(){ try{c.abort();}catch(e){} }, ms||12000); }catch(e){} return fetch(url, c?{signal:c.signal}:undefined).finally(function(){ if(t) clearTimeout(t); }); }
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1854,9 +1862,9 @@ window.onload = async function(){
     updateGhostButton();
     document.getElementById('welcome-name').innerText=nombreUsuario;
     const vb=document.getElementById('vozBtn'); if(vb) vb.innerHTML='<i class="fas fa-volume-'+(vozActiva?'high':'xmark')+'"></i> Voz: '+(vozActiva?'ON':'OFF');
-    us=JSON.parse(localStorage.getItem('lp_u_'+cu))||{d:0,n:'Novato',di:0,c:0,la:null,lo:null};
-    uj=JSON.parse(localStorage.getItem('lp_j_'+cu))||[];
-    rh=JSON.parse(localStorage.getItem('lp_r_'+cu))||[];
+    us=_lsJSON('lp_u_'+cu, {d:0,n:'Novato',di:0,c:0,la:null,lo:null});
+    uj=_lsJSON('lp_j_'+cu, []);
+    rh=_lsJSON('lp_r_'+cu, []);
     document.getElementById('auth').style.display='none';
     document.getElementById('logoutBtn').style.display='block';
     document.getElementById('ghostBtn').style.display='block';
@@ -1964,9 +1972,9 @@ async function reg(e){
   document.getElementById('ghostBtn').style.display='block';
   const _ap=document.getElementById('admin-panel'); if(_ap) _ap.style.display=(cu===ADMIN_ID)?'block':'none';
   document.getElementById('welcome-name').innerText=nombre;
-  us=JSON.parse(localStorage.getItem('lp_u_'+cu))||{d:0,n:'Novato',di:0,c:0,la:null,lo:null};
-  uj=JSON.parse(localStorage.getItem('lp_j_'+cu))||[];
-  rh=JSON.parse(localStorage.getItem('lp_r_'+cu))||[];
+  us=_lsJSON('lp_u_'+cu, {d:0,n:'Novato',di:0,c:0,la:null,lo:null});
+  uj=_lsJSON('lp_j_'+cu, []);
+  rh=_lsJSON('lp_r_'+cu, []);
   await im(); au(); rm(MG); fg('todos');
   loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
   if(!ghostMode) subscribeToUsers();
@@ -3452,7 +3460,7 @@ async function geocodeDestino(query){
   const cc=await paisDelUsuario();
   async function intentar(q){
     const baseUrl='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=8&q='+encodeURIComponent(q);
-    async function buscar(extra){ try{ const r=await fetch(baseUrl+extra); const j=await r.json(); return j||[]; }catch(e){ return []; } }
+    async function buscar(extra){ try{ const r=await _fetchT(baseUrl+extra, 12000); const j=await r.json(); return j||[]; }catch(e){ return []; } }
     const impOf=function(x){ return parseFloat((x&&x.importance)||0); };
     const porImp=function(a,b){ return impOf(b)-impOf(a); };
     const porDist=function(a,b){ if(!currentUserLocation) return 0; return calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(a.lat),parseFloat(a.lon)) - calculateDistance(currentUserLocation.lat,currentUserLocation.lon,parseFloat(b.lat),parseFloat(b.lon)); };
@@ -3480,7 +3488,7 @@ async function geocodeDestino(query){
   for(const v of _variantesFoneticas(query)){ r=await intentar(v); if(r) return r; }
   return null;
 }
-async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); alert('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert("Error: "+err.message); } }
+async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); alert('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert(((err&&err.name==='AbortError')||!navigator.onLine) ? 'Estás sin señal para buscar el destino. Prueba de nuevo con internet, o marca el punto en el mapa.' : 'No pude buscar ese destino ahora. Inténtalo otra vez.'); } }
 function _tileXY(lat,lon,zoom){ const n=Math.pow(2,zoom); const x=Math.floor((lon+180)/360*n); const latRad=lat*Math.PI/180; const y=Math.floor((1-Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n); return {x:x,y:y}; }
 async function descargarMapaRuta(){
   const btn=document.getElementById('btnDescargarMapa');
@@ -3594,7 +3602,7 @@ async function recalcularRuta(lat,lon){
   }
   try{
     const url='https://router.project-osrm.org/route/v1/cycling/'+lon+','+lat+';'+navDestLon+','+navDestLat+'?overview=full&geometries=geojson&steps=true';
-    const resp=await fetch(url); const data=await resp.json();
+    const resp=await _fetchT(url, 15000); const data=await resp.json();
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ navRecalculando=false; return; }
     const route=data.routes[0], steps=route.legs[0].steps;
     const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
@@ -3639,7 +3647,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   iniciarSeguimientoSegmentos(startLat,startLon);
   try{
     const url='https://router.project-osrm.org/route/v1/cycling/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
-    const resp=await fetch(url); const data=await resp.json();
+    const resp=await _fetchT(url, 15000); const data=await resp.json();
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ alert("No pude calcular la ruta"); endNavigation(); return; }
     const route=data.routes[0], steps=route.legs[0].steps;
     const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
@@ -3671,7 +3679,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     showSpeechBubble("En ruta a "+destName.split(',')[0]);
     h("Vamos a "+destName.split(',')[0]+". Yo te voy guiando, tú disfruta el camino.");
     anunciarClimaRuta(destLat,destLon,'Clima en tu destino'); // antes de salir a pedalear
-  }catch(err){ console.error(err); alert("Error: "+err.message); endNavigation(); }
+  }catch(err){ console.error(err); alert(((err&&err.name==='AbortError')||!navigator.onLine) ? 'No pude calcular la ruta: parece que estás sin señal. Prueba de nuevo cuando tengas internet.' : 'No pude calcular la ruta ahora. Inténtalo otra vez.'); endNavigation(); }
 }
 function checkFuel(distKm){
   if(distKm>=nextHydrateKm){ h("Llevas "+Math.round(distKm)+" kilómetros. Toma un par de tragos de agua para no deshidratarte."); nextHydrateKm+=5; }
