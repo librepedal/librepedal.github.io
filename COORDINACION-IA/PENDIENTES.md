@@ -4,6 +4,17 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
 
 ---
 
+## 🎯 FOCO ACTUAL: pulir para el LANZAMIENTO — capacidades de la IA avanzada de Pistero
+El chat de Pistero (`v-pistero`, v5.91) ya conversa. Ahora subirlo de nivel para el lanzamiento.
+Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
+- [ ] **A) Pistero que ACTÚA** — desde el chat opera la app: iniciar navegación a un destino que menciones, mostrar hospedajes, abrir el planificador. (No solo habla: hace.)
+- [ ] **B) Pistero te conoce** — recuerda conversaciones y gustos entre sesiones (localStorage) y personaliza más.
+- [ ] **C) Chips de sugerencias** en el chat (Planifica mi viaje / Arregla mi bici / ¿Dónde alojo? / Ruta de hoy) — descubribilidad y se ve pro.
+- [ ] **D) Planificador de viaje completo** — Pistero arma itinerario por días con gastos + hospedajes de la comunidad, y se puede guardar como "viaje".
+- [ ] **E) Pulido del chat** — estilo, scroll, estados de carga, manejo de errores/sin señal.
+
+---
+
 ## 🤖 Para GEMINI (build del APK — Claude no puede compilar el APK)
 - [ ] **Micrófono nativo en la app.** El código web (v5.92) ya llama al plugin `SpeechRecognition`. Falta meterlo al APK:
   1. `npm install @capacitor-community/speech-recognition`
