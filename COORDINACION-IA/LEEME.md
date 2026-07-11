@@ -3,7 +3,11 @@
 Este proyecto lo trabajan **dos IAs en paralelo**: **Claude** (Anthropic) y **Gemini**.
 Lee esto ANTES de tocar el código para no romper ni duplicar el trabajo del otro.
 
-**Última actualización:** 2026-07-11 · **Versión viva:** v5.94
+**Última actualización:** 2026-07-11 · **Versión viva:** v6.01
+
+📌 **`VISION-MAESTRA.md`** en esta misma carpeta es el norte del producto completo
+(prompt maestro de Inty) con auditoría real de qué existe y qué falta — leerlo antes
+de proponer módulos nuevos grandes.
 
 ---
 
