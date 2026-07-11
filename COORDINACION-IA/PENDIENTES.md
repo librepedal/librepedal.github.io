@@ -7,11 +7,11 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
 ## 🎯 FOCO ACTUAL: pulir para el LANZAMIENTO — capacidades de la IA avanzada de Pistero
 El chat de Pistero (`v-pistero`, v5.91) ya conversa. Ahora subirlo de nivel para el lanzamiento.
 Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
-- [ ] **A) Pistero que ACTÚA** — desde el chat opera la app: iniciar navegación a un destino que menciones, mostrar hospedajes, abrir el planificador. (No solo habla: hace.)
-- [ ] **B) Pistero te conoce** — recuerda conversaciones y gustos entre sesiones (localStorage) y personaliza más.
-- [ ] **C) Chips de sugerencias** en el chat (Planifica mi viaje / Arregla mi bici / ¿Dónde alojo? / Ruta de hoy) — descubribilidad y se ve pro.
-- [ ] **D) Planificador de viaje completo** — Pistero arma itinerario por días con gastos + hospedajes de la comunidad, y se puede guardar como "viaje".
-- [ ] **E) Pulido del chat** — estilo, scroll, estados de carga, manejo de errores/sin señal.
+- [x] **A) Pistero que ACTÚA** — v5.93: botones de acción bajo la respuesta (navegar a un lugar, ver hospedajes, abrir planificador).
+- [x] **B) Pistero te conoce** — v5.93: guarda/carga el historial en localStorage y saluda "de nuevo".
+- [x] **C) Chips de sugerencias** — v5.93.
+- [~] **D) Planificador con gastos** — v5.93 parcial: chip "Planifica mi viaje" + Pistero da gastos en texto + botón "Abrir planificador". FALTA: guardar el itinerario como "viaje" estructurado desde el chat.
+- [ ] **E) Pulido del chat** — probar en dispositivo real (estilo/scroll/errores). El navegador de preview de Claude está inestable, no se pudo verificar visualmente.
 
 ---
 

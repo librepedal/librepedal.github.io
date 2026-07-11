@@ -4,6 +4,13 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v5.93 — 2026-07-11 — Claude
+**Capacidades de la IA avanzada de Pistero (para el lanzamiento).**
+- **Chips de sugerencias** en `v-pistero` (Planifica mi viaje / Arregla mi bici / ¿Dónde alojo? / Ruta de hoy) → `pisteroSugerencia()`.
+- **Pistero te conoce**: `pisteroHistorial` se guarda/carga en `localStorage['lp_pistero_'+cu]` (`_pisteroGuardar/_pisteroCargar`); al reabrir pinta lo último y saluda "de nuevo".
+- **Pistero que ACTÚA**: `_pisteroPintarAcciones(msg)` detecta intención y agrega botones bajo la respuesta: 🧭 iniciar navegación a un lugar (`pisteroNavegar`→ quick-dest+startQuickTrip), 🏨 ver hospedajes (`cv('gui')`), 🗺️ abrir planificador (`cv('trips')`).
+- Historial de contexto al Worker subido a 16 turnos.
+
 ## v5.92 — 2026-07-11 — Claude
 **Micrófono nativo para la app + fallback claro.**
 - `toggleMic()` y `pisteroPorVoz()` ahora usan el plugin nativo `SpeechRecognition`
