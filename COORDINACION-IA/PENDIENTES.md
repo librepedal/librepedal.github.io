@@ -24,18 +24,33 @@ Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
   - Con eso el mic queda andando dentro de la app (hoy solo funciona en Chrome).
 
 ## 👤 Para INTY (son de tu cuenta, ninguna IA puede hacerlas)
-- [ ] **ROTAR los 3 tokens** (estuvieron públicos): Cloudflare, Cloudflare-IA y Netlify.
-  - Cloudflare/IA: dash.cloudflare.com → My Profile → API Tokens → el token → **Roll** → pegar el nuevo en `MI-CLOUDFLARE.txt` / `MI-CLOUDFLARE-IA.txt`.
-  - Netlify: app.netlify.com → User settings → Applications → **Revoke** (ya no se usa).
-- [ ] **Permiso DNS al token** (Zone:DNS Edit + Zone:Read) para poder: (a) poner la landing en `librepedal.cl` y (b) crear el correo `contacto@librepedal.cl` (Email Routing). Hoy el token solo tiene Pages/Workers.
+- [~] **ROTAR los 3 tokens**: la "fuga" que motivó esto era una falsa alarma (ver BITÁCORA v5.94 — era
+  el fallback SPA de Cloudflare Pages, no los tokens reales expuestos). No es urgente por ese motivo. Sigue
+  siendo buena práctica rotarlos alguna vez, a tu criterio, sin apuro.
+- [x] **Permiso DNS/dominio** — resuelto por otra vía: el token de `MI-CLOUDFLARE-IA.txt` ya tenía permiso
+  suficiente (`zone:read`, `worker:edit`) para conectar el dominio vía la API de Pages directamente (sin
+  necesitar Zone:DNS:Edit). Los registros CNAME los agregó Inty a mano en el dashboard (2 minutos, guiado).
 
-## 🌐 Dominio / correo (bloqueado por el permiso DNS de arriba)
-- [ ] Landing (`librepedal-web.pages.dev`) → puerta de entrada en `librepedal.cl`; app → `www.librepedal.cl`.
-- [ ] Correo pro `contacto@librepedal.cl` (Email Routing → Gmail). Ya está puesto en `privacidad.html`/`terminos.html`.
+## 🌐 Dominio / correo — ✅ YA HECHO (v5.82-5.85, antes de que existiera esta carpeta de coordinación)
+- [x] `librepedal.cl` y `www.librepedal.cl` conectados como dominio personalizado del proyecto Pages
+  `librepedal` (agregado vía API con el token de `MI-CLOUDFLARE-IA.txt`). SSL activo, verificado en vivo.
+- [x] `contacto@librepedal.cl` — Email Routing activo, reenvía a Gmail. Ya actualizado en `privacidad.html`
+  y `terminos.html` (dejaron de decir "pendiente, lo definimos al activar el dominio").
+- Nota: la landing de comunidad (`librepedal-web.pages.dev`, distinta de la app) NO se movió a `librepedal.cl`
+  — hoy `librepedal.cl` sirve la APP directo (`index.html`). Si se quiere landing en la raíz y app aparte,
+  es una decisión de arquitectura a conversar con Inty, no algo que haya que "des-bloquear".
+- Sí existe una landing propia dentro de la app: `bienvenida.html` (`librepedal.cl/bienvenida.html`),
+  landing interactiva con votación comunitaria en vivo (datos reales de Firestore, sin login).
 
-## 📄 Play Store / legal
-- [ ] Hostear/enlazar `privacidad.html` y `terminos.html` en URLs públicas (Play las exige). Ya están en la carpeta.
-- [ ] Completar ficha (título/descap. en `PLAY-STORE-LISTING.md`), rating de contenido, data safety.
+## 📄 Play Store / legal — mayormente ✅ YA HECHO
+- [x] `privacidad.html` y `terminos.html` ya están hosteados y públicos en `librepedal.cl/privacidad.html`
+  y `librepedal.cl/terminos.html`, enlazados desde el registro y desde Ajustes en la app.
+- [x] `PLAY-STORE-LISTING.md` ya tiene título, descripción corta/larga, categoría, guía de rating de
+  contenido y de "Data safety". Assets gráficos ya generados: `play-icon-512.png` (512×512),
+  `play-feature-graphic-1024x500.png` (con el logo real).
+- [ ] Falta: capturas de pantalla reales de la app (necesita login + navegar unas pantallas, no se hizo
+  para no ensuciar Firestore de producción con una cuenta de prueba). Y por supuesto, la cuenta de
+  desarrollador de Google Play misma (USD 25, pago único — le corresponde a Inty, ninguna IA puede pagarlo).
 
 ## 🧠 IA de Pistero (mejoras, opcional)
 - [ ] Pulir el estilo del chat `v-pistero` (Claude puede).

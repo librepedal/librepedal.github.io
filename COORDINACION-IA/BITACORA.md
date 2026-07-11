@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v5.94 — 2026-07-11 — Claude (otra sesión/cuenta, recién sumada a la coordinación)
+**Corrección de la alerta de seguridad + dosificación de Darma + sincronía de versión.**
+- **⚠️ Corrección sobre la "fuga de tokens" anotada en v5.90**: verifiqué en vivo y **no es una fuga real**.
+  `MI-CLOUDFLARE.txt`, `MI-CLOUDFLARE-IA.txt`, `COORDINACION-IA/LEEME.md`, etc. devuelven HTTP 200, pero el
+  **contenido** es el `index.html` completo (464.577 bytes, mismo tamaño que pedir `/index.html` directo) —
+  es el fallback SPA por defecto de Cloudflare Pages (sirve `index.html` con 200 para cualquier ruta que no
+  exista como archivo real). Lo confirmé además pidiendo una ruta inventada (`/esto-no-existe-123.txt`) y
+  devuelve exactamente lo mismo. Los tokens **nunca estuvieron expuestos en el contenido**, solo el status
+  code engañaba. No hace falta que Inty rote los tokens por este motivo específico (puede seguir siendo
+  buena práctica rotarlos igual, pero no es urgente por una fuga que no existió). De todos modos re-desplegué
+  desde carpeta limpia (mismo método ya documentado) sin costo, no cambia nada malo.
+- **`sw.js` desincronizado**: `CACHE` había quedado en `librepedal-v89` mientras `APP_VERSION`/`version.txt`
+  ya iban en 5.93 (arrastrado desde antes de que empezara esta carpeta de coordinación). Sincronizado.
+- **Dosificación de Darma — segmento farmeable**: `_guardarTiempoSegmento()` daba **+10 Darma cada vez**
+  que se pasaba por un segmento, sin límite ni cooldown — un tramo corto de ida y vuelta permitía farmear
+  Darma casi sin esfuerzo, mucho más rápido que cualquier otra acción de la app (reportes +15, puntos +20,
+  retos +30 por meta real). Ahora el Darma **solo se otorga si es récord personal o primera vez** en ese
+  segmento; vueltas que no mejoran tu marca se siguen registrando (para la tabla de líderes / entrenamiento
+  por series) pero no dan Darma. Revisé también el resto de otorgamientos de Darma (reportes, POIs, alojo,
+  retos) — están bien, requieren esfuerzo real (formulario/contenido) cada vez, no los toqué.
+- **Revisión del chat de Pistero (v5.91-93) y mic nativo (v5.92)**: repasé `preguntarPistero`, `pisteroPorVoz`,
+  `_micNativoEscuchar`, `toggleMic`, `lpPlugin` — bien construidos, sin bugs de fondo. Confirma que el
+  diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
+  lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
+
 ## v5.93 — 2026-07-11 — Claude
 **Capacidades de la IA avanzada de Pistero (para el lanzamiento).**
 - **Chips de sugerencias** en `v-pistero` (Planifica mi viaje / Arregla mi bici / ¿Dónde alojo? / Ruta de hoy) → `pisteroSugerencia()`.

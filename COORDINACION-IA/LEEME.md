@@ -3,7 +3,7 @@
 Este proyecto lo trabajan **dos IAs en paralelo**: **Claude** (Anthropic) y **Gemini**.
 Lee esto ANTES de tocar el código para no romper ni duplicar el trabajo del otro.
 
-**Última actualización:** 2026-07-11 · **Versión viva:** v5.92
+**Última actualización:** 2026-07-11 · **Versión viva:** v5.94
 
 ---
 
@@ -43,7 +43,12 @@ Sube el número en cada cambio (la app se auto-repara comparando con `version.tx
   rm -rf "$CLEAN"/scripts "$CLEAN"/concepts "$CLEAN"/COORDINACION-IA
   wrangler pages deploy "$CLEAN" --project-name=librepedal --branch=main
   ```
-- (2026-07-11) Se detectó que deploys previos dejaron los 3 tokens PÚBLICOS en `librepedal.cl/MI-*.txt` por días. Ya se cerró redeployando limpio. Inty debe **rotar los 3 tokens** (ver PENDIENTES).
+- (2026-07-11, corregido) Lo de arriba era una **falsa alarma**: `librepedal.cl/MI-*.txt` devuelve HTTP 200
+  pero el contenido es el `index.html` completo (fallback SPA por defecto de Cloudflare Pages para rutas que
+  no existen), no los tokens. Confirmado comparando tamaños de respuesta y probando con una ruta inventada
+  cualquiera — da exactamente lo mismo. Los tokens reales nunca estuvieron en el contenido servido. Sigue
+  siendo buena práctica deployar desde carpeta limpia (como dice el snippet de arriba) y no hace daño, pero
+  no hay urgencia de rotar tokens por este motivo específico (ver PENDIENTES).
 - Esta carpeta `COORDINACION-IA/` NO debe servirse en la web: exclúyela del deploy (ya está en el snippet).
 
 ## 🤝 Reglas para no pisarse
