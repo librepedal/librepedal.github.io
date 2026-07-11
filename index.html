@@ -612,7 +612,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.83</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.84</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -865,7 +865,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.83'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.84'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1034,6 +1034,12 @@ let navSteps = [], currentStepIndex = 0, lastSpokenStep = -1, routeTotalDistance
 // contador de fixes consecutivos lejos de la ruta para no recalcular por un salto
 // puntual del GPS (solo si se sostiene unos segundos, evitando falsas alarmas).
 let navDestLat=null, navDestLon=null, navDestName='', navRecalculando=false, navFixesFueraDeRuta=0;
+// Freno para zonas rurales sin camino mapeado: si el desvío se sostiene y OSRM no
+// logra devolver una ruta que coincida (común fuera de ciudad), sin esto la app
+// entraba en bucle recalculando y avisando por voz sin parar. Tras varios intentos
+// seguidos, hace una pausa larga y silenciosa antes de volver a intentar.
+let navRecalcIntentos=0, navUltimoRecalcTime=0, navRecalcSilencioHasta=0;
+const NAV_RECALC_COOLDOWN_MS=15000, NAV_RECALC_MAX_SEGUIDOS=3, NAV_RECALC_BACKOFF_MS=180000;
 // Auto-pausa: si estás quieto un buen rato (parada de foto, semáforo largo, comer),
 // el reloj del viaje no debería seguir corriendo como si estuvieras pedaleando. Se
 // paran ambas cosas (visual + cómputo) al detectar sp===0 y se retoman solas al moverte.
@@ -1918,6 +1924,22 @@ function _actualizarPendienteHistory(buffer, lat, lon, alt){
   buffer.push({lat:lat,lon:lon,alt:alt});
   while(buffer.length>2 && calculateDistance(buffer[0].lat,buffer[0].lon,buffer[buffer.length-1].lat,buffer[buffer.length-1].lon)>120) buffer.shift();
 }
+// Respaldo de altitud: varios Android no reportan p.coords.altitude (queda null todo
+// el viaje), y sin altitud nunca se arma el buffer de pendiente. Cuando pasa eso, se
+// pide una altitud aproximada a Open-Meteo (gratis, sin key) cada ~45s como respaldo,
+// nada más que para poder seguir detectando subidas/bajadas.
+let navUltimoFallbackAlt=0, navFallbackAltEnCurso=false;
+function _altitudConFallback(buffer, lat, lon, altitudeGPS){
+  if(altitudeGPS!=null && !isNaN(altitudeGPS)){ _actualizarPendienteHistory(buffer, lat, lon, altitudeGPS); return; }
+  const ahora=Date.now();
+  if(navFallbackAltEnCurso || ahora-navUltimoFallbackAlt<45000) return;
+  navFallbackAltEnCurso=true; navUltimoFallbackAlt=ahora;
+  fetch('https://api.open-meteo.com/v1/elevation?latitude='+lat+'&longitude='+lon)
+    .then(function(r){ return r.json(); })
+    .then(function(d){ const alt=(d && d.elevation && d.elevation[0]!=null)?d.elevation[0]:null; if(alt!=null) _actualizarPendienteHistory(buffer, lat, lon, alt); })
+    .catch(function(){})
+    .finally(function(){ navFallbackAltEnCurso=false; });
+}
 function calcularPendienteActual(buffer){
   if(buffer.length<5) return null;
   const dist=calculateDistance(buffer[0].lat,buffer[0].lon,buffer[buffer.length-1].lat,buffer[buffer.length-1].lon);
@@ -1958,7 +1980,7 @@ function ug(p){
   // estamos QUIETOS aunque el GPS reporte velocidad fantasma (caso casa).
   posHistory.push({lat:la,lon:lo,t:Date.now()});
   while(posHistory.length>1 && (Date.now()-posHistory[0].t)>12000) posHistory.shift();
-  _actualizarPendienteHistory(pendienteHistory, la, lo, p.coords.altitude);
+  _altitudConFallback(pendienteHistory, la, lo, p.coords.altitude);
   // Velocidad SOLO verificada por desplazamiento real (centroides). Ignoramos por
   // completo la "velocidad" que reporta el GPS (es la que se vuelve fantasma en casa).
   // El piso queda en 6 (no en 4, aunque "lento" arranque ahí en la categoría): bajarlo
@@ -3086,7 +3108,7 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   // lo último que marcaba y nunca volvía a 0 (ni se detectaba la pausa).
   navPosHistory.push({lat:lat,lon:lon,t:_now});
   while(navPosHistory.length>1 && (_now-navPosHistory[0].t)>12000) navPosHistory.shift();
-  _actualizarPendienteHistory(navPendienteHistory, lat, lon, altitude);
+  _altitudConFallback(navPendienteHistory, lat, lon, altitude);
   const _spWin=velocidadVentana(navPosHistory);
   const speed=(_spWin<6)?0:_spWin;
   _actualizarPausaViaje(speed, 'navPausaBadge');
@@ -3122,16 +3144,33 @@ function verificarDesviacion(lat,lon){
   for(let i=0;i<coords.length;i++){ const d=calculateDistance(lat,lon,coords[i][1],coords[i][0]); if(d<minDist) minDist=d; }
   if(minDist>70){
     navFixesFueraDeRuta++;
-    if(navFixesFueraDeRuta>=3) recalcularRuta(lat,lon);
+    if(navFixesFueraDeRuta<3) return;
+    const ahora=Date.now();
+    if(ahora<navRecalcSilencioHasta) return; // en pausa: zona sin camino claro, no insistir
+    if(ahora-navUltimoRecalcTime<NAV_RECALC_COOLDOWN_MS) return; // no recalcular más de 1 vez cada 15s
+    recalcularRuta(lat,lon);
   } else {
     navFixesFueraDeRuta=0;
+    navRecalcIntentos=0; // volviste a la ruta: se resetea el contador de intentos
   }
 }
 async function recalcularRuta(lat,lon){
   if(navRecalculando || navDestLat==null) return;
   navRecalculando=true; navFixesFueraDeRuta=0;
-  showSpeechBubble('Recalculando ruta...');
-  h('Te desviaste del camino, dame un segundo que te recalculo.');
+  navUltimoRecalcTime=Date.now();
+  navRecalcIntentos++;
+  if(navRecalcIntentos<=NAV_RECALC_MAX_SEGUIDOS){
+    showSpeechBubble('Recalculando ruta...');
+    h('Te desviaste del camino, dame un segundo que te recalculo.');
+  } else {
+    // varios recálculos seguidos y sigues fuera de ruta: probablemente estás en un
+    // camino rural que no está mapeado. Dejamos de insistir un rato en vez de repetir
+    // la misma frase sin parar — se reintenta solo, más tarde, sin avisar cada vez.
+    navRecalcIntentos=0;
+    navRecalcSilencioHasta=Date.now()+NAV_RECALC_BACKOFF_MS;
+    showSpeechBubble('Sigo tu ruta como pueda...');
+    h('Por esta zona no tengo un camino claro marcado. Sigue no más, cualquier cosa te aviso.');
+  }
   try{
     const url='https://router.project-osrm.org/route/v1/cycling/'+lon+','+lat+';'+navDestLon+','+navDestLat+'?overview=full&geometries=geojson&steps=true';
     const resp=await fetch(url); const data=await resp.json();
@@ -3169,6 +3208,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   // última vez (en cualquier contexto anterior, no relacionado a este viaje).
   lastFraseParadoTime=Date.now();
   navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
+  navRecalcIntentos=0; navUltimoRecalcTime=0; navRecalcSilencioHasta=0;
   navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
   navPendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
   iniciarDeteccionCaidas();
