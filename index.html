@@ -617,7 +617,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.95</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.96</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -914,7 +914,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.95'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.96'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1594,6 +1594,48 @@ function _pisteroGuardar(){ try{ localStorage.setItem(_pisteroKey(), JSON.string
 function _pisteroCargar(){ try{ const r=localStorage.getItem(_pisteroKey()); pisteroHistorial=r?(JSON.parse(r)||[]):[]; }catch(e){ pisteroHistorial=[]; } }
 function pisteroSugerencia(t){ const i=document.getElementById('pisteroInput'); if(i) i.value=t; preguntarPistero(); }
 function pisteroNavegar(lugar){ const qd=document.getElementById('quick-dest'); if(qd) qd.value=lugar; if(typeof startQuickTrip==='function') startQuickTrip(); }
+// Contexto que Pistero conoce de ti (se manda al Worker en cada pregunta): tu
+// actividad real en la app, para personalizar sin preguntarte de nuevo las cosas.
+function _pisteroContexto(){
+  const c={};
+  try{
+    c.horaLocal=new Date().getHours();
+    if(typeof trips!=='undefined'&&trips) c.viajesCompletados=trips.filter(function(t){return t.status==='completed';}).length;
+    if(typeof speedReadings!=='undefined'&&speedReadings.length) c.velMediaKmh=+(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1);
+    c.ultimasRutas=rutasLocales().slice(-4).reverse().map(function(r){ return {nombre:r.nombreRuta||null, km:+(r.distance||0).toFixed(1), fecha:new Date(r.startTime).toLocaleDateString()}; });
+  }catch(e){}
+  return c;
+}
+// Pistero OBEDECE órdenes: el Worker devuelve etiquetas [ACCION:...] al final de la
+// respuesta. Regla anti-invasivo: si TÚ lo pediste (tu mensaje suena a orden), se
+// ejecuta al tiro; si fue idea del modelo, queda como botón opcional y tú decides.
+const PISTERO_VISTAS_OK={map:1,trips:1,routes:1,diario:1,mac:1,gui:1,chat:1,customize:1,stats:1,musica:1,ajustes:1};
+const PISTERO_NOMBRES={map:'el Mapa',trips:'Mis viajes',routes:'el Historial de rutas',diario:'la Bitácora',mac:'el Taller',gui:'la CicloGuía',chat:'Social',customize:'tu Perfil',stats:'Estadísticas',musica:'Música',ajustes:'Ajustes'};
+function _pisteroBotonAccion(txt, fn){
+  const cont=document.getElementById('pisteroMsgs'); if(!cont) return;
+  const wrap=document.createElement('div'); wrap.className='pmsg-acciones';
+  const b=document.createElement('button'); b.className='pacc'; b.textContent=txt; b.onclick=fn;
+  wrap.appendChild(b); cont.appendChild(wrap); cont.scrollTop=cont.scrollHeight;
+}
+function _pisteroObedecer(acciones, pedido){
+  if(!acciones||!acciones.length) return;
+  const p=normalizar(pedido||'');
+  const pidioIr=/(lleva|llevame|llevanos|vamos|navega|ir (a|hasta)|anda|ruta (a|hasta)|guiame|marcame|partamos)/.test(p);
+  const pidioAbrir=/(abre|abrir|abreme|muestra|muestrame|ve (a|al)|entra|ensename|dejame en|ponme en)/.test(p);
+  const pidioGps=/(gps|graba|grabar|registra|empieza a grabar|deten|detener)/.test(p);
+  acciones.slice(0,2).forEach(function(a){
+    if(a.tipo==='navegar' && a.arg){
+      if(pidioIr){ pisteroNavegar(a.arg); }
+      else _pisteroBotonAccion('🧭 Iniciar navegación a '+a.arg, function(){ pisteroNavegar(a.arg); });
+    } else if(a.tipo==='abrir' && PISTERO_VISTAS_OK[a.arg]){
+      if(pidioAbrir||pidioIr){ cv(a.arg); }
+      else _pisteroBotonAccion('👉 Abrir '+(PISTERO_NOMBRES[a.arg]||a.arg), function(){ cv(a.arg); });
+    } else if(a.tipo==='gps'){
+      if(pidioGps){ toggleGPS(); }
+      else _pisteroBotonAccion('📍 GPS: grabar mi ruta', function(){ toggleGPS(); });
+    }
+  });
+}
 // Pistero que ACTÚA: según lo que pediste, ofrece botones que operan la app.
 function _pisteroPintarAcciones(msg){
   const cont=document.getElementById('pisteroMsgs'); if(!cont||!msg) return;
@@ -1633,22 +1675,28 @@ async function preguntarPistero(){
   const gustos=(typeof selectedHelmet!=='undefined'&&selectedHelmet)?('estilo/casco '+selectedHelmet):'';
   const payload={
     mensaje:msg,
-    usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), gustos:gustos },
+    usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos },
+    contexto:_pisteroContexto(),
     hospedajes:hosp,
     historial:pisteroHistorial.slice(-6)
   };
   try{
     const r=await fetch(IA_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     const data=await r.json();
-    const resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
+    let resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
+    // Separa las etiquetas de acción del texto: no se muestran ni se leen en voz.
+    const acciones=[];
+    resp=resp.replace(/\[ACCION:([a-z]+)(?:\|([^\]]+))?\]/gi, function(_m,tipo,arg){ acciones.push({tipo:tipo.toLowerCase(), arg:(arg||'').trim()}); return ''; }).replace(/\s{2,}/g,' ').trim();
+    if(!resp && acciones.length) resp='¡Hecho!';
     if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML(resp); }
     else _pisteroBurbuja(resp,'pistero');
     const cont=document.getElementById('pisteroMsgs'); if(cont) cont.scrollTop=cont.scrollHeight;
     pisteroHistorial.push({role:'user',content:msg}); pisteroHistorial.push({role:'pistero',content:resp});
     if(pisteroHistorial.length>16) pisteroHistorial=pisteroHistorial.slice(-16);
     _pisteroGuardar();
-    _pisteroPintarAcciones(msg);
     try{ h(resp); }catch(e){}
+    _pisteroObedecer(acciones, msg);
+    if(!acciones.length) _pisteroPintarAcciones(msg);
   }catch(e){
     if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML('Se me cortó la señal. Inténtalo de nuevo en un ratito.'); }
   }
@@ -5126,6 +5174,15 @@ function handleVoiceCommand(raw){
   if(/activa la voz|enciende la voz|\bhabla\b/.test(t)){ vozActiva=true; localStorage.setItem('lp_voz','on'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-high"></i> Voz: ON'; h("Voz activada."); return; }
   if(/\bsos\b|emergencia|auxilio|socorro|ayuda urgente|tuve un accidente|me accidente/.test(t)){ enviarSOS(); return; }
   if(/tutorial|ayuda|como funciona/.test(t)){ startTutorial(); return; }
+  // Pregunta u orden libre que ningún comando rápido reconoció → la responde la IA
+  // avanzada de Pistero (antes esto se convertía en un destino por error: decir
+  // "cuánta agua llevo que tomar" armaba un viaje a "agua llevo que tomar").
+  if(/^(que|como|cuando|cuanto|cuanta|cuantos|por que|cual|quien|para que|puedes|podrias|sabes|dime|cuentame|explicame|hablame|recomiendame|me recomiendas|busca|buscame|investiga|averigua|ayudame)\b/.test(t) || /\?\s*$/.test(raw)){
+    abrirPistero();
+    const pi=document.getElementById('pisteroInput');
+    if(pi){ pi.value=raw; preguntarPistero(); }
+    return;
+  }
   // Si no fue ningún comando, asumimos que dijo un DESTINO y armamos el viaje.
   let destino=limpiarDestino(raw);
   const stop=/^(hola|gracias|ok|si|no|que|como estas|chao|adios|prueba|test|esfera|menu)\.?$/i;

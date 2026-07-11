@@ -4,6 +4,16 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v5.96 — 2026-07-11 — Claude (sesión 2)
+**Pistero IA nivel 2: obedece órdenes, busca en la web, te conoce mejor — sin ser invasivo.**
+- **Worker `librepedal-ia` REESCRITO y redesplegado vía API** (respaldo del original en scratchpad; el modo "anécdota de lugar" GET sigue intacto). Nuevo:
+  - **Herramientas**: el modelo puede pedir `[BUSCAR: ...]` (Wikipedia es, gratis) o `[CLIMA: lugar]` (Open-Meteo geocoding+forecast) → el Worker resuelve y hace UNA segunda pasada con los resultados. Probado en vivo: historia de la Carretera Austral (busca y resume) y clima de Algarrobo mañana (datos reales).
+  - **Órdenes**: `[ACCION:navegar|lugar]`, `[ACCION:abrir|vista]`, `[ACCION:gps]` al final de la respuesta. Sin etiqueta para SOS (a propósito: emergencias solo por botón físico).
+  - **Contexto rico** en el system prompt: nivel, Darma, viajes completados, últimas rutas con nombre, vel. media, hora local + mapa completo de la app v5.95 (dónde está cada cosa) + regla explícita de NO ser invasivo (personalizar sin repetir datos porque sí ni recomendar lo no pedido).
+- **Cliente (index.html)**: `_pisteroContexto()` (actividad real: últimas rutas nombradas, viajes, vel. media, hora), payload extendido; parser de `[ACCION:...]` (se quitan del texto mostrado/hablado); **`_pisteroObedecer()` con regla anti-invasivo**: si TU mensaje suena a orden (llévame/abre/graba...) se ejecuta al tiro, si fue idea del modelo queda como botón opcional.
+- **Voz**: pregunta libre al micrófono que ningún comando reconoce → va a Pistero IA (antes se convertía en un destino por error: "cuánta agua..." armaba un viaje a "agua").
+- Verificado: Worker en vivo (4 escenarios), parser/obedecer/contexto/ruteo de voz en navegador (7 casos), 0 errores de consola, sintaxis OK.
+
 ## v5.95 — 2026-07-11 — Claude (sesión 2)
 **Navegación simplificada (aprobada por Inty vía `concepts/concepto-navegacion-simple.html`).**
 Cero funciones eliminadas — solo se reubicaron accesos:
