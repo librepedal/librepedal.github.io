@@ -49,6 +49,19 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v5.98 — 2026-07-11 — Claude (feedback de rodada real)
+**1) Recálculo falso corregido (importante).** `verificarDesviacion` medía distancia SOLO al
+`navSteps[currentStepIndex]`; si el índice de paso iba atrasado, creía que te salías estando en
+plena carretera y recalculaba en falso. Ahora mide contra **TODA la ruta** (`rutaLatLngs`, guardada
+al calcular/recalcular) con distancia **punto-a-segmento** (`_distPuntoASegmento`, verificada: 0m sobre
+la línea, 111m a 0.001°). Se resetea en `endNavigation`.
+**2) Subidas/bajadas más exactas y antes.** Ventana de pendiente 120→90m, distancia mínima para
+confiar 35→24m (detecta antes), umbrales de entrada 4.5→3.2% y salida 2.5→1.8% (histéresis), y el
+respaldo de altitud Open-Meteo pasa de cada 45s a cada 20s (más muestras cuando el GPS no da altitud).
+OJO: es tuning sin poder probar en terreno — validar en la próxima rodada.
+**3) Destino no encontrado → recomienda el mapa.** `startQuickTrip` y `startNavigation` ahora sugieren
+escribir con más detalle o tocar 📍 "elegir en el mapa" (el de línea 3180 ya lo hacía).
+
 ## v5.97 — 2026-07-11 — Claude
 **Fix: destinos por voz mal transcritos (K en vez de QU/C).** La voz escribía "Kiman" y
 el buscador no encontraba nada (el lugar es **Quimán**, Futrono). `geocodeDestino` ahora,

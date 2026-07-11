@@ -617,7 +617,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.97</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.98</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -914,7 +914,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.97'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.98'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -2159,7 +2159,7 @@ let pendienteHistory=[], navPendienteHistory=[];
 function _actualizarPendienteHistory(buffer, lat, lon, alt){
   if(alt==null || isNaN(alt)) return;
   buffer.push({lat:lat,lon:lon,alt:alt});
-  while(buffer.length>2 && calculateDistance(buffer[0].lat,buffer[0].lon,buffer[buffer.length-1].lat,buffer[buffer.length-1].lon)>120) buffer.shift();
+  while(buffer.length>2 && calculateDistance(buffer[0].lat,buffer[0].lon,buffer[buffer.length-1].lat,buffer[buffer.length-1].lon)>90) buffer.shift();
 }
 // Respaldo de altitud: varios Android no reportan p.coords.altitude (queda null todo
 // el viaje), y sin altitud nunca se arma el buffer de pendiente. Cuando pasa eso, se
@@ -2169,7 +2169,7 @@ let navUltimoFallbackAlt=0, navFallbackAltEnCurso=false;
 function _altitudConFallback(buffer, lat, lon, altitudeGPS){
   if(altitudeGPS!=null && !isNaN(altitudeGPS)){ _actualizarPendienteHistory(buffer, lat, lon, altitudeGPS); return; }
   const ahora=Date.now();
-  if(navFallbackAltEnCurso || ahora-navUltimoFallbackAlt<45000) return;
+  if(navFallbackAltEnCurso || ahora-navUltimoFallbackAlt<20000) return;
   navFallbackAltEnCurso=true; navUltimoFallbackAlt=ahora;
   fetch('https://api.open-meteo.com/v1/elevation?latitude='+lat+'&longitude='+lon)
     .then(function(r){ return r.json(); })
@@ -2180,7 +2180,7 @@ function _altitudConFallback(buffer, lat, lon, altitudeGPS){
 function calcularPendienteActual(buffer){
   if(buffer.length<5) return null;
   const dist=calculateDistance(buffer[0].lat,buffer[0].lon,buffer[buffer.length-1].lat,buffer[buffer.length-1].lon);
-  if(dist<35) return null; // muy corto para confiar en el dato
+  if(dist<24) return null; // muy corto para confiar en el dato (baja = detecta la pendiente antes)
   // promedia los 2 primeros y 2 últimos puntos para no dejarse engañar por un solo salto de altitud
   const altIni=(buffer[0].alt+buffer[1].alt)/2, altFin=(buffer[buffer.length-1].alt+buffer[buffer.length-2].alt)/2;
   return ((altFin-altIni)/dist)*100; // % de pendiente
@@ -2193,9 +2193,9 @@ function comentarPendiente(buffer, sp){
   const pend=calcularPendienteActual(buffer);
   if(pend==null) return;
   let zonaNueva=zonaPendienteActual;
-  if(zonaPendienteActual==='subida'){ if(pend<2.5) zonaNueva='plano'; }
-  else if(zonaPendienteActual==='bajada'){ if(pend>-2.5) zonaNueva='plano'; }
-  else { if(pend>4.5) zonaNueva='subida'; else if(pend<-4.5) zonaNueva='bajada'; }
+  if(zonaPendienteActual==='subida'){ if(pend<1.8) zonaNueva='plano'; }
+  else if(zonaPendienteActual==='bajada'){ if(pend>-1.8) zonaNueva='plano'; }
+  else { if(pend>3.2) zonaNueva='subida'; else if(pend<-3.2) zonaNueva='bajada'; }
   if(zonaNueva===zonaPendienteActual) return;
   zonaPendienteActual=zonaNueva;
   if(!vozActiva || vozOcupada() || vozCola.length) return;
@@ -3381,7 +3381,7 @@ function loadTrips(){ db.collection('trips').where('user','==',cu).onSnapshot(fu
 function renderTrips(){ const c=document.getElementById('trips-list'); if(!c) return; if(trips.length===0){ c.innerHTML='<p style="color:#888;text-align:center;padding:15px">Aún no tienes viajes</p>'; return; } let html=''; for(let t=0;t<trips.length;t++){ const trip=trips[t]; let dests=''; for(let d=0;d<trip.destinations.length;d++){ dests+='<div>'+(d+1)+'. '+escapeHTML(trip.destinations[d].name)+'</div>'; } const badge=trip.status==='completed'?'(completado)':trip.status==='active'?'(en curso)':'(pendiente)'; html+='<div class="trip-card"><h3>'+escapeHTML(trip.name)+' <span style="font-size:0.7rem;color:#888">'+badge+'</span></h3><div class="meta">Desde: '+escapeHTML(trip.start)+' · '+trip.destinations.length+' destinos</div>'; if(trip.gpsData&&trip.gpsData.distance){ html+='<div style="color:var(--p);font-size:0.8rem;margin-bottom:8px">'+trip.gpsData.distance.toFixed(2)+' km · '+trip.gpsData.duration+'</div>'; } html+='<div class="dest-list">'+dests+'</div><div class="actions">'; if(trip.status!=='completed'){ html+='<button class="btn btn-start" onclick="startNavigation(\''+trip.id+'\')">Iniciar</button>'; } else { html+='<button class="btn btn-view" onclick="viewCompletedTrip(\''+trip.id+'\')">Ver</button>'; } html+='<button class="btn btn-delete" onclick="deleteTrip(\''+trip.id+'\')">Borrar</button></div></div>'; } c.innerHTML=html; }
 function deleteTrip(id){ if(confirm("¿Eliminar este viaje?")){ db.collection('trips').doc(id).delete(); } }
 function viewCompletedTrip(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip||!trip.gpsData||!trip.gpsData.points) return alert("Este viaje no tiene ruta grabada"); currentTrip=trip; gpsPoints=trip.gpsData.points; totalDistance=trip.gpsData.distance||0; document.getElementById('nav-screen').classList.add('active'); if(navMap) navMap.remove(); navMap=L.map('nav-map').setView([gpsPoints[0].lat,gpsPoints[0].lon],15); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(navMap); showHostelsOnNavMap(); drawGpsRoute(); document.getElementById('navText').innerText="Ruta completada"; document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2); document.getElementById('navTime').innerText=trip.gpsData.duration||'0 min'; document.getElementById('navSpeed').innerText='0'; document.getElementById('etaDist').innerText=totalDistance.toFixed(2)+' km'; document.getElementById('etaDuration').innerText=trip.gpsData.duration||'0 min'; document.getElementById('etaTime').innerText='--:--'; showSpeechBubble("Recorriste "+totalDistance.toFixed(2)+" km"); }
-async function startNavigation(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip) return; currentTrip=trip; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS para navegar"); return; } } const dest=trip.destinations[trip.destinations.length-1]; let dLat=dest.lat, dLon=dest.lon; if(!dLat||!dLon){ showLoading("Buscando "+dest.name+"..."); try{ const r=await geocodeDestino(dest.addr||dest.name); if(r){ dLat=r.lat; dLon=r.lon; } }catch(e){} hideLoading(); } if(!dLat||!dLon){ alert("No pude ubicar el destino"); return; } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dLat,dLon,dest.name); }
+async function startNavigation(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip) return; currentTrip=trip; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS para navegar"); return; } } const dest=trip.destinations[trip.destinations.length-1]; let dLat=dest.lat, dLon=dest.lon; if(!dLat||!dLon){ showLoading("Buscando "+dest.name+"..."); try{ const r=await geocodeDestino(dest.addr||dest.name); if(r){ dLat=r.lat; dLon=r.lon; } }catch(e){} hideLoading(); } if(!dLat||!dLon){ alert('No pude ubicar "'+(dest.name||'el destino')+'". Escríbelo con más detalle (ciudad o región), o usa 📍 "elegir en el mapa" para marcarlo tú.'); return; } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dLat,dLon,dest.name); }
 // Geocodificador global e inteligente: reconoce cualquier punto del mundo, pero
 // si conocemos tu ubicación, prefiere los resultados cercanos (para términos
 // genéricos como "la plaza", "farmacia", "supermercado"). Sigue siendo global:
@@ -3463,7 +3463,7 @@ async function geocodeDestino(query){
   for(const v of _variantesFoneticas(query)){ r=await intentar(v); if(r) return r; }
   return null;
 }
-async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); alert("No encontré: "+destInput+". Prueba con más detalle (ciudad o calle)."); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert("Error: "+err.message); } }
+async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); alert('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert("Error: "+err.message); } }
 function _tileXY(lat,lon,zoom){ const n=Math.pow(2,zoom); const x=Math.floor((lon+180)/360*n); const latRad=lat*Math.PI/180; const y=Math.floor((1-Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n); return {x:x,y:y}; }
 async function descargarMapaRuta(){
   const btn=document.getElementById('btnDescargarMapa');
@@ -3525,26 +3525,37 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   verificarDesviacion(lat,lon);
   compararRitmoHistorico(totalDistance, tiempoActivoMs());
 }
-/* Recalculo automático si te desvías (como Waze): mide la distancia al tramo actual
-   de la ruta sugerida. Si te alejas más de 70m durante 3 fixes seguidos (ya filtrados
-   por precisión más arriba, así que no es ruido) recalcula desde donde estás. */
+/* Recalculo automático si te desvías (como Waze). CLAVE: mide la distancia a TODA la
+   ruta (no solo al tramo actual) y con distancia punto-a-SEGMENTO real. Antes solo
+   miraba el paso actual: si el índice de paso iba atrasado creía que te habías salido
+   aunque estuvieras en plena carretera, y recalculaba en falso. */
+let rutaLatLngs=[];
+function _distPuntoASegmento(plat,plon, alat,alon, blat,blon){
+  const R=6371000, tr=Math.PI/180, cl=Math.cos(plat*tr);
+  const px=plon*tr*cl*R, py=plat*tr*R, ax=alon*tr*cl*R, ay=alat*tr*R, bx=blon*tr*cl*R, by=blat*tr*R;
+  const dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy;
+  let t = len2>0 ? ((px-ax)*dx+(py-ay)*dy)/len2 : 0; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
+}
 function verificarDesviacion(lat,lon){
-  if(navRecalculando || !navSteps.length || currentStepIndex>=navSteps.length) return;
-  const step=navSteps[currentStepIndex];
-  const coords=(step.geometry && step.geometry.coordinates)||[];
-  if(!coords.length) return;
+  if(navRecalculando) return;
+  const pts=rutaLatLngs;
+  if(!pts || pts.length<2) return;
   let minDist=Infinity;
-  for(let i=0;i<coords.length;i++){ const d=calculateDistance(lat,lon,coords[i][1],coords[i][0]); if(d<minDist) minDist=d; }
+  for(let i=0;i<pts.length-1;i++){
+    const d=_distPuntoASegmento(lat,lon, pts[i][0],pts[i][1], pts[i+1][0],pts[i+1][1]);
+    if(d<minDist){ minDist=d; if(minDist<45) break; } // ya estás sobre la ruta, no sigas midiendo
+  }
   if(minDist>95){
     navFixesFueraDeRuta++;
     if(navFixesFueraDeRuta<4) return;
     const ahora=Date.now();
     if(ahora<navRecalcSilencioHasta) return; // en pausa: zona sin camino claro, no insistir
-    if(ahora-navUltimoRecalcTime<NAV_RECALC_COOLDOWN_MS) return; // no recalcular más de 1 vez cada 15s
+    if(ahora-navUltimoRecalcTime<NAV_RECALC_COOLDOWN_MS) return; // no recalcular más de 1 vez seguida
     recalcularRuta(lat,lon);
   } else {
     navFixesFueraDeRuta=0;
-    navRecalcIntentos=0; // volviste a la ruta: se resetea el contador de intentos
+    navRecalcIntentos=0; // estás sobre la ruta: se resetea el contador de intentos
   }
 }
 async function recalcularRuta(lat,lon){
@@ -3570,6 +3581,7 @@ async function recalcularRuta(lat,lon){
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ navRecalculando=false; return; }
     const route=data.routes[0], steps=route.legs[0].steps;
     const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
+    rutaLatLngs=latlngs;
     if(routeLine && navMap) navMap.removeLayer(routeLine);
     if(navMap) routeLine=L.polyline(latlngs,{color:'#fc4c02',weight:6,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(navMap);
     navSteps=steps.map(function(step,index){ return {instruction:getTurnInstruction(step.maneuver.type,step.maneuver.modifier,step.name),distance:step.distance,maneuver:step.maneuver,geometry:step.geometry,index:index}; });
@@ -3614,6 +3626,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ alert("No pude calcular la ruta"); endNavigation(); return; }
     const route=data.routes[0], steps=route.legs[0].steps;
     const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
+    rutaLatLngs=latlngs;
     if(routeLine) navMap.removeLayer(routeLine);
     routeLine=L.polyline(latlngs,{color:'#fc4c02',weight:6,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(navMap);
     navMap.fitBounds(routeLine.getBounds(),{padding:[80,80]});
@@ -3720,7 +3733,7 @@ function endNavigation(){
   navGuardado=false;
   lpWakeLock.disable(); detenerDeteccionCaidas();
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
-  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
+  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
 function cv(id){ const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */ document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); const el=document.getElementById('v-'+id); if(el) el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 // Puesto real en el ranking general (no solo si estás en el Top 100): cuenta cuántos
