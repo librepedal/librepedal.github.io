@@ -4,6 +4,26 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.01 — 2026-07-11 — Claude (sesión 2)
+**Fix: videos de ruta descargados no se veían.**
+- `grabarVideoRuta()` grababa SIEMPRE en WebM/VP9 y lo descargaba como `.webm`. Ese
+  formato no lo reproducen ni muestran con miniatura la mayoría de galerías de
+  Android, WhatsApp ni iOS — el video se descargaba bien pero "no se veía" (justo lo
+  reportado por Inty). Ahora prueba `MediaRecorder.isTypeSupported()` en este orden:
+  MP4/H.264 (avc1) → MP4 genérico → WebM/VP9 → WebM genérico, y usa la extensión de
+  archivo real según lo que quedó soportado. Probado en el navegador de este entorno:
+  soporta MP4/avc1 y lo elige primero (antes hubiera ido directo a WebM).
+- Nota para quien pruebe en el APK: confirmar que el WebView de Android también elige
+  MP4 (API 29+ debería); si un dispositivo viejo cae a WebM, al menos ahora el archivo
+  tiene la extensión correcta y no promete un formato que no es.
+- Sincronizado `sw.js` (CACHE quedó en v96 pese a que la app ya iba en v6.00 — quedó
+  desincronizado en algún push intermedio, ver nota abajo).
+
+⚠️ **Recurrente**: el CACHE de `sw.js` se ha desincronizado de `APP_VERSION` varias
+veces esta sesión (v81, v89, v96 quedaron pegados mientras la app subía de versión).
+Sugerencia para ambas cuentas: agregar el bump de `sw.js` al mismo checklist/comando
+que sube `APP_VERSION` y `version.txt`, no como paso aparte.
+
 ## v5.96 — 2026-07-11 — Claude (sesión 2)
 **Pistero IA nivel 2: obedece órdenes, busca en la web, te conoce mejor — sin ser invasivo.**
 - **Worker `librepedal-ia` REESCRITO y redesplegado vía API** (respaldo del original en scratchpad; el modo "anécdota de lugar" GET sigue intacto). Nuevo:

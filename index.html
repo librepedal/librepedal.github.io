@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.00</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.01</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -916,7 +916,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.00'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.01'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* ===== RED DE SEGURIDAD: ninguna eventualidad debe romper la app en plena ruta =====
    Un error suelto o una promesa rechazada se registran (Sentry) y la app SIGUE andando. */
 window.addEventListener('error', function(e){ try{ if(window.Sentry && e && e.error) Sentry.captureException(e.error); }catch(_){} });
@@ -2529,7 +2529,16 @@ function grabarVideoRuta(){
     const stream=out.captureStream(30);
     videoStream=stream;
     videoChunks=[];
-    const mime=(window.MediaRecorder&&MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))?'video/webm;codecs=vp9':'video/webm';
+    // MP4/H.264 PRIMERO: es el único formato que las galerías de Android, WhatsApp e
+    // iOS muestran con miniatura y reproducen sin drama. Antes esto grababa siempre en
+    // WebM/VP9 — se descargaba bien, pero en el celular quedaba como un archivo sin
+    // vista previa que muchas apps ni reconocían como video. MP4 solo lo soportan
+    // Chrome/WebView de Android relativamente nuevos (API 29+); si no está disponible,
+    // cae a WebM igual (mejor un video que se ve raro en algún lado que ninguno).
+    const mimeCandidatos=['video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9','video/webm'];
+    let mime='video/webm';
+    for(let i=0;i<mimeCandidatos.length;i++){ if(window.MediaRecorder&&MediaRecorder.isTypeSupported(mimeCandidatos[i])){ mime=mimeCandidatos[i]; break; } }
+    const extension=mime.indexOf('mp4')!==-1?'mp4':'webm';
     // "recorder" local (no solo la variable global videoRecorder): así, si el usuario
     // cierra y empieza OTRA grabación antes de que se cumplan los 18.6s, el timeout de
     // abajo nunca puede cortar la grabación nueva por error — solo conoce la suya.
@@ -2537,9 +2546,9 @@ function grabarVideoRuta(){
     videoRecorder=recorder;
     recorder.ondataavailable=function(e){ if(e.data&&e.data.size>0) videoChunks.push(e.data); };
     recorder.onstop=function(){
-      const blob=new Blob(videoChunks,{type:'video/webm'});
+      const blob=new Blob(videoChunks,{type:mime.split(';')[0]});
       const url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.webm'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.'+extension; document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(function(){ URL.revokeObjectURL(url); },4000);
       document.getElementById('video-status').innerText='¡Video descargado! Ya lo puedes compartir.';
       document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar';
