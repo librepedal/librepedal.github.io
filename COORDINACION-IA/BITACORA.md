@@ -184,6 +184,18 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.06 — 2026-07-11 — Claude (el micrófono OBEDECE todo, desde donde sea)
+Pedido de Inty: sin importar dónde se toque el mic, debe OBEDECER lo que se pida (no solo
+planear/marcar ruta); si no entiende, recomendar escribir con una broma sutil.
+- **Mic del chat de Pistero** (`pisteroPorVoz`, nativo y web) ahora enruta por `handleVoiceCommand`
+  igual que el mic principal → obedece navegar, abrir secciones, música, SOS, y preguntas→IA. Antes
+  solo chateaba.
+- **Fallback inteligente** en `handleVoiceCommand`: órdenes/preguntas libres o frases largas (≥5
+  palabras) → IA de Pistero (que obedece o responde); lugares cortos → viaje directo; vacío/stopword →
+  nuevo `_vozNoEntendi()` que recomienda escribir + **broma sutil** (4 variantes chilenas). Antes forzaba
+  cualquier cosa como destino y decía escuetamente "no te entendí, ¿a dónde vas?".
+- Verificado el enrutamiento con ejemplos ("cuánta agua tomar"→IA, "Pichilemu"→viaje, "ok"→broma).
+
 ## v6.05 — 2026-07-11 — Claude (mejora estrella: pendiente ANTICIPADA)
 El fix REAL prometido para "las subidas/bajadas las toma muy encima": ahora en navegación
 Pistero **lee el perfil de elevación de la ruta hacia adelante** y avisa ANTES de llegar,

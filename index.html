@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.05</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.06</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -918,7 +918,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.05'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.06'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1799,8 +1799,8 @@ async function pisteroPorVoz(){
     try{ pararVoz(); }catch(e){}
     const t=await _micNativoEscuchar();
     if(btn) btn.classList.remove('grabando');
-    if(t){ const i=document.getElementById('pisteroInput'); if(i) i.value=t; preguntarPistero(); }
-    else h('No te escuché bien. Escríbeme la pregunta no más.');
+    if(t){ const st=quitarEcoPistero(t)||t; handleVoiceCommand(st); }
+    else _vozNoEntendi();
     return;
   }
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -1810,7 +1810,7 @@ async function pisteroPorVoz(){
   try{
     pisteroRec=new SR(); pisteroRec.lang='es-CL'; pisteroRec.continuous=false; pisteroRec.interimResults=false; pisteroRec.maxAlternatives=1;
     const btn=document.getElementById('pisteroMic'); if(btn) btn.classList.add('grabando');
-    pisteroRec.onresult=function(e){ const t=e.results[0][0].transcript; const i=document.getElementById('pisteroInput'); if(i){ i.value=t; } preguntarPistero(); };
+    pisteroRec.onresult=function(e){ const t=e.results[0][0].transcript; const st=quitarEcoPistero(t)||t; if(st) handleVoiceCommand(st); else _vozNoEntendi(); };
     pisteroRec.onend=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); };
     pisteroRec.onerror=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); };
     pisteroRec.start();
@@ -5487,17 +5487,32 @@ function handleVoiceCommand(raw){
   // Pregunta u orden libre que ningún comando rápido reconoció → la responde la IA
   // avanzada de Pistero (antes esto se convertía en un destino por error: decir
   // "cuánta agua llevo que tomar" armaba un viaje a "agua llevo que tomar").
-  if(/^(que|como|cuando|cuanto|cuanta|cuantos|por que|cual|quien|para que|puedes|podrias|sabes|dime|cuentame|explicame|hablame|recomiendame|me recomiendas|busca|buscame|investiga|averigua|ayudame)\b/.test(t) || /\?\s*$/.test(raw)){
+  // Orden o pregunta libre que ningún comando rápido reconoció → la IA de Pistero, que
+  // OBEDECE (navegar, abrir secciones, etc.) o RESPONDE cualquier cosa. Una frase larga
+  // casi nunca es un nombre de lugar: va a la IA en vez de forzarla como destino.
+  const destino=limpiarDestino(raw);
+  const stop=/^(hola|gracias|ok|oye|ya|listo|si|no|que|como estas|chao|adios|prueba|test|esfera|menu)\.?$/i;
+  const esOrdenOPregunta = /^(que|como|cuando|cuanto|cuanta|cuantos|por que|cual|quien|para que|puedes|podrias|sabes|dime|cuentame|explicame|hablame|recomiendame|me recomiendas|busca|buscame|investiga|averigua|ayudame|necesito|quiero|abre|abrir|muestra|pon|dale)\b/.test(t) || /\?\s*$/.test(raw) || destino.split(/\s+/).filter(Boolean).length>=5;
+  if(esOrdenOPregunta){
+    if(destino.length<2 || stop.test(normalizar(destino))){ _vozNoEntendi(); return; }
     abrirPistero();
     const pi=document.getElementById('pisteroInput');
     if(pi){ pi.value=raw; preguntarPistero(); }
     return;
   }
-  // Si no fue ningún comando, asumimos que dijo un DESTINO y armamos el viaje.
-  let destino=limpiarDestino(raw);
-  const stop=/^(hola|gracias|ok|si|no|que|como estas|chao|adios|prueba|test|esfera|menu)\.?$/i;
+  // Pocas palabras y parece un lugar → armamos el viaje directo (camino rápido).
   if(destino.length>2 && !stop.test(normalizar(destino))){ cv('trips'); const qd=document.getElementById('quick-dest'); if(qd) qd.value=destino; h("Perfecto, armo el viaje a "+destino+" y te marco la ruta."); startQuickTrip(); return; }
-  h("No te entendí bien. ¿Me repites a dónde quieres ir?");
+  // No se entendió la petición → recomendar escribirla, con una broma sutil.
+  _vozNoEntendi();
+}
+function _vozNoEntendi(){
+  const bromas=[
+    'No te cacho bien con el viento en la oreja 😅. Escríbeme aquí abajo y lo hacemos al tiro.',
+    'Esa se me perdió en la bajada 🚵. Tíramela por escrito y la pillo de una.',
+    'Ni con audífonos nuevos te entendí esa 😆. Escríbela en el cuadro de texto y lo resolvemos.',
+    'Se me cruzaron los cables 🤖. Mejor escríbelo y te obedezco al toque.'
+  ];
+  h(bromas[Math.floor(Math.random()*bromas.length)]);
 }
 
 const tutorialSteps=[
