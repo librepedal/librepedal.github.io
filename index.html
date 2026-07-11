@@ -618,7 +618,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.88</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">5.89</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -872,12 +872,23 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='5.88'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='5.89'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
 // se sentía cada vez que la app se actualizaba sola en pleno arranque.
 window.__lpListoParaArrancar = new Promise(function(resolve){ window.__lpResolverArranque = resolve; });
+// Hay OTRO mecanismo de auto-actualización totalmente aparte (el controllerchange
+// del Service Worker, más abajo) que también puede disparar su propio reload. Cada
+// uno por separado ya evita su propio loop infinito, pero no se coordinaban entre
+// sí — en un día con varios despliegues seguidos, los dos podían dispararse uno
+// detrás del otro en la misma visita, y eso SÍ se sentía como "la app arranca dos
+// veces" (dos recargas reales de página, no solo un bug visual). Este flag en
+// sessionStorage (sobrevive al reload, no a una pestaña nueva) limita el total de
+// recargas automáticas a UNA por visita, sin importar cuál de los dos mecanismos
+// la dispare primero.
+function _lpYaRecargoEstaVisita(){ try{ return sessionStorage.getItem('lp_reload_visita')==='1'; }catch(e){ return false; } }
+function _lpMarcarRecargaEstaVisita(){ try{ sessionStorage.setItem('lp_reload_visita','1'); }catch(e){} }
 (function(){
   try{
     fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
@@ -885,8 +896,9 @@ window.__lpListoParaArrancar = new Promise(function(resolve){ window.__lpResolve
       // UN solo intento de reparación por versión remota (recordado en localStorage):
       // si tras limpiar la versión sigue distinta, la app ARRANCA IGUAL en vez de
       // recargarse en bucle infinito (bug v5.4-v5.8: APP_VERSION quedó en 5.3).
-      if(v && v!==APP_VERSION && localStorage.getItem('lp_heal_v')!==v){
+      if(v && v!==APP_VERSION && localStorage.getItem('lp_heal_v')!==v && !_lpYaRecargoEstaVisita()){
         try{ localStorage.setItem('lp_heal_v',v); }catch(e){}
+        _lpMarcarRecargaEstaVisita();
         try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); for(const r of rs){ await r.unregister(); } } }catch(e){}
         try{ if(window.caches){ const ks=await caches.keys(); for(const k of ks){ await caches.delete(k); } } }catch(e){}
         location.reload();
@@ -1668,9 +1680,9 @@ function cadenaClick(v){
     for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
     const src=ac.createBufferSource(); src.buffer=buf;
     // Dos resonancias metálicas (le dan el timbre de metal, no de ruido plano)
-    const bp1=ac.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value=2900+Math.random()*500; bp1.Q.value=9;
-    const bp2=ac.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value=5000+Math.random()*700; bp2.Q.value=14;
-    const g=ac.createGain(); g.gain.value=(v==null?0.1:v);
+    const bp1=ac.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value=2900+Math.random()*500; bp1.Q.value=6.5;
+    const bp2=ac.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value=5000+Math.random()*700; bp2.Q.value=10;
+    const g=ac.createGain(); g.gain.value=(v==null?0.05:v);
     const send=ac.createGain(); send.gain.value=0.07; // pizca de reverb = "alta calidad", sin embarrar
     src.connect(bp1); src.connect(bp2); bp1.connect(g); bp2.connect(g); g.connect(ac.destination); g.connect(send); send.connect(verb);
     src.start(t0);
@@ -1679,7 +1691,7 @@ function cadenaClick(v){
 let _cad={on:false, timer:0, vel:0, coast:false};
 function _cadTick(){
   if(!_cad.on) return;
-  cadenaClick(0.05+_cad.vel*0.085);
+  cadenaClick(0.025+_cad.vel*0.045);
   if(_cad.coast){ _cad.vel*=0.90; if(_cad.vel<0.05){ _cad.on=false; return; } } // piñón libre: frena y para solo
   const gap=62-_cad.vel*44; // rápido → clics juntos (~18ms), lento → separados (~62ms)
   _cad.timer=setTimeout(_cadTick, Math.max(16, gap+(Math.random()*8-4)));
@@ -4921,7 +4933,13 @@ if('serviceWorker' in navigator){
   // recargamos una sola vez para que el usuario reciba siempre la última versión.
   let lpRefrescando=false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
-    if(lpRefrescando) return; lpRefrescando=true; window.location.reload();
+    if(lpRefrescando) return;
+    // Comparte el mismo freno que la auto-reparación por version.txt (arriba): si esa
+    // ya recargó la página en esta visita, no sumamos una SEGUNDA recarga por este
+    // otro mecanismo — evita el "arranca dos veces" cuando ambos se disparan seguidos.
+    if(typeof _lpYaRecargoEstaVisita==='function' && _lpYaRecargoEstaVisita()) return;
+    if(typeof _lpMarcarRecargaEstaVisita==='function') _lpMarcarRecargaEstaVisita();
+    lpRefrescando=true; window.location.reload();
   });
   window.addEventListener('load', function(){
     navigator.serviceWorker.register('sw.js').then(function(reg){
