@@ -4,6 +4,40 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.31 — 2026-07-13 — Claude (sesión 2, navegación de Comunidad + votación abierta)
+Inty: "si veo un apartado (ej. records) y vuelvo atrás, me lleva a Inicio y tengo
+que volver a entrar a Comunidad para ver los otros ítems". Confirmado con el
+código: `mostrarLogrosComunidad()` (el menú Logros/Comunidad) y sus 8 pantallas
+hijas (Ranking, Segmentos, Retos, Resumen Anual, Rutas recomendadas, Tienda,
+Comunidad/vota, y la tabla de líderes de un segmento) viven TODAS dentro del
+mismo `userModal`, reemplazando el contenido sin dejar rastro — no usan `cv()`
+(el sistema de vistas con su propia pila de historial, ya sólido, revisado en la
+función #2). La única salida era la "✕", que cierra TODO el modal de una vez.
+
+**Corregido**: nuevo `_modalVolverA` (nombre de función a la que vuelve) +
+`_btnVolverModal()` (botón "← Volver" reusable). Cada pantalla hija fija su
+padre antes de dibujarse. Caso especial: `mostrarTienda()` se abre desde 2
+lugares distintos (el menú Logros, y al tocar un ítem bloqueado en
+Personalizar) — ahora recibe un parámetro (`mostrarTienda(true)` solo desde
+Logros) para mostrar "Volver" únicamente cuando corresponde; desde
+Personalizar la "✕" ya te deja en el lugar correcto, un botón "Volver a Logros"
+ahí habría sido confuso (nunca estuviste en Logros). Verificado en el
+navegador con la secuencia real: Logros → Ranking → tocar "Volver" → vuelve al
+menú Logros (no a Inicio).
+
+**Segundo pedido, mismo mensaje**: "activar la sección de votación, eso le da a
+la gente participación, luego cuando seamos 5.000 ya tendremos los votos y se
+hará la que diga la comunidad". Se sacó el bloqueo de `votarComunidad()` (antes
+exigía 5.000 usuarios para poder votar) — ahora se puede votar desde ya, y el
+texto se reformuló: la meta de 5.000 pasa de "desbloquea el botón de votar" a
+"ejecutamos lo que ya haya decidido la comunidad con los votos juntados hasta
+ahí". El sorteo NO se tocó, sigue gateado a 5.000 como estaba (no se pidió
+cambiarlo, y ahí sí tiene sentido por la promesa de "una vez cada 6 meses,
+justo y transparente"). Verificado votando con un total simulado de 42
+usuarios (muy por debajo de 5.000) — el voto se registra correctamente.
+
+Deploy: `librepedal.cl/version.txt` → `6.31` confirmado en vivo.
+
 ## v6.30 — 2026-07-13 — Claude (sesión 2, barrido #5: Comunidad) — ⚠️ hallazgo de escalabilidad real
 Función #5 del barrido completo (reportes en el mapa, CicloGuía, alojo, votación,
 retos, rodadas). La mayoría verificada sólida — pero encontré el mismo tipo de

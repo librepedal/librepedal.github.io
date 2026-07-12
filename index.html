@@ -956,7 +956,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.30'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.31'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1588,9 +1588,14 @@ function renderFondosEsfera(){ const c=document.getElementById('fondosEsferaGrid
 function getDesbloqueados(){ try{ return JSON.parse(localStorage.getItem('lp_unlocked_'+(cu||'anon'))||'[]'); }catch(e){ return []; } }
 function estaDesbloqueado(id){ return !(id in PRECIOS) || getDesbloqueados().indexOf(id)!==-1; }
 function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ lpAviso('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){} au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
-function mostrarTienda(){
+function mostrarTienda(desdeLogros){
+  // Se abre desde 2 lugares distintos: el menú de Logros (ahí sí tiene sentido
+  // "← Volver" a ese menú) y al tocar un ítem bloqueado en Personalizar (ahí la
+  // "✕" ya te deja de vuelta en Personalizar correctamente, un "Volver a Logros"
+  // sería confuso porque nunca estuviste ahí).
+  _modalVolverA=desdeLogros?'mostrarLogrosComunidad':null;
   document.getElementById('modalTitle').innerText='✨ Tienda de Darma';
-  let html='<p style="color:#9fb3c8;font-size:0.84rem;margin-top:0">Tienes <strong style="color:var(--g)">'+us.d+' de Darma ✨</strong>. Gánala aportando a la comunidad y desbloquea skins, lentes, accesorios y cascos.</p>';
+  let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.84rem;margin-top:0">Tienes <strong style="color:var(--g)">'+us.d+' de Darma ✨</strong>. Gánala aportando a la comunidad y desbloquea skins, lentes, accesorios y cascos.</p>';
   const grupos=[['🎨 Colores premium',skinOptions],['🕶️ Lentes',lensOptions],['✨ Accesorios',extrasOptions],['🪖 Cascos premium',helmetDesigns]];
   grupos.forEach(function(gp){ const items=gp[1].filter(function(it){return it.id in PRECIOS;}); if(!items.length) return; html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 6px">'+gp[0]+'</h4>'; items.forEach(function(it){ const unlocked=estaDesbloqueado(it.id); const costo=PRECIOS[it.id]; const puede=us.d>=costo; html+='<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;margin-bottom:5px;background:var(--gl);border:1px solid '+(unlocked?'var(--g)':'#242c3e')+'"><div style="flex:1"><div style="font-weight:700;font-size:0.84rem;color:#dfe7ff">'+escapeHTML((it.brand?it.brand+' ':'')+it.name)+'</div><div style="font-size:0.68rem;color:'+(unlocked?'var(--g)':'#7d8ba0')+'">'+(unlocked?'Desbloqueado ✓':(costo+' ✨ Darma'))+'</div></div>'+(unlocked?'<span style="color:var(--g);font-weight:800;font-size:1.1rem">✓</span>':'<button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.76rem;'+(puede?'':'opacity:0.45')+'" onclick="comprarItem(\''+it.id+'\')">Desbloquear</button>')+'</div>'; }); });
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(252,76,2,0.08));border:1px solid var(--g)">'+
@@ -3281,7 +3286,17 @@ async function sendFriendRequest(toUser){
     friendRequestSent.push(toUser); h("Solicitud enviada."); showUserListForFriendRequest();
   }catch(e){ lpAviso('No se pudo enviar la solicitud, intenta de nuevo.'); }
 }
-function closeModal(){ document.getElementById('userModal').classList.remove('on'); if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; }
+function closeModal(){ document.getElementById('userModal').classList.remove('on'); if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; _modalVolverA=null; }
+// "← Volver" DENTRO del modal (Logros → Ranking/Segmentos/Retos/etc.): antes solo
+// existía la "✕" que cierra TODO el modal y te deja en la vista de abajo (Inicio,
+// Perfil...) — para volver a una pantalla hermana (ej. de Ranking a Retos) había
+// que cerrar todo y volver a entrar a Comunidad desde cero, perdiendo el lugar.
+// _modalVolverA guarda el NOMBRE (string) de la función que dibuja la pantalla
+// padre; cada pantalla hija lo fija antes de dibujarse y lo agrega a su HTML con
+// _btnVolverModal(). null cuando no aplica (ej. Tienda abierta desde Personalizar,
+// no desde Logros — ahí la "✕" ya vuelve al lugar correcto).
+let _modalVolverA=null;
+function _btnVolverModal(){ return _modalVolverA ? '<button class="ab sec" style="margin:0 0 10px;width:auto;padding:8px 14px" onclick="'+_modalVolverA+'()">← Volver</button>' : ''; }
 
 /* ===== MAPA COMUNITARIO: "Reportar en Ruta" (público, agrupado por zona) ===== */
 const REPORTE_CATS={
@@ -3391,6 +3406,7 @@ const LOGROS=[
   {e:'📖',t:'Memorias',d:'7 días de bitácora',val:statBitacora,meta:7,u:''}
 ];
 function mostrarLogrosComunidad(){
+  _modalVolverA=null; // es el menú raíz de este grupo: la "✕" ya vuelve al lugar correcto
   document.getElementById('modalTitle').innerText='🏆 Logros y comunidad';
   document.getElementById('modalContent').innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'
     +'<button class="ab" style="margin:0" onclick="mostrarLogros()">🏆 Mis logros</button>'
@@ -3399,28 +3415,30 @@ function mostrarLogrosComunidad(){
     +'<button class="ab sec" style="margin:0" onclick="verRetos()">🎯 Retos y temporadas</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarResumenAnual()">📊 Mi año en Libre Pedal</button>'
     +'<button class="ab sec" style="margin:0" onclick="verRecomendacionRutas()">🧭 Rutas para ti</button>'
-    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda()">✨ Tienda de Darma</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda(true)">✨ Tienda de Darma</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarComunidad()">🤝 Meta de la comunidad (vota)</button>'
     +'</div>';
   document.getElementById('userModal').classList.add('on');
 }
 function mostrarLogros(){
+  _modalVolverA='mostrarLogrosComunidad';
   let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
-  let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
+  let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
   items.forEach(function(it){ const l=it.l; html+='<div style="display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;margin-bottom:6px;background:'+(it.done?'rgba(255,215,0,0.10)':'var(--gl)')+';border:1px solid '+(it.done?'var(--g)':'#242c3e')+';opacity:'+(it.done?'1':'0.78')+'"><div style="font-size:1.6rem;filter:'+(it.done?'none':'grayscale(1)')+'">'+l.e+'</div><div style="flex:1"><div style="font-weight:800;font-size:0.84rem;color:'+(it.done?'var(--g)':'#cfd8e6')+'">'+escapeHTML(l.t)+(it.done?' ✓':'')+'</div><div style="font-size:0.7rem;color:#8695aa">'+escapeHTML(l.d)+'</div>'+(it.done?'':'<div style="height:5px;background:#222b3d;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+it.pct+'%;background:var(--p)"></div></div><div style="font-size:0.62rem;color:#7d8ba0;margin-top:2px">'+(l.u==='km'?it.v.toFixed(1):Math.round(it.v))+' / '+l.meta+' '+l.u+'</div>')+'</div></div>'; });
   document.getElementById('modalTitle').innerText='🏆 Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
 async function sincronizarStats(){ if(!cu) return; const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null; try{ await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true}); }catch(e){} }
 async function mostrarRanking(){
-  document.getElementById('modalTitle').innerText='🥇 Top 100 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
+  _modalVolverA='mostrarLogrosComunidad';
+  document.getElementById('modalTitle').innerText='🥇 Top 100 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
   await sincronizarStats();
   try{ const snap=await db.collection('users').orderBy('km','desc').limit(100).get();
-    if(snap.empty){ c.innerHTML='<p style="color:#888">Aún no hay datos. ¡Activa el GPS y suma kilómetros para entrar al ranking!</p>'; return; }
-    const med=['🥇','🥈','🥉']; let html='<p style="color:#9fb3c8;font-size:0.82rem;margin-top:0">Los cicloviajeros con más kilómetros del mundo 🌎</p>'; let pos=0;
+    if(snap.empty){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">Aún no hay datos. ¡Activa el GPS y suma kilómetros para entrar al ranking!</p>'; return; }
+    const med=['🥇','🥈','🥉']; let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.82rem;margin-top:0">Los cicloviajeros con más kilómetros del mundo 🌎</p>'; let pos=0;
     snap.forEach(function(doc){ const d=doc.data(); pos++; const yo=doc.id===cu; html+='<div onclick="verPerfilUsuario(\''+doc.id+'\')" style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;cursor:pointer;background:'+(yo?'rgba(252,76,2,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-size:1.05rem;font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem;color:'+(yo?'var(--p)':'#dfe7ff')+'">'+escapeHTML(d.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g);font-size:0.9rem">'+(d.km||0).toFixed(0)+' km</div></div>'; });
     html+='<p style="font-size:0.68rem;color:#7d8ba0;text-align:center;margin-top:8px">Toca un ciclista para ver su perfil y sus rutas.</p>';
     c.innerHTML=html;
-  }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar el ranking. Intenta de nuevo en un momento.</p>'; }
+  }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudo cargar el ranking. Intenta de nuevo en un momento.</p>'; }
 }
 /* ===== PERFIL PÚBLICO: ver desempeño, logros y rutas de otros ciclistas ===== */
 async function verPerfilUsuario(userId){
@@ -4860,30 +4878,32 @@ async function crearSegmentoDesdeRuta(localId){
   }catch(e){ lpAviso('No se pudo crear el segmento.'); }
 }
 async function verSegmentos(){
+  _modalVolverA='mostrarLogrosComunidad';
   document.getElementById('modalTitle').innerText='🏁 Segmentos';
   const c=document.getElementById('modalContent');
-  c.innerHTML='<p style="color:#888">Cargando segmentos...</p>';
+  c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando segmentos...</p>';
   document.getElementById('userModal').classList.add('on');
   try{
     const snap=await db.collection('segmentos').orderBy('ts','desc').limit(50).get();
-    if(snap.empty){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Aún no hay segmentos. Crea uno desde Historial de rutas → elige una ruta → 🏁 Crear segmento.</p>'; return; }
-    c.innerHTML=snap.docs.map(function(d){ const s=d.data(); const nom=escapeHTML(s.nombre||'').replace(/'/g,"\\'"); return '<div class="novedad-card"><h4>'+escapeHTML(s.nombre||'')+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" onclick="verTablaLideresSegmento(\''+d.id+'\',\''+nom+'\')">🏆 Ver tabla de líderes</button></div>'; }).join('');
-  }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los segmentos.</p>'; }
+    if(snap.empty){ c.innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem">Aún no hay segmentos. Crea uno desde Historial de rutas → elige una ruta → 🏁 Crear segmento.</p>'; return; }
+    c.innerHTML=_btnVolverModal()+snap.docs.map(function(d){ const s=d.data(); const nom=escapeHTML(s.nombre||'').replace(/'/g,"\\'"); return '<div class="novedad-card"><h4>'+escapeHTML(s.nombre||'')+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" onclick="verTablaLideresSegmento(\''+d.id+'\',\''+nom+'\')">🏆 Ver tabla de líderes</button></div>'; }).join('');
+  }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar los segmentos.</p>'; }
 }
 async function verTablaLideresSegmento(segmentoId, nombre){
+  _modalVolverA='verSegmentos';
   document.getElementById('modalTitle').innerText='🏆 '+nombre;
   const c=document.getElementById('modalContent');
-  c.innerHTML='<p style="color:#888">Cargando tabla de líderes...</p>';
+  c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando tabla de líderes...</p>';
   document.getElementById('userModal').classList.add('on');
   try{
     // Sin orderBy en la consulta (evita necesitar un índice compuesto): se ordena
     // en el cliente, liviano porque son pocas marcas por segmento.
     const snap=await db.collection('segmentoTiempos').where('segmentoId','==',segmentoId).limit(300).get();
     const tiempos=snap.docs.map(function(d){return d.data();}).sort(function(a,b){return a.tiempoMs-b.tiempoMs;}).slice(0,20);
-    if(!tiempos.length){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Nadie ha marcado tiempo todavía. ¡Sé el primero!</p>'; return; }
+    if(!tiempos.length){ c.innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem">Nadie ha marcado tiempo todavía. ¡Sé el primero!</p>'; return; }
     const med=['🥇','🥈','🥉']; let pos=0;
-    c.innerHTML=tiempos.map(function(t){ pos++; const mins=Math.floor(t.tiempoMs/60000), segs=Math.floor((t.tiempoMs%60000)/1000); const yo=t.user===cu; return '<div style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;background:'+(yo?'rgba(252,76,2,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem">'+escapeHTML(t.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g)">'+mins+'m '+segs+'s</div></div>'; }).join('');
-  }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar la tabla.</p>'; }
+    c.innerHTML=_btnVolverModal()+tiempos.map(function(t){ pos++; const mins=Math.floor(t.tiempoMs/60000), segs=Math.floor((t.tiempoMs%60000)/1000); const yo=t.user===cu; return '<div style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;background:'+(yo?'rgba(252,76,2,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem">'+escapeHTML(t.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g)">'+mins+'m '+segs+'s</div></div>'; }).join('');
+  }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudo cargar la tabla.</p>'; }
 }
 /* ===== RETOS Y TEMPORADAS =====
    Desafíos con fecha límite sobre el Darma que ya existe (ej: "500km en julio").
@@ -4919,16 +4939,17 @@ async function revisarRetosCumplidos(){
   }catch(e){}
 }
 async function verRetos(){
+  _modalVolverA='mostrarLogrosComunidad';
   document.getElementById('modalTitle').innerText='🎯 Retos y temporadas';
   const c=document.getElementById('modalContent');
-  c.innerHTML='<p style="color:#888">Cargando retos...</p>';
+  c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando retos...</p>';
   document.getElementById('userModal').classList.add('on');
   try{
     const ahora=Date.now();
     const snap=await db.collection('retos').orderBy('fechaFin','desc').limit(30).get();
     const activos=[], pasados=[];
     snap.forEach(function(d){ const r=Object.assign({id:d.id},d.data()); (r.fechaFin>=ahora?activos:pasados).push(r); });
-    if(!activos.length && !pasados.length){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Todavía no hay retos activos.</p>'; return; }
+    if(!activos.length && !pasados.length){ c.innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem">Todavía no hay retos activos.</p>'; return; }
     function tarjeta(r){
       const km=calcularProgresoReto(r);
       const pct=Math.min(100, Math.round((km/r.metaKm)*100));
@@ -4937,9 +4958,9 @@ async function verRetos(){
         +'<div style="height:8px;background:#222b3d;border-radius:4px;overflow:hidden;margin:8px 0"><div style="height:100%;width:'+pct+'%;background:var(--p)"></div></div>'
         +'<p style="font-size:0.75rem;color:#9fb3c8;margin:0">'+km.toFixed(1)+' / '+(r.metaKm||0)+' km · '+(r.fechaFin>=ahora?(diasRestantes+' días restantes'):'Terminado')+(pct>=100?' · ✅ ¡Cumplido!':'')+'</p></div>';
     }
-    c.innerHTML=(activos.length?'<h4 style="color:var(--p);margin:0 0 8px">Activos</h4>'+activos.map(tarjeta).join(''):'')
+    c.innerHTML=_btnVolverModal()+(activos.length?'<h4 style="color:var(--p);margin:0 0 8px">Activos</h4>'+activos.map(tarjeta).join(''):'')
       +(pasados.length?'<h4 style="color:#7d8ba0;margin:14px 0 8px">Terminados</h4>'+pasados.slice(0,5).map(tarjeta).join(''):'');
-  }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los retos.</p>'; }
+  }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar los retos.</p>'; }
 }
 let _creandoReto=false;
 async function crearReto(){
@@ -5015,8 +5036,9 @@ function mostrarResumenAnual(){
   const anio=new Date().getFullYear();
   const r=calcularResumenAnual(anio);
   if(r.viajes===0){
+    _modalVolverA='mostrarLogrosComunidad';
     document.getElementById('modalTitle').innerText='📊 Mi año en Libre Pedal';
-    document.getElementById('modalContent').innerHTML='<p style="color:#9fb3c8;text-align:center;padding:20px 0">Todavía no tienes viajes registrados este '+anio+'. ¡Sal a pedalear y vuelve más adelante!</p>';
+    document.getElementById('modalContent').innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;text-align:center;padding:20px 0">Todavía no tienes viajes registrados este '+anio+'. ¡Sal a pedalear y vuelve más adelante!</p>';
     document.getElementById('userModal').classList.add('on');
     return;
   }
@@ -5132,17 +5154,18 @@ function _perfilCiclista(){
   return { avgKm:totalKm/rutas.length, totalViajes:rutas.length };
 }
 async function verRecomendacionRutas(){
+  _modalVolverA='mostrarLogrosComunidad';
   document.getElementById('modalTitle').innerText='🧭 Rutas para ti';
   const c=document.getElementById('modalContent');
-  c.innerHTML='<p style="color:#888">Analizando tu historial...</p>';
+  c.innerHTML=_btnVolverModal()+'<p style="color:#888">Analizando tu historial...</p>';
   document.getElementById('userModal').classList.add('on');
   const perfil=_perfilCiclista();
-  if(!perfil){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Todavía no tienes viajes registrados. ¡Sal a pedalear y vuelve para tus recomendaciones!</p>'; return; }
+  if(!perfil){ c.innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem">Todavía no tienes viajes registrados. ¡Sal a pedalear y vuelve para tus recomendaciones!</p>'; return; }
   // Sin filtro de cercanía, esto podía sugerir una ruta preciosa... al otro lado del
   // país, solo porque calzaba con tu distancia habitual. Se descarta lo que esté a
   // más de 80km de donde estás — nadie maneja horas solo para ir a pedalear.
   const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
-  if(!yo){ c.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">Necesito tu ubicación para buscar rutas cerca tuyo. Activa el GPS e inténtalo de nuevo.</p>'; return; }
+  if(!yo){ c.innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem">Necesito tu ubicación para buscar rutas cerca tuyo. Activa el GPS e inténtalo de nuevo.</p>'; return; }
   try{
     const minKm=perfil.avgKm*1.1, maxKm=perfil.avgKm*1.35;
     const RADIO_CERCANIA_KM=80;
@@ -5155,11 +5178,11 @@ async function verRecomendacionRutas(){
         return calculateDistance(yo.lat, yo.lon, p0.lat, p0.lon)/1000 <= RADIO_CERCANIA_KM;
       })
       .slice(0,8);
-    let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu promedio es <strong style="color:var(--g)">'+perfil.avgKm.toFixed(1)+' km</strong> en '+perfil.totalViajes+' viajes. Estas rutas de otros ciclistas cerca tuyo te ayudan a subir el nivel de a poco:</p>';
+    let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu promedio es <strong style="color:var(--g)">'+perfil.avgKm.toFixed(1)+' km</strong> en '+perfil.totalViajes+' viajes. Estas rutas de otros ciclistas cerca tuyo te ayudan a subir el nivel de a poco:</p>';
     if(!candidatas.length){ html+='<p style="color:#7d8ba0;font-size:0.82rem">Todavía no hay rutas de otros ciclistas en ese rango de distancia cerca tuyo. Vuelve más adelante.</p>'; }
     else { html+=candidatas.map(function(r){ const distCerca=(calculateDistance(yo.lat,yo.lon,r.points[0].lat,r.points[0].lon)/1000).toFixed(0); return '<div class="novedad-card"><h4>'+(r.distance||0).toFixed(1)+' km</h4><p>De '+escapeHTML(r.nombre||'un ciclista')+' · a '+distCerca+' km de ti</p><button class="ab sec" style="margin:0" onclick="closeModal();showSingleRoute(\''+r.id+'\')">👀 Ver en el mapa</button></div>'; }).join(''); }
     c.innerHTML=html;
-  }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar recomendaciones.</p>'; }
+  }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar recomendaciones.</p>'; }
 }
 function enviarSOS(){
   const cs=contactosSOS();
@@ -5319,9 +5342,10 @@ async function _totalUsuariosSuscritos(){
   try{ const doc=await db.collection('meta').doc('contadores').get(); return (doc.exists && doc.data().totalUsuarios) || 0; }catch(e){ return 0; }
 }
 async function mostrarComunidad(){
+  _modalVolverA='mostrarLogrosComunidad';
   document.getElementById('modalTitle').innerText='🤝 Comunidad Libre Pedal';
   const c=document.getElementById('modalContent');
-  c.innerHTML='<p style="color:#888">Cargando...</p>';
+  c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
   const META=5000;
   const total=await _totalUsuariosSuscritos();
@@ -5345,16 +5369,18 @@ async function mostrarComunidad(){
     sorteoTotal=snap.size;
     snap.forEach(function(doc){ if(doc.id===cu) yaParticipo=true; });
   }catch(e){}
-  const votoDesbloqueado=total>=META;
-  let html='<div style="background:var(--gl);padding:12px;border-radius:10px;margin-bottom:10px">'+
+  // La votación está ABIERTA desde ya (antes esperaba a los 5.000 usuarios) — así
+  // la gente participa desde ahora, y al llegar a la meta ya hay votos reales
+  // acumulados para saber qué decidió la comunidad de verdad.
+  let html=_btnVolverModal()+'<div style="background:var(--gl);padding:12px;border-radius:10px;margin-bottom:10px">'+
     '<div style="font-size:0.85rem;color:#9fb3c8">Somos <strong style="color:var(--p)">'+total+'</strong> pedaleando juntos</div>'+
     '<div style="background:#111;border-radius:8px;height:10px;margin-top:6px;overflow:hidden"><div style="background:var(--p);height:100%;width:'+pct+'%"></div></div>'+
-    '<div style="font-size:0.72rem;color:#8aa;margin-top:4px">'+pct+'% del camino a 5.000 usuarios suscritos — al llegar se activa el botón de votar y la comunidad decide qué hacer con parte de las ganancias</div></div>'+
-    '<h4 style="color:var(--p);font-size:0.85rem;margin-bottom:6px">¿En qué priorizamos cuando lleguemos?</h4>'+
-    (votoDesbloqueado?'':'<p style="font-size:0.72rem;color:#8aa;margin:0 0 8px">La votación se activa al llegar a 5.000 usuarios suscritos. Por ahora puedes ver cómo va, pero el botón de votar todavía está bloqueado.</p>');
+    '<div style="font-size:0.72rem;color:#8aa;margin-top:4px">'+pct+'% del camino a 5.000 usuarios suscritos — al llegar, hacemos lo que haya decidido la comunidad con los votos ya juntados</div></div>'+
+    '<h4 style="color:var(--p);font-size:0.85rem;margin-bottom:6px">¿En qué priorizamos cuando lleguemos a 5.000?</h4>'+
+    '<p style="font-size:0.72rem;color:#8aa;margin:0 0 8px">Vota ahora mismo — tu voto ya queda contando para cuando lleguemos a la meta.</p>';
   opciones.forEach(function(o){
     const p=Math.round((votos[o.id]/totalVotos)*100), sel=(miVoto===o.id);
-    html+='<div class="custom-option'+(sel?' selected':'')+(votoDesbloqueado?'':' locked')+'" style="text-align:left;margin-bottom:6px;padding:10px'+(votoDesbloqueado?'':';opacity:0.6;cursor:not-allowed')+'" onclick="'+(votoDesbloqueado?('votarComunidad(\''+o.id+'\')'):'return false')+'">'+(votoDesbloqueado?'<div class="check">OK</div>':'<div class="lock-badge">🔒</div>')+'<strong style="font-size:0.85rem">'+o.texto+'</strong><div style="background:#111;border-radius:6px;height:7px;margin-top:5px;overflow:hidden"><div style="background:var(--g);height:100%;width:'+p+'%"></div></div><div style="font-size:0.68rem;color:#8aa;margin-top:2px">'+p+'% ('+votos[o.id]+' votos)</div></div>';
+    html+='<div class="custom-option'+(sel?' selected':'')+'" style="text-align:left;margin-bottom:6px;padding:10px" onclick="votarComunidad(\''+o.id+'\')">'+(sel?'<div class="check">OK</div>':'')+'<strong style="font-size:0.85rem">'+o.texto+'</strong><div style="background:#111;border-radius:6px;height:7px;margin-top:5px;overflow:hidden"><div style="background:var(--g);height:100%;width:'+p+'%"></div></div><div style="font-size:0.68rem;color:#8aa;margin-top:2px">'+p+'% ('+votos[o.id]+' votos)</div></div>';
   });
   // Sorteo: se desbloquea recien al llegar a la meta, para que sea justo y transparente con toda la comunidad.
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(252,76,2,0.08));border:1px solid '+(total>=META?'var(--g)':'#333')+'">'+
@@ -5445,10 +5471,12 @@ async function rechazarFrase(id){
   if(!await lpConfirmar('¿Eliminar esta frase?')) return;
   try{ await db.collection('frasesComunidad').doc(id).delete(); mostrarRevisionFrases(); }catch(e){ lpAviso('No se pudo eliminar.'); }
 }
+// La votación ya NO espera a los 5.000 usuarios — Inty: "eso le da a la gente
+// participación, luego cuando seamos 5.000 ya tendremos los votos y se hará la
+// que diga la comunidad". Ahora se puede votar desde ya; lo que se gatea a los
+// 5.000 es la EJECUCIÓN de la opción ganadora (y el sorteo, que sigue igual).
 async function votarComunidad(opcionId){
   if(!cu) return;
-  const total=await _totalUsuariosSuscritos();
-  if(total<5000){ h('La votación se activa al llegar a 5.000 usuarios suscritos. Todavía no llegamos.'); return; }
   try{ await db.collection('votacionComunidad').doc(cu).set({opcion:opcionId,ts:firebase.firestore.FieldValue.serverTimestamp()}); h('¡Voto registrado! Gracias por construir la comunidad.'); mostrarComunidad(); }catch(e){ lpAviso('No se pudo registrar tu voto, intenta de nuevo.'); }
 }
 async function participarSorteo(){
