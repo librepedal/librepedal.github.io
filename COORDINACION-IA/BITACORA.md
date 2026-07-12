@@ -4,6 +4,83 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.08 — 2026-07-11 — Claude (sesión 2)
+**4 bugs reales que Inty reportó de uso real: la IA arma un viaje con cualquier
+pregunta, desplazamiento fantasma de GPS, comandos que se pisan, y Pistero
+respondiendo con "código" + limitado solo a ciclismo.** Diagnostiqué cada uno leyendo
+el código (no adiviné) antes de tocar nada.
+
+**CRÍTICO — dos GPS watchers vivos a la vez ("desplazamiento fantasma" + "comandos que
+se pisan"):** si "GPS libre" (`ig`) estaba grabando cuando el usuario pedía un destino
+(por voz o escrito), `calculateAndStartNavigation()` abría SU PROPIO watcher de
+posición (`gpsWatchId` → `_navPosUpdate()`) sin apagar el watcher de GPS libre
+(`gw` → `ug()`). Quedaban DOS pipelines procesando el mismo GPS real al mismo tiempo:
+cada fix se contaba dos veces (kilometraje doblado = "fantasma") y cada aviso de voz
+(pendiente, clima, fatiga, frases del camino) se disparaba dos veces desde dos
+funciones distintas = frases pisándose entre sí. Nueva `_detenerGpsLibreSiActivo()`:
+apaga el watcher de GPS libre (guardando lo ya grabado) ANTES de que la navegación
+abra el suyo — igual que el botón manual "Detener GPS".
+
+**ALTO — cualquier pregunta se armaba como viaje:** en `handleVoiceCommand`, el regex
+de destino tenía "busca"/"encuentra" con el complemento de lugar (" la dirección de",
+" ruta a", " lugar") como OPCIONAL. Cualquier frase que arrancara con "busca..." o
+"encuentra..." (muy común en el habla normal: "búscame información sobre...",
+"encuentra un consejo para...") se armaba como viaje a un destino inexistente, fallaba
+el geocode, y el ciclista veía "no encontré ese destino" — lo que reportó como "tira la
+talla y manda a escribir". Ahora ese complemento es obligatorio; sin él, la frase sigue
+al enrutador de preguntas/órdenes (que manda todo a la IA de Pistero, que si además
+obedece o responde, es lo correcto).
+
+**ALTO — Pistero respondía con "código":** cuando el modelo pedía una herramienta
+(`[BUSCAR:...]`/`[CLIMA:...]`) y la segunda pasada al modelo fallaba (timeout, modelo
+caído), el Worker devolvía el texto de la PRIMERA pasada, que trae la etiqueta cruda
+sin limpiar — el ciclista veía literalmente `[BUSCAR: historia de tal lugar]` en vez de
+una respuesta. Corregido en `worker.js`: si la segunda pasada falla, se devuelve el
+resultado de la herramienta directo (mejor que el texto crudo); y se agregó una
+limpieza final de red de seguridad que borra cualquier etiqueta de herramienta que se
+haya colado, pase lo que pase. Mismo parche defensivo también del lado del cliente
+(`preguntarPistero`) por si acaso.
+
+**MEDIO — Pistero limitado solo a ciclismo:** la regla 6 del prompt le ordenaba
+"reencauzar con amabilidad" cualquier pregunta ajena al ciclismo — literalmente le
+prohibía responder de otros temas. Inty pidió que tenga una base de conocimiento
+amplia y responda de todo. Reescrita: ahora responde cualquier pregunta (usa
+[BUSCAR:...] si no sabe con certeza en vez de inventar), solo evita temas ilegales o
+peligrosos. Verificado en vivo: "cuál es la capital de Francia" ya responde bien (antes
+la habría rechazado).
+
+**Memoria de conversación ampliada:** el historial de Pistero vivía en 16 mensajes
+(8 turnos) en localStorage y mandaba solo los últimos 6 al Worker. Subido a 40
+guardados / 12 enviados por consulta / 20 mostrados al reabrir el chat — recuerda más
+de la conversación sin disparar el límite de tokens del modelo (cada mensaje sigue
+acotado a 800 caracteres server-side). Una memoria de perfil persistente más profunda
+(preferencias explícitas, no solo historial de chat) sigue pendiente y es un cambio de
+arquitectura más grande — no se tocó, queda para decidir alcance con Inty.
+
+**Investigado y sin evidencia de bug real:** Inty reportó "la app no está iniciando
+bien". Cargué la app en un navegador limpio (servidor local) y revisé consola, red y
+contenido renderizado: cero errores, el dashboard cargó completo con datos reales. No
+encontré una causa concreta distinta de los bugs de arriba (el GPS fantasma y los
+comandos pisándose bien podrían sentirse como "arranca mal" si ocurren justo al
+empezar un viaje). Si sigue pasando tras este release, falta un reporte más específico
+(¿pantalla en blanco? ¿se cuelga? ¿en la app instalada o en el navegador?) para
+diagnosticarlo con evidencia en vez de adivinar.
+
+**Nuevo:** `worker-ia/wrangler.toml` — antes el deploy del Worker se hacía con curl y
+un `metadata.json` ad-hoc que no estaba versionado (había que reconstruirlo cada vez
+adivinando los bindings). Ahora es `npx wrangler deploy` desde `worker-ia/` con las
+credenciales de `MI-CLOUDFLARE-IA.txt`, reproducible por cualquiera de las dos
+sesiones. Confirmé el binding `AI` y `compatibility_date` exactos contra el Worker
+real antes de escribirlo, para no cambiar nada de la config en producción.
+
+Verificación: sintaxis de `index.html` (0 errores) y `worker.js` (`node --check`, OK).
+Worker probado en vivo tras el deploy: pregunta general respondida (ya no redirige),
+pregunta con búsqueda respondida sin dejar etiquetas crudas, acción no pedida quedó
+como botón opcional (no se auto-ejecutó — el diseño "no invasivo" ya existente sigue
+funcionando bien).
+
+---
+
 ## fix rápido tras v6.07 — 2026-07-11 — Claude (sesión 2)
 Sincronicé con el trabajo de mapas de la otra sesión (v6.04→v6.07: mapas nivel apps
 grandes, mic que obedece todo, pendiente anticipada, autocrítica). Revisé código nuevo

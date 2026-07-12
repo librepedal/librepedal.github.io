@@ -619,7 +619,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.07</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.08</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -918,7 +918,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.07'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.08'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1666,7 +1666,7 @@ function _pisteroBurbuja(txt, quien, pensando){
   return div;
 }
 function _pisteroKey(){ return 'lp_pistero_'+(cu||'anon'); }
-function _pisteroGuardar(){ try{ localStorage.setItem(_pisteroKey(), JSON.stringify(pisteroHistorial.slice(-16))); }catch(e){} }
+function _pisteroGuardar(){ try{ localStorage.setItem(_pisteroKey(), JSON.stringify(pisteroHistorial.slice(-40))); }catch(e){} }
 function _pisteroCargar(){ try{ const r=localStorage.getItem(_pisteroKey()); pisteroHistorial=r?(JSON.parse(r)||[]):[]; }catch(e){ pisteroHistorial=[]; } }
 function pisteroSugerencia(t){ const i=document.getElementById('pisteroInput'); if(i) i.value=t; preguntarPistero(); }
 function pisteroNavegar(lugar){ const qd=document.getElementById('quick-dest'); if(qd) qd.value=lugar; if(typeof startQuickTrip==='function') startQuickTrip(); }
@@ -1744,7 +1744,7 @@ function abrirPistero(){
     abrirPistero._init=true;
     _pisteroCargar();
     if(pisteroHistorial.length){
-      pisteroHistorial.slice(-8).forEach(function(m){ _pisteroBurbuja(m.content, m.role==='user'?'yo':'pistero'); });
+      pisteroHistorial.slice(-20).forEach(function(m){ _pisteroBurbuja(m.content, m.role==='user'?'yo':'pistero'); });
       _pisteroBurbuja('¡Hola de nuevo'+(nombreUsuario?(' '+nombreUsuario):'')+'! ¿Seguimos donde quedamos? Pregúntame lo que quieras 🚴','pistero');
     } else {
       _pisteroBurbuja('¡Hola'+(nombreUsuario?(' '+nombreUsuario):'')+'! Soy Pistero 🚴. Pregúntame por rutas, arreglos de bici, dónde alojar o cómo planear tu viaje con gastos. ¿En qué te ayudo?','pistero');
@@ -1767,7 +1767,7 @@ async function preguntarPistero(){
     usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos, personalidad:pisteroPersonalidad, actividad:actividadTipo },
     contexto:_pisteroContexto(),
     hospedajes:hosp,
-    historial:pisteroHistorial.slice(-6)
+    historial:pisteroHistorial.slice(-12)
   };
   try{
     const r=await fetch(IA_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
@@ -1775,13 +1775,18 @@ async function preguntarPistero(){
     let resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
     // Separa las etiquetas de acción del texto: no se muestran ni se leen en voz.
     const acciones=[];
-    resp=resp.replace(/\[ACCION:([a-z]+)(?:\|([^\]]+))?\]/gi, function(_m,tipo,arg){ acciones.push({tipo:tipo.toLowerCase(), arg:(arg||'').trim()}); return ''; }).replace(/\s{2,}/g,' ').trim();
+    resp=resp.replace(/\[ACCION:([a-z]+)(?:\|([^\]]+))?\]/gi, function(_m,tipo,arg){ acciones.push({tipo:tipo.toLowerCase(), arg:(arg||'').trim()}); return ''; })
+      // Red de seguridad: si por lo que sea el Worker deja pasar una etiqueta de
+      // herramienta [BUSCAR:...]/[CLIMA:...] sin resolver, nunca debe leerse ni
+      // mostrarse tal cual (se ve como "código" en vez de una respuesta normal).
+      .replace(/\[(BUSCAR|CLIMA):[^\]]*\]/gi, '')
+      .replace(/\s{2,}/g,' ').trim();
     if(!resp && acciones.length) resp='¡Hecho!';
     if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML(resp); }
     else _pisteroBurbuja(resp,'pistero');
     const cont=document.getElementById('pisteroMsgs'); if(cont) cont.scrollTop=cont.scrollHeight;
     pisteroHistorial.push({role:'user',content:msg}); pisteroHistorial.push({role:'pistero',content:resp});
-    if(pisteroHistorial.length>16) pisteroHistorial=pisteroHistorial.slice(-16);
+    if(pisteroHistorial.length>40) pisteroHistorial=pisteroHistorial.slice(-40);
     _pisteroGuardar();
     try{ h(resp); }catch(e){}
     _pisteroObedecer(acciones, msg);
@@ -3793,11 +3798,26 @@ async function recalcularRuta(lat,lon){
   }catch(e){ /* si falla, seguimos con la ruta anterior y lo reintenta el próximo desvío */ }
   navRecalculando=false;
 }
+function _detenerGpsLibreSiActivo(){
+  // Si "GPS libre" (ig) estaba grabando cuando arranca una navegación a destino (ej.
+  // le pides un lugar a Pistero mientras el GPS libre ya iba grabando), había quedado
+  // un watcher de posición VIVO llamando a ug() al mismo tiempo que el watcher propio
+  // de la navegación llama a _navPosUpdate() para el mismo GPS real — cada fix se
+  // contaba y se anunciaba por voz DOS VECES: desplazamiento fantasma en el mapa
+  // (kilometraje doblado) y frases pisándose entre sí. Se apaga ANTES de que la
+  // navegación abra el suyo, igual que hace el botón "Detener GPS" manual.
+  if(!ig) return;
+  if(currentRoute.length>1){ autoGuardarRuta(false,false); } // no perder lo ya grabado en GPS libre
+  if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); gw=null; }
+  ig=false;
+  const btn=document.getElementById('btnGPSLibre'); if(btn){ btn.innerText="📍 Iniciar GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
+}
 async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
   // Si ya había una navegación en curso (ej. el usuario pide por voz un destino nuevo
   // sin haber terminado el anterior), la cerramos primero para que guarde su avance
   // en vez de perderlo silenciosamente al pisar el estado con la ruta nueva.
   if(document.getElementById('nav-screen').classList.contains('active')) endNavigation();
+  _detenerGpsLibreSiActivo();
   navGuardado=false;
   document.getElementById('nav-screen').classList.add('active');
   if(navMap) navMap.remove();
@@ -5470,7 +5490,14 @@ function handleVoiceCommand(raw){
   if(/(guarda|guardar|graba|grabar)( el| la| mi)? (viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
   if(/sigamos|sigue con el viaje|continuar el viaje|contin[uú]a el viaje|retoma|reanuda/.test(t)){ if(!ig && !document.getElementById('nav-screen').classList.contains('active')){ toggleGPS(); } else { h('Seguimos, ya estoy registrando tu viaje.'); } return; }
   if(/treki|trakea|trackea|\btrack|sigue la ruta|sigue registrando|sigue grabando/.test(t)){ if(!ig){ toggleGPS(); } else { h('Sigo registrando tu ruta, tranquilo.'); } return; }
-  let m=t.match(/(?:planifica(?:r)?(?:me)?(?: mi| el| un)? viaje (?:a|hasta|hacia|para)|ir (?:a|hasta|hacia)|llevame (?:a|hasta|hacia)|llevarme a|lleva(?:me)? (?:a|hasta|hacia)|anda(?:me)? a|navega(?:r|me)? (?:a|hasta|hacia)|guia(?:r|me)? (?:a|hasta|hacia)|vamos (?:a|hasta)|vamonos a|quiero (?:ir|llegar) (?:a|hasta|hacia)|voy a|ruta (?:a|hasta|hacia|para)|como (?:llego|voy) a|llegar a|necesito ir a|busca(?:r|me)?(?: la| el)?(?: direccion(?: de)?| ruta a| lugar)?|encuentra(?: la)?(?: direccion(?: de)?)?|direccion de)\s+(.+)/);
+  // OJO: "busca"/"encuentra" ANTES exigían el complemento de lugar (" la dirección de",
+  // " ruta a", " lugar") de forma OPCIONAL — por eso CUALQUIER pregunta que arrancara
+  // con "busca..." o "encuentra..." (ej. "búscame información sobre...", "encuentra un
+  // consejo para...", frases sueltas del habla normal) se armaba como viaje a un lugar
+  // inexistente, fallaba el geocode y terminaba en "no encontré ese destino". Ahora ese
+  // complemento es OBLIGATORIO: sin él, la frase sigue de largo hasta el enrutador de
+  // preguntas/órdenes de más abajo, que es lo que corresponde.
+  let m=t.match(/(?:planifica(?:r)?(?:me)?(?: mi| el| un)? viaje (?:a|hasta|hacia|para)|ir (?:a|hasta|hacia)|llevame (?:a|hasta|hacia)|llevarme a|lleva(?:me)? (?:a|hasta|hacia)|anda(?:me)? a|navega(?:r|me)? (?:a|hasta|hacia)|guia(?:r|me)? (?:a|hasta|hacia)|vamos (?:a|hasta)|vamonos a|quiero (?:ir|llegar) (?:a|hasta|hacia)|voy a|ruta (?:a|hasta|hacia|para)|como (?:llego|voy) a|llegar a|necesito ir a|busca(?:r|me)?(?: la| el)? (?:direccion(?: de)?|ruta a|lugar)|encuentra(?: la)? direccion(?: de)?|direccion de)\s+(.+)/);
   if(m && m[1]){ let dest=limpiarDestino(m[1]); if(dest.length<2){ h('¿A qué lugar te llevo?'); return; } cv('trips'); const qd=document.getElementById('quick-dest'); if(qd) qd.value=dest; h("Perfecto, busco la ruta a "+dest+" y te la marco en el mapa."); startQuickTrip(); return; }
   if(/\binicio\b|panel|principal|tablero/.test(t)){ cv('dash'); h("Vamos al inicio."); return; }
   if(/^(el |ver |abre(?: el)? |mostrar )?mapa$/.test(t)){ cv('map'); h("Aquí está el mapa."); return; }
