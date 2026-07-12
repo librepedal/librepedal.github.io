@@ -4,26 +4,27 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-12.
 
 ---
 
-## 👤 Para INTY — publicar las reglas de Firestore nuevas (v6.11)
-- [ ] **Publicar `firestore.rules` actualizado en Firebase Console.** Cierra el
-  hueco de que cualquier usuario autenticado podía editar/borrar contenido de
-  OTRO usuario (reportes, comentarios, hospedajes, trucos, rutas, viajes, alojo,
-  rodadas, tiempos de segmento, solicitudes de amistad, mensajes). Pasos: Firebase
-  Console → proyecto `librepedal-cb983` → Firestore Database → pestaña Reglas →
-  copia TODO el contenido de `firestore.rules` (el archivo del repo, ya
-  actualizado) → Publicar. 2 minutos, gratis. Detalle completo en la entrada
-  **v6.11** de `BITACORA.md`. El código de la app ya guarda lo necesario
-  (`authUid`) desde ahora, así que apenas publiques las reglas, queda protegido
-  sin ningún paso adicional — ninguna IA lo publica por su cuenta a propósito
-  (es un cambio de control de acceso sobre producción).
-- [ ] **Decidir si migrar a tokens personalizados de Firebase** (el arreglo
-  completo y permanente, incluye cerrar la suplantación de admin en
-  `frasesComunidad`/`novedades`/`retos`). Requiere que generes una Firebase
-  service account key (gratis, 2 minutos: Firebase Console → ⚙️ Configuración del
-  proyecto → Cuentas de servicio → Generar nueva clave privada) y me la pases (o
-  la subas tú mismo como secreto de un Worker). Sin apuro, no bloquea el
-  lanzamiento — la protección de v6.11 ya cierra el riesgo más importante
-  (vandalismo entre usuarios distintos).
+## 👤 Para INTY — publicar las reglas de Firestore nuevas (v6.12)
+- [ ] **Publicar `firestore.rules` actualizado en Firebase Console.** Ya incluye
+  TODO: protección de dueño real (ahora también para documentos viejos, gracias a
+  la migración de auth de v6.12) y admin real de verdad para
+  `novedades`/`retos`/`frasesComunidad` (antes cualquier usuario autenticado
+  podía publicar/editar eso llamando la API directo, aunque la UI lo ocultara).
+  Pasos: Firebase Console → proyecto `librepedal-cb983` → Firestore Database →
+  pestaña Reglas → copia TODO el contenido de `firestore.rules` (el archivo del
+  repo) → Publicar. 2 minutos, gratis. Detalle completo en la entrada **v6.12**
+  de `BITACORA.md`. Ninguna IA lo publica por su cuenta a propósito (cambio de
+  control de acceso sobre producción).
+- [ ] **Después de publicar, recarga la app UNA vez** antes de usar el panel de
+  admin (crear novedades/retos, aprobar frases) — así tu sesión sube del auth
+  anónimo al token personalizado y `isAdmin()` te reconoce. Si no recargas,
+  tus propias acciones de admin quedarían bloqueadas hasta que lo hagas.
+
+**Ya hecho, no pendiente** (v6.12): migración de auth anónima a tokens
+personalizados (Worker `librepedal-auth`, probado en vivo contra Firebase real),
+y respaldo real de la base de datos completa (`LibrePedal-Backups/firestore-...`,
+ejecutado, no solo preparado). El script `scripts/backup-firestore.js` queda en
+el repo para correr respaldos futuros cuando quieras: `node scripts/backup-firestore.js`.
 
 ---
 

@@ -18,3 +18,4 @@ package-lock.json
 
 # Cache local de Wrangler (Cloudflare Pages deploy)
 .wrangler/
+firebase-service-account.json

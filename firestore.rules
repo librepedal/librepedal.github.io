@@ -2,27 +2,27 @@ rules_version = '2';
 
 // ============================================================================
 // REGLAS DE SEGURIDAD DE FIRESTORE — Libre Pedal
-// Lectura pública (la comunidad se ve siempre). Escritura SOLO autenticada
-// (Auth anónimo) y con límites de tamaño para evitar abuso y "bombas" de datos.
-// Contenido comunitario: no se puede editar/borrar ajeno (anti-vandalismo) en las
-// colecciones donde eso no tiene un caso de uso legítimo — ver isOwnerOrLegacy().
+// Lectura pública (la comunidad se ve siempre). Escritura SOLO autenticada, con
+// límites de tamaño para evitar abuso y "bombas" de datos, y verificación de
+// dueño real donde corresponde (ver isOwnerOrLegacy / isAdmin más abajo).
 //
-// LIMITACIÓN CONOCIDA (2026-07-12): la app usa Auth ANÓNIMA — el uid de cada
-// sesión es aleatorio y NO es estable entre dispositivos/reinstalaciones del mismo
-// usuario. Por eso isOwnerOrLegacy() protege bien "usuario A no puede tocar lo de
-// usuario B", pero no garantiza que el propio dueño pueda seguir editando lo suyo
-// si cambia de teléfono. Tampoco alcanza para reglas admin-only reales (novedades,
-// retos, aprobar/rechazar frasesComunidad siguen abiertas a cualquier signedIn()
-// hoy) porque no hay forma de verificar "es EL admin" con un uid aleatorio. El
-// arreglo completo y permanente es migrar de auth anónima a tokens personalizados
-// de Firebase atados al usuario real (cu) — requiere una service account key de
-// Firebase (gratis, la genera Inty desde la consola) para un Worker que los emita.
-// Ver COORDINACION-IA/BITACORA.md, entrada 2026-07-12, para el detalle completo.
+// AUTH (actualizado 2026-07-12): la app arranca con Auth ANÓNIMA (uid aleatorio,
+// para no bloquear a nadie apenas abre la app), pero apenas se conoce tu `cu`
+// (login o registro) la sube a un token personalizado de Firebase — emitido por
+// el Worker `librepedal-auth` — que fija tu uid de Firebase Auth a tu `cu` real,
+// ESTABLE en cualquier dispositivo. Con eso, `request.auth.uid` puede compararse
+// directo contra el campo `user` que YA se guarda en cada documento desde
+// siempre — protege también los documentos viejos, sin tener que re-escribir
+// nada. Si el Worker de tokens no responde (sin señal, caído), la app sigue con
+// la sesión anónima de siempre — no se rompe el login, solo queda con protección
+// parcial hasta que pueda re-intentar. Detalle completo en
+// COORDINACION-IA/BITACORA.md, entrada 2026-07-12.
 //
-// CÓMO ACTIVARLO (en orden, importante):
-//   1) Firebase Console -> Authentication -> Sign-in method -> habilita "Anónimo".
-//   2) Verifica en la app que sigue funcionando (lee/escribe).
-//   3) Firebase Console -> Firestore Database -> Reglas -> pega esto -> Publicar.
+// CÓMO PUBLICAR CAMBIOS A ESTE ARCHIVO (en orden, importante):
+//   1) Firebase Console -> Firestore Database -> pestaña Reglas -> pega esto -> Publicar.
+//   2) Si tocaste algo admin-only (novedades/retos/frasesComunidad), recarga la
+//      app UNA vez antes de usar el panel de admin — así tu sesión sube al
+//      token personalizado y `isAdmin()` te reconoce.
 //   Si algo se rompe, vuelve a las reglas abiertas temporalmente.
 // ============================================================================
 
@@ -35,25 +35,34 @@ service cloud.firestore {
       return !(f in request.resource.data)
         || (request.resource.data[f] is string && request.resource.data[f].size() <= n);
     }
-    // Dueño real: compara el uid de Firebase Auth (constante durante la sesión de
-    // este dispositivo) contra el authUid guardado en el documento al crearlo.
-    // GRANDFATHER: documentos de ANTES de este campo no tienen authUid — se dejan
-    // pasar igual que siempre pasaba, para no bloquear el borrado/edición de nada
-    // que ya existía en producción. Es una protección PARCIAL a propósito: el uid
-    // anónimo cambia si el usuario cambia de dispositivo o borra datos de la app —
-    // corta vandalismo entre USUARIOS DISTINTOS (que es el riesgo real hoy), pero
-    // no da 100% de continuidad multi-dispositivo para el mismo usuario. La
-    // protección completa y permanente (además de habilitar reglas admin-only de
-    // verdad) necesita migrar de auth anónima a tokens personalizados atados al
-    // usuario real — ver COORDINACION-IA/BITACORA.md.
+    // Dueño real. Dos vías, la primera es la buena y cubre TODO (documentos
+    // viejos y nuevos) para quien ya se autenticó con el token personalizado:
+    //  1) isOwnerByCu(): el campo `user` del documento (tu `cu`, se guarda desde
+    //     siempre) coincide con tu uid de Firebase Auth de hoy.
+    //  2) authUid == uid, con grandfather si el campo ni existe: respaldo para
+    //     mientras el usuario sigue en la sesión anónima vieja (no se rompe nada
+    //     hasta que recargue y su auth suba sola al token personalizado).
+    function isOwnerByCu() {
+      return 'user' in resource.data && resource.data.user == request.auth.uid;
+    }
     function isOwnerOrLegacy() {
-      return !('authUid' in resource.data) || resource.data.authUid == request.auth.uid;
+      return isOwnerByCu()
+        || !('authUid' in resource.data) || resource.data.authUid == request.auth.uid;
+    }
+    // Admin real: tu `cu` (correo transformado) es literalmente el uid de Firebase
+    // Auth una vez que tu sesión subió al token personalizado — antes de eso
+    // (sesión anónima vieja, sin recargar) esto da false, ver nota de arriba.
+    function isAdmin() {
+      return request.auth.uid == 'intyrivera_a_gmail_com';
     }
 
-    // Perfiles de ciclistas
+    // Perfiles de ciclistas. update restringido al dueño real: antes cualquier
+    // usuario autenticado podía sobrescribir el perfil de OTRO (nombre, casco,
+    // skin) con solo saber su `cu`.
     match /users/{id} {
       allow read: if true;
-      allow create, update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30);
+      allow create: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30);
+      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && isOwnerOrLegacy();
       allow delete: if false;
     }
 
@@ -177,19 +186,22 @@ service cloud.firestore {
     }
 
     // Frases que aporta la comunidad para que Pistero las diga en la app. Quedan en
-    // revisión (aprobada:false) hasta que el admin las aprueba/rechaza desde la app.
+    // revisión (aprobada:false) hasta que el ADMIN (de verdad, ver isAdmin) las
+    // aprueba/rechaza — antes cualquier signedIn() podía auto-aprobarse o borrar
+    // frases ajenas llamando la API directo, aunque la UI lo ocultara.
     match /frasesComunidad/{id} {
       allow read: if true;
       allow create: if signedIn() && strOk('texto', 140) && strOk('nombre', 60);
-      allow update, delete: if signedIn();
+      allow update, delete: if isAdmin();
     }
 
     // Novedades del mundo del ciclismo en Chile (competencias, rodadas, cicloturismo).
-    // Las publica el admin desde el panel de Perfil; lectura pública para todos.
+    // Las publica el ADMIN (de verdad, ver isAdmin) desde el panel de Perfil; antes
+    // cualquier signedIn() podía publicar "Novedades" falsas llamando la API directo.
     match /novedades/{id} {
       allow read: if true;
-      allow create, update: if signedIn() && strOk('titulo', 120) && strOk('desc', 800) && strOk('categoria', 30) && strOk('link', 300) && strOk('fecha', 60);
-      allow delete: if signedIn();
+      allow create, update: if isAdmin() && strOk('titulo', 120) && strOk('desc', 800) && strOk('categoria', 30) && strOk('link', 300) && strOk('fecha', 60);
+      allow delete: if isAdmin();
     }
 
     // Seguimiento en vivo: comparte tu ubicación con un link (quien lo abre no
@@ -213,11 +225,12 @@ service cloud.firestore {
     }
 
     // Retos y temporadas (desafíos con fecha límite sobre el Darma existente).
-    // Los publica el admin desde Ajustes; lectura pública para todos.
+    // Los publica el ADMIN (de verdad, ver isAdmin) desde Ajustes; antes cualquier
+    // signedIn() podía crear/editar retos falsos llamando la API directo.
     match /retos/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('titulo', 100) && strOk('desc', 400);
-      allow update, delete: if signedIn();
+      allow create: if isAdmin() && strOk('titulo', 100) && strOk('desc', 400);
+      allow update, delete: if isAdmin();
     }
 
     // Rodadas grupales (salidas con fecha/hora/punto de encuentro). update queda

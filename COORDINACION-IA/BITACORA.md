@@ -4,6 +4,69 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.12 — 2026-07-12 — Claude (sesión 2)
+**Respaldo real de la base de datos + migración de auth anónima a tokens
+personalizados.** Inty pidió "respaldar todo el proyecto" y luego "vamos por la
+recomendación" para hacerlo gratis; generó una Firebase service account key y
+pidió hacer también la migración de seguridad completa con la misma llave.
+
+**Respaldo (ya ejecutado, no solo preparado):**
+- `scripts/backup-firestore.js` — lee las 22 colecciones reales de la app (más
+  la subcolección `dm/{conv}/messages`) con el Admin SDK y las guarda como JSON.
+  100% gratis: son lecturas normales, sin Cloud Storage ni plan Blaze.
+- Corrido de verdad: `LibrePedal-Backups/firestore-2026-07-12-12-56-23/` (1.6 MB,
+  26 usuarios, 4.034 recomendaciones/POI, 32 rutas, y el resto de las colecciones
+  con datos reales de producción). Reusable para respaldos futuros.
+- Además quedó el respaldo de código de la sesión anterior (`.bundle` de git +
+  `.tar.gz` de archivos) en la misma carpeta.
+
+**Migración de auth (implementada, probada end-to-end, y en vivo):**
+- Nuevo Worker aislado `librepedal-auth` (repo: `worker-auth/`) — SOLO emite
+  tokens personalizados de Firebase, nada más. Aislado a propósito del Worker de
+  IA para no exponer la service account key a nada que no la necesite.
+- Usa `jose` (WebCrypto, compatible con el runtime de Workers) para firmar el
+  JWT con RS256 siguiendo el formato oficial de Firebase — no usa `firebase-admin`
+  (es de Node, no corre en Workers).
+- ⚠️ Nota técnica para la próxima vez que alguien haga esto: `wrangler secret put`
+  TRUNCA valores multilínea leídos por stdin — la private key hay que subirla en
+  base64 (una sola línea) y decodificarla adentro del Worker con `atob()`, no como
+  texto plano con `\n` literales.
+- Verificado en 2 niveles: (1) el JWT que emite el Worker tiene los claims
+  correctos (`uid`, `iss`, `sub`, `aud`, `exp`); (2) probado contra la API REAL de
+  Firebase (`accounts:signInWithCustomToken`) — la aceptó y devolvió una sesión
+  válida con el `uid` exacto pedido. Probado también en el navegador real: antes
+  `firebase.auth().currentUser.uid` era aleatorio, después de llamar a la función
+  nueva pasó a ser exactamente el `cu` pedido.
+- Cliente (`index.html`): nueva `_actualizarAuthConTokenPersonalizado(cu)`,
+  llamada en el login que restaura sesión (`window.onload`) y en el registro
+  nuevo (`reg()`), justo después de fijar `cu`. Si el Worker no responde (sin
+  señal, caído), la sesión anónima que ya arrancó sola al abrir la app sigue
+  funcionando exactamente igual que siempre — no bloquea ni rompe el login.
+- `firestore.rules`: nueva `isOwnerByCu()` (compara `request.auth.uid` contra el
+  campo `user`, que YA vive en cada documento desde siempre) — a diferencia del
+  `authUid` de v6.11, esto protege TAMBIÉN los documentos viejos, sin re-escribir
+  nada, apenas el usuario recargue la app una vez. Nueva `isAdmin()` real
+  (`request.auth.uid == 'intyrivera_a_gmail_com'`) — por fin `novedades`, `retos`
+  y aprobar/rechazar `frasesComunidad` son admin-only DE VERDAD (antes cualquier
+  `signedIn()` podía publicar/editar eso llamando la API directo; la UI solo lo
+  ocultaba). También `users.update` ahora exige dueño real (antes cualquiera
+  autenticado podía sobrescribir el perfil de otro con solo saber su `cu`).
+
+**IMPORTANTE — pendiente de Inty, no de una IA (igual que en v6.11, sigue sin
+publicarse)**: `firestore.rules` está listo en el repo pero las reglas de
+Firestore se publican a mano en Firebase Console. Nota extra esta vez: apenas
+publique las reglas nuevas, Inty debe recargar la app UNA vez antes de usar el
+panel de admin (para que su sesión suba del auth anónimo al token personalizado
+y `isAdmin()` lo reconozca) — si no, sus propias acciones de admin quedarían
+bloqueadas hasta que recargue.
+
+Verificación: sintaxis de `index.html` (0 errores), `firestore.rules` (llaves y
+paréntesis balanceados fuera de comentarios). Worker `librepedal-auth` probado en
+vivo (JWT válido + aceptado por Firebase real + probado en navegador real). Script
+de respaldo corrido de verdad contra producción, no solo escrito.
+
+---
+
 ## v6.11 — 2026-07-12 — Claude (sesión 2)
 **Cierra parte del hueco de seguridad de Firestore que se anotó como limitación
 conocida en la sesión anterior**: cualquier usuario autenticado (aunque fuera anónimo)
