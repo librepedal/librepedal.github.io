@@ -1,30 +1,54 @@
 # ✅ Pendientes — Libre Pedal
 
-Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-12.
+Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-12 (noche),
+versión actual del proyecto: **v6.13**.
 
 ---
 
-## 👤 Para INTY — publicar las reglas de Firestore nuevas (v6.12)
-- [ ] **Publicar `firestore.rules` actualizado en Firebase Console.** Ya incluye
-  TODO: protección de dueño real (ahora también para documentos viejos, gracias a
-  la migración de auth de v6.12) y admin real de verdad para
-  `novedades`/`retos`/`frasesComunidad` (antes cualquier usuario autenticado
-  podía publicar/editar eso llamando la API directo, aunque la UI lo ocultara).
-  Pasos: Firebase Console → proyecto `librepedal-cb983` → Firestore Database →
-  pestaña Reglas → copia TODO el contenido de `firestore.rules` (el archivo del
-  repo) → Publicar. 2 minutos, gratis. Detalle completo en la entrada **v6.12**
-  de `BITACORA.md`. Ninguna IA lo publica por su cuenta a propósito (cambio de
-  control de acceso sobre producción).
-- [ ] **Después de publicar, recarga la app UNA vez** antes de usar el panel de
-  admin (crear novedades/retos, aprobar frases) — así tu sesión sube del auth
-  anónimo al token personalizado y `isAdmin()` te reconoce. Si no recargas,
-  tus propias acciones de admin quedarían bloqueadas hasta que lo hagas.
+## 🔴 LO MÁS URGENTE — leer primero, cualquiera de las dos sesiones
 
-**Ya hecho, no pendiente** (v6.12): migración de auth anónima a tokens
-personalizados (Worker `librepedal-auth`, probado en vivo contra Firebase real),
-y respaldo real de la base de datos completa (`LibrePedal-Backups/firestore-...`,
-ejecutado, no solo preparado). El script `scripts/backup-firestore.js` queda en
-el repo para correr respaldos futuros cuando quieras: `node scripts/backup-firestore.js`.
+- [ ] **Publicar `firestore.rules` en Firebase Console — sigue sin publicarse**
+  (viene de v6.11 y v6.12, todavía pendiente). Sin esto, las protecciones de
+  dueño real y admin real que YA están en el código del repo no están activas en
+  producción. Es tarea de **Inty únicamente** (Firebase Console → proyecto
+  `librepedal-cb983` → Firestore Database → Reglas → copiar TODO el contenido de
+  `firestore.rules` → Publicar, 2 minutos). Ninguna IA lo hace por su cuenta a
+  propósito (cambio de control de acceso sobre producción). Después de publicar,
+  Inty debe recargar la app una vez para que su sesión suba a `isAdmin()`.
+- [ ] **Google Play: cuenta de desarrollador ya pagada por Inty, en validación.**
+  Cuando quede activa, falta: (1) capturas de pantalla reales de la app —
+  ofrecido ayudar a tomarlas, no se ha hecho; (2) generar el build **.aab**
+  firmado que pide Play Store (el pipeline actual (`build-apk.yml`) genera un
+  `.apk` de debug, no un `.aab` de release firmado — son formatos y procesos
+  distintos, falta armar ese paso). `PLAY-STORE-LISTING.md` ya tiene toda la
+  ficha lista para copiar/pegar.
+- [ ] **Capturas de pantalla para la ficha de Play Store** — nadie las ha
+  generado todavía (se evitó ensuciar Firestore de producción con una cuenta de
+  prueba). Pendiente de decidir cómo generarlas sin ese riesgo.
+
+## ✅ Resuelto esta sesión (2026-07-12, no repetir el diagnóstico)
+
+- **Ícono de la app instalada mostraba el genérico de Capacitor, no el logo de
+  Libre Pedal (v6.13).** Causa real: `build-apk.yml` arma `android/` desde cero
+  en cada build y NUNCA tuvo un paso que generara un ícono personalizado — se
+  perdía en cada build aunque alguien lo arreglara a mano una vez. Ahora hay un
+  paso `npx @capacitor/assets generate --android` usando `resources/icon.png` +
+  `resources/splash.png`/`splash-dark.png` (con el fondo real de la app, no
+  blanco). Ver entrada **v6.13** de `BITACORA.md`.
+- **Revisado el código real de `scripts/patch-android.js` — el pendiente de
+  "Gemini" sobre permisos de GPS en segundo plano y micrófono estaba
+  DESACTUALIZADO.** Ese script YA inyecta correctamente en el
+  `AndroidManifest.xml`: `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`,
+  `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`,
+  `RECORD_AUDIO`, y ADEMÁS parcha `MainActivity.java` para pedir los permisos
+  de verdad al arrancar (no basta con declararlos). `package.json` ya tiene
+  `@capacitor-community/background-geolocation` como dependencia. **Lo único
+  que sigue faltando de verdad es el plugin `@capacitor-community/speech-recognition`**
+  (no está en `package.json` — sin él, pedir el permiso de micrófono no alcanza,
+  falta el plugin que hace el reconocimiento de voz en sí). Ver sección
+  actualizada más abajo.
+- Respaldo real de la base de datos y migración de auth a tokens personalizados
+  (v6.12) — ver entrada correspondiente en `BITACORA.md`.
 
 ---
 
@@ -99,14 +123,31 @@ Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
 
 ---
 
-## 🤖 Para GEMINI (build del APK — Claude no puede compilar el APK)
-- [ ] **URGENTE — Rastreo con pantalla apagada (Inty dice que se rompió).** El código web está intacto (`lpBackgroundGeo`), pero SOLO funciona si el APK trae el plugin nativo. Verifica que el build incluya `@capacitor-community/background-geolocation`, que `npx cap sync android` corrió, y que el `AndroidManifest.xml` tenga `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`, `FOREGROUND_SERVICE` y `FOREGROUND_SERVICE_LOCATION`. Si un rebuild reciente lo dejó fuera, ESA es la regresión. Inty puede confirmarlo en la app con **Ajustes → 📡 Probar GPS** (dice si el plugin está o no).
-- [ ] **Micrófono nativo en la app.** El código web (v5.92) ya llama al plugin `SpeechRecognition`. Falta meterlo al APK:
-  1. `npm install @capacitor-community/speech-recognition`
-  2. `npx cap sync android`
-  3. En `AndroidManifest.xml`: `<uses-permission android:name="android.permission.RECORD_AUDIO" />`
-  4. Reconstruir el APK (`build-apk.yml`).
-  - Con eso el mic queda andando dentro de la app (hoy solo funciona en Chrome).
+## 🤖 Build del APK — actualizado 2026-07-12, ver también "🔴 LO MÁS URGENTE" arriba
+- [x] **Rastreo con pantalla apagada** — revisado el código real de
+  `scripts/patch-android.js` y `package.json`: el plugin
+  `@capacitor-community/background-geolocation` SÍ está como dependencia, y el
+  script SÍ inyecta `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`,
+  `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` en el manifest, y pide los
+  permisos al arrancar desde `MainActivity.java`. Por lectura de código esto ya
+  está bien resuelto — falta solo la confirmación en un dispositivo real
+  (**Ajustes → 📡 Probar GPS** en la app, o probar de verdad con pantalla
+  apagada), nadie de las dos IAs puede confirmar eso sin un teléfono a mano.
+- [ ] **Micrófono nativo en la app instalada — sigue faltando, esto sí es real.**
+  Los PERMISOS ya están listos (`RECORD_AUDIO` inyectado + pedido al arrancar,
+  `scripts/patch-android.js` ya lo hace), pero falta el PLUGIN en sí:
+  1. Agregar `@capacitor-community/speech-recognition` a `package.json`
+     (dependencies).
+  2. Confirmar que la API del plugin coincide con lo que llama el código
+     (`lpPlugin('SpeechRecognition')` en `index.html`, función
+     `_micNativoEscuchar()`) — revisar la documentación del plugin antes de
+     instalar a ciegas, puede que el nombre de los métodos no calce exacto.
+  3. `npx cap sync android` (ya está en el flujo del build, se corre solo).
+  4. Push a `main` — el build se dispara solo si el commit toca alguno de los
+     `paths:` de `.github/workflows/build-apk.yml` (agregar `package.json` a la
+     lista si no dispara).
+  - Con eso el mic queda andando dentro de la app instalada (hoy solo
+    funciona en Chrome/web).
 
 ## 👤 Para INTY (son de tu cuenta, ninguna IA puede hacerlas)
 - [~] **ROTAR los 3 tokens**: la "fuga" que motivó esto era una falsa alarma (ver BITÁCORA v5.94 — era
@@ -133,9 +174,14 @@ Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
 - [x] `PLAY-STORE-LISTING.md` ya tiene título, descripción corta/larga, categoría, guía de rating de
   contenido y de "Data safety". Assets gráficos ya generados: `play-icon-512.png` (512×512),
   `play-feature-graphic-1024x500.png` (con el logo real).
+- [x] Cuenta de desarrollador de Google Play: **ya pagada por Inty (USD 25) y en proceso de validación de
+  datos por Google** (a 2026-07-12). Cuando quede validada, se puede crear la ficha y subir el primer build.
 - [ ] Falta: capturas de pantalla reales de la app (necesita login + navegar unas pantallas, no se hizo
-  para no ensuciar Firestore de producción con una cuenta de prueba). Y por supuesto, la cuenta de
-  desarrollador de Google Play misma (USD 25, pago único — le corresponde a Inty, ninguna IA puede pagarlo).
+  para no ensuciar Firestore de producción con una cuenta de prueba).
+- [ ] Falta: build firmado `.aab` de release — hoy el pipeline (`build-apk.yml`) solo genera un `.apk` debug
+  sin firmar, que sirve para sideload pero NO para subir a Play Console (exige `.aab` firmado con keystore
+  de release). Falta agregar un paso de firma (genera un keystore, guarda como secret de GitHub, firma en CI).
+  Ver detalle en "🔴 LO MÁS URGENTE" arriba.
 
 ## 🧠 IA de Pistero (mejoras, opcional)
 - [ ] Pulir el estilo del chat `v-pistero` (Claude puede).
