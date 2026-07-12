@@ -505,14 +505,21 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <button class="es-classic" onclick="cerrarEsfera()">☰ Menú clásico</button>
 <div class="es-bottom">
   <button class="es-ind" onclick="cerrarEsfera();cv('stats')"><span class="es-ind-v" id="esKm">0</span><span class="es-ind-l">km</span></button>
-  <button class="es-ind es-badge" id="esAvisos" data-n="0" onclick="cerrarEsfera();showFriendRequests()"><span class="es-ind-v">🔔</span><span class="es-ind-l">Avisos</span></button>
+  <!-- Antes "Avisos" y "Mensajes" eran DOS botones que llevaban al mismo lugar en el
+       fondo (Social ya tiene amigos+solicitudes+chat juntos) — se fusionan en uno
+       para liberar un espacio en la fila, que ahora usa "Mi puesto" (rango real en
+       el ranking, antes solo visible adentro de Estadísticas). -->
+  <button class="es-ind es-badge" id="esAvisos" data-n="0" onclick="cerrarEsfera();cv('chat')"><span class="es-ind-v">🔔</span><span class="es-ind-l">Avisos</span></button>
   <button class="es-mic" id="esMic" onclick="toggleMic()"><i class="fas fa-microphone"></i></button>
-  <button class="es-ind es-badge" id="esMsgs" data-n="0" onclick="cerrarEsfera();cv('chat')"><span class="es-ind-v">💬</span><span class="es-ind-l">Mensajes</span></button>
+  <button class="es-ind" onclick="cerrarEsfera();mostrarLogrosComunidad()"><span class="es-ind-v" id="esPuesto">—</span><span class="es-ind-l">mi puesto</span></button>
   <button class="es-ind" onclick="cerrarEsfera();cv('trips')"><span class="es-ind-v" id="esViajes">0</span><span class="es-ind-l">viajes</span></button>
 </div>
 </div>
 <header>
-<h2>🚲 Libre Pedal</h2>
+<div style="display:flex;align-items:center;gap:4px">
+<button class="es-globe" id="btnAtras" onclick="volverAtras()" title="Atrás" style="display:none"><i class="fas fa-arrow-left"></i></button>
+<h2 style="margin:0">🚲 Libre Pedal</h2>
+</div>
 <div class="hdr-right">
 <button class="es-globe" onclick="abrirEsfera()" title="Esfera de apps">🌐</button>
 <button class="ghost-toggle" id="ghostBtn" onclick="toggleGhost()">👻 OFF</button>
@@ -589,7 +596,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <a href="https://soundcloud.com/search?q=cycling%20music" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 </div>
 <div class="lp-player-note" style="margin-top:6px">Al tocar un ícono se abre esa app (si la tienes instalada) o su web. El navegador no puede controlar el volumen de otra app — baja el volumen de Pistero desde ella si se superponen.</div>
-<button class="ab sec" style="margin-top:14px" onclick="cv('dash')">← Volver a Inicio</button>
+<button class="ab sec" style="margin-top:14px" onclick="cv('dash');abrirEsfera()">← Volver a Inicio</button>
 </section>
 
 <section id="v-ajustes" class="view">
@@ -619,7 +626,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.08</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.09</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -636,17 +643,20 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
     <button class="ab" style="margin-top:6px" onclick="crearReto()">Publicar reto</button>
   </div>
 </div>
-<button class="ab sec" style="margin-top:12px" onclick="cv('dash')">← Volver a Inicio</button>
+<button class="ab sec" style="margin-top:12px" onclick="cv('dash');abrirEsfera()">← Volver a Inicio</button>
 </section>
 
 <section id="v-trips" class="view">
-<div class="section-info"><h4>🗺️ Mis viajes</h4><p>Planifica viajes con varias paradas, revisa tu historial de rutas y tu bitácora.</p></div>
+<div class="section-info"><h4>🗺️ Mis viajes</h4><p>Tus recorridos grabados, viajes planificados y bitácora, todo en un solo lugar.</p></div>
 <button class="ab" onclick="showNewTripForm()">➕ Planificar viaje multi-destino</button>
-<div class="quick-links" style="margin-top:8px">
-  <button class="btrip" onclick="cv('routes')">🛣️ Historial de rutas</button>
-  <button class="btrip" onclick="cv('diario')">📓 Ciclo Bitácora</button>
-</div>
-<div id="trips-list" style="margin-top:12px"></div>
+<button class="btrip" style="margin-top:6px" onclick="cv('diario')">📓 Ciclo Bitácora</button>
+<h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">🛣️ Tus rutas grabadas</h4>
+<!-- Antes esto vivía SOLO en v-routes (una vista aparte, un toque extra): quien
+     salía a pedalear con "Iniciar navegación" (el camino normal, no el planificador
+     multi-destino) nunca veía su recorrido acá, aunque sí había quedado guardado. -->
+<div id="trips-rutas-list" class="js-rutas-list"></div>
+<h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">📋 Viajes planificados</h4>
+<div id="trips-list"></div>
 </section>
 
 <section id="v-newtrip" class="view">
@@ -720,17 +730,17 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="cd" style="margin-top:8px"><h4 style="margin-top:0;font-size:0.85rem">☁️ Respaldo de tus datos</h4><p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Tu diario se respalda en tu cuenta. También puedes descargar una copia a un archivo y restaurarla.</p>
 <button class="ab sec" style="margin:0 0 6px" onclick="exportarMisDatos()">⬇️ Descargar respaldo (archivo)</button>
 <label class="ab sec" style="display:block;margin:0;cursor:pointer;text-align:center">⬆️ Restaurar desde archivo<input type="file" accept="application/json,.json" onchange="importarMisDatos(this)" style="display:none"></label></div>
-<button class="ab sec" onclick="cv('dash')">← Volver al inicio</button>
+<button class="ab sec" onclick="cv('dash');abrirEsfera()">← Volver al inicio</button>
 <div id="diarioHistorial" style="margin-top:14px"></div>
 </section>
 
 <section id="v-routes" class="view">
 <div class="section-info"><h4>Historial de rutas</h4><p>Recorridos grabados: video, perfil de elevación y tu bitácora.</p></div>
 <button class="ab sec" style="margin-bottom:10px" onclick="openDiario()">📓 Ciclo Bitácora</button>
-<div id="routes-list"></div>
+<div id="routes-list" class="js-rutas-list"></div>
 <button class="ab" style="margin-top:10px" onclick="showAllRoutesOnMap()">Ver todas en el mapa</button>
 <button class="ab sec" onclick="combineAllRoutes()">Combinar todas en una</button>
-<button class="ab sec" onclick="cv('dash')">← Volver a Inicio</button>
+<button class="ab sec" onclick="cv('dash');abrirEsfera()">← Volver a Inicio</button>
 <div id="map-routes-all" style="margin-top:12px;display:none"><div id="map-all-routes"></div></div>
 </section>
 
@@ -788,7 +798,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
     <button class="ab" onclick="preguntarPistero()"><i class="fas fa-paper-plane"></i></button>
   </div>
 </div>
-<button class="ab sec" style="margin-top:8px" onclick="cv('dash')">← Volver al inicio</button>
+<button class="ab sec" style="margin-top:8px" onclick="cv('dash');abrirEsfera()">← Volver al inicio</button>
 </section>
 
 <section id="v-rec" class="view">
@@ -902,7 +912,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </main>
 
 <nav>
-<button class="nb on" onclick="cv('dash')"><i class="fas fa-house"></i><span>Inicio</span></button>
+<button class="nb on" onclick="cv('dash');abrirEsfera()"><i class="fas fa-house"></i><span>Inicio</span></button>
 <button class="nb" onclick="cv('map')"><i class="fas fa-map-location-dot"></i><span>Mapa</span></button>
 <button class="nb" onclick="abrirPistero()"><i class="fas fa-robot"></i><span>Pistero</span></button>
 <button class="nb" onclick="cv('chat')"><i class="fas fa-comments"></i><span>Social</span></button>
@@ -918,7 +928,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.08'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.09'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1710,6 +1720,13 @@ function _pisteroObedecer(acciones, pedido){
   const pidioIr=/(lleva|llevame|llevanos|vamos|navega|ir (a|hasta)|anda|ruta (a|hasta)|guiame|marcame|partamos)/.test(p);
   const pidioAbrir=/(abre|abrir|abreme|muestra|muestrame|ve (a|al)|entra|ensename|dejame en|ponme en)/.test(p);
   const pidioGps=/(gps|graba|grabar|registra|empieza a grabar|deten|detener)/.test(p);
+  // "Enséñame a usar X": Pistero conoce la app entera y, en vez de solo describirla en
+  // texto, te LLEVA hasta el elemento real con el mismo spotlight del tutorial inicial.
+  // Amplio a propósito: "cómo mando un sos", "cómo se usa", "dónde está" son la forma
+  // NATURAL de preguntar esto — si se deja muy estricto, la mayoría de las preguntas
+  // reales de "cómo hago X" no auto-ejecutan y el usuario tiene que tocar un botón
+  // extra para algo que ya pidió explícitamente que le mostraran.
+  const pidioEnsenar=/(ensena|ense[ñn]a|muestra|muestrame|^como |^c[oó]mo | como | c[oó]mo |que es|para que sirve|explica|explicame|donde esta|donde encuentro|donde queda|d[oó]nde est[aá]|d[oó]nde encuentro|d[oó]nde queda)/.test(p);
   acciones.slice(0,2).forEach(function(a){
     if(a.tipo==='navegar' && a.arg){
       if(pidioIr){ pisteroNavegar(a.arg); }
@@ -1722,6 +1739,11 @@ function _pisteroObedecer(acciones, pedido){
     } else if(a.tipo==='gps'){
       if(pidioGps){ toggleGPS(); }
       else _pisteroBotonAccion('📍 GPS: grabar mi ruta', function(){ toggleGPS(); });
+    } else if(a.tipo==='mostrar'){
+      const idx=TUTORIAL_TEMAS[normalizar(a.arg||'')];
+      if(idx==null) return;
+      if(pidioEnsenar||pidioAbrir||pidioIr){ mostrarPasoTutorial(idx); }
+      else _pisteroBotonAccion('👉 Muéstramelo en la app', function(){ mostrarPasoTutorial(idx); });
     }
   });
 }
@@ -2076,7 +2098,7 @@ function subscribeToChat(){ db.collection('chat').orderBy('ts','asc').limit(100)
 function escapeHTML(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function subscribeToRouteAlerts(){ db.collection('routeAlerts').orderBy('timestamp','desc').limit(20).onSnapshot(async function(snapshot){ const c=document.getElementById('route-alerts'); if(!c) return; c.innerHTML=''; for(const doc of snapshot.docs){ const data=doc.data(); const nombre=await getNombreUsuario(data.user); c.innerHTML+='<div class="route-alert"><strong>'+escapeHTML(data.type)+'</strong><p>'+escapeHTML(data.desc)+'</p><small>'+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small></div>'; } }); }
 function subscribeToComments(){ db.collection('guiComments').orderBy('ts','desc').limit(50).onSnapshot(async function(snapshot){ const c=document.getElementById('gui-comments'); if(!c) return; c.innerHTML=''; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero en comentar</p>'; return; } for(const doc of snapshot.docs){ const data=doc.data(); if(data.type==='voto'||!data.text) continue; const nombre=await getNombreUsuario(data.user); c.innerHTML+='<div class="global-comment"><div class="author">'+escapeHTML(nombre)+'</div><div class="time">'+escapeHTML(data.h)+'</div><div class="text">'+escapeHTML(data.text)+'</div></div>'; } }); }
-function subscribeToFriendRequests(){ db.collection('friendRequests').where('to','==',cu).onSnapshot(function(snapshot){ const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}).length; const b=document.getElementById('solicBadge'); if(b){ if(pend>0){ b.innerText=pend; b.style.display='inline-block'; } else { b.style.display='none'; } } const nav=document.querySelector('.nb[onclick*="chat"]'); if(nav){ nav.style.position='relative'; let dot=nav.querySelector('.nav-dot'); if(pend>0){ if(!dot){ dot=document.createElement('span'); dot.className='nav-dot'; dot.style.cssText='position:absolute;top:4px;right:calc(50% - 18px);width:9px;height:9px;background:var(--r);border-radius:50%'; nav.appendChild(dot); } } else if(dot){ dot.remove(); } } if(pend>0) h('Tienes '+pend+' solicitud de amistad pendiente. Míralas en Social.'); }); }
+function subscribeToFriendRequests(){ db.collection('friendRequests').where('to','==',cu).onSnapshot(function(snapshot){ const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}).length; const b=document.getElementById('solicBadge'); if(b){ if(pend>0){ b.innerText=pend; b.style.display='inline-block'; } else { b.style.display='none'; } } const eb=document.getElementById('esAvisos'); if(eb) eb.setAttribute('data-n', pend>0?String(Math.min(pend,99)):'0'); const nav=document.querySelector('.nb[onclick*="chat"]'); if(nav){ nav.style.position='relative'; let dot=nav.querySelector('.nav-dot'); if(pend>0){ if(!dot){ dot=document.createElement('span'); dot.className='nav-dot'; dot.style.cssText='position:absolute;top:4px;right:calc(50% - 18px);width:9px;height:9px;background:var(--r);border-radius:50%'; nav.appendChild(dot); } } else if(dot){ dot.remove(); } } if(pend>0) h('Tienes '+pend+' solicitud de amistad pendiente. Míralas en Social.'); }); }
 
 /* ===== NOVEDADES: competencias, rodadas y cicloturismo en Chile (curado, admin publica) ===== */
 let novedadesCache=[], novedadesCatActiva='todos';
@@ -2443,12 +2465,17 @@ function finalizarRutaPorInactividad(){
 }
 setInterval(finalizarRutaPorInactividad,60000);
 function renderRutas(){
-  const c=document.getElementById('routes-list'); if(!c) return;
+  // Se pinta en TODOS los contenedores con esta clase (hoy: v-routes Y v-trips) — un
+  // recorrido grabado con GPS aparece en los dos lugares sin duplicar la consulta.
+  const targets=document.querySelectorAll('.js-rutas-list'); if(!targets.length) return;
   const arr=rutasLocales().slice().sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);}).slice(0,60);
-  if(arr.length===0){ c.innerHTML='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; return; }
-  let html='';
-  arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
-  c.innerHTML=html;
+  let html;
+  if(arr.length===0){ html='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; }
+  else{
+    html='';
+    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
+  }
+  targets.forEach(function(c){ c.innerHTML=html; });
 }
 // Muestra al toque lo local (garantizado) y fusiona rutas viejas que estén SOLO en la nube.
 function loadRoutesList(){ if(!cu) return; renderRutas();
@@ -3967,7 +3994,14 @@ function endNavigation(){
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
   if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; rutaPerfil=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
-function cv(id){
+// Historial de vistas para el botón "← Atrás" del header: cv() apila la vista que
+// dejas atrás (salvo cuando el que llama es volverAtras()); "Inicio" siempre limpia
+// el historial (es un punto de reinicio, no tiene sentido "volver" desde ahí a algo
+// de una sesión de navegación anterior).
+let _viewHistory=[], _viewActual='dash';
+function _actualizarBtnAtras(){ const b=document.getElementById('btnAtras'); if(b) b.style.display=_viewHistory.length?'inline-flex':'none'; }
+function volverAtras(){ const prev=_viewHistory.pop(); if(prev){ cv(prev, true); if(prev==='dash') abrirEsfera(); } else { cv('dash'); abrirEsfera(); } }
+function cv(id, _esVolver){
   const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */
   const el=document.getElementById('v-'+id);
   if(!el){
@@ -3979,19 +4013,26 @@ function cv(id){
     if(id!=='dash') return cv('dash');
     return;
   }
-  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
+  if(id==='dash' && !_esVolver){ _viewHistory=[]; }
+  else if(!_esVolver && _viewActual && _viewActual!==id){ _viewHistory.push(_viewActual); if(_viewHistory.length>15) _viewHistory.shift(); }
+  _viewActual=id; _actualizarBtnAtras();
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 // Puesto real en el ranking general (no solo si estás en el Top 100): cuenta cuántos
 // ciclistas tienen más km que tú y le suma 1. Se calcula aparte porque mostrarRanking()
 // solo trae el Top 100, así que alguien fuera de esa lista antes no tenía forma de
 // saber en qué puesto va.
 async function actualizarMiPuesto(){
-  const el=document.getElementById('statPuesto'); if(!el || !cu) return;
-  el.innerText='…';
+  // Actualiza TODOS los indicadores de rango a la vez (Estadísticas y la fila de
+  // abajo de la Esfera) — antes solo existía dentro de Estadísticas, así que en la
+  // pantalla de inicio real de la app (la Esfera) nunca se veía tu puesto.
+  const els=[document.getElementById('statPuesto'), document.getElementById('esPuesto')].filter(Boolean);
+  if(!els.length || !cu) return;
+  els.forEach(function(el){ el.innerText='…'; });
   try{
     const miKm=us.di||0;
     const snap=await db.collection('users').where('km','>',miKm).get();
-    el.innerText='#'+(snap.size+1);
-  }catch(e){ el.innerText='—'; }
+    els.forEach(function(el){ el.innerText='#'+(snap.size+1); });
+  }catch(e){ els.forEach(function(el){ el.innerText='—'; }); }
 }
 function updateStatsView(){
   document.getElementById('statKm').innerText=us.di.toFixed(1);
@@ -5440,7 +5481,11 @@ function abrirEsfera(){
   sonidoArco();
   esAplicarFondoModo();
   const k=document.getElementById('esKm'); if(k) k.innerText=(us.di||0).toFixed(1);
-  const v=document.getElementById('esViajes'); if(v) v.innerText=trips.filter(function(t){return t.status==='completed';}).length;
+  // Antes solo contaba viajes PLANIFICADOS completados — para la mayoría, que sale a
+  // pedalear con "Iniciar navegación" directo (sin pasar por el planificador), este
+  // número siempre marcaba 0 aunque llevara varias rutas grabadas de verdad.
+  const v=document.getElementById('esViajes'); if(v) v.innerText=(rutasLocales().length + trips.filter(function(t){return t.status==='completed';}).length);
+  actualizarMiPuesto();
   if(!esRAF) esLoop();
 }
 function cerrarEsfera(){ const sc=document.getElementById('esferaScreen'); if(sc) sc.classList.remove('on'); if(esRAF){ cancelAnimationFrame(esRAF); esRAF=null; } esDetenerPostales(); }
@@ -5499,7 +5544,7 @@ function handleVoiceCommand(raw){
   // preguntas/órdenes de más abajo, que es lo que corresponde.
   let m=t.match(/(?:planifica(?:r)?(?:me)?(?: mi| el| un)? viaje (?:a|hasta|hacia|para)|ir (?:a|hasta|hacia)|llevame (?:a|hasta|hacia)|llevarme a|lleva(?:me)? (?:a|hasta|hacia)|anda(?:me)? a|navega(?:r|me)? (?:a|hasta|hacia)|guia(?:r|me)? (?:a|hasta|hacia)|vamos (?:a|hasta)|vamonos a|quiero (?:ir|llegar) (?:a|hasta|hacia)|voy a|ruta (?:a|hasta|hacia|para)|como (?:llego|voy) a|llegar a|necesito ir a|busca(?:r|me)?(?: la| el)? (?:direccion(?: de)?|ruta a|lugar)|encuentra(?: la)? direccion(?: de)?|direccion de)\s+(.+)/);
   if(m && m[1]){ let dest=limpiarDestino(m[1]); if(dest.length<2){ h('¿A qué lugar te llevo?'); return; } cv('trips'); const qd=document.getElementById('quick-dest'); if(qd) qd.value=dest; h("Perfecto, busco la ruta a "+dest+" y te la marco en el mapa."); startQuickTrip(); return; }
-  if(/\binicio\b|panel|principal|tablero/.test(t)){ cv('dash'); h("Vamos al inicio."); return; }
+  if(/\binicio\b|panel|principal|tablero/.test(t)){ cv('dash'); abrirEsfera(); h("Vamos al inicio."); return; }
   if(/^(el |ver |abre(?: el)? |mostrar )?mapa$/.test(t)){ cv('map'); h("Aquí está el mapa."); return; }
   if(/^(mis |ver |abre )?rutas?$/.test(t)){ cv('routes'); h("Tus rutas."); return; }
   if(/^(mis |ver |abre )?viajes?$|^navegaci[oó]n$/.test(t)){ cv('trips'); h("Tus viajes."); return; }
@@ -5583,6 +5628,34 @@ function tutSpotlight(el){
 }
 function startTutorial(){
   tutorialIdx=0;
+  document.getElementById('tutorialOverlay').classList.add('on');
+  const banner=document.getElementById('tutBanner');
+  if(banner){ banner.classList.remove('hide'); clearTimeout(banner._hideTO); banner._hideTO=setTimeout(function(){ banner.classList.add('hide'); },4500); }
+  renderTutorial();
+}
+// Pistero "te enseña": salta directo a UN paso del tutorial (índice de tutorialSteps)
+// en vez de recorrerlo entero desde el principio — reutiliza el mismo spotlight
+// gráfico real sobre el botón/pantalla exacto, no una descripción en texto suelto.
+const TUTORIAL_TEMAS={
+  esfera:1, sos:6, emergencia:6, auxilio:6,
+  destino:2, buscar:2, navegar:2, ruta:2, viaje:2,
+  microfono:3, mic:3,
+  pistero:4, ia:4, preguntar:4,
+  velocidad:5, gps:5, grabar:5, ritmo:5,
+  darma:7, puntos:7, monedas:7,
+  logros:8, ranking:8, tienda:8, top:8, posicion:8, puesto:8,
+  musica:9, radio:9, canciones:9,
+  ajustes:10, voz:10, bateria:10,
+  mapa:11, capas:11, satelite:11, topografico:11,
+  reportar:12, peligro:12, reporte:12,
+  ciclistas:13, radar:13,
+  social:14, amigos:14, mensajes:14, chat:14, solicitudes:14,
+  taller:15, reparar:15, bici:15, mecanica:15,
+  perfil:16, personaje:16, casco:16, personalizar:16
+};
+function mostrarPasoTutorial(indice){
+  if(indice==null || !tutorialSteps[indice]) return;
+  tutorialIdx=indice;
   document.getElementById('tutorialOverlay').classList.add('on');
   const banner=document.getElementById('tutBanner');
   if(banner){ banner.classList.remove('hide'); clearTimeout(banner._hideTO); banner._hideTO=setTimeout(function(){ banner.classList.add('hide'); },4500); }

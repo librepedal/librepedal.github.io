@@ -4,6 +4,60 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.09 — 2026-07-12 — Claude (sesión 2)
+**Rediseño de navegación pedido por Inty: la Esfera es ahora el "Inicio" permanente,
+Mis viajes muestra lo que de verdad grabaste, y Pistero puede llevarte gráficamente a
+cualquier función de la app cuando le preguntas cómo usarla.**
+
+- **La Esfera es el Inicio siempre** (pedido explícito: "es lo que le da una
+  diferencia"). Antes solo se abría sola al iniciar sesión; ahora TODO lo que antes
+  llevaba a `v-dash` directo (botón "Inicio" de la barra inferior, los 5 botones
+  "← Volver a Inicio" repartidos por la app, y el comando de voz "vamos al inicio")
+  reabre la Esfera. `v-dash` (el panel con el buscador de destino) sigue existiendo
+  intacto — se llega ahí con "☰ Menú clásico" dentro de la Esfera, o queda debajo
+  cuando la Esfera se cierra.
+- **Bug real: "llevo varios viajes y no aparece ninguno en Mis viajes".** Causa: la
+  vista `v-trips` solo leía la colección `trips` (planificador multi-destino), pero
+  quien sale a pedalear con "Iniciar navegación" directo (el camino normal, sin pasar
+  por el planificador) graba su recorrido en OTRO lugar (`routes` + localStorage) que
+  `v-trips` nunca mostraba — solo tenía un botón cruzado a una vista aparte
+  ("Historial de rutas"). Ahora `renderRutas()` pinta en los dos contenedores
+  (`v-routes` Y `v-trips`, clase compartida `.js-rutas-list`) — tus recorridos
+  aparecen directo en "Mis viajes", sin un clic extra a otra pantalla.
+- **"No veo mi puesto del Top 100 en la Esfera"**: `actualizarMiPuesto()` solo
+  actualizaba el indicador de Estadísticas (adentro de Perfil) — en la pantalla de
+  inicio real (la Esfera) nunca se veía. Ahora actualiza los dos a la vez.
+- **Espacio liberado en la Esfera**: "Avisos" y "Mensajes" eran dos botones que
+  llevaban al mismo lugar en el fondo (Social ya tiene amigos+solicitudes+chat
+  juntos) — se fusionaron en uno ("🔔 Avisos", con badge real de solicitudes
+  pendientes, antes esos badges eran decorativos y nunca se actualizaban). El slot
+  liberado ahora muestra "Mi puesto" (rango real en el ranking).
+- **Botón "← Atrás" universal**: nuevo historial de vistas en `cv()` (pila, tope 15).
+  Antes solo había botones de "volver" a destinos fijos y a veces ninguno. Ahora una
+  flecha en el header (visible solo si hay a dónde volver) regresa a la pantalla
+  ANTERIOR real, no siempre a Inicio — probado con navegación de varios niveles
+  (dash→chat→customize→atrás→atrás). "Inicio" limpia el historial (punto de
+  reinicio, no tiene sentido "volver" desde ahí a una sesión de navegación vieja).
+- **Pistero "te enseña" llevándote de verdad a la pantalla**: pedido de Inty — que
+  conozca la app al 100% y, en vez de solo describir en texto cómo usar algo, te
+  LLEVE ahí gráficamente. Nueva etiqueta `[ACCION:mostrar|clave]` (16 claves: esfera,
+  sos, destino, microfono, pistero, velocidad, darma, logros, musica, ajustes, mapa,
+  reportar, ciclistas, social, taller, perfil) reutiliza el spotlight REAL del
+  tutorial inicial (`tutSpotlight`/`tutorialSteps`) sobre un solo paso, en vez de
+  correr el tutorial completo desde cero. Gateado igual que las demás órdenes: si el
+  pedido es explícito ("cómo mando un SOS", "dónde está X") se ejecuta directo; si no,
+  queda como botón opcional. Probado en vivo: "cómo mando un sos" → resalta el botón
+  real de SOS; mención de pasada sin pedir ayuda → queda como botón, no invasivo.
+  System prompt del Worker actualizado con la descripción 100% real de la app de hoy
+  (Esfera como inicio, Mis viajes unificado, botón Atrás) y la nueva orden.
+
+Verificación: sintaxis de `index.html` (0 errores) y `worker.js` (`node --check`, OK).
+Navegación probada end-to-end en navegador (Esfera abre/cierra, historial de varios
+niveles, Mis viajes muestra rutas grabadas de un usuario de prueba sin datos, badges
+de rango/avisos). Worker probado en vivo con `curl` para el nuevo `[ACCION:mostrar]`.
+
+---
+
 ## v6.08 — 2026-07-11 — Claude (sesión 2)
 **4 bugs reales que Inty reportó de uso real: la IA arma un viaje con cualquier
 pregunta, desplazamiento fantasma de GPS, comandos que se pisan, y Pistero
