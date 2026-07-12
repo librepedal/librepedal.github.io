@@ -4,6 +4,26 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## fix rápido tras v6.07 — 2026-07-11 — Claude (sesión 2)
+Sincronicé con el trabajo de mapas de la otra sesión (v6.04→v6.07: mapas nivel apps
+grandes, mic que obedece todo, pendiente anticipada, autocrítica). Revisé código nuevo
+(satélite/brújula/3D/pantalla completa/navegar-aquí en `im()`) — sólido, sin bugs
+obvios; `toggleCapaMapa()` re-agrega bien las polilíneas tras `setStyle()`. Verifiqué
+también que mis 15 fixes de la QA v6.03 siguen intactos (guards GPS, techo de voz,
+lluvia local, doble-submit, maxlength) — cero regresiones.
+
+Un solo desajuste real: `sw.js` seguía en `CACHE='librepedal-v603'` mientras
+`APP_VERSION`/`version.txt` ya iban en v6.07 (4 releases sin bumpear el service
+worker). Corregido a `librepedal-v607` y redesplegado. Nota para ambas sesiones: el
+service worker es fácil de olvidar porque no está en el mismo archivo que
+`APP_VERSION` — revisarlo en cada release, no solo `index.html`/`version.txt`.
+
+(Nota de orden: las entradas v6.04-v6.07 de la otra sesión quedaron más abajo en este
+archivo en vez de arriba de esta — es solo un tema de orden de lectura, no de
+contenido; están completas y correctas.)
+
+---
+
 ## v6.03 — 2026-07-11 — Claude (sesión 2)
 **QA adversarial completa pre-lanzamiento.** Inty pidió actuar como alguien probando la
 app para dar el OK de lanzamiento ("no quiero fallas... la app no debe presentar fallas
