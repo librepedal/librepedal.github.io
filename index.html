@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.18'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.19'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3493,8 +3493,15 @@ function importarMisDatos(input){
       }
       // DIARIO
       if(Array.isArray(data.diario)){ data.diario.forEach(function(d){ if(d&&d.fecha){ try{ localStorage.setItem('lp_diario_'+(cu||'anon')+'_'+d.fecha, JSON.stringify(d)); nD++; }catch(e){} } }); }
-      // PERFIL (casco/skin/lente)
-      if(data.perfil){ try{ if(data.perfil.helmet){ selectedHelmet=data.perfil.helmet; localStorage.setItem('lp_helmet_'+cu, selectedHelmet); } if(data.perfil.skin) selectedSkin=data.perfil.skin; if(data.perfil.lens) selectedLens=data.perfil.lens; }catch(e){} }
+      // PERFIL (casco/skin/lente): los 3 deben guardarse en localStorage, no solo en la
+      // variable en memoria — si no, al recargar la app (login.onload lee de localStorage,
+      // ver línea ~2007) el casco restaurado sobrevive pero el skin y el lente se pierden.
+      if(data.perfil){ try{
+        if(data.perfil.helmet){ selectedHelmet=data.perfil.helmet; localStorage.setItem('lp_helmet_'+cu, selectedHelmet); }
+        if(data.perfil.skin){ selectedSkin=data.perfil.skin; localStorage.setItem('lp_skin_'+cu, selectedSkin); }
+        if(data.perfil.lens){ selectedLens=data.perfil.lens; localStorage.setItem('lp_lens_'+cu, selectedLens); }
+        if(typeof initCustomization==='function') initCustomization();
+      }catch(e){} }
       // ESTADÍSTICAS: nunca bajan tu progreso, toma el valor mayor (km, Darma, calorías).
       if(data.stats && typeof us==='object'){ try{ ['di','d','c'].forEach(function(k){ if((data.stats[k]||0)>(us[k]||0)) us[k]=data.stats[k]; }); localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){} }
       input.value='';

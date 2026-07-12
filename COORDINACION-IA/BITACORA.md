@@ -4,6 +4,46 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.19 — 2026-07-12 — Claude (sesión 2, revisión de código de la otra sesión)
+Inty pidió "dale" a exportar GPX (ya lo había hecho la otra sesión, v6.15/v6.16) y
+"revisar el código y avanzamos". Auditoría real (no solo leer BITACORA) de lo que
+la otra sesión construyó en v6.15-v6.18: GPX export/import y respaldo/restauración
+de datos completo.
+
+**Bug real encontrado y corregido en `importarMisDatos()`** (restaurar respaldo,
+v6.18): al restaurar el perfil, el casco (`selectedHelmet`) sí se guardaba en
+`localStorage`, pero el **skin y el lente NO** — se quedaban solo en la variable
+en memoria. Como el login (`window.onload`) relee casco/skin/lente de
+`localStorage` en cada carga, un usuario que restaurara su respaldo y luego
+recargara la app (ej. después de reinstalar) recuperaba el casco pero perdía el
+skin y el lente otra vez — "restaurar tu perfil" quedaba incompleto en silencio.
+Tampoco se llamaba a `initCustomization()`, así que ni siquiera se veía el cambio
+en la sesión actual sin navegar manualmente a Personalizar. Arreglado: los 3 ahora
+se guardan en `localStorage` y se refresca la vista.
+
+**Resto de lo auditado (GPX export/import, `exportarMisDatos`, dedupe de rutas
+por `localId`, merge de estadísticas por el máximo) — verificado en el navegador
+de verdad, no solo leído:**
+- `_gpxDeRuta`: XML válido (parseado de vuelta con `DOMParser` sin error), incluye
+  `<ele>`/`<time>`, y el nombre de la ruta se escapa (`escapeHTML`) antes de ir al
+  XML — probé con un nombre `<script>alert(1)</script>` y salió como texto, no
+  como tag.
+- `importarGPX`: subí un GPX sintético estilo Strava (`<trkpt>` con ele+time) vía
+  `File`+`DataTransfer` reales (no mock) → quedó en `rutasLocales()` con el nombre,
+  distancia y puntos correctos.
+- `lpConfirmar`/`lpAviso`/cronómetro (v6.14): confirmado que siguen funcionando
+  después de que la otra sesión tocó el archivo — modal abre, resuelve la Promise,
+  cierra; cronómetro tickea y se detiene bien.
+
+**Además:** `sw.js` `CACHE` se había quedado en `v614` durante TODO el rango
+v6.15-v6.18 de la otra sesión — el bug recurrente de desincronía de versión que
+ya habíamos peleado antes. Corregido a `v619` junto con `APP_VERSION`/`version.txt`.
+
+Deploy: Cloudflare Pages (`librepedal.cl/version.txt` → `6.19` confirmado en vivo).
+Nota de proceso: la verificación en navegador esta vez SÍ se pudo completar
+end-to-end con `javascript_tool` (la caída de herramientas de la respuesta
+anterior era temporal, del lado de la infraestructura, no de la app).
+
 ## v6.14 — 2026-07-12 — Claude (sesión 2, continuación)
 **Cronómetro visible en GPS libre + reemplazo de los 77 diálogos nativos del
 navegador (alert/confirm/prompt) por diálogos con el tema de la app.** Inty
