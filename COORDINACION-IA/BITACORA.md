@@ -33,6 +33,12 @@ la pena una prueba real cuando el navegador de pruebas vuelva a funcionar.
 
 Deploy: `librepedal.cl/version.txt` → `6.29` confirmado en vivo (código).
 
+**Verificación pendiente completada (2026-07-13, misma sesión, otra continuación):**
+el Browser pane volvió a funcionar — probado en vivo con el DOM real los 4 casos
+(toggle OFF/ON × comando genérico/explícito "bitácora"), todos correctos, y el
+botón de Ajustes (`toggleBitacoraViajes`) cambia texto/color y persiste en
+`localStorage` como corresponde. Sin hallazgos nuevos, queda cerrado de verdad.
+
 ## v6.28 — 2026-07-12 — Claude (sesión 2, feature nueva: "guardar bitácora de viaje")
 Inty pidió: cuando el usuario pide guardar la bitácora de viaje, la IA debe guardar
 la ruta, dónde se hospedó y todo lo que escribió sobre ese viaje — junto. Antes NO
