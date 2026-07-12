@@ -1,7 +1,8 @@
 # ✅ Pendientes — Libre Pedal
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-12 (noche),
-versión actual del proyecto: **v6.13**.
+versión actual del proyecto: **v6.19** (más el plugin de voz nativo agregado después,
+sin bump de versión web porque no toca `index.html` — ver más abajo).
 
 ---
 
@@ -25,28 +26,38 @@ versión actual del proyecto: **v6.13**.
 - [ ] **Capturas de pantalla para la ficha de Play Store** — nadie las ha
   generado todavía (se evitó ensuciar Firestore de producción con una cuenta de
   prueba). Pendiente de decidir cómo generarlas sin ese riesgo.
+- [ ] **Confirmar en un dispositivo Android real que el plugin de voz nativo
+  (agregado recién, ver "Resuelto esta sesión") compila y funciona.** Ninguna
+  IA tiene un teléfono a mano — es el único paso que falta para dar por
+  cerrado el micrófono nativo en la app instalada.
 
-## ✅ Resuelto esta sesión (2026-07-12, no repetir el diagnóstico)
+## ✅ Resuelto esta sesión (2026-07-12, continuación — v6.14 a v6.19 + plugin de voz)
 
-- **Ícono de la app instalada mostraba el genérico de Capacitor, no el logo de
-  Libre Pedal (v6.13).** Causa real: `build-apk.yml` arma `android/` desde cero
-  en cada build y NUNCA tuvo un paso que generara un ícono personalizado — se
-  perdía en cada build aunque alguien lo arreglara a mano una vez. Ahora hay un
-  paso `npx @capacitor/assets generate --android` usando `resources/icon.png` +
-  `resources/splash.png`/`splash-dark.png` (con el fondo real de la app, no
-  blanco). Ver entrada **v6.13** de `BITACORA.md`.
-- **Revisado el código real de `scripts/patch-android.js` — el pendiente de
-  "Gemini" sobre permisos de GPS en segundo plano y micrófono estaba
-  DESACTUALIZADO.** Ese script YA inyecta correctamente en el
-  `AndroidManifest.xml`: `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`,
-  `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `WAKE_LOCK`,
-  `RECORD_AUDIO`, y ADEMÁS parcha `MainActivity.java` para pedir los permisos
-  de verdad al arrancar (no basta con declararlos). `package.json` ya tiene
-  `@capacitor-community/background-geolocation` como dependencia. **Lo único
-  que sigue faltando de verdad es el plugin `@capacitor-community/speech-recognition`**
-  (no está en `package.json` — sin él, pedir el permiso de micrófono no alcanza,
-  falta el plugin que hace el reconocimiento de voz en sí). Ver sección
-  actualizada más abajo.
+- **Cronómetro visible en GPS libre + reemplazo de 77 diálogos nativos
+  (alert/confirm/prompt) por diálogos temáticos** (v6.14). Ver entrada v6.14 de
+  `BITACORA.md`.
+- **GPX export/import + respaldo/restauración completo de datos** (v6.15-v6.18,
+  hecho por la otra sesión). Auditado con pruebas reales en el navegador
+  (v6.19): se encontró y corrigió un bug real — `importarMisDatos()` no
+  guardaba el skin ni el lente restaurados en `localStorage` (solo el casco),
+  se perdían al recargar la app. También `sw.js` había quedado con
+  `CACHE=v614` durante 4 versiones (desincronía, bug recurrente ya conocido).
+  Ambos corregidos. Ver entrada v6.19 de `BITACORA.md`.
+- **Plugin `@capacitor-community/speech-recognition` agregado a
+  `package.json`** — esto es lo único que faltaba de verdad para el micrófono
+  nativo (los permisos ya estaban listos desde antes, ver abajo). Se verificó
+  la API real del plugin contra la documentación (no se instaló a ciegas):
+  se fijó la versión en `^6.0.1` — **NO** `latest`/`^7.0.0`, porque la v7 del
+  plugin requiere Capacitor 7 y este proyecto usa Capacitor `^6.1.2`
+  (`peerDependencies` de la v6.0.1 confirma `@capacitor/core: ^6.0.0`, calce
+  exacto). Los métodos que ya llama `index.html` (`requestPermissions()`,
+  `start({language,maxResults,partialResults,popup})` → `{matches:[...]}`)
+  coinciden exactamente con la API real de v6.0.1 — no hizo falta tocar
+  `index.html`. El README del plugin confirma "no further action required" en
+  Android más allá del permiso `RECORD_AUDIO`, que `scripts/patch-android.js`
+  ya inyecta. Falta la confirmación en un dispositivo real (ver arriba).
+- Revisado `scripts/patch-android.js`: GPS en segundo plano y permisos ya
+  estaban bien resueltos desde antes (confirmado de nuevo, sigue vigente).
 - Respaldo real de la base de datos y migración de auth a tokens personalizados
   (v6.12) — ver entrada correspondiente en `BITACORA.md`.
 
@@ -133,21 +144,16 @@ Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
   está bien resuelto — falta solo la confirmación en un dispositivo real
   (**Ajustes → 📡 Probar GPS** en la app, o probar de verdad con pantalla
   apagada), nadie de las dos IAs puede confirmar eso sin un teléfono a mano.
-- [ ] **Micrófono nativo en la app instalada — sigue faltando, esto sí es real.**
-  Los PERMISOS ya están listos (`RECORD_AUDIO` inyectado + pedido al arrancar,
-  `scripts/patch-android.js` ya lo hace), pero falta el PLUGIN en sí:
-  1. Agregar `@capacitor-community/speech-recognition` a `package.json`
-     (dependencies).
-  2. Confirmar que la API del plugin coincide con lo que llama el código
-     (`lpPlugin('SpeechRecognition')` en `index.html`, función
-     `_micNativoEscuchar()`) — revisar la documentación del plugin antes de
-     instalar a ciegas, puede que el nombre de los métodos no calce exacto.
-  3. `npx cap sync android` (ya está en el flujo del build, se corre solo).
-  4. Push a `main` — el build se dispara solo si el commit toca alguno de los
-     `paths:` de `.github/workflows/build-apk.yml` (agregar `package.json` a la
-     lista si no dispara).
-  - Con eso el mic queda andando dentro de la app instalada (hoy solo
-    funciona en Chrome/web).
+- [x] **Micrófono nativo en la app instalada** — plugin
+  `@capacitor-community/speech-recognition` agregado a `package.json`, fijado
+  en `^6.0.1` (NO latest/`^7.0.0`, esa versión pide Capacitor 7 y el proyecto
+  usa Capacitor 6). API verificada contra la documentación real de esa versión
+  exacta: coincide 100% con lo que ya llamaba `_micNativoEscuchar()` en
+  `index.html` (`requestPermissions()`, `start({...})` → `{matches:[...]}`) —
+  no hizo falta tocar `index.html`. `package.json` ya está en los `paths:` de
+  `build-apk.yml`, dispara el build solo. **Falta solo la confirmación en un
+  dispositivo real** (instalar el APK nuevo y probar el mic) — nadie de las
+  dos IAs puede confirmar eso sin un teléfono a mano.
 
 ## 👤 Para INTY (son de tu cuenta, ninguna IA puede hacerlas)
 - [~] **ROTAR los 3 tokens**: la "fuga" que motivó esto era una falsa alarma (ver BITÁCORA v5.94 — era
@@ -190,4 +196,6 @@ Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
 
 ## 🎤 Estado del micrófono (referencia)
 - Chrome (web): **funciona**.
-- App instalada (WebView): **no**, hasta que Gemini agregue el plugin (arriba). El código ya está preparado; el fallback manda a escribir mientras tanto.
+- App instalada (WebView): plugin agregado (ver "Build del APK" arriba), pendiente de confirmar en un
+  APK compilado con esto y un teléfono real. Hasta esa confirmación, el fallback sigue mandando a
+  escribir si algo falla.

@@ -4,6 +4,35 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## (sin bump de versión web) — 2026-07-12 — Claude (sesión 2, plugin de mic nativo)
+Inty: "revisar el código y avanzamos". Después de la auditoría de v6.19, seguí con
+el ítem más accionable que quedaba en `PENDIENTES.md`: el micrófono nativo en el
+APK instalado (el único hueco real que quedaba del pendiente de "Gemini").
+
+**`@capacitor-community/speech-recognition` agregado a `package.json`**, fijado en
+`^6.0.1` — **no** `latest` (que es `^7.0.1` y pide Capacitor 7; este proyecto usa
+Capacitor `^6.1.2`, así que instalar la última versión a ciegas habría roto el
+build). Verifiqué contra la documentación real de la v6.0.1 (vía `unpkg`/registry
+de npm, no de memoria) antes de tocar nada — la API (`requestPermissions()`,
+`start({language,maxResults,partialResults,popup})` → `Promise<{matches:[...]}>`)
+coincide exactamente con lo que `_micNativoEscuchar()` en `index.html` ya llamaba
+desde antes, así que no hizo falta cambiar una sola línea de `index.html`. El
+README confirma que en Android "no further action required" más allá del permiso
+`RECORD_AUDIO`, que `scripts/patch-android.js` ya inyecta y pide en runtime desde
+antes. `package.json` ya estaba en los `paths:` de `build-apk.yml`, así que el
+push dispara el build solo.
+
+No toqué `index.html`/`version.txt`/`sw.js` — este cambio es 100% nativo (Android),
+no hay nada distinto en la PWA web, así que no tenía sentido subir `APP_VERSION`.
+El número de versión visible en la app seguirá en 6.19 hasta el próximo cambio web
+real; el APK sí llevará este plugin nuevo en su próximo build automático.
+
+**Pendiente real que queda:** ninguna IA tiene un teléfono Android a mano para
+confirmar que el plugin compila y que el reconocimiento de voz funciona de
+verdad dentro del WebView instalado (la teoría/documentación dice que sí, pero
+"funciona en la doc" y "funciona en el dispositivo" no son lo mismo). Cuando
+alguien lo instale y pruebe, actualizar `PENDIENTES.md`.
+
 ## v6.19 — 2026-07-12 — Claude (sesión 2, revisión de código de la otra sesión)
 Inty pidió "dale" a exportar GPX (ya lo había hecho la otra sesión, v6.15/v6.16) y
 "revisar el código y avanzamos". Auditoría real (no solo leer BITACORA) de lo que
