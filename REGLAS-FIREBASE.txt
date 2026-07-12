@@ -1,36 +1,29 @@
 ========================================================
-LIBRE PEDAL — REGLAS DE FIRESTORE (pega esto en Firebase)
+LIBRE PEDAL — REGLAS DE FIRESTORE
 ========================================================
 
-POR QUÉ: Las reglas actuales bloquean varias colecciones
-(friendships, points, miradores, logros...). Por eso NO se
-registran los amigos, la lista se queda "cargando", y no
-quedan los puntos/miradores en el mapa.
+⚠️ ESTE ARCHIVO QUEDÓ OBSOLETO (2026-07-12). Antes recomendaba pegar una regla
+"allow read, write: if true" (base totalmente abierta) para arreglar un bug de
+colecciones bloqueadas en desarrollo temprano. Ya NO uses eso — dejaría la base
+de datos de producción abierta a cualquiera en internet.
 
-CÓMO APLICARLO (2 minutos, gratis):
+Las reglas reales y vigentes de Libre Pedal están en el archivo hermano:
+  firestore.rules
+
+Ese archivo sí está actualizado: exige sesión para escribir, limita tamaños de
+texto para evitar abuso, y protege que nadie edite o borre el contenido de otro
+usuario en las colecciones donde eso no tiene sentido (ver comentario
+"isOwnerOrLegacy" al principio del archivo para el detalle y sus límites
+conocidos).
+
+CÓMO PUBLICAR reglas nuevas cuando `firestore.rules` cambie (2 minutos, gratis):
 1. Entra a  https://console.firebase.google.com
 2. Elige el proyecto  librepedal-cb983
 3. Menú izquierdo:  Firestore Database  ->  pestaña  Reglas (Rules)
-4. Borra TODO lo que haya y pega EXACTAMENTE esto:
-
-------------------------------------------------------------
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
-------------------------------------------------------------
-
+4. Copia TODO el contenido de `firestore.rules` (el archivo real, no este) y
+   pégalo reemplazando lo que haya.
 5. Presiona  Publicar (Publish).
-6. Listo. Vuelve a la app: los amigos, mensajes, puntos,
-   miradores y logros ya quedarán registrados.
 
-NOTA DE SEGURIDAD (importante, no urgente):
-Esta regla deja la base ABIERTA (cualquiera puede leer/
-escribir). Es lo normal mientras la app no tiene login de
-Firebase y estás en desarrollo con la comunidad. Cuando la
-app crezca y quieras protegerla, se agrega autenticación y
-se cierran las reglas. Te aviso cuándo conviene hacerlo.
+Nota: publicar reglas de Firestore es un cambio de control de acceso sobre la
+base de datos de producción — por eso lo hace directamente Inty desde la
+consola, ninguna IA lo hace de forma automática aunque tenga el archivo listo.

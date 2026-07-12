@@ -4,6 +4,75 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.11 — 2026-07-12 — Claude (sesión 2)
+**Cierra parte del hueco de seguridad de Firestore que se anotó como limitación
+conocida en la sesión anterior**: cualquier usuario autenticado (aunque fuera anónimo)
+podía editar/borrar contenido de OTRO usuario en la mayoría de las colecciones,
+porque las reglas solo exigían `signedIn()`, sin verificar dueño real.
+
+**Causa de fondo (sigue sin resolverse del todo, ver abajo)**: la app usa Auth
+ANÓNIMA de Firebase — el `uid` de cada sesión es aleatorio y no tiene relación con
+el `cu` propio de la app (derivado del correo). Las reglas no podían comparar
+"¿es el dueño?" porque no había ningún campo guardado que lo permitiera verificar.
+
+**Arreglo de esta versión (real, pero parcial a propósito):**
+- Cliente: se agregó `authUid` (el uid real de Firebase Auth, ya se leía en
+  `window.lpUID` desde antes solo para `users`) a las 15 escrituras de contenido
+  comunitario: `reportes` (x2), `guiComments`, `hostels`, `repairTips`, `routes`,
+  `trips`, `alojo`, `recommendations` (x2), `rodadas`, `segmentoTiempos`,
+  `friendRequests`, `dm/messages`, `frasesComunidad`.
+- `firestore.rules`: nueva función `isOwnerOrLegacy()` — exige que el `authUid`
+  guardado en el documento coincida con `request.auth.uid` para `update`/`delete`,
+  EXCEPTO en documentos de antes de este cambio (sin el campo, se dejan pasar
+  igual que siempre — grandfather clause, cero riesgo de romper datos viejos).
+  Aplicado a `reportes`, `guiComments`, `repairTips`, `routes`, `trips`, `alojo`,
+  `dm/messages`, `segmentoTiempos` (update+delete), y a `recommendations`,
+  `hostels`, `friendRequests`, `rodadas` (solo delete — dejé `update` abierto en
+  estas 4 porque tienen actualizaciones LEGÍTIMAS de otros usuarios: likes,
+  calificaciones, aceptar/rechazar solicitud, marcar asistencia — verifiqué cada
+  caso leyendo el código antes de tocar la regla, para no romper esas funciones).
+- Revisé cada colección buscando funciones de `.delete()`/`.update()` reales antes
+  de restringir nada — varias (reportes, guiComments, hostels, repairTips,
+  recommendations, alojo, segmentoTiempos, rodadas) no tenían NINGUNA función de
+  borrado en toda la app, así que restringirlas no arriesga romper nada existente.
+- `REGLAS-FIREBASE.txt` (archivo obsoleto de 2026-07 temprano que recomendaba
+  `allow read, write: if true` — base totalmente abierta) corregido para apuntar
+  al `firestore.rules` real, con advertencia de que ya no se debe usar.
+
+**Lo que ESTO NO arregla (documentado en el propio `firestore.rules`, ver el
+comentario "LIMITACIÓN CONOCIDA" al inicio del archivo):**
+- El `authUid` es de la SESIÓN anónima actual — si el mismo usuario cambia de
+  celular o borra datos de la app, su próxima sesión tiene un uid distinto y ya no
+  coincide con el de sus documentos viejos (aunque sí sigue protegido contra que
+  OTROS lo toquen, que era el riesgo real).
+- No resuelve la suplantación de admin: `frasesComunidad` (aprobar/rechazar),
+  `novedades` y `retos` (crear/editar) siguen abiertas a cualquier `signedIn()` en
+  las reglas — el panel de administración solo las oculta en la UI, pero alguien
+  llamando la API de Firestore directo podría publicar "Novedades" falsas o
+  aprobar sus propias frases. No hay forma de verificar "es EL admin" con un uid
+  anónimo aleatorio.
+- El arreglo completo y permanente para AMBOS puntos es migrar de auth anónima a
+  tokens personalizados de Firebase atados al `cu` real — requiere una Firebase
+  service account key (gratis, la genera Inty desde la consola) para que un Worker
+  los emita. Quedó explicado a Inty en el chat; su decisión si y cuándo hacerlo.
+
+**IMPORTANTE — pendiente de Inty, no de una IA**: `firestore.rules` está
+actualizado en este repo, pero las reglas de Firestore se publican pegándolas en
+Firebase Console (Firestore Database → Reglas → Publicar). Es un cambio de
+control de acceso sobre la base de datos de producción — ninguna IA lo publica
+por su cuenta aunque tenga permiso total, por diseño. El código de la app
+(`index.html`, ya en vivo) ya guarda `authUid` en cada escritura desde ahora, así
+que cuando Inty publique las reglas nuevas, todo lo escrito desde este momento en
+adelante ya queda protegido sin más pasos.
+
+Verificación: sintaxis de `index.html` (0 errores). `firestore.rules` revisado a
+mano (llaves y paréntesis balanceados fuera de comentarios, confirmado con un
+script). Los 15 sitios de escritura confirmados con `authUid` presente por grep.
+No se probó contra Firestore real (habría creado documentos de prueba en
+producción) — la revisión fue por lectura de código + verificación mecánica.
+
+---
+
 ## v6.10 — 2026-07-12 — Claude (sesión 2, autónoma, de madrugada)
 **Segunda auditoría pedida por Inty ("auditoría sobre auditoría"), antes de irse a
 dormir, con permiso total y sin supervisión.** Primero reverifiqué que los 15 fixes

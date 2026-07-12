@@ -4,7 +4,20 @@ rules_version = '2';
 // REGLAS DE SEGURIDAD DE FIRESTORE — Libre Pedal
 // Lectura pública (la comunidad se ve siempre). Escritura SOLO autenticada
 // (Auth anónimo) y con límites de tamaño para evitar abuso y "bombas" de datos.
-// Contenido comunitario: no se puede editar/borrar ajeno (anti-vandalismo).
+// Contenido comunitario: no se puede editar/borrar ajeno (anti-vandalismo) en las
+// colecciones donde eso no tiene un caso de uso legítimo — ver isOwnerOrLegacy().
+//
+// LIMITACIÓN CONOCIDA (2026-07-12): la app usa Auth ANÓNIMA — el uid de cada
+// sesión es aleatorio y NO es estable entre dispositivos/reinstalaciones del mismo
+// usuario. Por eso isOwnerOrLegacy() protege bien "usuario A no puede tocar lo de
+// usuario B", pero no garantiza que el propio dueño pueda seguir editando lo suyo
+// si cambia de teléfono. Tampoco alcanza para reglas admin-only reales (novedades,
+// retos, aprobar/rechazar frasesComunidad siguen abiertas a cualquier signedIn()
+// hoy) porque no hay forma de verificar "es EL admin" con un uid aleatorio. El
+// arreglo completo y permanente es migrar de auth anónima a tokens personalizados
+// de Firebase atados al usuario real (cu) — requiere una service account key de
+// Firebase (gratis, la genera Inty desde la consola) para un Worker que los emita.
+// Ver COORDINACION-IA/BITACORA.md, entrada 2026-07-12, para el detalle completo.
 //
 // CÓMO ACTIVARLO (en orden, importante):
 //   1) Firebase Console -> Authentication -> Sign-in method -> habilita "Anónimo".
@@ -22,6 +35,20 @@ service cloud.firestore {
       return !(f in request.resource.data)
         || (request.resource.data[f] is string && request.resource.data[f].size() <= n);
     }
+    // Dueño real: compara el uid de Firebase Auth (constante durante la sesión de
+    // este dispositivo) contra el authUid guardado en el documento al crearlo.
+    // GRANDFATHER: documentos de ANTES de este campo no tienen authUid — se dejan
+    // pasar igual que siempre pasaba, para no bloquear el borrado/edición de nada
+    // que ya existía en producción. Es una protección PARCIAL a propósito: el uid
+    // anónimo cambia si el usuario cambia de dispositivo o borra datos de la app —
+    // corta vandalismo entre USUARIOS DISTINTOS (que es el riesgo real hoy), pero
+    // no da 100% de continuidad multi-dispositivo para el mismo usuario. La
+    // protección completa y permanente (además de habilitar reglas admin-only de
+    // verdad) necesita migrar de auth anónima a tokens personalizados atados al
+    // usuario real — ver COORDINACION-IA/BITACORA.md.
+    function isOwnerOrLegacy() {
+      return !('authUid' in resource.data) || resource.data.authUid == request.auth.uid;
+    }
 
     // Perfiles de ciclistas
     match /users/{id} {
@@ -37,11 +64,12 @@ service cloud.firestore {
       allow update, delete: if signedIn();
     }
 
-    // Mapa comunitario "Reportar en Ruta"
+    // Mapa comunitario "Reportar en Ruta". Nadie lo edita/borra salvo quien lo creó
+    // (o cualquiera, en documentos de antes de este cambio — ver isOwnerOrLegacy).
     match /reportes/{id} {
       allow read: if true;
       allow create: if signedIn() && strOk('text', 600) && strOk('comuna', 80) && strOk('cat', 30);
-      allow update, delete: if signedIn();
+      allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Alertas de ruta
@@ -55,49 +83,61 @@ service cloud.firestore {
     match /guiComments/{id} {
       allow read: if true;
       allow create: if signedIn() && strOk('text', 500);
-      allow update, delete: if signedIn();
+      allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
-    // Recomendaciones (permite "me gusta" = update)
+    // Recomendaciones. update queda abierto a signedIn(): "me gusta" (likes/likedBy)
+    // lo actualiza CUALQUIER usuario, no solo el dueño — es el comportamiento real
+    // de la función. delete sí se restringe: nadie borra la recomendación de otro.
     match /recommendations/{id} {
       allow read: if true;
       allow create, update: if signedIn() && strOk('title', 120) && strOk('desc', 800);
-      allow delete: if signedIn();
+      allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
-    // Hospedajes / campings aportados
+    // Hospedajes / campings. update queda abierto: las calificaciones (estrellas)
+    // las pone cualquier usuario, no solo el dueño. delete sí se restringe.
     match /hostels/{id} {
       allow read: if true;
       allow create: if signedIn() && strOk('name', 120) && strOk('location', 200) && strOk('desc', 800);
-      allow update, delete: if signedIn();
+      allow update: if signedIn();
+      allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Tips de taller (MacGyver)
     match /repairTips/{id} {
       allow read: if true;
       allow create: if signedIn() && strOk('title', 120) && strOk('desc', 1000);
-      allow update, delete: if signedIn();
+      allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Rutas grabadas (públicas). update/delete permitidos: la app actualiza la
     // misma ruta mientras la vas grabando (checkpoints) y el usuario puede borrar
     // las suyas desde "Mis Rutas" — con "if false" ninguna de las dos cosas
-    // funcionaba de verdad (la app lo ocultaba con un catch silencioso).
+    // funcionaba de verdad (la app lo ocultaba con un catch silencioso). Restringido
+    // al dueño real: nadie más tiene por qué tocar tu ruta grabada.
     match /routes/{id} {
       allow read: if true;
-      allow create, update, delete: if signedIn();
+      allow create: if signedIn();
+      allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Viajes planificados (el usuario gestiona los suyos desde la app)
     match /trips/{id} {
       allow read: if true;
-      allow create, update, delete: if signedIn();
+      allow create: if signedIn();
+      allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
-    // Solicitudes de amistad
+    // Solicitudes de amistad. update queda abierto: quien las ACEPTA/RECHAZA es el
+    // destinatario, no quien las creó — restringirlo a isOwnerOrLegacy rompería esa
+    // función. delete sí se restringe al que la envió (hoy la app no borra
+    // solicitudes, pero si algo llega a hacerlo, que sea solo el propio remitente).
     match /friendRequests/{id} {
       allow read: if true;
-      allow create, update, delete: if signedIn();
+      allow create: if signedIn();
+      allow update: if signedIn();
+      allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Diario personal (respaldo en la nube). Privacidad real (solo el dueño)
@@ -108,18 +148,18 @@ service cloud.firestore {
       allow delete: if signedIn();
     }
 
-    // Mensajes privados entre amigos (para el chat de amigos que viene)
+    // Mensajes privados entre amigos. Solo quien lo escribió puede editarlo/borrarlo.
     match /dm/{conversationId}/messages/{msgId} {
       allow read: if signedIn();
       allow create: if signedIn() && strOk('text', 1000);
-      allow update, delete: if signedIn();
+      allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Te doy alojo (solo usuarios con 6+ meses, verificado en la app)
     match /alojo/{id} {
       allow read: if signedIn();
       allow create: if signedIn() && strOk('desc', 600) && strOk('zona', 100);
-      allow update, delete: if signedIn();
+      allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Votación de comunidad (un voto por usuario, id del doc = su propio usuario)
@@ -169,7 +209,7 @@ service cloud.firestore {
     match /segmentoTiempos/{id} {
       allow read: if true;
       allow create: if signedIn() && strOk('nombre', 60) && strOk('segmentoId', 100);
-      allow update, delete: if signedIn();
+      allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Retos y temporadas (desafíos con fecha límite sobre el Darma existente).
@@ -180,12 +220,13 @@ service cloud.firestore {
       allow update, delete: if signedIn();
     }
 
-    // Rodadas grupales (salidas con fecha/hora/punto de encuentro). update permitido:
-    // es como se marca "voy"/"no voy" (lista de asistentes).
+    // Rodadas grupales (salidas con fecha/hora/punto de encuentro). update queda
+    // abierto a signedIn(): es como CUALQUIER asistente marca "voy"/"no voy" (lista
+    // de asistentes), no solo quien la creó. delete sí se restringe al creador.
     match /rodadas/{id} {
       allow read: if true;
       allow create, update: if signedIn() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400);
-      allow delete: if signedIn();
+      allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Todo lo demás: denegado por defecto

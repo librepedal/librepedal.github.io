@@ -1,6 +1,29 @@
 # ✅ Pendientes — Libre Pedal
 
-Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
+Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-12.
+
+---
+
+## 👤 Para INTY — publicar las reglas de Firestore nuevas (v6.11)
+- [ ] **Publicar `firestore.rules` actualizado en Firebase Console.** Cierra el
+  hueco de que cualquier usuario autenticado podía editar/borrar contenido de
+  OTRO usuario (reportes, comentarios, hospedajes, trucos, rutas, viajes, alojo,
+  rodadas, tiempos de segmento, solicitudes de amistad, mensajes). Pasos: Firebase
+  Console → proyecto `librepedal-cb983` → Firestore Database → pestaña Reglas →
+  copia TODO el contenido de `firestore.rules` (el archivo del repo, ya
+  actualizado) → Publicar. 2 minutos, gratis. Detalle completo en la entrada
+  **v6.11** de `BITACORA.md`. El código de la app ya guarda lo necesario
+  (`authUid`) desde ahora, así que apenas publiques las reglas, queda protegido
+  sin ningún paso adicional — ninguna IA lo publica por su cuenta a propósito
+  (es un cambio de control de acceso sobre producción).
+- [ ] **Decidir si migrar a tokens personalizados de Firebase** (el arreglo
+  completo y permanente, incluye cerrar la suplantación de admin en
+  `frasesComunidad`/`novedades`/`retos`). Requiere que generes una Firebase
+  service account key (gratis, 2 minutos: Firebase Console → ⚙️ Configuración del
+  proyecto → Cuentas de servicio → Generar nueva clave privada) y me la pases (o
+  la subas tú mismo como secreto de un Worker). Sin apuro, no bloquea el
+  lanzamiento — la protección de v6.11 ya cierra el riesgo más importante
+  (vandalismo entre usuarios distintos).
 
 ---
 
