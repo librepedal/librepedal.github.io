@@ -4,6 +4,35 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.29 — 2026-07-12 — Claude (sesión 2, bitácora opt-in)
+Inty: "este espacio es para quien lo quiera usar, debería preguntar si desea esta
+opción, no toda la gente tiene el hábito de hacer una bitácora". Confirmado con
+Inty el mecanismo exacto antes de construir: un toggle en Ajustes, apagado por
+defecto, que NO le quita la función a quien la pida por voz explícitamente.
+
+**Nuevo: 🎒 "Bitácora de viajes" en Ajustes** (`bitacoraViajesOn`, `localStorage`
+`lp_bitacora_viajes`, OFF por defecto):
+- El comando de voz explícito "guarda mi bitácora" sigue funcionando SIEMPRE,
+  esté el toggle prendido o no — si alguien lo pide directamente, no hay razón
+  para negárselo.
+- Con el toggle en OFF (default): el guardado genérico ("guarda mi viaje", sin
+  decir "bitácora") sigue siendo el rápido y silencioso de siempre — nadie ve
+  la pregunta de hospedaje sin haberla pedido.
+- Con el toggle en ON: hasta el guardado genérico ofrece el flujo completo
+  (pregunta hospedaje + junta el Diario del día) — es lo que promete el texto
+  de Ajustes al activarlo.
+
+**Nota de verificación**: el navegador de pruebas (Browser pane) volvió a caer
+con el mismo error de infraestructura de la sesión anterior ("modelo
+temporalmente no disponible") justo en este cambio — no se pudo confirmar en
+vivo con el DOM real. Sí se verificó: sintaxis del `<script>` extraído con
+`node --check` (limpia) y revisión manual línea por línea de la lógica nueva
+(orden de los `if` en `handleVoiceCommand`, que el chequeo del toggle está
+DESPUÉS del patrón específico de "bitácora" para no interferir con ese). Vale
+la pena una prueba real cuando el navegador de pruebas vuelva a funcionar.
+
+Deploy: `librepedal.cl/version.txt` → `6.29` confirmado en vivo (código).
+
 ## v6.28 — 2026-07-12 — Claude (sesión 2, feature nueva: "guardar bitácora de viaje")
 Inty pidió: cuando el usuario pide guardar la bitácora de viaje, la IA debe guardar
 la ruta, dónde se hospedó y todo lo que escribió sobre ese viaje — junto. Antes NO

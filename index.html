@@ -618,6 +618,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
 </div>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🎒 Bitácora de viajes</h4>
+<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">No todos llevan diario de sus viajes — esto es solo para quien quiera. Si lo activas, la app te ofrece llevar registro (dónde te hospedaste, tus notas del día) cuando termines una ruta. Puedes decir "guarda mi bitácora" en cualquier momento aunque esto esté apagado.</p>
+<div class="quick-links">
+  <button class="ab sec" style="margin:0" id="btnBitacoraViajes" onclick="toggleBitacoraViajes()">🎒 Bitácora de viajes: OFF</button>
+</div>
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🚨 Detección de caídas</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Detecta un golpe fuerte seguido de quietud y prepara el aviso a tus contactos de emergencia. Corre solo mientras el GPS está activo.</p>
 <div class="quick-links">
@@ -951,7 +956,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.28'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.29'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1995,6 +2000,7 @@ window.onload = async function(){
   initVoz();
   const _elVer=document.getElementById('lpVerMostrada'); if(_elVer) _elVer.innerText=APP_VERSION;
   _actualizarBtnAhorroGPS();
+  _actualizarBtnBitacoraViajes();
   _actualizarBtnCrash();
   _actualizarBtnGPS();
   // Espera a saber si la app se va a recargar sola por una actualización (máx. 1.5s)
@@ -2949,6 +2955,18 @@ function _prepararMapaCompat(map){
 // dibuja huellas/senderos rurales que sí existen en OSM pero no se ven en ese estilo.
 // La topográfica los muestra, además de curvas de nivel — útil para caminos interiores.
 let capaMapaTipo=(function(){ try{ return localStorage.getItem('lp_capa_mapa')||'calles'; }catch(e){ return 'calles'; } })();
+// No todos llevan diario de sus viajes — esto es opt-in, apagado por defecto. El
+// comando de voz "guarda mi bitácora" funciona SIEMPRE, esté esto activado o no
+// (si alguien lo pide explícitamente, no hay razón para negárselo); esta preferencia
+// solo controla si la app lo OFRECE por su cuenta en algún otro lugar.
+let bitacoraViajesOn=(function(){ try{ return localStorage.getItem('lp_bitacora_viajes')==='1'; }catch(e){ return false; } })();
+function _actualizarBtnBitacoraViajes(){ const b=document.getElementById('btnBitacoraViajes'); if(b){ b.innerText=bitacoraViajesOn?'🎒 Bitácora de viajes: ON':'🎒 Bitácora de viajes: OFF'; b.style.background=bitacoraViajesOn?'rgba(16,185,129,0.15)':''; b.style.borderColor=bitacoraViajesOn?'#10b981':''; } }
+function toggleBitacoraViajes(){
+  bitacoraViajesOn=!bitacoraViajesOn;
+  try{ localStorage.setItem('lp_bitacora_viajes', bitacoraViajesOn?'1':'0'); }catch(e){}
+  _actualizarBtnBitacoraViajes();
+  h(bitacoraViajesOn?'Bitácora de viajes activada. Cuando termines una ruta te voy a preguntar si quieres anotar dónde te hospedaste.':'Bitácora de viajes desactivada. Si igual quieres guardarla alguna vez, solo dime "guarda mi bitácora".');
+}
 let gpsAhorro=(function(){ try{ return localStorage.getItem('lp_gps_ahorro')==='1'; }catch(e){ return false; } })();
 function _actualizarBtnAhorroGPS(){ const b=document.getElementById('btnAhorroGPS'); if(b){ b.innerText=gpsAhorro?'🔋 Ahorro GPS: ON':'🔋 Ahorro GPS: OFF'; b.style.background=gpsAhorro?'rgba(16,185,129,0.15)':''; b.style.borderColor=gpsAhorro?'#10b981':''; } }
 async function toggleAhorroGPS(){
@@ -5843,7 +5861,11 @@ function handleVoiceCommand(raw){
   // "bitácora" ANTES del patrón genérico de guardar (si no, "guarda...viaje" de
   // más abajo la interceptaría primero y nunca llegaría a preguntar hospedaje/notas).
   if(/(guarda|guardar|graba|grabar)(me)?\b.{0,25}\bbit[aá]cora/.test(t)){ guardarBitacoraViaje(); return; }
-  if(/(guarda|graba|termina|finaliza|acaba)(r|me)?\b.{0,20}\b(viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
+  // Si el usuario activó "Bitácora de viajes" en Ajustes, hasta el guardado genérico
+  // ("guarda mi viaje", sin decir "bitácora") ofrece hospedaje+notas — es lo que dice
+  // el texto de Ajustes al activarlo. Con la preferencia apagada (por defecto), este
+  // guardado sigue siendo el rápido y silencioso de siempre.
+  if(/(guarda|graba|termina|finaliza|acaba)(r|me)?\b.{0,20}\b(viaje|ruta)/.test(t)){ if(bitacoraViajesOn){ guardarBitacoraViaje(); return; } if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
   if(/sigamos|sigue con el viaje|continuar el viaje|contin[uú]a el viaje|retoma|reanuda|quiero seguir pedaleando|dale que sigo/.test(t)){ if(!ig && !document.getElementById('nav-screen').classList.contains('active')){ toggleGPS(); } else { h('Seguimos, ya estoy registrando tu viaje.'); } return; }
   if(/treki|trakea|trackea|\btrack|sigue la ruta|sigue registrando|sigue grabando|registra mi recorrido|anota mi ruta|inicia el registro/.test(t)){ if(!ig){ toggleGPS(); } else { h('Sigo registrando tu ruta, tranquilo.'); } return; }
   // OJO: "busca"/"encuentra" ANTES exigían el complemento de lugar (" la dirección de",
