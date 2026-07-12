@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.21'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.22'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5741,7 +5741,16 @@ function handleVoiceCommand(raw){
   // Comando de interrupción inmediata: corta lo que Pistero esté diciendo YA (no
   // espera a que termine la frase) y de paso silencia la voz hasta que digas "habla".
   // Antes "cállate/silencio" solo apagaba la voz a futuro, sin cortar lo que sonaba.
-  if(/^(detente|para|ya|c[aá]llate|calla|silencio|guarda silencio|c[aá]llate ya|ya callate)\.?$/.test(t)){ pararVoz(); vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
+  // "para"/"ya" quedan SOLO como palabra suelta exacta (anchored): son demasiado
+  // comunes dentro de frases normales ("¿cuánto para llegar?", "ya casi llego") como
+  // para buscarlas en cualquier parte de la frase sin generar silencios por accidente.
+  // El resto ("cállate", "silencio", "no hables más"...) sí se busca en cualquier
+  // parte: son frases distintivas y con "por favor"/"porfa" pegado atrás (muy natural
+  // al pedir esto en voz alta) el anclado antiguo nunca las agarraba — en vez de
+  // callarse, Pistero armaba un viaje falso a "callate por favor" (mismo bug que
+  // pendiente/mapa/rutas más abajo, pero en el comando que más urge que funcione:
+  // silenciar la voz mientras vas pedaleando).
+  if(/^(detente|para|ya)\.?$/.test(t) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar/.test(t)){ pararVoz(); vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
   // Las preguntas ("qué es...", "cómo...", "cada cuánto...") se resuelven ANTES que
   // los comandos sueltos de más abajo: si no, por ejemplo "qué hace el botón SOS" caía
   // en el comando de emergencia real solo por contener la palabra "sos".
@@ -5760,14 +5769,20 @@ function handleVoiceCommand(raw){
   let m=t.match(/(?:planifica(?:r)?(?:me)?(?: mi| el| un)? viaje (?:a|hasta|hacia|para)|ir (?:a|hasta|hacia)|llevame (?:a|hasta|hacia)|llevarme a|lleva(?:me)? (?:a|hasta|hacia)|anda(?:me)? a|navega(?:r|me)? (?:a|hasta|hacia)|guia(?:r|me)? (?:a|hasta|hacia)|vamos (?:a|hasta)|vamonos a|quiero (?:ir|llegar) (?:a|hasta|hacia)|voy a|ruta (?:a|hasta|hacia|para)|como (?:llego|voy) a|llegar a|necesito ir a|busca(?:r|me)?(?: la| el)? (?:direccion(?: de)?|ruta a|lugar)|encuentra(?: la)? direccion(?: de)?|direccion de)\s+(.+)/);
   if(m && m[1]){ let dest=limpiarDestino(m[1]); if(dest.length<2){ h('¿A qué lugar te llevo?'); return; } cv('trips'); const qd=document.getElementById('quick-dest'); if(qd) qd.value=dest; h("Perfecto, busco la ruta a "+dest+" y te la marco en el mapa."); startQuickTrip(); return; }
   if(/\binicio\b|panel|principal|tablero/.test(t)){ cv('dash'); abrirEsfera(); h("Vamos al inicio."); return; }
-  if(/^(el |ver |abre(?: el)? |mostrar )?mapa$/.test(t)){ cv('map'); h("Aquí está el mapa."); return; }
-  if(/^(mis |ver |abre )?rutas?$/.test(t)){ cv('routes'); h("Tus rutas."); return; }
-  if(/^(mis |ver |abre )?viajes?$|^navegaci[oó]n$/.test(t)){ cv('trips'); h("Tus viajes."); return; }
+  // Sin anclar (antes eran ^...$ exactos): "muéstrame el mapa", "ábreme mis rutas",
+  // "quiero ver mis viajes" no calzaban con el patrón exacto y cualquiera de esas
+  // frases tan naturales de pedir esto caían en el mismo bug que pendiente/bajada —
+  // intentaba armar un viaje real a un destino llamado literalmente "muestrame el
+  // mapa". Igual que chat/taller/stats ya funcionan (más abajo, sin anclar), buscar
+  // la palabra clave en cualquier parte de la frase es más robusto y consistente.
+  if(/\bmapa\b/.test(t)){ cv('map'); h("Aquí está el mapa."); return; }
+  if(/\brutas?\b/.test(t)){ cv('routes'); h("Tus rutas."); return; }
+  if(/\bviajes?\b|navegaci[oó]n/.test(t)){ cv('trips'); h("Tus viajes."); return; }
   if(/chat|social|mensaje/.test(t)){ cv('chat'); h("Abriendo el chat."); return; }
   if(/amigo/.test(t)){ cv('chat'); showFriendsList(); return; }
   if(/ciclistas?( cerca| en el mapa)?$|busca ciclistas|d[oó]nde hay ciclistas/.test(t)){ cv('map'); h("Aquí está el mapa con los ciclistas de la comunidad."); return; }
   if(/taller|reparar|arreglar|mecanic/.test(t)){ cv('mac'); h("El taller MacGyver."); return; }
-  if(/^(ciclo ?)?gu[ií]a$|^hospedaje$|^hostal$|^hostel$|^alojamiento$/.test(t)){ cv('gui'); h("La CicloGuía."); return; }
+  if(/gu[ií]a|hospedaje|hostal|hostel|alojamiento/.test(t)){ cv('gui'); h("La CicloGuía."); return; }
   if(/estadistica|grafico|progreso/.test(t)){ cv('stats'); h("Tus estadísticas."); return; }
   if(/personaliz|perfil|casco|personaje/.test(t)){ cv('customize'); h("Personaliza tu personaje."); return; }
   if(/\bg\.?\s?p\.?\s?s\b|grabar|gepe ese/.test(t)){ toggleGPS(); return; }

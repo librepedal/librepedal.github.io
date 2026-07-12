@@ -4,6 +4,45 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.22 — 2026-07-12 — Claude (sesión 2, barrido #1: metodología "buscar variantes")
+Inty aclaró el método para todo el barrido: pendiente/bajada (v6.21) era solo UN
+EJEMPLO — para cada función hay que buscar variantes de frases/uso reales,
+cuestionar si funciona bien, y mejorarla si hay forma. Apliqué esto a
+`handleVoiceCommand` completo, probando ~25 frases naturales reales (no solo el
+caso feliz) contra el código de verdad en el navegador.
+
+**Encontrados y corregidos 7 bugs más de la MISMA clase** (frase natural no
+calzaba con un patrón `^...$` anclado exacto → caía en el comando genérico de
+"arma un viaje a lo que dijiste" → intentaba navegar a un destino falso):
+- "muéstrame el mapa", "ábreme el mapa" → ahora abren el mapa (antes intentaban
+  viajar a un lugar llamado "muéstrame el mapa").
+- "muéstrame mis rutas" → ahora abre Rutas.
+- "muéstrame mis viajes" → ahora abre Mis viajes.
+- "muéstrame la guía", "busco un hostal" → ahora abren la CicloGuía.
+- **"cállate por favor", "silencio porfa", "no hables más"** → el más grave de
+  los 7: en vez de callarse, Pistero intentaba armar un viaje. Es justo el
+  comando que más urge que funcione bien (silenciar la voz mientras vas
+  pedaleando, con las manos ocupadas). Corregido.
+
+**Cómo se arregló sin romper nada**: se sacó el anclado `^...$` de esos patrones
+(mapa/rutas/viajes/guía ya funcionaban así de sin-anclar en chat/taller/stats, se
+igualaron al mismo estilo). Para el comando de silencio se separó en dos partes:
+"para"/"ya" se dejaron ANCLADOS a propósito (son palabras demasiado comunes en
+frases normales — "¿cuánto para llegar?" — buscarlas sueltas en cualquier parte
+habría silenciado la voz por accidente todo el tiempo), y "cállate"/"silencio"/
+"no hables más"/"deja de hablar" se dejaron sin anclar (son frases distintivas,
+sin ese riesgo).
+
+**Verificado que NO se rompieron destinos reales** con la misma prueba: "llévame
+a la Cuesta Barriga", "vamos a la ruta 68" (contiene literalmente la palabra
+"ruta", el caso de colisión más riesgoso), "Valparaíso", "Puerto Varas" — los
+4 siguen armando el viaje correcto, porque el patrón de destino con verbo
+("llévame a...", "voy a...") se revisa ANTES y ya se queda con la frase.
+
+Deploy: `librepedal.cl/version.txt` → `6.22` confirmado en vivo. Sigue el barrido
+función por función — esta metodología (probar variantes reales, no solo el
+caso feliz, en el navegador de verdad) aplica a TODAS las funciones que vengan.
+
 ## v6.21 — 2026-07-12 — Claude (sesión 2, barrido #1 continuación: comando de voz "pendiente"/"bajada")
 Inty preguntó específicamente qué pasaba con la llamada de voz de "pendiente" y
 "bajada". Probé `handleVoiceCommand()` en el navegador de verdad (no de memoria) y
