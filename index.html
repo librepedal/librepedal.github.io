@@ -956,7 +956,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.33'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.34'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1756,6 +1756,14 @@ function _pisteroContexto(){
   const c={};
   try{
     c.horaLocal=new Date().getHours();
+    // Si va pedaleando AHORA MISMO (no solo "tiene la app abierta"): mismo patrón
+    // que ya usa la detección de caídas para leer la velocidad actual (navSpeed
+    // durante navegación turn-by-turn, spd en GPS libre). Antes Pistero respondía
+    // siempre igual de largo estés parado tomando té o subiendo una cuesta.
+    const navActivo=document.getElementById('nav-screen') && document.getElementById('nav-screen').classList.contains('active');
+    const elVel=document.getElementById(navActivo?'navSpeed':'spd');
+    const velActual=elVel?(parseFloat(elVel.innerText)||0):0;
+    c.enMovimiento = (navActivo || (typeof ig!=='undefined'&&ig)) && velActual>=3;
     if(typeof trips!=='undefined'&&trips) c.viajesCompletados=trips.filter(function(t){return t.status==='completed';}).length;
     if(typeof speedReadings!=='undefined'&&speedReadings.length) c.velMediaKmh=+(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1);
     c.ultimasRutas=rutasLocales().slice(-4).reverse().map(function(r){ return {nombre:r.nombreRuta||null, km:+(r.distance||0).toFixed(1), fecha:new Date(r.startTime).toLocaleDateString()}; });

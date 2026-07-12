@@ -4,6 +4,56 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.34 + Worker IA — 2026-07-13 — Claude (sesión 2, Pistero "pedaleando vs detenido" + auditoría de audio ducking)
+Inty pegó dos specs largas (personalidad de un compañero de viaje IA + arquitectura
+de audio ducking estilo Android nativo) y pidió "busca la mejor manera de
+implementar todo esto". Antes de tocar nada, audité qué de eso YA estaba hecho
+(para no reconstruir trabajo de sesiones anteriores) contra el código real:
+
+**Ya implementado, verificado, sin cambios:**
+- Memoria conversacional: `pisteroHistorial` (últimos 12 turnos) se manda siempre
+  al Worker como parte de los `messages`, así que la conversación ya es continua.
+- Ducking de la música PROPIA de la app (`lpMusic`): fade suave al hablar (250ms a
+  5%) y al terminar (700ms a 100%), restaura DE INMEDIATO si el usuario interrumpe
+  (`pararVoz()` → `_pisteroCalla()`), y ya es consciente de la cola de voces (cada
+  frase nueva en cola re-arma el mismo timeout, así nunca sube el volumen a medias
+  de una respuesta larga). Esto ya cumplía gran parte del spec de audio.
+- Tono seleccionable, alias de vistas en lenguaje natural, sistema de acciones
+  anti-invasivo: todo ya construido en sesiones previas.
+
+**Hueco real y honesto que hay que decir de frente**: el AudioFocus nativo de
+Android para bajarle el volumen a Spotify/YouTube Music (apps EXTERNAS) NO es
+alcanzable desde esta arquitectura (WebView/Capacitor con plugins de la
+comunidad) sin escribir un plugin nativo propio en Kotlin/Java — es un
+desarrollo real, no una función de índole cotidiana. No se implementó (no se
+puede fingir que funciona), queda anotado como pendiente de decisión futura si
+alguna vez se justifica esa inversión de tiempo.
+
+**Sí implementado — Pistero ahora responde distinto si vas pedaleando o
+detenido**, tal como pedía el spec de personalidad ("durante el pedaleo,
+respuestas cortas; detenido, puede profundizar"):
+- `index.html`: `_pisteroContexto()` ahora calcula `enMovimiento` (mismo patrón
+  que ya usaba la detección de caídas: lee `navSpeed` en navegación o `spd` en
+  GPS libre, exige velocidad real ≥3 km/h, no solo "GPS prendido").
+- `worker-ia/worker.js`: la Regla 1 del prompt de sistema ahora es condicional —
+  pedaleando: 1-2 frases, corto, prioriza seguridad; detenido: largo natural
+  según lo que la pregunta merezca, "como lo haría un guía real conversando, no
+  una ficha de datos". Se agregó también instrucción explícita de variar la
+  extensión y la forma de partir las respuestas (no la misma estructura
+  siempre), y se reforzó la identidad ("guía de viaje experimentado, no un
+  amigo cualquiera ni un profesor").
+
+Verificado de dos formas: (1) `personalidad()` ejecutada aislada en Node con
+`enMovimiento:true` y `false`, confirmando el texto de la Regla 1 correcto en
+ambos casos; (2) el Worker YA DESPLEGADO en producción, probado con `curl` real
+— pedaleando devolvió 2 frases cortas, detenido devolvió una respuesta más
+larga y conversacional, confirmando que el cambio de prompt sí afecta el
+comportamiento real del modelo, no solo el texto del prompt.
+
+Deploy: Worker `librepedal-ia` desplegado (usa `MI-CLOUDFLARE-IA.txt`, variable
+`TOKEN_IA`, no `TOKEN` — ojo con el nombre si otra sesión lo vuelve a desplegar).
+`librepedal.cl/version.txt` → `6.34` confirmado en vivo.
+
 ## v6.33 — 2026-07-13 — Claude (sesión 2, barrido #7: Pistero IA)
 Función #7 del barrido completo (chat conversacional, comandos de voz, FAQ,
 sistema de acciones `[ACCION:...]`, personalidades). Esta función ya tenía un
