@@ -229,6 +229,13 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .gps-status.show{display:block}
 .user-list-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:4000;display:none;flex-direction:column;padding:15px;overflow-y:auto}
 .user-list-modal.on{display:flex}
+.lp-dialog{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:4500;display:none;align-items:center;justify-content:center;padding:20px}
+.lp-dialog.on{display:flex}
+.lp-dialog-box{background:linear-gradient(135deg,#151b2e,#0a0f1d);border:2px solid var(--p);border-radius:14px;padding:18px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
+.lp-dialog-box p{color:#fff;font-size:0.92rem;line-height:1.4;margin:0 0 14px;white-space:pre-line}
+.lp-dialog-box input{margin-bottom:14px}
+.lp-dialog-btns{display:flex;gap:8px}
+.lp-dialog-btns button{flex:1}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
 .close-modal{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer}
 .chat-user-item{background:var(--gl);padding:12px;border-radius:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
@@ -553,6 +560,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="speed-value" id="spd">0</div>
   <div class="speed-label">km/h</div>
   <div class="speed-status" id="speedStatus">Detenido</div>
+  <div id="dashCrono" style="display:none;font-size:1.15rem;font-weight:800;color:#fff;margin-top:6px;letter-spacing:0.5px;font-variant-numeric:tabular-nums">⏱️ 0:00</div>
   <div class="gps-signal-badge" id="gpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
   <div class="pausa-badge" id="dashPausaBadge" style="display:none">⏸️ En pausa (no cuenta para tu ritmo)</div>
   <div class="pausa-badge" id="dashBleHR" style="display:none"></div>
@@ -926,11 +934,22 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div id="modalContent"></div>
 </div>
 
+<div class="lp-dialog" id="lpDialog">
+  <div class="lp-dialog-box">
+    <p id="lpDialogMsg"></p>
+    <input type="text" id="lpDialogInput" style="display:none">
+    <div class="lp-dialog-btns">
+      <button class="ab sec" id="lpDialogBtnCancel" style="display:none">Cancelar</button>
+      <button class="bg" id="lpDialogBtnOk">Aceptar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.13'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.14'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1149,6 +1168,26 @@ function tiempoActivoMs(){
   const pausadoAhora=viajePausedDesde?(Date.now()-viajePausedDesde):0;
   return Math.max(0, elapsedTotal-viajePausedMs-pausadoAhora);
 }
+// Cronómetro visible del dashboard en GPS libre: antes solo existía el reloj de la
+// navegación turn-by-turn (navTime); en "GPS libre" (el modo que más se usa, sin
+// destino fijado) no había ningún tiempo a la vista mientras pedaleabas. Tickea cada
+// segundo de verdad (no solo cuando llega un fix de GPS, que puede tardar) y respeta
+// la auto-pausa (tiempoActivoMs ya descuenta el tiempo parado).
+let dashCronoInterval=null;
+function _formatoCrono(ms){
+  const s=Math.floor(ms/1000), mm=Math.floor(s/60)%60, ss=s%60, hh=Math.floor(s/3600);
+  return (hh>0?hh+':'+(mm<10?'0':'')+mm:mm)+':'+(ss<10?'0':'')+ss;
+}
+function _iniciarCronometroDash(){
+  const el=document.getElementById('dashCrono'); if(!el) return;
+  el.style.display='block'; el.innerText='⏱️ 0:00';
+  clearInterval(dashCronoInterval);
+  dashCronoInterval=setInterval(function(){ el.innerText='⏱️ '+_formatoCrono(tiempoActivoMs()); },1000);
+}
+function _detenerCronometroDash(){
+  clearInterval(dashCronoInterval); dashCronoInterval=null;
+  const el=document.getElementById('dashCrono'); if(el) el.style.display='none';
+}
 function _actualizarPausaViaje(sp, badgeId){
   // Si el ciclista puso pausa MANUAL, mandamos nosotros: la auto-pausa por velocidad
   // no debe reanudar sola ni apagar el aviso. Se queda pausado hasta tocar Reanudar.
@@ -1297,7 +1336,7 @@ function diagnosticoGPS(){
   if(!cap) veredicto='⚠️ Estás en el NAVEGADOR. Con la pantalla apagada el sistema suspende el GPS; el rastreo real con pantalla apagada SOLO funciona en la APP instalada.';
   else if(!bg) veredicto='⚠️ La APP no trae el plugin de segundo plano. Hay que reconstruir el APK con @capacitor-community/background-geolocation (+ permiso de ubicación en segundo plano).';
   else veredicto='✅ Todo listo: graba con la pantalla apagada.';
-  alert('📡 DIAGNÓSTICO GPS\n\n'+info.join('\n')+'\n\n'+veredicto+'\n\n(Sácale una foto y mándamela)');
+  lpAviso('📡 DIAGNÓSTICO GPS\n\n'+info.join('\n')+'\n\n'+veredicto+'\n\n(Sácale una foto y mándamela)');
 }
 async function diagnosticoVoz(){
   let info=[];
@@ -1313,7 +1352,7 @@ async function diagnosticoVoz(){
   } else {
     try{ if('speechSynthesis' in window){ speechSynthesis.speak(new SpeechSynthesisUtterance('Prueba de voz web')); info.push('Voz web probada'); } }catch(e){}
   }
-  alert('🔊 DIAGNÓSTICO DE VOZ\n\n'+info.join('\n')+'\n\n(Sácale una foto y mándamela)');
+  lpAviso('🔊 DIAGNÓSTICO DE VOZ\n\n'+info.join('\n')+'\n\n(Sácale una foto y mándamela)');
 }
 function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
 function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); try{ lpMusic.unduck(); }catch(e){} }
@@ -1541,7 +1580,7 @@ function seleccionarFondoEsfera(n){ if(n===2 && !estaDesbloqueado('fondoespacial
 function renderFondosEsfera(){ const c=document.getElementById('fondosEsferaGrid'); if(!c) return; const nombres=['Postales de Chile','Espacial'], emojis=['🏞️','🌌']; let html=''; for(let n=1;n<=2;n++){ const lock=(n===2 && !estaDesbloqueado('fondoespacial')); const sel=(esFondoModo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarFondoEsfera('+n+')">'+(lock?'<div class="lock-badge">🔒 '+PRECIOS.fondoespacial+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4">'+emojis[n-1]+'</div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
 function getDesbloqueados(){ try{ return JSON.parse(localStorage.getItem('lp_unlocked_'+(cu||'anon'))||'[]'); }catch(e){ return []; } }
 function estaDesbloqueado(id){ return !(id in PRECIOS) || getDesbloqueados().indexOf(id)!==-1; }
-function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ alert('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){} au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
+function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ lpAviso('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){} au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
 function mostrarTienda(){
   document.getElementById('modalTitle').innerText='✨ Tienda de Darma';
   let html='<p style="color:#9fb3c8;font-size:0.84rem;margin-top:0">Tienes <strong style="color:var(--g)">'+us.d+' de Darma ✨</strong>. Gánala aportando a la comunidad y desbloquea skins, lentes, accesorios y cascos.</p>';
@@ -1594,7 +1633,7 @@ async function actualizarBadgeAdmin(){
   localStorage.setItem('lp_admin_last_seen', Date.now());
 }
 async function mostrarTodosRegistrados(){
-  if(cu!==ADMIN_ID){ alert('Solo el administrador puede ver esta lista.'); return; }
+  if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede ver esta lista.'); return; }
   document.getElementById('modalTitle').innerText='👥 Todos los registrados';
   const c=document.getElementById('modalContent');
   c.innerHTML='<p style="color:#888">Cargando...</p>';
@@ -2059,8 +2098,8 @@ async function reg(e){
   e.preventDefault();
   const nombre=document.getElementById('nombre-input').value.trim();
   const e_val=document.getElementById('em').value.trim();
-  if(!nombre) return alert("Ingresa tu nombre");
-  if(!e_val||!e_val.includes('@')) return alert("El correo es obligatorio");
+  if(!nombre) return lpAviso("Ingresa tu nombre");
+  if(!e_val||!e_val.includes('@')) return lpAviso("El correo es obligatorio");
   cu=e_val.replace(/[^a-zA-Z0-9]/g,'_');
   await _actualizarAuthConTokenPersonalizado(cu);
   nombreUsuario=nombre;
@@ -2096,7 +2135,7 @@ async function reg(e){
   else { setTimeout(function(){ h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
 }
 
-function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(confirm("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
+async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
 function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
 function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText=ghostMode?'👻 ON':'👻 OFF'; btn.style.background=ghostMode?'rgba(255,0,0,0.6)':'rgba(155,89,182,0.85)'; }
 function gd(){ if(!cu) return; try{ localStorage.setItem('lp_u_'+cu,JSON.stringify(us)); localStorage.setItem('lp_j_'+cu,JSON.stringify(uj)); localStorage.setItem('lp_r_'+cu,JSON.stringify(rh)); }catch(e){ /* almacenamiento lleno o modo privado: no debe cortar la función que llamó a gd() */ } }
@@ -2158,17 +2197,17 @@ async function publicarNovedad(){
   const fecha=document.getElementById('nov-fecha').value.trim();
   const desc=document.getElementById('nov-desc').value.trim();
   const link=document.getElementById('nov-link').value.trim();
-  if(!titulo) return alert('Ponle un título a la novedad');
+  if(!titulo) return lpAviso('Ponle un título a la novedad');
   try{
     await db.collection('novedades').add({titulo:titulo,categoria:categoria,fecha:fecha,desc:desc,link:link,ts:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('nov-titulo').value=''; document.getElementById('nov-fecha').value=''; document.getElementById('nov-desc').value=''; document.getElementById('nov-link').value='';
     h('Novedad publicada.');
-  }catch(e){ alert('No se pudo publicar: '+e.message); }
+  }catch(e){ lpAviso('No se pudo publicar: '+e.message); }
 }
 async function eliminarNovedad(id){
   if(cu!==ADMIN_ID) return;
-  if(!confirm('¿Borrar esta novedad?')) return;
-  try{ await db.collection('novedades').doc(id).delete(); }catch(e){ alert('No se pudo borrar.'); }
+  if(!await lpConfirmar('¿Borrar esta novedad?')) return;
+  try{ await db.collection('novedades').doc(id).delete(); }catch(e){ lpAviso('No se pudo borrar.'); }
 }
 
 
@@ -2245,17 +2284,19 @@ function toggleGPS(){
       if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable();
+      tripStartTime=Date.now(); _iniciarCronometroDash();
       h("GPS activado. Sigo grabando tu ruta aunque apagues la pantalla.");
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
       ig=true; if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable();
+      tripStartTime=Date.now(); _iniciarCronometroDash();
       h("GPS activado. Estoy grabando tu ruta.");
-    } else { alert("Tu dispositivo no soporta GPS"); }
+    } else { lpAviso("Tu dispositivo no soporta GPS"); }
   } else {
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
-    ig=false; lpWakeLock.disable(); detenerDeteccionCaidas();
+    ig=false; lpWakeLock.disable(); detenerDeteccionCaidas(); _detenerCronometroDash();
     if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
     if(btn){ btn.innerText="📍 Iniciar GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
     if(currentRoute.length>1){ autoGuardarRuta(false,false); }
@@ -2505,7 +2546,7 @@ function loadRoutesList(){ if(!cu) return; renderRutas();
 }
 function _rutaPorId(id){ return rutasLocales().find(function(x){return x.localId===id;}); }
 function showSingleRoute(id){ const r=_rutaPorId(id); function pintar(points){ if(!points||!points.length){ h("Esta ruta no tiene puntos guardados."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=mlPolyline(points,{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Aquí está tu ruta."); },300); } if(r&&r.points&&r.points.length){ pintar(r.points.map(function(p){return [p.lat,p.lon];})); return; } db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ pintar((doc.data().points||[]).map(function(p){return [p.lat,p.lon];})); } }).catch(function(){ h("No pude abrir esa ruta."); }); }
-function deleteRoute(id){ if(!confirm("¿Eliminar esta ruta?")) return; const it=_rutaPorId(id); rutasLocalesSet(rutasLocales().filter(function(x){return x.localId!==id;})); if(it&&it.firebaseId){ db.collection('routes').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ db.collection('routes').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
+async function deleteRoute(id){ if(!await lpConfirmar("¿Eliminar esta ruta?")) return; const it=_rutaPorId(id); rutasLocalesSet(rutasLocales().filter(function(x){return x.localId!==id;})); if(it&&it.firebaseId){ db.collection('routes').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ db.collection('routes').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
 
 /* ===== PERFIL DE ELEVACIÓN: usa la altitud que reporta el GPS del celular (gratis,
    sin servicios externos). Es más ruidosa que un DEM profesional, por eso se suaviza
@@ -2698,7 +2739,7 @@ function grabarVideoRuta(){
     recorder.start();
     iniciarVueloRuta();
     videoStopTimeoutId=setTimeout(function(){ if(recorder.state==='recording') recorder.stop(); videoStopTimeoutId=null; },videoVueloMs+600);
-  }catch(e){ alert('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar'; }
+  }catch(e){ lpAviso('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar'; }
 }
 function cerrarVideoRuta(){
   if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
@@ -2918,7 +2959,7 @@ function ap(){
   const n=document.getElementById('np').value.trim(); const cat=document.getElementById('cp').value;
   if(!n) return;
   const loc = currentUserLocation || (mp ? {lat:mp.getCenter().lat, lon:mp.getCenter().lng} : null);
-  if(!loc){ alert("Activa el GPS para ubicar el punto en el mapa"); return; }
+  if(!loc){ lpAviso("Activa el GPS para ubicar el punto en el mapa"); return; }
   const iconos={agua:'💧',camping:'⛺',taller:'🔧',mirador:'📸',hostel:'🏠'};
   us.d+=20; au(); sincronizarStats();
   db.collection('recommendations').add({user:cu,nombre:nombreUsuario,title:(iconos[cat]||'📍')+' '+n,cat:cat,desc:'Punto marcado en el mapa por la comunidad.',lat:loc.lat,lon:loc.lon,likes:0,likedBy:[],authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){ h("Punto guardado en el mapa. Veinte de Darma para ti."); }).catch(function(){ h("No se pudo guardar el punto."); });
@@ -2928,7 +2969,7 @@ function irAlPuntoYNavegar(lat,lon,name){
   lat=parseFloat(lat); lon=parseFloat(lon); name=name||'este punto';
   cv('map');
   setTimeout(function(){ if(!mp) return; if(mp._irMarker) mp.removeLayer(mp._irMarker); mp._irMarker=mlMarker([lat,lon],{}).addTo(mp).bindPopup('<b>'+escapeHTML(name)+'</b>').openPopup(); mp.setView([lat,lon],15); },160);
-  setTimeout(function(){ if(confirm('¿Iniciar navegación hacia '+name+'?')){ if(!currentUserLocation){ alert('Necesito tu GPS para navegar'); return; } currentTrip=null; calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,lat,lon,name); } },450);
+  setTimeout(async function(){ if(await lpConfirmar('¿Iniciar navegación hacia '+name+'?')){ if(!currentUserLocation){ lpAviso('Necesito tu GPS para navegar'); return; } currentTrip=null; calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,lat,lon,name); } },450);
 }
 // Con puntos de todo Chile (miles), pintarlos TODOS como marcadores DOM sin importar
 // el zoom trababa el mapa en celulares modestos. La primera versión de esto cortaba
@@ -3049,7 +3090,7 @@ function toggleRadarOnMap(){
     h("Radar desactivado.");
   }
 }
-function addRouteAlert(){ const type=prompt("¿Qué reportas? (bache, perro, peligro...)"); if(!type) return; const desc=prompt("Descripción:"); if(!desc) return; const hora=new Date().toLocaleTimeString(); db.collection('routeAlerts').add({user:cu,nombre:nombreUsuario,type:type,desc:desc,h:hora,lat:us.la||null,lon:us.lo||null,timestamp:firebase.firestore.FieldValue.serverTimestamp()}); h("Reporte enviado. Gracias por avisar."); }
+async function addRouteAlert(){ const type=await lpPedirTexto("¿Qué reportas?","bache, perro, peligro..."); if(!type) return; const desc=await lpPedirTexto("Descripción:"); if(!desc) return; const hora=new Date().toLocaleTimeString(); db.collection('routeAlerts').add({user:cu,nombre:nombreUsuario,type:type,desc:desc,h:hora,lat:us.la||null,lon:us.lo||null,timestamp:firebase.firestore.FieldValue.serverTimestamp()}); h("Reporte enviado. Gracias por avisar."); }
 function em(){ const i=document.getElementById('chi'), t=i.value.trim(); if(!t||!cu) return; const n=new Date(), h2=(n.getHours().toString().padStart(2,'0'))+':'+(n.getMinutes().toString().padStart(2,'0')); db.collection('chat').add({a:cu,nombre:nombreUsuario,t:t,h:h2,ts:firebase.firestore.FieldValue.serverTimestamp()}); i.value=""; }
 function rc(){ const c=document.getElementById('chm'); if(!c) return; c.innerHTML=cm.map(function(m){ return '<div class="ms '+(m.a===cu?'sf':'ot')+'">'+(m.a!==cu?'<div class="ma">'+escapeHTML(m.nombre||m.a)+' · '+escapeHTML(m.h)+'</div>':'')+'<div class="mb">'+escapeHTML(m.t)+'</div>'+(m.a===cu?'<div class="ma" style="text-align:right;margin-top:3px">'+escapeHTML(m.h)+'</div>':'')+'</div>'; }).join(''); c.scrollTop=c.scrollHeight; }
 /* ===== CHAT PRIVADO ENTRE AMIGOS (1 a 1) ===== */
@@ -3097,6 +3138,38 @@ async function showUserListForFriendRequest(){
   const snapshot=await db.collection('users').where('visible','==',true).get(); let items=[]; for(const doc of snapshot.docs){ if(doc.id===cu) continue; if(yaRelacionados[doc.id]==='accepted') continue; const data=doc.data(); if(data.lat&&data.lon){ const dist=currentUserLocation?gd2(currentUserLocation.lat,currentUserLocation.lon,data.lat,data.lon):null; items.push({id:doc.id, nombre:data.nombre||doc.id, dist:dist}); } } if(currentUserLocation) items.sort(function(a,b){ return (a.dist||0)-(b.dist||0); }); let html=''; items.forEach(function(it){ const sent=friendRequestSent.indexOf(it.id)!==-1 || yaRelacionados[it.id]==='pending'; const distTxt=(it.dist!=null)?(it.dist<1?Math.round(it.dist*1000)+' m':it.dist.toFixed(it.dist<100?1:0)+' km'):'—'; html+='<div class="nearby-user"><div style="width:35px;height:35px;background:var(--p);border-radius:50%"></div><div style="flex:1"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(it.nombre)+'</h4><div class="distance">'+distTxt+'</div></div>'+(sent?'<span style="color:#888;font-size:0.75rem">Enviada</span>':'<button class="route-btn" onclick="sendFriendRequest(\''+it.id+'\')">Agregar</button>')+'</div>'; }); c.innerHTML = items.length===0 ? '<p style="color:#888">Aún no hay otros ciclistas con ubicación visible. ¡Pronto se sumarán a la comunidad!</p>' : '<p style="color:var(--g);font-size:0.85rem;margin-bottom:10px">'+items.length+' ciclista'+(items.length>1?'s':'')+' en la comunidad'+(currentUserLocation?' (ordenados por cercanía)':'')+'</p>'+html; }
 // Antes de crear la solicitud, revisa si ya existe una (en cualquier sentido) para no
 // duplicarla cada vez que el usuario recarga la app y vuelve a tocar "Agregar".
+// Reemplazo temático de alert/confirm/prompt nativos del navegador: los diálogos
+// del sistema rompen la identidad visual de la app (aparecen sin el tema oscuro,
+// sin el naranja de marca, genéricos). lpAviso usa el bocadillo de Pistero;
+// lpConfirmar/lpPedirTexto usan un modal propio y devuelven una Promise para poder
+// seguir escribiendo "if(await lpConfirmar(...))" casi igual que con confirm().
+function lpAviso(msg){ mostrarBocadillo(String(msg), 6000); }
+function _lpDialogCerrar(){ document.getElementById('lpDialog').classList.remove('on'); }
+function lpConfirmar(msg){
+  return new Promise(function(resolve){
+    const modal=document.getElementById('lpDialog');
+    document.getElementById('lpDialogMsg').innerText=msg;
+    const inp=document.getElementById('lpDialogInput'); inp.style.display='none';
+    const btnOk=document.getElementById('lpDialogBtnOk'), btnCancel=document.getElementById('lpDialogBtnCancel');
+    btnCancel.style.display='block'; btnOk.innerText='Sí'; btnCancel.innerText='Cancelar';
+    btnOk.onclick=function(){ _lpDialogCerrar(); resolve(true); };
+    btnCancel.onclick=function(){ _lpDialogCerrar(); resolve(false); };
+    modal.classList.add('on');
+  });
+}
+function lpPedirTexto(msg, placeholder){
+  return new Promise(function(resolve){
+    const modal=document.getElementById('lpDialog');
+    document.getElementById('lpDialogMsg').innerText=msg;
+    const inp=document.getElementById('lpDialogInput'); inp.style.display='block'; inp.value=''; inp.placeholder=placeholder||'';
+    const btnOk=document.getElementById('lpDialogBtnOk'), btnCancel=document.getElementById('lpDialogBtnCancel');
+    btnCancel.style.display='block'; btnOk.innerText='Aceptar'; btnCancel.innerText='Cancelar';
+    btnOk.onclick=function(){ const v=inp.value.trim(); _lpDialogCerrar(); resolve(v||null); };
+    btnCancel.onclick=function(){ _lpDialogCerrar(); resolve(null); };
+    modal.classList.add('on');
+    setTimeout(function(){ inp.focus(); },50);
+  });
+}
 async function sendFriendRequest(toUser){
   try{
     const [a,b]=await Promise.all([
@@ -3107,7 +3180,7 @@ async function sendFriendRequest(toUser){
     if(yaExiste){ friendRequestSent.push(toUser); h("Ya tienes una solicitud o amistad con esta persona."); showUserListForFriendRequest(); return; }
     await db.collection('friendRequests').add({from:cu,fromNombre:nombreUsuario,to:toUser,status:'pending',authUid:window.lpUID||null,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     friendRequestSent.push(toUser); h("Solicitud enviada."); showUserListForFriendRequest();
-  }catch(e){ alert('No se pudo enviar la solicitud, intenta de nuevo.'); }
+  }catch(e){ lpAviso('No se pudo enviar la solicitud, intenta de nuevo.'); }
 }
 function closeModal(){ document.getElementById('userModal').classList.remove('on'); if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; }
 
@@ -3134,11 +3207,11 @@ function reportarEnRuta(){
 function seleccionarCatReporte(k){ reporteCatSel=k; document.querySelectorAll('#repCats .rep-cat').forEach(function(el){ el.style.borderColor = el.getAttribute('data-k')===k ? REPORTE_CATS[k].c : '#2a3147'; el.style.background = el.getAttribute('data-k')===k ? 'rgba(255,255,255,0.05)' : 'transparent'; }); const extra=document.getElementById('repSuperficieExtra'); if(extra) extra.style.display=(k==='superficie')?'block':'none'; }
 let _enviandoReporte=false;
 async function enviarReporte(){
-  if(!reporteCatSel){ alert('Elige primero una categoría'); return; }
+  if(!reporteCatSel){ lpAviso('Elige primero una categoría'); return; }
   const text=document.getElementById('repText').value.trim();
-  if(!text){ alert('Escribe el dato que quieres compartir'); return; }
+  if(!text){ lpAviso('Escribe el dato que quieres compartir'); return; }
   let loc=currentUserLocation || (us.la?{lat:us.la,lon:us.lo}:null);
-  if(!loc){ alert('Necesito tu ubicación para ubicar el reporte. Activa el GPS.'); getCurrentLocation(); return; }
+  if(!loc){ lpAviso('Necesito tu ubicación para ubicar el reporte. Activa el GPS.'); getCurrentLocation(); return; }
   if(_enviandoReporte) return; // evita duplicar el documento y el Darma con doble-tap
   _enviandoReporte=true;
   try{
@@ -3150,7 +3223,7 @@ async function enviarReporte(){
       // Antes eran opcionales: se podía publicar "Estado del camino" sin decir ni el
       // tipo de superficie ni la dificultad, dejando el dato sin nada útil para filtrar
       // o mostrar en el mapa (solo texto libre). Ahora se exige al menos el tipo.
-      if(!tipoEl || !tipoEl.value){ alert('Elige el tipo de superficie (asfalto, ripio, tierra o mixto)'); return; }
+      if(!tipoEl || !tipoEl.value){ lpAviso('Elige el tipo de superficie (asfalto, ripio, tierra o mixto)'); return; }
       data.superficie=tipoEl.value;
       if(difEl && difEl.value) data.dificultad=difEl.value;
     }
@@ -3158,7 +3231,7 @@ async function enviarReporte(){
     us.d+=15; au(); sincronizarStats();
     closeModal();
     h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
-  }catch(err){ alert('No se pudo enviar: '+err.message); }
+  }catch(err){ lpAviso('No se pudo enviar: '+err.message); }
   finally{ _enviandoReporte=false; }
 }
 function tiempoTranscurrido(ts){ if(!ts||!ts.seconds) return 'recién'; const s=Math.floor(Date.now()/1000)-ts.seconds; if(s<60) return 'recién'; const m=Math.floor(s/60); if(m<60) return 'hace '+m+' min'; const h2=Math.floor(m/60); if(h2<24) return 'hace '+h2+' h'; const d=Math.floor(h2/24); if(d<7) return 'hace '+d+' día'+(d>1?'s':''); const w=Math.floor(d/7); return 'hace '+w+' sem'; }
@@ -3335,12 +3408,12 @@ function togglePuntoMapaViaje(){
   setTimeout(function(){ puntoMapaViaje.resize(); },250);
 }
 async function navegarAPuntoMapaElegido(){
-  if(!puntoViajeCoords){ alert('Marca un punto en el mapa primero.'); return; }
+  if(!puntoViajeCoords){ lpAviso('Marca un punto en el mapa primero.'); return; }
   if(!currentUserLocation){
     showLoading("Obteniendo ubicación...");
     await getCurrentLocation();
     hideLoading();
-    if(!currentUserLocation){ alert("Necesito tu GPS"); return; }
+    if(!currentUserLocation){ lpAviso("Necesito tu GPS"); return; }
   }
   currentTrip=null;
   const lat=puntoViajeCoords.lat, lon=puntoViajeCoords.lon;
@@ -3354,9 +3427,9 @@ let _agregandoPOI=false;
 async function agregarPOI(){
   const q=document.getElementById('poi-buscar').value.trim();
   const desc=document.getElementById('poi-desc').value.trim();
-  if(!poiManualCoords && !q){ alert('Escribe el lugar o dirección, o márcalo directo en el mapa.'); return; }
-  if(!poiCatSel){ alert('Elige una categoría para el punto.'); return; }
-  if(!desc){ alert('Cuenta brevemente qué es este punto.'); return; }
+  if(!poiManualCoords && !q){ lpAviso('Escribe el lugar o dirección, o márcalo directo en el mapa.'); return; }
+  if(!poiCatSel){ lpAviso('Elige una categoría para el punto.'); return; }
+  if(!desc){ lpAviso('Cuenta brevemente qué es este punto.'); return; }
   if(_agregandoPOI) return; // evita duplicar el punto y el Darma con doble-tap
   _agregandoPOI=true;
   try{
@@ -3365,7 +3438,7 @@ async function agregarPOI(){
     else{
       h('Buscando "'+q+'" en el mapa...');
       try{ dest=await geocodeDestino(q); }catch(e){}
-      if(!dest){ alert('No encontré "'+q+'". Prueba con más detalle, o márcalo directo en el mapa con el botón de abajo.'); return; }
+      if(!dest){ lpAviso('No encontré "'+q+'". Prueba con más detalle, o márcalo directo en el mapa con el botón de abajo.'); return; }
     }
     let comuna='Mi zona';
     try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+dest.lat+'&lon='+dest.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
@@ -3376,7 +3449,7 @@ async function agregarPOI(){
     document.getElementById('poi-mapa-manual').style.display='none';
     document.getElementById('btnPoiMapaManual').innerText='📍 No lo encuentra: márcalo directo en el mapa';
     h('¡Punto compartido en '+comuna+'! Ya está en el mapa para toda la comunidad. Quince de Darma para ti. 🙌');
-  }catch(err){ alert('No se pudo compartir: '+(err.code||err.message)); }
+  }catch(err){ lpAviso('No se pudo compartir: '+(err.code||err.message)); }
   finally{ _agregandoPOI=false; }
 }
 function openDiario(){ cv('diario'); cargarDiario(); renderPoiCats(); sincronizarDiarioNube().then(function(){ cargarDiario(); }); }
@@ -3402,12 +3475,12 @@ async function sincronizarDiarioNube(){
   }catch(e){}
 }
 function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null}, stats:us, diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){} }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h('Respaldo descargado. Guárdalo a salvo: ahí está todo tu diario e historial.'); }
-function importarMisDatos(input){ const f=input.files&&input.files[0]; if(!f) return; const r=new FileReader(); r.onload=function(){ try{ const data=JSON.parse(r.result); let n=0; if(data.diario&&data.diario.length){ data.diario.forEach(function(d){ if(d&&d.fecha){ localStorage.setItem('lp_diario_'+(cu||'anon')+'_'+d.fecha, JSON.stringify(d)); n++; } }); } h('Respaldo restaurado: '+n+' días recuperados.'); if(typeof cargarDiario==='function') cargarDiario(); }catch(e){ alert('Ese archivo no es un respaldo válido de Libre Pedal.'); } input.value=''; }; r.readAsText(f); }
+function importarMisDatos(input){ const f=input.files&&input.files[0]; if(!f) return; const r=new FileReader(); r.onload=function(){ try{ const data=JSON.parse(r.result); let n=0; if(data.diario&&data.diario.length){ data.diario.forEach(function(d){ if(d&&d.fecha){ localStorage.setItem('lp_diario_'+(cu||'anon')+'_'+d.fecha, JSON.stringify(d)); n++; } }); } h('Respaldo restaurado: '+n+' días recuperados.'); if(typeof cargarDiario==='function') cargarDiario(); }catch(e){ lpAviso('Ese archivo no es un respaldo válido de Libre Pedal.'); } input.value=''; }; r.readAsText(f); }
 
 /* ===== EXPORT ADMIN: lista completa de usuarios registrados ===== */
 const ADMIN_ID = 'intyrivera_a_gmail_com';   // ID del admin (correo transformado)
 async function exportarUsuariosAdmin(){
-  if(cu!==ADMIN_ID){ alert('Solo el administrador puede exportar la lista de usuarios.'); return; }
+  if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede exportar la lista de usuarios.'); return; }
   h('Obteniendo lista de usuarios registrados...');
   try{
     const snap=await db.collection('users').orderBy('createdAt','desc').get();
@@ -3421,7 +3494,7 @@ async function exportarUsuariosAdmin(){
     a.href=url; a.download='LibrePedal-usuarios-'+new Date().toISOString().slice(0,10)+'.csv';
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     h('Descargado: '+( snap.size)+' usuarios en el CSV. Ábrelo en Excel.');
-  }catch(e){ alert('No se pudo exportar: '+(e.message||e)); }
+  }catch(e){ lpAviso('No se pudo exportar: '+(e.message||e)); }
 }
 
 /* ===== TE DOY ALOJO: trueque ciclista, solo usuarios con 6+ meses ===== */
@@ -3457,7 +3530,7 @@ let _publicandoAlojo=false;
 async function publicarAlojo(){
   const zona=document.getElementById('alojoZona')?.value.trim();
   const desc=document.getElementById('alojoDesc')?.value.trim();
-  if(!zona||!desc){ alert('Rellena zona y descripción antes de publicar.'); return; }
+  if(!zona||!desc){ lpAviso('Rellena zona y descripción antes de publicar.'); return; }
   if(_publicandoAlojo) return; // evita duplicar la oferta y el Darma con doble-tap
   _publicandoAlojo=true;
   try{
@@ -3465,7 +3538,7 @@ async function publicarAlojo(){
     us.d+=20; au(); sincronizarStats();
     h('¡Oferta publicada! Otros ciclistas ya pueden contactarte. Veinte de Darma para ti. 🏡');
     closeModal();
-  }catch(e){ alert('No se pudo publicar: '+(e.message||e)); }
+  }catch(e){ lpAviso('No se pudo publicar: '+(e.message||e)); }
   finally{ _publicandoAlojo=false; }
 }
 function renderDiarioHistorial(){ const c=document.getElementById('diarioHistorial'); if(!c) return; const pre='lp_diario_'+(cu||'anon')+'_'; const keys=Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().reverse().filter(function(k){return k!==diarioHoyKey();}); if(!keys.length){ c.innerHTML=''; return; } let html='<h4 style="font-size:0.85rem;color:var(--p)">Días anteriores</h4>'; keys.slice(0,12).forEach(function(k){ let d={}; try{d=JSON.parse(localStorage.getItem(k));}catch(e){return;} const est=DIARIO_ESTADOS.find(function(s){return s.l===d.estado;}); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.76rem;color:#9fb3c8">'+(d.fecha||'')+' · '+(est?est.e+' '+est.l:'')+' · '+(d.km?(+d.km).toFixed(1):0)+' km</div>'+(d.meta?'<div style="font-size:0.78rem;margin-top:3px">🎯 '+d.meta+'</div>':'')+(d.complejo?'<div style="font-size:0.75rem;color:#cdd;margin-top:3px">💪 '+d.complejo+'</div>':'')+(d.reflexion?'<div style="font-size:0.75rem;color:#9fb3c8;font-style:italic;margin-top:3px">🧘 '+d.reflexion+'</div>':'')+'</div>'; }); c.innerHTML=html; }
@@ -3473,7 +3546,7 @@ function rm(l){ document.getElementById('ml').innerHTML=l.map(function(i){ retur
 function fm(){ const v=document.getElementById('bm').value.toLowerCase(); rm(MG.filter(function(i){ return i.t.toLowerCase().indexOf(v)!==-1||i.s.toLowerCase().indexOf(v)!==-1; })); }
 function toggleSecretForm(){ document.getElementById('secretForm').classList.toggle('show'); }
 let _agregandoRepairTip=false;
-async function addRepairTip(){ const title=document.getElementById('repair-title').value.trim(); const desc=document.getElementById('repair-desc').value.trim(); if(!title||!desc) return alert("Completa los campos"); if(_agregandoRepairTip) return; _agregandoRepairTip=true; try{ await db.collection('repairTips').add({user:cu,nombre:nombreUsuario,title:title,desc:desc,authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}); document.getElementById('repair-title').value=''; document.getElementById('repair-desc').value=''; toggleSecretForm(); h("Truco compartido. ¡Gracias!"); }catch(e){ alert('No se pudo compartir: '+(e.message||e)); } finally{ _agregandoRepairTip=false; } }
+async function addRepairTip(){ const title=document.getElementById('repair-title').value.trim(); const desc=document.getElementById('repair-desc').value.trim(); if(!title||!desc) return lpAviso("Completa los campos"); if(_agregandoRepairTip) return; _agregandoRepairTip=true; try{ await db.collection('repairTips').add({user:cu,nombre:nombreUsuario,title:title,desc:desc,authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}); document.getElementById('repair-title').value=''; document.getElementById('repair-desc').value=''; toggleSecretForm(); h("Truco compartido. ¡Gracias!"); }catch(e){ lpAviso('No se pudo compartir: '+(e.message||e)); } finally{ _agregandoRepairTip=false; } }
 function loadRepairTips(){ db.collection('repairTips').orderBy('ts','desc').limit(20).onSnapshot(async function(snapshot){ const c=document.getElementById('repair-tips'); if(!c) return; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero en compartir</p>'; return; } let html='<h4 style="margin:12px 0 8px 0;color:var(--g);font-size:0.9rem">Trucos de la comunidad</h4>'; for(const doc of snapshot.docs){ const data=doc.data(); const nombre=await getNombreUsuario(data.user); html+='<div class="repair-tip"><strong style="font-size:0.85rem">'+escapeHTML(data.title)+'</strong><p style="font-size:0.8rem">'+escapeHTML(data.desc)+'</p><small style="color:#888;font-size:0.7rem">Por: '+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small></div>'; } c.innerHTML=html; }); }
 function filtrarCategoria(cat,btn){ categoriaActual=cat; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); fg(cat); }
 function fg(c){ const f=c==='todos'?CG:CG.filter(function(i){return i.cat===c;}); const el=document.getElementById('gl'); if(!el) return; el.innerHTML=f.map(function(i){ return '<div class="gi" onclick="h(\''+i.t+'. '+i.d.replace(/'/g,"\\'")+'\')"><h4 style="margin:0 0 6px 0;color:var(--p);font-size:0.85rem">'+i.t+'</h4><p style="margin:0 0 6px 0;font-size:0.8rem">'+i.d+'</p><div>'+i.tg.map(function(t){return '<span style="background:#333;padding:2px 5px;border-radius:5px;font-size:0.6rem;margin-right:3px">'+t+'</span>';}).join('')+'</div></div>'; }).join(''); }
@@ -3501,7 +3574,7 @@ function comprimirFoto(file,cb){
 function previewFoto(inp,tipo){
   const f=inp.files&&inp.files[0]; if(!f) return;
   comprimirFoto(f,function(data){
-    if(!data){ alert('No pude leer esa imagen, prueba con otra.'); return; }
+    if(!data){ lpAviso('No pude leer esa imagen, prueba con otra.'); return; }
     fotosPendientes[tipo]=data;
     const p=document.getElementById(tipo+'-foto-prev');
     if(p){ p.src=data; p.style.display='block'; }
@@ -3551,30 +3624,30 @@ async function valorar(col,id,n){
       await ref.update({ratingSum:sum,votes:votes,ratedBy:by});
     }
     h('Gracias por tu valoración de '+n+(n===1?' estrella.':' estrellas.'));
-  }catch(e){ alert('No se pudo guardar tu valoración: '+(e.message||e)); }
+  }catch(e){ lpAviso('No se pudo guardar tu valoración: '+(e.message||e)); }
 }
 function filtrarHostels(tipo,btn){ hostelTipoActual=tipo; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); renderHostelsLista(); }
-function addHostel(){ const name=document.getElementById('hostel-name').value; const tipo=document.getElementById('hostel-type').value; const location=document.getElementById('hostel-location').value; const desc=document.getElementById('hostel-desc').value; if(!name||!location) return alert("Completa nombre y dirección"); const d={user:cu,nombre:nombreUsuario,tipo:tipo,name:name,location:location,desc:desc,ratingSum:0,votes:0,ratedBy:{},authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}; if(hostelCoords){ d.lat=hostelCoords.lat; d.lon=hostelCoords.lon; } if(fotosPendientes.hostel){ d.foto=fotosPendientes.hostel; } db.collection('hostels').add(d); document.getElementById('hostel-name').value=''; document.getElementById('hostel-location').value=''; document.getElementById('hostel-desc').value=''; limpiarFoto('hostel'); hostelCoords=null; document.getElementById('map-hostel-select').classList.remove('show'); document.getElementById('gpsStatus').classList.remove('show'); h("Alojamiento publicado."); }
+function addHostel(){ const name=document.getElementById('hostel-name').value; const tipo=document.getElementById('hostel-type').value; const location=document.getElementById('hostel-location').value; const desc=document.getElementById('hostel-desc').value; if(!name||!location) return lpAviso("Completa nombre y dirección"); const d={user:cu,nombre:nombreUsuario,tipo:tipo,name:name,location:location,desc:desc,ratingSum:0,votes:0,ratedBy:{},authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}; if(hostelCoords){ d.lat=hostelCoords.lat; d.lon=hostelCoords.lon; } if(fotosPendientes.hostel){ d.foto=fotosPendientes.hostel; } db.collection('hostels').add(d); document.getElementById('hostel-name').value=''; document.getElementById('hostel-location').value=''; document.getElementById('hostel-desc').value=''; limpiarFoto('hostel'); hostelCoords=null; document.getElementById('map-hostel-select').classList.remove('show'); document.getElementById('gpsStatus').classList.remove('show'); h("Alojamiento publicado."); }
 function loadHostels(){ if(!loadHostels._votos){ loadHostels._votos=true; initVotosHostels(); } db.collection('hostels').orderBy('ts','desc').limit(50).onSnapshot(function(snapshot){ allHostels=[]; snapshot.forEach(function(doc){ const d=doc.data(); if(/^TEST-/.test(d.name||'')) return; allHostels.push(Object.assign({id:doc.id},d)); }); renderHostelsLista(); }, function(){ const c=document.getElementById('hostel-list'); if(c) c.innerHTML='<p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">No se pudieron cargar los alojamientos. Revisa tu conexión.</p>'; }); }
 async function renderHostelsLista(){ const c=document.getElementById('hostel-list'); if(!c) return; if(allHostels.length===0){ c.innerHTML='<p style="color:#888">Sin alojamientos</p>'; return; } let html='', count=0; for(const data of allHostels){ if(hostelTipoActual!=='todos'&&data.tipo!==hostelTipoActual) continue; const nombre=await getNombreUsuario(data.user); const coords=data.lat&&data.lon?'<div style="font-size:0.7rem;color:#aaa;margin-top:3px">GPS: '+data.lat.toFixed(5)+', '+data.lon.toFixed(5)+'</div>':''; const irBtn=(data.lat&&data.lon)?'<button class="ab" style="margin-top:6px;padding:7px;font-size:0.78rem" onclick="irAlPuntoYNavegar('+data.lat+','+data.lon+')">🧭 Ir / Navegar</button>':''; const foto=data.foto?'<img src="'+escapeHTML(data.foto)+'" loading="lazy" alt="" style="width:100%;border-radius:10px;margin:6px 0;max-height:170px;object-fit:cover">':''; html+='<div class="hostel-card"><h4>'+escapeHTML(data.name)+'</h4>'+foto+'<p style="font-size:0.8rem">'+escapeHTML(data.location||'')+'</p><p style="font-size:0.8rem">'+escapeHTML(data.desc||'')+'</p>'+coords+estrellasHTML('hostels',data.id,data)+'<small style="color:#888;font-size:0.7rem">Por: '+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small>'+irBtn+'</div>'; count++; } c.innerHTML = count===0 ? '<p style="color:#888">Sin alojamientos de ese tipo</p>' : html; }
 function toggleHostelMap(){ const mapDiv=document.getElementById('map-hostel-select'); const st=document.getElementById('gpsStatus'); if(mapDiv.classList.contains('show')){ mapDiv.classList.remove('show'); st.classList.remove('show'); return; } mapDiv.classList.add('show'); st.classList.add('show'); st.innerText='Obteniendo ubicación...'; if(!mapHostelSelect){ mapHostelSelect=L.map('map-hostel-select').setView([-34.6037,-58.3816],13); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapHostelSelect); } if(!navigator.geolocation){ st.innerText='GPS no disponible'; return; } navigator.geolocation.getCurrentPosition(function(pos){ const lat=pos.coords.latitude, lon=pos.coords.longitude; hostelCoords={lat:lat,lon:lon}; mapHostelSelect.setView([lat,lon],16); if(mapHostelSelect._um) mapHostelSelect.removeLayer(mapHostelSelect._um); mapHostelSelect._um=L.marker([lat,lon]).addTo(mapHostelSelect); st.innerText='Ubicación: '+lat.toFixed(5)+', '+lon.toFixed(5); mapHostelSelect.on('click',function(e){ hostelCoords={lat:e.latlng.lat,lon:e.latlng.lng}; if(mapHostelSelect._um) mapHostelSelect.removeLayer(mapHostelSelect._um); mapHostelSelect._um=L.marker([e.latlng.lat,e.latlng.lng]).addTo(mapHostelSelect); st.innerText='Punto: '+e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5); }); setTimeout(function(){ mapHostelSelect.invalidateSize(); },300); }, function(err){ st.innerText='Error: '+err.message; }, {enableHighAccuracy:true,timeout:10000}); }
 function addComment(){ const input=document.getElementById('comment-input'); const text=input.value.trim(); if(!text) return; const hora=new Date().toLocaleTimeString(); db.collection('guiComments').add({user:cu,nombre:nombreUsuario,text:text,authUid:window.lpUID||null,h:hora,ts:firebase.firestore.FieldValue.serverTimestamp()}); input.value=''; h("Comentario publicado."); }
-function addRecommendation(){ const title=document.getElementById('rec-title').value.trim(); const cat=document.getElementById('rec-cat').value; const desc=document.getElementById('rec-desc').value.trim(); if(!title||!desc) return alert("Completa los campos"); const rd={user:cu,nombre:nombreUsuario,title:title,cat:cat,desc:desc,likes:0,likedBy:[],ratingSum:0,votes:0,ratedBy:{},authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}; if(fotosPendientes.rec){ rd.foto=fotosPendientes.rec; } db.collection('recommendations').add(rd); document.getElementById('rec-title').value=''; document.getElementById('rec-desc').value=''; limpiarFoto('rec'); h("Recomendación publicada."); }
+function addRecommendation(){ const title=document.getElementById('rec-title').value.trim(); const cat=document.getElementById('rec-cat').value; const desc=document.getElementById('rec-desc').value.trim(); if(!title||!desc) return lpAviso("Completa los campos"); const rd={user:cu,nombre:nombreUsuario,title:title,cat:cat,desc:desc,likes:0,likedBy:[],ratingSum:0,votes:0,ratedBy:{},authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}; if(fotosPendientes.rec){ rd.foto=fotosPendientes.rec; } db.collection('recommendations').add(rd); document.getElementById('rec-title').value=''; document.getElementById('rec-desc').value=''; limpiarFoto('rec'); h("Recomendación publicada."); }
 function loadRecommendations(){ db.collection('recommendations').orderBy('ts','desc').limit(50).onSnapshot(async function(snapshot){ const c=document.getElementById('rec-list'); if(!c) return; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero</p>'; return; } let html=''; for(const doc of snapshot.docs){ const data=doc.data(); if(/^TEST-/.test(data.title||'')) continue; const nombre=await getNombreUsuario(data.user); const liked=data.likedBy&&data.likedBy.indexOf(cu)!==-1; html+='<div class="rec-card"><h4>'+escapeHTML(data.title)+'</h4>'+(data.foto?'<img src="'+escapeHTML(data.foto)+'" loading="lazy" alt="" style="width:100%;border-radius:10px;margin:6px 0;max-height:170px;object-fit:cover">':'')+'<div class="meta" style="font-size:0.75rem;color:#888">Por <strong>'+escapeHTML(nombre)+'</strong> · '+escapeHTML(data.h)+'</div><div style="font-size:0.85rem">'+escapeHTML(data.desc)+'</div>'+estrellasHTML('recommendations',doc.id,data)+'<div class="rec-actions"><button class="rec-btn '+(liked?'active':'')+'" onclick="likeRecommendation(\''+doc.id+'\')">Me gusta ('+(data.likes||0)+')</button>'+((data.lat&&data.lon)?'<button class="rec-btn" onclick="irAlPuntoYNavegar('+data.lat+','+data.lon+')">🧭 Ir</button>':'')+'</div></div>'; } c.innerHTML=html; }); }
 async function likeRecommendation(docId){ const ref=db.collection('recommendations').doc(docId); const doc=await ref.get(); const data=doc.data(); let likes=data.likes||0, by=data.likedBy||[]; if(by.indexOf(cu)!==-1){ by=by.filter(function(u){return u!==cu;}); likes=Math.max(0,likes-1); } else { by.push(cu); likes+=1; } ref.update({likes:likes,likedBy:by}); }
 function showNewTripForm(){ addedDests=[]; document.getElementById('trip-name').value=''; document.getElementById('trip-start').value=''; renderAddedDests(); filterDestType('hostel',document.querySelector('#v-newtrip .gtt')); cv('newtrip'); }
 function filterDestType(type,btn){ currentFilter=type; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); if(type==='hostel') renderHostelOptions(); else { document.getElementById('dest-options').innerHTML=''; document.getElementById('custom-dest-form').style.display='block'; } }
 function renderHostelOptions(){ document.getElementById('custom-dest-form').style.display='none'; const c=document.getElementById('dest-options'); if(allHostels.length===0){ c.innerHTML='<p style="color:#888">Sin hostels guardados</p>'; return; } c.innerHTML=allHostels.map(function(hh,i){ return '<div class="hostel-option" onclick="addHostelDest('+i+')"><div><strong style="font-size:0.85rem">'+escapeHTML(hh.name)+'</strong><div style="font-size:0.7rem;color:#888">'+escapeHTML(hh.location)+'</div></div><i class="fas fa-plus" style="color:var(--p)"></i></div>'; }).join(''); }
 function addHostelDest(idx){ const hh=allHostels[idx]; addedDests.push({name:hh.name,addr:hh.location,lat:hh.lat,lon:hh.lon,type:'hostel'}); renderAddedDests(); h("Agregado: "+hh.name); }
-function addCustomDest(){ const name=document.getElementById('custom-dest-name').value.trim(); const addr=document.getElementById('custom-dest-addr').value.trim(); if(!name||!addr) return alert("Completa los campos"); addedDests.push({name:name,addr:addr,lat:null,lon:null,type:'custom'}); document.getElementById('custom-dest-name').value=''; document.getElementById('custom-dest-addr').value=''; renderAddedDests(); }
+function addCustomDest(){ const name=document.getElementById('custom-dest-name').value.trim(); const addr=document.getElementById('custom-dest-addr').value.trim(); if(!name||!addr) return lpAviso("Completa los campos"); addedDests.push({name:name,addr:addr,lat:null,lon:null,type:'custom'}); document.getElementById('custom-dest-name').value=''; document.getElementById('custom-dest-addr').value=''; renderAddedDests(); }
 function removeDest(idx){ addedDests.splice(idx,1); renderAddedDests(); }
 function renderAddedDests(){ const c=document.getElementById('added-dests'); if(addedDests.length===0){ c.innerHTML='<p style="color:#888">Agrega destinos</p>'; return; } c.innerHTML=addedDests.map(function(d,i){ return '<div class="added-dest-item"><div style="background:var(--p);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem">'+(i+1)+'</div><div style="flex:1"><strong style="font-size:0.8rem">'+escapeHTML(d.name)+'</strong><div style="font-size:0.7rem;color:#888">'+escapeHTML(d.addr)+'</div></div><button onclick="removeDest('+i+')" style="background:#dc2626;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.7rem">X</button></div>'; }).join(''); }
-async function saveAndStartTrip(){ const name=document.getElementById('trip-name').value.trim(); const start=document.getElementById('trip-start').value.trim(); if(!name) return alert("Ponle nombre al viaje"); if(!start) return alert("Indica el origen"); if(addedDests.length===0) return alert("Agrega al menos un destino"); try{ await db.collection('trips').add({user:cu,nombre:nombreUsuario,name:name,start:start,destinations:addedDests,authUid:window.lpUID||null,createdAt:firebase.firestore.FieldValue.serverTimestamp(),status:'pending'}); h("Viaje guardado: "+name); cv('trips'); }catch(err){ alert("Error: "+err.message); } }
+async function saveAndStartTrip(){ const name=document.getElementById('trip-name').value.trim(); const start=document.getElementById('trip-start').value.trim(); if(!name) return lpAviso("Ponle nombre al viaje"); if(!start) return lpAviso("Indica el origen"); if(addedDests.length===0) return lpAviso("Agrega al menos un destino"); try{ await db.collection('trips').add({user:cu,nombre:nombreUsuario,name:name,start:start,destinations:addedDests,authUid:window.lpUID||null,createdAt:firebase.firestore.FieldValue.serverTimestamp(),status:'pending'}); h("Viaje guardado: "+name); cv('trips'); }catch(err){ lpAviso("Error: "+err.message); } }
 function loadTrips(){ db.collection('trips').where('user','==',cu).onSnapshot(function(snapshot){ trips=[]; snapshot.forEach(function(doc){ trips.push(Object.assign({id:doc.id},doc.data())); }); trips.sort(function(a,b){ return ((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0); }); renderTrips(); }, function(){ const c=document.getElementById('trips-list'); if(c) c.innerHTML='<p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">No se pudieron cargar tus viajes. Revisa tu conexión.</p>'; }); }
 function renderTrips(){ const c=document.getElementById('trips-list'); if(!c) return; if(trips.length===0){ c.innerHTML='<p style="color:#888;text-align:center;padding:15px">Aún no tienes viajes</p>'; return; } let html=''; for(let t=0;t<trips.length;t++){ const trip=trips[t]; let dests=''; for(let d=0;d<trip.destinations.length;d++){ dests+='<div>'+(d+1)+'. '+escapeHTML(trip.destinations[d].name)+'</div>'; } const badge=trip.status==='completed'?'(completado)':trip.status==='active'?'(en curso)':'(pendiente)'; html+='<div class="trip-card"><h3>'+escapeHTML(trip.name)+' <span style="font-size:0.7rem;color:#888">'+badge+'</span></h3><div class="meta">Desde: '+escapeHTML(trip.start)+' · '+trip.destinations.length+' destinos</div>'; if(trip.gpsData&&trip.gpsData.distance){ html+='<div style="color:var(--p);font-size:0.8rem;margin-bottom:8px">'+trip.gpsData.distance.toFixed(2)+' km · '+trip.gpsData.duration+'</div>'; } html+='<div class="dest-list">'+dests+'</div><div class="actions">'; if(trip.status!=='completed'){ html+='<button class="btn btn-start" onclick="startNavigation(\''+trip.id+'\')">Iniciar</button>'; } else { html+='<button class="btn btn-view" onclick="viewCompletedTrip(\''+trip.id+'\')">Ver</button>'; } html+='<button class="btn btn-delete" onclick="deleteTrip(\''+trip.id+'\')">Borrar</button></div></div>'; } c.innerHTML=html; }
-function deleteTrip(id){ if(confirm("¿Eliminar este viaje?")){ db.collection('trips').doc(id).delete(); } }
-function viewCompletedTrip(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip||!trip.gpsData||!trip.gpsData.points) return alert("Este viaje no tiene ruta grabada"); currentTrip=trip; gpsPoints=trip.gpsData.points; totalDistance=trip.gpsData.distance||0; document.getElementById('nav-screen').classList.add('active'); if(navMap) navMap.remove(); navMap=L.map('nav-map').setView([gpsPoints[0].lat,gpsPoints[0].lon],15); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(navMap); showHostelsOnNavMap(); drawGpsRoute(); document.getElementById('navText').innerText="Ruta completada"; document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2); document.getElementById('navTime').innerText=trip.gpsData.duration||'0 min'; document.getElementById('navSpeed').innerText='0'; document.getElementById('etaDist').innerText=totalDistance.toFixed(2)+' km'; document.getElementById('etaDuration').innerText=trip.gpsData.duration||'0 min'; document.getElementById('etaTime').innerText='--:--'; showSpeechBubble("Recorriste "+totalDistance.toFixed(2)+" km"); }
-async function startNavigation(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip) return; currentTrip=trip; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS para navegar"); return; } } const dest=trip.destinations[trip.destinations.length-1]; let dLat=dest.lat, dLon=dest.lon; if(!dLat||!dLon){ showLoading("Buscando "+dest.name+"..."); try{ const r=await geocodeDestino(dest.addr||dest.name); if(r){ dLat=r.lat; dLon=r.lon; } }catch(e){} hideLoading(); } if(!dLat||!dLon){ alert('No pude ubicar "'+(dest.name||'el destino')+'". Escríbelo con más detalle (ciudad o región), o usa 📍 "elegir en el mapa" para marcarlo tú.'); return; } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dLat,dLon,dest.name); }
+async function deleteTrip(id){ if(await lpConfirmar("¿Eliminar este viaje?")){ db.collection('trips').doc(id).delete(); } }
+function viewCompletedTrip(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip||!trip.gpsData||!trip.gpsData.points) return lpAviso("Este viaje no tiene ruta grabada"); currentTrip=trip; gpsPoints=trip.gpsData.points; totalDistance=trip.gpsData.distance||0; document.getElementById('nav-screen').classList.add('active'); if(navMap) navMap.remove(); navMap=L.map('nav-map').setView([gpsPoints[0].lat,gpsPoints[0].lon],15); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(navMap); showHostelsOnNavMap(); drawGpsRoute(); document.getElementById('navText').innerText="Ruta completada"; document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2); document.getElementById('navTime').innerText=trip.gpsData.duration||'0 min'; document.getElementById('navSpeed').innerText='0'; document.getElementById('etaDist').innerText=totalDistance.toFixed(2)+' km'; document.getElementById('etaDuration').innerText=trip.gpsData.duration||'0 min'; document.getElementById('etaTime').innerText='--:--'; showSpeechBubble("Recorriste "+totalDistance.toFixed(2)+" km"); }
+async function startNavigation(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip) return; currentTrip=trip; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS para navegar"); return; } } const dest=trip.destinations[trip.destinations.length-1]; let dLat=dest.lat, dLon=dest.lon; if(!dLat||!dLon){ showLoading("Buscando "+dest.name+"..."); try{ const r=await geocodeDestino(dest.addr||dest.name); if(r){ dLat=r.lat; dLon=r.lon; } }catch(e){} hideLoading(); } if(!dLat||!dLon){ lpAviso('No pude ubicar "'+(dest.name||'el destino')+'". Escríbelo con más detalle (ciudad o región), o usa 📍 "elegir en el mapa" para marcarlo tú.'); return; } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dLat,dLon,dest.name); }
 // Geocodificador global e inteligente: reconoce cualquier punto del mundo, pero
 // si conocemos tu ubicación, prefiere los resultados cercanos (para términos
 // genéricos como "la plaza", "farmacia", "supermercado"). Sigue siendo global:
@@ -3656,12 +3729,12 @@ async function geocodeDestino(query){
   for(const v of _variantesFoneticas(query)){ r=await intentar(v); if(r) return r; }
   return null;
 }
-async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ alert("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); alert("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); alert('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); alert(((err&&err.name==='AbortError')||!navigator.onLine) ? 'Estás sin señal para buscar el destino. Prueba de nuevo con internet, o marca el punto en el mapa.' : 'No pude buscar ese destino ahora. Inténtalo otra vez.'); } }
+async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ lpAviso("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); lpAviso('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'Estás sin señal para buscar el destino. Prueba de nuevo con internet, o marca el punto en el mapa.' : 'No pude buscar ese destino ahora. Inténtalo otra vez.'); } }
 function _tileXY(lat,lon,zoom){ const n=Math.pow(2,zoom); const x=Math.floor((lon+180)/360*n); const latRad=lat*Math.PI/180; const y=Math.floor((1-Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n); return {x:x,y:y}; }
 async function descargarMapaRuta(){
   const btn=document.getElementById('btnDescargarMapa');
   if(!routeLine){ h('Todavía no tengo una ruta calculada para descargar.'); return; }
-  if(!('serviceWorker' in navigator) || !navigator.serviceWorker.controller){ alert('La descarga offline necesita que la app esté instalada/activa como PWA.'); return; }
+  if(!('serviceWorker' in navigator) || !navigator.serviceWorker.controller){ lpAviso('La descarga offline necesita que la app esté instalada/activa como PWA.'); return; }
   const b=routeLine.getBounds();
   const urls=[];
   [13,14,15,16].forEach(function(z){
@@ -3669,7 +3742,7 @@ async function descargarMapaRuta(){
     const xMin=Math.max(0,tl.x-1), xMax=br.x+1, yMin=Math.max(0,tl.y-1), yMax=br.y+1;
     for(let x=xMin;x<=xMax;x++){ for(let y=yMin;y<=yMax;y++){ urls.push('https://a.tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png'); } }
   });
-  if(urls.length>3000){ alert('La ruta es muy larga para descargar de una vez ('+urls.length+' mosaicos). Descarga tramos más cortos.'); return; }
+  if(urls.length>3000){ lpAviso('La ruta es muy larga para descargar de una vez ('+urls.length+' mosaicos). Descarga tramos más cortos.'); return; }
   btn.disabled=true; btn.innerText='Descargando 0 / '+urls.length+'...';
   function onMsg(e){
     if(!e.data) return;
@@ -3855,7 +3928,7 @@ function _detenerGpsLibreSiActivo(){
   if(!ig) return;
   if(currentRoute.length>1){ autoGuardarRuta(false,false); } // no perder lo ya grabado en GPS libre
   if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); gw=null; }
-  ig=false;
+  ig=false; _detenerCronometroDash();
   const btn=document.getElementById('btnGPSLibre'); if(btn){ btn.innerText="📍 Iniciar GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
 }
 async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
@@ -3889,7 +3962,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   try{
     const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
     const resp=await _fetchT(url, 15000); const data=await resp.json();
-    if(data.code!=='Ok'||!data.routes||!data.routes.length){ alert("No pude calcular la ruta"); endNavigation(); return; }
+    if(data.code!=='Ok'||!data.routes||!data.routes.length){ lpAviso("No pude calcular la ruta"); endNavigation(); return; }
     const route=data.routes[0], steps=route.legs[0].steps;
     const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
     rutaLatLngs=latlngs; _prefetchPerfilRuta();
@@ -3920,7 +3993,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     showSpeechBubble("En ruta a "+destName.split(',')[0]);
     h("Vamos a "+destName.split(',')[0]+". Yo te voy guiando, tú disfruta el camino.");
     anunciarClimaRuta(destLat,destLon,'Clima en tu destino'); // antes de salir a pedalear
-  }catch(err){ console.error(err); alert(((err&&err.name==='AbortError')||!navigator.onLine) ? 'No pude calcular la ruta: parece que estás sin señal. Prueba de nuevo cuando tengas internet.' : 'No pude calcular la ruta ahora. Inténtalo otra vez.'); endNavigation(); }
+  }catch(err){ console.error(err); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'No pude calcular la ruta: parece que estás sin señal. Prueba de nuevo cuando tengas internet.' : 'No pude calcular la ruta ahora. Inténtalo otra vez.'); endNavigation(); }
 }
 function checkFuel(distKm){
   if(distKm>=nextHydrateKm){ h("Llevas "+Math.round(distKm)+" kilómetros. Toma un par de tragos de agua para no deshidratarte."); nextHydrateKm+=5; }
@@ -3991,7 +4064,7 @@ function formatDistance(m){ if(m<1000) return Math.round(m)+' m'; return (m/1000
 function showHostelsOnNavMap(){ allHostels.forEach(function(hh){ if(hh.lat&&hh.lon){ L.marker([hh.lat,hh.lon],{icon:L.divIcon({className:'',html:'<div style="background:#ffd700;width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px #ffd700"></div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(hh.name)+'</b><br>'+escapeHTML(hh.location)); } }); }
 function drawGpsRoute(){ if(gpsPoints.length<2) return; if(routeLine) navMap.removeLayer(routeLine); routeLine=L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#fc4c02',weight:5,opacity:0.8}).addTo(navMap); if(gpsPoints.length>10) navMap.fitBounds(routeLine.getBounds(),{padding:[50,50]}); }
 function showSpeechBubble(text){ const b=document.getElementById('speechBubble'); if(!b) return; b.innerText=text; b.classList.add('show'); setTimeout(function(){ b.classList.remove('show'); },4000); }
-async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigation(); return; } if(confirm("¿Terminar y guardar el viaje?")){ if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } navGuardado=true; const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; if(currentTrip){ try{ await db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}); }catch(e){ } } else { guardarRutaNavegada(); } setTimeout(endNavigation,2500); } }
+async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigation(); return; } if(await lpConfirmar("¿Terminar y guardar el viaje?")){ if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } navGuardado=true; const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; if(currentTrip){ try{ await db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}); }catch(e){ } } else { guardarRutaNavegada(); } setTimeout(endNavigation,2500); } }
 // Si el usuario cierra con "✕" sin haber pasado por "Terminar" ni por la llegada
 // automática, igual guardamos lo recorrido hasta ahí (nunca se pierde el track).
 function endNavigation(){
@@ -4074,7 +4147,7 @@ function updateStatsView(){
   cd.innerHTML=ct.map(function(t){ const d=parseInt((t.gpsData.duration||'0').replace(/[^0-9]/g,''))||0; const v=maxDur>0?(d/maxDur)*100:0; return '<div class="chart-bar-item" style="height:'+v+'%;background:var(--g)" title="'+d+' min"></div>'; }).join('');
   cc.innerHTML=ct.map(function(t){ const cal=t.gpsData.calories||0; const v=maxCal>0?(cal/maxCal)*100:0; return '<div class="chart-bar-item" style="height:'+v+'%;background:var(--r)" title="'+cal+' cal"></div>'; }).join('');
 }
-function exportarDatosGPX(){ if(gpsPoints.length===0){ alert("No hay una ruta activa para exportar"); return; } let gpx='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Libre Pedal">\n<trk>\n<trkseg>\n'; gpsPoints.forEach(function(p){ gpx+='<trkpt lat="'+p.lat+'" lon="'+p.lon+'"></trkpt>\n'; }); gpx+='</trkseg>\n</trk>\n</gpx>'; const blob=new Blob([gpx],{type:'application/gpx+xml'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.gpx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h("Ruta exportada en formato GPX."); }
+function exportarDatosGPX(){ if(gpsPoints.length===0){ lpAviso("No hay una ruta activa para exportar"); return; } let gpx='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Libre Pedal">\n<trk>\n<trkseg>\n'; gpsPoints.forEach(function(p){ gpx+='<trkpt lat="'+p.lat+'" lon="'+p.lon+'"></trkpt>\n'; }); gpx+='</trkseg>\n</trk>\n</gpx>'; const blob=new Blob([gpx],{type:'application/gpx+xml'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.gpx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h("Ruta exportada en formato GPX."); }
 function generarPDFBromas(){ const {jsPDF}=window.jspdf; const doc=new jsPDF(); doc.setFillColor(10,15,29); doc.rect(0,0,210,297,'F'); doc.setTextColor(252,76,2); doc.setFontSize(32); doc.text('Libre Pedal',105,80,{align:'center'}); doc.setFontSize(18); doc.text('Frases de Pistero',105,100,{align:'center'}); doc.setTextColor(255,255,255); doc.setFontSize(10); doc.text('Generado: '+new Date().toLocaleDateString(),105,150,{align:'center'}); const pagina=function(titulo,color,arr){ doc.addPage(); doc.setFillColor(color.r,color.g,color.b); doc.rect(0,0,210,20,'F'); doc.setTextColor(255,255,255); doc.setFontSize(16); doc.text(titulo,105,13,{align:'center'}); doc.setTextColor(0,0,0); doc.setFontSize(11); let y=35; arr.forEach(function(b,i){ if(y>270){ doc.addPage(); y=20; } doc.setFont(undefined,'bold'); doc.text((i+1)+'.',15,y); doc.setFont(undefined,'normal'); const lines=doc.splitTextToSize(b,170); doc.text(lines,25,y); y+=lines.length*6+4; }); }; pagina('LENTO',{r:37,g:99,b:235},frasesLento); pagina('NORMAL',{r:16,g:185,b:129},frasesNormal); pagina('RAPIDO',{r:220,g:38,b:38},frasesRapido); pagina('PARADO',{r:100,g:100,b:100},frasesParado); pagina('MOTIVACIONAL',{r:255,g:215,b:0},frasesMotivacionales); pagina('PROFUNDAS',{r:139,g:92,b:246},frasesProfundas); doc.save('LibrePedal.pdf'); h("PDF descargado."); }
 function calculateDistance(lat1,lon1,lat2,lon2){ const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1000; }
 
@@ -4202,7 +4275,7 @@ function gestionarContactosSOS(){
   html+='<div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin-top:8px"><input id="sosNombre" placeholder="Nombre del contacto"><input id="sosFono" placeholder="Teléfono con código país (569...)"><button class="ab" onclick="agregarContactoSOS()">➕ Agregar contacto</button></div>';
   document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
-function agregarContactoSOS(){ const n=(document.getElementById('sosNombre').value||'').trim(); const f=(document.getElementById('sosFono').value||'').replace(/[^0-9]/g,''); if(!n||f.length<8) return alert('Pon un nombre y un teléfono válido con código de país (ej: 56912345678)'); const cs=contactosSOS(); cs.push({nombre:n,fono:f}); guardarContactosSOS(cs); h('Contacto de emergencia guardado.'); gestionarContactosSOS(); }
+function agregarContactoSOS(){ const n=(document.getElementById('sosNombre').value||'').trim(); const f=(document.getElementById('sosFono').value||'').replace(/[^0-9]/g,''); if(!n||f.length<8) return lpAviso('Pon un nombre y un teléfono válido con código de país (ej: 56912345678)'); const cs=contactosSOS(); cs.push({nombre:n,fono:f}); guardarContactosSOS(cs); h('Contacto de emergencia guardado.'); gestionarContactosSOS(); }
 function borrarContactoSOS(i){ const cs=contactosSOS(); cs.splice(i,1); guardarContactosSOS(cs); gestionarContactosSOS(); }
 /* ===== DETECCIÓN DE CAÍDAS =====
    Usa el acelerómetro del celular (DeviceMotion, gratis, sin hardware extra). Una
@@ -4354,7 +4427,7 @@ async function toggleSeguimientoVivo(){
     _actualizarBtnSeguimientoVivo();
     const url=location.origin+location.pathname.replace(/index\.html$/,'')+'seguir.html?id='+liveTrackId;
     mostrarLinkSeguimientoVivo(url);
-  }catch(e){ alert('No se pudo activar el seguimiento en vivo. Revisa tu conexión.'); }
+  }catch(e){ lpAviso('No se pudo activar el seguimiento en vivo. Revisa tu conexión.'); }
 }
 // Invitar amigos: mensaje corto, honesto, sin exagerar ("comunidad enorme" cuando
 // recién está empezando) — solo lo que la app de verdad hace hoy.
@@ -4418,7 +4491,7 @@ async function _reconectarBLE(device, onReady, tipo, sigueActivo){
   }
 }
 async function conectarPulsometro(){
-  if(!_bleDisponible()){ alert('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
+  if(!_bleDisponible()){ lpAviso('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
   try{
     const device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});
     async function suscribir(server){
@@ -4432,10 +4505,10 @@ async function conectarPulsometro(){
     device.addEventListener('gattserverdisconnected', function(){ bleHR=null; _actualizarBleUI(); if(bleHRDevice===device) _reconectarBLE(device, suscribir, 'Pulsómetro', function(){ return bleHRDevice===device; }); });
     _actualizarBleUI();
     h('Pulsómetro conectado.');
-  }catch(e){ if(e.name!=='NotFoundError') alert('No se pudo conectar el pulsómetro: '+e.message); }
+  }catch(e){ if(e.name!=='NotFoundError') lpAviso('No se pudo conectar el pulsómetro: '+e.message); }
 }
 async function conectarPotenciometro(){
-  if(!_bleDisponible()){ alert('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
+  if(!_bleDisponible()){ lpAviso('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
   try{
     const device=await navigator.bluetooth.requestDevice({filters:[{services:['cycling_power']}]});
     async function suscribir(server){
@@ -4449,7 +4522,7 @@ async function conectarPotenciometro(){
     device.addEventListener('gattserverdisconnected', function(){ blePower=null; _actualizarBleUI(); if(blePowerDevice===device) _reconectarBLE(device, suscribir, 'Potenciómetro', function(){ return blePowerDevice===device; }); });
     _actualizarBleUI();
     h('Potenciómetro conectado.');
-  }catch(e){ if(e.name!=='NotFoundError') alert('No se pudo conectar el potenciómetro: '+e.message); }
+  }catch(e){ if(e.name!=='NotFoundError') lpAviso('No se pudo conectar el potenciómetro: '+e.message); }
 }
 function desconectarBluetooth(){
   if(bleHRDevice && bleHRDevice.gatt.connected) bleHRDevice.gatt.disconnect();
@@ -4550,14 +4623,14 @@ async function _guardarTiempoSegmento(segmento, tiempoMs){
 }
 async function crearSegmentoDesdeRuta(localId){
   const r=_rutaPorId(localId);
-  if(!r || !r.points || r.points.length<2){ alert('Esta ruta no tiene suficientes puntos para ser un segmento.'); return; }
-  const nombre=prompt('Nombre del segmento (ej: Subida al mirador):');
+  if(!r || !r.points || r.points.length<2){ lpAviso('Esta ruta no tiene suficientes puntos para ser un segmento.'); return; }
+  const nombre=await lpPedirTexto('Nombre del segmento:','ej: Subida al mirador');
   if(!nombre || !nombre.trim()) return;
   const inicio=r.points[0], fin=r.points[r.points.length-1];
   try{
     await db.collection('segmentos').add({nombre:nombre.trim(), desc:'', inicio:{lat:inicio.lat,lon:inicio.lon}, fin:{lat:fin.lat,lon:fin.lon}, distanciaKm:r.distance||0, creadoPor:cu, nombreCreador:nombreUsuario||'Ciclista', ts:firebase.firestore.FieldValue.serverTimestamp()});
     h('Segmento "'+nombre.trim()+'" creado. Ya cualquiera puede competir por el mejor tiempo ahí.');
-  }catch(e){ alert('No se pudo crear el segmento.'); }
+  }catch(e){ lpAviso('No se pudo crear el segmento.'); }
 }
 async function verSegmentos(){
   document.getElementById('modalTitle').innerText='🏁 Segmentos';
@@ -4649,14 +4722,14 @@ async function crearReto(){
   const metaKm=parseFloat(document.getElementById('retoMeta').value);
   const dias=parseInt(document.getElementById('retoDias').value,10);
   // Números negativos son "truthy" en JS (!(-5) es false): el chequeo anterior los dejaba pasar.
-  if(!titulo || !(metaKm>0) || !(dias>0)){ alert('Completa título, meta en km y duración en días (ambos mayores a cero)'); return; }
+  if(!titulo || !(metaKm>0) || !(dias>0)){ lpAviso('Completa título, meta en km y duración en días (ambos mayores a cero)'); return; }
   if(_creandoReto) return; // evita duplicar el reto con doble-tap
   _creandoReto=true;
   try{
     await db.collection('retos').add({titulo:titulo, desc:desc, metaKm:metaKm, fechaInicio:Date.now(), fechaFin:Date.now()+dias*86400000, ts:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('retoTitulo').value=''; document.getElementById('retoDesc').value=''; document.getElementById('retoMeta').value=''; document.getElementById('retoDias').value='';
     h('Reto publicado.');
-  }catch(e){ alert('No se pudo crear el reto.'); }
+  }catch(e){ lpAviso('No se pudo crear el reto.'); }
   finally{ _creandoReto=false; }
 }
 /* ===== RECAPITULACIÓN ANUAL (estilo "Wrapped") =====
@@ -4758,15 +4831,15 @@ async function crearRodada(){
   const desc=(document.getElementById('rodadaDesc').value||'').trim();
   const puntoEncuentro=(document.getElementById('rodadaPunto').value||'').trim();
   const fechaStr=document.getElementById('rodadaFecha').value;
-  if(!titulo || !puntoEncuentro || !fechaStr){ alert('Completa título, punto de encuentro y fecha'); return; }
+  if(!titulo || !puntoEncuentro || !fechaStr){ lpAviso('Completa título, punto de encuentro y fecha'); return; }
   const fecha=new Date(fechaStr).getTime();
-  if(!fecha || isNaN(fecha)){ alert('Fecha inválida'); return; }
+  if(!fecha || isNaN(fecha)){ lpAviso('Fecha inválida'); return; }
   try{
     await db.collection('rodadas').add({titulo:titulo, desc:desc, puntoEncuentro:puntoEncuentro, fecha:fecha, creadoPor:cu, nombreCreador:nombreUsuario||'Ciclista', asistentes:[cu], authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('rodadaTitulo').value=''; document.getElementById('rodadaDesc').value=''; document.getElementById('rodadaPunto').value=''; document.getElementById('rodadaFecha').value='';
     h('Rodada creada. Ya se avisa a la comunidad.');
     verRodadas();
-  }catch(e){ alert('No se pudo crear la rodada.'); }
+  }catch(e){ lpAviso('No se pudo crear la rodada.'); }
 }
 async function verRodadas(){
   document.getElementById('modalTitle').innerText='🚵 Rodadas grupales';
@@ -4797,7 +4870,7 @@ async function toggleAsistenciaRodada(id){
     if(idx===-1){ asistentes.push(cu); } else { asistentes.splice(idx,1); }
     await ref.update({asistentes:asistentes});
     verRodadas();
-  }catch(e){ alert('No se pudo actualizar tu asistencia.'); }
+  }catch(e){ lpAviso('No se pudo actualizar tu asistencia.'); }
 }
 // Antes, confirmar "voy" a una rodada era mudo: no había ningún aviso el día que
 // tocaba, así que era fácil olvidarla entre todo lo demás. Revisa al abrir la app
@@ -4868,7 +4941,7 @@ function enviarSOS(){
     const msg='SOS. Soy '+(nombreUsuario||'un ciclista')+' y necesito ayuda.'+(url?(' Mi ubicación: '+url):'');
     if(cs.length===0){
       if(navigator.share){ navigator.share({title:'SOS Libre Pedal', text:msg}).catch(function(){}); }
-      else { try{ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); }catch(e){ alert(msg); } }
+      else { try{ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); }catch(e){ lpAviso(msg); } }
       document.getElementById('modalTitle').innerText='🆘 SOS';
       document.getElementById('modalContent').innerHTML='<p style="color:#ffd0d0">Aún no tienes contactos de emergencia guardados.</p><button class="ab" onclick="gestionarContactosSOS()">Agregar contactos de emergencia</button>';
       document.getElementById('userModal').classList.add('on');
@@ -5082,13 +5155,13 @@ async function enviarFraseComunidad(){
   const inp=document.getElementById('fraseComunidadInput'); if(!inp||!cu) return;
   const texto=inp.value.trim();
   if(!texto) return;
-  if(texto.length>140){ alert('Máximo 140 caracteres.'); return; }
+  if(texto.length>140){ lpAviso('Máximo 140 caracteres.'); return; }
   try{
     await db.collection('frasesComunidad').add({user:cu, nombre:nombreUsuario||'Ciclista', texto:texto, aprobada:false, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
     inp.value='';
     h('¡Gracias! Tu frase queda en revisión.');
     renderMisFrasesComunidad();
-  }catch(e){ alert('No se pudo enviar tu frase, intenta de nuevo.'); }
+  }catch(e){ lpAviso('No se pudo enviar tu frase, intenta de nuevo.'); }
 }
 async function renderMisFrasesComunidad(){
   const c=document.getElementById('misFrasesComunidad'); if(!c||!cu) return;
@@ -5130,11 +5203,11 @@ async function aprobarFrase(id){
       if(frasesNeutro.normal.indexOf(t)===-1) frasesNeutro.normal.push(t);
     }
     h('Frase aprobada, ya suena en la app.'); mostrarRevisionFrases();
-  }catch(e){ alert('No se pudo aprobar.'); }
+  }catch(e){ lpAviso('No se pudo aprobar.'); }
 }
 async function rechazarFrase(id){
-  if(!confirm('¿Eliminar esta frase?')) return;
-  try{ await db.collection('frasesComunidad').doc(id).delete(); mostrarRevisionFrases(); }catch(e){ alert('No se pudo eliminar.'); }
+  if(!await lpConfirmar('¿Eliminar esta frase?')) return;
+  try{ await db.collection('frasesComunidad').doc(id).delete(); mostrarRevisionFrases(); }catch(e){ lpAviso('No se pudo eliminar.'); }
 }
 async function votarComunidad(opcionId){
   if(!cu) return;
@@ -5142,14 +5215,14 @@ async function votarComunidad(opcionId){
     const snap=await db.collection('users').get();
     if(snap.size<5000){ h('La votación se activa al llegar a 5.000 usuarios suscritos. Todavía no llegamos.'); return; }
   }catch(e){ return; }
-  try{ await db.collection('votacionComunidad').doc(cu).set({opcion:opcionId,ts:firebase.firestore.FieldValue.serverTimestamp()}); h('¡Voto registrado! Gracias por construir la comunidad.'); mostrarComunidad(); }catch(e){ alert('No se pudo registrar tu voto, intenta de nuevo.'); }
+  try{ await db.collection('votacionComunidad').doc(cu).set({opcion:opcionId,ts:firebase.firestore.FieldValue.serverTimestamp()}); h('¡Voto registrado! Gracias por construir la comunidad.'); mostrarComunidad(); }catch(e){ lpAviso('No se pudo registrar tu voto, intenta de nuevo.'); }
 }
 async function participarSorteo(){
   if(!cu) return;
-  try{ await db.collection('sorteoComunidad').doc(cu).set({nombre:nombreUsuario||'Ciclista',ts:firebase.firestore.FieldValue.serverTimestamp()}); h('¡Listo, quedaste anotado en el sorteo!'); mostrarComunidad(); }catch(e){ alert('No se pudo registrar tu participación, intenta de nuevo.'); }
+  try{ await db.collection('sorteoComunidad').doc(cu).set({nombre:nombreUsuario||'Ciclista',ts:firebase.firestore.FieldValue.serverTimestamp()}); h('¡Listo, quedaste anotado en el sorteo!'); mostrarComunidad(); }catch(e){ lpAviso('No se pudo registrar tu participación, intenta de nuevo.'); }
 }
 async function reporteDeViaje(){
-  if(!addedDests || addedDests.length===0){ alert('Agrega al menos un destino primero'); return; }
+  if(!addedDests || addedDests.length===0){ lpAviso('Agrega al menos un destino primero'); return; }
   document.getElementById('modalTitle').innerText='🗺️ Reporte del viaje';
   const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Preparando el reporte y el clima de cada parada...</p>'; document.getElementById('userModal').classList.add('on');
   let html='<div style="background:var(--gl);padding:10px;border-radius:10px;margin-bottom:10px"><strong style="color:var(--p)">📍 Paradas ('+addedDests.length+')</strong>';
