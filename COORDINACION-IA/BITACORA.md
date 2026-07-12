@@ -611,6 +611,14 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.17 — 2026-07-11 — Claude (exportar DATOS completo — era must-have)
+Inty: exportar mapas y datos es "sí o sí"; importar es solo gancho de publicidad.
+- HUECO real encontrado: `exportarMisDatos()` (respaldo JSON) guardaba perfil, stats y diario pero
+  **NO las rutas** → el backup estaba INCOMPLETO. Agregado `rutas: rutasLocales()` al objeto exportado.
+  Ahora el respaldo trae rutas + diario + perfil + estadísticas. Botón y mensaje actualizados.
+- Exportar mapas offline (`descargarMapaRuta`, tiles por SW) y GPX (activa + por ruta) ya existían.
+Pendiente natural: poder RESTAURAR ese respaldo (import del JSON) para portabilidad total entre teléfonos.
+
 ## v6.16 — 2026-07-11 — Claude (IMPORTAR GPX = atraer usuarios de Strava/Wikiloc)
 Corrección de dirección: el GPX de v6.15 era EXPORTAR (nuestras rutas → Strava), que sirve para que
 NUESTROS usuarios compartan afuera. Pero el objetivo de Inty es lo contrario: atraer usuarios de
