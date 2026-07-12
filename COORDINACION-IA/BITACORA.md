@@ -4,6 +4,49 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.10 — 2026-07-12 — Claude (sesión 2, autónoma, de madrugada)
+**Segunda auditoría pedida por Inty ("auditoría sobre auditoría"), antes de irse a
+dormir, con permiso total y sin supervisión.** Primero reverifiqué que los 15 fixes
+de la QA v6.03 y todos los cambios de v6.04-v6.09 siguieran intactos (cero
+regresiones — Inty había notado que bugs ya corregidos volvían a aparecer). Todo
+confirmado presente y correcto.
+
+Después lancé 3 agentes en paralelo cazando específicamente el patrón de bug que
+Inty pidió: "algo no está donde debería estar porque no lee de donde corresponde".
+- **Agente 1 (cableado de navegación)**: encontró **1 bug real, y es mío, de la
+  MISMA sesión de hoy**: al agregar el botón "← Atrás" en el header le puse la
+  clase `es-globe` (para heredar el estilo) — pero eso hizo que `document.
+  querySelector('.es-globe')` (usado por el spotlight del tutorial, paso 2 "Tu
+  Esfera") ahora encontrara el botón Atrás PRIMERO (oculto, tamaño 0) en vez del
+  botón 🌐 real. El anillo de luz no se veía donde correspondía. Corregido: el
+  botón 🌐 ahora tiene `id="btnEsferaHeader"` propio, y el tutorial apunta a ese id
+  en vez de a la clase compartida. Reverifiqué LOS 17 PASOS del tutorial uno por
+  uno (no solo el que falló) — todos resuelven a un elemento real y visible.
+- **Agente 2 (datos escritos en un lugar, leídos en otro)**: reportó 2 candidatos
+  (`repairTips` sin lectura, `guiComments` de texto sin lectura). Los investigué a
+  fondo YO MISMO antes de tocar nada — **ambos eran falsos positivos**:
+  `loadRepairTips()` sí existe y sí se llama en el login (línea ~1964 y ~2070), y
+  `subscribeToComments()` sí lee `guiComments` y sí filtra los votos aparte. El
+  agente no las encontró en su búsqueda pero SÍ existen. No se tocó nada — verificar
+  antes de "corregir" evitó romper algo que ya funcionaba.
+- **Agente 3 (botones que llaman funciones inexistentes)**: revisó los ~220
+  `onclick`/`onchange`/`oninput` del archivo contra las funciones declaradas.
+  **Cero encontrados.** Esta capa está sana.
+- **Sub-navegación ("pestañas")**: confirmado que el nuevo botón "← Atrás" (v6.09)
+  funciona para navegación de varios niveles real (probado dash→chat→perfil→atrás→
+  atrás en el navegador). El chat de un amigo específico ya tenía su propio "←
+  Volver a amigos"; las categorías de Guía/Novedades/Hostales ya tienen "Todos"
+  como reset. No hacía falta agregar nada ahí.
+
+**Lección para la próxima ronda (de ambas sesiones)**: antes de reusar una clase CSS
+existente en un elemento nuevo, revisar si algún `querySelector` en JS (spotlight del
+tutorial, principalmente) depende de que esa clase sea única. Es fácil de repetir.
+
+Verificación: sintaxis de `index.html` (0 errores). Los 17 pasos del tutorial
+probados uno por uno en el navegador tras el fix (todos `found:true, visible:true`).
+
+---
+
 ## v6.09 — 2026-07-12 — Claude (sesión 2)
 **Rediseño de navegación pedido por Inty: la Esfera es ahora el "Inicio" permanente,
 Mis viajes muestra lo que de verdad grabaste, y Pistero puede llevarte gráficamente a
