@@ -4,6 +4,52 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.13 — 2026-07-12 — Claude (sesión 2)
+**Fix real del ícono de la app, de raíz, en los 3 lugares donde estaba mal — no
+solo el archivo que se veía, sino el pipeline que lo genera.** Inty reportó que el
+ícono de la app no tenía el logo de Libre Pedal.
+
+**Causa raíz encontrada (no era solo "cambiar un archivo"):**
+1. `icon.svg` (usado por el manifest de la PWA) era un dibujo genérico de una
+   bicicleta/casco hecho a mano — NUNCA fue el logo real de la marca. Se ve en
+   cualquier "agregar a inicio" desde el navegador.
+2. `.github/workflows/build-apk.yml` hace `npx cap add android` en CADA build
+   (la carpeta `android/` no se versiona) y **nunca tuvo un paso que generara un
+   ícono nativo personalizado** — el APK instalado mostraba el ícono GENÉRICO DE
+   CAPACITOR (ni siquiera el bike genérico), porque nada en el pipeline lo
+   sobreescribía. Esto se perdía en cada build, aunque alguien lo hubiera
+   arreglado a mano una vez.
+3. `apple-touch-icon` apuntaba a un `.svg` — Safari de iOS ignora SVG en ese tag
+   (solo acepta PNG/JPEG), así que en iPhone ese ícono nunca funcionó, quedaba
+   en blanco.
+
+**Arreglado:**
+- `icon-192.png` / `icon-512.png` generados a partir de `play-icon-512.png` (el
+  logo real, ya verificado antes) — reemplazan a `icon.svg` en `manifest.json`,
+  favicon/apple-touch-icon de `index.html`, favicon de `bienvenida.html`, `CORE`
+  de `sw.js`, y la lista de `scripts/copy-web.js`. `icon.svg` eliminado (nada lo
+  usa ya).
+- Nuevo `resources/icon.png` (1024×1024) y `resources/splash.png` +
+  `splash-dark.png` (2732×2732, fondo `#0a0f1d` real de la app con el logo
+  centrado — el splash por defecto de `@capacitor/assets` sale con fondo BLANCO
+  si no le das uno propio, se veía fuera de marca).
+- `build-apk.yml`: nuevo paso `npx @capacitor/assets generate --android` entre
+  "Agregar plataforma Android" e "Inyectar permisos nativos" — genera TODAS las
+  densidades de ícono (`mipmap-*`, normal y redondo) y splash (claro/oscuro,
+  retrato/paisaje) en cada build, de ahora en adelante siempre con el logo real.
+  `paths:` del workflow actualizado para disparar rebuild si cambian los
+  archivos de ícono/resources.
+
+Verificación: probado LOCAL antes de tocar el pipeline de CI — corrí
+`npx cap add android` + `npx @capacitor/assets generate --android` de verdad en
+este equipo (no solo escrito, corrido de verdad) y revisé visualmente el ícono cuadrado, el
+redondo, y el splash resultante — los 3 con el logo y colores correctos. La
+carpeta `android/` de prueba se borró después (se regenera sola en cada build,
+está en `.gitignore`, no hacía falta conservarla). Sintaxis de `index.html` y
+`manifest.json` verificada tras los cambios.
+
+---
+
 ## v6.12 — 2026-07-12 — Claude (sesión 2)
 **Respaldo real de la base de datos + migración de auth anónima a tokens
 personalizados.** Inty pidió "respaldar todo el proyecto" y luego "vamos por la

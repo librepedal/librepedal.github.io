@@ -9,7 +9,7 @@ const www = path.join(root, 'www');
 
 fs.mkdirSync(www, { recursive: true });
 
-const files = ['index.html', 'como-funciona.html', 'manifest.json', 'icon.svg', 'version.txt'];
+const files = ['index.html', 'como-funciona.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'version.txt'];
 files.forEach(function (f) {
   const src = path.join(root, f);
   if (fs.existsSync(src)) {

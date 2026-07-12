@@ -23,7 +23,8 @@ Proceso de deploy (repetir cada vez que se sube una versión):
 ```bash
 # 1. Bump version.txt, APP_VERSION en index.html, y CACHE en sw.js (todos +1)
 # 2. Copiar SOLO estos archivos a una carpeta limpia (NUNCA la carpeta completa, tiene tokens):
-#    index.html sw.js manifest.json icon.svg version.txt como-funciona.html _headers logo.jpg
+#    index.html sw.js manifest.json icon-192.png icon-512.png version.txt como-funciona.html _headers logo.jpg
+#    (además: seguir.html privacidad.html terminos.html bienvenida.html logo-transparent.png)
 #    (si agregas un archivo nuevo referenciado en index.html, agrégalo TAMBIÉN aquí y al
 #    array CORE en sw.js — si no, queda roto en producción aunque funcione en local)
 # 3. Deploy:
