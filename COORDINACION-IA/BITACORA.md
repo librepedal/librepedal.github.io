@@ -611,6 +611,16 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.18 — 2026-07-11 — Claude (RESTAURAR respaldo completo — traer tus datos)
+Inty: si un usuario quiere traer sus datos a la app, esa opción debe estar lista y disponible.
+- HUECO crítico: `importarMisDatos` (botón "Restaurar desde archivo" que ya existía) SOLO restauraba el
+  diario → un usuario que cambia de teléfono perdía sus rutas aunque tuviera el respaldo. Ahora restaura
+  **rutas** (merge sin duplicar por localId), **diario**, **perfil** (casco/skin/lente) y **estadísticas**
+  (toma el mayor, nunca baja tu progreso). Verificado el ciclo export→restaurar.
+- Junto con v6.17 (export ya incluye rutas), el ciclo de datos queda cerrado: exportar TODO en un teléfono
+  y restaurarlo completo en otro.
+- Recordatorio: para traer datos de OTRAS apps está el import de GPX (v6.16, Strava/Wikiloc/Komoot).
+
 ## v6.17 — 2026-07-11 — Claude (exportar DATOS completo — era must-have)
 Inty: exportar mapas y datos es "sí o sí"; importar es solo gancho de publicidad.
 - HUECO real encontrado: `exportarMisDatos()` (respaldo JSON) guardaba perfil, stats y diario pero

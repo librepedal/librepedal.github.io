@@ -636,7 +636,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.17</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.18</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.17'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.18'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3477,7 +3477,33 @@ async function sincronizarDiarioNube(){
   }catch(e){}
 }
 function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null}, stats:us, rutas:(typeof rutasLocales==='function'?rutasLocales():[]), diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){} }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h('Respaldo descargado: tus rutas, diario, perfil y estadísticas. Guárdalo a salvo.'); }
-function importarMisDatos(input){ const f=input.files&&input.files[0]; if(!f) return; const r=new FileReader(); r.onload=function(){ try{ const data=JSON.parse(r.result); let n=0; if(data.diario&&data.diario.length){ data.diario.forEach(function(d){ if(d&&d.fecha){ localStorage.setItem('lp_diario_'+(cu||'anon')+'_'+d.fecha, JSON.stringify(d)); n++; } }); } h('Respaldo restaurado: '+n+' días recuperados.'); if(typeof cargarDiario==='function') cargarDiario(); }catch(e){ lpAviso('Ese archivo no es un respaldo válido de Libre Pedal.'); } input.value=''; }; r.readAsText(f); }
+function importarMisDatos(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=function(){
+    try{
+      const data=JSON.parse(r.result);
+      if(!data || (data.app && data.app!=='Libre Pedal')){ lpAviso('Ese archivo no es un respaldo de Libre Pedal.'); input.value=''; return; }
+      let nR=0, nD=0;
+      // RUTAS: se suman a las que ya tienes (sin duplicar por localId) — no pierdes nada.
+      if(Array.isArray(data.rutas) && data.rutas.length && typeof rutasLocales==='function'){
+        const actuales=rutasLocales(); const ids={}; actuales.forEach(function(x){ if(x&&x.localId) ids[x.localId]=1; });
+        const nuevas=data.rutas.filter(function(x){ return x && x.localId && x.points && x.points.length && !ids[x.localId]; });
+        nR=nuevas.length; if(nR) rutasLocalesSet(actuales.concat(nuevas));
+      }
+      // DIARIO
+      if(Array.isArray(data.diario)){ data.diario.forEach(function(d){ if(d&&d.fecha){ try{ localStorage.setItem('lp_diario_'+(cu||'anon')+'_'+d.fecha, JSON.stringify(d)); nD++; }catch(e){} } }); }
+      // PERFIL (casco/skin/lente)
+      if(data.perfil){ try{ if(data.perfil.helmet){ selectedHelmet=data.perfil.helmet; localStorage.setItem('lp_helmet_'+cu, selectedHelmet); } if(data.perfil.skin) selectedSkin=data.perfil.skin; if(data.perfil.lens) selectedLens=data.perfil.lens; }catch(e){} }
+      // ESTADÍSTICAS: nunca bajan tu progreso, toma el valor mayor (km, Darma, calorías).
+      if(data.stats && typeof us==='object'){ try{ ['di','d','c'].forEach(function(k){ if((data.stats[k]||0)>(us[k]||0)) us[k]=data.stats[k]; }); localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){} }
+      input.value='';
+      if(typeof renderRutas==='function') renderRutas(); if(typeof cargarDiario==='function') cargarDiario(); if(typeof au==='function') au();
+      h('Respaldo restaurado: '+nR+' rutas y '+nD+' días de diario, más tu perfil y estadísticas. Todo de vuelta.');
+    }catch(e){ input.value=''; lpAviso('Ese archivo no es un respaldo válido de Libre Pedal.'); }
+  };
+  r.readAsText(f);
+}
 
 /* ===== EXPORT ADMIN: lista completa de usuarios registrados ===== */
 const ADMIN_ID = 'intyrivera_a_gmail_com';   // ID del admin (correo transformado)
