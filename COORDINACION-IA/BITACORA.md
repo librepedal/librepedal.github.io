@@ -611,6 +611,16 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.15 — 2026-07-11 — Claude (GPX completo + exportar rutas guardadas)
+Remate del GPX que la otra sesión dejó básico (solo lat/lon de la ruta activa):
+- `_gpxDeRuta(pts,nombre)` genera GPX 1.1 con namespace + `<name>` + **`<ele>` (elevación)** + **`<time>`
+  (timestamp ISO)** — lo que Strava/Komoot/Wikiloc necesitan para el perfil de altimetría y velocidad.
+- `exportarDatosGPX` (ruta activa) ahora usa el GPX completo.
+- Nuevo `exportarRutaGPX(id)` + **botón "📤 GPX" en cada ruta del historial** → exporta cualquier ruta
+  guardada (local o de la nube), no solo la activa. Verificado: GPX válido con ele+time.
+Nota: revisé el "diálogo nativo restante" que marcaba el grep — es la palabra confirm() DENTRO de un
+comentario, no una llamada real. Los diálogos temáticos de la otra sesión están 100% completos.
+
 ## v6.07 — 2026-07-11 — Claude (mapas nivel apps grandes)
 Pedido de Inty: que los mapas tengan todas las funciones de otras apps y se vean espectaculares.
 En el mapa principal MapLibre (`im()`):
