@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.22'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.23'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5756,7 +5756,12 @@ function handleVoiceCommand(raw){
   // en el comando de emergencia real solo por contener la palabra "sos".
   if(responderPreguntaGeneral(t)) return;
   if(/esfera|men[uú] esfera|lanzador|aplicaciones/.test(t)){ abrirEsfera(); h('Aquí está la esfera de aplicaciones.'); return; }
-  if(/(guarda|guardar|graba|grabar)( el| la| mi)? (viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
+  // (me)? y una ventana de hasta 20 caracteres (en vez de una lista fija de
+  // artículos) para que "guárdame el viaje" y "guarda ESTA ruta" también calcen —
+  // con la lista fija anterior (solo "el/la/mi") esas dos frases tan naturales no
+  // matcheaban NADA y terminaban en otro comando por accidente (abrían Rutas/Viajes
+  // en vez de guardar), un guardado real que el ciclista pide y no pasa nada.
+  if(/(guarda|guardar|graba|grabar)(me)?\b.{0,20}\b(viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
   if(/sigamos|sigue con el viaje|continuar el viaje|contin[uú]a el viaje|retoma|reanuda/.test(t)){ if(!ig && !document.getElementById('nav-screen').classList.contains('active')){ toggleGPS(); } else { h('Seguimos, ya estoy registrando tu viaje.'); } return; }
   if(/treki|trakea|trackea|\btrack|sigue la ruta|sigue registrando|sigue grabando/.test(t)){ if(!ig){ toggleGPS(); } else { h('Sigo registrando tu ruta, tranquilo.'); } return; }
   // OJO: "busca"/"encuentra" ANTES exigían el complemento de lugar (" la dirección de",
@@ -5786,7 +5791,11 @@ function handleVoiceCommand(raw){
   if(/estadistica|grafico|progreso/.test(t)){ cv('stats'); h("Tus estadísticas."); return; }
   if(/personaliz|perfil|casco|personaje/.test(t)){ cv('customize'); h("Personaliza tu personaje."); return; }
   if(/\bg\.?\s?p\.?\s?s\b|grabar|gepe ese/.test(t)){ toggleGPS(); return; }
-  if(/cuanto|kilometro|distancia/.test(t)){ h("Llevas "+us.di.toFixed(1)+" kilómetros y "+Math.round(us.c)+" calorías quemadas."); return; }
+  // Antes "cuanto" solo (sin nada más) disparaba esto — se comía CUALQUIER
+  // pregunta con "cuánto" (cuánto me falta, cuánto se demora, cuánto cuesta...),
+  // dando la respuesta de kilómetros totales sin que tuviera nada que ver.
+  // Ahora exige que la pregunta sea realmente sobre distancia/kilómetros.
+  if(/cuant[oa]s? (kil[oó]metros?|km)|kil[oó]metro|distancia (recorrida|llevo|voy)|que distancia/.test(t)){ h("Llevas "+us.di.toFixed(1)+" kilómetros y "+Math.round(us.c)+" calorías quemadas."); return; }
   // Anclado (^...$) a propósito: "pendiente"/"subida"/"bajada" sueltas o en frases
   // cortas de consulta son sobre el terreno, NO un nombre de lugar — sin este anclaje
   // cualquiera de estas palabras caía en el comando genérico de "arma un viaje a

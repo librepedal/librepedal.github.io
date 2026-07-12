@@ -4,6 +4,33 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.23 — 2026-07-12 — Claude (sesión 2, barrido #1: cierre de handleVoiceCommand)
+Última pasada de variantes sobre `handleVoiceCommand` antes de cerrar la función #1
+del barrido completo.
+
+**2 bugs más encontrados y corregidos:**
+- **"guárdame el viaje" / "guarda esta ruta" no guardaban nada** — el patrón viejo
+  `(guarda|guardar|graba|grabar)( el| la| mi)? (viaje|ruta)` exigía que el artículo
+  fuera EXACTAMENTE "el"/"la"/"mi" pegado al verbo. "guárdame" (con el "me" pegado)
+  y "esta ruta" (con "esta", no en la lista) no calzaban con nada — la orden de
+  guardar el viaje, la más importante de toda esta función, se perdía en silencio
+  (con el fix de mapa/rutas de v6.22 ahora abrían una vista en vez de guardar, que
+  es mejor pero sigue sin ser lo que se pidió). Regex nueva: `(guarda|guardar|graba|
+  grabar)(me)?\b.{0,20}\b(viaje|ruta)` — acepta el sufijo "me" y hasta 20 caracteres
+  de por medio en vez de una lista fija de artículos.
+- **"cuánto" se comía cualquier pregunta con esa palabra** — `/cuanto|kilometro|
+  distancia/` respondía SIEMPRE con el resumen de km/calorías totales, aunque
+  preguntaras "cuánto me falta" o "cuánto se demora la bajada" (nada que ver).
+  Acotado a que la pregunta sea realmente sobre distancia/kilómetros; el resto cae
+  ahora a la IA de Pistero, que sí puede intentar responder algo relevante.
+
+Con esto, `handleVoiceCommand` (silencio, guardar, continuar/trackear, mapa,
+rutas, viajes, guía/hospedaje, pendiente/subida/bajada, distancia, SOS, tutorial)
+quedó probado variante por variante contra el código real en el navegador, no
+solo el caso feliz. **Función #1 (GPS y navegación) — CERRADA.**
+
+Deploy: `librepedal.cl/version.txt` → `6.23` confirmado en vivo.
+
 ## v6.22 — 2026-07-12 — Claude (sesión 2, barrido #1: metodología "buscar variantes")
 Inty aclaró el método para todo el barrido: pendiente/bajada (v6.21) era solo UN
 EJEMPLO — para cada función hay que buscar variantes de frases/uso reales,
