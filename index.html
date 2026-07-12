@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.24'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.25'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3713,8 +3713,14 @@ function sugerirDestino(q){
     const cc=await paisDelUsuario(); if(cc) url+='&countrycodes='+cc;
     if(currentUserLocation){ const d=3,lo=currentUserLocation.lon,la=currentUserLocation.lat; url+='&viewbox='+(lo-d)+','+(la+d)+','+(lo+d)+','+(la-d); }
     let g=[]; try{ const r=await fetch(url); g=await r.json(); }catch(e){}
-    if(!g||!g.length){ box.innerHTML='<div class="sug" style="color:#7d8ba0">Sin resultados para "'+q+'"</div>'; box.classList.add('show'); return; }
-    box.innerHTML=g.map(function(it){ const parts=(it.display_name||'').split(','); const titulo=parts[0]; const resto=parts.slice(1,4).join(',').trim(); const nm=(it.display_name||'').replace(/['"\\]/g,' ').slice(0,90); return '<div class="sug" onclick="elegirSugerencia('+it.lat+','+it.lon+',\''+nm+'\')"><strong>'+titulo+'</strong>'+(resto?'<br><small>'+resto+'</small>':'')+'</div>'; }).join('');
+    if(!g||!g.length){ box.innerHTML='<div class="sug" style="color:#7d8ba0">Sin resultados para "'+escapeHTML(q)+'"</div>'; box.classList.add('show'); return; }
+    // titulo/resto se muestran como HTML: igual que en el resto de la app (rutas,
+    // chat, comunidad) van por escapeHTML antes de insertarse — display_name viene
+    // de OpenStreetMap, una fuente externa editable por cualquiera, y antes se
+    // insertaba directo sin escapar (inconsistente con el resto del código, que sí
+    // lo hace en todos lados). "nm" es aparte: solo se usa dentro del atributo
+    // onclick como string de JS, ahí lo que protege es sacar las comillas, no escapeHTML.
+    box.innerHTML=g.map(function(it){ const parts=(it.display_name||'').split(','); const titulo=escapeHTML(parts[0]); const resto=escapeHTML(parts.slice(1,4).join(',').trim()); const nm=(it.display_name||'').replace(/['"\\]/g,' ').slice(0,90); return '<div class="sug" onclick="elegirSugerencia('+it.lat+','+it.lon+',\''+nm+'\')"><strong>'+titulo+'</strong>'+(resto?'<br><small>'+resto+'</small>':'')+'</div>'; }).join('');
     box.classList.add('show');
   }, 350);
 }

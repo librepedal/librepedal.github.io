@@ -4,6 +4,35 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.25 — 2026-07-12 — Claude (sesión 2, barrido #2: Inicio / Esfera de apps)
+Función #2 del barrido completo. A diferencia de la #1 (GPS/navegación, con muchos
+bugs de comandos de voz), esta función resultó sólida en su núcleo — reviso y dejo
+constancia de lo verificado, no solo de lo corregido.
+
+**Verificado sin bugs** (con pruebas reales en el navegador, DOM real):
+- Los 11 íconos de la esfera (`esferaItems`) — cada uno probado, ningún enlace roto
+  ni función con nombre mal escrito.
+- `cv()`/`volverAtras()` — pila de historial de navegación probada con una secuencia
+  real de 4 vistas + reintentos: no duplica al reabrir la misma vista, retrocede en
+  el orden correcto, no se rompe al llegar al final de la pila.
+- Fondo espacial de la esfera (cosmético con Darma) — sí exige el desbloqueo real
+  antes de activarse, no hay forma de saltárselo.
+- Contador "Viajes" de la esfera — confirmé que NO duplica cuenta entre viaje rápido
+  (`startQuickTrip`, guarda en `rutasLocales()`) y viaje planificado (`trips` de
+  Firestore): son caminos de guardado distintos y mutuamente excluyentes.
+
+**1 bug real encontrado y corregido — XSS en las sugerencias de destino:**
+`sugerirDestino()` insertaba el nombre del lugar (`display_name` de Nominatim/
+OpenStreetMap, una fuente externa editable por cualquiera) directo en
+`innerHTML`, sin `escapeHTML()` — inconsistente con el resto de la app, que sí lo
+hace en todos lados (rutas, chat, comunidad). También el mensaje "Sin resultados
+para 'X'" insertaba lo que el usuario escribió sin escapar. Probado con un
+`display_name` malicioso (`<img src=x onerror=alert(1)>`) simulando la respuesta
+de Nominatim: antes se habría insertado como HTML real, ahora sale como texto
+escapado, confirmado en el navegador con la respuesta real interceptada.
+
+Deploy: `librepedal.cl/version.txt` → `6.25` confirmado en vivo.
+
 ## v6.24 — 2026-07-12 — Claude (sesión 2, barrido #1: ampliar vocabulario de Pistero)
 Inty pidió ampliar el vocabulario: "hay muchas formas de referirse a un mismo tema,
 cuando se le pida a Pistero debe reconocer todo". Pasada completa por
