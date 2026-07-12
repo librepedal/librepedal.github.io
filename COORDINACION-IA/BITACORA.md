@@ -4,6 +4,61 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.14 — 2026-07-12 — Claude (sesión 2, continuación)
+**Cronómetro visible en GPS libre + reemplazo de los 77 diálogos nativos del
+navegador (alert/confirm/prompt) por diálogos con el tema de la app.** Inty
+notó que faltaba un cronómetro, y pidió resolver "lo genérico" de la app.
+
+**1. Cronómetro en GPS libre** (`index.html`): existía `navTime` en la
+navegación turn-by-turn, pero el modo "GPS libre" (el más usado, sin destino
+fijo) no mostraba ningún tiempo mientras se pedaleaba. Se agregó `#dashCrono`
+en el dashboard, tickeando cada segundo de verdad (`setInterval`, no atado a
+la llegada de un fix GPS) y reusando `tripStartTime`/`tiempoActivoMs()` —el
+mismo mecanismo de auto-pausa que ya tenía la navegación—, así que respeta
+las paradas sin más código nuevo. Arranca en `toggleGPS()` (ambas rutas:
+background-geo y `watchPosition`) y se apaga tanto al detener el GPS como al
+empezar una navegación a destino (`_detenerGpsLibreSiActivo()`, que antes
+apagaba el GPS libre "por debajo" sin pasar por `toggleGPS()` — sin este
+segundo punto de apagado el cronómetro se habría quedado tickeando fantasma).
+
+**2. Diálogos nativos → temáticos**: 68 `alert()`, 7 `confirm()` y 2 `prompt()`
+(3 llamadas) rompían la identidad visual — aparecen sin el tema oscuro/naranja
+de la marca, genéricos del navegador. Nuevo sistema (`lpAviso`, `lpConfirmar`,
+`lpPedirTexto`) cerca de `closeModal()`: `lpAviso` usa el bocadillo de Pistero
+(`mostrarBocadillo`, ya existía); `lpConfirmar`/`lpPedirTexto` son un modal
+propio nuevo (`#lpDialog`, con el borde naranja y fondo oscuro de siempre) que
+devuelven una `Promise`, así que los call sites quedaron casi idénticos
+(`if(await lpConfirmar(...))` en vez de `if(confirm(...))`) — las funciones
+que no eran `async` se marcaron `async` (todas se llaman solo desde `onclick`,
+verificado antes de tocar cada una, sin nada que dependa de un valor de
+retorno síncrono).
+
+**Reemplazo de `alert(` → `lpAviso(` hecho con un script (texto exacto,
+case-sensitive) en vez de a mano en 68 sitios — se verificó antes que no
+había colisión con identificadores como `showAlert(`/`addRouteAlert(`
+(mayúscula distinta, no matchean) y después que no quedó ningún `lpAviso`
+pegado a una letra (corrupción de nombre). Los 7 `confirm()` y 2 `prompt()`
+sí se revisaron uno por uno a mano (contexto real, no todos eran igual de
+simples: `irAlPuntoYNavegar` tenía el `confirm` dentro de un `setTimeout`
+no-async, `finishTrip`/`eliminarNovedad`/`rechazarFrase` ya eran async).
+
+**Verificación**: `node --check` sobre el `<script>` extraído confirma sintaxis
+válida; grep confirma cero `alert(`/`confirm(`/`prompt(` nativos restantes
+(salvo el comentario que los menciona) y ninguna función duplicada. La
+verificación EN VIVO en el navegador (Browser pane) no se pudo completar esta
+vez: `javascript_tool` y `computer` devolvieron error de "modelo
+temporalmente no disponible" / timeout en cada intento — parece una caída
+puntual de la infraestructura de esas herramientas, no algo de la app (el
+`get_page_text` y `read_page`, que sí funcionaron, mostraron la app cargando
+y renderizando bien). **Queda pendiente una prueba real rápida** (abrir GPS
+libre y ver que el cronómetro corra; disparar algún `lpAviso`/`lpConfirmar`
+real, ej. borrar una ruta) — deploy ya está en producción, es de bajo riesgo
+si algo se ve raro con avisar.
+
+Deploy: Cloudflare Pages (`librepedal.cl/version.txt` → `6.14` confirmado en
+vivo) + push a `main` (dispara rebuild del APK con el mismo pipeline
+verificado en v6.13).
+
 ## v6.13 — 2026-07-12 — Claude (sesión 2)
 **Fix real del ícono de la app, de raíz, en los 3 lugares donde estaba mal — no
 solo el archivo que se veía, sino el pipeline que lo genera.** Inty reportó que el
