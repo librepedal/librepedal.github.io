@@ -4,6 +4,38 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.24 — 2026-07-12 — Claude (sesión 2, barrido #1: ampliar vocabulario de Pistero)
+Inty pidió ampliar el vocabulario: "hay muchas formas de referirse a un mismo tema,
+cuando se le pida a Pistero debe reconocer todo". Pasada completa por
+`handleVoiceCommand` agregando sinónimos/variantes chilenas naturales a cada
+comando, todo verificado en el navegador (no solo agregado a ciegas).
+
+**2 hallazgos de seguridad, los más importantes de esta pasada:**
+- **Decir solo "¡ayuda!" abría el TUTORIAL en vez de disparar el SOS.** El
+  tutorial tenía "ayuda" sin anclar y se revisaba antes de tener nada más
+  específico. Ahora "ayuda" sola (anclada, sin nada más) dispara `enviarSOS()`
+  — que además ya estaba bien diseñado: no manda nada solo, abre una pantalla
+  de "a quién avisar" (WhatsApp), así que ampliar sus gatillos no tiene riesgo
+  de sobre-alertar. "necesito ayuda con la app" sigue yendo al tutorial (se
+  probó explícitamente que NO dispara el SOS por accidente).
+- **"estoy herido", "me caí", "no puedo levantarme", "necesito una ambulancia"
+  armaban un viaje falso** en vez de activar la emergencia — mismo bug de toda
+  la función, pero en el peor lugar posible.
+
+**Resto de variantes agregadas y verificadas** (mapa: "dónde estoy"/"mi
+ubicación"; amigos: "solicitudes de amistad"; guardar: "termina/finaliza/acaba
+el viaje"; destino: "trázame la ruta a…", "parte para…", "arranca hacia…";
+esfera: "menú principal"; inicio: "home"; taller: "se me pinchó la rueda";
+guía: "dónde puedo acampar" — este último necesitó una segunda vuelta porque
+"dónde acampar" (sin "puedo" de por medio) tampoco calzaba, mismo patrón de bug
+otra vez, mismo fix de tolerancia de espacio; stats: "cómo voy"; voz: "quiero
+que hables").
+
+Verificado que nada de esto rompió destinos reales (Cuesta Barriga, ruta 68) ni
+comandos ya arreglados (cállate, pendiente).
+
+Deploy: `librepedal.cl/version.txt` → `6.24` confirmado en vivo.
+
 ## v6.23 — 2026-07-12 — Claude (sesión 2, barrido #1: cierre de handleVoiceCommand)
 Última pasada de variantes sobre `handleVoiceCommand` antes de cerrar la función #1
 del barrido completo.

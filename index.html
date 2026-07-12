@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.23'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.24'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5750,20 +5750,20 @@ function handleVoiceCommand(raw){
   // callarse, Pistero armaba un viaje falso a "callate por favor" (mismo bug que
   // pendiente/mapa/rutas más abajo, pero en el comando que más urge que funcione:
   // silenciar la voz mientras vas pedaleando).
-  if(/^(detente|para|ya)\.?$/.test(t) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar/.test(t)){ pararVoz(); vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
+  if(/^(detente|para|ya)\.?$/.test(t) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(t)){ pararVoz(); vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
   // Las preguntas ("qué es...", "cómo...", "cada cuánto...") se resuelven ANTES que
   // los comandos sueltos de más abajo: si no, por ejemplo "qué hace el botón SOS" caía
   // en el comando de emergencia real solo por contener la palabra "sos".
   if(responderPreguntaGeneral(t)) return;
-  if(/esfera|men[uú] esfera|lanzador|aplicaciones/.test(t)){ abrirEsfera(); h('Aquí está la esfera de aplicaciones.'); return; }
+  if(/esfera|men[uú]( principal)?|lanzador|aplicaciones|todas las apps/.test(t)){ abrirEsfera(); h('Aquí está la esfera de aplicaciones.'); return; }
   // (me)? y una ventana de hasta 20 caracteres (en vez de una lista fija de
   // artículos) para que "guárdame el viaje" y "guarda ESTA ruta" también calcen —
   // con la lista fija anterior (solo "el/la/mi") esas dos frases tan naturales no
   // matcheaban NADA y terminaban en otro comando por accidente (abrían Rutas/Viajes
   // en vez de guardar), un guardado real que el ciclista pide y no pasa nada.
-  if(/(guarda|guardar|graba|grabar)(me)?\b.{0,20}\b(viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
-  if(/sigamos|sigue con el viaje|continuar el viaje|contin[uú]a el viaje|retoma|reanuda/.test(t)){ if(!ig && !document.getElementById('nav-screen').classList.contains('active')){ toggleGPS(); } else { h('Seguimos, ya estoy registrando tu viaje.'); } return; }
-  if(/treki|trakea|trackea|\btrack|sigue la ruta|sigue registrando|sigue grabando/.test(t)){ if(!ig){ toggleGPS(); } else { h('Sigo registrando tu ruta, tranquilo.'); } return; }
+  if(/(guarda|graba|termina|finaliza|acaba)(r|me)?\b.{0,20}\b(viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
+  if(/sigamos|sigue con el viaje|continuar el viaje|contin[uú]a el viaje|retoma|reanuda|quiero seguir pedaleando|dale que sigo/.test(t)){ if(!ig && !document.getElementById('nav-screen').classList.contains('active')){ toggleGPS(); } else { h('Seguimos, ya estoy registrando tu viaje.'); } return; }
+  if(/treki|trakea|trackea|\btrack|sigue la ruta|sigue registrando|sigue grabando|registra mi recorrido|anota mi ruta|inicia el registro/.test(t)){ if(!ig){ toggleGPS(); } else { h('Sigo registrando tu ruta, tranquilo.'); } return; }
   // OJO: "busca"/"encuentra" ANTES exigían el complemento de lugar (" la dirección de",
   // " ruta a", " lugar") de forma OPCIONAL — por eso CUALQUIER pregunta que arrancara
   // con "busca..." o "encuentra..." (ej. "búscame información sobre...", "encuentra un
@@ -5771,25 +5771,30 @@ function handleVoiceCommand(raw){
   // inexistente, fallaba el geocode y terminaba en "no encontré ese destino". Ahora ese
   // complemento es OBLIGATORIO: sin él, la frase sigue de largo hasta el enrutador de
   // preguntas/órdenes de más abajo, que es lo que corresponde.
-  let m=t.match(/(?:planifica(?:r)?(?:me)?(?: mi| el| un)? viaje (?:a|hasta|hacia|para)|ir (?:a|hasta|hacia)|llevame (?:a|hasta|hacia)|llevarme a|lleva(?:me)? (?:a|hasta|hacia)|anda(?:me)? a|navega(?:r|me)? (?:a|hasta|hacia)|guia(?:r|me)? (?:a|hasta|hacia)|vamos (?:a|hasta)|vamonos a|quiero (?:ir|llegar) (?:a|hasta|hacia)|voy a|ruta (?:a|hasta|hacia|para)|como (?:llego|voy) a|llegar a|necesito ir a|busca(?:r|me)?(?: la| el)? (?:direccion(?: de)?|ruta a|lugar)|encuentra(?: la)? direccion(?: de)?|direccion de)\s+(.+)/);
+  let m=t.match(/(?:planifica(?:r)?(?:me)?(?: mi| el| un)? viaje (?:a|hasta|hacia|para)|ir (?:a|hasta|hacia)|llevame (?:a|hasta|hacia)|llevarme a|lleva(?:me)? (?:a|hasta|hacia)|anda(?:me)? a|navega(?:r|me)? (?:a|hasta|hacia)|guia(?:r|me)? (?:a|hasta|hacia)|vamos (?:a|hasta)|vamonos a|quiero (?:ir|llegar|pedalear) (?:a|hasta|hacia)|voy a|arranca(?:r|me)? (?:a|hasta|hacia)|parte(?:me)? (?:a|hasta|hacia|para)|salgo (?:a|hasta|hacia|para)|trazame (?:la ruta|el camino) (?:a|hasta|hacia)|muestrame el camino (?:a|hasta|hacia)|ruta (?:a|hasta|hacia|para)|como (?:llego|voy) a|llegar a|necesito ir a|busca(?:r|me)?(?: la| el)? (?:direccion(?: de)?|ruta a|lugar)|encuentra(?: la)? direccion(?: de)?|direccion de)\s+(.+)/);
   if(m && m[1]){ let dest=limpiarDestino(m[1]); if(dest.length<2){ h('¿A qué lugar te llevo?'); return; } cv('trips'); const qd=document.getElementById('quick-dest'); if(qd) qd.value=dest; h("Perfecto, busco la ruta a "+dest+" y te la marco en el mapa."); startQuickTrip(); return; }
-  if(/\binicio\b|panel|principal|tablero/.test(t)){ cv('dash'); abrirEsfera(); h("Vamos al inicio."); return; }
+  if(/\binicio\b|panel|principal|tablero|\bhome\b/.test(t)){ cv('dash'); abrirEsfera(); h("Vamos al inicio."); return; }
   // Sin anclar (antes eran ^...$ exactos): "muéstrame el mapa", "ábreme mis rutas",
   // "quiero ver mis viajes" no calzaban con el patrón exacto y cualquiera de esas
   // frases tan naturales de pedir esto caían en el mismo bug que pendiente/bajada —
   // intentaba armar un viaje real a un destino llamado literalmente "muestrame el
   // mapa". Igual que chat/taller/stats ya funcionan (más abajo, sin anclar), buscar
   // la palabra clave en cualquier parte de la frase es más robusto y consistente.
-  if(/\bmapa\b/.test(t)){ cv('map'); h("Aquí está el mapa."); return; }
+  // "dónde estoy/ando/me encuentro" son formas naturales de pedir el mapa con tu
+  // ubicación — antes ninguna calzaba con nada y terminaban armando un viaje falso
+  // a "donde estoy" (mismo bug que toda esta función).
+  if(/\bmapa\b|d[oó]nde (estoy|ando|me encuentro)|mi ubicaci[oó]n/.test(t)){ cv('map'); h("Aquí está el mapa."); return; }
   if(/\brutas?\b/.test(t)){ cv('routes'); h("Tus rutas."); return; }
   if(/\bviajes?\b|navegaci[oó]n/.test(t)){ cv('trips'); h("Tus viajes."); return; }
   if(/chat|social|mensaje/.test(t)){ cv('chat'); h("Abriendo el chat."); return; }
-  if(/amigo/.test(t)){ cv('chat'); showFriendsList(); return; }
+  // "amistad" (solicitudes de amistad) no comparte raíz con "amigo" como texto —
+  // antes se perdía en el mismo bug de destino falso.
+  if(/amigo|amistad/.test(t)){ cv('chat'); showFriendsList(); return; }
   if(/ciclistas?( cerca| en el mapa)?$|busca ciclistas|d[oó]nde hay ciclistas/.test(t)){ cv('map'); h("Aquí está el mapa con los ciclistas de la comunidad."); return; }
-  if(/taller|reparar|arreglar|mecanic/.test(t)){ cv('mac'); h("El taller MacGyver."); return; }
-  if(/gu[ií]a|hospedaje|hostal|hostel|alojamiento/.test(t)){ cv('gui'); h("La CicloGuía."); return; }
-  if(/estadistica|grafico|progreso/.test(t)){ cv('stats'); h("Tus estadísticas."); return; }
-  if(/personaliz|perfil|casco|personaje/.test(t)){ cv('customize'); h("Personaliza tu personaje."); return; }
+  if(/taller|reparar|arreglar|mecanic|se me (pinch|rompi[oó])|bicicleta rota|no funciona mi bici/.test(t)){ cv('mac'); h("El taller MacGyver."); return; }
+  if(/gu[ií]a|hospedaje|hostal|hostel|alojamiento|d[oó]nde.{0,15}(dormir|acampar)|\bacampar\b|camping/.test(t)){ cv('gui'); h("La CicloGuía."); return; }
+  if(/estadistica|grafico|progreso|mi avance|mi rendimiento|como voy/.test(t)){ cv('stats'); h("Tus estadísticas."); return; }
+  if(/personaliz|perfil|casco|personaje|mi avatar/.test(t)){ cv('customize'); h("Personaliza tu personaje."); return; }
   if(/\bg\.?\s?p\.?\s?s\b|grabar|gepe ese/.test(t)){ toggleGPS(); return; }
   // Antes "cuanto" solo (sin nada más) disparaba esto — se comía CUALQUIER
   // pregunta con "cuánto" (cuánto me falta, cuánto se demora, cuánto cuesta...),
@@ -5807,9 +5812,14 @@ function handleVoiceCommand(raw){
   if(/pausa la m[uú]sica|para la m[uú]sica|detén la m[uú]sica|apaga la m[uú]sica/.test(t)){ lpMusic.pause(); h("Música pausada."); return; }
   if(/pon m[uú]sica|reproduce m[uú]sica|dale m[uú]sica|m[uú]sica por favor|^m[uú]sica$/.test(t)){ lpMusic.play(); h("¡Que suene!"); return; }
   if(/cambia la (m[uú]sica|radio|canci[oó]n)|siguiente (canci[oó]n|radio)|otra (canci[oó]n|radio)/.test(t)){ lpMusic.next(); h("Cambiando."); return; }
-  if(/activa la voz|enciende la voz|\bhabla\b/.test(t)){ vozActiva=true; localStorage.setItem('lp_voz','on'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-high"></i> Voz: ON'; h("Voz activada."); return; }
-  if(/\bsos\b|emergencia|auxilio|socorro|ayuda urgente|tuve un accidente|me accidente/.test(t)){ enviarSOS(); return; }
-  if(/tutorial|ayuda|como funciona/.test(t)){ startTutorial(); return; }
+  if(/activa la voz|enciende la voz|\bhabla\b|vuelve a hablar|quiero que hables|activa el audio/.test(t)){ vozActiva=true; localStorage.setItem('lp_voz','on'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-high"></i> Voz: ON'; h("Voz activada."); return; }
+  // "ayuda" SOLA (anclada, sin nada más) es un grito de auxilio real — antes cualquier
+  // "¡ayuda!" abría el TUTORIAL en vez de la alerta de emergencia, porque "ayuda" sin
+  // anclar más abajo (tutorial) se revisaba antes que nada más específico. "estoy
+  // herido"/"me caí"/"no puedo moverme" también armaban un viaje falso (mismo bug de
+  // siempre) en vez de disparar el SOS, que es justo lo que corresponde acá.
+  if(/\bsos\b|emergencia|auxilio|socorro|ayuda urgente|^ay[uú]da[.!]?$|tuve un accidente|me accident|me atropell|\bme cai\b|me lastim|estoy herido|no puedo (moverme|levantarme)|necesito una? ambulancia/.test(t)){ enviarSOS(); return; }
+  if(/tutorial|ayuda|como funciona|no entiendo (la app|esto)/.test(t)){ startTutorial(); return; }
   // Pregunta u orden libre que ningún comando rápido reconoció → la responde la IA
   // avanzada de Pistero (antes esto se convertía en un destino por error: decir
   // "cuánta agua llevo que tomar" armaba un viaje a "agua llevo que tomar").
