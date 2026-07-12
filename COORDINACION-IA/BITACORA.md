@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.32 — 2026-07-13 — Claude (sesión 2, barrido #6: Social)
+Función #6 del barrido completo (amigos, mensajes privados, chat). El chat 1-a-1
+(`abrirChatAmigo`) ya tenía "← Volver a amigos" bien hecho desde antes — buen
+precedente a seguir. `sendFriendRequest` ya revisa duplicados antes de crear.
+
+**1 instancia del mismo bug de navegación de v6.31**: "Ciclistas en la
+comunidad" (buscar gente nueva para agregar, se abre desde Amigos → "Buscar
+ciclistas"/"Agregar más") no tenía "← Volver a amigos" — mismo patrón que
+Comunidad, reusando el mismo sistema `_modalVolverA`/`_btnVolverModal()`.
+
+**Caso con 4 entradas distintas — `verPerfilUsuario()`**: se llama desde Amigos,
+Ranking, y 2 popups del mapa (radar de ciclistas / navegación activa). Los 2
+primeros SÍ necesitan volver (a Amigos o a Ranking respectivamente); los 2 del
+mapa NO tienen una "pantalla padre" del modal — ahí la "✕" ya te deja de vuelta
+en el mapa correctamente, un botón "Volver" habría sido confuso. Se agregó un
+segundo parámetro opcional (`verPerfilUsuario(id, volverA)`) — Amigos pasa
+`'showFriendsList'`, Ranking pasa `'mostrarRanking'`, los 2 popups del mapa no
+pasan nada (mismo patrón ya usado para `mostrarTienda()` en v6.31).
+
+Verificado en el navegador con la secuencia completa: Amigos → Buscar
+ciclistas → Volver → Amigos; y perfil abierto desde Amigos (con botón) vs
+desde el mapa (sin botón), ambos casos correctos.
+
+Deploy: `librepedal.cl/version.txt` → `6.32` confirmado en vivo.
+
 ## v6.31 — 2026-07-13 — Claude (sesión 2, navegación de Comunidad + votación abierta)
 Inty: "si veo un apartado (ej. records) y vuelvo atrás, me lleva a Inicio y tengo
 que volver a entrar a Comunidad para ver los otros ítems". Confirmado con el
