@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.19'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.20'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2899,9 +2899,22 @@ async function toggleAhorroGPS(){
   // Si el GPS ya está corriendo (nativo, en segundo plano), lo reinicia con la nueva
   // frecuencia sin que el usuario tenga que apagar y prender el viaje — cuidando de
   // mantener el callback correcto (navegación turn-by-turn vs GPS libre).
+  const opts=gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000,timeout:10000};
   if(lpBackgroundGeo.disponible()){
     if(document.getElementById('nav-screen').classList.contains('active')){ await lpBackgroundGeo.restart(_navBgCallback); }
     else if(ig){ await lpBackgroundGeo.restart(); }
+  } else {
+    // Navegador (sin plugin nativo): watchPosition no relee sus opciones solo con
+    // cambiar la variable — hay que cortar el watch viejo y abrir uno nuevo con las
+    // opciones nuevas, si no el botón dice "cambié la precisión" pero en los hechos
+    // sigue exactamente igual hasta que se apague y prenda el GPS de nuevo.
+    if(document.getElementById('nav-screen').classList.contains('active') && gpsWatchId){
+      navigator.geolocation.clearWatch(gpsWatchId);
+      gpsWatchId=navigator.geolocation.watchPosition(_navGeoCallback,function(err){ console.error("GPS:",err); },opts);
+    } else if(ig && gw){
+      navigator.geolocation.clearWatch(gw);
+      gw=navigator.geolocation.watchPosition(ug,hg,opts);
+    }
   }
   h(gpsAhorro?'Ahorro de GPS activado. Va a gastar menos batería, con un poco menos de precisión.':'Ahorro de GPS desactivado. Vuelvo a la máxima precisión.');
 }
@@ -3788,6 +3801,9 @@ async function descargarMapaRuta(){
   navigator.serviceWorker.controller.postMessage({type:'PRECACHE_TILES',urls:urls});
 }
 function _navBgCallback(location){ _navPosUpdate(location.latitude, location.longitude, location.accuracy, (location.speed&&location.speed>0.7)?location.speed*3.6:0, location.altitude); }
+// Nombrada (no anónima) para poder reusarla al reiniciar el watchPosition web
+// cuando cambia el Ahorro de GPS a mitad de una navegación (ver toggleAhorroGPS).
+function _navGeoCallback(pos){ _navPosUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, (pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0, pos.coords.altitude); }
 function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   // Mismo resguardo que ug(): coordenadas corruptas (null/NaN) no deben tocar ningún
   // cálculo de distancia ni mover el marcador (Leaflet lanza excepción con NaN, lo
@@ -4020,9 +4036,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
       // Nativo: el GPS sigue guiando la navegación aunque la pantalla esté apagada.
       lpBackgroundGeo.start(_navBgCallback);
     } else {
-      gpsWatchId=navigator.geolocation.watchPosition(function(pos){
-        _navPosUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, (pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0, pos.coords.altitude);
-      },function(err){ console.error("GPS:",err); },gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
+      gpsWatchId=navigator.geolocation.watchPosition(_navGeoCallback,function(err){ console.error("GPS:",err); },gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
     }
     if(navSteps.length>0) showStepInstruction(0);
     showSpeechBubble("En ruta a "+destName.split(',')[0]);

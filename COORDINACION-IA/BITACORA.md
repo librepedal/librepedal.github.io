@@ -4,6 +4,38 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.20 — 2026-07-12 — Claude (sesión 2, barrido función por función #1: GPS y navegación)
+Inty pidió un barrido de TODA la app, función por función, cerrando cada una antes de
+pasar a la siguiente. Empezamos por el núcleo: GPS y navegación (GPS libre,
+cronómetro, auto-pausa, navegación turn-by-turn, recálculo de ruta, detección de
+caídas, sensores Bluetooth, ahorro de batería GPS).
+
+**Revisado y verificado sin cambios** (código correcto, no se tocó):
+- Detección de caídas: umbral de 3.5g razonable, doble chequeo de quietud (1.5s+3s)
+  para no confundir un bache con una caída, alarma sonora+vibración, y el SOS respeta
+  que WhatsApp exige un toque del usuario (no intenta mandar el mensaje solo, sería
+  imposible y engañoso prometerlo).
+- Sensores Bluetooth (pulsómetro/potenciómetro): parseo correcto del formato GATT
+  estándar (flags de 8/16 bits en heart_rate, offset correcto en cycling_power),
+  reconexión automática con reintentos si el sensor se corta.
+- Recálculo de ruta al desviarte: ya tenía cooldown + backoff + tope de intentos
+  seguidos de una sesión anterior — sigue bien.
+
+**Bug real encontrado y corregido — Ahorro de GPS no se aplicaba en vivo en la
+versión web:** `toggleAhorroGPS()` solo reiniciaba el GPS con la nueva precisión
+cuando había plugin nativo (`lpBackgroundGeo`). En el navegador/PWA (el camino MÁS
+usado hoy, ver estado del micrófono) el `watchPosition` del navegador se queda
+con las opciones viejas hasta que apagas y prendes el GPS de nuevo — el botón
+cambiaba, Pistero decía "cambié la precisión", pero en los hechos no pasaba nada
+hasta reiniciar. Corregido: ahora corta el watch viejo y abre uno nuevo con las
+opciones correctas, tanto en GPS libre como en navegación activa. De paso,
+la función anónima del callback de navegación (duplicada en dos lugares) quedó
+como función nombrada `_navGeoCallback` para poder reusarla aquí sin repetir código.
+Verificado en el navegador interceptando `watchPosition`/`clearWatch` para
+confirmar que se llama con las opciones y el callback correctos, en ambos modos.
+
+Deploy: `librepedal.cl/version.txt` → `6.20` confirmado en vivo.
+
 ## (sin bump de versión web) — 2026-07-12 — Claude (sesión 2, plugin de mic nativo)
 Inty: "revisar el código y avanzamos". Después de la auditoría de v6.19, seguí con
 el ítem más accionable que quedaba en `PENDIENTES.md`: el micrófono nativo en el
