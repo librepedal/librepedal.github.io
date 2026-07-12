@@ -956,7 +956,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.29'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.30'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2123,7 +2123,14 @@ async function reg(e){
   // authUid: uid real de Firebase Auth, ademas del id legado (cu, derivado del email).
   // Se guarda de forma aditiva para migrar mas adelante a reglas de Firestore por-dueno sin romper nada hoy.
   const _authUid = window.lpUID || (firebase.auth().currentUser && firebase.auth().currentUser.uid) || null;
+  // Detecta si es realmente un usuario NUEVO (no uno que perdió la sesión local y
+  // volvió a pasar por el formulario) para llevar la cuenta total de suscritos sin
+  // tener que leer la colección completa cada vez que alguien quiere votar — ver
+  // votarComunidad() más abajo.
+  let _esUsuarioNuevo=false;
+  try{ const _prevDoc=await db.collection('users').doc(cu).get(); _esUsuarioNuevo=!_prevDoc.exists; }catch(e){}
   try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
+  if(_esUsuarioNuevo){ try{ await db.collection('meta').doc('contadores').set({totalUsuarios:firebase.firestore.FieldValue.increment(1)},{merge:true}); }catch(e){} }
   document.getElementById('auth').style.display='none';
   document.getElementById('logoutBtn').style.display='block';
   document.getElementById('ghostBtn').style.display='block';
@@ -5301,14 +5308,23 @@ async function buscarPlanPresupuesto(){
   res.innerHTML=html;
   h('Listo, armé un plan de referencia con tu presupuesto y opciones reales de la comunidad cerca de tu destino.');
 }
+// Cuenta de suscritos SIN leer la colección completa de usuarios: con miles de
+// documentos, cada apertura de "Comunidad" (o cada intento de votar) leía la
+// colección ENTERA solo para contar cuántos hay — con el proyecto acercándose a
+// 5.000 usuarios de verdad, eso son miles de lecturas de Firestore por un solo
+// clic (el cupo gratis diario es 50.000 lecturas TOTALES para toda la app). Se
+// mantiene un contador aparte (`meta/contadores.totalUsuarios`), incrementado en
+// reg() solo cuando el usuario es realmente nuevo (no en cada login).
+async function _totalUsuariosSuscritos(){
+  try{ const doc=await db.collection('meta').doc('contadores').get(); return (doc.exists && doc.data().totalUsuarios) || 0; }catch(e){ return 0; }
+}
 async function mostrarComunidad(){
   document.getElementById('modalTitle').innerText='🤝 Comunidad Libre Pedal';
   const c=document.getElementById('modalContent');
   c.innerHTML='<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
   const META=5000;
-  let total=0;
-  try{ const snap=await db.collection('users').get(); total=snap.size; }catch(e){}
+  const total=await _totalUsuariosSuscritos();
   const pct=Math.min(100,Math.round((total/META)*100));
   const opciones=[
     {id:'reforestar',texto:'🌳 Reforestar zonas naturales'},
@@ -5431,10 +5447,8 @@ async function rechazarFrase(id){
 }
 async function votarComunidad(opcionId){
   if(!cu) return;
-  try{
-    const snap=await db.collection('users').get();
-    if(snap.size<5000){ h('La votación se activa al llegar a 5.000 usuarios suscritos. Todavía no llegamos.'); return; }
-  }catch(e){ return; }
+  const total=await _totalUsuariosSuscritos();
+  if(total<5000){ h('La votación se activa al llegar a 5.000 usuarios suscritos. Todavía no llegamos.'); return; }
   try{ await db.collection('votacionComunidad').doc(cu).set({opcion:opcionId,ts:firebase.firestore.FieldValue.serverTimestamp()}); h('¡Voto registrado! Gracias por construir la comunidad.'); mostrarComunidad(); }catch(e){ lpAviso('No se pudo registrar tu voto, intenta de nuevo.'); }
 }
 async function participarSorteo(){

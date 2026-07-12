@@ -4,6 +4,54 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.30 — 2026-07-13 — Claude (sesión 2, barrido #5: Comunidad) — ⚠️ hallazgo de escalabilidad real
+Función #5 del barrido completo (reportes en el mapa, CicloGuía, alojo, votación,
+retos, rodadas). La mayoría verificada sólida — pero encontré el mismo tipo de
+riesgo real del que hablamos antes ("cuándo puede colapsar la app").
+
+**Verificado sin bugs**: reportes/alojo/repairTips/hostels/recommendations/
+guiComments/trips ya tienen `authUid` en cada escritura, así que NO caen en la
+misma trampa que tenía el diario (el "grandfather" de `isOwnerOrLegacy()` que da
+por dueño a cualquiera si el campo no existe) — se revisaron uno por uno contra
+el código real, no de memoria. El sistema de estrellas/votos (hostels,
+recommendations) maneja bien el recálculo de promedio y el re-voto. Rodadas ya
+filtra las fechas pasadas al mostrar la lista (no hacía falta más validación ahí).
+
+**Hallazgo real — lectura carísima de Firestore**: `mostrarComunidad()` (se abre
+cada vez que alguien entra a la pantalla de Comunidad) y `votarComunidad()`
+leían la colección `users` COMPLETA solo para contar cuántos usuarios hay y
+compararlo con la meta de 5.000. Con el proyecto acercándose a usuarios reales,
+esto significa miles de lecturas de Firestore **por un solo clic** — contra un
+cupo gratis de 50.000 lecturas/día para TODA la app. Abrir Comunidad unas pocas
+veces en un día con la comunidad cerca de la meta agotaría el cupo del día para
+todos los usuarios a la vez.
+
+**Corregido**: nuevo contador liviano (`meta/contadores.totalUsuarios`),
+incrementado en `reg()` SOLO cuando el usuario es realmente nuevo (se verifica
+que el documento no existía antes — no en cada login/re-registro). Ambas
+funciones ahora leen 1 solo documento en vez de la colección entera. Se
+consideró usar `.count()` (agregación nativa de Firestore, aún más barata) pero
+el bundle `firebase-firestore-compat.js` cargado en la app no lo expone —
+confirmado probándolo en vivo, no asumido.
+
+**Trade-off aceptado, no oculto**: cualquier `signedIn()` puede escribir el
+contador (mismo nivel de confianza que otros contadores comunitarios de la app,
+ej. likes) — en el peor caso alguien lo infla y la votación se activa antes de
+tiempo. No es dato sensible, y agregar protección extra (ej. incrementar solo vía
+Cloud Function) requeriría el plan pago Blaze, así que no se hizo.
+
+Verificado en el navegador con red real interceptada (no solo lectura de código):
+confirmado que ni `mostrarComunidad()` ni `votarComunidad()` tocan la colección
+`users` después del fix, que el contador incrementa correctamente, y que
+`votarComunidad()` corta ANTES de intentar escribir el voto cuando faltan
+suscritos. Nota aparte: el navegador de pruebas local sirvió una versión vieja
+del archivo cacheada por el propio servidor de desarrollo (no relacionado con la
+app) — se resolvió con un parámetro anti-caché en la URL, dejado como referencia
+para la próxima sesión si vuelve a pasar.
+
+Deploy: `librepedal.cl/version.txt` → `6.30` confirmado en vivo. Firestore rules
+(archivo del repo, NO publicado) con la colección `meta` nueva.
+
 ## v6.29 — 2026-07-12 — Claude (sesión 2, bitácora opt-in)
 Inty: "este espacio es para quien lo quiera usar, debería preguntar si desea esta
 opción, no toda la gente tiene el hábito de hacer una bitácora". Confirmado con

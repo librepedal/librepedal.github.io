@@ -66,6 +66,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Contador de suscritos totales (para no leer TODA la colección `users` cada
+    // vez que alguien abre Comunidad o intenta votar — con miles de usuarios eso
+    // eran miles de lecturas por un solo clic). Solo un documento, se incrementa
+    // en el registro. Cualquier signedIn() puede escribirlo (igual de confianza
+    // que otros contadores comunitarios de la app, ej. likes) — no es dato
+    // sensible, en el peor caso alguien lo infla y la votación se activa antes de
+    // los 5.000 reales.
+    match /meta/{id} {
+      allow read: if true;
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+
     // Chat global de la comunidad
     match /chat/{id} {
       allow read: if true;
