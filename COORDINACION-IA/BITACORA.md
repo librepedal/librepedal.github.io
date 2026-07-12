@@ -4,6 +4,34 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.33 — 2026-07-13 — Claude (sesión 2, barrido #7: Pistero IA)
+Función #7 del barrido completo (chat conversacional, comandos de voz, FAQ,
+sistema de acciones `[ACCION:...]`, personalidades). Esta función ya tenía un
+nivel de pulido notable de sesiones anteriores — sistema anti-invasivo bien
+pensado (solo auto-ejecuta acciones si TU mensaje sonaba a orden, si no ofrece
+un botón), alias de vistas en lenguaje natural, todo el texto de la IA
+escapado con `escapeHTML()`. FAQ_APP/FAQ_CICLISMO revisadas: regexes
+específicas de varias palabras, sin patrones sueltos que pudieran comerse
+otros comandos (la clase de bug de la función #1).
+
+**1 bug real: sin timeout en la llamada al Worker de IA.** `preguntarPistero()`
+usaba `fetch()` plano — si el Worker se colgaba (aceptaba la conexión pero
+nunca contestaba, no lo mismo que "caído"), la burbuja "Pistero está
+pensando…" quedaba pegada PARA SIEMPRE: el `catch` nunca se disparaba porque
+la promesa nunca se rechazaba sola. La app ya tenía `_fetchT(url, ms)` (fetch
+con `AbortController`+timeout) usado en geocoding/elevación, pero solo servía
+para GET sin opciones. Se extendió con un 3er parámetro opcional `opts` (se
+combina con la señal de abort) sin romper a los 4 llamadores existentes —
+verificado que siguen mandando exactamente lo mismo que antes. `preguntarPistero`
+ahora usa `_fetchT(IA_URL, 25000, {method:'POST',...})`.
+
+Verificado con un Worker simulado que nunca responde (no solo leído): esperé
+los 25 segundos reales del timeout — antes de fijarlo la burbuja se habría
+quedado pegada para siempre, ahora corta y muestra "Se me cortó la señal.
+Inténtalo de nuevo en un ratito." como ya estaba pensado para errores de red.
+
+Deploy: `librepedal.cl/version.txt` → `6.33` confirmado en vivo.
+
 ## v6.32 — 2026-07-13 — Claude (sesión 2, barrido #6: Social)
 Función #6 del barrido completo (amigos, mensajes privados, chat). El chat 1-a-1
 (`abrirChatAmigo`) ya tenía "← Volver a amigos" bien hecho desde antes — buen

@@ -956,14 +956,16 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.32'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.33'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
 /* Lectura segura de localStorage: datos corruptos NO deben crashear el arranque. */
 function _lsJSON(key, fb){ try{ const v=localStorage.getItem(key); if(v==null) return fb; const p=JSON.parse(v); return (p==null)?fb:p; }catch(e){ return fb; } }
 /* fetch con timeout: sin señal, una petición no debe colgar la app para siempre. */
-function _fetchT(url, ms){ let c=null,t=null; try{ c=new AbortController(); t=setTimeout(function(){ try{c.abort();}catch(e){} }, ms||12000); }catch(e){} return fetch(url, c?{signal:c.signal}:undefined).finally(function(){ if(t) clearTimeout(t); }); }
+// opts es opcional (agregado para poder mandar POST con body/headers, ej. el chat
+// de Pistero, sin romper a los 4 llamadores que ya existían y solo pasan url+ms).
+function _fetchT(url, ms, opts){ let c=null,t=null; try{ c=new AbortController(); t=setTimeout(function(){ try{c.abort();}catch(e){} }, ms||12000); }catch(e){} return fetch(url, Object.assign({}, opts||{}, c?{signal:c.signal}:{})).finally(function(){ if(t) clearTimeout(t); }); }
 // window.onload espera este flag antes de activar GPS/voz de arranque: si la
 // verificación de versión decide recargar la página, la instancia VIEJA nunca llega
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
@@ -1860,7 +1862,10 @@ async function preguntarPistero(){
     historial:pisteroHistorial.slice(-12)
   };
   try{
-    const r=await fetch(IA_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    // Con fetch() plano y sin timeout, si el Worker se cuelga (no cae, solo no
+    // contesta) la burbuja "Pistero está pensando…" quedaba pegada PARA SIEMPRE —
+    // el catch de abajo nunca se disparaba porque la promesa nunca se rechazaba.
+    const r=await _fetchT(IA_URL, 25000, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     const data=await r.json();
     let resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
     // Separa las etiquetas de acción del texto: no se muestran ni se leen en voz.
