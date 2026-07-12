@@ -4,6 +4,20 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
 
 ---
 
+## ✅ CERRADO — Segunda auditoría autónoma (Claude sesión 2, v6.10, de madrugada)
+Inty pidió "auditoría sobre auditoría" antes de dormir, con permiso total y sin
+supervisión. Verificadas cero regresiones en TODO lo anterior (v6.03-v6.09). 3
+agentes en paralelo cazando el patrón "no lee de donde corresponde" (el mismo tipo
+de bug que "Mis viajes" en v6.09). Único bug real: una regresión propia de la MISMA
+sesión (selector `.es-globe` ambiguo tras agregar el botón Atrás, rompía el
+spotlight del tutorial paso 2). Corregido y verificado los 17 pasos del tutorial uno
+por uno. Detalle completo en la entrada **v6.10** de `BITACORA.md`.
+⚠️ Lección para ambas sesiones: si vas a poner una clase CSS existente en un elemento
+NUEVO, revisa antes si algún `querySelector` de JS depende de que esa clase sea
+única (el spotlight del tutorial es el caso más frágil para esto).
+
+---
+
 ## ✅ CERRADO — Rediseño de navegación pedido por Inty (Claude sesión 2, v6.09)
 Esfera como Inicio permanente, fix de "Mis viajes" vacío (rutas grabadas no
 aparecían), Mi puesto visible en la Esfera, Avisos+Mensajes fusionados, botón
