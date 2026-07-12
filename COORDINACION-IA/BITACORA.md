@@ -611,6 +611,17 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.16 — 2026-07-11 — Claude (IMPORTAR GPX = atraer usuarios de Strava/Wikiloc)
+Corrección de dirección: el GPX de v6.15 era EXPORTAR (nuestras rutas → Strava), que sirve para que
+NUESTROS usuarios compartan afuera. Pero el objetivo de Inty es lo contrario: atraer usuarios de
+Strava/Wikiloc/Komoot A Libre Pedal → eso es IMPORTAR.
+- Nuevo `importarGPX(input)`: lee un .gpx (tracks `<trkpt>` o rutas `<rtept>`) con `DOMParser` nativo,
+  extrae lat/lon + elevación + tiempo, calcula la distancia y lo guarda como ruta en el historial
+  (`rutasLocales`), lista para ver, ver perfil, hacerle video, re-exportar o pedalearla.
+- Botón "📥 Importar ruta (GPX de Strava, Wikiloc o Komoot)" arriba en la pantalla de rutas + input file oculto.
+- Verificado el parseo con un GPX estilo Strava (nombre, puntos, ele, time, distancia). El export (v6.15)
+  se mantiene (algunos usuarios lo querrán). Sync directo con Strava (OAuth) sigue pendiente (alto esfuerzo).
+
 ## v6.15 — 2026-07-11 — Claude (GPX completo + exportar rutas guardadas)
 Remate del GPX que la otra sesión dejó básico (solo lat/lon de la ruta activa):
 - `_gpxDeRuta(pts,nombre)` genera GPX 1.1 con namespace + `<name>` + **`<ele>` (elevación)** + **`<time>`

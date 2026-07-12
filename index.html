@@ -636,7 +636,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.15</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.16</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -747,6 +747,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <section id="v-routes" class="view">
 <div class="section-info"><h4>Historial de rutas</h4><p>Recorridos grabados: video, perfil de elevación y tu bitácora.</p></div>
 <button class="ab sec" style="margin-bottom:10px" onclick="openDiario()">📓 Ciclo Bitácora</button>
+<input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
+<button class="ab" style="margin-bottom:10px;background:linear-gradient(135deg,#10b981,#059669);color:#042417;font-weight:800" onclick="document.getElementById('gpxFileInput').click()">📥 Importar ruta (GPX de Strava, Wikiloc o Komoot)</button>
 <div id="routes-list" class="js-rutas-list"></div>
 <button class="ab" style="margin-top:10px" onclick="showAllRoutesOnMap()">Ver todas en el mapa</button>
 <button class="ab sec" onclick="combineAllRoutes()">Combinar todas en una</button>
@@ -949,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.15'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.16'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4157,6 +4159,39 @@ function _descargarGPX(gpx, nombre){
   const blob=new Blob([gpx],{type:'application/gpx+xml'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=(nombre||'libre-pedal-ruta').replace(/[^\w-]+/g,'_').slice(0,50)+'.gpx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },3000);
 }
 function exportarDatosGPX(){ if(gpsPoints.length===0){ lpAviso("No hay una ruta activa para exportar"); return; } _descargarGPX(_gpxDeRuta(gpsPoints,'Ruta Libre Pedal'),'libre-pedal-ruta'); h("Ruta exportada en GPX con elevación y tiempo. Súbela a Strava, Komoot o Wikiloc."); }
+// IMPORTAR GPX: trae a Libre Pedal una ruta de Strava/Wikiloc/Komoot (o de un amigo).
+// Lee tracks (<trkpt>) o rutas (<rtept>), con elevación y tiempo si los trae, y la guarda
+// en tu historial para verla, ver su perfil, hacerle video o pedalearla.
+function importarGPX(input){
+  const file=input && input.files && input.files[0]; if(!file){ return; }
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const xml=new DOMParser().parseFromString(String(ev.target.result), 'application/xml');
+      if(xml.getElementsByTagName('parsererror').length){ lpAviso('Ese archivo no parece un GPX válido.'); input.value=''; return; }
+      let nodos=Array.prototype.slice.call(xml.getElementsByTagName('trkpt'));
+      if(nodos.length<2) nodos=Array.prototype.slice.call(xml.getElementsByTagName('rtept'));
+      const points=nodos.map(function(p){
+        const lat=parseFloat(p.getAttribute('lat')), lon=parseFloat(p.getAttribute('lon'));
+        const o={lat:lat, lon:lon};
+        const e=p.getElementsByTagName('ele')[0]; if(e){ const a=parseFloat(e.textContent); if(!isNaN(a)) o.alt=a; }
+        const tt=p.getElementsByTagName('time')[0]; if(tt){ const ts=Date.parse(tt.textContent); if(!isNaN(ts)) o.timestamp=ts; }
+        return o;
+      }).filter(function(p){ return !isNaN(p.lat) && !isNaN(p.lon); });
+      if(points.length<2){ lpAviso('Ese GPX no tiene puntos de ruta que pueda leer.'); input.value=''; return; }
+      let dist=0; for(let i=1;i<points.length;i++){ dist+=calculateDistance(points[i-1].lat,points[i-1].lon,points[i].lat,points[i].lon)/1000; }
+      const nom=xml.getElementsByTagName('name')[0];
+      const nombre=(nom && nom.textContent && nom.textContent.trim()) || file.name.replace(/\.(gpx|xml)$/i,'') || 'Ruta importada';
+      const ruta={ localId:'imp_'+Date.now(), nombreRuta:nombre, points:points, distance:dist, calories:Math.round(dist*30), startTime:(points[0].timestamp||Date.now()), importada:true };
+      rutasLocalesSet(rutasLocales().concat([ruta]));
+      if(typeof renderRutas==='function') renderRutas();
+      input.value='';
+      h('¡Importé "'+nombre+'", '+dist.toFixed(1)+' kilómetros! Ya está en tu historial: tócala para verla o pedalearla.');
+    }catch(e){ input.value=''; lpAviso('No pude leer ese GPX. ¿Seguro que es un archivo de ruta?'); }
+  };
+  reader.onerror=function(){ input.value=''; lpAviso('No pude abrir el archivo.'); };
+  reader.readAsText(file);
+}
 function exportarRutaGPX(id){
   function armar(pts,nombre){ if(!pts||!pts.length){ lpAviso('Esa ruta no tiene puntos para exportar.'); return; } _descargarGPX(_gpxDeRuta(pts,nombre), nombre); h('Ruta exportada en GPX. Súbela a Strava, Komoot o Wikiloc.'); }
   const r=_rutaPorId(id);
