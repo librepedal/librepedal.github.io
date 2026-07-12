@@ -1,21 +1,26 @@
 # ✅ Pendientes — Libre Pedal
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-12 (noche),
-versión actual del proyecto: **v6.19** (más el plugin de voz nativo agregado después,
-sin bump de versión web porque no toca `index.html` — ver más abajo).
+versión actual del proyecto: **v6.27**.
 
 ---
 
 ## 🔴 LO MÁS URGENTE — leer primero, cualquiera de las dos sesiones
 
-- [ ] **Publicar `firestore.rules` en Firebase Console — sigue sin publicarse**
-  (viene de v6.11 y v6.12, todavía pendiente). Sin esto, las protecciones de
-  dueño real y admin real que YA están en el código del repo no están activas en
-  producción. Es tarea de **Inty únicamente** (Firebase Console → proyecto
-  `librepedal-cb983` → Firestore Database → Reglas → copiar TODO el contenido de
-  `firestore.rules` → Publicar, 2 minutos). Ninguna IA lo hace por su cuenta a
-  propósito (cambio de control de acceso sobre producción). Después de publicar,
-  Inty debe recargar la app una vez para que su sesión suba a `isAdmin()`.
+- [ ] **Publicar `firestore.rules` en Firebase Console — sigue sin publicarse,
+  y ahora es MÁS urgente que antes.** Barrido de la función Diario (v6.27)
+  encontró que la colección `diarios` en PRODUCCIÓN deja que **cualquier
+  usuario logueado lea, sobrescriba o borre el diario personal de OTRO
+  usuario** (reflexiones privadas) — no es solo "activar protecciones ya
+  listas", es cerrar un hueco de privacidad real que está abierto AHORA MISMO
+  en producción. Ya está corregido en el archivo `firestore.rules` del repo
+  (usa `isOwnerByCu()`, no `isOwnerOrLegacy()` — esa NO servía para esta
+  colección, ver el comentario en el archivo). Es tarea de **Inty únicamente**
+  (Firebase Console → proyecto `librepedal-cb983` → Firestore Database →
+  Reglas → copiar TODO el contenido de `firestore.rules` → Publicar, 2
+  minutos). Ninguna IA lo hace por su cuenta a propósito (cambio de control de
+  acceso sobre producción). Después de publicar, Inty debe recargar la app una
+  vez para que su sesión suba a `isAdmin()`.
 - [ ] **Google Play: cuenta de desarrollador ya pagada por Inty, en validación.**
   Cuando quede activa, falta: (1) capturas de pantalla reales de la app —
   ofrecido ayudar a tomarlas, no se ha hecho; (2) generar el build **.aab**

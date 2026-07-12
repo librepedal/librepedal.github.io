@@ -149,12 +149,22 @@ service cloud.firestore {
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
-    // Diario personal (respaldo en la nube). Privacidad real (solo el dueño)
-    // llega con la migración a auth.uid; por ahora exige sesión para leer.
+    // Diario personal (respaldo en la nube). Privacidad real: la migración a
+    // auth.uid (v6.12) ya está lista para esto, pero nadie la había aplicado acá
+    // — CUALQUIER usuario logueado podía leer, sobrescribir o borrar el diario de
+    // OTRO usuario (reflexiones privadas), con el ID de documento predecible
+    // (`{cu}_{fecha}`). OJO: isOwnerOrLegacy() NO sirve para esta colección — su
+    // "grandfather" da por dueño a cualquiera cuando el documento no tiene el campo
+    // `authUid`, y los diarios NUNCA lo tienen (usan `user`), así que habría quedado
+    // siempre abierto. Se usa isOwnerByCu() solo, y en `create` se exige además que
+    // el campo `user` sea tu propio uid (si no, alguien podría "adelantarse" y crear
+    // el documento de otro usuario con contenido propio antes de que ese usuario
+    // escriba el suyo).
     match /diarios/{id} {
-      allow read: if signedIn();
-      allow create, update: if signedIn() && strOk('reflexion', 2000) && strOk('complejo', 2000) && strOk('meta', 300);
-      allow delete: if signedIn();
+      allow read: if signedIn() && isOwnerByCu();
+      allow create: if signedIn() && request.resource.data.user == request.auth.uid && strOk('reflexion', 2000) && strOk('complejo', 2000) && strOk('meta', 300);
+      allow update: if signedIn() && isOwnerByCu() && strOk('reflexion', 2000) && strOk('complejo', 2000) && strOk('meta', 300);
+      allow delete: if signedIn() && isOwnerByCu();
     }
 
     // Mensajes privados entre amigos. Solo quien lo escribió puede editarlo/borrarlo.

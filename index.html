@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.26'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.27'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3270,7 +3270,13 @@ function renderReportesComunidad(docs){
 /* ===== MI DIARIO (privado, AM/PM, en el teléfono) ===== */
 const DIARIO_ESTADOS=[{e:'💪',l:'Excelente'},{e:'🩹',l:'Con molestias'},{e:'🐢',l:'Fatigado'}];
 let diarioEstadoSel=null;
-function diarioHoyKey(){ return 'lp_diario_'+(cu||'anon')+'_'+new Date().toISOString().slice(0,10); }
+// toISOString() es UTC, no la hora local — en Chile (UTC-3/-4) escribir el diario
+// de noche caía en la fecha de MAÑANA en UTC. Al día siguiente, diarioHoyKey()
+// volvía a calcular esa misma fecha (ya era "hoy" de verdad) y una entrada nueva
+// SOBRESCRIBÍA en silencio la de la noche anterior (mismo bug ya conocido y
+// arreglado para el aviso de lluvia — acá nadie lo había aplicado).
+function _fechaLocalYMD(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function diarioHoyKey(){ return 'lp_diario_'+(cu||'anon')+'_'+_fechaLocalYMD(); }
 /* ===== GAMIFICACIÓN: Logros (gratis) + Ranking Top 100 ===== */
 function statViajesCompletados(){ return (typeof trips!=='undefined'&&trips)?trips.filter(function(t){return t&&t.status==='completed';}).length:0; }
 function statBitacora(){ const pre='lp_diario_'+(cu||'anon')+'_'; return Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).length; }
@@ -3470,7 +3476,7 @@ async function agregarPOI(){
 function openDiario(){ cv('diario'); cargarDiario(); renderPoiCats(); sincronizarDiarioNube().then(function(){ cargarDiario(); }); }
 function renderDiarioEstados(){ const c=document.getElementById('diarioEstado'); if(!c) return; c.innerHTML=DIARIO_ESTADOS.map(function(s){ const sel=diarioEstadoSel===s.l; return '<button onclick="diarioEstadoSel=\''+s.l+'\';renderDiarioEstados()" style="flex:1;min-width:88px;padding:10px;border-radius:10px;border:2px solid '+(sel?'var(--p)':'#2a3147')+';background:'+(sel?'rgba(252,76,2,0.12)':'var(--gl)')+';color:#fff;font-weight:700;font-size:0.78rem;cursor:pointer">'+s.e+' '+s.l+'</button>'; }).join(''); }
 function cargarDiario(){ const km=document.getElementById('diarioKm'); if(km) km.innerText=us.di.toFixed(2); let d={}; try{ d=JSON.parse(localStorage.getItem(diarioHoyKey()))||{}; }catch(e){} diarioEstadoSel=d.estado||null; const meta=document.getElementById('diarioMeta'), comp=document.getElementById('diarioComplejo'), refl=document.getElementById('diarioReflexion'); if(meta) meta.value=d.meta||''; if(comp) comp.value=d.complejo||''; if(refl) refl.value=d.reflexion||''; renderDiarioEstados(); renderDiarioHistorial(); }
-function guardarDiario(){ const fecha=new Date().toISOString().slice(0,10); const d={estado:diarioEstadoSel, meta:document.getElementById('diarioMeta').value, complejo:document.getElementById('diarioComplejo').value, reflexion:document.getElementById('diarioReflexion').value, km:us.di, fecha:fecha, local_ts:Date.now()}; localStorage.setItem(diarioHoyKey(),JSON.stringify(d)); /* respaldo en la nube (tu cuenta) para no perderlo al cambiar de teléfono */ if(cu){ try{ db.collection('diarios').doc(cu+'_'+fecha).set({user:cu, fecha:fecha, estado:d.estado||'', meta:d.meta||'', complejo:d.complejo||'', reflexion:d.reflexion||'', km:d.km||0, ts:firebase.firestore.FieldValue.serverTimestamp()}); }catch(e){} } h('Diario guardado y respaldado en tu cuenta. Buen camino.'); renderDiarioHistorial(); }
+function guardarDiario(){ const fecha=_fechaLocalYMD(); const d={estado:diarioEstadoSel, meta:document.getElementById('diarioMeta').value, complejo:document.getElementById('diarioComplejo').value, reflexion:document.getElementById('diarioReflexion').value, km:us.di, fecha:fecha, local_ts:Date.now()}; localStorage.setItem(diarioHoyKey(),JSON.stringify(d)); /* respaldo en la nube (tu cuenta) para no perderlo al cambiar de teléfono */ if(cu){ try{ db.collection('diarios').doc(cu+'_'+fecha).set({user:cu, fecha:fecha, estado:d.estado||'', meta:d.meta||'', complejo:d.complejo||'', reflexion:d.reflexion||'', km:d.km||0, ts:firebase.firestore.FieldValue.serverTimestamp()}); }catch(e){} } h('Diario guardado y respaldado en tu cuenta. Buen camino.'); renderDiarioHistorial(); }
 // Compara fechas por dispositivo: si escribiste el mismo día en dos celulares, se queda
 // con la versión más reciente (nube vs local) en vez de ignorar la nube solo porque ya
 // había "algo" guardado localmente (eso perdía cambios más nuevos de otro dispositivo).
@@ -3504,8 +3510,15 @@ function importarMisDatos(input){
         const nuevas=data.rutas.filter(function(x){ return x && x.localId && x.points && x.points.length && !ids[x.localId]; });
         nR=nuevas.length; if(nR) rutasLocalesSet(actuales.concat(nuevas));
       }
-      // DIARIO
-      if(Array.isArray(data.diario)){ data.diario.forEach(function(d){ if(d&&d.fecha){ try{ localStorage.setItem('lp_diario_'+(cu||'anon')+'_'+d.fecha, JSON.stringify(d)); nD++; }catch(e){} } }); }
+      // DIARIO: solo sobrescribe si la entrada del respaldo es más nueva que la que
+      // ya tienes — antes pisaba SIEMPRE, así que restaurar un respaldo viejo podía
+      // borrar silenciosamente algo que escribiste hoy mismo para esa fecha (mismo
+      // cuidado que ya tenía sincronizarDiarioNube, que acá no se aplicaba).
+      if(Array.isArray(data.diario)){ data.diario.forEach(function(d){ if(d&&d.fecha){ try{
+        const key='lp_diario_'+(cu||'anon')+'_'+d.fecha;
+        let local=null; try{ local=JSON.parse(localStorage.getItem(key)); }catch(e2){}
+        if(!local || (d.local_ts||0)>(local.local_ts||0)){ localStorage.setItem(key, JSON.stringify(d)); nD++; }
+      }catch(e){} } }); }
       // PERFIL (casco/skin/lente): los 3 deben guardarse en localStorage, no solo en la
       // variable en memoria — si no, al recargar la app (login.onload lee de localStorage,
       // ver línea ~2007) el casco restaurado sobrevive pero el skin y el lente se pierden.
@@ -3589,7 +3602,7 @@ async function publicarAlojo(){
   }catch(e){ lpAviso('No se pudo publicar: '+(e.message||e)); }
   finally{ _publicandoAlojo=false; }
 }
-function renderDiarioHistorial(){ const c=document.getElementById('diarioHistorial'); if(!c) return; const pre='lp_diario_'+(cu||'anon')+'_'; const keys=Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().reverse().filter(function(k){return k!==diarioHoyKey();}); if(!keys.length){ c.innerHTML=''; return; } let html='<h4 style="font-size:0.85rem;color:var(--p)">Días anteriores</h4>'; keys.slice(0,12).forEach(function(k){ let d={}; try{d=JSON.parse(localStorage.getItem(k));}catch(e){return;} const est=DIARIO_ESTADOS.find(function(s){return s.l===d.estado;}); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.76rem;color:#9fb3c8">'+(d.fecha||'')+' · '+(est?est.e+' '+est.l:'')+' · '+(d.km?(+d.km).toFixed(1):0)+' km</div>'+(d.meta?'<div style="font-size:0.78rem;margin-top:3px">🎯 '+d.meta+'</div>':'')+(d.complejo?'<div style="font-size:0.75rem;color:#cdd;margin-top:3px">💪 '+d.complejo+'</div>':'')+(d.reflexion?'<div style="font-size:0.75rem;color:#9fb3c8;font-style:italic;margin-top:3px">🧘 '+d.reflexion+'</div>':'')+'</div>'; }); c.innerHTML=html; }
+function renderDiarioHistorial(){ const c=document.getElementById('diarioHistorial'); if(!c) return; const pre='lp_diario_'+(cu||'anon')+'_'; const keys=Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().reverse().filter(function(k){return k!==diarioHoyKey();}); if(!keys.length){ c.innerHTML=''; return; } let html='<h4 style="font-size:0.85rem;color:var(--p)">Días anteriores</h4>'; keys.slice(0,12).forEach(function(k){ let d={}; try{d=JSON.parse(localStorage.getItem(k));}catch(e){return;} const est=DIARIO_ESTADOS.find(function(s){return s.l===d.estado;}); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.76rem;color:#9fb3c8">'+escapeHTML(d.fecha||'')+' · '+(est?est.e+' '+est.l:'')+' · '+(d.km?(+d.km).toFixed(1):0)+' km</div>'+(d.meta?'<div style="font-size:0.78rem;margin-top:3px">🎯 '+escapeHTML(d.meta)+'</div>':'')+(d.complejo?'<div style="font-size:0.75rem;color:#cdd;margin-top:3px">💪 '+escapeHTML(d.complejo)+'</div>':'')+(d.reflexion?'<div style="font-size:0.75rem;color:#9fb3c8;font-style:italic;margin-top:3px">🧘 '+escapeHTML(d.reflexion)+'</div>':'')+'</div>'; }); c.innerHTML=html; }
 function rm(l){ document.getElementById('ml').innerHTML=l.map(function(i){ return '<div class="cd" onclick="h(\''+i.t+'. '+i.s.replace(/'/g,"\\'")+'\')"><b style="color:var(--p);font-size:0.85rem">'+i.t+'</b><p style="margin:6px 0;font-size:0.8rem">'+i.s+'</p><small style="color:#888;font-size:0.7rem">Fuente: '+i.f+'</small></div>'; }).join(''); }
 function fm(){ const v=document.getElementById('bm').value.toLowerCase(); rm(MG.filter(function(i){ return i.t.toLowerCase().indexOf(v)!==-1||i.s.toLowerCase().indexOf(v)!==-1; })); }
 function toggleSecretForm(){ document.getElementById('secretForm').classList.toggle('show'); }

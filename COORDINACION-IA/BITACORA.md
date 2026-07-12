@@ -4,6 +4,56 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.27 — 2026-07-12 — Claude (sesión 2, barrido #4: Diario / Bitácora) — ⚠️ hallazgo serio
+Función #4 del barrido completo. Esta pasada encontró el hallazgo más serio de
+todo el barrido hasta ahora.
+
+**1) Fecha en UTC en vez de local (mismo bug ya conocido, nadie lo aplicó acá):**
+`diarioHoyKey()` y `guardarDiario()` usaban `new Date().toISOString().slice(0,10)`
+— UTC, no la hora de Chile. Escribir en el diario de noche podía guardar la
+entrada bajo la fecha de MAÑANA; al día siguiente, una entrada nueva
+sobrescribía esa en silencio (mismo tipo de bug que ya se había corregido para
+el aviso de lluvia, pero nadie lo replicó en el diario). Nuevo helper
+`_fechaLocalYMD()` (usa `getFullYear/getMonth/getDate` locales) usado en ambos
+lugares. Verificado que ya no usa `toISOString` en ninguno de los dos.
+
+**2) `importarMisDatos()` (restaurar respaldo) podía perder una entrada de HOY**
+al restaurar un respaldo viejo con la misma fecha — sobrescribía siempre, sin
+comparar `local_ts` como sí hace `sincronizarDiarioNube()`. Corregido para que
+gane la más nueva. Verificado con una prueba real: entrada de hoy + respaldo
+viejo con la misma fecha → se conserva la de hoy.
+
+**3) XSS en el historial del diario**: `renderDiarioHistorial()` insertaba
+meta/complejo/reflexión directo en `innerHTML` sin `escapeHTML()`. Corregido y
+verificado con un payload real (`<img onerror=...>`, `<script>`) — ahora sale
+como texto escapado.
+
+**4) ⚠️ HALLAZGO SERIO — control de acceso real en `firestore.rules`:** la
+colección `diarios` en producción tiene `allow read/create/update/delete: if
+signedIn()` — CUALQUIER usuario logueado puede leer, sobrescribir o borrar el
+diario (reflexiones privadas) de CUALQUIER OTRO usuario, con el ID de
+documento predecible (`{cu}_{fecha}`). Combinado con el punto 3 (antes de este
+fix), esto era una vía real de XSS almacenado, no solo teórica: alguien podría
+escribir contenido malicioso en el diario de otro usuario (adivinando su
+`cu`), y ese contenido se ejecutaría cuando la víctima abriera su propio
+diario. **Corregido en el archivo `firestore.rules` del repo** (no publicado
+— eso es tarea exclusiva de Inty, ver "🔴 LO MÁS URGENTE" en `PENDIENTES.md`):
+- `isOwnerOrLegacy()` NO sirve para esta colección — su "grandfather" da por
+  dueño a cualquiera cuando falta el campo `authUid`, y los diarios NUNCA lo
+  tienen (usan `user`), así que habría quedado siempre abierto igual. Se usa
+  `isOwnerByCu()` solo.
+- En `create` se exige además `request.resource.data.user ==
+  request.auth.uid`, para que nadie pueda "adelantarse" y crear el documento
+  de otro usuario con contenido propio antes de que ese usuario escriba el
+  suyo (ese hueco sí existe todavía en `users`/`routes`/`trips` con el patrón
+  viejo, pero ahí el impacto es menor — perfil público/rutas, no un diario
+  privado; queda anotado para revisar en una pasada futura si hace falta).
+- **Sigue sin publicarse en producción** — el hueco de acceso sigue abierto
+  hasta que Inty lo publique desde Firebase Console.
+
+Deploy: `librepedal.cl/version.txt` → `6.27` confirmado en vivo (código de la
+app). `firestore.rules` quedó commiteado en el repo, NO publicado en Firebase.
+
 ## v6.26 — 2026-07-12 — Claude (sesión 2, barrido #3: Mis viajes / Rutas)
 Función #3 del barrido completo (historial de rutas, perfil de elevación,
 planificador por presupuesto, calculadora de gastos, video de ruta).
