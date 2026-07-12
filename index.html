@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.27'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.28'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2471,6 +2471,64 @@ function rutasLocalesSet(arr){ try{ localStorage.setItem(_rutasKey(), JSON.strin
 function guardarRutaLocalObj(data){ const arr=rutasLocales(); const i=arr.findIndex(function(r){return r.localId===data.localId;}); if(i>=0){ arr[i]=Object.assign(arr[i],data); } else { arr.push(data); } rutasLocalesSet(arr); return arr; }
 /* Respaldo best-effort en Firebase; enlaza firebaseId a la ruta local para no duplicar. */
 function _subirRutaNube(localId, fb){ try{ fb.authUid=window.lpUID||null; const it=rutasLocales().find(function(r){return r.localId===localId;}); const fid=it&&it.firebaseId; if(fid){ db.collection('routes').doc(fid).update(fb).catch(function(){}); } else { db.collection('routes').add(fb).then(function(ref){ const a=rutasLocales(); const x=a.find(function(r){return r.localId===localId;}); if(x){ x.firebaseId=ref.id; rutasLocalesSet(a); } }).catch(function(){}); } }catch(e){} }
+// Adjunta hospedaje/notas a una ruta YA guardada (localId). Busca el registro FRESCO
+// (no uno viejo capturado antes) porque _subirRutaNube recién le agrega el firebaseId
+// de forma asíncrona — para cuando el usuario terminó de contestar el diálogo de
+// hospedaje ya suele haber llegado, pero si no llegó todavía, igual queda guardado
+// local (garantizado) y se sube a la nube en el próximo guardado de esa ruta.
+function _agregarDatosBitacora(localId, hospedaje, notas){
+  if(!hospedaje && !notas) return;
+  const arr=rutasLocales(); const r=arr.find(function(x){return x.localId===localId;});
+  if(!r) return;
+  if(hospedaje) r.hospedaje=hospedaje;
+  if(notas) r.notasDelDia=notas;
+  rutasLocalesSet(arr);
+  if(r.firebaseId){ const patch={}; if(hospedaje) patch.hospedaje=hospedaje; if(notas) patch.notasDelDia=notas; db.collection('routes').doc(r.firebaseId).update(patch).catch(function(){}); }
+}
+// Junta todo lo que el usuario escribió HOY en su Diario (estado + meta + lo más
+// difícil + reflexión) en un solo texto, para adjuntarlo a la bitácora del viaje.
+function _notasDelDiaDeHoy(){
+  try{
+    const d=JSON.parse(localStorage.getItem(diarioHoyKey()));
+    if(!d) return null;
+    const partes=[];
+    if(d.estado) partes.push(d.estado);
+    if(d.meta) partes.push('Meta: '+d.meta);
+    if(d.complejo) partes.push('Lo más difícil: '+d.complejo);
+    if(d.reflexion) partes.push(d.reflexion);
+    return partes.length?partes.join(' — '):null;
+  }catch(e){ return null; }
+}
+// "Guardar la bitácora de mi viaje": a diferencia del guardado rápido y silencioso
+// (autoGuardarRuta), esto junta TODO sobre el viaje en un solo registro — la ruta,
+// dónde te hospedaste (pregunta en el momento, se puede omitir) y lo que ya
+// escribiste hoy en el Diario. Antes no existía ningún vínculo entre estas 3 cosas:
+// la ruta se guardaba sola, el hospedaje no tenía dónde quedar, y el Diario era
+// independiente por fecha del calendario, sin relación con un viaje puntual.
+async function guardarBitacoraViaje(){
+  const navActivo=document.getElementById('nav-screen').classList.contains('active');
+  let saved=null;
+  if(navActivo){
+    if(currentTrip){ h('Este es un viaje planificado — por ahora solo puedo agregar hospedaje y notas a viajes rápidos, así que lo guardo como siempre.'); finishTrip(); return; }
+    if(!await lpConfirmar('¿Terminar y guardar tu bitácora de este viaje?')) return;
+    if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; }
+    navGuardado=true;
+    saved=await guardarRutaNavegada();
+  } else if(ig){
+    saved=await autoGuardarRuta(true,false);
+  } else {
+    h('Todavía no tienes un viaje en curso para guardar. Activa el GPS o empieza a navegar primero.');
+    return;
+  }
+  if(!saved){ h('No pude guardar la ruta — parece que no hay suficientes puntos grabados todavía.'); if(navActivo) setTimeout(endNavigation,500); return; }
+  const hospedaje=await lpPedirTexto('¿Dónde te hospedaste esta noche? (déjalo en blanco si no aplica)','ej: Hostal La Bicicleta, Pucón');
+  const notas=_notasDelDiaDeHoy();
+  _agregarDatosBitacora(saved.localId, hospedaje, notas);
+  const partes=['tu ruta']; if(hospedaje) partes.push('dónde te hospedaste'); if(notas) partes.push('lo que escribiste hoy en tu diario');
+  const listaPartes=partes.length>1 ? (partes.slice(0,-1).join(', ')+' y '+partes[partes.length-1]) : partes[0];
+  h('Guardé '+listaPartes+' en tu bitácora de viaje. Buen descanso.');
+  if(navActivo) setTimeout(endNavigation,1200);
+}
 // Nombre real de un lugar a partir de sus coordenadas (reverse geocoding, con caché
 // por coordenada redondeada para no repetir la misma consulta). Timeout corto: si
 // Nominatim no contesta rápido, sigue con un nombre genérico en vez de trabar el
@@ -2511,6 +2569,7 @@ async function autoGuardarRuta(conVoz, esCheckpoint){
   _subirRutaNube(localId,fb);
   revisarRetosCumplidos();
   /* guardado silencioso */
+  return data;
 }
 // Si llevas UMBRAL_INACTIVIDAD_RUTA quieto, la ruta actual se da por TERMINADA: se
 // guarda tal cual quedó y se limpia el trazo, para que el próximo pedaleo arranque
@@ -2535,7 +2594,7 @@ function renderRutas(){
   if(arr.length===0){ html='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; }
   else{
     html='';
-    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; html+='<div class="route-history-item"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p></div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn" onclick="exportarRutaGPX(\''+d.localId+'\')">📤 GPX</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
+    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8">🏠 '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic">📓 '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn" onclick="exportarRutaGPX(\''+d.localId+'\')">📤 GPX</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
   }
   targets.forEach(function(c){ c.innerHTML=html; });
 }
@@ -4152,6 +4211,7 @@ async function guardarRutaNavegada(){
   guardarRutaLocalObj(data); renderRutas();
   _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()});
   revisarRetosCumplidos();
+  return data;
 }
 function finishTripAuto(){ navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).then(function(){ }).catch(function(){ }); }
 function formatDistance(m){ if(m<1000) return Math.round(m)+' m'; return (m/1000).toFixed(1)+' km'; }
@@ -5780,6 +5840,9 @@ function handleVoiceCommand(raw){
   // con la lista fija anterior (solo "el/la/mi") esas dos frases tan naturales no
   // matcheaban NADA y terminaban en otro comando por accidente (abrían Rutas/Viajes
   // en vez de guardar), un guardado real que el ciclista pide y no pasa nada.
+  // "bitácora" ANTES del patrón genérico de guardar (si no, "guarda...viaje" de
+  // más abajo la interceptaría primero y nunca llegaría a preguntar hospedaje/notas).
+  if(/(guarda|guardar|graba|grabar)(me)?\b.{0,25}\bbit[aá]cora/.test(t)){ guardarBitacoraViaje(); return; }
   if(/(guarda|graba|termina|finaliza|acaba)(r|me)?\b.{0,20}\b(viaje|ruta)/.test(t)){ if(document.getElementById('nav-screen').classList.contains('active')){ finishTrip(); } else if(ig){ autoGuardarRuta(true,false); } else { h('Activa el GPS para empezar a grabar tu ruta.'); } return; }
   if(/sigamos|sigue con el viaje|continuar el viaje|contin[uú]a el viaje|retoma|reanuda|quiero seguir pedaleando|dale que sigo/.test(t)){ if(!ig && !document.getElementById('nav-screen').classList.contains('active')){ toggleGPS(); } else { h('Seguimos, ya estoy registrando tu viaje.'); } return; }
   if(/treki|trakea|trackea|\btrack|sigue la ruta|sigue registrando|sigue grabando|registra mi recorrido|anota mi ruta|inicia el registro/.test(t)){ if(!ig){ toggleGPS(); } else { h('Sigo registrando tu ruta, tranquilo.'); } return; }

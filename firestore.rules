@@ -127,8 +127,8 @@ service cloud.firestore {
     // al dueño real: nadie más tiene por qué tocar tu ruta grabada.
     match /routes/{id} {
       allow read: if true;
-      allow create: if signedIn();
-      allow update, delete: if signedIn() && isOwnerOrLegacy();
+      allow create: if signedIn() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000);
+      allow update, delete: if signedIn() && isOwnerOrLegacy() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000);
     }
 
     // Viajes planificados (el usuario gestiona los suyos desde la app)

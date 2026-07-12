@@ -4,6 +4,47 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.28 — 2026-07-12 — Claude (sesión 2, feature nueva: "guardar bitácora de viaje")
+Inty pidió: cuando el usuario pide guardar la bitácora de viaje, la IA debe guardar
+la ruta, dónde se hospedó y todo lo que escribió sobre ese viaje — junto. Antes NO
+existía ningún vínculo entre esas 3 cosas: la ruta se guardaba sola (sin lugar para
+hospedaje), "Te doy alojo" es para OFRECER tu casa a otros (no para registrar dónde
+TÚ dormiste), y el Diario es independiente por fecha del calendario, sin relación
+con un viaje puntual. Confirmado con Inty el diseño antes de construir (2 preguntas):
+preguntar el hospedaje en el momento (no solo juntar lo que ya exista), y usar la
+entrada del Diario del día tal cual (no un campo de notas aparte por viaje).
+
+**Nuevo comando de voz "guarda la bitácora de mi viaje"** (variantes: "guárdame la
+bitácora", etc. — chequeado ANTES que el patrón genérico de "guarda...viaje" para
+que no se lo coma primero) → `guardarBitacoraViaje()`:
+1. Guarda la ruta como siempre (GPS libre vía `autoGuardarRuta`, o navegación activa
+   vía `guardarRutaNavegada` — ambas funciones ahora devuelven el registro guardado,
+   antes no devolvían nada).
+2. Pregunta "¿Dónde te hospedaste esta noche?" con el diálogo temático
+   (`lpPedirTexto`, se puede omitir en blanco).
+3. Junta lo que ya escribiste HOY en el Diario (estado + meta + lo más difícil +
+   reflexión) en un solo texto.
+4. Todo junto (`hospedaje`, `notasDelDia`) queda en el mismo registro de la ruta —
+   local siempre, y a la nube si el `firebaseId` ya llegó (si no, queda local
+   igual, se sube en el próximo guardado de esa ruta).
+5. Ahora visible en el historial de rutas (`renderRutas`) con 🏠/📓, escapado con
+   `escapeHTML()`.
+
+Viajes planificados (con `currentTrip` de Firestore, no el camino rápido común) NO
+quedan con hospedaje/notas todavía — se avisa honestamente y se guardan como
+siempre, sin fingir que quedó completo.
+
+**Reglas de Firestore** (archivo del repo, NO publicado — ver "🔴 LO MÁS URGENTE"):
+`routes` ahora valida largo de `hospedaje` (200) y `notasDelDia` (3000) con
+`strOk()`, igual que el resto de campos de texto libre en otras colecciones.
+
+Verificado end-to-end en el navegador: comando de voz enruta bien (no choca con
+"guarda mi viaje" genérico), flujo completo con hospedaje+diario+ruta junto,
+mensaje final con gramática correcta en 1 y 2+ ítems, escape de HTML confirmado
+con un payload malicioso en el campo de hospedaje.
+
+Deploy: `librepedal.cl/version.txt` → `6.28` confirmado en vivo.
+
 ## v6.27 — 2026-07-12 — Claude (sesión 2, barrido #4: Diario / Bitácora) — ⚠️ hallazgo serio
 Función #4 del barrido completo. Esta pasada encontró el hallazgo más serio de
 todo el barrido hasta ahora.
