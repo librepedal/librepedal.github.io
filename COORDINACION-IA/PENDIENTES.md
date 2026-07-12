@@ -4,6 +4,16 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
 
 ---
 
+## ✅ CERRADO — 4 bugs de uso real reportados por Inty (Claude sesión 2, v6.08)
+GPS fantasma (doble watcher GPS-libre + navegación corriendo a la vez), voz que armaba
+un viaje con cualquier pregunta ("busca"/"encuentra" sin complemento de lugar), Pistero
+respondiendo con etiquetas `[BUSCAR:]` crudas ("código"), y Pistero limitado solo a
+ciclismo (ahora responde de todo). Detalle completo en la entrada **v6.08** de
+`BITACORA.md`. "La app no inicia bien" quedó investigado sin causa concreta distinta —
+si persiste, falta un reporte más específico para diagnosticarlo con evidencia.
+
+---
+
 ## ✅ CERRADO — QA adversarial pre-lanzamiento (Claude sesión 2, v6.03)
 Inty pidió una pasada de calidad total antes de lanzar ("no quiero fallas... la app no
 debe presentar fallas de ningún tipo"). 3 agentes Explore auditaron el código completo
