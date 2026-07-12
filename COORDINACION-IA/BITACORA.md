@@ -4,6 +4,32 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.21 — 2026-07-12 — Claude (sesión 2, barrido #1 continuación: comando de voz "pendiente"/"bajada")
+Inty preguntó específicamente qué pasaba con la llamada de voz de "pendiente" y
+"bajada". Probé `handleVoiceCommand()` en el navegador de verdad (no de memoria) y
+confirmé un bug real: decir "bajada", "pendiente" o "subida" sueltas por voz las
+trataba como si fueran el NOMBRE DE UN LUGAR — armaba un viaje hacia un destino
+literal "bajada"/"pendiente"/"subida" (que fallaría el geocode), en vez de contestar
+sobre el terreno actual.
+
+**Corregido**: nueva función `_pendienteActualTexto()` que responde con el dato
+REAL — usa el mismo perfil de elevación pre-cargado que ya usa el aviso anticipado
+(`avisarPendienteAnticipada`, v6.05) si hay una navegación con destino activa, y si
+no, cae al detector reactivo `zonaPendienteActual` (GPS libre). Nuevo comando en
+`handleVoiceCommand` con regex **anclada** (`^...$`) a propósito: intercepta solo
+frases cortas de consulta ("pendiente", "hay una bajada", "cómo está la subida"),
+NO cualquier frase que contenga esas palabras — así "llévame a la Cuesta Barriga"
+(lugar real, está en el propio listado de postales de la app) sigue funcionando
+como destino, sin choque.
+
+Verificado en el navegador con 10+ frases reales (bajada/pendiente/subida sueltas,
+con artículo, preguntas naturales, y destinos reales de 1 y 2 palabras) — todas se
+enrutan donde corresponde. También probada la rama con perfil de ruta cargado
+(subida/bajada/plano simulados con datos de elevación reales) — responde correcto
+en los 3 casos.
+
+Deploy: `librepedal.cl/version.txt` → `6.21` confirmado en vivo.
+
 ## v6.20 — 2026-07-12 — Claude (sesión 2, barrido función por función #1: GPS y navegación)
 Inty pidió un barrido de TODA la app, función por función, cerrando cada una antes de
 pasar a la siguiente. Empezamos por el núcleo: GPS y navegación (GPS libre,

@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.20'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.21'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3885,6 +3885,32 @@ async function _prefetchPerfilRuta(){
     rutaPerfil=muestras.map(function(m,i){ return {d:m.d, ele:ele[i], lat:m.lat, lon:m.lon}; });
   }catch(e){ rutaPerfil=[]; }
 }
+// Responde "¿qué pendiente hay?" con el dato real: si hay perfil de ruta cargado
+// (navegación con destino) usa la MISMA lógica de avisarPendienteAnticipada pero
+// sin sus efectos secundarios (cooldown, marcar como avisada) porque esto es una
+// consulta, no un aviso proactivo. Si no hay perfil (GPS libre, o nav sin perfil
+// aún cargado), cae al detector reactivo (zonaPendienteActual).
+function _pendienteActualTexto(){
+  const loc=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+  if(rutaPerfil && rutaPerfil.length && loc){
+    let iNow=0, best=Infinity;
+    for(let i=0;i<rutaPerfil.length;i++){ const dd=calculateDistance(loc.lat,loc.lon,rutaPerfil[i].lat,rutaPerfil[i].lon); if(dd<best){ best=dd; iNow=i; } }
+    if(best<=150){
+      const dNow=rutaPerfil[iNow].d, eleNow=rutaPerfil[iNow].ele;
+      let iAhead=-1;
+      for(let i=iNow+1;i<rutaPerfil.length;i++){ if(rutaPerfil[i].d-dNow>=180){ iAhead=i; break; } }
+      if(iAhead>=0){
+        const grade=((rutaPerfil[iAhead].ele-eleNow)/(rutaPerfil[iAhead].d-dNow))*100;
+        if(grade>=4) return 'Vamos en subida ahora mismo, dale con ganas.';
+        if(grade<=-4) return 'Vamos en bajada ahora mismo, ojo con la velocidad.';
+        return 'Vamos en terreno más o menos plano por ahora.';
+      }
+    }
+  }
+  if(zonaPendienteActual==='subida') return 'Vamos en subida ahora mismo, dale con ganas.';
+  if(zonaPendienteActual==='bajada') return 'Vamos en bajada ahora mismo, ojo con la velocidad.';
+  return 'Por ahora vamos en terreno parejo.';
+}
 function avisarPendienteAnticipada(lat,lon){
   if(!rutaPerfil.length || !vozActiva || vozOcupada() || vozCola.length) return;
   const ahora=Date.now();
@@ -5746,6 +5772,14 @@ function handleVoiceCommand(raw){
   if(/personaliz|perfil|casco|personaje/.test(t)){ cv('customize'); h("Personaliza tu personaje."); return; }
   if(/\bg\.?\s?p\.?\s?s\b|grabar|gepe ese/.test(t)){ toggleGPS(); return; }
   if(/cuanto|kilometro|distancia/.test(t)){ h("Llevas "+us.di.toFixed(1)+" kilómetros y "+Math.round(us.c)+" calorías quemadas."); return; }
+  // Anclado (^...$) a propósito: "pendiente"/"subida"/"bajada" sueltas o en frases
+  // cortas de consulta son sobre el terreno, NO un nombre de lugar — sin este anclaje
+  // cualquiera de estas palabras caía en el comando genérico de "arma un viaje a
+  // <lo que dijiste>" de más abajo e intentaba navegar a un destino inexistente
+  // llamado literalmente "bajada". Anclado también evita chocar con lugares reales
+  // que SÍ llevan estas palabras (ej. "Cuesta Barriga" sigue funcionando como destino
+  // porque no calza con este patrón).
+  if(/^(que |cual es la |como (esta|va) la |hay (una |un )?|vamos en |estamos en )?(pendiente|subida|bajada)(\s+(tiene|hay|ahora|aqui|ahi|esta ruta|esto))?\??\.?$/.test(t)){ h(_pendienteActualTexto()); return; }
   if(/pausa la m[uú]sica|para la m[uú]sica|detén la m[uú]sica|apaga la m[uú]sica/.test(t)){ lpMusic.pause(); h("Música pausada."); return; }
   if(/pon m[uú]sica|reproduce m[uú]sica|dale m[uú]sica|m[uú]sica por favor|^m[uú]sica$/.test(t)){ lpMusic.play(); h("¡Que suene!"); return; }
   if(/cambia la (m[uú]sica|radio|canci[oó]n)|siguiente (canci[oó]n|radio)|otra (canci[oó]n|radio)/.test(t)){ lpMusic.next(); h("Cambiando."); return; }
