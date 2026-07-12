@@ -4,6 +4,18 @@ Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-11.
 
 ---
 
+## ✅ CERRADO — Rediseño de navegación pedido por Inty (Claude sesión 2, v6.09)
+Esfera como Inicio permanente, fix de "Mis viajes" vacío (rutas grabadas no
+aparecían), Mi puesto visible en la Esfera, Avisos+Mensajes fusionados, botón
+"← Atrás" universal, y Pistero puede llevarte gráficamente a cualquier función de la
+app cuando le preguntas cómo usarla (`[ACCION:mostrar|clave]`). Detalle completo en
+la entrada **v6.09** de `BITACORA.md`.
+⚠️ Si vas a tocar `cv()`, `esferaItems`, `es-bottom` o los botones "Volver a Inicio":
+la Esfera ahora es el destino real de "ir a Inicio" en TODA la app — no revertir a
+que "Inicio" abra `v-dash` directo sin pasar por la Esfera.
+
+---
+
 ## ✅ CERRADO — 4 bugs de uso real reportados por Inty (Claude sesión 2, v6.08)
 GPS fantasma (doble watcher GPS-libre + navegación corriendo a la vez), voz que armaba
 un viaje con cualquier pregunta ("busca"/"encuentra" sin complemento de lugar), Pistero
