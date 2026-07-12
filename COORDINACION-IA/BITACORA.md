@@ -4,6 +4,28 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.26 — 2026-07-12 — Claude (sesión 2, barrido #3: Mis viajes / Rutas)
+Función #3 del barrido completo (historial de rutas, perfil de elevación,
+planificador por presupuesto, calculadora de gastos, video de ruta).
+
+**Verificado sin bugs**: `calcularDesnivel` (perfil de elevación) ya filtraba bien
+los puntos sin altitud y exigía un mínimo de 5 válidos antes de calcular; el
+dedupe entre rutas locales y de la nube (`loadRoutesList`) usa `startTime` como
+clave además de `firebaseId`, y se confirmó que ambos lados escriben el mismo
+número plano (no hay descalce Timestamp-vs-número que rompiera la comparación).
+
+**2 bugs reales de validación numérica, misma familia**: tanto el
+"Planificador por presupuesto" (`buscarPlanPresupuesto`) como la "Calculadora de
+gastos" del viaje activo (`calcularGastos`) aceptaban números **negativos** en
+presupuesto/km/comida/alojamiento sin ningún clamp — un usuario que escribe
+"-5000" (a propósito o sin querer) veía resultados sin sentido como "-$1.000
+/noche". Los inputs HTML ya tenían `min="0"`, pero eso no bloquea escribir un
+negativo a mano, solo afecta las flechitas del spinner. Corregido con
+`Math.max(0, ...)` en los 4 campos (presupuesto, km, comida, noche),
+consistente con cómo ya se protegía "días" (`Math.max(1,...)`) desde antes.
+
+Deploy: `librepedal.cl/version.txt` → `6.26` confirmado en vivo.
+
 ## v6.25 — 2026-07-12 — Claude (sesión 2, barrido #2: Inicio / Esfera de apps)
 Función #2 del barrido completo. A diferencia de la #1 (GPS/navegación, con muchos
 bugs de comandos de voz), esta función resultó sólida en su núcleo — reviso y dejo

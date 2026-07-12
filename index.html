@@ -951,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.25'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.26'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1429,10 +1429,10 @@ async function toggleGastosPanel(){
   }
 }
 function calcularGastos(){
-  const km=parseFloat(document.getElementById('gasto-km').value)||0;
+  const km=Math.max(0,parseFloat(document.getElementById('gasto-km').value)||0);
   const dias=Math.max(1,parseInt(document.getElementById('gasto-dias').value)||1);
-  const comida=parseFloat(document.getElementById('gasto-comida').value)||0;
-  const noche=parseFloat(document.getElementById('gasto-noche').value)||0;
+  const comida=Math.max(0,parseFloat(document.getElementById('gasto-comida').value)||0);
+  const noche=Math.max(0,parseFloat(document.getElementById('gasto-noche').value)||0);
   if(!km){ h('Dime cuántos kilómetros tiene el viaje.'); return; }
   const noches=Math.max(0,dias-1);
   const tComida=comida*dias, tNoche=noche*noches;
@@ -5168,7 +5168,7 @@ async function mostrarPlanificadorPresupuesto(){
   document.getElementById('userModal').classList.add('on');
 }
 async function buscarPlanPresupuesto(){
-  const presupuesto=parseFloat(document.getElementById('plan-presupuesto').value)||0;
+  const presupuesto=Math.max(0,parseFloat(document.getElementById('plan-presupuesto').value)||0);
   const dias=Math.max(1,parseInt(document.getElementById('plan-dias').value)||1);
   const pref=document.getElementById('plan-pref').value;
   const res=document.getElementById('plan-resultado');
