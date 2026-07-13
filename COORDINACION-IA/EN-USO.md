@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-13 20:29
-Terminó: comandos de voz nuevos (v6.57) — ciclistas cerca (con distancia real), panorama por la zona, historia/mito/leyenda del lugar bajo pedido. Commiteado y pusheado (3d0dbe1), desplegado y verificado en librepedal.cl.
+OCUPADO
+Sesión: 2
+Desde: 2026-07-13 20:33
+Tocando: index.html — chips de modo en la esfera (más grandes, color propio por modo) + gentilicio moto 'viajero'->'motorizado'
 ```
 
 ---
