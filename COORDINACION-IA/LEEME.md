@@ -1,13 +1,86 @@
 # 🤝 Coordinación entre IAs — Libre Pedal
 
-Este proyecto lo trabajan **dos IAs en paralelo**: **Claude** (Anthropic) y **Gemini**.
-Lee esto ANTES de tocar el código para no romper ni duplicar el trabajo del otro.
+Este proyecto lo trabajan **varias IAs en paralelo** (hoy: dos sesiones de Claude;
+en el pasado, Gemini). Lee esto ANTES de tocar el código para no romper ni duplicar
+el trabajo de otra sesión — sea cual sea el modelo que la esté corriendo.
 
-**Última actualización:** 2026-07-11 · **Versión viva:** v6.01
+**Última actualización:** 2026-07-13 · **Versión viva:** v6.37
 
 📌 **`VISION-MAESTRA.md`** en esta misma carpeta es el norte del producto completo
 (prompt maestro de Inty) con auditoría real de qué existe y qué falta — leerlo antes
 de proponer módulos nuevos grandes.
+
+---
+
+## 🧭 EL PROTOCOLO DE TRABAJO (léelo si sos una sesión nueva, de cualquier modelo)
+
+Esto es lo que Inty pide, palabra por palabra, y lo que ya viene funcionando bien
+en las últimas ~30 versiones — no es opcional, es el estilo de trabajo de este
+proyecto. Si te acaban de sumar a este repo (Claude, Gemini, Qwen, Kimi, o
+cualquier otro agente con acceso a archivos/terminal/navegador), seguí esto:
+
+1. **Barrido función por función, no arreglos sueltos.** Se recorre la app una
+   función/sección a la vez (ver la lista de funciones ya barridas más abajo),
+   se cierra completa, y recién ahí se pasa a la siguiente. No dejar una función
+   "a medias" para saltar a otra más entretenida.
+
+2. **Buscar VARIANTES reales de uso, no solo el caso feliz.** Para cada función:
+   pensar en las distintas formas en que una persona real la usaría (frases
+   distintas si es un comando de voz, valores negativos/vacíos/al límite si es
+   un formulario, dos pestañas a la vez si es un guardado, etc.), no solo probar
+   el ejemplo obvio. La mayoría de los bugs reales de este proyecto salieron de
+   acá: una regex demasiado angosta, un campo sin `Math.max(0,...)`, un
+   `isOwnerOrLegacy()` que resultó ser un no-op para una colección que nunca
+   tuvo el campo `authUid`.
+
+3. **Verificar de VERDAD, no "debería funcionar".** Antes de dar algo por
+   arreglado: `node --check` para sintaxis, y siempre que se pueda, ejecutar la
+   función real en el navegador (Browser pane) con datos de prueba —
+   interceptando `fetch`/`db.collection` cuando hace falta simular Firestore —
+   y leer el resultado real, no asumirlo. Si de verdad no se puede probar (ej.
+   sensores de un teléfono real, GPS en movimiento, una prueba de caída física),
+   decirlo explícitamente en la bitácora en vez de fingir que se probó. Sesión 1
+   hizo esto bien en v6.37: encontró un hueco real en la detección de caídas y
+   **no lo tocó a ciegas** porque tocar seguridad sin poder probar con un
+   teléfono real puede empeorarlo — lo dejó anotado en vez de arriesgar.
+
+4. **Cada cambio = versión + deploy + commit + bitácora, siempre los 4.** Ver
+   "Sistema de versión" y "Cómo se publica" más abajo. Nunca dejar un cambio sin
+   subir la versión o sin desplegar — la mitad de un arreglo es peor que nada,
+   porque otra sesión (o Inty) cree que ya está en producción y no lo es.
+
+5. **Documentar CON evidencia, no solo "lo revisé".** Cada entrada de
+   `BITACORA.md` debería poder responder: ¿qué se rompía exactamente?, ¿con qué
+   frase/dato/condición se reproduce?, ¿cómo se confirmó que el fix funciona?
+   Copiar el resultado real de la prueba (aunque sea resumido) vale más que
+   "verificado ✅".
+
+6. **Los límites de acceso son del proyecto, no de una sesión.** Ninguna IA
+   publica `firestore.rules` en Firebase Console (cambio de control de acceso
+   en producción — solo Inty, siempre). Ninguna IA paga nada. Ver
+   "🔐 SEGURIDAD" y "🛡️ PROTEGIDO" más abajo para el resto.
+
+**Barrido — estado (actualízalo si seguís de acá):** #1 GPS y navegación, #2
+Inicio/Esfera, #3 Mis viajes/Rutas, #4 Diario/Bitácora, #5 Comunidad, #6 Social,
+#7 Pistero IA — cerrados. #8 SOS y detección de caídas — cerrado salvo el hallazgo
+de seguridad de arriba (necesita teléfono real). Además, fuera de la numeración:
+escalabilidad de lecturas Firestore (`count()`) y creación de contenido de
+comunidad (guards anti-doble-tap) ya revisados. Quedan: Gamificación,
+Personalización, Música, Novedades, Taller/Guía, Ajustes, Admin, base/PWA.
+
+## 🌐 ¿Se puede sumar a Qwen, Kimi u otro modelo con este mismo protocolo?
+
+Sí, con una condición: ese otro asistente necesita tener el mismo tipo de acceso
+que tiene esta sesión de Claude — leer/escribir archivos de este repo, correr
+comandos de terminal (`node --check`, `git`, `wrangler`), y probar en un
+navegador real. Eso depende de CÓMO Inty lo abra (ej. un CLI/agente de código con
+esas herramientas), no de qué tan bueno sea el modelo — un chat normal de Qwen o
+Kimi sin acceso a archivos no puede tocar este repo, por más que se le pase este
+documento. Ninguna IA (incluida esta) puede "invocar" o coordinarse en vivo con
+otro proveedor de IA por su cuenta — no hay una conexión directa entre modelos.
+Si Inty quiere sumar otro asistente: abrirlo con acceso a esta carpeta y pegarle
+como primer mensaje "lee COORDINACION-IA/LEEME.md completo antes de tocar nada" —
+con eso alcanza para que seas cual seas, sigas el mismo protocolo.
 
 ---
 

@@ -1,11 +1,24 @@
 # ✅ Pendientes — Libre Pedal
 
-Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-12 (noche),
-versión actual del proyecto: **v6.27**.
+Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-13,
+versión actual del proyecto: **v6.37**.
 
 ---
 
 ## 🔴 LO MÁS URGENTE — leer primero, cualquiera de las dos sesiones
+
+- [ ] **⚠️ Posible falla de seguridad en detección de caídas — necesita prueba
+  con teléfono real, nadie la puede hacer sin dispositivo.** Encontrado en el
+  barrido #8 (v6.37, ver `BITACORA.md`): el chequeo de "¿sigues quieto tras el
+  impacto?" usa la velocidad del GPS (`spd`/`navSpeed`), que viene de una
+  ventana de ~10-15s de posiciones y por lo tanto LAGGEA. A los 3s post-impacto
+  la velocidad mostrada puede seguir marcando la de ANTES del choque (alta) →
+  el sistema cree que "sigues moviéndote" → **NO dispara la alerta** → podría
+  no detectar una caída real ocurrida a velocidad. El fix correcto sería medir
+  quietud con el ACELERÓMETRO (movimiento bajo tras el impacto), no con la
+  velocidad GPS — pero NO se tocó a ciegas: cambiar lógica de seguridad sin
+  poder hacer una prueba de caída real puede meter falsos positivos (alarma en
+  cada bache) o dejarlo peor. Necesita a alguien con el teléfono en mano.
 
 - [ ] **Publicar `firestore.rules` en Firebase Console — sigue sin publicarse,
   y ahora es MÁS urgente que antes.** Barrido de la función Diario (v6.27)
