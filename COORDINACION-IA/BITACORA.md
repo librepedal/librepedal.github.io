@@ -4,6 +4,44 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.40 — 2026-07-13 — Claude (sesión 2, barrido: Música)
+
+Revisé el módulo `lpMusic` (radios gratis + música propia + auto-ducking cuando
+Pistero habla). Encontré y arreglé 2 cosas reales, buscando variantes de uso real
+en vez del solo caso feliz:
+
+**1. Música a todo volumen si arrancas a reproducir justo mientras Pistero está
+hablando.** `duck()` solo baja el volumen de audio YA sonando (`if(audio.paused)
+return;`). Si abrías la pantalla de Música y le dabas play justo cuando Pistero
+seguía con el saludo (algo que pasa fácil: son los primeros segundos después de
+entrar), la música arrancaba al 100% y recién bajaba cuando Pistero volviera a
+hablar la próxima vez. Arreglado: `play()` ahora revisa si el body tiene la clase
+`pistero-hablando` ANTES de arrancar el audio, y si es así arranca directo al 5%
+(mismo nivel que `duck()`), sin el golpe de volumen inicial.
+
+**2. Fuga de memoria con "tu música" (📁).** Cada archivo cargado crea un blob URL
+(`URL.createObjectURL`) que nunca se liberaba. Si cargabas tus canciones, después
+volvías a radios y cargabas otro grupo de archivos, las URLs viejas quedaban vivas
+en memoria para siempre — sesiones largas (justamente el caso de uso típico:
+alguien pedaleando varias horas) iban acumulando fugas. Arreglado: se revocan las
+URLs de la lista anterior antes de reemplazarla, tanto al cargar archivos nuevos
+como al volver a radios.
+
+**Verificación:** no se pudo probar reproducción real de audio en este entorno
+(sandbox sin salida de red para streaming), así que extraje la lógica exacta de
+`play()` y de la revocación a un script Node aislado con mocks de `audio`/`document`/
+`URL`, y confirmé ambos casos: (a) volumen arranca en 0.05 cuando `pistero-hablando`
+está activo y en 1 cuando no, (b) las URLs viejas se revocan en el orden correcto
+al cambiar de lista. `node --check` limpio, sin errores de consola al cargar la app.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.40. `sw.js` CACHE → v640.
+Desplegado a librepedal.cl y confirmado en vivo.
+
+Barrido — sigue: Novedades, Taller/Guía (si existe como sección propia), Ajustes,
+Admin, base/PWA.
+
+---
+
 ## v6.39 — 2026-07-13 — Claude (sesión 2, animación de habla + personalización con variedad real)
 
 Inty pidió dos cosas directas: (1) la animación de "hablar" del personaje se veía

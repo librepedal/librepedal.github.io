@@ -651,7 +651,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.39</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.40</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -987,7 +987,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.39'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.40'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1528,8 +1528,17 @@ const lpMusic=(function(){
   const $=function(id){ return document.getElementById(id); };
   function ui(){ const p=$('lpPlayer'),b=$('lpPlayBtn'),t=$('lpTrackName'); if(!p) return; p.classList.toggle('playing',!audio.paused); p.classList.toggle('ducking',ducked&&!audio.paused); if(b) b.innerText=audio.paused?'▶':'⏸'; if(t) t.innerText=(lista[idx]&&lista[idx].n)||'Radio Libre Pedal'; }
   function fadeTo(v,ms){ clearInterval(fadeTO); const desde=audio.volume, pasos=8, dur=(ms||350)/pasos; let i=0; fadeTO=setInterval(function(){ i++; audio.volume=Math.max(0,Math.min(1,desde+(v-desde)*(i/pasos))); if(i>=pasos) clearInterval(fadeTO); },dur); }
+  function _revocarPropias(){ if(propias){ lista.forEach(function(t){ if(t.u && t.u.indexOf('blob:')===0){ try{ URL.revokeObjectURL(t.u); }catch(e){} } }); } }
   function cargar(i){ idx=(i+lista.length)%lista.length; const estaba=!audio.paused; audio.src=lista[idx].u; if(estaba||audio.dataset.want==='1'){ play(); } ui(); }
-  function play(){ audio.dataset.want='1'; audio.play().then(ui).catch(function(){ const t=$('lpTrackName'); if(t) t.innerText='⚠️ Esta radio no respondió, prueba otra (⏭)'; }); }
+  function play(){
+    audio.dataset.want='1';
+    // Si Pistero ya está hablando cuando arranca la música (ej: abres el reproductor
+    // y le das play justo mientras te saluda), que arranque bajito desde el primer
+    // instante — si no, suena a todo volumen un momento antes de que el duck() de
+    // _pisteroHabla() alcance a bajarla.
+    if(document.body.classList.contains('pistero-hablando')){ ducked=true; audio.volume=0.05; }
+    audio.play().then(ui).catch(function(){ const t=$('lpTrackName'); if(t) t.innerText='⚠️ Esta radio no respondió, prueba otra (⏭)'; });
+  }
   function pause(){ audio.dataset.want='0'; audio.pause(); ui(); }
   audio.onplay=ui; audio.onpause=ui;
   audio.onerror=function(){ const t=$('lpTrackName'); if(t) t.innerText='⚠️ Sin señal aquí, prueba otra (⏭)'; };
@@ -1543,8 +1552,11 @@ const lpMusic=(function(){
     sonando:function(){ return !audio.paused; },
     duck:function(){ if(audio.paused) return; ducked=true; fadeTo(0.05,250); ui(); }, /* 5%: Pistero se escucha clarito sobre la música */
     unduck:function(){ if(!ducked) return; ducked=false; if(!audio.paused) fadeTo(1,700); ui(); },
-    cargarArchivos:function(files){ if(!files||!files.length) return; lista=Array.prototype.map.call(files,function(f){ return {n:'🎵 '+f.name.replace(/\.[^.]+$/,''),u:URL.createObjectURL(f)}; }); propias=true; cargar(0); play(); try{ h('Tu música lista. '+lista.length+' canciones a bordo.'); }catch(e){} },
-    radios:function(){ lista=RADIOS.slice(); propias=false; cargar(0); }
+    // Los blobs de "tu música" (📁) no se liberan solos: si cargas archivos varias
+    // veces, o vuelves a radios después de haber cargado tu música, las URLs viejas
+    // quedaban vivas en memoria para siempre. Se revocan antes de reemplazar la lista.
+    cargarArchivos:function(files){ if(!files||!files.length) return; _revocarPropias(); lista=Array.prototype.map.call(files,function(f){ return {n:'🎵 '+f.name.replace(/\.[^.]+$/,''),u:URL.createObjectURL(f)}; }); propias=true; cargar(0); play(); try{ h('Tu música lista. '+lista.length+' canciones a bordo.'); }catch(e){} },
+    radios:function(){ _revocarPropias(); lista=RADIOS.slice(); propias=false; cargar(0); }
   };
 })();
 
