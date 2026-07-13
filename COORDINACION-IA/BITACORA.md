@@ -53,6 +53,18 @@ de este computador, y lanzar el workflow una vez para la confirmación final.
 
 ---
 
+## v6.54 — 2026-07-13 — Claude (sesión 1, +6 arquetipos de personalidad = 12)
+Inty pidió mínimo 10 personalidades "tal cual la gente" (sensibles, sin bromas, motivadores, zen, distintos).
+Descubrí que sesión 2 YA tenía la infraestructura: Worker `TONOS[u.personalidad]` (6) + selector
+"🎭 Personalidad de Pistero" (`PERSONALIDADES`/`elegirPersonalidad`) + persistencia + envío en el payload.
+Protocolo (no duplicar, extender): agregué 6 arquetipos a AMBOS lados (mismo id): sensible (empático sin
+bromas), directo (serio al grano), sabio (reflexivo), relator (épico deportivo), picaro (competitivo/te pica),
+maternal (protector). Total 12. + `trackEvent('voz', id)` al elegir → la analytics (v6.53) mide cuál gusta
+más (para decidir premium). Worker redeployado (TOKEN_IA; el token Pages no despliega Workers).
+**Evidencia:** POST real al Worker con 2 arquetipos nuevos → tonos claramente distintos: "directo" responde
+técnico y al grano ("0,5 L por hora"); "picaro" tutea y pica ("Che Inty... si vas a darle con todo, 3 litros").
+node --check worker.js OK, llaves index 0, 12 TONOS. No probado el selector en navegador (herramienta caída).
+
 ## v6.53 — 2026-07-13 — Claude (sesión 1, base de ANALYTICS + rescate de sesión 2)
 **Pedido de Inty:** medir qué usa el usuario, dónde pasa tiempo, su relación con la app, y verlo en su
 panel de admin — para después dejar en premium las voces/arquetipos/funciones más exitosas.

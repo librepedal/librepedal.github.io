@@ -1017,7 +1017,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.53'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.54'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1434,12 +1434,19 @@ const PERSONALIDADES=[
   {id:'entrenador', label:'💪 Entrenador'},
   {id:'relajado', label:'🧘 Relajado'},
   {id:'humoristico', label:'😄 Humorístico'},
-  {id:'guia', label:'📖 Guía turístico'}
+  {id:'guia', label:'📖 Guía turístico'},
+  {id:'sensible', label:'💗 Sensible (sin bromas)'},
+  {id:'directo', label:'🎯 Directo (al grano)'},
+  {id:'sabio', label:'🦉 Sabio del camino'},
+  {id:'relator', label:'🎙️ Relator deportivo'},
+  {id:'picaro', label:'😏 Pícaro (te pica)'},
+  {id:'maternal', label:'🫶 Protector'}
 ];
 let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
 function elegirPersonalidad(id){
   if(!PERSONALIDADES.some(function(p){return p.id===id;})) return;
   pisteroPersonalidad=id; try{ localStorage.setItem('lp_personalidad',id); }catch(e){}
+  try{ trackEvent('voz', id); }catch(e){} // mide qué arquetipo eligen (para decidir premium)
   // Igual que la actividad: se sube al perfil para no perderla al cambiar de celular.
   if(cu){ try{ db.collection('users').doc(cu).set({personalidad:id},{merge:true}).catch(function(){}); }catch(e){} }
   renderPersonalidadGrid();

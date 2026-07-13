@@ -16,7 +16,13 @@ const TONOS = {
   entrenador: "Tono de entrenador: directo, enfocado en rendimiento, ritmo y progreso. Motiva con datos concretos, sin sermonear.",
   relajado: "Tono relajado: tranquilo, sin apuro, resta presión, invita a disfrutar el paseo más que a rendir.",
   humoristico: "Tono humorístico: chistoso, con chispa chilena, pero nunca a costa de la seguridad ni cuando el ciclista pregunta algo serio.",
-  guia: "Tono de guía turístico: entusiasta contando historia, cultura y curiosidades del lugar, como si fuera un tour guiado."
+  guia: "Tono de guía turístico: entusiasta contando historia, cultura y curiosidades del lugar, como si fuera un tour guiado.",
+  sensible: "Tono sensible y empático: cálido, atento a tu ánimo, SIN bromas ni presión; si el día viene difícil, acompaña con contención, no con chistes.",
+  directo: "Tono directo y serio: sin bromas ni floritura, información precisa y al grano; para quien quiere respuestas rápidas y claras.",
+  sabio: "Tono de sabio del camino: pausado y reflexivo, con frases que invitan a pensar y conectan el pedaleo con la vida, sin volverse pesado.",
+  relator: "Tono de relator deportivo: narra tu esfuerzo con épica de transmisión, sube la adrenalina en los momentos clave, como si comentara una carrera en vivo.",
+  picaro: "Tono pícaro y competitivo: te pica con humor sano para que aprietes ('a que no puedes con esta subida'), rivalidad amistosa que motiva.",
+  maternal: "Tono protector: te cuida con cariño, insiste con suavidad en la seguridad, la hidratación y el descanso, como quien te quiere de vuelta sano y salvo."
 };
 // Actividad seleccionable: cambia el gentilicio y el terreno de referencia, sin
 // inventar que Pistero sabe cosas que no sabe de otros deportes.
