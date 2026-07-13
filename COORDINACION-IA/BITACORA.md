@@ -4,6 +4,59 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.43 — 2026-07-13 — Claude (sesión 2, segunda vuelta del barrido: 3 condiciones de carrera reales en Comunidad)
+
+Inty pidió una segunda vuelta meticulosa, con autocrítica. Primero re-verifiqué
+mis propios cambios de v6.39-6.42 con pruebas dirigidas (condición de carrera en
+el ducking de música, escape de atributo en Novedades, consistencia del wake
+lock, doble-llamada a la animación de habla, restauración combinada de v6.38+v6.39
+en `reg()`, colisión de clases CSS, correspondencia pestaña↔panel↔grid) — **todo
+pasó, sin fallas nuevas**. Evidencia completa en el historial de esta sesión.
+
+Después seguí barriendo Comunidad/Social buscando el patrón "leer un array o
+mapa completo, modificarlo en el cliente, reescribirlo entero" — y encontré
+**3 condiciones de carrera reales**, las tres reproducidas con pruebas
+concurrentes ANTES de arreglarlas (no se asumió el bug, se demostró):
+
+**1. `toggleAsistenciaRodada()`** — dos personas confirmando asistencia a una
+rodada casi al mismo tiempo: la que escribía último pisaba a la otra sin
+avisar. Reproducido: con el código viejo, `userB` desaparecía de la lista de
+asistentes aunque había confirmado antes que `userC`. Arreglado con
+`FieldValue.arrayUnion`/`arrayRemove` (atómico en el servidor, no depende de
+qué haya leído el cliente).
+
+**2. `likeRecommendation()`** — mismo problema con "me gusta" en recomendaciones
+de CicloGuía: dos likes casi simultáneos, uno se perdía (tanto el contador
+`likes` como la entrada en `likedBy`). Arreglado igual: `arrayUnion`/
+`arrayRemove` para `likedBy` + `FieldValue.increment()` para el contador.
+
+**3. `valorar()`** (estrellas en recomendaciones) — mismo problema con
+`ratingSum`/`votes`/`ratedBy`. Arreglado con `increment()` para los números y
+una escritura de **solo esa clave** del mapa (`'ratedBy.'+clave`, dot-path),
+que Firestore aplica de forma atómica sin tocar los votos de nadie más
+—confirmé que `claveVoto()` ya sanitiza puntos y caracteres especiales, así
+que el dot-path nunca se malinterpreta como un path anidado accidental.
+
+Revisé aparte que `hostels` (calificaciones) YA estaba libre de este problema
+desde antes — usa un doc-por-voto (`guiComments` con `type:'voto'`), un diseño
+sin contención por construcción. Revisé también Social (solicitudes de
+amistad) — solo hace `set` de un campo string único (`status`), sin arrays/
+contadores compartidos, sin riesgo.
+
+**Verificación real:** para cada uno de los 3 fixes, simulé 2 escrituras
+concurrentes con latencia realista (40-60ms) contra un mock que reproduce
+fielmente cómo Firestore aplica `arrayUnion`/`arrayRemove`/`increment`/
+dot-path (inspeccioné la forma real de los sentinels del SDK cargado en vez de
+adivinar). Con el código VIEJO reproduje la pérdida de datos; con el código
+NUEVO confirmé que ambas escrituras concurrentes quedan reflejadas correctamente,
+en los 3 casos, incluyendo un caso mixto (uno confirma mientras otro cancela al
+mismo tiempo en rodadas).
+
+**Versión:** APP_VERSION, version.txt y footer → 6.43. `sw.js` CACHE → v643.
+Desplegado a librepedal.cl y confirmado en vivo.
+
+---
+
 ## v6.42 — 2026-07-13 — Claude (sesión 2, barrido: Ajustes)
 
 **Fuga real de batería en "🔋 Ahorro pantalla".** El botón está siempre

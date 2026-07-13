@@ -651,7 +651,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.42</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.43</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -987,7 +987,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.42'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.43'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4081,10 +4081,17 @@ async function valorar(col,id,n){
       const ref=db.collection(col).doc(id);
       const doc=await ref.get(); if(!doc.exists) return;
       const data=doc.data(); const by=data.ratedBy||{}; const k=claveVoto();
-      let sum=data.ratingSum||0, votes=data.votes||0;
-      if(by[k]){ sum-=by[k]; } else { votes+=1; }
-      by[k]=n; sum+=n;
-      await ref.update({ratingSum:sum,votes:votes,ratedBy:by});
+      const anterior=by[k]||0;
+      // Antes se leía ratedBy completo, se modificaba en el cliente y se
+      // reescribía entero — dos personas valorando casi al mismo tiempo se
+      // pisaban (la escritura más tardía borraba en silencio el voto de la
+      // otra, igual que pasaba con "asistentes" en rodadas). Con increment()
+      // y una escritura de solo ESA clave del mapa (dot-path), cada voto suma
+      // su delta sin importar qué haya escrito otro usuario en el medio.
+      const cambios={}; cambios['ratedBy.'+k]=n;
+      cambios.votes=firebase.firestore.FieldValue.increment(anterior?0:1);
+      cambios.ratingSum=firebase.firestore.FieldValue.increment(n-anterior);
+      await ref.update(cambios);
     }
     h('Gracias por tu valoración de '+n+(n===1?' estrella.':' estrellas.'));
   }catch(e){ lpAviso('No se pudo guardar tu valoración: '+(e.message||e)); }
@@ -4098,7 +4105,19 @@ let _agregandoComentarioGuia=false;
 async function addComment(){ const input=document.getElementById('comment-input'); const text=input.value.trim(); if(!text) return; if(_agregandoComentarioGuia) return; _agregandoComentarioGuia=true; const hora=new Date().toLocaleTimeString(); try{ await db.collection('guiComments').add({user:cu,nombre:nombreUsuario,text:text,authUid:window.lpUID||null,h:hora,ts:firebase.firestore.FieldValue.serverTimestamp()}); input.value=''; h("Comentario publicado."); }catch(e){ lpAviso('No se pudo publicar el comentario.'); } finally{ _agregandoComentarioGuia=false; } }
 function addRecommendation(){ const title=document.getElementById('rec-title').value.trim(); const cat=document.getElementById('rec-cat').value; const desc=document.getElementById('rec-desc').value.trim(); if(!title||!desc) return lpAviso("Completa los campos"); const rd={user:cu,nombre:nombreUsuario,title:title,cat:cat,desc:desc,likes:0,likedBy:[],ratingSum:0,votes:0,ratedBy:{},authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}; if(fotosPendientes.rec){ rd.foto=fotosPendientes.rec; } db.collection('recommendations').add(rd); document.getElementById('rec-title').value=''; document.getElementById('rec-desc').value=''; limpiarFoto('rec'); h("Recomendación publicada."); }
 function loadRecommendations(){ db.collection('recommendations').orderBy('ts','desc').limit(50).onSnapshot(async function(snapshot){ const c=document.getElementById('rec-list'); if(!c) return; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero</p>'; return; } let html=''; for(const doc of snapshot.docs){ const data=doc.data(); if(/^TEST-/.test(data.title||'')) continue; const nombre=await getNombreUsuario(data.user); const liked=data.likedBy&&data.likedBy.indexOf(cu)!==-1; html+='<div class="rec-card"><h4>'+escapeHTML(data.title)+'</h4>'+(data.foto?'<img src="'+escapeHTML(data.foto)+'" loading="lazy" alt="" style="width:100%;border-radius:10px;margin:6px 0;max-height:170px;object-fit:cover">':'')+'<div class="meta" style="font-size:0.75rem;color:#888">Por <strong>'+escapeHTML(nombre)+'</strong> · '+escapeHTML(data.h)+'</div><div style="font-size:0.85rem">'+escapeHTML(data.desc)+'</div>'+estrellasHTML('recommendations',doc.id,data)+'<div class="rec-actions"><button class="rec-btn '+(liked?'active':'')+'" onclick="likeRecommendation(\''+doc.id+'\')">Me gusta ('+(data.likes||0)+')</button>'+((data.lat&&data.lon)?'<button class="rec-btn" onclick="irAlPuntoYNavegar('+data.lat+','+data.lon+')">🧭 Ir</button>':'')+'</div></div>'; } c.innerHTML=html; }); }
-async function likeRecommendation(docId){ const ref=db.collection('recommendations').doc(docId); const doc=await ref.get(); const data=doc.data(); let likes=data.likes||0, by=data.likedBy||[]; if(by.indexOf(cu)!==-1){ by=by.filter(function(u){return u!==cu;}); likes=Math.max(0,likes-1); } else { by.push(cu); likes+=1; } ref.update({likes:likes,likedBy:by}); }
+// arrayUnion/arrayRemove + increment(): la version anterior leia likes/likedBy
+// completos y los reescribia enteros - dos "me gusta" casi simultaneos se
+// pisaban entre si (mismo problema que "asistentes" en rodadas). Asi, cada
+// like suma o resta su delta atomicamente sin importar el orden de llegada.
+async function likeRecommendation(docId){
+  const ref=db.collection('recommendations').doc(docId);
+  const doc=await ref.get(); const data=doc.data();
+  const yaLeGustaba=(data.likedBy||[]).indexOf(cu)!==-1;
+  await ref.update({
+    likes: firebase.firestore.FieldValue.increment(yaLeGustaba?-1:1),
+    likedBy: yaLeGustaba ? firebase.firestore.FieldValue.arrayRemove(cu) : firebase.firestore.FieldValue.arrayUnion(cu)
+  });
+}
 function showNewTripForm(){ addedDests=[]; document.getElementById('trip-name').value=''; document.getElementById('trip-start').value=''; renderAddedDests(); filterDestType('hostel',document.querySelector('#v-newtrip .gtt')); cv('newtrip'); }
 function filterDestType(type,btn){ currentFilter=type; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); if(type==='hostel') renderHostelOptions(); else { document.getElementById('dest-options').innerHTML=''; document.getElementById('custom-dest-form').style.display='block'; } }
 function renderHostelOptions(){ document.getElementById('custom-dest-form').style.display='none'; const c=document.getElementById('dest-options'); if(allHostels.length===0){ c.innerHTML='<p style="color:#888">Sin hostels guardados</p>'; return; } c.innerHTML=allHostels.map(function(hh,i){ return '<div class="hostel-option" onclick="addHostelDest('+i+')"><div><strong style="font-size:0.85rem">'+escapeHTML(hh.name)+'</strong><div style="font-size:0.7rem;color:#888">'+escapeHTML(hh.location)+'</div></div><i class="fas fa-plus" style="color:var(--p)"></i></div>'; }).join(''); }
@@ -5424,9 +5443,14 @@ async function toggleAsistenciaRodada(id){
     const doc=await ref.get();
     if(!doc.exists) return;
     const asistentes=doc.data().asistentes||[];
-    const idx=asistentes.indexOf(cu);
-    if(idx===-1){ asistentes.push(cu); } else { asistentes.splice(idx,1); }
-    await ref.update({asistentes:asistentes});
+    const voy=asistentes.indexOf(cu)!==-1;
+    // arrayUnion/arrayRemove son atómicos en el servidor. Antes se leía el array
+    // completo, se modificaba en el cliente y se reescribía entero — si dos
+    // personas confirmaban asistencia casi al mismo tiempo, la escritura más
+    // tardía pisaba a la otra SIN avisar (quien confirmó primero desaparecía de
+    // la lista, en silencio). Con arrayUnion/arrayRemove cada confirmación se
+    // suma/resta sola, sin importar qué haya escrito otro usuario en el medio.
+    await ref.update({ asistentes: voy ? firebase.firestore.FieldValue.arrayRemove(cu) : firebase.firestore.FieldValue.arrayUnion(cu) });
     verRodadas();
   }catch(e){ lpAviso('No se pudo actualizar tu asistencia.'); }
 }
