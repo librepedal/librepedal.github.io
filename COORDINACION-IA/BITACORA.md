@@ -1198,6 +1198,18 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.35 — 2026-07-13 — Claude (sesión 1, barrido: escalabilidad Firestore con count())
+Retomando el barrido de sesión 2 en un frente propio: **conteos que leían colecciones enteras**.
+- **Ranking** (`updateRanking`/#N): leía TODOS los usuarios con más km que tú (`.get().size`) solo para un
+  número → miles de lecturas. Ahora usa **agregación `count()`** (lee 0 documentos, resultado exacto), con
+  fallback al método viejo si el SDK no la soporta (cero regresión).
+- **Sorteo comunidad**: leía TODAS las entradas para el total + si participaste → ahora `count()` para el
+  total + 1 doc directo (`.doc(cu)`) para tu participación, con fallback.
+- Revisado XSS en secciones con contenido de usuario (Taller/CicloGuía/Recos): 0 hallazgos (ya escapado).
+PENDIENTE (scale, no toqué por riesgo sin poder testear): `votacionComunidad` lee todos los votos para el
+tally por opción (se podría hacer con 4 `count()` where opcion + 1 doc para tu voto, requiere índices+prueba)
+y el `users where visible` del mapa (necesita geo-queries reales). Dejar para cuando se pueda testear Firestore.
+
 ## v6.18 — 2026-07-11 — Claude (RESTAURAR respaldo completo — traer tus datos)
 Inty: si un usuario quiere traer sus datos a la app, esa opción debe estar lista y disponible.
 - HUECO crítico: `importarMisDatos` (botón "Restaurar desde archivo" que ya existía) SOLO restauraba el
