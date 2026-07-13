@@ -4,6 +4,78 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.39 — 2026-07-13 — Claude (sesión 2, animación de habla + personalización con variedad real)
+
+Inty pidió dos cosas directas: (1) la animación de "hablar" del personaje se veía
+mal — "un chiste" para una app de este nivel — y (2) "Crea tu perfil" ocupa mucho
+espacio para tan poca variedad; pidió variedad real (cascos, lentes, pañoletas,
+rostro, barba, bigote, ojos, labios) pensando también en personajes femeninos.
+
+**1. Boca al hablar, rehecha de fondo.** Antes era un único `<path>` de sonrisa
+estirado con `scaleY` vía CSS `@keyframes` a ritmo perfectamente parejo (0.18s
+lineal) — se veía plano y robótico. Ahora (`_bocaFrames`, `_bocaAplicar`,
+`_bocaIniciarCiclo` en index.html) cicla por JS entre 6 formas de boca reales
+(cerrada, apenas abierta, media redonda, ancha, redonda grande, fruncida) con
+selección aleatoria PONDERADA (favorece formas chicas, como el habla real) y
+timing IRREGULAR entre cuadros (65-160ms, no un intervalo fijo) — eso es lo que
+distingue una boca hablando de una animación mecánica. Verificado ejecutando la
+función real en el navegador: capturé 14 cuadros durante 3s de "habla" simulada y
+confirmé formas distintas en secuencia irregular, más el reset correcto a la
+sonrisa de reposo al terminar.
+
+**2. Personalización de personaje, ampliada de verdad — 6 categorías nuevas:**
+Piel (6 tonos), Ojos (8: color + forma almendrada + pestañas), Labios (6 colores),
+Vello facial (7: bigotes y barbas de varios estilos), Peinado (9: rapado, cortos,
+rulos, cola, trenzas, pelo largo — varios colores), Pañoleta/cuello (6). Además
+Lentes pasó de 6 a 10 opciones y Accesorios del casco de 4 a 9 (luces LED,
+banderín, cinta reflectante, corona, orejas). Los tonos de piel y los colores base
+de ojos quedan SIEMPRE gratis a propósito — representar tu identidad no debería
+tener precio; solo lo cosmético extra (formas, pestañas, otros colores/estilos)
+cuesta Darma, igual que el resto de la tienda.
+
+Cada categoría nueva tiene un valor por defecto que reproduce EXACTO el look
+anterior (piel clara #f4c9a0, ojos café #16203a, labios café #7a4a2a, sin vello,
+sin peinado, sin pañoleta) — cero cambio visual para quien no toque nada nuevo.
+
+**3. "Crea tu perfil" ya no es una lista larga — es por pestañas.** Antes eran 8
+secciones apiladas siempre visibles (mucho scroll para elegir cosas chicas). Ahora
+(`.tabs-personalizar`, `_tabPersonalizar()`) se ve UNA categoría a la vez, con el
+personaje siempre fijo arriba — 11 pestañas: Casco, Color, Piel, Peinado, Ojos,
+Labios, Vello facial, Lentes, Pañuelo, Accesorios, y Preferencias (agrupa Estilo de
+energía/Fondo de esfera/Actividad/Personalidad de Pistero, que no son apariencia
+del personaje y no deberían competir por el mismo espacio).
+
+**4. Cuidado con colisiones de ID.** `PRECIOS`/`getDesbloqueados()` son un mapa
+plano compartido por TODAS las categorías — usar el mismo id en dos categorías
+(ej. "azul" en color de casco Y en pañoleta) haría que comprar una desbloqueara
+la otra gratis. Antes de escribir código verifiqué programáticamente que los 87
+ids de todas las categorías son únicos, y que cada clave de `PRECIOS` apunta a un
+id real que existe en alguna categoría (sin huérfanas, sin duplicadas).
+
+**Verificación real en el navegador** (no solo lectura de código): con `db`
+mockeado, logueé un usuario de prueba, abrí las 11 pestañas y confirmé que cada
+grid renderiza el número esperado de opciones (18 cascos, 8 ojos, 9 peinados, 7
+vello, 6 labios, 6 pañuelo, 6 piel); confirmé que seleccionar un color de ojos
+gratis se aplica al toque (el iris cambia en el SVG real) y que seleccionar un
+ítem bloqueado NO cambia el personaje (abre la tienda en su lugar); compré
+`barbaCompleta` (40 Darma, saldo bajó de 500 a 460 exacto), se desbloqueó y se
+aplicó, y la tienda lista las 5 categorías nuevas; compré `labioRojo` y confirmé
+que la boca en reposo Y la boca "hablando" respetan el color elegido (vuelve al
+rojo del personaje al dejar de hablar, no a un café genérico).
+
+**Persistencia:** las 6 selecciones nuevas se guardan en localStorage
+(`lp_piel_`, `lp_ojos_`, etc.), se sincronizan a Firestore en `saveCustomization()`
+y se restauran/preservan en `reg()` con el mismo cuidado anti-borrado que ya tenía
+`unlocked` (v6.38) — un teléfono nuevo no te hace perder lo que compraste ni tu
+apariencia. También se agregaron a `exportarMisDatos()`/`importarMisDatos()`
+(antes esa copia de respaldo ni siquiera incluía los accesorios/extras del casco,
+un hueco que quedaba de antes).
+
+**Versión:** APP_VERSION, version.txt y footer → 6.39. `sw.js` CACHE → v639.
+Desplegado a librepedal.cl y confirmado en vivo (`version.txt` → 6.39).
+
+---
+
 ## v6.38 — 2026-07-13 — Claude (sesión 2, barrido #9: Gamificación — Darma y personalización no sobrevivían a un teléfono nuevo)
 
 Retomé el barrido en **Gamificación** (Logros, Ranking, Retos, Wrapped, Tienda de

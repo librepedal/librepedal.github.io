@@ -35,8 +35,9 @@ body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);co
 body::before{content:'';position:fixed;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(8,12,20,0.55) 0%,rgba(6,9,15,0.8) 55%,rgba(5,8,14,0.93) 100%)}
 body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(115deg,transparent 43%,rgba(252,76,2,0.05) 47%,rgba(220,240,255,0.14) 50%,rgba(252,76,2,0.05) 53%,transparent 57%),repeating-linear-gradient(0deg,rgba(150,172,205,0.045) 0 1px,transparent 1px 26px),repeating-linear-gradient(90deg,rgba(150,172,205,0.045) 0 1px,transparent 1px 26px);background-size:260% 260%,auto,auto;background-position:-60% -60%,0 0,0 0;animation:metalShine 9s ease-in-out infinite}
 @keyframes metalShine{0%,74%{background-position:-60% -60%,0 0,0 0}94%,100%{background-position:160% 160%,0 0,0 0}}
-@keyframes phablar{0%{transform:scaleY(0.5)}100%{transform:scaleY(2.6)}}
-.pistero-hablando .pboca{transform-box:fill-box;transform-origin:center;animation:phablar 0.18s ease-in-out infinite alternate}
+/* La boca al hablar ya no es un CSS keyframe (estirar una curva fija se veía plano
+   y robótico) — ver _bocaFrames / _iniciarBocaHablando: cicla por JS entre formas
+   de vocalización reales con timing irregular. */
 /* Esfera de aplicaciones 3D (lanzador tipo DNA Launcher) */
 #esferaScreen{position:fixed;inset:0;z-index:4500;display:none;background:radial-gradient(circle at 50% 42%,#04060b 0%,#000 62%)}
 #esStars{position:absolute;inset:0;display:none}
@@ -96,6 +97,15 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .customization-section h3{color:var(--g);font-size:0.95rem;margin-bottom:12px}
 .helmet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
 .accessory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
+/* "Perfil y personaje" por pestañas: antes eran ~8 secciones apiladas visibles a
+   la vez (mucho scroll para elegir cosas chicas) — ahora se ve UNA categoría por
+   vez, con el personaje siempre fijo arriba. */
+.tabs-personalizar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs-personalizar::-webkit-scrollbar{display:none}
+.tab-pill{flex:0 0 auto;padding:7px 13px;border-radius:20px;background:var(--gl);border:1px solid #242c3e;color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab-pill.active{background:var(--p);color:#03121a;border-color:var(--p)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
 .skin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
 .custom-option{background:var(--gl);border:2px solid #333;border-radius:10px;padding:8px 6px;cursor:pointer;text-align:center;transition:all 0.3s;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.35);min-height:96px;display:flex;flex-direction:column;justify-content:center}
 .custom-option::before{content:'';position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.16) 0%,rgba(255,255,255,0.04) 35%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.2) 100%);pointer-events:none}
@@ -641,7 +651,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.38</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.39</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -897,14 +907,35 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="btrip" onclick="cv('stats')">📊 Estadísticas</button>
 </div>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
-<div class="customization-section"><h3>Casco</h3><div class="helmet-grid" id="customizeHelmetGrid"></div></div>
-<div class="customization-section"><h3>Color del casco</h3><div class="skin-grid" id="customizeSkinGrid"></div></div>
-<div class="customization-section"><h3>Lentes</h3><div class="accessory-grid" id="customizeAccessoryGrid"></div></div>
-<div class="customization-section"><h3>Extras</h3><div class="accessory-grid" id="customizeExtrasGrid"></div></div>
-<div class="customization-section"><h3>⚡ Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
-<div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
-<div class="customization-section"><h3>🧭 Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
-<div class="customization-section"><h3>🎭 Personalidad de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Sigue siendo Pistero, solo cambia el tono con el que te habla.</p><div id="personalidadGrid"></div></div>
+<div class="tabs-personalizar" id="tabsPersonalizar">
+  <button class="tab-pill active" data-tab="casco" onclick="_tabPersonalizar('casco')">🪖 Casco</button>
+  <button class="tab-pill" data-tab="color" onclick="_tabPersonalizar('color')">🎨 Color</button>
+  <button class="tab-pill" data-tab="piel" onclick="_tabPersonalizar('piel')">🧑 Piel</button>
+  <button class="tab-pill" data-tab="peinado" onclick="_tabPersonalizar('peinado')">💇 Peinado</button>
+  <button class="tab-pill" data-tab="ojos" onclick="_tabPersonalizar('ojos')">👁️ Ojos</button>
+  <button class="tab-pill" data-tab="labios" onclick="_tabPersonalizar('labios')">💋 Labios</button>
+  <button class="tab-pill" data-tab="vello" onclick="_tabPersonalizar('vello')">🧔 Vello facial</button>
+  <button class="tab-pill" data-tab="lentes" onclick="_tabPersonalizar('lentes')">🕶️ Lentes</button>
+  <button class="tab-pill" data-tab="panuelo" onclick="_tabPersonalizar('panuelo')">🧣 Pañuelo</button>
+  <button class="tab-pill" data-tab="accesorios" onclick="_tabPersonalizar('accesorios')">✨ Accesorios</button>
+  <button class="tab-pill" data-tab="prefs" onclick="_tabPersonalizar('prefs')">⚙️ Preferencias</button>
+</div>
+<div class="tab-panel active" data-panel="casco"><div class="customization-section" style="margin-top:0"><div class="helmet-grid" id="customizeHelmetGrid"></div></div></div>
+<div class="tab-panel" data-panel="color"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizeSkinGrid"></div></div></div>
+<div class="tab-panel" data-panel="piel"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizePielGrid"></div></div></div>
+<div class="tab-panel" data-panel="peinado"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizePeinadoGrid"></div></div></div>
+<div class="tab-panel" data-panel="ojos"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizeOjosGrid"></div></div></div>
+<div class="tab-panel" data-panel="labios"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizeLabiosGrid"></div></div></div>
+<div class="tab-panel" data-panel="vello"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizeVelloGrid"></div></div></div>
+<div class="tab-panel" data-panel="lentes"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizeAccessoryGrid"></div></div></div>
+<div class="tab-panel" data-panel="panuelo"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizePanueloGrid"></div></div></div>
+<div class="tab-panel" data-panel="accesorios"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizeExtrasGrid"></div></div></div>
+<div class="tab-panel" data-panel="prefs">
+  <div class="customization-section" style="margin-top:0"><h3>⚡ Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
+  <div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
+  <div class="customization-section"><h3>🧭 Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
+  <div class="customization-section"><h3>🎭 Personalidad de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Sigue siendo Pistero, solo cambia el tono con el que te habla.</p><div id="personalidadGrid"></div></div>
+</div>
 <button class="bg" onclick="saveCustomization()">💾 Guardar personaje</button>
 </section>
 
@@ -956,7 +987,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.38'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.39'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1077,7 +1108,11 @@ const lensOptions = [
   {id:'aviator', name:'Aviador', svg:'<path d="M64 108 Q78 104 92 108 L92 122 Q78 127 64 122 Z" fill="#3498db" opacity="0.7"/><path d="M108 108 Q122 104 136 108 L136 122 Q122 127 108 122 Z" fill="#3498db" opacity="0.7"/><line x1="92" y1="113" x2="108" y2="113" stroke="#2980b9" stroke-width="3"/>'},
   {id:'mirrored', name:'Espejados', svg:'<defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9b59b6"/><stop offset="50%" stop-color="#3498db"/><stop offset="100%" stop-color="#1abc9c"/></linearGradient></defs><path d="M58 108 Q100 103 142 108 L142 122 Q100 127 58 122 Z" fill="url(#mg)" opacity="0.85"/>'},
   {id:'amber', name:'Ámbar', svg:'<path d="M58 108 Q100 103 142 108 L142 122 Q100 127 58 122 Z" fill="#ffb300" opacity="0.7"/><path d="M58 108 Q100 103 142 108" fill="none" stroke="#cc8f00" stroke-width="3"/>'},
-  {id:'pink', name:'Rosado', svg:'<path d="M58 108 Q100 103 142 108 L142 122 Q100 127 58 122 Z" fill="#ff5fa2" opacity="0.7"/><path d="M58 108 Q100 103 142 108" fill="none" stroke="#d63384" stroke-width="3"/>'}
+  {id:'pink', name:'Rosado', svg:'<path d="M58 108 Q100 103 142 108 L142 122 Q100 127 58 122 Z" fill="#ff5fa2" opacity="0.7"/><path d="M58 108 Q100 103 142 108" fill="none" stroke="#d63384" stroke-width="3"/>'},
+  {id:'redondos', name:'Redondos', svg:'<circle cx="78" cy="115" r="15" fill="#2c3e50" opacity="0.8"/><circle cx="122" cy="115" r="15" fill="#2c3e50" opacity="0.8"/><line x1="93" y1="115" x2="107" y2="115" stroke="#1a252f" stroke-width="3"/>'},
+  {id:'catEye', name:'Cat-eye', svg:'<path d="M60 118 Q64 104 92 108 Q98 112 92 118 Q76 122 60 118 Z" fill="#8e44ad" opacity="0.75"/><path d="M140 118 Q136 104 108 108 Q102 112 108 118 Q124 122 140 118 Z" fill="#8e44ad" opacity="0.75"/>'},
+  {id:'transparente', name:'Transparentes', svg:'<path d="M58 108 Q100 103 142 108 L142 122 Q100 127 58 122 Z" fill="#dff6ff" opacity="0.28"/><path d="M58 108 Q100 103 142 108" fill="none" stroke="#9fd8ea" stroke-width="2.5"/>'},
+  {id:'grandes', name:'Sol grandes', svg:'<path d="M54 106 Q100 98 146 106 L146 126 Q100 134 54 126 Z" fill="#1a1a1a" opacity="0.88"/><path d="M54 106 Q100 98 146 106" fill="none" stroke="#000" stroke-width="2.5"/>'}
 ];
 
 const skinOptions = [
@@ -1095,8 +1130,78 @@ const extrasOptions = [
   {id:'faro', name:'Faro', svg:'<circle cx="100" cy="104" r="6" fill="#fff700"/><circle cx="100" cy="104" r="13" fill="#fff700" opacity="0.35"/>'},
   {id:'antena', name:'Antena', svg:'<line x1="100" y1="58" x2="100" y2="36" stroke="#cfd6e6" stroke-width="2.5"/><circle cx="100" cy="33" r="4.5" fill="#ff3b30"><animate attributeName="r" values="4.5;5.5;4.5" dur="1.2s" repeatCount="indefinite"/></circle>'},
   {id:'calco', name:'Calcomanía', svg:'<circle cx="132" cy="82" r="9" fill="#ffd700" stroke="#cc8f00" stroke-width="1.5"/><circle cx="132" cy="82" r="3.5" fill="#cc8f00"/>'},
-  {id:'bandana', name:'Pañoleta', svg:'<path d="M64 150 Q100 166 136 150 L132 160 Q100 174 68 160 Z" fill="#e74c3c"/>'}
+  {id:'bandana', name:'Pañoleta bajo el casco', svg:'<path d="M64 150 Q100 166 136 150 L132 160 Q100 174 68 160 Z" fill="#e74c3c"/>'},
+  {id:'ledLateral', name:'Luces LED', svg:'<circle cx="46" cy="108" r="3.5" fill="#4cc9f0"><animate attributeName="opacity" values="1;0.3;1" dur="0.9s" repeatCount="indefinite"/></circle><circle cx="154" cy="108" r="3.5" fill="#4cc9f0"><animate attributeName="opacity" values="1;0.3;1" dur="0.9s" repeatCount="indefinite" begin="0.45s"/></circle>'},
+  {id:'banderin', name:'Banderín', svg:'<line x1="150" y1="90" x2="150" y2="62" stroke="#8a8f99" stroke-width="2"/><path d="M150 62 L172 70 L150 78 Z" fill="#fc4c02"/>'},
+  {id:'cintaReflectante', name:'Cinta reflectante', svg:'<path d="M42 100 Q100 78 158 100" fill="none" stroke="#e8ff00" stroke-width="3" stroke-dasharray="4 4" opacity="0.9"/>'},
+  {id:'corona', name:'Corona', svg:'<path d="M72 60 L80 40 L92 56 L100 36 L108 56 L120 40 L128 60 Z" fill="#ffd700" stroke="#cc8f00" stroke-width="1.5"/><circle cx="100" cy="36" r="3" fill="#ff3b30"/>'},
+  {id:'orejas', name:'Orejas de gato', svg:'<path d="M56 66 L68 34 L84 62 Z" fill="'+'#2b2b2b'+'"/><path d="M144 66 L132 34 L116 62 Z" fill="#2b2b2b"/><path d="M62 60 L69 42 L79 58 Z" fill="#ff8fab"/><path d="M138 60 L131 42 L121 58 Z" fill="#ff8fab"/>'}
 ];
+
+/* ===== NUEVO: rostro, ojos, labios, vello facial, peinado y pañuelo/cuello —
+   variedad real de personalización (distintos tonos de piel, formas/colores de
+   ojos, color de labios, bigote/barba, peinados y pañoletas de cuello), pensada
+   para representar personajes de cualquier género, no un molde único. Cada
+   categoría trae UNA opción gratis por defecto que reproduce exactamente el look
+   anterior (cero cambio visual para quien no toque nada nuevo). ===== */
+const pielOptions = [
+  {id:'pielClara', name:'Clara', c:'#f4c9a0'},
+  {id:'pielMedia', name:'Media', c:'#e0ac7c'},
+  {id:'pielTrigo', name:'Trigueña', c:'#c98b5e'},
+  {id:'pielMorena', name:'Morena', c:'#a9673f'},
+  {id:'pielOscura', name:'Oscura', c:'#7a4a2a'},
+  {id:'pielProfunda', name:'Profunda', c:'#5c3520'}
+];
+const ojosOptions = [
+  {id:'ojoCafe', name:'Café', iris:'#16203a', shape:'redondo', pestanas:false},
+  {id:'ojoAzul', name:'Azules', iris:'#2f6fb0', shape:'redondo', pestanas:false},
+  {id:'ojoVerde', name:'Verdes', iris:'#2e7d4f', shape:'redondo', pestanas:false},
+  {id:'ojoMiel', name:'Miel', iris:'#a9702c', shape:'redondo', pestanas:false},
+  {id:'ojoGris', name:'Grises', iris:'#6b7685', shape:'redondo', pestanas:false},
+  {id:'ojoAlmendrado', name:'Almendrados', iris:'#16203a', shape:'almendrado', pestanas:false},
+  {id:'ojoPestanas', name:'Con pestañas', iris:'#16203a', shape:'redondo', pestanas:true},
+  {id:'ojoPestanasAzul', name:'Pestañas y azules', iris:'#2f6fb0', shape:'redondo', pestanas:true}
+];
+const labiosOptions = [
+  {id:'labioNatural', name:'Natural', c:'#7a4a2a'},
+  {id:'labioRojo', name:'Rojo clásico', c:'#c81d3f'},
+  {id:'labioRosado', name:'Rosado', c:'#e0668f'},
+  {id:'labioCoral', name:'Coral', c:'#e0704a'},
+  {id:'labioVino', name:'Vino', c:'#5c1a2e'},
+  {id:'labioNude', name:'Nude', c:'#a56b52'}
+];
+const velloFacialOptions = [
+  {id:'velloNinguno', name:'Ninguno', svg:''},
+  {id:'bigoteFino', name:'Bigote fino', svg:'<path d="M80 156 Q100 152 120 156" stroke="#2b2018" stroke-width="3" fill="none" stroke-linecap="round"/>'},
+  {id:'bigoteGrueso', name:'Bigote grueso', svg:'<path d="M76 158 Q100 149 124 158 Q100 162 100 156 Q100 162 76 158 Z" fill="#2b2018"/>'},
+  {id:'barbaCandado', name:'Barba candado', svg:'<path d="M80 156 Q100 152 120 156" stroke="#2b2018" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M92 168 Q100 179 108 168 L106 175 Q100 181 94 175 Z" fill="#2b2018"/>'},
+  {id:'perilla', name:'Perilla', svg:'<path d="M90 168 Q100 180 110 168 L108 173 Q100 179 92 173 Z" fill="#2b2018"/>'},
+  {id:'barbaCorta', name:'Barba corta', svg:'<path d="M66 138 Q63 168 100 174 Q137 168 134 138 Q138 160 119 170 Q100 178 81 170 Q62 160 66 138 Z" fill="#2b2018" opacity="0.82"/>'},
+  {id:'barbaCompleta', name:'Barba completa', svg:'<path d="M64 130 Q59 170 100 176 Q141 170 136 130 Q141 164 117 173 Q100 181 83 173 Q59 164 64 130 Z" fill="#241a12"/>'}
+];
+const peinadoOptions = [
+  {id:'pelado', name:'Rapado', svgSide:'', svgBack:''},
+  {id:'cortoNegro', name:'Corto negro', svgSide:'<path d="M48 118 Q39 129 46 140 L55 137 Q49 127 57 118 Z" fill="#241a12"/><path d="M144 118 Q153 129 146 140 L137 137 Q143 127 135 118 Z" fill="#241a12"/>'},
+  {id:'cortoCastano', name:'Corto castaño', svgSide:'<path d="M48 118 Q39 129 46 140 L55 137 Q49 127 57 118 Z" fill="#5c3a21"/><path d="M144 118 Q153 129 146 140 L137 137 Q143 127 135 118 Z" fill="#5c3a21"/>'},
+  {id:'cortoRubio', name:'Corto rubio', svgSide:'<path d="M48 118 Q39 129 46 140 L55 137 Q49 127 57 118 Z" fill="#d9b45c"/><path d="M144 118 Q153 129 146 140 L137 137 Q143 127 135 118 Z" fill="#d9b45c"/>'},
+  {id:'rulos', name:'Rulos', svgSide:'<circle cx="45" cy="121" r="7.5" fill="#241a12"/><circle cx="38" cy="132" r="6.5" fill="#241a12"/><circle cx="155" cy="121" r="7.5" fill="#241a12"/><circle cx="162" cy="132" r="6.5" fill="#241a12"/>'},
+  {id:'rulosPelirrojos', name:'Rulos pelirrojos', svgSide:'<circle cx="45" cy="121" r="7.5" fill="#c1440e"/><circle cx="38" cy="132" r="6.5" fill="#c1440e"/><circle cx="155" cy="121" r="7.5" fill="#c1440e"/><circle cx="162" cy="132" r="6.5" fill="#c1440e"/>'},
+  {id:'colaCastana', name:'Cola de caballo', svgBack:'<path d="M150 106 Q180 118 173 162 Q168 182 154 178 Q166 150 146 118 Z" fill="#6b4226"/>', svgSide:''},
+  {id:'trenzas', name:'Trenzas', svgBack:'<path d="M48 120 Q37 152 46 180" stroke="#3a2515" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M152 120 Q163 152 154 180" stroke="#3a2515" stroke-width="8" fill="none" stroke-linecap="round"/>'},
+  {id:'largoSuelto', name:'Largo suelto', svgBack:'<path d="M46 110 Q28 152 42 184 L59 179 Q46 148 59 114 Z" fill="#241a12"/><path d="M154 110 Q172 152 158 184 L141 179 Q154 148 141 114 Z" fill="#241a12"/>'}
+];
+const panueloOptions = [
+  {id:'panueloNinguno', name:'Ninguno', svg:''},
+  {id:'panueloRoja', name:'Roja', svg:'<path d="M64 172 Q100 189 136 172 L132 183 Q100 197 68 183 Z" fill="#e74c3c"/>'},
+  {id:'panueloAzul', name:'Azul', svg:'<path d="M64 172 Q100 189 136 172 L132 183 Q100 197 68 183 Z" fill="#2563eb"/>'},
+  {id:'panueloNegra', name:'Negra', svg:'<path d="M64 172 Q100 189 136 172 L132 183 Q100 197 68 183 Z" fill="#222222"/>'},
+  {id:'panueloLunares', name:'A lunares', svg:'<path d="M64 172 Q100 189 136 172 L132 183 Q100 197 68 183 Z" fill="#c81d3f"/><circle cx="84" cy="181" r="2.4" fill="#fff"/><circle cx="100" cy="187" r="2.4" fill="#fff"/><circle cx="116" cy="181" r="2.4" fill="#fff"/>'},
+  {id:'panueloBuff', name:'Buff / cuello alto', svg:'<path d="M62 168 Q100 186 138 168 L136 194 Q100 208 64 194 Z" fill="#10b981"/>'}
+];
+// Normalización para la miniatura de selección (gridHTML): ojos usa el iris como
+// color de muestra, y peinado combina sus dos fragmentos (atrás/lado) en uno solo.
+ojosOptions.forEach(function(o){ o.c=o.iris; });
+peinadoOptions.forEach(function(p){ p.svg=(p.svgBack||'')+(p.svgSide||''); });
 
 let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null,sumVelDist:0},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[],combinedLines=[];
 let categoriaActual='todos', hostelTipoActual='todos';
@@ -1229,6 +1334,8 @@ function togglePausaViaje(){
 }
 let currentUserLocation = null;
 let selectedHelmet = 'giro', selectedLens = 'none', selectedSkin = 'cyan', selectedExtras = [];
+let selectedPiel = 'pielClara', selectedOjos = 'ojoCafe', selectedLabios = 'labioNatural', selectedVello = 'velloNinguno', selectedPeinado = 'pelado', selectedPanuelo = 'panueloNinguno';
+function _lookActual(){ return {piel:selectedPiel, ojos:selectedOjos, labios:selectedLabios, vello:selectedVello, peinado:selectedPeinado, panuelo:selectedPanuelo}; }
 // ===== Tipo de actividad: arquitectura para escalar más allá del ciclismo (moto,
 // trekking, etc.) sin tocar el comportamiento de nadie que no lo elija. 'ciclismo' es
 // el default de SIEMPRE — cero cambio para quien no toque este selector. Verificado en
@@ -1363,8 +1470,49 @@ async function diagnosticoVoz(){
   }
   lpAviso('🔊 DIAGNÓSTICO DE VOZ\n\n'+info.join('\n')+'\n\n(Sácale una foto y mándamela)');
 }
-function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
-function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); try{ lpMusic.unduck(); }catch(e){} }
+/* ===== BOCA ANIMADA: visemas reales, no una curva estirándose verticalmente =====
+   Antes "hablar" era un solo <path> de sonrisa estirado en scaleY con CSS keyframes
+   a ritmo perfectamente parejo (0.18s, lineal) — se veía plano y mecánico. Ahora se
+   cicla por JS entre formas de boca distintas (cerrada, entreabierta, redonda,
+   ancha, "o", fruncida) con timing IRREGULAR entre cuadros, que es lo que de
+   verdad distingue una boca hablando de una animación robótica. */
+const _bocaFrames=[
+  {d:'M86 162 Q100 174 114 162', fill:'none', stroke:'#7a4a2a', sw:'3.4', w:6}, // cerrada / reposo
+  {d:'M94 168 a6 3 0 1 0 12 0 a6 3 0 1 0 -12 0', fill:'#6b3320', stroke:'#4a2214', sw:'1.2', w:4}, // apenas abierta
+  {d:'M91 168 a9 7 0 1 0 18 0 a9 7 0 1 0 -18 0', fill:'#6b3320', stroke:'#4a2214', sw:'1.2', w:3}, // media, redonda
+  {d:'M84 167 a16 4 0 1 0 32 0 a16 4 0 1 0 -32 0', fill:'#6b3320', stroke:'#4a2214', sw:'1.2', w:2}, // ancha ("ee")
+  {d:'M92 169 a8 10 0 1 0 16 0 a8 10 0 1 0 -16 0', fill:'#6b3320', stroke:'#4a2214', sw:'1.2', w:1}, // redonda grande ("oh")
+  {d:'M96 167 a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0', fill:'#5a2a1a', stroke:'#4a2214', sw:'1', w:2} // fruncida ("m"/"u")
+];
+function _bocaAplicar(i){
+  const f=_bocaFrames[i];
+  document.querySelectorAll('.pboca').forEach(function(p){
+    // Cerrada (i===0): usa el color de labios del personaje (data-labios), no un
+    // café fijo — así el color elegido en Personalización se respeta también
+    // mientras habla, no solo en la pose estática.
+    const stroke = (i===0) ? (p.getAttribute('data-labios')||f.stroke) : f.stroke;
+    p.setAttribute('d', f.d); p.setAttribute('fill', f.fill); p.setAttribute('stroke', stroke); p.setAttribute('stroke-width', f.sw);
+  });
+}
+function _bocaSiguiente(anterior){
+  const pesos=_bocaFrames.map(function(f){return f.w;});
+  const total=pesos.reduce(function(a,b){return a+b;},0);
+  let r=Math.random()*total, i=0;
+  for(; i<_bocaFrames.length-1; i++){ r-=pesos[i]; if(r<=0) break; }
+  return (i===anterior && _bocaFrames.length>1) ? _bocaSiguiente(anterior) : i;
+}
+function _bocaIniciarCiclo(){
+  clearTimeout(window._bocaTO);
+  let ultimo=0;
+  (function cuadro(){
+    ultimo=_bocaSiguiente(ultimo);
+    _bocaAplicar(ultimo);
+    window._bocaTO=setTimeout(cuadro, 65+Math.random()*95); // cadencia irregular: 65-160ms
+  })();
+}
+function _bocaDetener(){ clearTimeout(window._bocaTO); _bocaAplicar(0); }
+function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); _bocaIniciarCiclo(); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
+function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }
 
 /* ===== REPRODUCTOR LIBRE PEDAL: radios gratis + música propia, con auto-volumen cuando Pistero habla ===== */
 const lpMusic=(function(){
@@ -1536,17 +1684,30 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'</svg>'; }
 function riderMarkerHTML(helmetId, accent, mine){ return '<div class="helmet-pin'+(mine?' mine':'')+'">'+miniHelmetSVG(helmetId, accent||'#fc4c02')+'</div>'; }
 
-function generateCharacterSVG(helmetId, lensId, skinId, extras){
+function generateCharacterSVG(helmetId, lensId, skinId, extras, look){
   const helmet = helmetDesigns.find(function(x){return x.id===helmetId;}) || helmetDesigns[0];
   const lens = lensOptions.find(function(x){return x.id===lensId;}) || lensOptions[0];
   const accent = skinColor(skinId);
   extras = extras || [];
+  look = look || {};
+  // Rostro configurable (tono de piel, ojos, labios, vello facial, peinado,
+  // pañoleta) — todas con un valor por defecto que reproduce EXACTO el look
+  // original, así que un personaje que nunca toca esto no cambia en nada.
+  const piel = pielOptions.find(function(x){return x.id===look.piel;}) || pielOptions[0];
+  const ojos = ojosOptions.find(function(x){return x.id===look.ojos;}) || ojosOptions[0];
+  const labios = labiosOptions.find(function(x){return x.id===look.labios;}) || labiosOptions[0];
+  const vello = velloFacialOptions.find(function(x){return x.id===look.vello;}) || velloFacialOptions[0];
+  const peinado = peinadoOptions.find(function(x){return x.id===look.peinado;}) || peinadoOptions[0];
+  const panuelo = panueloOptions.find(function(x){return x.id===look.panuelo;}) || panueloOptions[0];
   const col = helmet.color || '#00aaff';
+  const eyeRx = ojos.shape==='almendrado' ? 11 : 10, eyeRy = ojos.shape==='almendrado' ? 8.5 : 11;
   let s = '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">';
   // sombra en el suelo
   s += '<ellipse cx="100" cy="184" rx="44" ry="7" fill="rgba(0,0,0,0.22)"/>';
-  // cara (forma de rostro bajo la visera, tono piel; enmarca ojos y boca, NO es una esfera)
-  s += '<path d="M64 126 Q64 172 100 174 Q136 172 136 126 Z" fill="#f4c9a0"/>';
+  // pelo largo/cola/trenzas: va DETRÁS de la cara y el casco (asoma por atrás)
+  if(peinado.svgBack) s += peinado.svgBack;
+  // cara (forma de rostro bajo la visera, tono de piel elegido; enmarca ojos y boca)
+  s += '<path d="M64 126 Q64 172 100 174 Q136 172 136 126 Z" fill="'+piel.c+'"/>';
   // casco FRONTAL: cupula vista de frente sobre la frente
   s += '<path d="M40 132 A60 58 0 0 1 160 132 Z" fill="'+col+'"/>';
   // visera / borde inferior del casco
@@ -1558,18 +1719,29 @@ function generateCharacterSVG(helmetId, lensId, skinId, extras){
   s += '<path d="M116 102 q7 -16 14 0" stroke="rgba(0,0,0,0.22)" stroke-width="5" fill="none" stroke-linecap="round"/>';
   // brillo del casco
   s += '<path d="M60 118 A48 48 0 0 1 90 84" stroke="rgba(255,255,255,0.35)" stroke-width="4" fill="none" stroke-linecap="round"/>';
-  // ojos (debajo de la visera, parpadean)
-  s += '<ellipse cx="83" cy="144" rx="10" ry="11" fill="#ffffff"><animate attributeName="ry" values="11;11;1;11;11" dur="4s" repeatCount="indefinite"/></ellipse>';
-  s += '<ellipse cx="117" cy="144" rx="10" ry="11" fill="#ffffff"><animate attributeName="ry" values="11;11;1;11;11" dur="4s" repeatCount="indefinite"/></ellipse>';
-  s += '<circle cx="85" cy="146" r="4.6" fill="#16203a"/><circle cx="119" cy="146" r="4.6" fill="#16203a"/>';
+  // pelo corto/rulos: asoma por debajo del borde del casco, a los lados
+  if(peinado.svgSide) s += peinado.svgSide;
+  // ojos (debajo de la visera, parpadean; forma e iris según lo elegido)
+  s += '<ellipse cx="83" cy="144" rx="'+eyeRx+'" ry="'+eyeRy+'" fill="#ffffff"><animate attributeName="ry" values="'+eyeRy+';'+eyeRy+';1;'+eyeRy+';'+eyeRy+'" dur="4s" repeatCount="indefinite"/></ellipse>';
+  s += '<ellipse cx="117" cy="144" rx="'+eyeRx+'" ry="'+eyeRy+'" fill="#ffffff"><animate attributeName="ry" values="'+eyeRy+';'+eyeRy+';1;'+eyeRy+';'+eyeRy+'" dur="4s" repeatCount="indefinite"/></ellipse>';
+  s += '<circle cx="85" cy="146" r="4.6" fill="'+ojos.iris+'"/><circle cx="119" cy="146" r="4.6" fill="'+ojos.iris+'"/>';
   s += '<circle cx="86.6" cy="144.2" r="1.5" fill="#fff"/><circle cx="120.6" cy="144.2" r="1.5" fill="#fff"/>';
+  if(ojos.pestanas){
+    s += '<path d="M74 136 l-4 -5M79 133 l-2 -6M89 131 l1 -6" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+    s += '<path d="M126 136 l4 -5M121 133 l2 -6M111 131 l-1 -6" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+  }
   // mejillas
   s += '<circle cx="72" cy="158" r="4.5" fill="rgba(255,120,120,0.35)"/><circle cx="128" cy="158" r="4.5" fill="rgba(255,120,120,0.35)"/>';
-  // boca (sonrisa)
-  s += '<path class="pboca" d="M86 162 Q100 174 114 162" stroke="#7a4a2a" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
+  // boca (sonrisa en reposo; el color de labios elegido queda en data-labios para
+  // que _bocaAplicar lo use también mientras habla, no solo en la pose fija)
+  s += '<path class="pboca" data-labios="'+labios.c+'" d="M86 162 Q100 174 114 162" stroke="'+labios.c+'" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
+  // vello facial (bigote/barba) sobre la boca
+  if(vello.svg) s += vello.svg;
   // lentes (reposicionados a la nueva altura de ojos)
   if(lensId!=='none' && lens.svg) s += '<g transform="translate(0,28)">'+lens.svg+'</g>';
-  // accesorios
+  // pañoleta/cuello
+  if(panuelo.svg) s += panuelo.svg;
+  // accesorios del casco
   extras.forEach(function(id){ const ex=extrasOptions.find(function(x){return x.id===id;}); if(ex) s+=ex.svg; });
   s += '</svg>';
   return s;
@@ -1581,7 +1753,23 @@ const PRECIOS = {
   aviator:50, mirrored:80, amber:60, pink:60,
   faro:60, antena:90, calco:40, bandana:70,
   poc:80, kask:90, lazer:100, rudy:120, abus:140, limar:150,
-  estilo2:60, estilo3:90, fondoespacial:70
+  estilo2:60, estilo3:90, fondoespacial:70,
+  // Lentes nuevos
+  redondos:35, catEye:55, transparente:30, grandes:65,
+  // Accesorios de casco nuevos
+  ledLateral:70, banderin:45, cintaReflectante:35, corona:120, orejas:50,
+  // Ojos: los colores base (café/azul/verde/miel/gris) quedan SIEMPRE gratis a
+  // propósito — representar tu identidad no debería tener precio. Solo la forma y
+  // los extras (pestañas) son cosmético de tienda, como los lentes.
+  ojoAlmendrado:25, ojoPestanas:35, ojoPestanasAzul:45,
+  // Labios (color, tipo maquillaje — cosmético liviano)
+  labioRojo:20, labioRosado:20, labioCoral:20, labioVino:25, labioNude:20,
+  // Vello facial
+  bigoteFino:20, bigoteGrueso:25, barbaCandado:30, perilla:20, barbaCorta:35, barbaCompleta:40,
+  // Peinados
+  cortoNegro:25, cortoCastano:25, cortoRubio:25, rulos:30, rulosPelirrojos:35, colaCastana:35, trenzas:40, largoSuelto:45,
+  // Pañoleta / cuello
+  panueloRoja:20, panueloAzul:20, panueloNegra:20, panueloLunares:30, panueloBuff:35
 };
 function seleccionarEstilo(n){ const id='estilo'+n; if(n>1 && !estaDesbloqueado(id)){ comprarItem(id); if(!estaDesbloqueado(id)) return; } esEstilo=n; try{ localStorage.setItem('lp_estilo',n); }catch(e){} h('Estilo de energía activado.'); renderEstilos(); }
 function renderEstilos(){ const c=document.getElementById('estilosGrid'); if(!c) return; const nombres=['Arcos neón','Tesla azul','Plasma']; let html=''; for(let n=1;n<=3;n++){ const id='estilo'+n; const lock=(n>1 && !estaDesbloqueado(id)); const sel=(esEstilo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarEstilo('+n+')">'+(lock?'<div class="lock-badge">🔒 '+PRECIOS[id]+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4">⚡</div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
@@ -1602,7 +1790,7 @@ function mostrarTienda(desdeLogros){
   _modalVolverA=desdeLogros?'mostrarLogrosComunidad':null;
   document.getElementById('modalTitle').innerText='✨ Tienda de Darma';
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.84rem;margin-top:0">Tienes <strong style="color:var(--g)">'+us.d+' de Darma ✨</strong>. Gánala aportando a la comunidad y desbloquea skins, lentes, accesorios y cascos.</p>';
-  const grupos=[['🎨 Colores premium',skinOptions],['🕶️ Lentes',lensOptions],['✨ Accesorios',extrasOptions],['🪖 Cascos premium',helmetDesigns]];
+  const grupos=[['🎨 Colores premium',skinOptions],['🕶️ Lentes',lensOptions],['✨ Accesorios del casco',extrasOptions],['🪖 Cascos premium',helmetDesigns],['👁️ Ojos',ojosOptions],['💋 Labios',labiosOptions],['💇 Peinado',peinadoOptions],['🧔 Vello facial',velloFacialOptions],['🧣 Pañoleta',panueloOptions]];
   grupos.forEach(function(gp){ const items=gp[1].filter(function(it){return it.id in PRECIOS;}); if(!items.length) return; html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 6px">'+gp[0]+'</h4>'; items.forEach(function(it){ const unlocked=estaDesbloqueado(it.id); const costo=PRECIOS[it.id]; const puede=us.d>=costo; html+='<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;margin-bottom:5px;background:var(--gl);border:1px solid '+(unlocked?'var(--g)':'#242c3e')+'"><div style="flex:1"><div style="font-weight:700;font-size:0.84rem;color:#dfe7ff">'+escapeHTML((it.brand?it.brand+' ':'')+it.name)+'</div><div style="font-size:0.68rem;color:'+(unlocked?'var(--g)':'#7d8ba0')+'">'+(unlocked?'Desbloqueado ✓':(costo+' ✨ Darma'))+'</div></div>'+(unlocked?'<span style="color:var(--g);font-weight:800;font-size:1.1rem">✓</span>':'<button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.76rem;'+(puede?'':'opacity:0.45')+'" onclick="comprarItem(\''+it.id+'\')">Desbloquear</button>')+'</div>'; }); });
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(252,76,2,0.08));border:1px solid var(--g)">'+
     '<h4 style="color:var(--g);font-size:0.9rem;margin:0 0 6px">🚴 Libre Pedal Pro <span style="font-size:0.62rem;background:#333;color:#aaa;padding:2px 7px;border-radius:8px;vertical-align:middle">Muy pronto</span></h4>'+
@@ -1629,7 +1817,13 @@ function initCustomization(){
                ['customizeHelmetGrid',helmetDesigns,selectedHelmet,'selectHelmet',false],
                ['customizeSkinGrid',skinOptions,selectedSkin,'selectSkin',false],
                ['customizeAccessoryGrid',lensOptions,selectedLens,'toggleLens',false],
-               ['customizeExtrasGrid',extrasOptions,null,'toggleExtra',true]];
+               ['customizeExtrasGrid',extrasOptions,null,'toggleExtra',true],
+               ['customizePielGrid',pielOptions,selectedPiel,'selectPiel',false],
+               ['customizeOjosGrid',ojosOptions,selectedOjos,'selectOjos',false],
+               ['customizeLabiosGrid',labiosOptions,selectedLabios,'selectLabios',false],
+               ['customizeVelloGrid',velloFacialOptions,selectedVello,'selectVello',false],
+               ['customizePeinadoGrid',peinadoOptions,selectedPeinado,'selectPeinado',false],
+               ['customizePanueloGrid',panueloOptions,selectedPanuelo,'selectPanuelo',false]];
   map.forEach(function(m){ const el=document.getElementById(m[0]); if(el) el.innerHTML=gridHTML(m[1],m[2],m[3],m[4]); });
   updatePreview(); updateCustomizePreview(); renderEstilos(); renderFondosEsfera();
   renderActividadGrid(); renderPersonalidadGrid();
@@ -1672,14 +1866,30 @@ function selectHelmet(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; }
 function selectSkin(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedSkin=id; initCustomization(); }
 function toggleLens(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedLens = (selectedLens===id) ? 'none' : id; initCustomization(); }
 function toggleExtra(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } const i=selectedExtras.indexOf(id); if(i===-1) selectedExtras.push(id); else selectedExtras.splice(i,1); initCustomization(); }
-function updatePreview(){ const p=document.getElementById('preview-svg'); if(p) p.innerHTML=generateCharacterSVG(selectedHelmet,selectedLens,selectedSkin,selectedExtras); const n=document.getElementById('characterNameDisplay'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
-function updateCustomizePreview(){ const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=generateCharacterSVG(selectedHelmet,selectedLens,selectedSkin,selectedExtras); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
+function _tabPersonalizar(tab){
+  document.querySelectorAll('#tabsPersonalizar .tab-pill').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===tab); });
+  document.querySelectorAll('#v-customize .tab-panel').forEach(function(p){ p.classList.toggle('active', p.dataset.panel===tab); });
+}
+function selectPiel(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPiel=id; initCustomization(); }
+function selectOjos(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedOjos=id; initCustomization(); }
+function selectLabios(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedLabios=id; initCustomization(); }
+function selectVello(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedVello=id; initCustomization(); }
+function selectPeinado(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPeinado=id; initCustomization(); }
+function selectPanuelo(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPanuelo=id; initCustomization(); }
+function updatePreview(){ const p=document.getElementById('preview-svg'); if(p) p.innerHTML=generateCharacterSVG(selectedHelmet,selectedLens,selectedSkin,selectedExtras,_lookActual()); const n=document.getElementById('characterNameDisplay'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
+function updateCustomizePreview(){ const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=generateCharacterSVG(selectedHelmet,selectedLens,selectedSkin,selectedExtras,_lookActual()); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
 function saveCustomization(){
   localStorage.setItem('lp_helmet_'+cu, selectedHelmet);
   localStorage.setItem('lp_lens_'+cu, selectedLens);
   localStorage.setItem('lp_skin_'+cu, selectedSkin);
   localStorage.setItem('lp_extras_'+cu, JSON.stringify(selectedExtras));
-  db.collection('users').doc(cu).update({helmet:selectedHelmet, lens:selectedLens, skin:selectedSkin, extras:selectedExtras}).catch(function(){});
+  localStorage.setItem('lp_piel_'+cu, selectedPiel);
+  localStorage.setItem('lp_ojos_'+cu, selectedOjos);
+  localStorage.setItem('lp_labios_'+cu, selectedLabios);
+  localStorage.setItem('lp_vello_'+cu, selectedVello);
+  localStorage.setItem('lp_peinado_'+cu, selectedPeinado);
+  localStorage.setItem('lp_panuelo_'+cu, selectedPanuelo);
+  db.collection('users').doc(cu).update({helmet:selectedHelmet, lens:selectedLens, skin:selectedSkin, extras:selectedExtras, piel:selectedPiel, ojos:selectedOjos, labios:selectedLabios, vello:selectedVello, peinado:selectedPeinado, panuelo:selectedPanuelo}).catch(function(){});
   if(helmetMarker) helmetMarker.setIcon(L.divIcon({className:'',html:riderMarkerHTML(selectedHelmet, skinColor(selectedSkin), true),iconSize:[50,34],iconAnchor:[25,17]}));
   h("Tu personaje quedó listo. Te ves de lujo.");
 }
@@ -2036,6 +2246,12 @@ window.onload = async function(){
     selectedLens=localStorage.getItem('lp_lens_'+cu)||'none';
     selectedSkin=localStorage.getItem('lp_skin_'+cu)||'cyan';
     try{ selectedExtras=JSON.parse(localStorage.getItem('lp_extras_'+cu))||[]; }catch(e){ selectedExtras=[]; }
+    selectedPiel=localStorage.getItem('lp_piel_'+cu)||'pielClara';
+    selectedOjos=localStorage.getItem('lp_ojos_'+cu)||'ojoCafe';
+    selectedLabios=localStorage.getItem('lp_labios_'+cu)||'labioNatural';
+    selectedVello=localStorage.getItem('lp_vello_'+cu)||'velloNinguno';
+    selectedPeinado=localStorage.getItem('lp_peinado_'+cu)||'pelado';
+    selectedPanuelo=localStorage.getItem('lp_panuelo_'+cu)||'panueloNinguno';
     ghostMode=localStorage.getItem('lp_ghost_'+cu)==='true';
     updateGhostButton();
     document.getElementById('welcome-name').innerText=nombreUsuario;
@@ -2159,13 +2375,25 @@ async function reg(e){
     if(_prevData.skin) selectedSkin=_prevData.skin;
     if(Array.isArray(_prevData.extras)) selectedExtras=_prevData.extras;
     if(Array.isArray(_prevData.unlocked)){ _unlockedFinal=_unlockedFinal.concat(_prevData.unlocked.filter(function(x){return _unlockedFinal.indexOf(x)===-1;})); }
+    if(_prevData.piel) selectedPiel=_prevData.piel;
+    if(_prevData.ojos) selectedOjos=_prevData.ojos;
+    if(_prevData.labios) selectedLabios=_prevData.labios;
+    if(_prevData.vello) selectedVello=_prevData.vello;
+    if(_prevData.peinado) selectedPeinado=_prevData.peinado;
+    if(_prevData.panuelo) selectedPanuelo=_prevData.panuelo;
   }
   try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
   localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
   localStorage.setItem('lp_lens_'+cu,selectedLens);
   localStorage.setItem('lp_skin_'+cu,selectedSkin);
   localStorage.setItem('lp_extras_'+cu,JSON.stringify(selectedExtras));
-  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
+  localStorage.setItem('lp_piel_'+cu,selectedPiel);
+  localStorage.setItem('lp_ojos_'+cu,selectedOjos);
+  localStorage.setItem('lp_labios_'+cu,selectedLabios);
+  localStorage.setItem('lp_vello_'+cu,selectedVello);
+  localStorage.setItem('lp_peinado_'+cu,selectedPeinado);
+  localStorage.setItem('lp_panuelo_'+cu,selectedPanuelo);
+  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,piel:selectedPiel,ojos:selectedOjos,labios:selectedLabios,vello:selectedVello,peinado:selectedPeinado,panuelo:selectedPanuelo,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
   if(_esUsuarioNuevo){ try{ await db.collection('meta').doc('contadores').set({totalUsuarios:firebase.firestore.FieldValue.increment(1)},{merge:true}); }catch(e){} }
   document.getElementById('auth').style.display='none';
   document.getElementById('logoutBtn').style.display='block';
@@ -3479,7 +3707,7 @@ async function verPerfilUsuario(userId, volverA){
     const logrosPub=kmMetas.filter(function(m){return km>=m;}).length + darmaMetas.filter(function(m){return darma>=m;}).length;
     // rutas del ciclista
     let rutas=[], totalKm=0; try{ const rs=await db.collection('routes').where('user','==',userId).limit(50).get(); rs.forEach(function(r){ const x=r.data(); rutas.push(x); totalKm+=(x.distance||0); }); }catch(e){}
-    const avatar=(typeof generateCharacterSVG==='function')?generateCharacterSVG(d.helmet||'giro','none',d.skin||'cyan',[]):'';
+    const avatar=(typeof generateCharacterSVG==='function')?generateCharacterSVG(d.helmet||'giro','none',d.skin||'cyan',[],{piel:d.piel,ojos:d.ojos,labios:d.labios,vello:d.vello,peinado:d.peinado,panuelo:d.panuelo}):'';
     let html=_btnVolverModal()+'<div style="text-align:center"><div style="width:110px;height:110px;margin:0 auto">'+avatar+'</div><h3 style="margin:6px 0;color:var(--p)">'+escapeHTML(nombre)+'</h3><div style="color:var(--g);font-weight:800;font-size:0.85rem">'+escapeHTML(nivel)+'</div></div>';
     html+='<div class="stats-grid" style="margin:12px 0"><div class="stat-card"><div class="stat-value">'+km.toFixed(0)+'</div><div class="stat-label">Km totales</div></div><div class="stat-card"><div class="stat-value">'+darma+'</div><div class="stat-label">Darma</div></div><div class="stat-card"><div class="stat-value">'+logrosPub+'</div><div class="stat-label">Logros</div></div><div class="stat-card"><div class="stat-value">'+rutas.length+'</div><div class="stat-label">Rutas</div></div></div>';
     html+='<p style="font-size:0.8rem;color:#9fb3c8;text-align:center">Ha recorrido y grabado <strong style="color:var(--p)">'+totalKm.toFixed(1)+' km</strong> en '+rutas.length+' ruta'+(rutas.length===1?'':'s')+'.</p>';
@@ -3627,7 +3855,7 @@ async function sincronizarDiarioNube(){
     });
   }catch(e){}
 }
-function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null}, stats:us, rutas:(typeof rutasLocales==='function'?rutasLocales():[]), diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){} }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h('Respaldo descargado: tus rutas, diario, perfil y estadísticas. Guárdalo a salvo.'); }
+function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null, extras:typeof selectedExtras!=='undefined'?selectedExtras:[], piel:typeof selectedPiel!=='undefined'?selectedPiel:null, ojos:typeof selectedOjos!=='undefined'?selectedOjos:null, labios:typeof selectedLabios!=='undefined'?selectedLabios:null, vello:typeof selectedVello!=='undefined'?selectedVello:null, peinado:typeof selectedPeinado!=='undefined'?selectedPeinado:null, panuelo:typeof selectedPanuelo!=='undefined'?selectedPanuelo:null, unlocked:(typeof getDesbloqueados==='function'?getDesbloqueados():[])}, stats:us, rutas:(typeof rutasLocales==='function'?rutasLocales():[]), diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){} }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h('Respaldo descargado: tus rutas, diario, perfil y estadísticas. Guárdalo a salvo.'); }
 function importarMisDatos(input){
   const f=input.files&&input.files[0]; if(!f) return;
   const r=new FileReader();
@@ -3658,6 +3886,21 @@ function importarMisDatos(input){
         if(data.perfil.helmet){ selectedHelmet=data.perfil.helmet; localStorage.setItem('lp_helmet_'+cu, selectedHelmet); }
         if(data.perfil.skin){ selectedSkin=data.perfil.skin; localStorage.setItem('lp_skin_'+cu, selectedSkin); }
         if(data.perfil.lens){ selectedLens=data.perfil.lens; localStorage.setItem('lp_lens_'+cu, selectedLens); }
+        if(Array.isArray(data.perfil.extras)){ selectedExtras=data.perfil.extras; localStorage.setItem('lp_extras_'+cu, JSON.stringify(selectedExtras)); }
+        if(data.perfil.piel){ selectedPiel=data.perfil.piel; localStorage.setItem('lp_piel_'+cu, selectedPiel); }
+        if(data.perfil.ojos){ selectedOjos=data.perfil.ojos; localStorage.setItem('lp_ojos_'+cu, selectedOjos); }
+        if(data.perfil.labios){ selectedLabios=data.perfil.labios; localStorage.setItem('lp_labios_'+cu, selectedLabios); }
+        if(data.perfil.vello){ selectedVello=data.perfil.vello; localStorage.setItem('lp_vello_'+cu, selectedVello); }
+        if(data.perfil.peinado){ selectedPeinado=data.perfil.peinado; localStorage.setItem('lp_peinado_'+cu, selectedPeinado); }
+        if(data.perfil.panuelo){ selectedPanuelo=data.perfil.panuelo; localStorage.setItem('lp_panuelo_'+cu, selectedPanuelo); }
+        // Ítems comprados con Darma: UNIÓN con lo que ya hay local, nunca reemplazo
+        // (mismo cuidado que reg() — un respaldo viejo no debe hacerte perder algo
+        // que compraste después de generarlo).
+        if(Array.isArray(data.perfil.unlocked) && typeof getDesbloqueados==='function'){
+          const localArr=getDesbloqueados();
+          const union=localArr.concat(data.perfil.unlocked.filter(function(x){return localArr.indexOf(x)===-1;}));
+          localStorage.setItem('lp_unlocked_'+(cu||'anon'), JSON.stringify(union));
+        }
         if(typeof initCustomization==='function') initCustomization();
       }catch(e){} }
       // ESTADÍSTICAS: nunca bajan tu progreso, toma el valor mayor (km, Darma, calorías).
