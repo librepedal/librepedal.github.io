@@ -33,7 +33,9 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-(última vez: sesión 2, 2026-07-13 ~21:55, terminó FAQ_CHARLA + clima con día/lugar, v6.56 desplegado)
+Última sesión: 2
+Hasta: 2026-07-13 20:29
+Terminó: comandos de voz nuevos (v6.57) — ciclistas cerca (con distancia real), panorama por la zona, historia/mito/leyenda del lugar bajo pedido. Commiteado y pusheado (3d0dbe1), desplegado y verificado en librepedal.cl.
 ```
 
 ---
