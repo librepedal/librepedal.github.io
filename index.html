@@ -639,6 +639,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
 </div>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🎙️ Manos libres</h4>
+<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Para cuando vas pedaleando o manejando y no puedes tocar el micrófono: Pistero queda escuchando todo el tiempo. No responde a cada cosa que digas — solo cuando lo llamas por su nombre ("Pistero, ¿cómo está el clima?"). Para callarlo, decir "cállate" funciona siempre, sin necesitar el nombre.</p>
+<div class="quick-links">
+  <button class="ab sec" style="margin:0" id="btnManosLibres" onclick="toggleManosLibres()">🎙️ Manos libres: OFF</button>
+</div>
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🎒 Bitácora de viajes</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">No todos llevan diario de sus viajes — esto es solo para quien quiera. Si lo activas, la app te ofrece llevar registro (dónde te hospedaste, tus notas del día) cuando termines una ruta. Puedes decir "guarda mi bitácora" en cualquier momento aunque esto esté apagado.</p>
 <div class="quick-links">
@@ -998,7 +1003,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.47'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.48'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1425,6 +1430,17 @@ let navUserMarkers = [], maxSpeed = 0, speedReadings = [];
 // Umbrales de ritmo FIJOS (km/h), iguales en frases, ánimo del personaje y el
 // indicador del panel: parado=0, lento 4-8, normal 8-16, rápido 16+.
 const RITMO_LENTO_MAX = 8, RITMO_NORMAL_MAX = 16;
+// Umbrales de "vas lento/normal/rápido" por modo de actividad: los de ciclismo
+// (8/16 km/h) no tienen sentido caminando (mucho más lento) ni en auto/moto
+// (mucho más rápido) — sin esto, un viaje en auto siempre calificaba de "muy
+// rápido" y una caminata siempre de "muy lenta", sin importar el ritmo real.
+function _ritmoUmbrales(){
+  const m=(typeof actividadTipo!=='undefined')?actividadTipo:'ciclismo';
+  if(m==='trekking') return {lento:3, normal:7};
+  if(m==='moto') return {lento:20, normal:90};
+  if(m==='mtb') return {lento:6, normal:14};
+  return {lento:RITMO_LENTO_MAX, normal:RITMO_NORMAL_MAX};
+}
 let nextHydrateKm = 5, nextEatKm = 20;
 let recognition = null, micOn = false;
 let vozPref = null, vozActiva = (localStorage.getItem('lp_voz') !== 'off');
@@ -1440,6 +1456,47 @@ const frasesSubida = ["Esto se puso cuesta arriba, ¡dale con todo!","Subida a l
 const frasesBajada = ["Bajada a la vista: cuidado con la velocidad y los baches.","Ahora te toca disfrutar, pero ojo con los frenos.","Se viene la bajada, agárrate que esto vuela.","Aprovecha de descansar las piernas, ya te ganaste esta bajada.","Ojo con las curvas en la bajada, no hay apuro.","Bajando rico, pero con la vista bien puesta en el camino."];
 const frasesProfundas = ["Mira tus alforjas: si todo lo que necesitas cabe ahí, ¿para qué cargar con tanta m***** en la vida?","En la ciudad todo va a mil. Acá el mundo cambia al ritmo de tus ojos. Habita el presente, mijo.","El viento en contra enseña que no controlamos nada. Fluir es aprender a pedalear con lo que toque.","No estás de visita; tú eres parte de la naturaleza. Siente el aire y conéctate.","El silencio de la ruta no está vacío, está lleno de respuestas. Escúchate de verdad.","Para disfrutar la bajada, primero hay que sudar la subida. Así es la vida también.","El viaje te deja a solas contigo mismo. No le tengas miedo a tus pensamientos, déjalos pasar.","La felicidad es simple: un plato de comida caliente y un lugar donde tirar el saco.","Pedalear aquí es elegir ver el mundo con tus propios ojos, no a través de una pantalla.","La ruta no es cuántos kilómetros dejas atrás, sino cuántas trancas mentales vas botando.","Éxito no es acumular cosas. La verdadera riqueza es elegir dónde armar la carpa hoy.","El camino es un espejo. Lo que te molesta de la ruta, sánalo pedaleando.","El único kilómetro real es el que estás pisando ahora. Deja de pensar en la meta y disfruta.","La bici no miente: te muestra de qué estás hecho cuando las piernas ya no dan más.","La ciudad te enseña a competir; el pedal te enseña a compartir y conectar con la gente.","Desconéctate para conectar. Que tu único mapa sea el que dibujas con el corazón."];
 const frasesMotivacionales = ["¡Vamos, que tú puedes!","El que se rinde no llega, y tú no eres de esos.","La subida está dura, pero la bajada es gloria.","Piensa en la bebida heladita que te espera.","¡Saca la garra!","Rómpete las piernas hoy y agradécelo mañana.","En la ciudad todo va a mil, tú lleva tu propio ritmo.","El viento en contra también enseña.","No estás de visita en este camino, eres parte de él.","Para disfrutar la bajada, primero hay que sudar la subida.","La felicidad es simple: dos ruedas y ganas.","Pedalear es elegir ver el mundo de verdad.","Tu única competencia eres tú mismo.","Cada pedalada cuenta, no lo olvides.","Desconéctate del ruido para conectar contigo.","El presente es un regalo, pedaléalo con calma.","Las cuestas más duras llevan a las mejores vistas.","Tu bicicleta no miente, te lleva donde pones el alma."];
+
+// ===== Vocabulario por MODO DE ACTIVIDAD: un rutero de asfalto, un montañista de
+// singletrack, un caminante y alguien en auto/moto no hablan igual — "pedaleas",
+// "cadena" o "bicicleta" suenan a chiste malo si vas a pie o manejando. Cada modo
+// tiene su propio set, mismo tono chileno y la misma gracia de siempre, pero con
+// las palabras que corresponden a lo que realmente estás haciendo.
+const FRASES_POR_MODO = {
+  mtb: {
+    lento:["¿Terreno técnico o estás mirando el paisaje?","Con raíces y piedras, mejor ir con calma que con apuro.","¿Se te atascó la rueda en el barro?","Tómatelo con calma, el sendero no se mueve de ahí.","¿Bajaste el ritmo por el terreno o por las piernas?","En singletrack técnico, lento y seguro gana la carrera."],
+    normal:["¡Buena línea! Así se lee el sendero.","Ritmo firme entre raíces y piedras, se nota la técnica.","Así se rueda un buen singletrack.","Vas leyendo bien el terreno, sigue así.","El polvo del sendero es la mejor colonia.","Cadena limpia, suspensión suave, ritmo perfecto."],
+    rapido:["¡Ojo con esa raíz, fiera!","Vas volando en el sendero, cuidado con el próximo giro.","Modo enduro activado, pero mira bien el terreno.","¡Esa velocidad en terreno técnico es todo un compromiso!","Frena antes de la curva ciega, no después.","Vas rápido, pero el sendero no perdona un descuido."],
+    parado:["¿Pinchazo por una piedra filosa?","Buen momento para bajar la presión de las llantas.","Revisa la suspensión mientras descansas.","¿Se te salió la cadena en un salto?","Toma agua, el sendero técnico cansa el doble.","Aprovecha de limpiar el barro de los frenos."],
+    motivacional:["Cada raíz superada es técnica ganada.","El barro de hoy es la anécdota de mañana.","No hay sendero fácil que valga la pena contar.","Tu bici de montaña fue hecha para esto, confía en ella.","El singletrack te enseña a leer el terreno y a ti mismo.","Cae, levántate, sigue rodando: así se hacen los mejores riders."],
+    subida:["Singletrack cuesta arriba: cadencia alta y mirada al frente.","Esta subida técnica separa a los que solo miran de los que ruedan.","Ritmo parejo en la subida, el sendero premia la constancia.","Cuesta arriba entre piedras: técnica antes que fuerza."],
+    bajada:["Bajada técnica a la vista: peso atrás y ojo con las líneas.","Se viene singletrack de bajada, elige bien tu línea.","Bajada con raíces: gomas rodando, no frenando en seco.","Disfruta la bajada, para eso subiste con tanto sacrificio."],
+    ciudad:["Antes de llegar al sendero, ojo con el tráfico igual.","Calle antes de tierra: mantén las luces si hay poca visibilidad.","Ya casi llegas al sendero, aguanta el asfalto un poco más."],
+    profunda:["El sendero no perdona el apuro: te enseña a estar presente, raíz a raíz.","En el monte no hay atajos de verdad, solo distintas formas de ganarte la bajada.","Cada caída en el sendero es una lección que el asfalto nunca te daría.","La montaña no compite contigo, solo te muestra quién eres cuando nadie mira.","El barro se lava, pero lo que aprendiste rodando ahí se queda.","Un buen rider no domina el sendero, aprende a escucharlo."]
+  },
+  trekking: {
+    lento:["¿Caminata contemplativa o se te durmió una pierna?","Paso tranquilo, disfrutando cada rincón del camino.","Con calma también se llega, y se ve más.","¿Parando a mirar el paisaje o a recuperar el aire?","Un paso lento es un paso que sí disfrutas."],
+    normal:["Buen paso, así se hace una caminata.","Ritmo parejo, ideal para aguantar toda la jornada.","La mochila bien puesta y el paso firme, se nota.","Así se camina un sendero: con cabeza y con calma.","Cada paso te acerca al mirador, sigue así."],
+    rapido:["¡Ese paso ya es trote, cuidado con el tobillo!","Vas volando, pero el sendero tiene piedras sueltas.","Frena un poco, que no es una carrera de atletismo.","Ese ritmo cansa doble con la mochila puesta.","Cuidado con el paso apurado en bajada de piedras."],
+    parado:["¿Ajustando la mochila o sacando fotos?","Buen momento para tomar agua e hidratarte.","Revisa tus botas, una piedrita adentro arruina el día.","Descansa las piernas, la caminata recién empieza.","¿Todo bien? Aprovecha de estirar."],
+    motivacional:["Cada paso cuenta, aunque no lo sientas.","El cansancio de hoy es la anécdota de la vuelta a casa.","No hay cumbre que no empiece con un primer paso.","Tu cuerpo aguanta más de lo que tu cabeza te dice.","La mochila pesa menos cuando el paisaje te sorprende.","Camina a tu ritmo: no hay competencia, solo tu propio camino."],
+    subida:["Cuesta arriba a pie: paso corto, respiración larga.","Esta subida se sube con cabeza, no con apuro.","Cada paso cuesta arriba te acerca a la mejor vista.","Ritmo parejo en la subida, el camino no se acaba apurando."],
+    bajada:["Bajada a la vista: cuidado con las rodillas y las piedras sueltas.","Ahora a disfrutar, pero sin apurar el paso en bajada.","Bajando con calma, que las rodillas se cuidan solas.","Ojo con el terreno suelto, mejor un paso seguro que uno rápido."],
+    ciudad:["Antes del sendero, cuidado cruzando calles.","Vereda o berma, siempre mirando el tráfico.","Ya casi dejas el asfalto atrás, aguanta un poco más."],
+    profunda:["Caminar es la forma más antigua de pensar: deja que la mente vaya al mismo ritmo que tus pies.","No hay mochila que pese tanto como los pensamientos que no sueltas.","El sendero no tiene apuro, y tú tampoco deberías.","Cada cumbre te enseña que lo importante no es solo llegar, es el paso a paso.","El silencio del monte no está vacío, está lleno de ti.","Caminar despacio no es debilidad, es la única forma de ver todo lo que te estás perdiendo corriendo."]
+  },
+  moto: {
+    lento:["¿Taco a la vista o vas de paseo?","Ritmo tranquilo, buena forma de disfrutar el paisaje.","Con calma también se llega, y sin multas.","¿Frenando por el tráfico o por gusto de mirar la vista?"],
+    normal:["Buen ritmo de viaje, así se disfruta la ruta.","Motor parejo, kilómetros que se hacen solos.","Así se viaja: con calma y buena música.","La ruta abierta y tú disfrutando el camino, se nota."],
+    rapido:["¡Ojo con la velocidad, que el radar no perdona!","Vas volando, baja un poco el pie del acelerador.","Modo autopista activado, pero cuidado con las curvas.","Esa velocidad se disfruta más con cabeza fría."],
+    parado:["¿Parada técnica o cargando bencina?","Buen momento para estirar las piernas y tomar algo.","Revisa presión de neumáticos mientras descansas.","Aprovecha la parada para hidratarte también."],
+    motivacional:["El viaje es tan bueno como la compañía y las ganas.","Cada kilómetro de ruta es una historia que después vas a contar.","No hay destino que valga tanto como el camino para llegar.","La ruta abierta es libertad pura, disfrútala con cabeza.","Buen viaje no es el más rápido, es el que se disfruta completo.","Menos apuro, más paisaje: para eso saliste a la ruta."],
+    subida:["Cuesta arriba con el motor rugiendo, disfruta la vista.","Esta subida en curvas es puro gusto, eso sí, con cuidado.","Ritmo parejo cuesta arriba, no hay apuro en la ruta."],
+    bajada:["Bajada en curvas: frenos con cabeza, no en seco.","Se viene bajada, disfruta pero sin excederte.","Bajando con vista despejada, cuidado con el ripio suelto.","Ojo con las curvas en bajada, la ruta no perdona un descuido."],
+    ciudad:["Ojo con el peatón que cruza sin mirar.","Cuidado con las puertas de autos estacionados.","En la ciudad el casco no es opcional.","Respeta el semáforo, aunque tengas apuro."],
+    profunda:["La ruta abierta enseña que el destino importa menos de lo que crees.","No estás de paso por estos caminos, el viaje también te construye a ti.","El viento en la cara te recuerda que estás vivo, de verdad presente.","Un buen viaje no se mide en kilómetros, se mide en lo que descubriste de ti.","La carretera es un espejo: lo que te inquieta del camino, resuélvelo manejando.","Desconéctate del apuro de siempre; en la ruta el único reloj eres tú."]
+  }
+};
 
 const MG=[{t:"Cadena rota",s:"Usa un clavo o piedra para empujar el pasador. Deja un milímetro asomando.",f:"ForoMTB"},{t:"Pinchazo sin parches",s:"Un envoltorio de comida sirve como parche interno temporal.",f:"Bikepacking"},{t:"Radio roto",s:"Sácalo y envuelve los radios vecinos con cinta.",f:"Sheldon Brown"},{t:"Freno suelto",s:"Haz un nudo en el extremo del cable y engánchalo a la leva.",f:"Park Tool"},{t:"Manubrio girado",s:"Afloja con una moneda, alinea y vuelve a apretar.",f:"ForoMTB"},{t:"El asiento se baja",s:"Limpia el tubo y aplica un poco de grasa.",f:"Sheldon Brown"},{t:"Pedal atascado",s:"Recuerda: el pedal izquierdo tiene rosca inversa, gira al revés.",f:"Sheldon Brown"},{t:"Crujido molesto",s:"Limpia las uniones con alcohol y vuelve a apretar.",f:"Park Tool"},{t:"Los cambios no entran",s:"Gira el barrilete media vuelta y prueba.",f:"Park Tool"},{t:"Ruido en los radios",s:"Aprieta cada radio un cuarto de vuelta.",f:"Sheldon Brown"},{t:"Frenos que chirrían",s:"Lija suave las pastillas y limpia el aro.",f:"Park Tool"},{t:"La cadena salta",s:"Acorta un eslabón con la tronchacadenas.",f:"ForoMTB"},{t:"Rueda descentrada",s:"Aprieta los radios del lado que roza.",f:"Sheldon Brown"},{t:"Maneta floja",s:"Tensa el barrilete del freno.",f:"Park Tool"},{t:"Alforja rota",s:"Repara con cinta o un cordel resistente.",f:"Reddit"},{t:"Botella perdida",s:"Una bolsa doble sirve de recipiente improvisado.",f:"Bikepacking"},{t:"Cable de cambio roto",s:"Deja una marcha manejable y sigue con cuidado.",f:"ForoMTB"}];
 const CG=[{cat:'hospedaje',t:'Hostal La Bicicleta',d:'Desayuno temprano y guardabicis. Cerca de quince dólares.',tg:['#CicloAmigable']},{cat:'panorama',t:'Mirador del Cóndor',d:'Vista de 360 grados, ideal al atardecer.',tg:['#Vistas']},{cat:'tips',t:'Agua en las bencineras',d:'Suelen llenar los bidones gratis.',tg:['#AguaGratis']},{cat:'economia',t:'Feria de los jueves',d:'Frutas hasta 40 por ciento más baratas.',tg:['#Ahorro']},{cat:'hospedaje',t:'Camping Río Azul',d:'Seguro, con baños y enchufes.',tg:['#Seguro']},{cat:'tips',t:'Taller comunitario',d:'Sábados de 9 a 12, ayuda gratis.',tg:['#Comunidad']},{cat:'economia',t:'Menú del ciclista',d:'Menú con bebida por unos cinco dólares.',tg:['#Económico']}];
@@ -1961,6 +2018,8 @@ const frasesFlavor={
 };
 function paisFrases(){ return (paisUsuario||'').toString().toLowerCase().slice(0,2); }
 function poolPais(cat){
+  const modo=(typeof actividadTipo!=='undefined')?actividadTipo:'ciclismo';
+  if(modo!=='ciclismo' && FRASES_POR_MODO[modo] && FRASES_POR_MODO[modo][cat]) return FRASES_POR_MODO[modo][cat];
   if(cat==='profunda') return frasesProfundas;
   const p=paisFrases();
   const chil={lento:frasesLento,normal:frasesNormal,rapido:frasesRapido,parado:frasesParado,ciudad:frasesCiudad,motivacional:frasesMotivacionales,subida:frasesSubida,bajada:frasesBajada};
@@ -1982,7 +2041,7 @@ function obtenerFraseUnica(categoria){
   return frase;
 }
 /* Umbrales realistas de ciclismo: <7 subida/tranco lento · 7-18 ritmo de paseo/ruta · 18+ ya es volar (bajada o viento a favor). */
-function obtenerFrasePorVelocidad(v){ if(v===0) return obtenerFraseUnica('parado'); if(v<RITMO_LENTO_MAX) return obtenerFraseUnica('lento'); if(v>=RITMO_NORMAL_MAX) return obtenerFraseUnica('rapido'); return obtenerFraseUnica('normal'); }
+function obtenerFrasePorVelocidad(v){ const u=_ritmoUmbrales(); if(v===0) return obtenerFraseUnica('parado'); if(v<u.lento) return obtenerFraseUnica('lento'); if(v>=u.normal) return obtenerFraseUnica('rapido'); return obtenerFraseUnica('normal'); }
 // Frases para ciclista URBANO (términos chilenos), separadas de las de carretera.
 const frasesCiudad = ["Ojo con las puertas de los autos estacionados, no te vayan a abrir una.","Respeta el semáforo, aunque andes apurado.","En la ciudad todos andan a mil; tú lleva tu propio ritmo.","Cuidado con el peatón pegado al celular.","Esquiva el bache, que la calle anda pelada.","Un ciclista más es un taco menos: vas aportando a Chile.","Hazte notar, toca la campanilla si tienes.","Ojo con la micro, que esa no te espera a nadie.","Vas ganándole al taco, campeón.","En las esquinas mira siempre antes de cruzar, no confíes.","En la ciudad el casco no es opcional, es tu mejor amigo.","Si hay ciclovía, úsala, que para eso está.","Ojo con los quiltros del barrio, salúdalos de lejitos.","La ciudad se ve distinta desde la bici, disfrútala.","Cuidado con el auto que dobla sin poner la señal."];
 // Detección de zona: ciudad vs carretera (reverse-geocoding, con throttle para no saturar).
@@ -2167,8 +2226,10 @@ async function pisteroPorVoz(){
   if(_nat&&_nat.start){
     const btn=document.getElementById('pisteroMic'); if(btn) btn.classList.add('grabando');
     try{ pararVoz(); }catch(e){}
+    _pausarManosLibres();
     const t=await _micNativoEscuchar();
     if(btn) btn.classList.remove('grabando');
+    _reanudarManosLibres();
     if(t){ const st=quitarEcoPistero(t)||t; handleVoiceCommand(st); }
     else _vozNoEntendi();
     return;
@@ -2177,14 +2238,15 @@ async function pisteroPorVoz(){
   if(!SR){ h('En la app escríbeme la pregunta aquí abajo; la voz funciona en Chrome.'); const i=document.getElementById('pisteroInput'); if(i){ try{ i.focus(); }catch(e){} } return; }
   if(!window.isSecureContext){ h('La voz solo funciona desde la página publicada.'); return; }
   try{ pararVoz(); }catch(e){}
+  _pausarManosLibres();
   try{
     pisteroRec=new SR(); pisteroRec.lang='es-CL'; pisteroRec.continuous=false; pisteroRec.interimResults=false; pisteroRec.maxAlternatives=1;
     const btn=document.getElementById('pisteroMic'); if(btn) btn.classList.add('grabando');
     pisteroRec.onresult=function(e){ const t=e.results[0][0].transcript; const st=quitarEcoPistero(t)||t; if(st) handleVoiceCommand(st); else _vozNoEntendi(); };
-    pisteroRec.onend=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); };
-    pisteroRec.onerror=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); };
+    pisteroRec.onend=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); };
+    pisteroRec.onerror=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); };
     pisteroRec.start();
-  }catch(e){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); }
+  }catch(e){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); }
 }
 let ultimoLugarAnecdota='';
 function _anecdotasContadas(){ try{ return JSON.parse(localStorage.getItem('lp_anecdotas'))||[]; }catch(e){ return []; } }
@@ -2283,6 +2345,7 @@ window.onload = async function(){
   _actualizarBtnBitacoraViajes();
   _actualizarBtnCrash();
   _actualizarBtnGPS();
+  _actualizarBtnManosLibres();
   // Espera a saber si la app se va a recargar sola por una actualización (máx. 1.5s)
   // antes de activar GPS/voz de arranque — si se recarga, esta instancia nunca sigue.
   try{ await Promise.race([window.__lpListoParaArrancar, new Promise(function(r){ setTimeout(r,1500); })]); }catch(e){}
@@ -2316,6 +2379,9 @@ window.onload = async function(){
     initCustomization();
     setTimeout(function(){ h(saludoBienvenida(nombreUsuario)); },500);
     setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },950);
+    // Espera a que termine el saludo hablado antes de abrir la escucha continua:
+    // si se abre con Pistero todavía hablando, el mic capta su propia voz.
+    if(manosLibresOn) setTimeout(function(){ _iniciarEscuchaContinua(); },3000);
     if(!ghostMode) subscribeToUsers();
     subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
     getCurrentLocation();
@@ -2807,9 +2873,10 @@ function ug(p){
 }
 function updateSpeedStatus(speed){
   const el=document.getElementById('speedStatus'); if(!el) return;
+  const _u=_ritmoUmbrales();
   if(speed===0){ el.innerText='Detenido'; el.style.color='#888'; }
-  else if(speed<RITMO_LENTO_MAX){ el.innerText='Ritmo lento'; el.style.color='#ff9800'; }
-  else if(speed<RITMO_NORMAL_MAX){ el.innerText='Ritmo normal'; el.style.color='#10b981'; }
+  else if(speed<_u.lento){ el.innerText='Ritmo lento'; el.style.color='#ff9800'; }
+  else if(speed<_u.normal){ el.innerText='Ritmo normal'; el.style.color='#10b981'; }
   else { el.innerText='¡Rápido!'; el.style.color='#ff3333'; }
   pv(speed);
 }
@@ -3207,7 +3274,7 @@ function velocidadVentana(pts){
   if(dt<2) return 0;
   return (gd2(c1.lat,c1.lon,c2.lat,c2.lon)*1000/dt)*3.6;
 }
-function pv(v){ const f=document.getElementById('pf'); if(!f) return; const c=v===0?'parado':v<RITMO_LENTO_MAX?'lento':v>=RITMO_NORMAL_MAX?'rapido':'normal'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
+function pv(v){ const f=document.getElementById('pf'); if(!f) return; const _u=_ritmoUmbrales(); const c=v===0?'parado':v<_u.lento?'lento':v>=_u.normal?'rapido':'normal'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd(); }
 /* ===== Mapa principal: MapLibre GL + OpenFreeMap (vectorial, gratis, sin cuenta) =====
@@ -4818,6 +4885,94 @@ function initVoz(){
     else if(err!=='aborted'){ h("Hubo un problema con el micrófono. Inténtalo otra vez."); }
   };
 }
+// ===== MANOS LIBRES: escucha continua, sin apretar el micrófono cada vez =====
+// Pedido explícito de Inty: "si vas en bicicleta o manejando no hay tiempo para
+// estar apretando el botón del micrófono, no tiene lógica". Con esto activado,
+// el reconocimiento queda escuchando todo el tiempo (se reinicia solo cada vez
+// que el navegador lo corta por su cuenta, cosa que hace seguido incluso con
+// continuous:true — es una limitación conocida de la Web Speech API, no un bug
+// de acá) y SOLO responde cuando lo llamas por su nombre ("Pistero, ...") — así
+// no interrumpe una charla normal con quien vaya pedaleando al lado. La única
+// excepción es "cállate/silencio": esa funciona SIEMPRE, sin decir "Pistero"
+// antes, porque es la orden más urgente y no puede tener fricción.
+let manosLibresOn=(function(){ try{ return localStorage.getItem('lp_manos_libres')==='1'; }catch(e){ return false; } })();
+let _reconocimientoContinuo=null, _manosLibresPausado=false, _tocandoNativoContinuo=false;
+function _actualizarBtnManosLibres(){ const b=document.getElementById('btnManosLibres'); if(b) b.innerText=manosLibresOn?'🎙️ Manos libres: ON':'🎙️ Manos libres: OFF'; }
+function toggleManosLibres(){
+  manosLibresOn=!manosLibresOn;
+  try{ localStorage.setItem('lp_manos_libres', manosLibresOn?'1':'0'); }catch(e){}
+  _actualizarBtnManosLibres();
+  if(manosLibresOn){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    const nat=lpPlugin('SpeechRecognition');
+    if(!SR && !(nat&&nat.start)){ h('Tu navegador no soporta escucha continua. Sigue usando el botón del micrófono.'); manosLibresOn=false; try{ localStorage.setItem('lp_manos_libres','0'); }catch(e){} _actualizarBtnManosLibres(); return; }
+    h('Manos libres activado. Dime "Pistero" y lo que necesites, sin tocar nada. Para callarme en cualquier momento, solo di "cállate".');
+    _iniciarEscuchaContinua();
+  } else {
+    h('Manos libres desactivado.');
+    _detenerEscuchaContinua();
+  }
+}
+function _procesarFraseManosLibres(t){
+  if(!t) return;
+  const norm=normalizar(t);
+  // El silencio funciona SIEMPRE, sin necesitar el nombre — es la orden más
+  // urgente y no puede depender de que Pistero "te haya escuchado bien" el nombre.
+  if(/^(detente|para|ya)\.?$/.test(norm) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(norm)){ handleVoiceCommand(t); return; }
+  const m=t.match(/pistero[,:.]?\s*(.*)$/i);
+  if(!m) return; // no te dirigiste a él por su nombre: sigue escuchando en silencio, no interrumpe
+  const resto=(m[1]||'').trim();
+  if(!resto){ h('Dime.'); return; }
+  handleVoiceCommand(resto);
+}
+function _iniciarEscuchaContinua(){
+  if(_manosLibresPausado) return; // hay otra captura puntual (mic normal / chat) en curso
+  const nat=lpPlugin('SpeechRecognition');
+  if(nat&&nat.start){ _iniciarEscuchaContinuaNativa(); return; }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return;
+  if(_reconocimientoContinuo){ try{ _reconocimientoContinuo.onend=null; _reconocimientoContinuo.stop(); }catch(e){} }
+  const r=new SR();
+  r.lang='es-CL'; r.continuous=true; r.interimResults=false; r.maxAlternatives=1;
+  r.onresult=function(e){
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(!e.results[i].isFinal) continue;
+      const t=quitarEcoPistero(e.results[i][0].transcript)||e.results[i][0].transcript;
+      _procesarFraseManosLibres(t);
+    }
+  };
+  // no-speech es lo NORMAL en modo continuo (silencio ambiental mientras pedaleas
+  // sin hablar) — no es un error real, el navegador lo corta y este mismo onend
+  // lo reinicia solo.
+  r.onerror=function(){};
+  r.onend=function(){ _reconocimientoContinuo=null; if(manosLibresOn && !_manosLibresPausado) setTimeout(function(){ if(manosLibresOn && !_manosLibresPausado) _iniciarEscuchaContinua(); }, 250); };
+  _reconocimientoContinuo=r;
+  try{ r.start(); }catch(e){}
+}
+function _detenerEscuchaContinua(){
+  if(_reconocimientoContinuo){ try{ _reconocimientoContinuo.onend=null; _reconocimientoContinuo.stop(); }catch(e){} _reconocimientoContinuo=null; }
+  _tocandoNativoContinuo=false;
+}
+// App instalada (plugin nativo): no soporta "continuous" real, así que se simula
+// reiniciando la captura de a una vez apenas termina la anterior — hay una pausa
+// perceptible entre frases, pero igual sin tocar el botón.
+async function _iniciarEscuchaContinuaNativa(){
+  if(_tocandoNativoContinuo) return;
+  _tocandoNativoContinuo=true;
+  while(manosLibresOn && !_manosLibresPausado){
+    const t=await _micNativoEscuchar();
+    if(!manosLibresOn || _manosLibresPausado) break;
+    if(t){ const sinEco=quitarEcoPistero(t)||t; _procesarFraseManosLibres(sinEco); }
+    await new Promise(function(res){ setTimeout(res,400); });
+  }
+  _tocandoNativoContinuo=false;
+}
+// Coordina con el mic de "empuja para hablar" y el chat de Pistero: el micrófono
+// del dispositivo solo admite una captura a la vez, así que mientras esos capturan
+// su propia frase puntual, la escucha continua se pausa y se reanuda sola al
+// terminar — sin esto, las dos capturas peleaban por el mismo micrófono.
+function _pausarManosLibres(){ if(!manosLibresOn) return; _manosLibresPausado=true; _detenerEscuchaContinua(); }
+function _reanudarManosLibres(){ if(!manosLibresOn) return; _manosLibresPausado=false; setTimeout(function(){ if(manosLibresOn && !_manosLibresPausado) _iniciarEscuchaContinua(); }, 400); }
 const llamadosAlViaje=[
   "¿Dónde quieres ir?",
   "¿Dónde vamos esta vez?",
@@ -4851,10 +5006,12 @@ async function toggleMic(){
     if(micOn) return;
     try{ pararVoz(); }catch(e){}
     try{ lpMusic.duck(); }catch(e){}
+    _pausarManosLibres();
     micOn=true; updateMicBtn(); beepMic();
     mostrarBocadillo('🎙️ '+llamadosAlViaje[Math.floor(Math.random()*llamadosAlViaje.length)]);
     const t=await _micNativoEscuchar();
     micOn=false; updateMicBtn(); try{ lpMusic.unduck(); }catch(e){}
+    _reanudarManosLibres();
     if(t){ const sinEco=quitarEcoPistero(t); mostrarBocadillo('Te escuché: "'+(sinEco||t)+'"'); if(sinEco) handleVoiceCommand(sinEco); else h('¿A dónde vamos? Toca el micrófono y dime solo el lugar.'); }
     else h('No te escuché bien. Toca el micrófono y dime tu destino de nuevo.');
     return;
@@ -4866,17 +5023,18 @@ async function toggleMic(){
     return;
   }
   if(!window.isSecureContext){ h("Los comandos de voz solo funcionan con candado de seguridad, es decir desde la página publicada, no abriendo el archivo directo."); return; }
-  if(micOn){ try{recognition.stop();}catch(e){} micOn=false; updateMicBtn(); return; }
+  if(micOn){ try{recognition.stop();}catch(e){} micOn=false; updateMicBtn(); _reanudarManosLibres(); return; }
   try{
     // CLAVE: Pistero se calla ANTES de abrir el mic. Si habla con el mic abierto,
     // el reconocimiento escucha su voz por el parlante y la mezcla con tu destino.
     pararVoz();
     try{ lpMusic.duck(); }catch(e){}
+    _pausarManosLibres();
     recognition.start(); micOn=true; updateMicBtn();
     beepMic();
     mostrarBocadillo('🎙️ '+llamadosAlViaje[Math.floor(Math.random()*llamadosAlViaje.length)]);
   }
-  catch(e){ micOn=false; updateMicBtn(); h("Espera un segundo y vuelve a tocar el micrófono."); }
+  catch(e){ micOn=false; updateMicBtn(); _reanudarManosLibres(); h("Espera un segundo y vuelve a tocar el micrófono."); }
 }
 function beepMic(){ try{ const ac=window._lpAC||(window._lpAC=new (window.AudioContext||window.webkitAudioContext)()); if(ac.state==='suspended') ac.resume(); const o=ac.createOscillator(), g=ac.createGain(); o.connect(g); g.connect(ac.destination); o.type='sine'; o.frequency.setValueAtTime(660,ac.currentTime); o.frequency.setValueAtTime(990,ac.currentTime+0.09); g.gain.setValueAtTime(0.0001,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.18,ac.currentTime+0.03); g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.22); o.start(ac.currentTime); o.stop(ac.currentTime+0.25); }catch(e){} }
 function updateMicBtn(){ const b=document.getElementById('micBtn'); if(b) b.classList.toggle('listening',micOn); const e=document.getElementById('esMic'); if(e) e.classList.toggle('listening',micOn); }

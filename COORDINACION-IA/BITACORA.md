@@ -4,6 +4,74 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.48 — 2026-07-13 — Claude (sesión 2, manos libres + vocabulario por modo de actividad)
+
+Los dos pendientes que quedaron anotados en v6.47.
+
+**1. Manos libres (escucha continua).** Pedido explícito y con urgencia de
+seguridad: "si vas en bicicleta o manejando no hay tiempo para estar apretando
+el botón del micrófono, no tiene lógica". Hasta ahora los tres caminos de voz de
+la app (mic principal, chat de Pistero, plugin nativo del APK) eran los tres
+`continuous=false` — push-to-talk puro, cero escucha continua.
+
+Se agregó un modo "Manos libres" (toggle nuevo en Ajustes, `#btnManosLibres`,
+persistido en `localStorage.lp_manos_libres`) que activa un `SpeechRecognition`
+con `continuous=true` que se reinicia solo cada vez que el navegador lo corta
+(el navegador corta la escucha continua cada cierto rato incluso con esa opción
+activada — es una limitación conocida de la Web Speech API, no un bug propio).
+Con el modo activo, Pistero NO responde a cualquier cosa que se diga cerca del
+teléfono — solo actúa cuando lo llaman por su nombre ("Pistero, ..."), para no
+interrumpir una conversación normal entre ciclistas. La única excepción es la
+orden de callarse ("cállate"/"silencio"/etc.), que funciona SIEMPRE, sin
+necesitar el nombre antes, porque es la orden más urgente y no puede tener
+fricción. Para el APK instalado (plugin nativo, que no soporta un modo
+continuo real) se simula reiniciando la captura de a una apenas termina la
+anterior.
+
+Coordinación: el micrófono del dispositivo solo admite una captura a la vez,
+así que el modo continuo se pausa automáticamente (`_pausarManosLibres()`)
+cada vez que se usa el botón de mic normal o el mic del chat de Pistero, y se
+reanuda solo (`_reanudarManosLibres()`) al terminar esa captura puntual — antes
+de este cambio, dos instancias de `SpeechRecognition` intentando usar el mic al
+mismo tiempo se habrían peleado por el micrófono.
+
+**Verificación:** sintaxis con `node --check` (0 errores); en navegador, con
+`SpeechRecognition` mockeado, confirmé: extracción correcta del comando después
+de "Pistero" (con coma, con dos puntos, sin nada, y con muletillas antes como
+"oye pistero..."); frases sin la palabra "Pistero" se ignoran sin disparar nada;
+"cállate"/"silencio" funcionan con y sin el nombre antes; el auto-reinicio tras
+un corte del navegador crea una nueva instancia sola (sin intervención); pausa
+y reanudación al usar el mic normal funcionan y dejan el estado consistente; el
+botón de Ajustes refleja ON/OFF correctamente en ambas direcciones.
+
+**2. Vocabulario específico por modo de actividad.** Las frases aleatorias de
+Pistero (ritmo lento/normal/rápido, parado, subidas, bajadas, motivacionales,
+zona urbana, reflexiones profundas) eran 100% de ciclismo ("pedaleas", "cadena",
+"bicicleta") sin importar el modo elegido — sin sentido si el modo activo era
+trekking o moto/auto. Se agregó `FRASES_POR_MODO` con sets completos y propios
+para `mtb`, `trekking` y `moto` (mismo tono chileno y la misma gracia de
+siempre, pero con vocabulario de sendero técnico, caminata y ruta en auto/moto
+según corresponda); el modo `ciclismo` sigue usando el sistema de frases por
+país que ya existía, sin cambios. `poolPais()` ahora consulta primero
+`actividadTipo` antes de la lógica de país.
+
+De paso, encontré y arreglé un bug asociado: los umbrales de "vas lento/normal/
+rápido" estaban fijos en 8/16 km/h (calibrados para bici) sin importar el modo
+— en moto, cualquier velocidad real de ruta (40-100 km/h) siempre calificaba
+como "extremadamente rápido", y caminando, cualquier paso normal (4-5 km/h)
+siempre calificaba como "lento". Se agregó `_ritmoUmbrales()` con umbrales
+propios por modo (trekking 3/7, mtb 6/14, moto 20/90 km/h; ciclismo mantiene
+8/16 sin cambios) y se aplicó en los tres puntos que usaban el umbral fijo.
+
+**Verificación:** sintaxis con `node --check` (0 errores); en navegador,
+confirmé que cada modo devuelve su propio set completo (9 categorías, todas con
+contenido, ninguna vacía) y que los umbrales por modo son los esperados.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.48. `sw.js` CACHE → v648.
+Desplegado a librepedal.cl y confirmado en vivo (`version.txt` → 6.48).
+
+---
+
 ## v6.47 — 2026-07-13 — Claude (sesión 2, popup del mapa invisible + "cómo está el clima" armaba un viaje falso)
 
 Dos reportes directos de Inty, los dos reales:
