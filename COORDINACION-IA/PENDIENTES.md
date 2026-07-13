@@ -3,6 +3,20 @@
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-13,
 versión actual del proyecto: **v6.52**.
 
+## 🚴 FECHA META: 3 de octubre de 2026 — Cicletada en Lago Ranco
+
+La app tiene que estar publicada y pulida en Google Play para esa fecha
+(Inty va a mostrarla ahí, conecta con el objetivo de que la promocione la
+élite del ciclismo chileno). Ver plan de trabajo completo con fases y fechas
+en la conversación del 2026-07-13. Resumen: (1) pruebas en dispositivo real
+primero (GPS background, mic nativo, caídas, offline — nadie sin teléfono
+puede confirmarlas); (2) cerrar seguridad/privacidad pendiente
+(`firestore.rules` sigue sin publicarse, ver abajo); (3) capturas + ficha de
+Play Store; (4) enviar a revisión con VARIAS SEMANAS de colchón antes del
+evento, no solo días — cuenta nueva + permisos sensibles (ubicación en
+segundo plano + micrófono) pueden gatillar revisión más lenta o un rechazo
+que obligue a reenviar.
+
 ---
 
 ## 🔴 LO MÁS URGENTE — leer primero, cualquiera de las dos sesiones
