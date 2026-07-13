@@ -4,6 +4,58 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.55 — 2026-07-13 — Claude (sesión 2, cronómetro completo: pausa manual en GPS libre + vueltas + reinicio)
+
+Reporte real de Inty tras probar en su teléfono: "aún falta un cronómetro."
+Investigando, el cronómetro YA existía (GPS libre y navegación a destino),
+pero le faltaban dos cosas concretas que Inty pidió al preguntarle:
+
+**1. Pausa manual solo existía en navegación a destino, no en GPS libre**
+(el modo que más se usa, según el propio comentario del código). `togglePausaViaje()`
+solo tenía un botón conectado (`btnPausaViaje`, en `#nav-screen`). Ahora un
+mismo botón vive en ambas pantallas (`btnPausaDash` nuevo en el dashboard) y
+la función actualiza los dos botones y los dos badges de pausa a la vez — no
+importa desde cuál pantalla la tocaste.
+
+**2. Sistema de vueltas (lap) — no existía, nuevo de cero.** `marcarVuelta()`
+registra el tiempo transcurrido desde la última vuelta (o desde el inicio si
+es la primera) en `vueltasRegistradas`, sin depender de segmentos
+predefinidos en el mapa — sirve para comparar tramos o hacer series. `verVueltas()`
+muestra la lista completa en el modal genérico de la app. Se resetea al
+iniciar cada viaje nuevo (mismo patrón que el resto del estado de viaje).
+
+**3. Reinicio manual del cronómetro** (`reiniciarCronometro()`, con
+confirmación): pone el tiempo en cero sin tocar distancia ni el track — para
+cuando terminas un calentamiento y quieres arrancar a cronometrar el entreno
+de verdad sin apagar y prender el GPS entero.
+
+Los tres controles (⏸️ Pausar, 🏁 Vuelta, 📋 Ver vueltas, 🔄 Reiniciar) están
+ahora disponibles tanto en el dashboard (GPS libre) como en la pantalla de
+navegación a destino.
+
+**Verificación real en navegador:** simulé un viaje con vueltas marcadas en
+momentos distintos (confirmé tiempos parciales y totales correctos); probé
+`togglePausaViaje()` confirmando que actualiza AMBOS botones en las dos
+direcciones (pausar/reanudar); probé `verVueltas()` (el modal muestra la
+lista con los datos correctos) y `reiniciarCronometro()` completo, incluida
+la confirmación (`lpConfirmar`), verificando que el tiempo y las vueltas se
+resetean pero la distancia queda intacta.
+
+**Nota de coordinación:** esta sesión trabajó en paralelo con "sesión 1" (otra
+cuenta Claude, ver acuerdo arriba en `PENDIENTES.md`) sobre el mismo
+`index.html`. Antes de tocar nada, verifiqué `git status`/`git log` — confirmé
+que mi trabajo de la ronda anterior (manos libres en nav, fix de km parado,
+ruta alternativa por voz) ya había sido rescatado y commiteado por sesión 1
+(`3da21e4`, con crédito correcto), y que no había conflicto con su trabajo de
+voz/personalidad (v6.53 analytics, v6.54 doce arquetipos). Revisé también que
+no quedaran funciones duplicadas a nivel global por el trabajo concurrente —
+ninguna encontrada (las 4 coincidencias de nombre eran funciones locales
+anidadas en scopes distintos, no conflictos reales).
+
+**Versión:** APP_VERSION, version.txt y footer → 6.55. `sw.js` CACHE → v655.
+
+---
+
 ## Infra Android — 2026-07-13 — Claude (sesión 2, pipeline de .aab firmado para Google Play)
 
 Inty confirmó que Google ya aprobó la cuenta de desarrollador. Con eso

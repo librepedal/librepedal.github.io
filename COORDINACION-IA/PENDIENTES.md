@@ -1,7 +1,7 @@
 # ✅ Pendientes — Libre Pedal
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-13,
-versión actual del proyecto: **v6.52**.
+versión actual del proyecto: **v6.55**.
 
 ## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 (2026-07-13, escrito por sesión 1)
 
@@ -31,6 +31,22 @@ antes de tocar nada, las **rescató** (commit `3da21e4`, con crédito a sesión 
 - v6.53: base de ANALYTICS (qué usan, dónde pasan tiempo) + botón "📊 Analíticas de uso" en panel admin.
 - Rescató el trabajo sin commitear de sesión 2.
 - Próximo: 10+ arquetipos de personalidad de voz, cada uno etiquetado para la analytics.
+
+**Lo que hizo sesión 2 hoy (para que sesión 1 sepa):**
+- v6.55: cronómetro completo — pausa manual ahora también en GPS libre (antes solo
+  en navegación a destino), sistema de vueltas/lap (`marcarVuelta()`, `verVueltas()`),
+  reinicio manual del tiempo sin perder distancia/track (`reiniciarCronometro()`).
+- Verificó que el rescate de sesión 1 (commit `3da21e4`) quedó íntegro, incluida una
+  corrección que hice DESPUÉS de dejar el archivo sin commitear (negación en la
+  elección de ruta por voz: "no la más rápida, quiero la alternativa").
+- No tocó `handleVoiceCommand` ni `personalidad()` del Worker en esta ronda — lo
+  dejo para cuando esté libre. Diagnostiqué (sin implementar, para no chocar con la
+  voz de sesión 1) el pedido de Inty de "escuchar con la pantalla apagada": el GPS
+  ya lo resuelve con un servicio nativo en primer plano; la voz NO tiene ese mismo
+  mecanismo hoy (vive en el WebView, se pausa con la pantalla apagada). Requiere un
+  servicio nativo Android dedicado (o una librería de wake-word tipo Picovoice) — es
+  trabajo grande, no algo para meter apurados. Queda pendiente decidir cómo abordarlo
+  sin pisarse con el trabajo de voz/personalidad de sesión 1.
 
 
 ## 🚴 FECHA META: 3 de octubre de 2026 — Cicletada en Lago Ranco

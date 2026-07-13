@@ -512,6 +512,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
       <button class="nav-end-btn" id="btnPausaViaje" onclick="togglePausaViaje()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706)">⏸️ Pausar</button>
       <button class="nav-end-btn" onclick="finishTrip()" style="flex:1">✅ Terminar</button>
     </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="marcarVuelta()">🏁 Vuelta</button>
+      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="verVueltas()">📋 Ver vueltas</button>
+      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="reiniciarCronometro()">🔄 Reiniciar</button>
+    </div>
     <button class="ab sec" id="btnDescargarMapa" style="margin-top:8px" onclick="descargarMapaRuta()">📥 Descargar mapa de la ruta (para andar sin señal)</button>
   </div>
 </div>
@@ -592,6 +597,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="speed-label">km/h</div>
   <div class="speed-status" id="speedStatus">Detenido</div>
   <div id="dashCrono" style="display:none;font-size:1.15rem;font-weight:800;color:#fff;margin-top:6px;letter-spacing:0.5px;font-variant-numeric:tabular-nums">⏱️ 0:00</div>
+  <div id="dashCronoControles" style="display:none;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px">
+    <button class="ab sec" id="btnPausaDash" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="togglePausaViaje()">⏸️ Pausar</button>
+    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="marcarVuelta()">🏁 Vuelta</button>
+    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="verVueltas()">📋 Vueltas</button>
+    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="reiniciarCronometro()">🔄 Reiniciar</button>
+  </div>
   <div class="gps-signal-badge" id="gpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
   <div class="pausa-badge" id="dashPausaBadge" style="display:none">⏸️ En pausa (no cuenta para tu ritmo)</div>
   <div class="pausa-badge" id="dashBleHR" style="display:none"></div>
@@ -1017,7 +1028,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.54'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.55'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1325,12 +1336,14 @@ function _formatoCrono(ms){
 function _iniciarCronometroDash(){
   const el=document.getElementById('dashCrono'); if(!el) return;
   el.style.display='block'; el.innerText='⏱️ 0:00';
+  const c=document.getElementById('dashCronoControles'); if(c) c.style.display='flex';
   clearInterval(dashCronoInterval);
   dashCronoInterval=setInterval(function(){ el.innerText='⏱️ '+_formatoCrono(tiempoActivoMs()); },1000);
 }
 function _detenerCronometroDash(){
   clearInterval(dashCronoInterval); dashCronoInterval=null;
   const el=document.getElementById('dashCrono'); if(el) el.style.display='none';
+  const c=document.getElementById('dashCronoControles'); if(c) c.style.display='none';
 }
 function _actualizarPausaViaje(sp, badgeId){
   // Si el ciclista puso pausa MANUAL, mandamos nosotros: la auto-pausa por velocidad
@@ -1343,24 +1356,65 @@ function _actualizarPausaViaje(sp, badgeId){
 }
 // Pausa/Reanuda el viaje a mano: congela reloj, km y calorías; no recalcula ni cuenta
 // el movimiento hecho durante la pausa (empujar la bici, subir a una micro, etc.).
+// Reporte real: este botón solo existía en la pantalla de navegación a destino —
+// en "GPS libre" (el modo que más se usa, sin destino fijado) no había forma de
+// pausar a mano, solo la auto-pausa por velocidad. Ahora un solo botón (y una
+// sola función) sirve para las dos pantallas: actualiza ambos botones y ambos
+// badges de pausa, así no importa desde cuál pantalla lo tocaste.
 function togglePausaViaje(){
   viajePausaManual=!viajePausaManual;
-  const btn=document.getElementById('btnPausaViaje');
+  const btnNav=document.getElementById('btnPausaViaje'), btnDash=document.getElementById('btnPausaDash');
   if(viajePausaManual){
     if(!viajePausedDesde) viajePausedDesde=Date.now();   // congela el tiempo activo
     lastGpsPoint=null;                                    // al reanudar no cuenta el tramo de la pausa
-    _gpsBadgeToggle('navPausaBadge', true);
-    if(btn){ btn.innerText='▶️ Reanudar'; btn.style.background='linear-gradient(135deg,#10b981,#059669)'; }
+    _gpsBadgeToggle('navPausaBadge', true); _gpsBadgeToggle('dashPausaBadge', true);
+    if(btnNav){ btnNav.innerText='▶️ Reanudar'; btnNav.style.background='linear-gradient(135deg,#10b981,#059669)'; }
+    if(btnDash){ btnDash.innerText='▶️ Reanudar'; btnDash.style.color='#10b981'; btnDash.style.borderColor='#10b981'; }
     try{ showSpeechBubble('Viaje en pausa'); }catch(e){}
     h('Viaje en pausa. Cuando quieras seguir, toca Reanudar.');
   } else {
     if(viajePausedDesde){ viajePausedMs+=(Date.now()-viajePausedDesde); viajePausedDesde=null; }
     lastGpsPoint=null;
-    _gpsBadgeToggle('navPausaBadge', false);
-    if(btn){ btn.innerText='⏸️ Pausar'; btn.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; }
+    _gpsBadgeToggle('navPausaBadge', false); _gpsBadgeToggle('dashPausaBadge', false);
+    if(btnNav){ btnNav.innerText='⏸️ Pausar'; btnNav.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; }
+    if(btnDash){ btnDash.innerText='⏸️ Pausar'; btnDash.style.color=''; btnDash.style.borderColor=''; }
     try{ showSpeechBubble('¡Seguimos!'); }catch(e){}
     h('Seguimos pedaleando.');
   }
+}
+// Vueltas (lap): marca el tiempo transcurrido desde la última vuelta (o desde el
+// inicio si es la primera) — para comparar tramos o hacer series, sin depender de
+// segmentos predefinidos en el mapa. Se resetea al iniciar cada viaje nuevo.
+let vueltasRegistradas=[];
+function marcarVuelta(){
+  if(!tripStartTime){ h('Todavía no hay ningún viaje en marcha para marcar una vuelta.'); return; }
+  const ahora=tiempoActivoMs();
+  const anterior=vueltasRegistradas.length ? vueltasRegistradas[vueltasRegistradas.length-1].totalMs : 0;
+  const parcial=ahora-anterior;
+  vueltasRegistradas.push({numero:vueltasRegistradas.length+1, totalMs:ahora, parcialMs:parcial});
+  const n=vueltasRegistradas.length;
+  try{ showSpeechBubble('🏁 Vuelta '+n+': '+_formatoCrono(parcial)); }catch(e){}
+  h('Vuelta '+n+' marcada: '+_formatoCrono(parcial)+'. Tiempo total: '+_formatoCrono(ahora)+'.');
+}
+function verVueltas(){
+  if(!vueltasRegistradas.length){ lpAviso('Todavía no marcaste ninguna vuelta en este viaje. Toca "🏁 Vuelta" para registrar la primera.'); return; }
+  let html='<div style="max-height:50vh;overflow-y:auto">';
+  vueltasRegistradas.slice().reverse().forEach(function(v){
+    html+='<div style="display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid #15202e"><span style="color:#9fb3c8">Vuelta '+v.numero+'</span><span style="font-weight:800;font-variant-numeric:tabular-nums">'+_formatoCrono(v.parcialMs)+'</span><span style="color:#7d8ba0;font-variant-numeric:tabular-nums">total '+_formatoCrono(v.totalMs)+'</span></div>';
+  });
+  html+='</div>';
+  document.getElementById('modalTitle').innerText='🏁 Vueltas de este viaje';
+  document.getElementById('modalContent').innerHTML=html;
+  document.getElementById('userModal').classList.add('on');
+}
+// Reinicia el cronómetro a cero SIN cortar el GPS ni perder distancia/track — para
+// cuando quieres empezar a cronometrar de nuevo (ej. terminaste el calentamiento y
+// arranca el entreno de verdad) sin tener que apagar y prender el viaje entero.
+async function reiniciarCronometro(){
+  if(!tripStartTime){ h('Todavía no hay ningún viaje en marcha.'); return; }
+  if(!(await lpConfirmar('¿Reiniciar el cronómetro a cero? La distancia y el recorrido NO se pierden, solo el tiempo.'))) return;
+  tripStartTime=Date.now(); viajePausedMs=0; viajePausedDesde=null; vueltasRegistradas=[];
+  h('Cronómetro reiniciado. La distancia y el recorrido siguen intactos.');
 }
 let currentUserLocation = null;
 let selectedHelmet = 'giro', selectedLens = 'none', selectedSkin = 'cyan', selectedExtras = [];
@@ -2742,7 +2796,7 @@ function toggleGPS(){
     // se disparaba de inmediato con solo estar quieto un instante (ej. mientras
     // se ve el tutorial recién logueado, sin haber pedaleado nada todavía).
     lastFraseParadoTime=Date.now();
-    viajePausedMs=0; viajePausedDesde=null; posHistory=[]; _gpsBadgeToggle('dashPausaBadge', false);
+    viajePausedMs=0; viajePausedDesde=null; posHistory=[]; vueltasRegistradas=[]; _gpsBadgeToggle('dashPausaBadge', false);
     pendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
     puntosAvisados=new Set(); reportesAvisados=new Set();
     _avisoLluviaHecho=false; _ultimoChequeoLluvia=0; _fatigaBuffer=[]; _avisoFatigaHecho=false; _velPromInicioFatiga=null;
@@ -4930,7 +4984,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   navRecalcIntentos=0; navUltimoRecalcTime=0; navRecalcSilencioHasta=0;
   puntosAvisados=new Set(); reportesAvisados=new Set();
   _avisoLluviaHecho=false; _ultimoChequeoLluvia=0; _fatigaBuffer=[]; _avisoFatigaHecho=false; _velPromInicioFatiga=null;
-  navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
+  navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; vueltasRegistradas=[]; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
   (function(){ const b=document.getElementById('btnPausaViaje'); if(b){ b.innerText='⏸️ Pausar'; b.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; } })();
   navPendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
   iniciarDeteccionCaidas();
