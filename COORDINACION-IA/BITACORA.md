@@ -4,6 +4,55 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## Infra Android — 2026-07-13 — Claude (sesión 2, pipeline de .aab firmado para Google Play)
+
+Inty confirmó que Google ya aprobó la cuenta de desarrollador. Con eso
+desbloqueado, faltaba lo último técnico para poder subir la app a Play Store:
+un build de RELEASE firmado (`.aab`) — el pipeline existente
+(`build-apk.yml`) solo generaba un `.apk` de debug sin firmar, útil para
+sideload pero que Play Console rechaza.
+
+**Qué se hizo:**
+1. Generado el keystore de release real (`librepedal-release.keystore`, RSA
+   2048, válido hasta 2053-11-28 — más que la vida útil esperada de la app,
+   siguiendo la recomendación de Google). **Nunca se sube al repo** (agregado
+   a `.gitignore`: `*.keystore`, `*.jks`, `MI-KEYSTORE-PLAYSTORE.txt`).
+2. `scripts/patch-android-signing.js` (nuevo): tras `npx cap add android`,
+   inyecta el `signingConfig` en `android/app/build.gradle` leyendo el
+   keystore y las contraseñas desde variables de ENTORNO (nunca hardcodeadas
+   en el archivo generado ni en el repo) — y de paso deriva `versionCode`/
+   `versionName` de `version.txt` (ej. "6.52" → versionCode 6052), así cada
+   build de release ya trae automáticamente un código mayor al anterior
+   (Play Store lo exige) sin que nadie tenga que acordarse de subirlo a mano.
+3. `.github/workflows/build-aab-release.yml` (nuevo, separado de
+   `build-apk.yml`): se lanza a mano desde GitHub (`workflow_dispatch`), no
+   en cada push — un release firmado no debe generarse solo porque alguien
+   subió un cambio cualquiera. Decodifica el keystore desde un secret en
+   base64, corre `./gradlew bundleRelease`, y borra el keystore del runner
+   apenas termina (no debe quedar ni como artefacto descargable).
+4. `MI-KEYSTORE-PLAYSTORE.txt` (nuevo, local, gitignored): instrucciones para
+   Inty — cómo respaldar el keystore, los 4 secrets exactos que hay que
+   agregar en GitHub y sus valores, y advertencia explícita de que perder
+   esta llave significa no poder actualizar la app nunca más en Play Store.
+
+**Verificación real (no solo "debería funcionar"):** se corrió el pipeline
+COMPLETO en local con el keystore real — `npm install`, `cap add android`,
+`patch-android-signing.js`, y `./gradlew bundleRelease` con las 4 variables
+de entorno reales. Resultado: `BUILD SUCCESSFUL in 2m 2s`, generó
+`app-release.aab` (3.4 MB). Se verificó la firma de forma independiente con
+`jarsigner -verify -certs`: confirmó "The signer certificate will expire on
+2053-11-28", coincide exacto con la fecha del keystore generado — prueba
+directa de que el `.aab` quedó firmado con la clave correcta, no solo de que
+el build no tiró error. El workflow de CI usa exactamente los mismos pasos;
+falta la confirmación final corriéndolo en GitHub Actions (necesita que Inty
+agregue los 4 secrets primero).
+
+**Pendiente de Inty:** agregar los secrets en GitHub (valores en
+`MI-KEYSTORE-PLAYSTORE.txt`), respaldar el keystore en un lugar seguro fuera
+de este computador, y lanzar el workflow una vez para la confirmación final.
+
+---
+
 ## v6.52 — 2026-07-13 — Claude (sesión 2, mapas libres estilo Google Maps + dos bugs reales de datos: km perdidos del ranking y ruta perdida con pantalla apagada)
 
 Pedido grande de Inty con varias partes, dos de ellas bugs reales con evidencia

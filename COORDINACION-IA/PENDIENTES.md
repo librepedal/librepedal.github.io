@@ -50,19 +50,36 @@ versión actual del proyecto: **v6.52**.
   minutos). Ninguna IA lo hace por su cuenta a propósito (cambio de control de
   acceso sobre producción). Después de publicar, Inty debe recargar la app una
   vez para que su sesión suba a `isAdmin()`.
-- [ ] **Google Play: cuenta de desarrollador APROBADA (2026-07-13, confirmado
-  por Inty)** — ya no está "en validación", queda activa para publicar. Falta:
-  (1) capturas de pantalla reales de la app — ofrecido ayudar a tomarlas, no
-  se ha hecho; (2) generar el build **.aab** firmado que pide Play Store (el
-  pipeline actual (`build-apk.yml`) genera un `.apk` de debug, no un `.aab` de
-  release firmado — son formatos y procesos distintos, falta armar ese paso.
-  OJO: firmar un `.aab` de release exige un keystore — generarlo es un paso
-  de una sola vez y MUY delicado: si se pierde esa llave, Google Play nunca
-  más deja subir una actualización a esa misma app, hay que decidir con Inty
-  cómo generarlo y dónde guardarlo a buen resguardo, no generarlo a la
-  ligera). `PLAY-STORE-LISTING.md` ya tiene toda la ficha lista para
-  copiar/pegar. (3) Crear la ficha en Play Console y subir el primer build —
-  eso lo hace Inty directamente (es su cuenta de Google).
+- [x] **Google Play: cuenta de desarrollador APROBADA (2026-07-13, confirmado
+  por Inty)** — ya no está "en validación", queda activa para publicar.
+- [x] **Build .aab firmado de release — pipeline armado y VERIFICADO
+  (2026-07-13).** Antes el pipeline (`build-apk.yml`) solo generaba un `.apk`
+  de debug sin firmar, que sirve para sideload pero no para Play Console.
+  Ahora existe `scripts/patch-android-signing.js` (inyecta el signingConfig
+  en `android/app/build.gradle` leyendo el keystore/contraseñas desde
+  variables de entorno — nunca hardcodeadas — y deriva `versionCode`/
+  `versionName` de `version.txt`, así cada versión que sube el proyecto ya
+  trae el número correcto sin tocar nada a mano) y el workflow
+  `.github/workflows/build-aab-release.yml` (se lanza a mano desde GitHub,
+  no en cada push). Se generó el keystore real (`librepedal-release.keystore`,
+  válido hasta 2053, **NUNCA subido al repo**, ver `.gitignore`) y se probó el
+  build COMPLETO en local: `BUILD SUCCESSFUL`, `.aab` de 3.4 MB, firma
+  confirmada con `jarsigner -verify` (certificado coincide exacto). Todos los
+  datos y las instrucciones paso a paso quedaron en `MI-KEYSTORE-PLAYSTORE.txt`
+  (local, gitignored, solo en el computador de Inty).
+- [ ] **Falta que Inty agregue los 4 secrets en GitHub** (ver
+  `MI-KEYSTORE-PLAYSTORE.txt` para los valores exactos: `ANDROID_KEYSTORE_BASE64`,
+  `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`) y
+  lance el workflow una vez desde GitHub → Actions → "Construir AAB firmado
+  (Google Play)" → Run workflow, para la confirmación final en el entorno
+  real de CI (ya se probó en local con éxito, pero CI es un entorno distinto).
+  Sobre todo: **respaldar el keystore en un lugar seguro fuera de este
+  computador antes de seguir** — sin él, no se puede volver a firmar una
+  actualización de esta app nunca más.
+- [ ] Falta: capturas de pantalla reales de la app.
+- [ ] Falta: crear la ficha en Play Console y subir el primer `.aab` — eso lo
+  hace Inty directamente (es su cuenta de Google). `PLAY-STORE-LISTING.md` ya
+  tiene toda la ficha lista para copiar/pegar.
 - [ ] **Capturas de pantalla para la ficha de Play Store** — nadie las ha
   generado todavía (se evitó ensuciar Firestore de producción con una cuenta de
   prueba). Pendiente de decidir cómo generarlas sin ese riesgo.
@@ -241,10 +258,8 @@ Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
   (confirmado 2026-07-13)** — ya se puede crear la ficha y subir el primer build.
 - [ ] Falta: capturas de pantalla reales de la app (necesita login + navegar unas pantallas, no se hizo
   para no ensuciar Firestore de producción con una cuenta de prueba).
-- [ ] Falta: build firmado `.aab` de release — hoy el pipeline (`build-apk.yml`) solo genera un `.apk` debug
-  sin firmar, que sirve para sideload pero NO para subir a Play Console (exige `.aab` firmado con keystore
-  de release). Falta agregar un paso de firma (genera un keystore, guarda como secret de GitHub, firma en CI).
-  Ver detalle en "🔴 LO MÁS URGENTE" arriba.
+- [x] Build firmado `.aab` de release — pipeline armado y verificado en local (2026-07-13). Ver detalle
+  en "🔴 LO MÁS URGENTE" arriba. Falta que Inty agregue los secrets en GitHub y confirme en CI.
 
 ## 🧠 IA de Pistero (mejoras, opcional)
 - [ ] Pulir el estilo del chat `v-pistero` (Claude puede).

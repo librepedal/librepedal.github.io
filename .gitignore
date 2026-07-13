@@ -8,6 +8,9 @@ MI-CLOUDFLARE.txt
 MI-CLOUDFLARE-IA.txt
 MI-TOKEN-NETLIFY.txt
 .netlify-token.txt
+MI-KEYSTORE-PLAYSTORE.txt
+*.keystore
+*.jks
 
 # Generados por el build nativo (Capacitor / Android)
 node_modules/

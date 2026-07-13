@@ -1,0 +1,73 @@
+name: Construir AAB firmado (Google Play)
+
+# A diferencia de "Construir APK Android" (que corre solo en cada push, genera
+# un .apk de debug sin firmar), este workflow NO corre automáticamente — se
+# lanza a mano desde GitHub cuando Inty decide subir una versión nueva a Play
+# Console. Genera el .aab de RELEASE, firmado con el keystore real, listo
+# para subir directo.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Preparar carpeta web (www/)
+        run: node scripts/copy-web.js
+
+      - name: Agregar plataforma Android
+        run: npx cap add android
+
+      - name: Generar ícono y splash desde resources/ (logo real de Libre Pedal)
+        run: npx @capacitor/assets generate --android
+
+      - name: Inyectar permisos nativos
+        run: node scripts/patch-android.js
+
+      - name: Sincronizar Capacitor
+        run: npx cap sync android
+
+      - name: Preparar firma y versionCode/versionName (desde version.txt)
+        run: node scripts/patch-android-signing.js
+
+      - name: Decodificar el keystore desde el secret
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/librepedal-release.keystore
+
+      - name: Compilar AAB (release, firmado)
+        env:
+          ANDROID_KEYSTORE_PATH: librepedal-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: Borrar el keystore del runner (no debe quedar ni como artefacto)
+        if: always()
+        run: rm -f android/app/librepedal-release.keystore
+
+      - name: Publicar el AAB como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: LibrePedal-AAB-release
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
