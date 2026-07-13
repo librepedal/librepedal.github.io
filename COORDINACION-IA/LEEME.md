@@ -72,7 +72,22 @@ ducking al arrancar + fuga de blobs), **Novedades + CicloGuía** (v6.41: link
 `javascript:` bloqueado, doble-tap en comentarios), **Ajustes** (v6.42: fuga de
 wake lock en Ahorro pantalla). Además, fuera de la numeración: escalabilidad de
 lecturas Firestore (`count()`) y creación de contenido de comunidad (guards
-anti-doble-tap) ya revisados. **Quedan: Admin, base/PWA.**
+anti-doble-tap) ya revisados. **Admin** revisado (v6.42, sin cambio de código):
+encontró que el correo de todos los usuarios es públicamente legible sin ser
+admin (`users` tiene `allow read:if true` para que funcionen Ranking/perfiles
+públicos, pero el doc también guarda `email`) — anotado en `PENDIENTES.md`
+como urgente, necesita decisión de Inty, no se tocó a ciegas. **base/PWA**
+revisado (v6.42, sin cambio de código): el service worker, el manifest y el
+mecanismo de auto-reparación por versión ya estaban sólidos de sesiones
+anteriores; un matiz de caché offline (Firebase/MapLibre no se cachean en el
+SW) quedó anotado como "a verificar" en `PENDIENTES.md`, no urgente.
+
+**🎉 Con esto se completó una vuelta entera del barrido por todas las
+secciones de la app** (GPS, Inicio, Rutas, Diario, Comunidad, Social, Pistero
+IA, SOS, Gamificación, Personalización, Música, Novedades, CicloGuía, Ajustes,
+Admin, base/PWA). Para la próxima vuelta: no hay una lista de "queda por
+hacer" — toca releer cada sección buscando lo que cambió desde la última
+pasada, o profundizar en variantes que no se probaron la primera vez.
 
 ## 🌐 ¿Se puede sumar a Qwen, Kimi u otro modelo con este mismo protocolo?
 

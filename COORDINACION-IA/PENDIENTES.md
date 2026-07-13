@@ -65,6 +65,23 @@ versión actual del proyecto: **v6.42**.
   IA tiene un teléfono a mano — es el único paso que falta para dar por
   cerrado el micrófono nativo en la app instalada.
 
+## 🟡 A verificar (no urgente, necesita probarse en condiciones reales)
+
+- [ ] **PWA offline: `sw.js` excluye a propósito los scripts de Firebase/MapLibre
+  (`gstatic.com/firebasejs`, etc.) del cacheo del Service Worker** (barrido de
+  base/PWA, v6.42 — sin cambios de código, solo revisado). Para el uso real más
+  común (arrancas la ruta CON señal, la pierdes a mitad de camino) esto no
+  importa: la pestaña sigue corriendo en memoria, nunca vuelve a pedir esos
+  scripts. Pero si alguien cierra la app del todo y la vuelve a abrir estando
+  YA sin señal (ej. a la mañana siguiente en una zona sin cobertura), esos
+  scripts no están en la caché del Service Worker — dependen de que el caché
+  HTTP normal del navegador todavía los tenga guardados de una visita anterior.
+  No se tocó porque no se pudo probar con corte de red real en este entorno
+  (sandbox sin control de conectividad) y cambiar la estrategia de caché a
+  ciegas podría introducir problemas de versión SDK obsoleta. Si alguien puede
+  probar en un teléfono real con modo avión: abrir la app fría (recién
+  reinstalada o con caché borrada) sin señal y ver si carga.
+
 ## ✅ Resuelto esta sesión (2026-07-12, continuación — v6.14 a v6.19 + plugin de voz)
 
 - **Cronómetro visible en GPS libre + reemplazo de 77 diálogos nativos
