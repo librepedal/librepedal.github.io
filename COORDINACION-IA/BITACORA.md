@@ -4,6 +4,51 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.47 — 2026-07-13 — Claude (sesión 2, popup del mapa invisible + "cómo está el clima" armaba un viaje falso)
+
+Dos reportes directos de Inty, los dos reales:
+
+**1. "Recuadro blanco sin información" al ver a otro ciclista en el mapa.** Ningún
+popup del mapa (ni los de MapLibre ni los de Leaflet, esta app usa ambos según la
+pantalla) fijaba un color de texto propio — heredaban el `color:#fff` del `body`.
+El fondo del popup es blanco por defecto de la propia librería: texto blanco sobre
+fondo blanco, invisible. Solo se alcanzaba a ver el link naranja (que sí tenía
+color inline), por eso no se veía TOTALMENTE vacío, solo sin la info principal
+(nombre del ciclista, título del punto, etc). Arreglado con una sola regla CSS
+global (`.maplibregl-popup-content,.leaflet-popup-content{color:#1a1a2e}`) en vez
+de parchar cada popup uno por uno — corrige TODOS los popups actuales y futuros
+de una vez.
+
+**2. "Cómo voy a ver el clima" / "cómo está el clima" armaban un viaje falso a un
+lugar llamado literalmente "el clima" (o la IA general "no sabía" responder).**
+El enrutador de voz no tenía ningún manejador para clima — frases con "voy a" o
+"como" caían en el regex genérico de destino/pregunta antes de llegar a algo que
+supiera qué hacer. Se agregó un manejador de clima BIEN AL PRINCIPIO del enrutador
+(antes del regex de destino), que responde con datos reales de Open-Meteo (la
+misma API que ya usa el resumen de ruta), no con lo que la IA general "cree" que
+hace el clima ahí. Cuidado especial: "cuánto tiempo me falta" NO debe activar
+clima (es sobre duración, no clima) — el patrón exige "clima"/"temperatura"/
+"va a llover"/"cómo está o anda el tiempo" explícitos, no un "tiempo" suelto.
+
+**Verificación real en el navegador:** las 5 frases reportadas/plausibles
+("como voy a ver el clima", "como esta el clima", "que clima hace", "va a
+llover", "cual es la temperatura") activan el clima y NUNCA abren la pantalla de
+viajes; probado de punta a punta con fetch real a Open-Meteo (respondió "14
+grados y nublado", datos reales de Santiago en el momento de la prueba); y
+confirmé que "cuánto tiempo me falta", "llévame a Santiago" y "cómo llego a
+Valparaíso" siguen funcionando exactamente igual que antes (sin falsos positivos
+nuevos).
+
+**Versión:** APP_VERSION, version.txt y footer → 6.47. `sw.js` CACHE → v647.
+Desplegado a librepedal.cl y confirmado en vivo.
+
+Pendiente del mismo pedido de Inty (viene en camino, no cabía en esta versión):
+vocabulario específico por modo de actividad (cicloturismo/ruteros/MTB/auto no
+deberían decir las mismas frases), y escucha continua tipo manos-libres (pidió
+no tener que apretar el botón del micrófono mientras pedalea o maneja).
+
+---
+
 ## v6.46 — 2026-07-13 — Claude (sesión 2, el "modo" de actividad pasa a primera plana)
 
 Pedido de Inty: el modo (ciclismo/MTB/trekking/moto) estaba escondido dentro de
