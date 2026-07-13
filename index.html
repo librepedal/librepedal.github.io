@@ -1003,7 +1003,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.48'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.49'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1464,37 +1464,37 @@ const frasesMotivacionales = ["¡Vamos, que tú puedes!","El que se rinde no lle
 // las palabras que corresponden a lo que realmente estás haciendo.
 const FRASES_POR_MODO = {
   mtb: {
-    lento:["¿Terreno técnico o estás mirando el paisaje?","Con raíces y piedras, mejor ir con calma que con apuro.","¿Se te atascó la rueda en el barro?","Tómatelo con calma, el sendero no se mueve de ahí.","¿Bajaste el ritmo por el terreno o por las piernas?","En singletrack técnico, lento y seguro gana la carrera."],
-    normal:["¡Buena línea! Así se lee el sendero.","Ritmo firme entre raíces y piedras, se nota la técnica.","Así se rueda un buen singletrack.","Vas leyendo bien el terreno, sigue así.","El polvo del sendero es la mejor colonia.","Cadena limpia, suspensión suave, ritmo perfecto."],
-    rapido:["¡Ojo con esa raíz, fiera!","Vas volando en el sendero, cuidado con el próximo giro.","Modo enduro activado, pero mira bien el terreno.","¡Esa velocidad en terreno técnico es todo un compromiso!","Frena antes de la curva ciega, no después.","Vas rápido, pero el sendero no perdona un descuido."],
-    parado:["¿Pinchazo por una piedra filosa?","Buen momento para bajar la presión de las llantas.","Revisa la suspensión mientras descansas.","¿Se te salió la cadena en un salto?","Toma agua, el sendero técnico cansa el doble.","Aprovecha de limpiar el barro de los frenos."],
-    motivacional:["Cada raíz superada es técnica ganada.","El barro de hoy es la anécdota de mañana.","No hay sendero fácil que valga la pena contar.","Tu bici de montaña fue hecha para esto, confía en ella.","El singletrack te enseña a leer el terreno y a ti mismo.","Cae, levántate, sigue rodando: así se hacen los mejores riders."],
-    subida:["Singletrack cuesta arriba: cadencia alta y mirada al frente.","Esta subida técnica separa a los que solo miran de los que ruedan.","Ritmo parejo en la subida, el sendero premia la constancia.","Cuesta arriba entre piedras: técnica antes que fuerza."],
-    bajada:["Bajada técnica a la vista: peso atrás y ojo con las líneas.","Se viene singletrack de bajada, elige bien tu línea.","Bajada con raíces: gomas rodando, no frenando en seco.","Disfruta la bajada, para eso subiste con tanto sacrificio."],
+    lento:["¿Terreno técnico o estás mirando el paisaje?","Con raíces y piedras, mejor ir con calma que con apuro.","¿Se te atascó la rueda en el barro?","Tómatelo con calma, el sendero no se mueve de ahí.","¿Bajaste el ritmo por el terreno o por las piernas?","En singletrack técnico, lento y seguro gana la carrera.","¿Leyendo la línea o ya te leyó el terreno a ti?","Con este pedregal, ir despacio no es cobardía, es sabiduría.","¿Se te clavó un palo en el desviador o vas contemplando?","Paso a paso también se cruza un sendero técnico, tranquilo."],
+    normal:["¡Buena línea! Así se lee el sendero.","Ritmo firme entre raíces y piedras, se nota la técnica.","Así se rueda un buen singletrack.","Vas leyendo bien el terreno, sigue así.","El polvo del sendero es la mejor colonia.","Cadena limpia, suspensión suave, ritmo perfecto.","Ese ritmo entre piedras habla de horas de práctica.","Suspensión trabajando, piernas sueltas, así se anda en el monte.","Vas fluyendo con el sendero, ni el barro te saca de línea.","Ritmo de rider con oficio, se nota que conoces el trazado."],
+    rapido:["¡Ojo con esa raíz, fiera!","Vas volando en el sendero, cuidado con el próximo giro.","Modo enduro activado, pero mira bien el terreno.","¡Esa velocidad en terreno técnico es todo un compromiso!","Frena antes de la curva ciega, no después.","Vas rápido, pero el sendero no perdona un descuido.","¡Esa bajada te la tomaste en serio, cuidado con las piedras sueltas!","Vas como piloto de enduro, pero el sendero también tiene sorpresas.","Ojo con el salto que viene, que la velocidad no te tape la vista.","A ese ritmo técnico, un frenazo de más también puede jugarte en contra."],
+    parado:["¿Pinchazo por una piedra filosa?","Buen momento para bajar la presión de las llantas.","Revisa la suspensión mientras descansas.","¿Se te salió la cadena en un salto?","Toma agua, el sendero técnico cansa el doble.","Aprovecha de limpiar el barro de los frenos.","¿Reventaste una cámara con una raíz traicionera?","Buen momento para sacar el barro de los tacos de la llanta.","¿Se te destensó la cadena en algún salto? Revísala tranquilo.","Aprovecha de estirar, el singletrack exige más de lo que parece."],
+    motivacional:["Cada raíz superada es técnica ganada.","El barro de hoy es la anécdota de mañana.","No hay sendero fácil que valga la pena contar.","Tu bici de montaña fue hecha para esto, confía en ella.","El singletrack te enseña a leer el terreno y a ti mismo.","Cae, levántate, sigue rodando: así se hacen los mejores riders.","El sendero técnico no perdona el miedo, pero premia la calma.","Cada caída es una clase gratis que el asfalto nunca te da.","Confía en tus llantas, confía en tu suspensión, confía en ti.","No se trata de ser el más rápido, se trata de leer bien el terreno."],
+    subida:["Singletrack cuesta arriba: cadencia alta y mirada al frente.","Esta subida técnica separa a los que solo miran de los que ruedan.","Ritmo parejo en la subida, el sendero premia la constancia.","Cuesta arriba entre piedras: técnica antes que fuerza.","Cadencia constante y peso adelante, así se sube técnico.","Esta subida rocosa se sube con cabeza fría, no con piernas locas."],
+    bajada:["Bajada técnica a la vista: peso atrás y ojo con las líneas.","Se viene singletrack de bajada, elige bien tu línea.","Bajada con raíces: gomas rodando, no frenando en seco.","Disfruta la bajada, para eso subiste con tanto sacrificio.","Peso atrás, codos afuera, y a disfrutar la bajada técnica.","Ojo con las piedras sueltas en la bajada, elige tu línea con calma."],
     ciudad:["Antes de llegar al sendero, ojo con el tráfico igual.","Calle antes de tierra: mantén las luces si hay poca visibilidad.","Ya casi llegas al sendero, aguanta el asfalto un poco más."],
-    profunda:["El sendero no perdona el apuro: te enseña a estar presente, raíz a raíz.","En el monte no hay atajos de verdad, solo distintas formas de ganarte la bajada.","Cada caída en el sendero es una lección que el asfalto nunca te daría.","La montaña no compite contigo, solo te muestra quién eres cuando nadie mira.","El barro se lava, pero lo que aprendiste rodando ahí se queda.","Un buen rider no domina el sendero, aprende a escucharlo."]
+    profunda:["El sendero no perdona el apuro: te enseña a estar presente, raíz a raíz.","En el monte no hay atajos de verdad, solo distintas formas de ganarte la bajada.","Cada caída en el sendero es una lección que el asfalto nunca te daría.","La montaña no compite contigo, solo te muestra quién eres cuando nadie mira.","El barro se lava, pero lo que aprendiste rodando ahí se queda.","Un buen rider no domina el sendero, aprende a escucharlo.","El monte te enseña que el control real está en soltar, no en aferrarte.","Cada sendero técnico es un espejo de cuánto miedo estás dispuesto a soltar."]
   },
   trekking: {
-    lento:["¿Caminata contemplativa o se te durmió una pierna?","Paso tranquilo, disfrutando cada rincón del camino.","Con calma también se llega, y se ve más.","¿Parando a mirar el paisaje o a recuperar el aire?","Un paso lento es un paso que sí disfrutas."],
-    normal:["Buen paso, así se hace una caminata.","Ritmo parejo, ideal para aguantar toda la jornada.","La mochila bien puesta y el paso firme, se nota.","Así se camina un sendero: con cabeza y con calma.","Cada paso te acerca al mirador, sigue así."],
-    rapido:["¡Ese paso ya es trote, cuidado con el tobillo!","Vas volando, pero el sendero tiene piedras sueltas.","Frena un poco, que no es una carrera de atletismo.","Ese ritmo cansa doble con la mochila puesta.","Cuidado con el paso apurado en bajada de piedras."],
-    parado:["¿Ajustando la mochila o sacando fotos?","Buen momento para tomar agua e hidratarte.","Revisa tus botas, una piedrita adentro arruina el día.","Descansa las piernas, la caminata recién empieza.","¿Todo bien? Aprovecha de estirar."],
-    motivacional:["Cada paso cuenta, aunque no lo sientas.","El cansancio de hoy es la anécdota de la vuelta a casa.","No hay cumbre que no empiece con un primer paso.","Tu cuerpo aguanta más de lo que tu cabeza te dice.","La mochila pesa menos cuando el paisaje te sorprende.","Camina a tu ritmo: no hay competencia, solo tu propio camino."],
-    subida:["Cuesta arriba a pie: paso corto, respiración larga.","Esta subida se sube con cabeza, no con apuro.","Cada paso cuesta arriba te acerca a la mejor vista.","Ritmo parejo en la subida, el camino no se acaba apurando."],
-    bajada:["Bajada a la vista: cuidado con las rodillas y las piedras sueltas.","Ahora a disfrutar, pero sin apurar el paso en bajada.","Bajando con calma, que las rodillas se cuidan solas.","Ojo con el terreno suelto, mejor un paso seguro que uno rápido."],
+    lento:["¿Caminata contemplativa o se te durmió una pierna?","Paso tranquilo, disfrutando cada rincón del camino.","Con calma también se llega, y se ve más.","¿Parando a mirar el paisaje o a recuperar el aire?","Un paso lento es un paso que sí disfrutas.","¿Sacando fotos o el cerro te está cobrando cada metro?","Ritmo de contemplación, nadie te está cronometrando aquí.","Con calma se llega igual, y de paso se disfruta el doble."],
+    normal:["Buen paso, así se hace una caminata.","Ritmo parejo, ideal para aguantar toda la jornada.","La mochila bien puesta y el paso firme, se nota.","Así se camina un sendero: con cabeza y con calma.","Cada paso te acerca al mirador, sigue así.","Ese paso constante es el que aguanta toda la jornada, sin quemarte al principio.","Buen ritmo de caminante con oficio, ni muy lento ni muy ansioso.","La respiración pareja y el paso firme, así se hace un buen trekking."],
+    rapido:["¡Ese paso ya es trote, cuidado con el tobillo!","Vas volando, pero el sendero tiene piedras sueltas.","Frena un poco, que no es una carrera de atletismo.","Ese ritmo cansa doble con la mochila puesta.","Cuidado con el paso apurado en bajada de piedras.","Ese ritmo te va a pasar la cuenta en un par de horas, cuida el combustible.","¡Vas como si el refugio se fuera a acabar! Baja el ritmo un poco."],
+    parado:["¿Ajustando la mochila o sacando fotos?","Buen momento para tomar agua e hidratarte.","Revisa tus botas, una piedrita adentro arruina el día.","Descansa las piernas, la caminata recién empieza.","¿Todo bien? Aprovecha de estirar.","¿Sacando la cámara para el paisaje? Bien merecido el alto.","Buen momento para revisar las ampollas antes de que se pongan peor."],
+    motivacional:["Cada paso cuenta, aunque no lo sientas.","El cansancio de hoy es la anécdota de la vuelta a casa.","No hay cumbre que no empiece con un primer paso.","Tu cuerpo aguanta más de lo que tu cabeza te dice.","La mochila pesa menos cuando el paisaje te sorprende.","Camina a tu ritmo: no hay competencia, solo tu propio camino.","El cansancio se olvida, la vista desde arriba se queda para siempre.","Un paso más, y después otro: así se hacen todas las cumbres del mundo.","La mochila pesa lo que pesan tus dudas, suéltalas y sigue caminando."],
+    subida:["Cuesta arriba a pie: paso corto, respiración larga.","Esta subida se sube con cabeza, no con apuro.","Cada paso cuesta arriba te acerca a la mejor vista.","Ritmo parejo en la subida, el camino no se acaba apurando.","Paso corto y firme, así se ganan las subidas largas.","Esta cuesta se sube respirando, no aguantando la respiración."],
+    bajada:["Bajada a la vista: cuidado con las rodillas y las piedras sueltas.","Ahora a disfrutar, pero sin apurar el paso en bajada.","Bajando con calma, que las rodillas se cuidan solas.","Ojo con el terreno suelto, mejor un paso seguro que uno rápido.","Rodillas semiflectadas y paso corto, así se cuida la bajada larga.","Baja con calma, que las piedras sueltas no avisan cuándo ruedan."],
     ciudad:["Antes del sendero, cuidado cruzando calles.","Vereda o berma, siempre mirando el tráfico.","Ya casi dejas el asfalto atrás, aguanta un poco más."],
-    profunda:["Caminar es la forma más antigua de pensar: deja que la mente vaya al mismo ritmo que tus pies.","No hay mochila que pese tanto como los pensamientos que no sueltas.","El sendero no tiene apuro, y tú tampoco deberías.","Cada cumbre te enseña que lo importante no es solo llegar, es el paso a paso.","El silencio del monte no está vacío, está lleno de ti.","Caminar despacio no es debilidad, es la única forma de ver todo lo que te estás perdiendo corriendo."]
+    profunda:["Caminar es la forma más antigua de pensar: deja que la mente vaya al mismo ritmo que tus pies.","No hay mochila que pese tanto como los pensamientos que no sueltas.","El sendero no tiene apuro, y tú tampoco deberías.","Cada cumbre te enseña que lo importante no es solo llegar, es el paso a paso.","El silencio del monte no está vacío, está lleno de ti.","Caminar despacio no es debilidad, es la única forma de ver todo lo que te estás perdiendo corriendo.","El caminante que mira el reloj se pierde la montaña que tiene al frente.","Cada mochila bien armada es una lección de qué es realmente necesario en la vida."]
   },
   moto: {
-    lento:["¿Taco a la vista o vas de paseo?","Ritmo tranquilo, buena forma de disfrutar el paisaje.","Con calma también se llega, y sin multas.","¿Frenando por el tráfico o por gusto de mirar la vista?"],
-    normal:["Buen ritmo de viaje, así se disfruta la ruta.","Motor parejo, kilómetros que se hacen solos.","Así se viaja: con calma y buena música.","La ruta abierta y tú disfrutando el camino, se nota."],
-    rapido:["¡Ojo con la velocidad, que el radar no perdona!","Vas volando, baja un poco el pie del acelerador.","Modo autopista activado, pero cuidado con las curvas.","Esa velocidad se disfruta más con cabeza fría."],
-    parado:["¿Parada técnica o cargando bencina?","Buen momento para estirar las piernas y tomar algo.","Revisa presión de neumáticos mientras descansas.","Aprovecha la parada para hidratarte también."],
-    motivacional:["El viaje es tan bueno como la compañía y las ganas.","Cada kilómetro de ruta es una historia que después vas a contar.","No hay destino que valga tanto como el camino para llegar.","La ruta abierta es libertad pura, disfrútala con cabeza.","Buen viaje no es el más rápido, es el que se disfruta completo.","Menos apuro, más paisaje: para eso saliste a la ruta."],
-    subida:["Cuesta arriba con el motor rugiendo, disfruta la vista.","Esta subida en curvas es puro gusto, eso sí, con cuidado.","Ritmo parejo cuesta arriba, no hay apuro en la ruta."],
-    bajada:["Bajada en curvas: frenos con cabeza, no en seco.","Se viene bajada, disfruta pero sin excederte.","Bajando con vista despejada, cuidado con el ripio suelto.","Ojo con las curvas en bajada, la ruta no perdona un descuido."],
-    ciudad:["Ojo con el peatón que cruza sin mirar.","Cuidado con las puertas de autos estacionados.","En la ciudad el casco no es opcional.","Respeta el semáforo, aunque tengas apuro."],
-    profunda:["La ruta abierta enseña que el destino importa menos de lo que crees.","No estás de paso por estos caminos, el viaje también te construye a ti.","El viento en la cara te recuerda que estás vivo, de verdad presente.","Un buen viaje no se mide en kilómetros, se mide en lo que descubriste de ti.","La carretera es un espejo: lo que te inquieta del camino, resuélvelo manejando.","Desconéctate del apuro de siempre; en la ruta el único reloj eres tú."]
+    lento:["¿Taco a la vista o vas de paseo?","Ritmo tranquilo, buena forma de disfrutar el paisaje.","Con calma también se llega, y sin multas.","¿Frenando por el tráfico o por gusto de mirar la vista?","A este ritmo el estanque también te dura más, ojo con eso.","Ritmo de crucero, ideal para no perderse ningún letrero del camino."],
+    normal:["Buen ritmo de viaje, así se disfruta la ruta.","Motor parejo, kilómetros que se hacen solos.","Así se viaja: con calma y buena música.","La ruta abierta y tú disfrutando el camino, se nota.","Ese ritmo de crucero es el que te deja llegar sin el cuerpo molido.","Motor sano, ritmo parejo, así rinde bien el estanque en un viaje largo."],
+    rapido:["¡Ojo con la velocidad, que el radar no perdona!","Vas volando, baja un poco el pie del acelerador.","Modo autopista activado, pero cuidado con las curvas.","Esa velocidad se disfruta más con cabeza fría.","A esa velocidad el paisaje se te pasa de largo sin que lo veas.","Ojo con la distancia de frenado a esa velocidad, la ruta no perdona."],
+    parado:["¿Parada técnica o cargando bencina?","Buen momento para estirar las piernas y tomar algo.","Revisa presión de neumáticos mientras descansas.","Aprovecha la parada para hidratarte también.","Buen momento para revisar el aceite y estirar la espalda.","Aprovecha de tomarte un café, que el viaje largo también se disfruta parando."],
+    motivacional:["El viaje es tan bueno como la compañía y las ganas.","Cada kilómetro de ruta es una historia que después vas a contar.","No hay destino que valga tanto como el camino para llegar.","La ruta abierta es libertad pura, disfrútala con cabeza.","Buen viaje no es el más rápido, es el que se disfruta completo.","Menos apuro, más paisaje: para eso saliste a la ruta.","El mejor viaje es el que se cuenta con más anécdotas que kilómetros.","La ruta te espera igual mañana, no hay que gastarla toda hoy con apuro."],
+    subida:["Cuesta arriba con el motor rugiendo, disfruta la vista.","Esta subida en curvas es puro gusto, eso sí, con cuidado.","Ritmo parejo cuesta arriba, no hay apuro en la ruta.","Curvas en subida: buen agarre y ojo con el aceite en el asfalto."],
+    bajada:["Bajada en curvas: frenos con cabeza, no en seco.","Se viene bajada, disfruta pero sin excederte.","Bajando con vista despejada, cuidado con el ripio suelto.","Ojo con las curvas en bajada, la ruta no perdona un descuido.","Bajada larga: frenos alternados, no los sobrecalientes de una vez."],
+    ciudad:["Ojo con el peatón que cruza sin mirar.","Cuidado con las puertas de autos estacionados.","En la ciudad el casco no es opcional.","Respeta el semáforo, aunque tengas apuro.","En la ciudad manejan todos apurados, tú no tienes por qué sumarte."],
+    profunda:["La ruta abierta enseña que el destino importa menos de lo que crees.","No estás de paso por estos caminos, el viaje también te construye a ti.","El viento en la cara te recuerda que estás vivo, de verdad presente.","Un buen viaje no se mide en kilómetros, se mide en lo que descubriste de ti.","La carretera es un espejo: lo que te inquieta del camino, resuélvelo manejando.","Desconéctate del apuro de siempre; en la ruta el único reloj eres tú.","La ruta larga te enseña que llegar rápido no es lo mismo que llegar bien."]
   }
 };
 
@@ -2178,6 +2178,11 @@ async function preguntarPistero(){
   const msg=inp.value.trim(); if(!msg) return;
   inp.value='';
   _pisteroBurbuja(msg,'yo');
+  // Reportes de peligro escritos (pacos, animal atropellado, objeto en la vía,
+  // taco, accidente): se resuelven aquí mismo, sin gastar una llamada a la IA —
+  // son datos concretos para el mapa, no una conversación.
+  const _catReporte=_detectarReporteVoz(normalizar(msg));
+  if(_catReporte){ const _conf=await reportarPorVozRapido(_catReporte); _pisteroBurbuja(_conf,'pistero'); try{ h(_conf); }catch(e){} return; }
   const pensando=_pisteroBurbuja('Pistero está pensando…','pistero',true);
   const hosp=(typeof allHostels!=='undefined'&&allHostels?allHostels:[]).slice(0,12).map(function(hh){
     return {name:hh.name, tipo:hh.tipo, location:hh.location, desc:(hh.desc||'').toString().slice(0,120)};
@@ -2683,7 +2688,7 @@ function toggleGPS(){
     lastFraseParadoTime=Date.now();
     viajePausedMs=0; viajePausedDesde=null; posHistory=[]; _gpsBadgeToggle('dashPausaBadge', false);
     pendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
-    puntosAvisados=new Set();
+    puntosAvisados=new Set(); reportesAvisados=new Set();
     _avisoLluviaHecho=false; _ultimoChequeoLluvia=0; _fatigaBuffer=[]; _avisoFatigaHecho=false; _velPromInicioFatiga=null;
     segmentosCargados=false; segmentosActivos=[]; segmentosEstado={};
     iniciarDeteccionCaidas();
@@ -2856,6 +2861,7 @@ function ug(p){
   bromasDelCamino(sp);
   comentarPendiente(pendienteHistory, sp);
   avisarPuntosCercanos(la,lo);
+  avisarReportesCercanos(la,lo);
   _avisoLluviaProactivo(la,lo);
   _verificarFatiga(tiempoActivoMs(), sp);
   // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
@@ -3693,8 +3699,76 @@ const REPORTE_CATS={
   critico:{e:'⚠️',l:'Punto Crítico',c:'#ef4444',h:'Perros sueltos, caminos cortados, peligros, falta de agua'},
   util:{e:'🥖',l:'Dato Útil / Picada',c:'#f59e0b',h:'Almacenes, talleres amigos, agua gratis, comida al paso'},
   mirador:{e:'📸',l:'Mirador',c:'#3b82f6',h:'Spots para detenerse y registrar el paisaje'},
-  superficie:{e:'🛣️',l:'Estado del camino',c:'#8b5cf6',h:'Asfalto, ripio o tierra — y qué tan exigente está el tramo'}
+  superficie:{e:'🛣️',l:'Estado del camino',c:'#8b5cf6',h:'Asfalto, ripio o tierra — y qué tan exigente está el tramo'},
+  policia:{e:'👮',l:'Control policial',c:'#3b82f6',h:'Pacos, carabineros o fiscalización en la ruta'},
+  animal:{e:'🦔',l:'Animal en la vía',c:'#78716c',h:'Animal atropellado o muerto que puede sorprenderte'},
+  objeto:{e:'🪨',l:'Objeto en la vía',c:'#f97316',h:'Piedra, fierro, rama u otro objeto atravesado'},
+  taco:{e:'🚗',l:'Taco / congestión',c:'#eab308',h:'Tráfico detenido o muy lento'},
+  accidente:{e:'🚨',l:'Accidente',c:'#dc2626',h:'Choque o atropello reciente en la vía'}
 };
+// Vigencia de cada categoría de peligro para los avisos proactivos: un taco de
+// ayer ya no sirve de nada (y podría hasta desviar mal), pero un objeto tirado
+// en la vía puede seguir ahí días después. Cada una expira a su propio ritmo.
+const REPORTE_VIGENCIA_MS={policia:3*3600000, taco:2*3600000, accidente:6*3600000, animal:24*3600000, objeto:48*3600000, critico:72*3600000};
+// Reportes de PELIGRO por voz o texto: sin soltar el manubrio ni el volante, y
+// sin tener que abrir ningún formulario. Cada categoría tiene su propio patrón
+// de habla natural chilena + el texto que queda en el mapa + la confirmación
+// que Pistero dice de vuelta (con gracia, no un "reporte enviado" seco). Si
+// alguien quiere contar más detalle, "Reportar en Ruta" sigue disponible.
+const REPORTE_VOZ={
+  policia:{regex:/\b(pacos?|tombos?|carabineros?|control policial|control de carabineros|fiscalizaci[oó]n|ret[eé]n)\b/, texto:'Control policial reportado por la comunidad.', confirma:'Anotado, ojo con los pacos. Gracias por el dato, colega.'},
+  animal:{regex:/\banimal(es)?\s+(muerto|atropellado)|\b(perro|gato|vaca|caballo|zorro)\s+(muerto|atropellado)|\bcarro[ñn]a\b/, texto:'Animal atropellado en la vía, cuidado al pasar.', confirma:'Qué pena, gracias por avisar. Ya lo dejé marcado para que otros bajen la velocidad ahí.'},
+  objeto:{regex:/\b(objeto|piedra|fierro|palo|escombro|rama|vidrio)s?\s+(en la (v[ií]a|pista|calzada|carretera|calle|camino)|tirad[oa]|atravesad[oa])|hay algo (tirado|atravesado)/, texto:'Objeto en la vía que puede ser peligroso.', confirma:'Marcado. Ese tipo de sorpresas en el camino no perdonan, buen ojo.'},
+  taco:{regex:/\btaco\b|\bcongesti[oó]n\b|atochamiento|tr[aá]fico (pesado|parado|detenido|colapsado)/, texto:'Taco reportado por la comunidad.', confirma:'Anotado el taco. Con este dato, el resto se ahorra el mal rato.'},
+  accidente:{regex:/\baccidente\b|\bchoque\b|\batropell\w*|volc[oó] un auto/, texto:'Accidente reciente en la vía, extremar precaución.', confirma:'Marcado con prioridad. Ojalá estén todos bien — gracias por avisar, así el resto va con más cuidado.'}
+};
+function _detectarReporteVoz(texto){
+  if(!texto) return null;
+  for(const cat in REPORTE_VOZ){ if(REPORTE_VOZ[cat].regex.test(texto)) return cat; }
+  return null;
+}
+async function reportarPorVozRapido(cat){
+  const info=REPORTE_CATS[cat], voz=REPORTE_VOZ[cat];
+  if(!info||!voz) return 'No reconocí ese tipo de aviso.';
+  let loc=currentUserLocation || (us&&us.la!=null?{lat:us.la,lon:us.lo}:null);
+  if(!loc) return 'Necesito tu ubicación para dejar el aviso. Activa el GPS y cuéntame de nuevo.';
+  try{
+    let comuna='Mi zona';
+    try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+loc.lat+'&lon='+loc.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
+    await db.collection('reportes').add({cat:cat, text:voz.texto, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    us.d+=15; au(); if(typeof sincronizarStats==='function') sincronizarStats();
+    return voz.confirma;
+  }catch(err){ return 'No se pudo enviar el aviso, inténtalo de nuevo en un rato.'; }
+}
+// ===== Aviso PROACTIVO de peligros: Pistero avisa ANTES de llegar, no después.
+// Mismo patrón que avisarPuntosCercanos() (agua/mirador/hospedaje) pero para los
+// reportes de peligro de la comunidad, con vigencia por categoría (ver arriba). =====
+let reportesData=[], reportesAvisoRelevantes=[], reportesAvisados=new Set();
+const REPORTE_AVISO_MARGEN_DEG=0.01;
+function _calcularReportesAvisoRelevantes(){
+  const ahora=Date.now();
+  reportesAvisoRelevantes=reportesData.filter(function(r){
+    const vig=REPORTE_VIGENCIA_MS[r.cat]; if(!vig) return false;
+    if(!r.lat||!r.lon) return false;
+    const ms=(r.ts&&r.ts.seconds)?(ahora-r.ts.seconds*1000):null;
+    return ms==null || ms<=vig; // sin timestamp aún (recién publicado, servidor no confirmó) cuenta como vigente
+  });
+}
+function avisarReportesCercanos(lat,lon){
+  if(!reportesAvisoRelevantes.length || !vozActiva || vozOcupada() || vozCola.length) return;
+  for(let i=0;i<reportesAvisoRelevantes.length;i++){
+    const r=reportesAvisoRelevantes[i];
+    if(Math.abs(r.lat-lat)>REPORTE_AVISO_MARGEN_DEG || Math.abs(r.lon-lon)>REPORTE_AVISO_MARGEN_DEG) continue; // descarte barato
+    const id=r.id||(r.lat+','+r.lon+','+r.cat);
+    if(reportesAvisados.has(id)) continue;
+    if(calculateDistance(lat,lon,r.lat,r.lon)<=400){
+      reportesAvisados.add(id);
+      const c=REPORTE_CATS[r.cat];
+      h('Ojo, '+c.e+' '+c.l.toLowerCase()+' reportado por la comunidad a unos metros: '+r.text);
+      return;
+    }
+  }
+}
 const SUPERFICIE_TIPOS={asfalto:'🛣️ Asfalto',ripio:'🪨 Ripio',tierra:'🟤 Tierra',mixto:'🔀 Mixto'};
 const DIFICULTAD_NIVELES={facil:'🟢 Fácil',media:'🟡 Media',dificil:'🔴 Difícil'};
 let reporteCatSel=null, reporteMarkers=[];
@@ -3740,7 +3814,8 @@ async function enviarReporte(){
 function tiempoTranscurrido(ts){ if(!ts||!ts.seconds) return 'recién'; const s=Math.floor(Date.now()/1000)-ts.seconds; if(s<60) return 'recién'; const m=Math.floor(s/60); if(m<60) return 'hace '+m+' min'; const h2=Math.floor(m/60); if(h2<24) return 'hace '+h2+' h'; const d=Math.floor(h2/24); if(d<7) return 'hace '+d+' día'+(d>1?'s':''); const w=Math.floor(d/7); return 'hace '+w+' sem'; }
 function subscribeToReportes(){
   db.collection('reportes').orderBy('ts','desc').limit(200).onSnapshot(function(snap){
-    const docs=[]; snap.forEach(function(d){ docs.push(d.data()); });
+    const docs=[]; snap.forEach(function(d){ const x=d.data(); x.id=d.id; docs.push(x); });
+    reportesData=docs; _calcularReportesAvisoRelevantes();
     reporteMarkers.forEach(function(m){ if(mp) mp.removeLayer(m); }); reporteMarkers=[];
     if(mp){ docs.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const badge=lpBadgeHTML(c.e, r.cat==='critico'?c.c:null); const extra=(r.superficie||r.dificultad)?('<br>'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')):''; const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'); reporteMarkers.push(mk); } }); }
     renderReportesComunidad(docs);
@@ -4403,6 +4478,7 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
   if(rutaPerfil.length) avisarPendienteAnticipada(lat,lon); else comentarPendiente(navPendienteHistory, speed);
   avisarPuntosCercanos(lat,lon);
+  avisarReportesCercanos(lat,lon);
   _avisoLluviaProactivo(lat,lon);
   _verificarFatiga(tiempoActivoMs(), speed);
   checkNavigationSteps(lat,lon);
@@ -4582,7 +4658,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   lastFraseParadoTime=Date.now();
   navDestLat=destLat; navDestLon=destLon; navDestName=destName; navRecalculando=false; navFixesFueraDeRuta=0;
   navRecalcIntentos=0; navUltimoRecalcTime=0; navRecalcSilencioHasta=0;
-  puntosAvisados=new Set();
+  puntosAvisados=new Set(); reportesAvisados=new Set();
   _avisoLluviaHecho=false; _ultimoChequeoLluvia=0; _fatigaBuffer=[]; _avisoFatigaHecho=false; _velPromInicioFatiga=null;
   navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
   (function(){ const b=document.getElementById('btnPausaViaje'); if(b){ b.innerText='⏸️ Pausar'; b.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; } })();
@@ -6457,6 +6533,10 @@ function handleVoiceCommand(raw){
   // que ya usa el resumen de ruta) en vez de mandarlo a la IA general, que no tiene
   // acceso a clima en vivo y por eso "no sabía" responder bien.
   if(/\bclima\b|\btemperatura\b|va a llover|c[oó]mo (est[aá]|anda) el tiempo|qu[eé] tiempo hace|qu[eé] clima hace/.test(t)){ _pisteroDecirClima(); return; }
+  // Reportes de peligro por voz (pacos, animal atropellado, objeto en la vía,
+  // taco, accidente): van directo al mapa comunitario, sin pasar por la IA
+  // general ni por ningún formulario — para eso es "manos libres" de verdad.
+  { const _catRep=_detectarReporteVoz(t); if(_catRep){ reportarPorVozRapido(_catRep).then(h); return; } }
   if(/esfera|men[uú]( principal)?|lanzador|aplicaciones|todas las apps/.test(t)){ abrirEsfera(); h('Aquí está la esfera de aplicaciones.'); return; }
   // (me)? y una ventana de hasta 20 caracteres (en vez de una lista fija de
   // artículos) para que "guárdame el viaje" y "guarda ESTA ruta" también calcen —

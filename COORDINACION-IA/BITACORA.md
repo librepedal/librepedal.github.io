@@ -4,6 +4,77 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.49 — 2026-07-13 — Claude (sesión 2, reportes de peligro por voz/texto + más vocabulario por modo)
+
+Pedido de Inty: ampliar más las bromas por modo, y agregar reporte de peligros
+(pacos, animales muertos, objetos en la vía, tacos, accidentes) por voz Y por
+escrito, con Pistero avisando proactivamente — "siempre un paso adelante... con
+gracia y picardia, mucha simpatía".
+
+**1. Cinco categorías nuevas en el mapa comunitario** (`REPORTE_CATS`): control
+policial, animal en la vía, objeto en la vía, taco/congestión, accidente. Ya
+aparecen automáticamente en el formulario escrito "Reportar en Ruta" (no hubo
+que tocar esa UI, itera las categorías dinámicamente).
+
+**2. Reporte rápido por VOZ Y por TEXTO, sin formulario.** Nueva tabla
+`REPORTE_VOZ` con un patrón de habla chilena natural por categoría ("pacos",
+"tombos", "carabineros"... / "animal atropellado"... / "piedra en la vía"...
+/ "taco", "congestión"... / "accidente", "choque", "atropello"...). Se conectó
+en dos puntos: `handleVoiceCommand` (voz, cualquiera de los 3 caminos: mic
+normal, manos libres, chat de Pistero por voz) y `preguntarPistero()` (texto
+escrito en el chat) — mismo detector (`_detectarReporteVoz`), sin duplicar
+lógica. Al detectar, NO se le pasa la frase a la IA ni se abre ningún
+formulario: se publica directo en el mapa comunitario (`reportarPorVozRapido`)
+y Pistero confirma con una frase corta y con gracia (ej. "Anotado, ojo con los
+pacos. Gracias por el dato, colega." / "Marcado con prioridad. Ojalá estén
+todos bien..."), la misma personalidad de siempre.
+
+**3. Pistero avisa PROACTIVAMENTE al acercarte a un peligro reportado**, no
+solo cuando alguien pregunta. Mismo patrón que el aviso de agua/miradores que
+ya existía (`avisarPuntosCercanos`), pero para reportes de peligro
+(`avisarReportesCercanos`), con una diferencia clave: cada categoría vence a su
+propio ritmo (`REPORTE_VIGENCIA_MS`) — un taco de hace 3 horas ya no sirve
+(vence a las 2h), pero un objeto tirado en la vía puede seguir siendo relevante
+2 días después. Un reporte vencido nunca se anuncia. Conectado tanto al GPS
+libre (`ug()`) como a la navegación a destino (`_navPosUpdate`), y el set de
+"ya avisado en este viaje" se resetea al iniciar cada viaje nuevo (mismo
+patrón que los avisos de puntos de interés).
+
+**4. Más variedad de bromas por modo** (pedido explícito: "seamos versátiles y
+entretenidos, esa es nuestra marca"). Las categorías de MTB/trekking/moto que
+quedaron un poco escuetas en v6.48 (algunas con solo 3-6 frases) ahora tienen
+6-10 frases cada una, mismo tono y gracia, con vocabulario que sigue aplicando
+con sentido a lo que se está haciendo en cada modo (sendero técnico para MTB,
+mochila/rodillas para trekking, motor/bencina para moto).
+
+**Nota de proceso — un error propio, encontrado y corregido antes de
+desplegar:** al verificar `reportarPorVozRapido()` en el navegador, intenté
+simular Firestore reasignando `window.db` a un mock; como `db` es una variable
+`let` de módulo (no una propiedad de `window`), la reasignación no interceptó
+nada y la función usó la base de datos REAL de producción, publicando un
+reporte de prueba falso en la colección `reportes` (categoría "policía",
+usuario ficticio "Testeador"). Lo detecté de inmediato revisando los últimos
+documentos de la colección, confirmé el ID (`vWGt2Ie8cX78Pj87O5DD`) y lo
+eliminé antes de seguir — verificado que ya no existe. De paso encontré (sin
+tocar) que ya había un documento de prueba antiguo ajeno a esta sesión
+("prueba de auditoria", usuario "qa_test") en la misma colección — no es de
+esta sesión, queda anotado por si Inty quiere limpiarlo.
+
+**Verificación:** sintaxis con `node --check` (0 errores); en navegador:
+detección correcta de las 5 categorías desde frases naturales variadas
+(incluida una conjugación que fallaba al principio — "atropellaron" no
+calzaba con el regex original que solo cubría "atropelló/atropello/atropellado",
+corregido a un patrón de raíz más amplio y reverificado); frases sin relación
+(clima, destino) NO disparan ningún reporte; el aviso proactivo respeta la
+vigencia por categoría (un reporte vencido no se anuncia, uno vigente y cercano
+sí, y no se repite dos veces en el mismo viaje); las 10 categorías (5 antiguas
++ 5 nuevas) aparecen correctas en el formulario escrito; los tres modos
+(mtb/trekking/moto) cargan sus pools ampliados sin categorías vacías.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.49. `sw.js` CACHE → v649.
+
+---
+
 ## v6.48 — 2026-07-13 — Claude (sesión 2, manos libres + vocabulario por modo de actividad)
 
 Los dos pendientes que quedaron anotados en v6.47.
