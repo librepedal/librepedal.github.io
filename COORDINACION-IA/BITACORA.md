@@ -4,6 +4,48 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.45 — 2026-07-13 — Claude (sesión 2, "la app arranca dos veces" — reporte directo de Inty)
+
+Inty abrió la web recién desplegada (tras una racha de 7 despliegues seguidos hoy,
+v6.38→v6.44) y vio la pantalla recargarse sola dos veces. Investigué en vivo:
+reproducir la carrera exacta de temporización no es posible desde este sandbox
+(depende de en qué momento el CDN de Cloudflare propaga cada nodo edge), pero
+encontré la causa raíz real leyendo el mecanismo de auto-actualización con lupa.
+
+**El problema:** el listener de `controllerchange` del Service Worker recargaba la
+página de forma **incondicional** apenas un SW nuevo tomaba control — sin nunca
+verificar si de verdad hacía falta. Con una racha de varios despliegues seguidos
+(exactamente lo que pasó hoy), el SW puede activarse por razones que NO significan
+"hay una versión más nueva para ti": una reinstalación redundante del mismo
+`sw.js`, o que dos pestañas/cargas sucesivas aterricen en nodos del CDN con
+propagación desincronizada por unos segundos. En esos casos el listener recargaba
+igual, sin razón real — eso es justo lo que se siente como "la app arranca dos
+veces": una recarga de verdad (por versión distinta) y encima otra recarga
+"fantasma" (por la reactivación del SW, sin que la versión hubiera cambiado).
+
+**Arreglo:** antes de recargar, el listener ahora vuelve a preguntarle a
+`version.txt` (igual que hace el mecanismo de auto-reparación, la otra mitad de
+este sistema) si la versión realmente cambió. Si ya estás al día, no recarga nada.
+Si de verdad hay una versión distinta, recarga como antes. El freno de
+`sessionStorage` compartido con el otro mecanismo (`_lpYaRecargoEstaVisita`) se
+mantiene intacto como protección adicional.
+
+**Verificación:** no se pudo reproducir la condición de carrera real del CDN en
+este entorno, así que extraje la lógica exacta del listener a un script Node
+aislado con mocks de `fetch`/`location.reload`, y probé los 4 casos que importan:
+(1) versión ya correcta → 0 recargas; (2) versión distinta → 1 recarga y marca el
+freno; (3) `version.txt` no responde → recarga igual (conservador, como antes);
+(4) dos `controllerchange` casi simultáneos con versión correcta → ninguno
+recarga, sin condición de carrera entre ellos. Los 4 casos se comportaron
+exactamente como se esperaba.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.45. `sw.js` CACHE → v645.
+Desplegado a librepedal.cl y confirmado en vivo. Este despliegue en particular
+debería ser el que finalmente deje de sentirse como "arranca dos veces", una vez
+que el propio CDN termine de propagar esta versión a todos sus nodos.
+
+---
+
 ## v6.44 — 2026-07-13 — Claude (sesión 2, cierre de la segunda vuelta: Pistero IA, Diario, Rutas, Inicio)
 
 Terminé de barrer las 4 áreas que faltaban de la segunda vuelta:

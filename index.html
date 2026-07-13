@@ -651,7 +651,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.44</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.45</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -987,7 +987,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.44'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.45'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6429,7 +6429,14 @@ function closeTutorial(){ document.getElementById('tutorialOverlay').classList.r
 /* ===== PWA: Service Worker + Wake Lock (GPS/voz con pantalla apagada) ===== */
 if('serviceWorker' in navigator){
   // Auto-actualización: si entra un Service Worker nuevo y toma control,
-  // recargamos una sola vez para que el usuario reciba siempre la última versión.
+  // recargamos para que el usuario reciba siempre la última versión — PERO
+  // antes se creía a ciegas que un controllerchange siempre significa "hay
+  // versión nueva", y recargaba igual aunque la versión ya fuera la correcta.
+  // Con varios despliegues seguidos (racha normal de trabajo), el SW puede
+  // activarse por reinstalaciones redundantes o por inconsistencia momentánea
+  // entre nodos del CDN — eso se sentía como "la app arranca dos veces" sin
+  // que hiciera falta. Ahora se reverifica contra version.txt antes de decidir:
+  // si ya estás en la versión correcta, no se recarga nada.
   let lpRefrescando=false;
   navigator.serviceWorker.addEventListener('controllerchange', function(){
     if(lpRefrescando) return;
@@ -6437,8 +6444,20 @@ if('serviceWorker' in navigator){
     // ya recargó la página en esta visita, no sumamos una SEGUNDA recarga por este
     // otro mecanismo — evita el "arranca dos veces" cuando ambos se disparan seguidos.
     if(typeof _lpYaRecargoEstaVisita==='function' && _lpYaRecargoEstaVisita()) return;
-    if(typeof _lpMarcarRecargaEstaVisita==='function') _lpMarcarRecargaEstaVisita();
-    lpRefrescando=true; window.location.reload();
+    lpRefrescando=true; // se marca YA (antes del fetch async) para que un segundo
+                         // controllerchange casi simultáneo no dispare su propia
+                         // verificación en paralelo
+    fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(function(v){
+      v=(v||'').replace(/^﻿/,'').trim();
+      if(v && v===APP_VERSION){ lpRefrescando=false; return; } // ya estás al día: no hacía falta recargar
+      if(typeof _lpMarcarRecargaEstaVisita==='function') _lpMarcarRecargaEstaVisita();
+      window.location.reload();
+    }).catch(function(){
+      // sin poder confirmar la versión, se mantiene el comportamiento de antes
+      // (recargar) para no dejar a nadie atascado en una versión vieja
+      if(typeof _lpMarcarRecargaEstaVisita==='function') _lpMarcarRecargaEstaVisita();
+      window.location.reload();
+    });
   });
   window.addEventListener('load', function(){
     navigator.serviceWorker.register('sw.js').then(function(reg){
