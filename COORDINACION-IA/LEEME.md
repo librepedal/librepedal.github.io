@@ -4,7 +4,7 @@ Este proyecto lo trabajan **varias IAs en paralelo** (hoy: dos sesiones de Claud
 en el pasado, Gemini). Lee esto ANTES de tocar el código para no romper ni duplicar
 el trabajo de otra sesión — sea cual sea el modelo que la esté corriendo.
 
-**Última actualización:** 2026-07-13 · **Versión viva:** v6.38
+**Última actualización:** 2026-07-13 · **Versión viva:** v6.42
 
 📌 **`VISION-MAESTRA.md`** en esta misma carpeta es el norte del producto completo
 (prompt maestro de Inty) con auditoría real de qué existe y qué falta — leerlo antes
@@ -64,13 +64,15 @@ cualquier otro agente con acceso a archivos/terminal/navegador), seguí esto:
 Inicio/Esfera, #3 Mis viajes/Rutas, #4 Diario/Bitácora, #5 Comunidad, #6 Social,
 #7 Pistero IA — cerrados. #8 SOS y detección de caídas — cerrado salvo el hallazgo
 de seguridad de arriba (necesita teléfono real). #9 Gamificación (Logros, Ranking,
-Retos, Wrapped, Tienda de Darma) — cerrado en v6.38: eliminado código muerto (`ap()`),
-y arreglado que comprar con Darma / el casco-skin-lente-accesorios equipados no
-sobrevivían a un teléfono nuevo (ver BITACORA v6.38, incluye un bug real donde
-`reg()` borraba en la nube lo ya comprado). Además, fuera de la numeración:
-escalabilidad de lecturas Firestore (`count()`) y creación de contenido de
-comunidad (guards anti-doble-tap) ya revisados. Quedan: Personalización (lo que no
-cubre Tienda/Darma), Música, Novedades, Taller/Guía, Ajustes, Admin, base/PWA.
+Retos, Wrapped, Tienda de Darma) — cerrado en v6.38 (ver detalle en BITACORA).
+Después de #9, sin numeración formal pero mismo criterio, sesión 2 cerró en
+orden: **Personalización de personaje** (v6.39: piel/ojos/labios/vello/peinado/
+pañoleta nuevos, boca al hablar rehecha, UI por pestañas), **Música** (v6.40:
+ducking al arrancar + fuga de blobs), **Novedades + CicloGuía** (v6.41: link
+`javascript:` bloqueado, doble-tap en comentarios), **Ajustes** (v6.42: fuga de
+wake lock en Ahorro pantalla). Además, fuera de la numeración: escalabilidad de
+lecturas Firestore (`count()`) y creación de contenido de comunidad (guards
+anti-doble-tap) ya revisados. **Quedan: Admin, base/PWA.**
 
 ## 🌐 ¿Se puede sumar a Qwen, Kimi u otro modelo con este mismo protocolo?
 
