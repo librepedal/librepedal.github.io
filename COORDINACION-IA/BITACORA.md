@@ -4,6 +4,65 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.50 — 2026-07-13 — Claude (sesión 2, consulta de peligros en una ruta: "¿hay policías en mi ruta a X?")
+
+Pedido de Inty, con ejemplo concreto: sale en auto y le pregunta a Pistero
+"dime si hay policías en mi ruta de A hasta B", y Pistero debe saber dónde
+buscar información real y contestar si hay o no hay.
+
+**Aclaración honesta primero (importante):** no existe ninguna fuente de datos
+policiales en vivo, ni pública ni gratuita, en ningún país — ni siquiera Waze
+"sabe" dónde está la policía por magia, lo sabe porque millones de usuarios se
+lo reportan en tiempo real. Acá funciona igual: la única fuente real y honesta
+es el mapa comunitario que la propia app ya construye con los reportes de otros
+ciclistas/viajeros (`reportes`, ampliado en v6.49). Pistero nunca inventa ni
+"cree" que hay o no hay algo — responde según lo que la comunidad reportó, y
+si no hay nada, lo dice explícitamente en vez de sonar como que garantiza que
+está despejado.
+
+**Cómo funciona:** nueva función `consultarPeligrosEnRuta(categoria, destino)`:
+geocodifica el destino (reusando `geocodeDestino`, el mismo buscador de toda la
+app), calcula la ruta real con OSRM desde tu posición actual (respetando el
+perfil de tu modo de actividad — auto/moto usa perfil de manejo, no de bici),
+y revisa los reportes de esa categoría dentro de su vigencia (ver v6.49) que
+caigan a menos de 600 m de cualquier punto del trazado. Si ya estás navegando
+y no das un destino nuevo, usa la ruta que ya tienes activa ("¿hay taco en mi
+ruta?"). Contesta con cuántos reportes hay, hace cuánto y en qué comuna
+aproximada — o, si no hay nada, aclara que eso es lo que la comunidad marcó,
+no una garantía.
+
+**Diferenciar PREGUNTA de AVISO** fue la parte más delicada: "hay pacos en mi
+ruta a Valparaíso" y "hay pacos en el camino" comparten casi las mismas
+palabras, pero la primera es una pregunta (hay que consultar) y la segunda es
+un aviso (hay que publicarlo, como ya hace v6.49). Se resolvió exigiendo que la
+consulta tenga un destino explícito ("...hasta/hacia/a X") O una frase de
+pregunta inequívoca ("sabes si hay", "dime si hay", "avísame si hay"...) — sin
+ninguna de las dos, se trata como aviso normal (el comportamiento de siempre,
+sin regresión). Conectado en los mismos dos canales que los avisos: voz
+(`handleVoiceCommand`) y texto (`preguntarPistero`), verificado con el ejemplo
+literal de Inty ("hey pistero dime si hay policías en mi ruta de a hasta
+Valparaíso") antes de dar por bueno el diseño.
+
+**Bug encontrado y corregido durante la propia verificación:** el chequeo de
+cercanía entre la ruta y los reportes saltaba de 3 en 3 los puntos del trazado
+(pensado para el aviso proactivo por GPS, que sí corre en cada fix y necesita
+ser barato). Acá es una consulta puntual bajo pedido, no hace falta ahorrar —
+y saltar puntos podía dejar huecos de cobertura en tramos rectos con pocos
+vértices OSRM. Se sacó el salteo: ahora revisa el trazado completo.
+
+**Verificación:** sintaxis con `node --check` (0 errores); en navegador:
+detección correcta de consulta-vs-aviso en los 6 casos probados (incluido el
+ejemplo literal de Inty); flujo completo con geocodificación y ruta REALES
+(Santiago→Valparaíso, perfil de manejo) contra reportes de prueba en memoria —
+encontró el reporte vigente cercano, ignoró el vencido, respondió
+honestamente "no tengo reportes" para una categoría sin datos, y manejó bien
+un destino inexistente; la variante "en tu ruta" (sin destino, navegación
+activa) también verificada tras corregir el bug de cobertura.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.50. `sw.js` CACHE → v650.
+
+---
+
 ## v6.49 — 2026-07-13 — Claude (sesión 2, reportes de peligro por voz/texto + más vocabulario por modo)
 
 Pedido de Inty: ampliar más las bromas por modo, y agregar reporte de peligros

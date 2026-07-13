@@ -1003,7 +1003,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.49'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.50'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2178,10 +2178,25 @@ async function preguntarPistero(){
   const msg=inp.value.trim(); if(!msg) return;
   inp.value='';
   _pisteroBurbuja(msg,'yo');
+  const _msgNorm=normalizar(msg);
+  // Consulta escrita sobre peligros en una ruta ("¿hay policías en mi ruta a
+  // X?"): mismo criterio que por voz — solo cuenta como consulta con destino
+  // explícito o pregunta clara, si no, es un reporte normal.
+  {
+    const _catConsultaMsg=_detectarReporteVoz(_msgNorm);
+    if(_catConsultaMsg){
+      const _destinoConsultaMsg=_extraerDestinoConsulta(_msgNorm);
+      if(_destinoConsultaMsg || CONSULTA_RUTA_OPENER_RE.test(_msgNorm)){
+        const _respConsulta=await consultarPeligrosEnRuta(_catConsultaMsg, _destinoConsultaMsg);
+        _pisteroBurbuja(_respConsulta,'pistero'); try{ h(_respConsulta); }catch(e){}
+        return;
+      }
+    }
+  }
   // Reportes de peligro escritos (pacos, animal atropellado, objeto en la vía,
   // taco, accidente): se resuelven aquí mismo, sin gastar una llamada a la IA —
   // son datos concretos para el mapa, no una conversación.
-  const _catReporte=_detectarReporteVoz(normalizar(msg));
+  const _catReporte=_detectarReporteVoz(_msgNorm);
   if(_catReporte){ const _conf=await reportarPorVozRapido(_catReporte); _pisteroBurbuja(_conf,'pistero'); try{ h(_conf); }catch(e){} return; }
   const pensando=_pisteroBurbuja('Pistero está pensando…','pistero',true);
   const hosp=(typeof allHostels!=='undefined'&&allHostels?allHostels:[]).slice(0,12).map(function(hh){
@@ -3716,7 +3731,7 @@ const REPORTE_VIGENCIA_MS={policia:3*3600000, taco:2*3600000, accidente:6*360000
 // que Pistero dice de vuelta (con gracia, no un "reporte enviado" seco). Si
 // alguien quiere contar más detalle, "Reportar en Ruta" sigue disponible.
 const REPORTE_VOZ={
-  policia:{regex:/\b(pacos?|tombos?|carabineros?|control policial|control de carabineros|fiscalizaci[oó]n|ret[eé]n)\b/, texto:'Control policial reportado por la comunidad.', confirma:'Anotado, ojo con los pacos. Gracias por el dato, colega.'},
+  policia:{regex:/\b(pacos?|tombos?|carabineros?|polic[ií]as?|control policial|control de carabineros|fiscalizaci[oó]n|ret[eé]n)\b/, texto:'Control policial reportado por la comunidad.', confirma:'Anotado, ojo con los pacos. Gracias por el dato, colega.'},
   animal:{regex:/\banimal(es)?\s+(muerto|atropellado)|\b(perro|gato|vaca|caballo|zorro)\s+(muerto|atropellado)|\bcarro[ñn]a\b/, texto:'Animal atropellado en la vía, cuidado al pasar.', confirma:'Qué pena, gracias por avisar. Ya lo dejé marcado para que otros bajen la velocidad ahí.'},
   objeto:{regex:/\b(objeto|piedra|fierro|palo|escombro|rama|vidrio)s?\s+(en la (v[ií]a|pista|calzada|carretera|calle|camino)|tirad[oa]|atravesad[oa])|hay algo (tirado|atravesado)/, texto:'Objeto en la vía que puede ser peligroso.', confirma:'Marcado. Ese tipo de sorpresas en el camino no perdonan, buen ojo.'},
   taco:{regex:/\btaco\b|\bcongesti[oó]n\b|atochamiento|tr[aá]fico (pesado|parado|detenido|colapsado)/, texto:'Taco reportado por la comunidad.', confirma:'Anotado el taco. Con este dato, el resto se ahorra el mal rato.'},
@@ -3739,6 +3754,64 @@ async function reportarPorVozRapido(cat){
     us.d+=15; au(); if(typeof sincronizarStats==='function') sincronizarStats();
     return voz.confirma;
   }catch(err){ return 'No se pudo enviar el aviso, inténtalo de nuevo en un rato.'; }
+}
+// ===== Consulta de peligros en una RUTA concreta ("Pistero, ¿hay policías en mi
+// ruta a Valparaíso?"). OJO con las expectativas: no existe ninguna fuente de
+// datos policiales en vivo (ni pública ni gratuita) — lo que SÍ tenemos es el
+// mapa comunitario (reportesData), igual que Waze funciona a punta de reportes
+// de otros usuarios, no de una cámara satelital. La respuesta siempre es
+// honesta sobre esa limitación: dice lo que la comunidad reportó, y si no hay
+// nada, aclara que eso NO es garantía de que esté despejado.
+const REPORTE_LABEL_VOZ={policia:'control policial', animal:'animal en la vía', objeto:'objeto en la vía', taco:'taco', accidente:'accidente'};
+// Requiere un destino explícito ("...hasta/hacia/a X") o una de estas frases
+// de pregunta clara — así "hay pacos en el camino" (una frase declarativa
+// normal, sin destino) sigue yendo al reporte rápido de siempre, y no se
+// confunde con una consulta.
+const CONSULTA_RUTA_OPENER_RE=/\b(sabes si hay|dime si hay|av[ií]same si hay|cu[eé]ntame si hay|hay o no hay|habr[ai]|hab[ií]a)\b/;
+function _extraerDestinoConsulta(t){
+  const m=t.match(/(?:hasta|hacia|\ba\b)\s+([^,.]+)$/);
+  return (m && m[1]) ? limpiarDestino(m[1]) : null;
+}
+async function _obtenerRutaGeometria(startLat,startLon,destLat,destLon){
+  const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson';
+  const resp=await _fetchT(url, 15000);
+  const data=await resp.json();
+  if(data.code!=='Ok'||!data.routes||!data.routes.length) return null;
+  return {coords: data.routes[0].geometry.coordinates.map(function(c){ return [c[1],c[0]]; })};
+}
+async function consultarPeligrosEnRuta(categoria, destinoTexto){
+  const label=REPORTE_LABEL_VOZ[categoria]||categoria;
+  let coords, etiquetaRuta;
+  if(destinoTexto){
+    if(!currentUserLocation) return 'Necesito tu ubicación para revisar la ruta. Activa el GPS y pregúntame de nuevo.';
+    h('Dame un segundo, reviso los reportes de la comunidad en tu ruta a '+destinoTexto+'...');
+    let dest; try{ dest=await geocodeDestino(destinoTexto); }catch(e){ dest=null; }
+    if(!dest) return 'No encontré "'+destinoTexto+'". Dime el destino con más detalle (ciudad o región).';
+    let geo; try{ geo=await _obtenerRutaGeometria(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon); }catch(e){ geo=null; }
+    if(!geo) return 'No pude calcular la ruta a '+destinoTexto+' ahora mismo.';
+    coords=geo.coords; etiquetaRuta='a '+destinoTexto;
+  } else if(typeof rutaLatLngs!=='undefined' && rutaLatLngs && rutaLatLngs.length){
+    coords=rutaLatLngs; etiquetaRuta='en tu ruta';
+  } else {
+    return '¿A qué destino? Dime "hay '+label+' en mi ruta a" y el lugar, o pregúntame mientras vas navegando.';
+  }
+  const ahora=Date.now();
+  const vig=REPORTE_VIGENCIA_MS[categoria]||24*3600000;
+  const encontrados=reportesData.filter(function(r){
+    if(r.cat!==categoria || r.lat==null || r.lon==null) return false;
+    const ms=(r.ts&&r.ts.seconds)?(ahora-r.ts.seconds*1000):null;
+    if(ms!=null && ms>vig) return false;
+    // Consulta puntual bajo pedido (no un chequeo por cada fix del GPS), así que
+    // no hay apuro por saltar puntos: revisa el trazado completo para no dejar
+    // huecos de cobertura en tramos rectos donde OSRM pone pocos vértices.
+    for(let i=0;i<coords.length;i++){ if(calculateDistance(coords[i][0],coords[i][1],r.lat,r.lon)<=600) return true; }
+    return false;
+  });
+  if(!encontrados.length) return 'No tengo reportes de la comunidad de '+label+' '+etiquetaRuta+'. Ojo, esto es lo que otros ciclistas han marcado, no una garantía de que esté despejado — igual anda atento.';
+  encontrados.sort(function(a,b){ return ((b.ts&&b.ts.seconds)||0)-((a.ts&&a.ts.seconds)||0); });
+  const masReciente=encontrados[0];
+  const hace=tiempoTranscurrido(masReciente.ts);
+  return 'Sí, la comunidad reportó '+encontrados.length+' '+(encontrados.length>1?'avisos':'aviso')+' de '+label+' '+etiquetaRuta+'. El más reciente fue '+hace+(masReciente.comuna?(' cerca de '+masReciente.comuna):'')+'. Anda con cuidado.';
 }
 // ===== Aviso PROACTIVO de peligros: Pistero avisa ANTES de llegar, no después.
 // Mismo patrón que avisarPuntosCercanos() (agua/mirador/hospedaje) pero para los
@@ -6533,6 +6606,19 @@ function handleVoiceCommand(raw){
   // que ya usa el resumen de ruta) en vez de mandarlo a la IA general, que no tiene
   // acceso a clima en vivo y por eso "no sabía" responder bien.
   if(/\bclima\b|\btemperatura\b|va a llover|c[oó]mo (est[aá]|anda) el tiempo|qu[eé] tiempo hace|qu[eé] clima hace/.test(t)){ _pisteroDecirClima(); return; }
+  // Consulta sobre peligros en una ruta ("¿hay policías en mi ruta a X?"): va
+  // ANTES del reporte rápido, porque comparte las mismas palabras clave
+  // (policía, taco, accidente...) pero es una pregunta, no un aviso. Solo se
+  // toma como consulta si hay un destino explícito o una frase de pregunta
+  // clara — así "hay pacos en el camino" (un aviso normal, sin destino) sigue
+  // yendo al reporte de siempre.
+  {
+    const _catConsulta=_detectarReporteVoz(t);
+    if(_catConsulta){
+      const _destinoConsulta=_extraerDestinoConsulta(t);
+      if(_destinoConsulta || CONSULTA_RUTA_OPENER_RE.test(t)){ consultarPeligrosEnRuta(_catConsulta, _destinoConsulta).then(h); return; }
+    }
+  }
   // Reportes de peligro por voz (pacos, animal atropellado, objeto en la vía,
   // taco, accidente): van directo al mapa comunitario, sin pasar por la IA
   // general ni por ningún formulario — para eso es "manos libres" de verdad.
