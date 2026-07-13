@@ -4,6 +4,53 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.51 — 2026-07-13 — Claude (sesión 2, rigor en la velocidad: reporte real de 70 km/h mostrado como más de 100)
+
+Reporte concreto y verificable de Inty: le contaron que iban en auto a 70 km/h
+reales y la app marcaba más de 100. Pidió rigurosidad en el tema.
+
+**Causa raíz encontrada:** la velocidad en pantalla (`#spd` en GPS libre,
+`#navSpeed` navegando) se calculaba EXCLUSIVAMENTE comparando posiciones GPS
+consecutivas (`velocidadVentana()`, centroide de los últimos ~10-15s) e
+ignoraba por completo `coords.speed` — la velocidad que el propio chip GPS mide
+por efecto Doppler, mucho más precisa que restar posiciones, sobre todo a
+velocidad de auto: el margen de error normal de un fix GPS (5-20 m) pesa poco
+al pedalear despacio, pero pesa mucho sobre una ventana corta cuando ya vas
+rápido — ahí es donde un poco de ruido de posición infla el promedio muy por
+encima de la velocidad real. Además, esa ventana de 2-4 puntos no tenía
+ninguna protección contra un solo fix con rebote de señal (multipath, típico
+en autopista/túneles/cañones urbanos), que podía colarse y corromper el
+promedio completo.
+
+**Fix (dos capas):**
+1. **Se prioriza `coords.speed`** (Doppler del chip GPS) para el NÚMERO exacto
+   una vez que el método por posición ya confirmó que hay movimiento real
+   (`_velocidadHardware()` + `_velMaxPlausibleKmh()` como techo de seguridad).
+   El método por posición sigue siendo la fuente de verdad para decidir SI te
+   estás moviendo (protege contra la "velocidad fantasma" estando parado en
+   casa, un bug ya resuelto antes que no se quería reabrir) — solo cambia CUÁL
+   número se muestra una vez que ya se confirmó movimiento real. Si el
+   dispositivo no entrega `coords.speed` (pasa en algunos navegadores/chips),
+   se cae de vuelta al método por posición de siempre, sin cambios.
+2. **Filtro de saltos implausibles** (`_filtrarSaltoVentana`) antes de que un
+   punto entre a la ventana de posición: si el salto desde el último punto
+   aceptado implica una velocidad imposible para el modo actual, se descarta
+   —mismo principio que ya protegía el kilometraje acumulado
+   (`_saltoEsPlausible`), ahora también protege la velocidad en pantalla.
+
+**Verificación en navegador (simulando fixes de GPS, no un dispositivo real):**
+70 km/h reales (`coords.speed`=19.44 m/s) con ruido de posición superpuesto
+que antes habría inflado el promedio — ahora muestra 70 exacto, no más de
+100; parado en casa con `coords.speed` reportando ruido fantasma (2.5 m/s) sin
+desplazamiento real de posición — sigue mostrando 0 (protección intacta); sin
+`coords.speed` disponible (null) — cae correctamente al respaldo por posición;
+un fix con salto imposible (2 km en 1 segundo) intercalado entre fixes
+normales — se descarta del historial y no corrompe la velocidad mostrada.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.51. `sw.js` CACHE → v651.
+
+---
+
 ## v6.50 — 2026-07-13 — Claude (sesión 2, consulta de peligros en una ruta: "¿hay policías en mi ruta a X?")
 
 Pedido de Inty, con ejemplo concreto: sale en auto y le pregunta a Pistero

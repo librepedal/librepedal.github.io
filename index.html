@@ -1003,7 +1003,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.50'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.51'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2832,6 +2832,34 @@ function _saltoEsPlausible(distMetros, msTranscurridos){
   const kmh=(distMetros/1000)/(msTranscurridos/3600000);
   return kmh<=_velMaxPlausibleKmh();
 }
+// ===== Velocidad RIGUROSA: reporte real de un ciclista/conductor — iba a 70 km/h
+// y la app marcaba más de 100. Causa: la velocidad en pantalla se calculaba SOLO
+// comparando posiciones (centroide de los últimos ~10-15s) e ignoraba por completo
+// coords.speed, la velocidad que el propio chip GPS mide por efecto Doppler — mucho
+// más precisa que derivar de la posición, sobre todo a velocidad de auto, donde el
+// margen de error normal del GPS (5-20 m) pesa menos sobre el Doppler que sobre una
+// resta de posiciones en una ventana corta. Ahora se prioriza coords.speed cuando el
+// dispositivo lo entrega (y pasa el techo de plausibilidad); el cálculo por posición
+// queda solo como respaldo para cuando el GPS no lo entrega (pasa en algunos
+// navegadores/chips).
+function _velocidadHardware(speedMs){
+  if(speedMs==null || !Number.isFinite(speedMs)) return null; // el dispositivo no entrega este dato: sin info, toca usar el cálculo por posición
+  if(speedMs<=0.7) return 0; // el propio chip GPS dice que estás prácticamente detenido
+  return speedMs*3.6;
+}
+// Segunda capa de rigor, para cuando SÍ toca calcular por posición (respaldo): un
+// solo fix con rebote de señal (multipath típico en autopista, túneles, cañones
+// urbanos) puede colar un salto imposible dentro de la ventana de 2-4 puntos que
+// usa velocidadVentana() y corromper el promedio entero. Se descarta ANTES de
+// entrar a la ventana, igual que ya se hace con el kilometraje acumulado.
+function _filtrarSaltoVentana(historyArr, punto){
+  if(!historyArr.length) return true;
+  const last=historyArr[historyArr.length-1];
+  const dtMs=(punto.t||punto.timestamp)-(last.t||last.timestamp);
+  if(dtMs<=0) return true; // sin referencia de tiempo confiable, no hay como objetar
+  if(dtMs>20000) return true; // último punto muy viejo (señal cortada un rato): re-ancla en vez de quedar pegado comparando contra algo obsoleto
+  return _saltoEsPlausible(calculateDistance(last.lat,last.lon,punto.lat,punto.lon), dtMs);
+}
 function ug(p){
   const la=p.coords.latitude, lo=p.coords.longitude;
   // Descarta fixes con coordenadas corruptas (null/NaN, típico con señal muy débil en
@@ -2844,19 +2872,27 @@ function ug(p){
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
   const _msDesdeUltimoFix=lastFixTime?(Date.now()-lastFixTime):0; // para el chequeo de velocidad plausible más abajo
   // VELOCIDAD VERIFICADA POR DESPLAZAMIENTO REAL (ventana ~10s). Es la fuente de
-  // verdad: promedia el ruido del GPS. Si en 10s no nos desplazamos de verdad,
-  // estamos QUIETOS aunque el GPS reporte velocidad fantasma (caso casa).
-  posHistory.push({lat:la,lon:lo,t:Date.now()});
+  // verdad para saber SI te estás moviendo: promedia el ruido del GPS. Si en 10s no
+  // nos desplazamos de verdad, estamos QUIETOS aunque el GPS reporte velocidad
+  // fantasma (caso casa) — este chequeo se mantiene igual que siempre.
+  const _nuevoPunto={lat:la,lon:lo,t:Date.now()};
+  if(_filtrarSaltoVentana(posHistory, _nuevoPunto)) posHistory.push(_nuevoPunto);
   while(posHistory.length>1 && (Date.now()-posHistory[0].t)>12000) posHistory.shift();
   _altitudConFallback(pendienteHistory, la, lo, p.coords.altitude);
-  // Velocidad SOLO verificada por desplazamiento real (centroides). Ignoramos por
-  // completo la "velocidad" que reporta el GPS (es la que se vuelve fantasma en casa).
   // El piso queda en 6 (no en 4, aunque "lento" arranque ahí en la categoría): bajarlo
   // a 4 dejaba pasar ruido del GPS como si fuera movimiento real estando quieto, y por
   // eso nunca se detectaba "parado" (que habla cada 20 min) — se quedaba pegado en modo
   // ciudad/carretera, que comenta mucho más seguido.
   const spVentana=velocidadVentana(posHistory);
-  let sp = (spVentana<6) ? 0 : spVentana;
+  const _spBase = (spVentana<6) ? 0 : spVentana;
+  // Reporte real de un ciclista/conductor: iba a 70 km/h y la app marcaba más de
+  // 100. Una vez que la ventana por posición YA confirmó que hay movimiento real
+  // (_spBase>0, protege contra la velocidad fantasma estando parado), preferimos
+  // coords.speed — la velocidad Doppler del propio chip GPS — para el NÚMERO
+  // exacto: a velocidad de auto, el margen de error normal del GPS pesa mucho más
+  // sobre una resta de posiciones en una ventana corta que sobre el Doppler.
+  const _velHW=_velocidadHardware(p.coords.speed);
+  let sp = (_spBase>0 && _velHW!=null && _velHW<=_velMaxPlausibleKmh()) ? _velHW : _spBase;
   lastFixTime=Date.now();
   document.getElementById('spd').innerText=Math.round(sp);
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
@@ -4504,8 +4540,8 @@ async function descargarMapaRuta(){
 function _navBgCallback(location){ _navPosUpdate(location.latitude, location.longitude, location.accuracy, (location.speed&&location.speed>0.7)?location.speed*3.6:0, location.altitude); }
 // Nombrada (no anónima) para poder reusarla al reiniciar el watchPosition web
 // cuando cambia el Ahorro de GPS a mitad de una navegación (ver toggleAhorroGPS).
-function _navGeoCallback(pos){ _navPosUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, (pos.coords.speed&&pos.coords.speed>0.7)?pos.coords.speed*3.6:0, pos.coords.altitude); }
-function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
+function _navGeoCallback(pos){ _navPosUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.coords.speed, pos.coords.altitude); }
+function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   // Mismo resguardo que ug(): coordenadas corruptas (null/NaN) no deben tocar ningún
   // cálculo de distancia ni mover el marcador (Leaflet lanza excepción con NaN, lo
   // que cortaría en seco todo lo que viene después en esta misma función).
@@ -4520,11 +4556,17 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
   // solo recibía puntos cuando había movimiento real >=12m — como al detenerte del
   // todo dejaban de llegar puntos nuevos a gpsPoints, la velocidad quedaba pegada en
   // lo último que marcaba y nunca volvía a 0 (ni se detectaba la pausa).
-  navPosHistory.push({lat:lat,lon:lon,t:_now});
+  const _nuevoPuntoNav={lat:lat,lon:lon,t:_now};
+  if(_filtrarSaltoVentana(navPosHistory, _nuevoPuntoNav)) navPosHistory.push(_nuevoPuntoNav);
   while(navPosHistory.length>1 && (_now-navPosHistory[0].t)>12000) navPosHistory.shift();
   _altitudConFallback(navPendienteHistory, lat, lon, altitude);
   const _spWin=velocidadVentana(navPosHistory);
-  const speed=(_spWin<6)?0:_spWin;
+  const _speedBase=(_spWin<6)?0:_spWin;
+  // Mismo criterio riguroso que ug(): una vez confirmado el movimiento real por la
+  // ventana de posición, se prefiere coords.speed (Doppler del chip GPS) para el
+  // número exacto — reporte real: 70 km/h reales se mostraban como más de 100.
+  const _velHWNav=_velocidadHardware(speedMs);
+  const speed=(_speedBase>0 && _velHWNav!=null && _velHWNav<=_velMaxPlausibleKmh()) ? _velHWNav : _speedBase;
   _actualizarPausaViaje(speed, 'navPausaBadge');
   _actualizarLiveTrack(lat,lon);
   _verificarSegmentos(lat,lon);
@@ -4536,10 +4578,10 @@ function _navPosUpdate(lat,lon,accuracy,speedKmh,altitude){
       // Salto implausible (glitch del GPS): no suma al kilometraje, pero re-ancla la
       // posición igual para que el próximo fix se calcule contra el punto correcto.
       if(_saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
-      gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
+      gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
     }
   }
-  else { gpsPoints.push({lat:lat,lon:lon,speed:speedKmh,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now}; }
+  else { gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now}; }
   if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]); }
   L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
   document.getElementById('navSpeed').innerText=Math.round(speed);
