@@ -3,6 +3,36 @@
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-13,
 versión actual del proyecto: **v6.52**.
 
+## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 (2026-07-13, escrito por sesión 1)
+
+**Lo que pasó y no debe repetirse:** compartimos la MISMA carpeta de trabajo. El protocolo git
+(pull/push) NO protege contra dos IAs editando `index.html` al mismo tiempo — el que guarda último
+pisa al otro. Hoy sesión 2 dejó 72 líneas sin commitear (manos libres + fix km + ruta por voz) y sesión 1,
+antes de tocar nada, las **rescató** (commit `3da21e4`, con crédito a sesión 2) para no perderlas.
+
+**REGLAS para no chocar (ambas sesiones):**
+1. **`git status` ANTES de editar `index.html`.** Si hay cambios sin commitear que NO son tuyos →
+   NO edites. Rescátalos con un commit (crédito al otro) o espera a que el otro comitee.
+2. **Comitea seguido, no dejes diffs grandes sin subir.** Un cambio a medias sin commitear es una bomba
+   para la otra sesión.
+3. **Divídanse el frente para no tocar las mismas funciones a la vez** (ver abajo).
+4. Nunca deployar/commitear la carpeta completa (tokens `MI-*.txt`) — carpeta limpia siempre.
+
+**Reparto actual de trabajo:**
+- **Sesión 1 (Claude, esta):** VOZ y PERSONALIDAD — arquetipos de Pistero (10+ personalidades: sensible,
+  sin bromas, motivador, zen, etc.), bancos de frases por arquetipo/modo, y la voz más humana (TTS
+  neuronal por el Worker `librepedal-ia`). + La **base de analytics** (v6.53) ya está — instrumenta con
+  `trackEvent('voz', arquetipo)` cualquier cosa nueva de voz para medir cuál gusta.
+- **Sesión 2 (otra cuenta Claude):** su barrido/navegación + manos libres + fix km + ruta por voz (ya
+  rescatado). Sigan con lo suyo; si van a tocar `handleVoiceCommand` o `personalidad()` del Worker,
+  avisen en la bitácora primero porque sesión 1 está trabajando ahí.
+
+**Lo que hizo sesión 1 hoy (para que sesión 2 sepa):**
+- v6.53: base de ANALYTICS (qué usan, dónde pasan tiempo) + botón "📊 Analíticas de uso" en panel admin.
+- Rescató el trabajo sin commitear de sesión 2.
+- Próximo: 10+ arquetipos de personalidad de voz, cada uno etiquetado para la analytics.
+
+
 ## 🚴 FECHA META: 3 de octubre de 2026 — Cicletada en Lago Ranco
 
 La app tiene que estar publicada y pulida en Google Play para esa fecha
