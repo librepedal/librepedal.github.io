@@ -4,6 +4,50 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.58 — 2026-07-13 — Claude (sesión 2, chips de modo en la esfera + gentilicio moto)
+
+Reporte de Inty: "arregla los botones de modos arriba de la esfera están muy
+pequeños y no se diferencian, el modo auto no puede ser modo viajero debe
+ser motorizado."
+
+**1. Chips de modo (fila de 4 íconos arriba de la esfera) — causa raíz: todos
+se veían exactamente igual** (círculo gris de 38px, mismo borde blanco tenue,
+solo cambiaba el emoji) y con 🚴 (ciclismo) vs 🚵 (MTB) a ese tamaño el emoji
+casi ni se distinguía. Se rediseñó `renderModoRapidoEsfera()` y el CSS
+`.es-modo-chip`:
+- Tamaño del ícono: 38px → 48px.
+- Cada modo ahora usa SU PROPIO color (el mismo `color.p` que ya existía en
+  `ACTIVIDADES` y tiñe el resto de la app) como borde/relleno del chip —
+  naranja (ciclismo), verde (MTB), café (trekking), azul (auto) — así se
+  diferencian de un vistazo aunque el emoji sea parecido, no solo cuando
+  están seleccionados.
+- Se agregó una etiqueta corta de texto bajo cada ícono (`corto`, campo nuevo
+  en `ACTIVIDADES`: "Ruta"/"MTB"/"Trek"/"Auto") para que no dependa solo del
+  emoji.
+- El seleccionado ahora se ve claramente distinto: opacidad completa, fondo
+  teñido con su color, halo/glow y un leve zoom — antes solo cambiaba el
+  borde y era sutil.
+
+**2. "Modo auto no puede ser modo viajero, debe ser motorizado"** — el campo
+`gentilicio` de `ACTIVIDADES` para `moto` decía `'viajero'` (usado en la
+frase de Pistero "ahora te acompaño como viajero"). Se corrigió a
+`'motorizado'`. De paso se corrigió también `verbo` ('viajando' →
+'conduciendo', mismo campo, consistente con el cambio) y el label visible
+('🏍️ Moto / Auto (viaje)' → '🏍️ Moto / Auto (motorizado)').
+
+**Verificación real hecha:** servidor estático local + Browser pane.
+Confirmado por inspección de estilos computados que los 4 chips renderizan a
+48×48px con `border-color`/fondo correctos por modo (naranja `#fc4c02`,
+verde `#5c8a3a`, café `#b5651d`, azul `#2563eb`), que el chip seleccionado
+tiene opacidad 1 y los demás 0.5, y que `elegirActividad('moto')` mueve la
+selección correctamente al chip "Auto". Confirmado que
+`ACTIVIDADES.find(a=>a.id==='moto').gentilicio === 'motorizado'`. No se pudo
+tomar captura de pantalla real en este sandbox (herramienta de screenshot
+sin funcionar, limitación ya documentada en versiones anteriores) — queda
+pendiente que Inty lo vea en su teléfono.
+
+---
+
 ## v6.57 — 2026-07-13 — Claude (sesión 2, Pistero: ciclistas cerca, panorama por la zona, historia/mito del lugar)
 
 Pedido de Inty: "sigamos ampliando, por ejemplo pistero busca ciclistas

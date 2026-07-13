@@ -89,9 +89,12 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-lbl{font-size:0.62rem;color:#cfeeff;margin-top:4px;font-weight:700;text-shadow:0 1px 3px #000}
 .es-title{position:absolute;top:18px;left:0;right:0;text-align:center;color:var(--p);font-weight:800;font-size:1.1rem;text-shadow:0 0 10px rgba(252,76,2,0.5);pointer-events:none}
 .es-hint{position:absolute;top:44px;left:0;right:0;text-align:center;color:#8fb0c8;font-size:0.72rem;pointer-events:none}
-.es-modo-rapido{position:absolute;top:70px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:9px;z-index:4;pointer-events:none}
-.es-modo-chip{width:38px;height:38px;border-radius:50%;background:rgba(10,18,30,0.78);border:2px solid rgba(255,255,255,0.16);font-size:1.15rem;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;transition:transform 0.15s,border-color 0.15s,background 0.15s}
-.es-modo-chip.selected{border-color:var(--p);background:rgba(252,76,2,0.22);transform:scale(1.1)}
+.es-modo-rapido{position:absolute;top:66px;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;gap:14px;z-index:4;pointer-events:none}
+.es-modo-chip{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;pointer-events:auto}
+.es-modo-chip .es-modo-ico{width:48px;height:48px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1.5rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
+.es-modo-chip .es-modo-txt{font-size:0.6rem;font-weight:700;letter-spacing:0.02em;color:#8fb0c8;text-shadow:0 1px 3px rgba(0,0,0,0.6);opacity:0.75;transition:color 0.15s,opacity 0.15s}
+.es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.14);box-shadow:0 0 16px -2px var(--chip-c)}
+.es-modo-chip.selected .es-modo-txt{color:#fff;opacity:1}
 .es-classic{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
 .es-globe{background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
 #auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px 20px 40px;text-align:center;overflow-y:auto}
@@ -1028,7 +1031,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.57'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.58'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1425,10 +1428,10 @@ function _lookActual(){ return {piel:selectedPiel, ojos:selectedOjos, labios:sel
 // el default de SIEMPRE — cero cambio para quien no toque este selector. Verificado en
 // vivo que router.project-osrm.org responde 200 en los 3 perfiles (cycling/foot/driving).
 const ACTIVIDADES=[
-  {id:'ciclismo', label:'🚴 Ciclismo de ruta', icono:'🚴', osrm:'cycling', gentilicio:'ciclista', verbo:'pedaleando', color:{p:'#fc4c02',g:'#ffd700'}},
-  {id:'mtb', label:'🚵 MTB / Gravel', icono:'🚵', osrm:'cycling', gentilicio:'ciclista de montaña', verbo:'rodando', color:{p:'#5c8a3a',g:'#c9a227'}},
-  {id:'trekking', label:'🎒 Senderismo / Trekking', icono:'🎒', osrm:'foot', gentilicio:'caminante', verbo:'caminando', color:{p:'#b5651d',g:'#8fae6e'}},
-  {id:'moto', label:'🏍️ Moto / Auto (viaje)', icono:'🏍️', osrm:'driving', gentilicio:'viajero', verbo:'viajando', color:{p:'#2563eb',g:'#f2b705'}}
+  {id:'ciclismo', label:'🚴 Ciclismo de ruta', corto:'Ruta', icono:'🚴', osrm:'cycling', gentilicio:'ciclista', verbo:'pedaleando', color:{p:'#fc4c02',g:'#ffd700'}},
+  {id:'mtb', label:'🚵 MTB / Gravel', corto:'MTB', icono:'🚵', osrm:'cycling', gentilicio:'ciclista de montaña', verbo:'rodando', color:{p:'#5c8a3a',g:'#c9a227'}},
+  {id:'trekking', label:'🎒 Senderismo / Trekking', corto:'Trek', icono:'🎒', osrm:'foot', gentilicio:'caminante', verbo:'caminando', color:{p:'#b5651d',g:'#8fae6e'}},
+  {id:'moto', label:'🏍️ Moto / Auto (motorizado)', corto:'Auto', icono:'🏍️', osrm:'driving', gentilicio:'motorizado', verbo:'conduciendo', color:{p:'#2563eb',g:'#f2b705'}}
 ];
 let actividadTipo=localStorage.getItem('lp_actividad')||'ciclismo';
 function _actividadActual(){ return ACTIVIDADES.find(function(a){return a.id===actividadTipo;})||ACTIVIDADES[0]; }
@@ -1474,7 +1477,14 @@ function renderModoRegistro(){
 // gesto de girar la esfera (el hueco entre chips no bloquea el toque).
 function renderModoRapidoEsfera(){
   const c=document.getElementById('esModoRapido'); if(!c) return;
-  c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="es-modo-chip'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\')" title="'+a.label.replace(/"/g,'')+'">'+a.icono+'</div>'; }).join('');
+  // Cada modo lleva SU propio color (el mismo que ya definía ACTIVIDADES para
+  // teñir la app entera) como anillo/relleno del chip — antes todos se veían
+  // igual (gris, solo el ícono cambiaba) y con 🚴 vs 🚵 a 38px eran casi
+  // indistinguibles. Con color propio + más tamaño se diferencian de un vistazo.
+  c.innerHTML=ACTIVIDADES.map(function(a){
+    const sel=a.id===actividadTipo;
+    return '<div class="es-modo-chip'+(sel?' selected':'')+'" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="elegirActividad(\''+a.id+'\')" title="'+a.label.replace(/"/g,'')+'"><div class="es-modo-ico">'+a.icono+'</div><div class="es-modo-txt">'+a.corto+'</div></div>';
+  }).join('');
 }
 // Aplica el tema y pinta el selector apenas carga el script — así la pantalla de
 // registro (y una sesión que vuelve) ya se ven con el color correcto desde el
