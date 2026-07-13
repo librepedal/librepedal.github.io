@@ -4,6 +4,43 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.42 — 2026-07-13 — Claude (sesión 2, barrido: Ajustes)
+
+**Fuga real de batería en "🔋 Ahorro pantalla".** El botón está siempre
+disponible en Ajustes, sin depender de que el GPS esté corriendo. `toggleSaver()`
+pedía el wake lock de pantalla (`lpWakeLock.enable()`) al activarse, pero al
+salir (tocar la pantalla para volver) NUNCA lo soltaba — solo `toggleGPS`/
+`endNavigation` lo hacían. Si alguien usaba "Ahorro pantalla" SIN tener el GPS
+corriendo (perfectamente posible: el botón no lo exige), el teléfono se quedaba
+sin poder apagar la pantalla solo nunca más en esa sesión — justo lo contrario
+de lo que promete un modo "ahorro".
+
+Arreglo cuidadoso (esto toca `lpWakeLock`, que está en la lista de PROTEGIDO de
+`LEEME.md` — se leyó completo el módulo antes de tocar nada, y el cambio es
+aditivo, no reemplaza nada): al salir de "Ahorro pantalla", si ni el GPS libre
+(`ig`) ni la navegación (`#nav-screen.active`) siguen corriendo, se suelta el
+wake lock. Si cualquiera de los dos sigue activo, no se toca — son ellos quienes
+lo necesitan y ya lo sueltan cuando corresponde.
+
+**Verificación real en el navegador:** mockeado `lpWakeLock.enable/disable` para
+capturar llamadas, probados los 2 casos reales — (a) Ahorro pantalla solo, sin
+GPS: ON→OFF pide y suelta el lock correctamente; (b) Ahorro pantalla con GPS
+libre activo: ON→OFF pide pero NO suelta (GPS sigue necesitándolo). Revisado de
+paso el resto de Ajustes (voz, GPS ahorro, detección de caídas, Bluetooth) —
+todos ya estaban sólidos de barridos anteriores, sin cambios necesarios.
+
+Nota técnica: el servidor de pruebas local se cayó a mitad de la verificación
+(el `preview` de este sandbox, no algo de la app) y hubo que reiniciarlo — quedó
+documentado por si se repite.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.42. `sw.js` CACHE → v642.
+Desplegado a librepedal.cl y confirmado en vivo.
+
+Barrido — sigue: Admin, base/PWA. Con esto, el recorrido por TODAS las secciones
+listadas en el LEEME queda cerrado salvo esas dos.
+
+---
+
 ## v6.41 — 2026-07-13 — Claude (sesión 2, barrido: Novedades + CicloGuía)
 
 **Novedades:** `n.link` (el botón "Ver más →") se renderizaba con
