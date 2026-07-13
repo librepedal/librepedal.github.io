@@ -53,6 +53,26 @@ de este computador, y lanzar el workflow una vez para la confirmación final.
 
 ---
 
+## v6.53 — 2026-07-13 — Claude (sesión 1, base de ANALYTICS + rescate de sesión 2)
+**Pedido de Inty:** medir qué usa el usuario, dónde pasa tiempo, su relación con la app, y verlo en su
+panel de admin — para después dejar en premium las voces/arquetipos/funciones más exitosas.
+**Antes: rescate.** El working tree tenía 72 líneas sin commitear de sesión 2 (otra cuenta Claude, sin
+créditos/GitHub) — manos libres, fix de kilometraje (ruido GPS parado sumaba 0,3 km, ahora exige sp>0),
+ruta alternativa por voz. Verificadas sanas (llaves 0, funciones completas) y commiteadas/pusheadas con su
+crédito (commit 3da21e4) para no perderlas antes de tocar el archivo.
+**Analytics (nuevo):**
+- `trackEvent(grupo,clave,cuanto)` + buffer en memoria + flush cada 25s / en `visibilitychange` (hidden) /
+  `pagehide`. Escritura **atómica** a `usage/{cu}` con `FieldValue.increment` en objeto ANIDADO + `{merge:true}`
+  (no dotted-keys, que en `.set()` no anidan) — barato y sin carreras (Principio del protocolo maestro).
+- `_trackPantalla(id)` enganchado en `cv()`: cuenta visitas por pantalla y acumula el TIEMPO en cada una.
+- Eventos de función: voz (`handleVoiceCommand`), navegación (`calculateAndStartNavigation`), chat Pistero.
+- `verAnaliticasAdmin()` (solo ADMIN_ID) + botón "📊 Analíticas de uso" en el panel admin: agrega todos los
+  docs `usage` y muestra rankings de pantallas, tiempo (min), funciones, voz + activos 7 días.
+**Verificación:** `node`/llaves balanceadas (0), trackEvent 6 usos, 3 eventos de función, flush atómico, y los
+elementos de modal (modalTitle/modalContent/userModal) existen. NO probado en navegador (herramienta caída) —
+honestidad radical (Principio #5): la lógica y sintaxis están verificadas; falta ver los datos reales fluir.
+Firebase Analytics (GA4) recomendado aparte para retención/embudos (gratis) — anotado en PENDIENTES.
+
 ## v6.52 — 2026-07-13 — Claude (sesión 2, mapas libres estilo Google Maps + dos bugs reales de datos: km perdidos del ranking y ruta perdida con pantalla apagada)
 
 Pedido grande de Inty con varias partes, dos de ellas bugs reales con evidencia

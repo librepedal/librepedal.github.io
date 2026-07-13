@@ -686,6 +686,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
     <div id="adminNuevosBadge" style="display:none;background:rgba(255,215,0,0.12);border:1px solid var(--g);color:var(--g);border-radius:8px;padding:8px 10px;font-size:0.78rem;font-weight:700;margin-bottom:8px"></div>
     <button class="ab" onclick="exportarUsuariosAdmin()">⬇️ Exportar lista de usuarios (.csv)</button>
     <button class="ab sec" onclick="mostrarTodosRegistrados()">👥 Ver todos los registrados</button>
+    <button class="ab" style="background:#6366f1;color:#fff" onclick="verAnaliticasAdmin()">📊 Analíticas de uso</button>
     <h4 style="margin-top:14px;font-size:0.82rem;color:var(--g)">🎯 Crear reto</h4>
     <input type="text" id="retoTitulo" placeholder="Título (ej: 500km en julio)" maxlength="80">
     <input type="text" id="retoDesc" placeholder="Descripción breve (opcional)" maxlength="200">
@@ -1016,7 +1017,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.52'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.53'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2198,6 +2199,7 @@ function abrirPistero(){
 async function preguntarPistero(){
   const inp=document.getElementById('pisteroInput'); if(!inp) return;
   const msg=inp.value.trim(); if(!msg) return;
+  trackEvent('funcion','chat_pistero');
   inp.value='';
   _pisteroBurbuja(msg,'yo');
   const _msgNorm=normalizar(msg);
@@ -4288,6 +4290,28 @@ function importarMisDatos(input){
 
 /* ===== EXPORT ADMIN: lista completa de usuarios registrados ===== */
 const ADMIN_ID = 'intyrivera_a_gmail_com';   // ID del admin (correo transformado)
+async function verAnaliticasAdmin(){
+  if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede ver las analíticas.'); return; }
+  h('Cargando analíticas de uso...');
+  try{
+    const snap=await db.collection('usage').get();
+    const pantalla={}, tiempo={}, funcion={}, voz={}; let total=0, activos7d=0; const ahora=Date.now();
+    snap.forEach(function(doc){ const d=doc.data(); total++;
+      const uu=(d.ultimoUso&&d.ultimoUso.toMillis)?d.ultimoUso.toMillis():0; if(uu && (ahora-uu)<7*86400000) activos7d++;
+      ['pantalla','tiempo','funcion','voz'].forEach(function(g){ const dst=(g==='pantalla')?pantalla:(g==='tiempo')?tiempo:(g==='voz')?voz:funcion; if(d[g]) Object.keys(d[g]).forEach(function(k){ dst[k]=(dst[k]||0)+(Number(d[g][k])||0); }); });
+    });
+    function top(o, sufijo){ const e=Object.entries(o).sort(function(a,b){return b[1]-a[1];}).slice(0,10); if(!e.length) return '<p style="color:#888;font-size:0.8rem">Sin datos todavía.</p>'; return e.map(function(x){ return '<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:3px 0;border-bottom:1px solid #222"><span>'+escapeHTML(x[0])+'</span><b style="color:var(--p)">'+x[1]+(sufijo||'')+'</b></div>'; }).join(''); }
+    const tiempoMin={}; Object.keys(tiempo).forEach(function(k){ tiempoMin[k]=Math.round(tiempo[k]/60); });
+    let html='<p style="font-size:0.9rem"><b>'+total+'</b> usuarios con actividad · <b style="color:var(--g)">'+activos7d+'</b> activos (últimos 7 días)</p>';
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px">📱 Pantallas más vistas</h4>'+top(pantalla);
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px">⏱️ Dónde pasan más tiempo</h4>'+top(tiempoMin,' min');
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px">⚡ Funciones más usadas</h4>'+top(funcion);
+    if(Object.keys(voz).length) html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px">🎙️ Voz/arquetipo</h4>'+top(voz);
+    document.getElementById('modalTitle').innerText='📊 Analíticas de uso';
+    document.getElementById('modalContent').innerHTML=html;
+    document.getElementById('userModal').classList.add('on');
+  }catch(e){ lpAviso('No pude cargar las analíticas: '+(e.message||e)); }
+}
 async function exportarUsuariosAdmin(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede exportar la lista de usuarios.'); return; }
   h('Obteniendo lista de usuarios registrados...');
@@ -4869,6 +4893,7 @@ function _detectarEleccionRutaPorVoz(t){
   return null;
 }
 async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
+  trackEvent('funcion','navegacion');
   // Si ya había una navegación en curso (ej. el usuario pide por voz un destino nuevo
   // sin haber terminado el anterior), la cerramos primero para que guarde su avance
   // en vez de perderlo silenciosamente al pisar el estado con la ruta nueva.
@@ -5100,6 +5125,35 @@ function endNavigation(){
 let _viewHistory=[], _viewActual='dash';
 function _actualizarBtnAtras(){ const b=document.getElementById('btnAtras'); if(b) b.style.display=_viewHistory.length?'inline-flex':'none'; }
 function volverAtras(){ const prev=_viewHistory.pop(); if(prev){ cv(prev, true); if(prev==='dash') abrirEsfera(); } else { cv('dash'); abrirEsfera(); } }
+/* ===== ANALYTICS: qué usa el usuario y dónde pasa tiempo. Buffer en memoria +
+   escritura ATÓMICA (FieldValue.increment) con throttle — NO escribe en cada toque
+   (eficiente y sin carreras de datos). El panel de admin agrega estos docs. Para lo
+   profundo (retención/embudos) se recomienda Firebase Analytics aparte. ===== */
+let _evBuf={}, _evFlushT=null, _secDesde=0, _secActual=null;
+function _sanKey(s){ return String(s||'x').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,40)||'x'; }
+function trackEvent(grupo, clave, cuanto){
+  if(typeof cu==='undefined' || !cu) return;
+  const k=_sanKey(grupo)+'|'+_sanKey(clave);
+  _evBuf[k]=(_evBuf[k]||0)+(cuanto||1);
+  if(!_evFlushT) _evFlushT=setTimeout(_flushAnalytics, 25000);
+}
+function _trackPantalla(id){
+  const ahora=Date.now();
+  if(_secActual && _secDesde){ const seg=(ahora-_secDesde)/1000; if(seg>1 && seg<7200) trackEvent('tiempo', _secActual, Math.round(seg)); }
+  _secActual=id; _secDesde=ahora;
+  trackEvent('pantalla', id);
+}
+function _flushAnalytics(){
+  _evFlushT=null;
+  const keys=Object.keys(_evBuf); if(!keys.length || typeof cu==='undefined' || !cu) return;
+  const F=firebase.firestore.FieldValue;
+  const upd={ ultimoUso:F.serverTimestamp(), nombre:(typeof nombreUsuario!=='undefined'?nombreUsuario:'')||'', kmTotal:Math.round((us&&us.di)||0) };
+  keys.forEach(function(k){ const p=k.split('|'); if(!upd[p[0]]) upd[p[0]]={}; upd[p[0]][p[1]]=F.increment(_evBuf[k]); });
+  _evBuf={};
+  try{ db.collection('usage').doc(cu).set(upd,{merge:true}); }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden'){ if(_secActual&&_secDesde){ const seg=(Date.now()-_secDesde)/1000; if(seg>1&&seg<7200) trackEvent('tiempo',_secActual,Math.round(seg)); _secDesde=Date.now(); } _flushAnalytics(); } });
+window.addEventListener('pagehide', _flushAnalytics);
 function cv(id, _esVolver){
   const _es=document.getElementById('esferaScreen'); if(_es&&_es.classList.contains('on')&&typeof cerrarEsfera==='function') cerrarEsfera(); /* navegar cierra la esfera (p.ej. comandos de voz) */
   const el=document.getElementById('v-'+id);
@@ -5112,6 +5166,7 @@ function cv(id, _esVolver){
     if(id!=='dash') return cv('dash');
     return;
   }
+  _trackPantalla(id);
   if(id==='dash' && !_esVolver){ _viewHistory=[]; }
   else if(!_esVolver && _viewActual && _viewActual!==id){ _viewHistory.push(_viewActual); if(_viewHistory.length>15) _viewHistory.shift(); }
   _viewActual=id; _actualizarBtnAtras();
@@ -6825,6 +6880,7 @@ function responderPreguntaGeneral(t){
   return false;
 }
 function handleVoiceCommand(raw){
+  trackEvent('funcion','voz');
   const t=normalizar(raw);
   // Si hay un selector de rutas alternativas esperando respuesta, la frase se
   // interpreta como una elección PRIMERO (con máxima prioridad) — si no matchea
