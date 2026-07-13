@@ -300,6 +300,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-stat .lbl{font-size:0.6rem;color:#888}
 .nav-close{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;border:none;width:35px;height:35px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:600}
 .nav-recenter-btn{position:absolute;right:14px;bottom:210px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:46px;height:46px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.nav-manoslibres-btn{position:absolute;right:14px;bottom:266px;z-index:550;background:rgba(15,20,35,0.92);color:#7d8ba0;border:2px solid rgba(255,255,255,0.2);width:46px;height:46px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.nav-manoslibres-btn.on{color:var(--p);border-color:var(--p);background:rgba(252,76,2,0.16)}
 .map-recenter-btn{position:absolute;right:14px;bottom:24px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:46px;height:46px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-end-btn{width:100%;margin-top:8px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:10px 12px;border-radius:12px;font-size:0.85rem;font-weight:800;cursor:pointer}
 .nav-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(10,15,29,0.95);padding:12px;border-top:2px solid var(--p)}
@@ -480,6 +482,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="nav-alert" id="navAlert"></div>
   <button class="nav-close" onclick="endNavigation()">✕</button>
   <button class="nav-recenter-btn" id="btnNavRecenter" onclick="_navRecentrar()" title="Volver a mi ubicación">🎯</button>
+  <button class="nav-manoslibres-btn" id="btnNavManosLibres" onclick="toggleManosLibres()" title="Manos libres">🎙️</button>
   <div class="nav-top">
     <div class="gps-signal-badge" id="navGpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
     <div class="pausa-badge" id="navPausaBadge" style="display:none">⏸️ En pausa</div>
@@ -647,7 +650,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
 </div>
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🎙️ Manos libres</h4>
-<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Para cuando vas pedaleando o manejando y no puedes tocar el micrófono: Pistero queda escuchando todo el tiempo. No responde a cada cosa que digas — solo cuando lo llamas por su nombre ("Pistero, ¿cómo está el clima?"). Para callarlo, decir "cállate" funciona siempre, sin necesitar el nombre.</p>
+<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Para cuando vas pedaleando o manejando y no puedes tocar el micrófono: Pistero queda escuchando todo el tiempo. No responde a cada cosa que digas — solo cuando lo llamas por su nombre ("Pistero, ¿cómo está el clima?"). Para callarlo, decir "cállate" funciona siempre, sin necesitar el nombre. <strong style="color:var(--g)">Necesita la pantalla encendida</strong> — si la apagas, deja de escuchar (a diferencia del GPS, que sí sigue con la pantalla apagada).</p>
 <div class="quick-links">
   <button class="ab sec" style="margin:0" id="btnManosLibres" onclick="toggleManosLibres()">🎙️ Manos libres: OFF</button>
 </div>
@@ -2950,7 +2953,14 @@ function ug(p){
   // kilometraje, pero igual re-anclamos la posición para que el PRÓXIMO fix se
   // calcule bien (si no, un solo glitch dejaría todos los fixes siguientes también
   // "implausibles" por comparar contra un punto viejo).
-  if(us.la && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  // Reporte real: parado, la app sumó 0,3 km solo. Causa: este chequeo comparaba
+  // SOLO dos puntos consecutivos — el ruido normal del GPS estando quieto (puede
+  // "saltar" 15-30 m sin moverte nada) pasa esa comparación de a poco, aunque
+  // "sp" (la velocidad YA calculada arriba con la ventana de varios puntos, que
+  // promedia y cancela justo ese ruido) muestre 0 = estás parado de verdad. Se
+  // agrega sp>0 como condición: solo suma kilometraje cuando la propia app ya
+  // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
+  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
@@ -4617,7 +4627,10 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
     if(dist>=12){
       // Salto implausible (glitch del GPS): no suma al kilometraje, pero re-ancla la
       // posición igual para que el próximo fix se calcule contra el punto correcto.
-      if(_saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
+      // Mismo bug real que en ug() (GPS libre): sin exigir speed>0, el ruido normal
+      // del GPS estando quieto se colaba de a poco al kilometraje aunque "speed" (ya
+      // calculada arriba, con ventana de varios puntos) mostrara 0 = parado de verdad.
+      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
       gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
     }
   }
@@ -4813,10 +4826,16 @@ function _navRecentrar(){
 // camino razonable, se muestran para elegir en vez de arrancar directo con el
 // primero — reutiliza el modal genérico de la app (mismo que "Reportar en
 // Ruta"), no hace falta UI nueva. Si solo hay un camino (lo normal en rutas
-// rurales/cicloturismo), no aparece ningún selector: cero fricción extra. =====
+// rurales/cicloturismo), no aparece ningún selector: cero fricción extra.
+// Reporte real de Inty: le pidió por voz "la ruta alternativa, no la más
+// rápida" y Pistero no entendió — el selector solo se podía tocar en la
+// pantalla, ningún sentido para "manos libres" (nadie va a mirar/tocar el
+// teléfono manejando o pedaleando). Ahora también se anuncia por voz al
+// abrirse y se puede elegir hablando. =====
+let _rutaAlternativaEnEspera=null; // null, o {routes:[...]} mientras el selector espera respuesta
 function _elegirRutaAlternativa(routes){
   return new Promise(function(resolve){
-    let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Encontré más de un camino posible, elige el que prefieras:</p>';
+    let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Encontré más de un camino posible, elige el que prefieras (o dime "la más rápida" / "la alternativa"):</p>';
     routes.forEach(function(r,i){
       const km=(r.distance/1000).toFixed(1), min=Math.round(r.duration/60);
       html+='<div class="rep-cat" style="border:2px solid #2a3147;border-radius:12px;padding:14px;cursor:pointer;text-align:left;margin-bottom:10px" onclick="_elegirRutaAlternativaConfirmar('+i+')"><div style="font-weight:800;color:'+(i===0?'var(--p)':'#e2e8f0')+'">'+(i===0?'🚀 Ruta más rápida':'🔀 Ruta alternativa '+i)+'</div><div style="font-size:0.8rem;color:#9fb3c8;margin-top:4px">'+km+' km · '+min+' min</div></div>';
@@ -4824,10 +4843,31 @@ function _elegirRutaAlternativa(routes){
     document.getElementById('modalTitle').innerText='🗺️ Elige tu ruta';
     document.getElementById('modalContent').innerHTML=html;
     document.getElementById('userModal').classList.add('on');
-    window._resolverEleccionRuta=function(i){ closeModal(); delete window._resolverEleccionRuta; resolve(i); };
+    const resumenVoz=routes.map(function(r,i){ return (i===0?'la más rápida':'la alternativa'+(routes.length>2?' '+i:''))+', '+(r.distance/1000).toFixed(1)+' kilómetros'; }).join('; ');
+    h('Encontré '+routes.length+' caminos: '+resumenVoz+'. Dime cuál prefieres, o tócala en la pantalla.');
+    _rutaAlternativaEnEspera={routes:routes};
+    window._resolverEleccionRuta=function(i){ _rutaAlternativaEnEspera=null; closeModal(); delete window._resolverEleccionRuta; resolve(i); };
   });
 }
 function _elegirRutaAlternativaConfirmar(i){ if(window._resolverEleccionRuta) window._resolverEleccionRuta(i); }
+// Interpreta la respuesta hablada al selector de rutas: "la más rápida"/"la
+// primera" -> índice 0; "la alternativa"/"la segunda" -> índice 1; también
+// entiende "opción 2"/"la 2" con el número que sea, por si hay 3+ caminos.
+function _detectarEleccionRutaPorVoz(t){
+  if(!_rutaAlternativaEnEspera) return null;
+  const n=_rutaAlternativaEnEspera.routes.length;
+  // "no la más rápida, quiero la alternativa" es una forma MUY natural de decirlo
+  // (aclarar descartando la otra) — sin esto, "más rápida" matchea primero y elige
+  // justo lo contrario de lo que se pidió. Una negación justo antes de una opción
+  // descarta esa opción, aunque la palabra aparezca en la frase.
+  const niegaRapida=/no\s+(la\s+)?(mas rapida|primera)/.test(t);
+  const niegaAlternativa=/no\s+(la\s+)?(alternativa|segunda)/.test(t);
+  if(!niegaRapida && /mas rapida|la primera|primera opcion|opcion (uno|1)\b/.test(t)) return 0;
+  if(!niegaAlternativa && n>1 && /\balternativa\b|la segunda|segunda opcion|opcion (dos|2)\b/.test(t)) return 1;
+  const m=t.match(/opcion (\d+)|\bla (\d+)\b/);
+  if(m){ const idx=parseInt(m[1]||m[2],10)-1; if(idx>=0 && idx<n) return idx; }
+  return null;
+}
 async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
   // Si ya había una navegación en curso (ej. el usuario pide por voz un destino nuevo
   // sin haber terminado el anterior), la cerramos primero para que guarde su avance
@@ -4836,6 +4876,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   _detenerGpsLibreSiActivo();
   navGuardado=false;
   document.getElementById('nav-screen').classList.add('active');
+  _actualizarBtnManosLibres();
   if(navMap) navMap.remove();
   navMap=L.map('nav-map').setView([startLat,startLon],15);
   L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(navMap);
@@ -5234,7 +5275,17 @@ function initVoz(){
 // antes, porque es la orden más urgente y no puede tener fricción.
 let manosLibresOn=(function(){ try{ return localStorage.getItem('lp_manos_libres')==='1'; }catch(e){ return false; } })();
 let _reconocimientoContinuo=null, _manosLibresPausado=false, _tocandoNativoContinuo=false;
-function _actualizarBtnManosLibres(){ const b=document.getElementById('btnManosLibres'); if(b) b.innerText=manosLibresOn?'🎙️ Manos libres: ON':'🎙️ Manos libres: OFF'; }
+// Reporte real: Inty quería activar manos libres A MITAD DE UNA NAVEGACIÓN
+// activa, tuvo que salir a Ajustes para hacerlo, y "Atrás" lo devolvió a
+// Inicio en vez de a la navegación (la pantalla de navegación es un overlay
+// aparte que no vive en el historial de "Atrás" — perdía su lugar). El arreglo
+// no es tocar ese historial: es que NUNCA tenga que salir de la navegación
+// para esto — el mismo botón está ahora también arriba del mapa mientras
+// navegas.
+function _actualizarBtnManosLibres(){
+  const b=document.getElementById('btnManosLibres'); if(b) b.innerText=manosLibresOn?'🎙️ Manos libres: ON':'🎙️ Manos libres: OFF';
+  const nb=document.getElementById('btnNavManosLibres'); if(nb) nb.classList.toggle('on', manosLibresOn);
+}
 function toggleManosLibres(){
   manosLibresOn=!manosLibresOn;
   try{ localStorage.setItem('lp_manos_libres', manosLibresOn?'1':'0'); }catch(e){}
@@ -5243,7 +5294,12 @@ function toggleManosLibres(){
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     const nat=lpPlugin('SpeechRecognition');
     if(!SR && !(nat&&nat.start)){ h('Tu navegador no soporta escucha continua. Sigue usando el botón del micrófono.'); manosLibresOn=false; try{ localStorage.setItem('lp_manos_libres','0'); }catch(e){} _actualizarBtnManosLibres(); return; }
-    h('Manos libres activado. Dime "Pistero" y lo que necesites, sin tocar nada. Para callarme en cualquier momento, solo di "cállate".');
+    // Aviso honesto de una limitación real (confirmada en dispositivo real): a
+    // diferencia del GPS (que tiene su propio servicio nativo y sigue con la
+    // pantalla apagada), la escucha de voz vive en la app misma — si apagas la
+    // pantalla a mano, deja de escuchar. Mejor decirlo de entrada que dejar que
+    // alguien crea que le está fallando el micrófono.
+    h('Manos libres activado. Dime "Pistero" y lo que necesites, sin tocar nada. Para callarme en cualquier momento, solo di "cállate". Eso sí: mantén la pantalla encendida, si la apagas dejo de escucharte.');
     _iniciarEscuchaContinua();
   } else {
     h('Manos libres desactivado.');
@@ -6770,6 +6826,14 @@ function responderPreguntaGeneral(t){
 }
 function handleVoiceCommand(raw){
   const t=normalizar(raw);
+  // Si hay un selector de rutas alternativas esperando respuesta, la frase se
+  // interpreta como una elección PRIMERO (con máxima prioridad) — si no matchea
+  // ninguna opción válida, sigue de largo al enrutador normal (así "cállate"
+  // sigue funcionando igual aunque el selector esté abierto).
+  if(_rutaAlternativaEnEspera){
+    const _idxRuta=_detectarEleccionRutaPorVoz(t);
+    if(_idxRuta!=null && window._resolverEleccionRuta){ window._resolverEleccionRuta(_idxRuta); return; }
+  }
   // Comando de interrupción inmediata: corta lo que Pistero esté diciendo YA (no
   // espera a que termine la frase) y de paso silencia la voz hasta que digas "habla".
   // Antes "cállate/silencio" solo apagaba la voz a futuro, sin cortar lo que sonaba.
