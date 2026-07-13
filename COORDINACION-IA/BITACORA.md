@@ -1198,6 +1198,22 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.36 — 2026-07-13 — Claude (sesión 1, barrido: creación de contenido de comunidad)
+Adopté el protocolo de sesión 2 (variantes reales de uso, cuestionar cada función, no solo el caso feliz).
+Función/sección: **crear contenido de comunidad** (hospedaje, POI, truco, reto, rodada, frase).
+Comparé todas contra el patrón blindado de `agregarPOI` (trim + guard anti-doble-tap + await/try/catch/finally).
+Ya estaban OK: `agregarPOI`, `addRepairTip`, `crearReto`, `enviarReporte`. **3 rezagos reales corregidos:**
+- **`addHostel`** — no tenía NADA del patrón: (a) nombre/dirección con solo espacios pasaban la validación
+  (`!name` es false con `" "`) → publicaba alojamiento en blanco; (b) doble-tap publicaba 2 veces; (c) el
+  `db.add` no era await ni tenía catch → limpiaba el form y decía "publicado" aunque el guardado fallara
+  (sin señal) → perdías lo escrito con falso éxito. Ahora async con trim + `_agregandoHostel` + await/catch/finally.
+- **`crearRodada`** — (a) sin guard → doble-tap = 2 rodadas; (b) **aceptaba fecha en el PASADO** (solo validaba
+  NaN) → podías crear una rodada "para ayer". Ahora chequea fecha futura (con 1h de gracia) + `_creandoRodada`.
+- **`enviarFraseComunidad`** — sin guard anti-doble-tap → frase duplicada en revisión. Ahora `_enviandoFrase`.
+Cómo no rompe nada: mismo patrón exacto ya probado en agregarPOI; validaciones son ADICIONALES (los caminos
+felices siguen igual). Verificado: llaves balanceadas, 3 funciones con guard, 3 flags declarados.
+Deploy: `librepedal.cl/version.txt` → 6.36.
+
 ## v6.35 — 2026-07-13 — Claude (sesión 1, barrido: escalabilidad Firestore con count())
 Retomando el barrido de sesión 2 en un frente propio: **conteos que leían colecciones enteras**.
 - **Ranking** (`updateRanking`/#N): leía TODOS los usuarios con más km que tú (`.get().size`) solo para un
