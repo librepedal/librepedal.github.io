@@ -4,6 +4,53 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.56 — 2026-07-13 — Claude (sesión 2, Pistero se quedaba callado con charla casual, y el clima no entendía día/lugar)
+
+Dos reportes reales de Inty: "le pregunté a Pistero cómo estaba y se quedó
+callado, ¿qué clase de amigo hace eso?" y "le pregunté por el clima de mañana
+en X y no respondió."
+
+**1. "Cómo estás" — causa raíz encontrada: la frase estaba LITERAL en la lista
+de palabras que la app descarta como ruido** (`stop`, al final de
+`handleVoiceCommand`), tratada exactamente igual que "hola" u "ok" sueltos —
+sin ninguna respuesta real. No era un bug de que algo fallara, era que ni
+siquiera se la tomaba como una pregunta de verdad. Se sacó de esa lista y se
+creó `FAQ_CHARLA` (nuevo, antes de `FAQ_APP`/`FAQ_CICLISMO` en
+`responderPreguntaGeneral`, que ya corre bien temprano en el enrutador de
+voz): "cómo estás/andas", agradecimientos, despedidas, cariño, risas, y
+saludos — cada categoría con VARIAS respuestas al azar (no siempre la misma,
+para no sonar a grabación), con la personalidad de siempre.
+
+**2. Clima con día y lugar específico — no existía.** `_pisteroDecirClima()`
+solo sabía el clima de AHORA en la ubicación ACTUAL; ignoraba por completo
+"mañana"/"pasado mañana" y cualquier lugar mencionado ("en Valparaíso"). La
+API que ya se usaba (`climaDeZona`) YA traía el pronóstico de 3 días
+completo — solo faltaba usarlo. Ahora detecta el día (hoy/mañana/pasado
+mañana) y, si mencionas un lugar, lo geocodifica con el mismo buscador que
+usa toda la app (`geocodeDestino`) y trae el pronóstico de ESE lugar, no del
+tuyo. Con cuidado de no confundir "en la tarde/noche" con un lugar real.
+
+**Verificación real en navegador:** charla casual probada con las frases
+exactas reportadas más variantes ("como estas", "como andas", "gracias
+crack", "chao nos vemos", "hola", "te quiero pistero") — todas responden, con
+personalidad, sin repetir siempre lo mismo. Encontré y corregí un bug propio
+en la prueba: el patrón de despedida estaba anclado exacto (`^...$`) y no
+reconocía "chao nos vemos" (dos despedidas juntas), corregido a búsqueda de
+palabra. El clima se probó con **datos reales de Open-Meteo**, no
+simulados: "cómo está el clima" (19° nublado, hoy, tu zona), "clima mañana"
+(sin lugar, pronóstico real de mañana), "el clima de mañana en Valparaíso"
+(geocodificó Valparaíso de verdad, trajo SU pronóstico), "clima en Viña del
+Mar pasado mañana" (geocodificó Viña del Mar, día correcto, con el aviso de
+lluvia cuando correspondía).
+
+**Coordinación:** marqué el candado en `EN-USO.md` antes de tocar
+`handleVoiceCommand` (zona compartida con sesión 1), sin commits nuevos de
+ellos mientras trabajé — se libera al terminar esta entrada.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.56. `sw.js` CACHE → v656.
+
+---
+
 ## v6.55 — 2026-07-13 — Claude (sesión 2, cronómetro completo: pausa manual en GPS libre + vueltas + reinicio)
 
 Reporte real de Inty tras probar en su teléfono: "aún falta un cronómetro."

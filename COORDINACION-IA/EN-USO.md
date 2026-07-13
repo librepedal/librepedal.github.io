@@ -33,14 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-```
-
-*(Cuando edites: reemplaza el bloque de arriba por algo así)*
-```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-13 22:14
-Tocando: index.html — handleVoiceCommand (servicio nativo de voz en background)
+(última vez: sesión 2, 2026-07-13 ~21:55, terminó FAQ_CHARLA + clima con día/lugar, v6.56 desplegado)
 ```
 
 ---

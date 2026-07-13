@@ -1028,7 +1028,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.55'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.56'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6259,18 +6259,53 @@ async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-
 // Comando de voz "¿cómo está el clima?": responde con datos REALES de tu zona (la
 // misma API que ya usa el resumen de ruta), no con lo que la IA general "crea" que
 // hace el clima ahí — eso es lo que antes hacía que Pistero "no supiera" contestar.
-async function _pisteroDecirClima(){
-  let lat=currentUserLocation&&currentUserLocation.lat, lon=currentUserLocation&&currentUserLocation.lon;
-  if(!lat && us && us.la){ lat=us.la; lon=us.lo; }
-  if(!lat){ h('Necesito saber dónde estás para el clima — activa el GPS y pregúntame de nuevo.'); return; }
-  h('Dame un segundo, reviso el clima de tu zona...');
-  const w=await climaDeZona(lat,lon);
-  if(!w || !w.current){ h('No pude traer el clima ahora mismo, prueba de nuevo en un rato.'); return; }
-  const temp=Math.round(w.current.temperature_2m);
-  const desc=wmoTexto(w.current.weather_code);
-  const lluvia=(w.daily && w.daily.precipitation_probability_max && w.daily.precipitation_probability_max[0]) || 0;
-  const remate = lluvia>=50 ? '. Alta probabilidad de lluvia hoy, lleva algo para el agua.' : lluvia>=20 ? '. Puede caer algo de lluvia, ojo con eso.' : '.';
-  h('Ahora mismo hay '+temp+' grados y está '+desc+remate);
+// Reporte real de Inty: preguntó "el clima de mañana en X" y no le respondió —
+// esta función solo sabía el clima de AHORA en tu ubicación ACTUAL, ignoraba
+// "mañana" y cualquier lugar mencionado. Ahora entiende ambos (climaDeZona ya
+// traía el pronóstico de 3 días, solo faltaba usarlo; el lugar se geocodifica
+// igual que un destino de viaje, con el mismo buscador de siempre).
+async function _pisteroDecirClima(raw){
+  raw=raw||'';
+  let dia=0, diaTexto='ahora mismo', diaTextoCap='Ahora mismo';
+  if(/pasado\s+ma[ñn]ana/i.test(raw)){ dia=2; diaTexto='pasado mañana'; diaTextoCap='Pasado mañana'; }
+  else if(/\bma[ñn]ana\b/i.test(raw)){ dia=1; diaTexto='mañana'; diaTextoCap='Mañana'; }
+  // "en <lugar>", cortando antes de "hoy/mañana/pasado mañana" si vienen pegados
+  // después del lugar (ej. "el clima en Viña del Mar mañana"), o al final/signo
+  // de puntuación si no. Descarta candidatos que en realidad son parte del tiempo
+  // ("en la tarde/noche/mañana") para no intentar geocodificar eso como si fuera
+  // un lugar real.
+  const mLugar=raw.match(/\ben\s+([a-záéíóúñüA-ZÁÉÍÓÚÑÜ][a-záéíóúñüA-ZÁÉÍÓÚÑÜ\s]{2,40}?)(?:\s+(?:hoy|ma[ñn]ana|pasado\s+ma[ñn]ana)\b|[\?\.!,]|$)/i);
+  let lat, lon, nombreLugar=null;
+  if(mLugar && mLugar[1] && !/^(la |el )?(tarde|noche|mañana|manana|madrugada|momento|rato)$/i.test(mLugar[1].trim())){
+    const candidato=mLugar[1].trim();
+    h('Dame un segundo, busco el clima de '+candidato+'...');
+    let dest=null; try{ dest=await geocodeDestino(candidato); }catch(e){ dest=null; }
+    if(dest){ lat=dest.lat; lon=dest.lon; nombreLugar=candidato; }
+  }
+  if(lat==null){
+    lat=currentUserLocation&&currentUserLocation.lat; lon=currentUserLocation&&currentUserLocation.lon;
+    if(!lat && us && us.la){ lat=us.la; lon=us.lo; }
+  }
+  if(!lat){ h('Necesito saber dónde estás para el clima — activa el GPS, o dime el lugar, y pregúntame de nuevo.'); return; }
+  if(!nombreLugar) h('Dame un segundo, reviso el clima'+(dia>0?' de '+diaTexto:' de tu zona')+'...');
+  let w=null; try{ w=await climaDeZona(lat,lon); }catch(e){ w=null; }
+  if(!w){ h('No pude traer el clima ahora mismo, prueba de nuevo en un rato.'); return; }
+  const lugarTxt=nombreLugar?(' en '+nombreLugar):'';
+  if(dia===0){
+    if(!w.current){ h('No pude traer el clima ahora mismo, prueba de nuevo en un rato.'); return; }
+    const temp=Math.round(w.current.temperature_2m);
+    const desc=wmoTexto(w.current.weather_code);
+    const lluvia=(w.daily && w.daily.precipitation_probability_max && w.daily.precipitation_probability_max[0]) || 0;
+    const remate = lluvia>=50 ? '. Alta probabilidad de lluvia hoy, lleva algo para el agua.' : lluvia>=20 ? '. Puede caer algo de lluvia, ojo con eso.' : '.';
+    h('Ahora mismo hay '+temp+' grados'+lugarTxt+' y está '+desc+remate);
+    return;
+  }
+  if(!w.daily || w.daily.weather_code==null || w.daily.weather_code[dia]==null){ h('No tengo el pronóstico de '+diaTexto+' todavía, prueba con el clima de hoy.'); return; }
+  const max=Math.round(w.daily.temperature_2m_max[dia]), min=Math.round(w.daily.temperature_2m_min[dia]);
+  const desc=wmoTexto(w.daily.weather_code[dia]);
+  const lluvia=w.daily.precipitation_probability_max[dia]||0;
+  const remate = lluvia>=50 ? ' Alta probabilidad de lluvia, lleva algo para el agua.' : lluvia>=20 ? ' Puede caer algo de lluvia, ojo con eso.' : '';
+  h(diaTextoCap+lugarTxt+' va a estar '+desc+', entre '+min+' y '+max+' grados.'+remate);
 }
 // ===== Predicción real: lluvia ANTES de que caiga, no solo "hoy hay % de lluvia" al
 // salir. Mira las próximas 2 horas del pronóstico horario y avisa una sola vez por
@@ -6935,7 +6970,47 @@ const FAQ_CICLISMO=[
   {r:/cada cu[aá]nto (reviso|cambio) la cadena/, a:"Revisa el estiramiento de la cadena cada mil kilómetros más o menos, y límpiala seguido. Una cadena gastada desgasta los piñones más rápido."},
   {r:/c[oó]mo evito (que se me duerman las manos|el dolor de manos)/, a:"Cambia la posición de las manos en el manubrio de vez en cuando, y revisa que el manubrio no quede más bajo que el asiento."},
 ];
+// ===== Charla casual: reporte real de Inty — le preguntó "¿cómo estás?" a
+// Pistero y se quedó callado. Causa real: "como estas" estaba en la lista de
+// palabras "vacías" que la app descarta (tratada igual que "hola" u "ok" sueltos,
+// sin ninguna respuesta real) — no es que fallara, es que ni siquiera se lo
+// tomaba como una pregunta de verdad. Un amigo no hace eso. Estas son las
+// preguntas de charla común que un ciclista/viajero le haría a su copiloto sin
+// que sean sobre la app ni sobre ciclismo — cada una con VARIAS respuestas (no
+// la misma siempre) para que no suene a grabación. */
+const FAQ_CHARLA=[
+  {r:/^(y\s+)?(como|que tal|q\s*tal)\s*(estas|andas|vas|te va|andai|estai)\b|^como estai\b|^todo bien\??$/, a:[
+    "¡Todo piñón! Listo para acompañarte donde vayas hoy.",
+    "De diez, con las pilas puestas. ¿Y tú, cómo vienes?",
+    "Ahí ando, siempre con ganas de rodar. ¿Cómo va tu día?",
+    "Bien acá, esperando que salgamos a dar unas vueltas. ¿Vamos?"
+  ]},
+  {r:/gracias|te pasaste|eres un crack|eres el mejor|buena esa|se agradece/, a:[
+    "De nada, para eso estoy. ¡Sigamos rodando!",
+    "Un gusto ayudarte, siempre a la orden.",
+    "¡Ese es el espíritu! Cuenta conmigo cuando quieras."
+  ]},
+  {r:/\b(chao|adios|adi[oó]s|nos vemos|hasta luego|hasta pronto|me voy|nos hablamos)\b/, a:[
+    "¡Nos vemos! Anda con cuidado por ahí.",
+    "Chao, que tengas linda ruta. Aquí estaré cuando vuelvas.",
+    "Hasta la próxima. ¡Cuídate!"
+  ]},
+  {r:/te quiero|eres el mejor amigo|eres genial|me caes bien/, a:[
+    "Yo también te tengo cariño, colega. Vamos a seguir sumando kilómetros juntos.",
+    "Que bueno que andamos en la misma sintonía. ¡A rodar se ha dicho!"
+  ]},
+  {r:/^(jaja+|jeje+|que risa|muy bueno eso|buena esa broma)\.?$/, a:[
+    "😄 Me gusta que te rías, así se disfruta más la ruta.",
+    "Ja, sabía que te iba a sacar una sonrisa."
+  ]},
+  {r:/^(hola|holis|buenas|hey|ep|quiubo|qui[uú]bo)\.?$/, a:[
+    "¡Hola! ¿Listo para salir a rodar?",
+    "¡Qué tal! Aquí ando, esperando la próxima ruta.",
+    "Hola, colega. ¿Vamos a algún lado hoy?"
+  ]}
+];
 function responderPreguntaGeneral(t){
+  for(let i=0;i<FAQ_CHARLA.length;i++){ if(FAQ_CHARLA[i].r.test(t)){ const arr=FAQ_CHARLA[i].a; h(arr[Math.floor(Math.random()*arr.length)]); return true; } }
   for(let i=0;i<FAQ_APP.length;i++){ if(FAQ_APP[i].r.test(t)){ h(FAQ_APP[i].a); return true; } }
   for(let i=0;i<FAQ_CICLISMO.length;i++){ if(FAQ_CICLISMO[i].r.test(t)){ h(FAQ_CICLISMO[i].a); return true; } }
   return false;
@@ -6974,7 +7049,7 @@ function handleVoiceCommand(raw){
   // llamado literalmente "el clima". Responde con datos reales (Open-Meteo, el mismo
   // que ya usa el resumen de ruta) en vez de mandarlo a la IA general, que no tiene
   // acceso a clima en vivo y por eso "no sabía" responder bien.
-  if(/\bclima\b|\btemperatura\b|va a llover|c[oó]mo (est[aá]|anda) el tiempo|qu[eé] tiempo hace|qu[eé] clima hace/.test(t)){ _pisteroDecirClima(); return; }
+  if(/\bclima\b|\btemperatura\b|va a llover|c[oó]mo (est[aá]|anda) el tiempo|qu[eé] tiempo hace|qu[eé] clima hace/.test(t)){ _pisteroDecirClima(raw); return; }
   // Consulta sobre peligros en una ruta ("¿hay policías en mi ruta a X?"): va
   // ANTES del reporte rápido, porque comparte las mismas palabras clave
   // (policía, taco, accidente...) pero es una pregunta, no un aviso. Solo se
@@ -7074,7 +7149,11 @@ function handleVoiceCommand(raw){
   // OBEDECE (navegar, abrir secciones, etc.) o RESPONDE cualquier cosa. Una frase larga
   // casi nunca es un nombre de lugar: va a la IA en vez de forzarla como destino.
   const destino=limpiarDestino(raw);
-  const stop=/^(hola|gracias|ok|oye|ya|listo|si|no|que|como estas|chao|adios|prueba|test|esfera|menu)\.?$/i;
+  // "hola"/"gracias"/"como estas"/"chao"/"adios" NO van acá: ahora tienen respuesta
+  // real en FAQ_CHARLA (más arriba en la cadena, así que nunca deberían llegar hasta
+  // este punto) — antes se trataban como ruido a descartar, sin ninguna respuesta,
+  // que es justo el reporte real de Inty ("le pregunté cómo estaba y se quedó callado").
+  const stop=/^(ok|oye|ya|listo|si|no|que|prueba|test|esfera|menu)\.?$/i;
   const esOrdenOPregunta = /^(que|como|cuando|cuanto|cuanta|cuantos|por que|cual|quien|para que|puedes|podrias|sabes|dime|cuentame|explicame|hablame|recomiendame|me recomiendas|busca|buscame|investiga|averigua|ayudame|necesito|quiero|abre|abrir|muestra|pon|dale)\b/.test(t) || /\?\s*$/.test(raw) || destino.split(/\s+/).filter(Boolean).length>=5;
   if(esOrdenOPregunta){
     if(destino.length<2 || stop.test(normalizar(destino))){ _vozNoEntendi(); return; }
