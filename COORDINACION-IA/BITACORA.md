@@ -4,6 +4,40 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.41 — 2026-07-13 — Claude (sesión 2, barrido: Novedades + CicloGuía)
+
+**Novedades:** `n.link` (el botón "Ver más →") se renderizaba con
+`href="'+encodeURI(n.link)+'"` sin validar el esquema. `encodeURI` NO toca los
+dos puntos ni las letras, así que un link `javascript:...` guardado en el
+documento se habría renderizado como un enlace clicable ejecutable — que
+cualquiera que abriera Novedades y tocara "Ver más" habría disparado. Hoy la
+escritura en `novedades` ya está bien cerrada en las reglas (`isAdmin()`, no
+"cualquier signedIn()" como antes de una corrección previa), así que el único
+que podría meter un link así es la propia cuenta admin — pero por las dudas
+(fat-finger al pegar un link, o una cuenta admin comprometida más adelante) se
+agregó `_linkSeguro()`: exige `http://` o `https://` al empezar, tanto al
+publicar (`publicarNovedad`, rechaza con aviso si no cumple) como al mostrar
+(`renderNovedadesList`, defensa en profundidad por si un dato viejo no pasó por
+ahí). Probado con 10 casos reales (incluyendo `javascript:`, `JavaScript:`
+con mayúsculas mezcladas, `data:`, `vbscript:`, vacío, null) — todos los
+peligrosos rechazados, los `http(s)` reales aceptados, y confirmado con un
+render real que un link malicioso ya NO produce un `href="javascript:..."` en
+el DOM.
+
+**CicloGuía:** `addComment()` no tenía guarda anti-doble-tap (sí la tienen
+`addHostel`/`addRepairTip`, que ya estaban bien desde antes) — un doble toque
+podía duplicar el comentario. Agregada la misma guarda (`_agregandoComentarioGuia`)
+y manejo de error, mismo patrón que el resto del proyecto. Verificado disparando
+dos llamadas casi simultáneas: solo 1 documento se crea.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.41. `sw.js` CACHE → v641.
+Desplegado a librepedal.cl y confirmado en vivo.
+
+Barrido — sigue: Taller MacGyver (revisado de pasada, `addRepairTip` ya estaba
+sólido), Ajustes, Admin, base/PWA.
+
+---
+
 ## v6.40 — 2026-07-13 — Claude (sesión 2, barrido: Música)
 
 Revisé el módulo `lpMusic` (radios gratis + música propia + auto-ducking cuando
