@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-13 20:33
-Tocando: index.html — chips de modo en la esfera (más grandes, color propio por modo) + gentilicio moto 'viajero'->'motorizado'
+LIBRE
+Última sesión: 2
+Hasta: 2026-07-13 20:38
+Terminó: v6.58 — chips de modo en la esfera más grandes y con color propio, gentilicio moto 'viajero'->'motorizado'. Commiteado y pusheado (056788d), desplegado y verificado en librepedal.cl.
 ```
 
 ---
