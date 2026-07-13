@@ -4,6 +4,89 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.52 — 2026-07-13 — Claude (sesión 2, mapas libres estilo Google Maps + dos bugs reales de datos: km perdidos del ranking y ruta perdida con pantalla apagada)
+
+Pedido grande de Inty con varias partes, dos de ellas bugs reales con evidencia
+concreta de otros usuarios.
+
+**1. BUG REAL: "un amigo lleva varios km y no se reflejan en el Top 100."**
+Causa raíz: el campo `km` en Firestore (`users/{uid}.km`, lo único que lee la
+consulta del ranking) solo se actualizaba desde `sincronizarStats()`, y esa
+función SOLO se llamaba en eventos sueltos de Darma (desbloquear tienda,
+récord de segmento, etc.) o al apagar el GPS libre manualmente. Alguien que
+solo navega de un punto a otro (`calculateAndStartNavigation`/`finishTrip`/
+`endNavigation`) podía terminar viajes enteros — acumulando distancia real y
+correcta en su perfil local — sin que ese número LLEGARA JAMÁS a la nube.
+Localmente todo se veía bien (por eso no era obvio); en el ranking, invisible
+o desactualizado. Arreglado en dos capas: (a) sync automático cada ~60s
+mientras hay distancia acumulándose, agregado directo en `au()` (el punto
+central por el que pasan TANTO el GPS libre COMO la navegación a destino, así
+no hay ningún camino que se escape), y (b) una llamada final de red de
+seguridad en `endNavigation()` (el único punto de salida de cualquier
+navegación) para los viajes cortos que terminan antes del primer sync de 60s.
+
+**2. BUG REAL: "se apagó la pantalla, se encendió, y la ruta ya no estaba
+— tocó volver a ponerla a mano."** Causa: los navegadores móviles (Chrome
+sobre todo) pueden "descartar" una pestaña en segundo plano con la pantalla
+apagada para liberar memoria, borrando TODO el estado que vivía solo en
+variables de JavaScript (destino, geometría de la ruta, progreso). El
+WakeLock evita que la pantalla se apague SOLA por inactividad, pero no evita
+que el usuario la apague a mano con el botón físico — ahí no hay wake lock
+que valga, y ese es justo el escenario que describió Inty. No se puede
+evitar que el navegador descarte la pestaña (esa decisión es del sistema, no
+de la app), así que la solución es sobrevivirlo: se guarda en localStorage
+(throttleado, cada fix de `_navPosUpdate`) lo esencial del viaje activo
+—destino, distancia y track ya recorridos, el id del trip si existía uno—, y
+al arrancar la app de nuevo (sesión guardada o login), si hay un registro
+reciente (menos de 3 horas) lo retoma SOLO, sin preguntar nada (preguntar
+obligaría a tocar la pantalla justo manejando o pedaleando, que es lo que
+motivó todo el pedido), recalculando la ruta desde la posición actual pero
+restaurando el odómetro y el track ya hecho — no arranca de cero. Se limpia
+solo al terminar un viaje de forma normal (`endNavigation`).
+
+**3. Mapas libres, como Google Maps.** El mapa de navegación se re-centraba
+solo en CADA fix de GPS (cada 1-2 segundos), peleando con cualquier intento
+de moverlo a mano — apenas soltabas el dedo, el próximo fix lo tironeaba de
+vuelta. Ahora sigue tu posición sola mientras no lo tocas (como siempre), pero
+apenas lo arrastras se suelta del seguimiento automático para que explores
+libremente, y aparece un botón flotante 🎯 para retomarlo cuando quieras. Se
+agregó el mismo botón 🎯 en el Mapa Global (comunidad), que ahí no tenía
+ningún seguimiento automático que soltar, solo hacía falta la forma rápida de
+volver a tu posición.
+
+**4. Alternativas de ruta, como Google Maps.** Se agregó `alternatives=true`
+al pedido a OSRM; si devuelve más de un camino razonable, aparece un selector
+simple (reutiliza el modal genérico de la app) con distancia y tiempo de cada
+opción ANTES de arrancar a navegar. Con una sola ruta (lo normal en
+cicloturismo rural) no aparece nada — cero fricción extra para el caso de
+siempre. El recálculo automático por desviación de ruta (cuando te sales del
+camino a mitad de viaje) sigue sin alternativas a propósito: interrumpir con
+un selector en pleno recálculo automático sería muy molesto.
+
+**5. Accesos directos de modo en la esfera.** El modo de actividad
+(ciclismo/MTB/trekking/moto) solo se podía cambiar desde Preferencias, muy
+escondido para algo que se usa seguido (quien anda a veces en bici y a veces
+en auto lo cambia bastante más que una vez). Fila compacta de 4 íconos justo
+debajo del título en la pantalla de la esfera, sin invadir el gesto de girar
+la esfera con el dedo (el hueco entre íconos no bloquea el toque, solo cada
+ícono es clicable).
+
+**Verificación:** sintaxis con `node --check` (0 errores); en navegador:
+simulé el escenario exacto del bug de velocidad — no, de km — probé que
+`_guardarEstadoNavParaReanudar`/`_intentarReanudarNavegacion` guardan,
+restauran (destino, distancia acumulada, track, trip id) y expiran (>3h)
+correctamente, y que `endNavigation` limpia el registro al terminar normal;
+probé que arrastrar el mapa de navegación suelta el auto-seguimiento y el
+botón 🎯 lo retoma; probé el selector de alternativas de ruta completo
+(2 opciones simuladas, elección de la segunda, resolución correcta); probé
+`_mapaRecentrar()` con `currentUserLocation` mockeado; probé los 4 chips de
+modo en la esfera (selección visual correcta, cambia `actividadTipo` real,
+no bloquea el área vacía del gesto de girar).
+
+**Versión:** APP_VERSION, version.txt y footer → 6.52. `sw.js` CACHE → v652.
+
+---
+
 ## v6.51 — 2026-07-13 — Claude (sesión 2, rigor en la velocidad: reporte real de 70 km/h mostrado como más de 100)
 
 Reporte concreto y verificable de Inty: le contaron que iban en auto a 70 km/h

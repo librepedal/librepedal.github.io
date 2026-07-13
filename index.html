@@ -89,6 +89,9 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-lbl{font-size:0.62rem;color:#cfeeff;margin-top:4px;font-weight:700;text-shadow:0 1px 3px #000}
 .es-title{position:absolute;top:18px;left:0;right:0;text-align:center;color:var(--p);font-weight:800;font-size:1.1rem;text-shadow:0 0 10px rgba(252,76,2,0.5);pointer-events:none}
 .es-hint{position:absolute;top:44px;left:0;right:0;text-align:center;color:#8fb0c8;font-size:0.72rem;pointer-events:none}
+.es-modo-rapido{position:absolute;top:70px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:9px;z-index:4;pointer-events:none}
+.es-modo-chip{width:38px;height:38px;border-radius:50%;background:rgba(10,18,30,0.78);border:2px solid rgba(255,255,255,0.16);font-size:1.15rem;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;transition:transform 0.15s,border-color 0.15s,background 0.15s}
+.es-modo-chip.selected{border-color:var(--p);background:rgba(252,76,2,0.22);transform:scale(1.1)}
 .es-classic{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
 .es-globe{background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
 #auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px 20px 40px;text-align:center;overflow-y:auto}
@@ -296,6 +299,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-stat .val{font-size:1rem;font-weight:800;color:var(--p)}
 .nav-stat .lbl{font-size:0.6rem;color:#888}
 .nav-close{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;border:none;width:35px;height:35px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:600}
+.nav-recenter-btn{position:absolute;right:14px;bottom:210px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:46px;height:46px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.map-recenter-btn{position:absolute;right:14px;bottom:24px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:46px;height:46px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-end-btn{width:100%;margin-top:8px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:10px 12px;border-radius:12px;font-size:0.85rem;font-weight:800;cursor:pointer}
 .nav-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(10,15,29,0.95);padding:12px;border-top:2px solid var(--p)}
 .nav-eta{display:flex;justify-content:space-around}
@@ -474,6 +479,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="speech-bubble" id="speechBubble">¡Hola!</div>
   <div class="nav-alert" id="navAlert"></div>
   <button class="nav-close" onclick="endNavigation()">✕</button>
+  <button class="nav-recenter-btn" id="btnNavRecenter" onclick="_navRecentrar()" title="Volver a mi ubicación">🎯</button>
   <div class="nav-top">
     <div class="gps-signal-badge" id="navGpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
     <div class="pausa-badge" id="navPausaBadge" style="display:none">⏸️ En pausa</div>
@@ -531,6 +537,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div id="esFlash"></div>
 <div class="es-title">Libre Pedal</div>
 <div class="es-hint">Gira con el dedo · toca un ícono para entrar</div>
+<div class="es-modo-rapido" id="esModoRapido"></div>
 <div id="esferaWrap"></div>
 <button class="es-classic" onclick="cerrarEsfera()">☰ Menú clásico</button>
 <div class="es-bottom">
@@ -735,7 +742,10 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="btrip" style="margin:0" onclick="cv('gui')">🧭 CicloGuía</button>
   <button class="ab sec" style="margin:0" id="btnCapaMapa" onclick="toggleCapaMapa()">🏔️ Topográfico</button>
 </div>
-<div id="map"></div>
+<div style="position:relative">
+  <div id="map"></div>
+  <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación">🎯</button>
+</div>
 <div id="reportes-comunidad"></div>
 <div id="route-alerts"></div>
 </section>
@@ -1003,7 +1013,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.51'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.52'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1383,7 +1393,7 @@ function elegirActividad(id, silencioso){
   // preferencia sin ningún aviso. Se sube a su perfil igual que casco/lentes/skin.
   if(cu){ try{ db.collection('users').doc(cu).set({actividad:id},{merge:true}).catch(function(){}); }catch(e){} }
   _aplicarTemaActividad();
-  renderActividadGrid(); renderModoRegistro();
+  renderActividadGrid(); renderModoRegistro(); renderModoRapidoEsfera();
   if(!silencioso) h('Listo, ahora te acompaño como '+_actividadActual().gentilicio+'.');
 }
 function renderActividadGrid(){
@@ -1399,10 +1409,19 @@ function renderModoRegistro(){
   const c=document.getElementById('modoRegistroGrid'); if(!c) return;
   c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\',true)"><div class="check">OK</div><div style="font-size:1.4rem">'+a.icono+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
 }
+// Acceso directo al modo desde la primera pantalla (la esfera): antes había que
+// entrar a Perfil → Preferencias para cambiarlo, muy escondido para algo que se
+// usa seguido (quien anda a veces en bici y a veces en auto lo cambia bastante
+// más que una vez). Fila de íconos chica, debajo del título, sin invadir el
+// gesto de girar la esfera (el hueco entre chips no bloquea el toque).
+function renderModoRapidoEsfera(){
+  const c=document.getElementById('esModoRapido'); if(!c) return;
+  c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="es-modo-chip'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\')" title="'+a.label.replace(/"/g,'')+'">'+a.icono+'</div>'; }).join('');
+}
 // Aplica el tema y pinta el selector apenas carga el script — así la pantalla de
 // registro (y una sesión que vuelve) ya se ven con el color correcto desde el
 // primer pintado, no recién después de loguearse.
-_aplicarTemaActividad(); renderModoRegistro();
+_aplicarTemaActividad(); renderModoRegistro(); renderModoRapidoEsfera();
 // ===== Personalidad de Pistero: el tono cambia, la identidad (Pistero, chileno,
 // experto) no. 'cercano' es el default — mismo tono que siempre tuvo la app.
 const PERSONALIDADES=[
@@ -2407,6 +2426,7 @@ window.onload = async function(){
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
+    _intentarReanudarNavegacion();
   } else {
     document.getElementById('auth').style.display='flex';
     rm(MG); fg('todos'); initCustomization();
@@ -2434,6 +2454,14 @@ function getCurrentLocation(){
     }, function(){ const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; showSpeechBubble("No se pudo obtener el GPS"); fin(null); },
     {enableHighAccuracy:true, timeout:15000, maximumAge:0});
   });
+}
+// Botón 🎯 del Mapa Global: a diferencia del mapa de navegación, este mapa
+// nunca te sigue solo (es para explorar la comunidad, no para ir a un destino),
+// así que no hace falta "soltar" ningún seguimiento — solo centra en tu
+// posición actual, como el botón equivalente de Google Maps.
+function _mapaRecentrar(){
+  if(currentUserLocation){ if(mp) mp.flyTo({center:[currentUserLocation.lon,currentUserLocation.lat], zoom:15, duration:1200}); return; }
+  getCurrentLocation().then(function(loc){ if(loc && mp) mp.flyTo({center:[loc.lon,loc.lat], zoom:15, duration:1200}); });
 }
 function showLoading(t){ document.getElementById('loadingText').innerText=t; const ov=document.getElementById('loadingOverlay'); ov.classList.add('show'); ov.onclick=hideLoading; /* escape de emergencia: un toque la cierra si algo queda pegado */ cadenaIniciar(0.5); }
 function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); cadenaDetener(); }
@@ -2553,6 +2581,7 @@ async function reg(e){
   getCurrentLocation();
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
+  _intentarReanudarNavegacion();
   if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(startTutorial, 700); }
   else { setTimeout(function(){ h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
 }
@@ -3333,7 +3362,18 @@ function velocidadVentana(pts){
 }
 function pv(v){ const f=document.getElementById('pf'); if(!f) return; const _u=_ritmoUmbrales(); const c=v===0?'parado':v<_u.lento?'lento':v>=_u.normal?'rapido':'normal'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
-function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd(); }
+let _ultimoSyncStats=0;
+function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd();
+  // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
+  // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
+  // sueltos de Darma o al apagar el GPS libre — quien solo navegaba a un destino
+  // (sin usar nunca el GPS libre) podía terminar viajes enteros sin que su km
+  // llegara jamás a la nube: acumulaba distancia real, pero el ranking (que lee
+  // el campo 'km' de Firestore) nunca se enteraba. Con esto el número en la nube
+  // nunca queda más de un minuto atrás, pase lo que pase con la app después.
+  const _ahoraSync=Date.now();
+  if(cu && (_ahoraSync-_ultimoSyncStats)>60000){ _ultimoSyncStats=_ahoraSync; if(typeof sincronizarStats==='function') sincronizarStats(); }
+}
 /* ===== Mapa principal: MapLibre GL + OpenFreeMap (vectorial, gratis, sin cuenta) =====
    Reemplaza los mosaicos planos de Leaflet/OSM por un estilo sobrio y elegante,
    igual de prolijo que las apps líderes del rubro. Se deja una capa de compatibilidad
@@ -4549,7 +4589,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   if(accuracy>30){ _gpsBadgeToggle('navGpsSignalBadge', true); return; }
   _gpsBadgeToggle('navGpsSignalBadge', false);
   // Pausa manual: seguimos mostrando tu posición pero NO contamos km, tiempo ni recalculamos.
-  if(viajePausaManual){ if(helmetMarker&&navMap){ helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]); } document.getElementById('navSpeed').innerText='0'; return; }
+  if(viajePausaManual){ if(helmetMarker&&navMap){ helmetMarker.setLatLng([lat,lon]); if(navAutoFollow) navMap.panTo([lat,lon]); } document.getElementById('navSpeed').innerText='0'; return; }
   const _now=Date.now();
   // Ventana de velocidad SEPARADA del registro de distancia (mismo patrón que el GPS
   // libre con posHistory/currentRoute): antes esto se calculaba sobre gpsPoints, que
@@ -4582,7 +4622,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
     }
   }
   else { gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now}; }
-  if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); navMap.panTo([lat,lon]); }
+  if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); if(navAutoFollow) navMap.panTo([lat,lon]); }
   L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
   document.getElementById('navSpeed').innerText=Math.round(speed);
   document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2);
@@ -4599,6 +4639,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   checkNavigationSteps(lat,lon);
   verificarDesviacion(lat,lon);
   compararRitmoHistorico(totalDistance, tiempoActivoMs());
+  _guardarEstadoNavParaReanudar();
 }
 /* Recalculo automático si te desvías (como Waze). CLAVE: mide la distancia a TODA la
    ruta (no solo al tramo actual) y con distancia punto-a-SEGMENTO real. Antes solo
@@ -4752,6 +4793,41 @@ function _detenerGpsLibreSiActivo(){
   ig=false; _detenerCronometroDash();
   const btn=document.getElementById('btnGPSLibre'); if(btn){ btn.innerText="📍 Iniciar GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
 }
+// ===== Mapa de navegación LIBRE, como Google Maps: mientras no lo tocas, sigue tu
+// posición sola; apenas lo arrastras, se suelta del seguimiento para que explores
+// a gusto; el botón 🎯 lo retoma. Antes esto se peleaba con vos: cada fix de GPS
+// (cada 1-2s) forzaba panTo() encima de cualquier movimiento manual, haciendo
+// imposible mirar el mapa libremente mientras ibas navegando. =====
+let navAutoFollow=true;
+function _navDetenerAutoFollow(){
+  if(!navAutoFollow) return;
+  navAutoFollow=false;
+  const b=document.getElementById('btnNavRecenter'); if(b) b.style.display='flex';
+}
+function _navRecentrar(){
+  navAutoFollow=true;
+  const b=document.getElementById('btnNavRecenter'); if(b) b.style.display='none';
+  if(navMap && helmetMarker){ navMap.panTo(helmetMarker.getLatLng()); }
+}
+// ===== Alternativas de ruta, como Google Maps: si OSRM devuelve más de un
+// camino razonable, se muestran para elegir en vez de arrancar directo con el
+// primero — reutiliza el modal genérico de la app (mismo que "Reportar en
+// Ruta"), no hace falta UI nueva. Si solo hay un camino (lo normal en rutas
+// rurales/cicloturismo), no aparece ningún selector: cero fricción extra. =====
+function _elegirRutaAlternativa(routes){
+  return new Promise(function(resolve){
+    let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Encontré más de un camino posible, elige el que prefieras:</p>';
+    routes.forEach(function(r,i){
+      const km=(r.distance/1000).toFixed(1), min=Math.round(r.duration/60);
+      html+='<div class="rep-cat" style="border:2px solid #2a3147;border-radius:12px;padding:14px;cursor:pointer;text-align:left;margin-bottom:10px" onclick="_elegirRutaAlternativaConfirmar('+i+')"><div style="font-weight:800;color:'+(i===0?'var(--p)':'#e2e8f0')+'">'+(i===0?'🚀 Ruta más rápida':'🔀 Ruta alternativa '+i)+'</div><div style="font-size:0.8rem;color:#9fb3c8;margin-top:4px">'+km+' km · '+min+' min</div></div>';
+    });
+    document.getElementById('modalTitle').innerText='🗺️ Elige tu ruta';
+    document.getElementById('modalContent').innerHTML=html;
+    document.getElementById('userModal').classList.add('on');
+    window._resolverEleccionRuta=function(i){ closeModal(); delete window._resolverEleccionRuta; resolve(i); };
+  });
+}
+function _elegirRutaAlternativaConfirmar(i){ if(window._resolverEleccionRuta) window._resolverEleccionRuta(i); }
 async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
   // Si ya había una navegación en curso (ej. el usuario pide por voz un destino nuevo
   // sin haber terminado el anterior), la cerramos primero para que guarde su avance
@@ -4763,6 +4839,12 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   if(navMap) navMap.remove();
   navMap=L.map('nav-map').setView([startLat,startLon],15);
   L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(navMap);
+  // Mapa libre, como Google Maps: sigue tu posición sola mientras no la toques,
+  // pero apenas la arrastras/haces zoom con el dedo se suelta del seguimiento
+  // automático para que puedas mirar lo que quieras — el botón 🎯 la retoma.
+  navAutoFollow=true;
+  const _btnNavRecenter=document.getElementById('btnNavRecenter'); if(_btnNavRecenter) _btnNavRecenter.style.display='none';
+  navMap.on('dragstart', _navDetenerAutoFollow);
   showHostelsOnNavMap(); subscribeToUsersOnNavMap();
   document.getElementById('navText').innerText="Calculando ruta..."; document.getElementById('navDist').innerText="";
   nextHydrateKm=5; nextEatKm=20;
@@ -4781,10 +4863,17 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   iniciarDeteccionCaidas();
   iniciarSeguimientoSegmentos(startLat,startLon);
   try{
-    const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true';
+    const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true&alternatives=true';
     const resp=await _fetchT(url, 15000); const data=await resp.json();
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ lpAviso("No pude calcular la ruta"); endNavigation(); return; }
-    const route=data.routes[0], steps=route.legs[0].steps;
+    // Si hay más de un camino razonable, se elige antes de arrancar (como Google
+    // Maps); con uno solo (lo normal en rutas rurales) sigue igual que siempre.
+    let _rutaIdx=0;
+    if(data.routes.length>1){
+      document.getElementById('navText').innerText="Elige tu ruta...";
+      _rutaIdx=await _elegirRutaAlternativa(data.routes);
+    }
+    const route=data.routes[_rutaIdx], steps=route.legs[0].steps;
     const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
     rutaLatLngs=latlngs; _prefetchPerfilRuta();
     if(routeLine) navMap.removeLayer(routeLine);
@@ -4879,6 +4968,58 @@ async function guardarRutaNavegada(){
   revisarRetosCumplidos();
   return data;
 }
+// ===== Persistencia de la navegación activa: sobrevive un apagón de pantalla.
+// Reporte real de Inty: se apagó la pantalla, se encendió, y la ruta ya no
+// estaba — tocó volver a ponerla a mano para seguir el viaje. Causa: Chrome
+// (y otros navegadores móviles) pueden "descartar" una pestaña en segundo
+// plano con la pantalla apagada para liberar memoria, borrando TODO el estado
+// que vivía solo en variables de JavaScript (destino, ruta, progreso) — el
+// WakeLock evita que la pantalla se apague sola, pero no evita que el usuario
+// la apague a mano con el botón físico, y ahí no hay wake lock que valga.
+// La solución no es evitar el descarte (no se puede, es el navegador quien
+// decide), sino guardar lo esencial para reconstruir el viaje al volver.
+const NAV_RESUME_KEY='lp_nav_activa';
+function _guardarEstadoNavParaReanudar(){
+  if(!navDestLat || !navDestLon) return;
+  try{
+    localStorage.setItem(NAV_RESUME_KEY, JSON.stringify({
+      destLat:navDestLat, destLon:navDestLon, destName:navDestName,
+      tripId:(currentTrip&&currentTrip.id)||null,
+      totalDistance:totalDistance, tripStartTime:tripStartTime,
+      // tope de puntos: en un viaje larguísimo no tiene sentido guardar cada
+      // punto para "reanudar" (el track completo ya se sube aparte al terminar);
+      // con los últimos ~2000 alcanza de sobra para no perder continuidad.
+      gpsPoints:gpsPoints.slice(-2000),
+      guardadoEn:Date.now()
+    }));
+  }catch(e){} // localStorage lleno o modo privado: no hay resumen, pero tampoco debe cortar la navegación
+}
+function _limpiarEstadoNavGuardado(){ try{ localStorage.removeItem(NAV_RESUME_KEY); }catch(e){} }
+// Se llama una vez al arrancar la app (tras loguear): si había un viaje a medio
+// camino cuando la pestaña se perdió, lo retoma solo, sin preguntar — preguntar
+// obligaría a tocar la pantalla justo en el escenario (manejando/pedaleando)
+// que motivó todo esto.
+async function _intentarReanudarNavegacion(){
+  let data; try{ data=JSON.parse(localStorage.getItem(NAV_RESUME_KEY)); }catch(e){ data=null; }
+  if(!data || !data.destLat || !data.destLon) return;
+  // Vencido (más de 3 horas desde el último guardado): lo más probable es que el
+  // viaje haya terminado de otra forma (cerraste la app del todo) y esto quedó
+  // pegado — mejor no reaparecer solo con una ruta vieja y quizás ya irrelevante.
+  if(!data.guardadoEn || (Date.now()-data.guardadoEn)>3*3600000){ _limpiarEstadoNavGuardado(); return; }
+  _limpiarEstadoNavGuardado(); // se vuelve a guardar solo apenas la navegación reanudada avance
+  if(!currentUserLocation){ await getCurrentLocation(); }
+  if(!currentUserLocation) return; // sin GPS no hay cómo recalcular la ruta
+  await calculateAndStartNavigation(currentUserLocation.lat, currentUserLocation.lon, data.destLat, data.destLon, data.destName);
+  // calculateAndStartNavigation arranca el progreso en cero, como cualquier viaje
+  // nuevo — sin esto, "reanudar" te dejaría con el odómetro reiniciado y el
+  // tramo ya recorrido antes del apagón, perdido.
+  if(data.gpsPoints && data.gpsPoints.length){ gpsPoints=data.gpsPoints; lastGpsPoint=gpsPoints[gpsPoints.length-1]; }
+  if(data.totalDistance) totalDistance=data.totalDistance;
+  if(data.tripStartTime) tripStartTime=data.tripStartTime;
+  if(data.tripId) currentTrip={id:data.tripId};
+  document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2);
+  h('Recuperé tu viaje a '+(data.destName?data.destName.split(',')[0].trim():'tu destino')+', seguimos.');
+}
 function finishTripAuto(){ navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).then(function(){ }).catch(function(){ }); }
 function formatDistance(m){ if(m<1000) return Math.round(m)+' m'; return (m/1000).toFixed(1)+' km'; }
 function showHostelsOnNavMap(){ allHostels.forEach(function(hh){ if(hh.lat&&hh.lon){ L.marker([hh.lat,hh.lon],{icon:L.divIcon({className:'',html:'<div style="background:#ffd700;width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px #ffd700"></div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(hh.name)+'</b><br>'+escapeHTML(hh.location)); } }); }
@@ -4892,6 +5033,7 @@ function endNavigation(){
   // cerraste la navegación, seguía sonando (o la cola se seguía vaciando) de un viaje
   // que ya terminó — instrucciones de giro sonando segundos después de cerrar el mapa.
   pararVoz();
+  _limpiarEstadoNavGuardado(); // el viaje terminó de forma normal: no hay nada que reanudar después
   if(!navGuardado && gpsPoints.length>=2){
     if(currentTrip){
       _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs());
@@ -4902,6 +5044,10 @@ function endNavigation(){
     }
   }
   navGuardado=false;
+  // Red de seguridad final: asegura que el km de este viaje quede en la nube al
+  // cerrar, sin depender del sync periódico de 60s (un viaje corto podría cerrar
+  // antes de que ese primer sync se dispare).
+  if(typeof sincronizarStats==='function') sincronizarStats();
   lpWakeLock.disable(); detenerDeteccionCaidas();
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
   if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; rutaPerfil=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
