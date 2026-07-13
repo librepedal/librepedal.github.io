@@ -4,6 +4,66 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.44 — 2026-07-13 — Claude (sesión 2, cierre de la segunda vuelta: Pistero IA, Diario, Rutas, Inicio)
+
+Terminé de barrer las 4 áreas que faltaban de la segunda vuelta:
+
+- **Pistero IA**: revisé `preguntarPistero`/`_pisteroObedecer`/`_pisteroBurbuja` —
+  ya está bien protegido (`escapeHTML` en ambos lados del chat, historial
+  acotado a 40 mensajes, el input se limpia antes de mandar así que un
+  doble-tap no duplica el request). Sin cambios de código.
+- **Diario/Bitácora**: revisé `guardarBitacoraViaje` (la función combinada
+  ruta+hospedaje+diario) — ya maneja bien los casos de viaje planificado vs
+  rápido, confirma antes de terminar, y no guarda si no hay suficientes puntos.
+  Sin cambios de código.
+- **Mis viajes/Rutas**: comprobé que el contador de viajes de la Esfera
+  (`rutasLocales().length + trips completados`) no duplica un mismo viaje —
+  `finishTrip()` guarda en `trips` (planificado) O en `rutasLocales` (rápido),
+  nunca los dos para el mismo viaje. Sin cambios de código.
+- **Inicio/Esfera**: revisé el manejo de eventos táctiles/mouse del lanzador
+  3D — el flag `esBound` ya evita registrar los listeners de arrastre dos
+  veces, y `esRAF` evita loops de animación duplicados. Sin cambios de código.
+
+**Encontré 2 huecos reales, y los dos me los dejé YO mismo en v6.39** (al
+agregar piel/ojos/labios/vello/peinado/pañoleta nunca actualicé lo que ya
+existía para referirse a "casco/personalizar"):
+
+**1. La respuesta de Pistero a "¿qué cascos hay?"** solo mencionaba cascos,
+colores y accesorios — nada de las 6 categorías nuevas. Actualizada para
+mencionarlas todas.
+
+**2. El comando de voz para abrir Personalizar** (`personaliz|perfil|casco|
+personaje|mi avatar`) no reconocía NADA de vocabulario nuevo — decir "cambia
+mi peinado" o "ponme barba" no hacía nada. Ampliado con cuidado: "peinado",
+"barba", "bigote", "vello facial", "pañoleta/pañuelo" van sueltos (specific,
+sin riesgo real de falso positivo en este dominio), pero "ojos", "piel" y
+"labios" SOLO cuentan si vienen con una frase que de verdad pide cambiarlos
+("color de ojos", "cambia mi pelo") — sueltos quedan afuera a propósito,
+porque un ciclista real los usa también para quejarse ("me duelen los ojos",
+"se me quemó la piel", "tengo los labios partidos") y esas frases no deberían
+mandarte a Personalizar.
+
+**Verificación:** probé las 2 regex con 13 frases reales que SÍ deberían
+activar Personalizar y 6 frases realistas que NO deberían (quejas de cansancio/
+dolor/clima) — las 19 se comportaron como se esperaba, corrido en Node con el
+mismo motor (V8) que usa el navegador. El navegador de este sandbox estuvo
+temporalmente caído durante esta parte (infraestructura del entorno, no algo
+de la app — reintenté varias veces) así que esta vez la verificación de
+regex/lógica se hizo en Node en vez de en vivo en el navegador; el resto
+(sintaxis completa del archivo con `node --check` vía `new Function()`, y el
+despliegue con verificación de `version.txt` en producción) sí se hizo igual
+que siempre.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.44. `sw.js` CACHE → v644.
+Desplegado a librepedal.cl y confirmado en vivo.
+
+**Con esto termina la segunda vuelta completa del barrido** (autocrítica de
+v6.39-6.42 sin fallas nuevas, 3 condiciones de carrera reales en Comunidad
+v6.43, y estos 2 huecos de vocabulario/contenido en v6.44). Las 16 secciones
+de la app ya pasaron por dos pasadas meticulosas.
+
+---
+
 ## v6.43 — 2026-07-13 — Claude (sesión 2, segunda vuelta del barrido: 3 condiciones de carrera reales en Comunidad)
 
 Inty pidió una segunda vuelta meticulosa, con autocrítica. Primero re-verifiqué

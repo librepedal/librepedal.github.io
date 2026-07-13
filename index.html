@@ -651,7 +651,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.43</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.44</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -987,7 +987,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.43'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.44'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6193,7 +6193,7 @@ const FAQ_APP=[
   {r:/qu[eé] es (el )?taller macgyver|c[oó]mo arreglo (la bici|un pinchazo|la cadena)/, a:"El Taller MacGyver tiene diecisiete trucos para reparar tu bici con lo que tengas a mano: pinchazos, cadena, frenos y más. Lo encuentras en la sección Taller."},
   {r:/qu[eé] es (el )?seguimiento en vivo|c[oó]mo comparto mi ubicaci[oó]n/, a:"El seguimiento en vivo genera un link temporal para que alguien te siga en tiempo real mientras pedaleas. Lo activas desde Ajustes y se desactiva solo cuando terminas."},
   {r:/qu[eé] son los segmentos|c[oó]mo compito por un r[eé]cord/, a:"Los segmentos son tramos fijos donde compites por el mejor tiempo con otros ciclistas, con tabla de líderes. Se marcan automático cuando pasas por uno."},
-  {r:/qu[eé] cascos hay|c[oó]mo cambio (mi casco|de casco)/, a:"Tienes más de dieciocho cascos para elegir, con colores y accesorios. Entra a Perfil y toca Personalizar para probártelos."},
+  {r:/qu[eé] cascos hay|c[oó]mo cambio (mi casco|de casco)|c[oó]mo personalizo mi (personaje|perfil|avatar)/, a:"Tienes dieciocho cascos, lentes, tono de piel, color de ojos y labios, vello facial, peinados y pañoletas para armar tu personaje a tu gusto. Entra a Perfil y toca Personalizar para probártelos."},
   {r:/qu[eé] es la esfera/, a:"La esfera es el lanzador de aplicaciones de Libre Pedal: gira con el dedo y toca un ícono para entrar a cualquier sección."},
   {r:/en qu[eé] puesto (voy|estoy)|cu[aá]l es mi (puesto|posici[oó]n|ranking)/, a:"Entra a Estadísticas y ahí te muestro tu puesto actual en el ranking general."},
   {r:/qu[eé] (funciones tiene|puedes hacer|hace) (la app|libre pedal)|para qu[eé] sirve (esta app|libre pedal)/, a:"Te guío por voz como Waze, grabo tu ruta sola, te conecto con la comunidad de ciclistas, te aviso peligros y pendientes, y llevo tus estadísticas. Pregúntame por cualquier función y te explico."},
@@ -6277,7 +6277,10 @@ function handleVoiceCommand(raw){
   if(/taller|reparar|arreglar|mecanic|se me (pinch|rompi[oó])|bicicleta rota|no funciona mi bici/.test(t)){ cv('mac'); h("El taller MacGyver."); return; }
   if(/gu[ií]a|hospedaje|hostal|hostel|alojamiento|d[oó]nde.{0,15}(dormir|acampar)|\bacampar\b|camping/.test(t)){ cv('gui'); h("La CicloGuía."); return; }
   if(/estadistica|grafico|progreso|mi avance|mi rendimiento|como voy/.test(t)){ cv('stats'); h("Tus estadísticas."); return; }
-  if(/personaliz|perfil|casco|personaje|mi avatar/.test(t)){ cv('customize'); h("Personaliza tu personaje."); return; }
+  // "ojos"/"piel"/"labios" sueltos quedan afuera a propósito: un ciclista real los
+  // usa tambien para quejarse ("me duelen los ojos", "se me quemo la piel") — solo
+  // cuentan si van con una frase que de verdad pide cambiarlos.
+  if(/personaliz|perfil|casco|personaje|mi avatar|peinado|\bbarba\b|\bbigote\b|vello facial|pa[ñn]oleta|pa[ñn]uelo|tono de piel|color de (ojos|labios|piel)|(cambia|cambiar|cambiame|c[aá]mbiame)\s+(el|los|mis?)\s+(ojos|labios|pelo)/.test(t)){ cv('customize'); h("Personaliza tu personaje."); return; }
   if(/\bg\.?\s?p\.?\s?s\b|grabar|gepe ese/.test(t)){ toggleGPS(); return; }
   // Antes "cuanto" solo (sin nada más) disparaba esto — se comía CUALQUIER
   // pregunta con "cuánto" (cuánto me falta, cuánto se demora, cuánto cuesta...),
