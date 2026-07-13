@@ -4,6 +4,52 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.46 — 2026-07-13 — Claude (sesión 2, el "modo" de actividad pasa a primera plana)
+
+Pedido de Inty: el modo (ciclismo/MTB/trekking/moto) estaba escondido dentro de
+Perfil → Preferencias — casi nadie lo encontraba, todos arrancaban en "Ciclismo
+de ruta" sin saber que había otros. Pidió que fuera una elección visible desde
+el inicio, en el registro, que la app se "acomode a ese estilo", y que se pueda
+cambiar siempre.
+
+**Lo que se hizo:**
+- Nuevo selector de modo (mismo estilo visual que los demás selectores de la
+  app) **arriba de todo en la pantalla de registro**, antes que nombre/correo —
+  literalmente lo primero que se elige.
+- **La app entera adopta el tono del modo elegido**, no solo un cambio
+  cosmético local: `var(--p)`/`var(--g)` (color principal y de acento) se usan
+  116 y 57 veces respectivamente en toda la hoja de estilos, así que
+  redefinirlas en `:root` alcanza para teñir botones, acentos y bordes de TODA
+  la app de una sola vez. Colores pensados para cada modo, no una rotación de
+  matiz genérica: Ciclismo mantiene el naranja de siempre (cero cambio para
+  quien no toca esto), MTB un verde musgo/ámbar tierra, Trekking terracota/
+  salvia, Moto azul carretera/ámbar. Se aplica al cargar la página (antes de
+  loguearse también) y al toque apenas se elige — sin recargar.
+- Se puede cambiar cuando quieras desde Perfil → Preferencias, como antes —
+  ahí sigue confirmando por voz; en el registro el cambio es silencioso (no
+  tiene sentido que Pistero "hable" en medio de un formulario que aún no se
+  envía).
+- **De paso, encontré y arreglé el mismo bug de v6.38** pero para estos dos
+  campos: `reg()` restauraba piel/ojos/labios/vello/peinado/pañuelo al volver
+  desde un teléfono nuevo, pero NO restauraba `actividad` ni `personalidad` —
+  se perdían, pisadas por los valores por defecto de este dispositivo. Ahora sí
+  se restauran, con el mismo cuidado que el resto.
+
+**Verificación real en el navegador:** confirmé que el selector de registro
+muestra las 4 opciones; que elegir "MTB" cambia `--p`/`--g` al toque (verde
+musgo `#5c8a3a`); que registrarse con "MTB" elegido guarda `actividad:'mtb'`
+en Firestore; que un usuario con `actividad:'trekking'` ya guardado en la nube,
+al registrarse en un dispositivo nuevo SIN tocar el selector (que queda en el
+default 'ciclismo'), termina con `actividadTipo:'trekking'` restaurado y el
+tema correcto aplicado (`#b5651d`) — no pisado; y que cambiar el modo después,
+desde Preferencias, también actualiza el tema en vivo y sigue confirmando por
+voz como antes.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.46. `sw.js` CACHE → v646.
+Desplegado a librepedal.cl y confirmado en vivo.
+
+---
+
 ## v6.45 — 2026-07-13 — Claude (sesión 2, "la app arranca dos veces" — reporte directo de Inty)
 
 Inty abrió la web recién desplegada (tras una racha de 7 despliegues seguidos hoy,

@@ -376,6 +376,10 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="lp-logo-wrap"><img src="logo.jpg" alt="Libre Pedal" class="lp-logo"></div>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Crea tu personaje ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
+<div style="margin-bottom:14px;text-align:left">
+  <p style="color:var(--g);font-size:0.78rem;font-weight:800;margin:0 0 8px">¿Cómo te mueves? <span style="color:#7d8ba0;font-weight:400">— la app se acomoda a tu modo, y lo cambias cuando quieras</span></p>
+  <div class="helmet-grid" id="modoRegistroGrid"></div>
+</div>
 <input type="text" id="nombre-input" placeholder="Tu nombre" required maxlength="60" style="border:2px solid var(--g)">
 <input type="email" id="em" placeholder="correo@ejemplo.com" required maxlength="100">
 <select id="pais-input" title="Tu país (adapta las frases a tu jerga)">
@@ -651,7 +655,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.45</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.46</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -987,7 +991,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.45'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.46'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1341,27 +1345,52 @@ function _lookActual(){ return {piel:selectedPiel, ojos:selectedOjos, labios:sel
 // el default de SIEMPRE — cero cambio para quien no toque este selector. Verificado en
 // vivo que router.project-osrm.org responde 200 en los 3 perfiles (cycling/foot/driving).
 const ACTIVIDADES=[
-  {id:'ciclismo', label:'🚴 Ciclismo de ruta', icono:'🚴', osrm:'cycling', gentilicio:'ciclista', verbo:'pedaleando'},
-  {id:'mtb', label:'🚵 MTB / Gravel', icono:'🚵', osrm:'cycling', gentilicio:'ciclista de montaña', verbo:'rodando'},
-  {id:'trekking', label:'🎒 Senderismo / Trekking', icono:'🎒', osrm:'foot', gentilicio:'caminante', verbo:'caminando'},
-  {id:'moto', label:'🏍️ Moto / Auto (viaje)', icono:'🏍️', osrm:'driving', gentilicio:'viajero', verbo:'viajando'}
+  {id:'ciclismo', label:'🚴 Ciclismo de ruta', icono:'🚴', osrm:'cycling', gentilicio:'ciclista', verbo:'pedaleando', color:{p:'#fc4c02',g:'#ffd700'}},
+  {id:'mtb', label:'🚵 MTB / Gravel', icono:'🚵', osrm:'cycling', gentilicio:'ciclista de montaña', verbo:'rodando', color:{p:'#5c8a3a',g:'#c9a227'}},
+  {id:'trekking', label:'🎒 Senderismo / Trekking', icono:'🎒', osrm:'foot', gentilicio:'caminante', verbo:'caminando', color:{p:'#b5651d',g:'#8fae6e'}},
+  {id:'moto', label:'🏍️ Moto / Auto (viaje)', icono:'🏍️', osrm:'driving', gentilicio:'viajero', verbo:'viajando', color:{p:'#2563eb',g:'#f2b705'}}
 ];
 let actividadTipo=localStorage.getItem('lp_actividad')||'ciclismo';
 function _actividadActual(){ return ACTIVIDADES.find(function(a){return a.id===actividadTipo;})||ACTIVIDADES[0]; }
 function _osrmPerfil(){ return _actividadActual().osrm; }
-function elegirActividad(id){
+// La app entera usa var(--p)/var(--g) para su color principal y de acento (116 y 57
+// usos respectivos en toda la hoja de estilos) — cambiar estas dos variables en
+// :root basta para que TODA la app adopte el tono del modo elegido, sin tener que
+// tocar pantalla por pantalla. Ciclismo de ruta mantiene el naranja de siempre
+// (cero cambio visual para quien no toca esto); los otros 3 modos tienen su propio
+// tono con carácter propio, no una simple rotación de matiz.
+function _aplicarTemaActividad(){
+  const c=_actividadActual().color;
+  document.documentElement.style.setProperty('--p', c.p);
+  document.documentElement.style.setProperty('--g', c.g);
+}
+function elegirActividad(id, silencioso){
   if(!ACTIVIDADES.some(function(a){return a.id===id;})) return;
   actividadTipo=id; try{ localStorage.setItem('lp_actividad',id); }catch(e){}
   // Antes solo quedaba en localStorage: si el usuario cambiaba de celular perdía la
   // preferencia sin ningún aviso. Se sube a su perfil igual que casco/lentes/skin.
   if(cu){ try{ db.collection('users').doc(cu).set({actividad:id},{merge:true}).catch(function(){}); }catch(e){} }
-  renderActividadGrid();
-  h('Listo, ahora te acompaño como '+_actividadActual().gentilicio+'.');
+  _aplicarTemaActividad();
+  renderActividadGrid(); renderModoRegistro();
+  if(!silencioso) h('Listo, ahora te acompaño como '+_actividadActual().gentilicio+'.');
 }
 function renderActividadGrid(){
   const c=document.getElementById('actividadGrid'); if(!c) return;
   c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\')"><div class="check">OK</div><div style="font-size:1.4rem">'+a.icono+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
 }
+// El mismo selector, pero en la primera pantalla (registro) — antes el modo
+// quedaba escondido dentro de Perfil → Preferencias, así que casi nadie lo
+// encontraba y todos arrancaban en "Ciclismo de ruta" sin saber que existían
+// otros. Ahora es lo primero que se elige, y de inmediato tiñe la app entera
+// con el tono de ese modo — se puede cambiar cuando quieras desde Preferencias.
+function renderModoRegistro(){
+  const c=document.getElementById('modoRegistroGrid'); if(!c) return;
+  c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\',true)"><div class="check">OK</div><div style="font-size:1.4rem">'+a.icono+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
+}
+// Aplica el tema y pinta el selector apenas carga el script — así la pantalla de
+// registro (y una sesión que vuelve) ya se ven con el color correcto desde el
+// primer pintado, no recién después de loguearse.
+_aplicarTemaActividad(); renderModoRegistro();
 // ===== Personalidad de Pistero: el tono cambia, la identidad (Pistero, chileno,
 // experto) no. 'cercano' es el default — mismo tono que siempre tuvo la app.
 const PERSONALIDADES=[
@@ -2393,6 +2422,12 @@ async function reg(e){
     if(_prevData.vello) selectedVello=_prevData.vello;
     if(_prevData.peinado) selectedPeinado=_prevData.peinado;
     if(_prevData.panuelo) selectedPanuelo=_prevData.panuelo;
+    // Mismo cuidado para el modo de actividad y la personalidad de Pistero: sin esto,
+    // alguien que ya había elegido "MTB" o una personalidad distinta perdía esa
+    // elección al volver a entrar desde un teléfono nuevo (quedaba pisada por el
+    // default de este dispositivo, 'ciclismo'/'cercano', en vez de conservarse).
+    if(_prevData.actividad && ACTIVIDADES.some(function(a){return a.id===_prevData.actividad;})) actividadTipo=_prevData.actividad;
+    if(_prevData.personalidad) pisteroPersonalidad=_prevData.personalidad;
   }
   try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
   localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
@@ -2405,6 +2440,9 @@ async function reg(e){
   localStorage.setItem('lp_vello_'+cu,selectedVello);
   localStorage.setItem('lp_peinado_'+cu,selectedPeinado);
   localStorage.setItem('lp_panuelo_'+cu,selectedPanuelo);
+  try{ localStorage.setItem('lp_actividad',actividadTipo); }catch(e){}
+  try{ localStorage.setItem('lp_personalidad',pisteroPersonalidad); }catch(e){}
+  _aplicarTemaActividad();
   try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,piel:selectedPiel,ojos:selectedOjos,labios:selectedLabios,vello:selectedVello,peinado:selectedPeinado,panuelo:selectedPanuelo,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
   if(_esUsuarioNuevo){ try{ await db.collection('meta').doc('contadores').set({totalUsuarios:firebase.firestore.FieldValue.increment(1)},{merge:true}); }catch(e){} }
   document.getElementById('auth').style.display='none';
