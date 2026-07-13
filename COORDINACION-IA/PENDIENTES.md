@@ -3,20 +3,46 @@
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-13,
 versión actual del proyecto: **v6.55**.
 
-## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 (2026-07-13, escrito por sesión 1)
+## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 — PERMANENTE (actualizado 2026-07-13 por sesión 2)
 
-**Lo que pasó y no debe repetirse:** compartimos la MISMA carpeta de trabajo. El protocolo git
-(pull/push) NO protege contra dos IAs editando `index.html` al mismo tiempo — el que guarda último
-pisa al otro. Hoy sesión 2 dejó 72 líneas sin commitear (manos libres + fix km + ruta por voz) y sesión 1,
-antes de tocar nada, las **rescató** (commit `3da21e4`, con crédito a sesión 2) para no perderlas.
+**Pedido explícito de Inty: "quiero que desde ahora haya una coordinación sin
+fallas... esa indicación la tienes que hacer que se acaben los créditos de
+esta cuenta y la otra cuenta de Claude debe hacer lo mismo."** Esto no es una
+regla de una sesión — rige para TODA sesión futura de cualquiera de las dos
+cuentas, hasta nuevo aviso. Toda IA que abra este proyecto: lee esto ANTES de
+tocar `index.html`, no solo la primera vez.
 
-**REGLAS para no chocar (ambas sesiones):**
-1. **`git status` ANTES de editar `index.html`.** Si hay cambios sin commitear que NO son tuyos →
-   NO edites. Rescátalos con un commit (crédito al otro) o espera a que el otro comitee.
-2. **Comitea seguido, no dejes diffs grandes sin subir.** Un cambio a medias sin commitear es una bomba
-   para la otra sesión.
-3. **Divídanse el frente para no tocar las mismas funciones a la vez** (ver abajo).
-4. Nunca deployar/commitear la carpeta completa (tokens `MI-*.txt`) — carpeta limpia siempre.
+**¿Por qué no "uno edita, el otro revisa"?** Se evaluó y se descartó a
+propósito: ustedes dos usan cada cuenta cuando les acomoda, no en paralelo
+sincronizado — un modelo editor/revisor en tiempo real no aplica acá, y
+además reduce el rendimiento a la mitad (una sesión queda esperando a la
+otra). Lo que sí funciona con dos sesiones asíncronas compartiendo la misma
+carpeta es: **candado de archivo + territorio dividido + commits chicos y
+frecuentes.** Ninguna de las tres reglas por sí sola alcanza — juntas sí.
+
+**Lo que pasó y no debe repetirse:** el protocolo git (pull/push) NO protege
+contra dos IAs editando `index.html` al mismo tiempo — el que guarda último
+pisa al otro. El 2026-07-13 sesión 2 dejó 72 líneas sin commitear (manos
+libres + fix km + ruta por voz) y sesión 1, antes de tocar nada, las
+**rescató** (commit `3da21e4`, con crédito a sesión 2) para no perderlas. No
+fue un desastre esa vez, pero fue suerte de que alguien mirara a tiempo.
+
+**REGLAS OBLIGATORIAS para no chocar (ambas sesiones, todas las veces):**
+1. **Lee `COORDINACION-IA/EN-USO.md` ANTES de tocar `index.html`.** Es un
+   candado real: dice quién está editando ahora mismo (o `LIBRE`). Si está
+   ocupado por la otra sesión hace menos de 45 min, espera o trabaja en otra
+   cosa. Al empezar a editar, marca tu candado; al terminar de commitear
+   (push incluido), vuelve a dejarlo en `LIBRE`. Instrucciones completas ahí.
+2. **`git status` ANTES de editar, igual — el candado no reemplaza esto,
+   lo complementa.** Si hay cambios sin commitear que no son tuyos, no
+   edites: rescátalos con un commit (crédito al otro) o espera.
+3. **Comitea seguido, no dejes diffs grandes sin subir.** Un cambio a medias
+   sin commitear es una bomba para la otra sesión — y deja el candado de
+   `EN-USO.md` puesto más tiempo del necesario.
+4. **Divídanse el frente para no tocar las mismas funciones a la vez**
+   (ver reparto de territorio abajo) — reduce cuánto necesitan el candado.
+5. Nunca deployar/commitear la carpeta completa (tokens `MI-*.txt`) — carpeta
+   limpia siempre.
 
 **Reparto actual de trabajo:**
 - **Sesión 1 (Claude, esta):** VOZ y PERSONALIDAD — arquetipos de Pistero (10+ personalidades: sensible,
