@@ -1,7 +1,7 @@
 # ✅ Pendientes — Libre Pedal
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-13,
-versión actual del proyecto: **v6.42**.
+versión actual del proyecto: **v6.52**.
 
 ---
 
@@ -50,13 +50,19 @@ versión actual del proyecto: **v6.42**.
   minutos). Ninguna IA lo hace por su cuenta a propósito (cambio de control de
   acceso sobre producción). Después de publicar, Inty debe recargar la app una
   vez para que su sesión suba a `isAdmin()`.
-- [ ] **Google Play: cuenta de desarrollador ya pagada por Inty, en validación.**
-  Cuando quede activa, falta: (1) capturas de pantalla reales de la app —
-  ofrecido ayudar a tomarlas, no se ha hecho; (2) generar el build **.aab**
-  firmado que pide Play Store (el pipeline actual (`build-apk.yml`) genera un
-  `.apk` de debug, no un `.aab` de release firmado — son formatos y procesos
-  distintos, falta armar ese paso). `PLAY-STORE-LISTING.md` ya tiene toda la
-  ficha lista para copiar/pegar.
+- [ ] **Google Play: cuenta de desarrollador APROBADA (2026-07-13, confirmado
+  por Inty)** — ya no está "en validación", queda activa para publicar. Falta:
+  (1) capturas de pantalla reales de la app — ofrecido ayudar a tomarlas, no
+  se ha hecho; (2) generar el build **.aab** firmado que pide Play Store (el
+  pipeline actual (`build-apk.yml`) genera un `.apk` de debug, no un `.aab` de
+  release firmado — son formatos y procesos distintos, falta armar ese paso.
+  OJO: firmar un `.aab` de release exige un keystore — generarlo es un paso
+  de una sola vez y MUY delicado: si se pierde esa llave, Google Play nunca
+  más deja subir una actualización a esa misma app, hay que decidir con Inty
+  cómo generarlo y dónde guardarlo a buen resguardo, no generarlo a la
+  ligera). `PLAY-STORE-LISTING.md` ya tiene toda la ficha lista para
+  copiar/pegar. (3) Crear la ficha en Play Console y subir el primer build —
+  eso lo hace Inty directamente (es su cuenta de Google).
 - [ ] **Capturas de pantalla para la ficha de Play Store** — nadie las ha
   generado todavía (se evitó ensuciar Firestore de producción con una cuenta de
   prueba). Pendiente de decidir cómo generarlas sin ese riesgo.
@@ -231,8 +237,8 @@ Candidatos (Inty prioriza; si Gemini toma uno, anótalo aquí para no chocar):
 - [x] `PLAY-STORE-LISTING.md` ya tiene título, descripción corta/larga, categoría, guía de rating de
   contenido y de "Data safety". Assets gráficos ya generados: `play-icon-512.png` (512×512),
   `play-feature-graphic-1024x500.png` (con el logo real).
-- [x] Cuenta de desarrollador de Google Play: **ya pagada por Inty (USD 25) y en proceso de validación de
-  datos por Google** (a 2026-07-12). Cuando quede validada, se puede crear la ficha y subir el primer build.
+- [x] Cuenta de desarrollador de Google Play: **pagada por Inty (USD 25) y APROBADA por Google
+  (confirmado 2026-07-13)** — ya se puede crear la ficha y subir el primer build.
 - [ ] Falta: capturas de pantalla reales de la app (necesita login + navegar unas pantallas, no se hizo
   para no ensuciar Firestore de producción con una cuenta de prueba).
 - [ ] Falta: build firmado `.aab` de release — hoy el pipeline (`build-apk.yml`) solo genera un `.apk` debug
