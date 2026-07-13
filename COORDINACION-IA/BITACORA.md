@@ -1198,6 +1198,24 @@ Cero funciones eliminadas — solo se reubicaron accesos:
   diagnóstico de v5.92 (WebView no soporta `webkitSpeechRecognition`) es correcto y el fix está completo del
   lado web; solo falta que el APK traiga el plugin (ver PENDIENTES, tarea de Gemini).
 
+## v6.37 — 2026-07-13 — Claude (sesión 1, barrido #8: SOS y detección de caídas)
+Siguiendo la numeración de sesión 2 (#1-#7 hechos). Barrido #8 = seguridad (SOS + caídas), lo más crítico.
+**El grueso de la sección está SÓLIDO** (lo confirmo, no solo busco bugs):
+- `enviarSOS`: con/sin GPS (usa última ubicación), con/sin contactos (WhatsApp o navigator.share). OK.
+- Detección de caídas: impacto por acelerómetro + **doble chequeo de quietud** (1.5s y 3s) para filtrar
+  baches; permiso iOS pedido bien (con gesto); alerta de 30s con vibración + alarma sonora + voz + botón
+  "Estoy bien"; al llegar a 0 muestra botones de WhatsApp (honesto: WhatsApp exige un toque, no se puede
+  auto-enviar desde web) + botón "Cerrar" que resetea `crashAlertaActiva`. Bien pensado.
+**1 bug real corregido:** `agregarContactoSOS` no validaba teléfono duplicado ni limpiaba los campos →
+doble-tap agregaba el contacto 2 veces. Ahora chequea duplicado + limpia inputs.
+**⚠️ HALLAZGO IMPORTANTE que NO toqué (necesita prueba en dispositivo real):** el chequeo de quietud tras
+el impacto usa la VELOCIDAD del GPS (`spd`/`navSpeed`), pero esa velocidad viene de una ventana de ~10-15s de
+posiciones → LAGGEA. A los 3s post-impacto la velocidad mostrada puede seguir siendo la de ANTES del choque
+(alta) → el chequeo cree que "sigues moviéndote" → NO alerta → **podría MISSEAR caídas reales a velocidad**.
+El fix correcto es medir la quietud con el ACELERÓMETRO (movimiento bajo tras el impacto), no con la velocidad
+GPS. NO lo cambié a ciegas: tocar lógica de seguridad sin poder hacer un drop-test real puede meter falsos
+positivos (alarma en cada bache) o negativos. **Requiere validación con teléfono real (prueba de caída).**
+
 ## v6.36 — 2026-07-13 — Claude (sesión 1, barrido: creación de contenido de comunidad)
 Adopté el protocolo de sesión 2 (variantes reales de uso, cuestionar cada función, no solo el caso feliz).
 Función/sección: **crear contenido de comunidad** (hospedaje, POI, truco, reto, rodada, frase).
