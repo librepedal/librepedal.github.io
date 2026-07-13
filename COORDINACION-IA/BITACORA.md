@@ -4,6 +4,74 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.38 — 2026-07-13 — Claude (sesión 2, barrido #9: Gamificación — Darma y personalización no sobrevivían a un teléfono nuevo)
+
+Retomé el barrido en **Gamificación** (Logros, Ranking, Retos, Wrapped, Tienda de
+Darma). La mayoría ya estaba sólido (retos con guardas anti-doble-tap y validación
+de negativos de una pasada anterior, ranking/logros con la navegación "volver" ya
+arreglada). Encontré y corregí 3 cosas reales:
+
+**1. `ap()` era código muerto — eliminada.** Función "agregar punto al mapa" que
+nunca se llama desde ningún botón (`grep -n '\bap\b'` solo la encontraba en su
+propia definición) ni existían los elementos `#np`/`#cp` que leía. Además tenía el
+mismo bug de "otorgar Darma antes de confirmar el guardado, sin guarda anti-doble-tap"
+que este proyecto ya sabía corregir (ver el comentario en `agregarPOI`/reportes:
+"evita duplicar el documento y el Darma con doble-tap"). Al estar inalcanzable no
+afectaba a nadie, pero quedaba como trampa para quien la reconectara copiando el
+patrón equivocado. Eliminada completa.
+
+**2. `comprarItem()` no respaldaba en la nube lo que pagabas con Darma.** Los
+ítems desbloqueados con Darma (cascos, skins, lentes, accesorios premium) solo se
+guardaban en `localStorage` (`lp_unlocked_<usuario>`). Si cambiabas de teléfono o
+reinstalabas, tu saldo de Darma SÍ volvía (ya gastado, vía `sincronizarStats()`)
+pero el ítem que compraste con esa plata, no — perdías lo pagado. Se agregó un
+`db.collection('users').doc(cu).set({unlocked: FieldValue.arrayUnion(id)}, {merge:true})`
+en cada compra, mismo patrón aditivo (arrayUnion, no sobrescribe) que ya usa el
+resto del proyecto para evitar condiciones de carrera entre dispositivos.
+
+**3. Más grave: `reg()` (login/registro) SOBRESCRIBÍA en Firestore el casco, skin,
+lente y accesorios ya guardados en la nube con los valores por defecto de este
+dispositivo, cada vez que alguien volvía a entrar en un teléfono nuevo o después de
+reinstalar.** La causa: `selectedHelmet/selectedLens/selectedSkin/selectedExtras`
+arrancan en 'giro'/'none'/'cyan'/[] en cualquier pestaña nueva (línea ~1231), y
+`reg()` los escribía en Firestore con `.set(...,{merge:true})` sin haber leído antes
+lo que ya existía — el `merge:true` no salva nada acá porque el campo `helmet` sí
+viaja en el payload, así que pisa el valor anterior igual. Resultado real: un
+ciclista que compró un casco premium con Darma, y después perdió la sesión local o
+cambió de celular, no solo no lo veía de vuelta — el próximo login BORRABA el
+registro en la nube de que alguna vez lo tuvo.
+
+Arreglo: `reg()` ahora lee el doc existente (`_prevDoc`, que ya se pedía para saber
+si es usuario nuevo) ANTES de escribir nada, y si existe, usa su `helmet/lens/skin/
+extras/unlocked` en vez de los valores por defecto de este dispositivo — y hace
+unión (no reemplazo) del array `unlocked` con lo que este dispositivo ya tenía
+localmente, para no perder tampoco compras hechas antes de este fix (docs viejos
+sin campo `unlocked`).
+
+**Verificación real en el navegador** (no solo lectura de código):
+- `comprarItem()`: mockeado `db.collection` para capturar escrituras; confirmado
+  que descuenta Darma, agrega el id a `localStorage`, y manda
+  `{unlocked: FieldValue.arrayUnion('amarillo')}` con `merge:true` a `users/<cu>`.
+- `reg()`: mockeado un doc de Firestore existente con
+  `{helmet:'kask',lens:'aviator',skin:'negro',extras:['calco'],unlocked:[...]}`
+  simulando "cuenta vieja, teléfono nuevo", y ejecutado `reg()` real (con DOM/inputs
+  mockeados) de punta a punta. Confirmado: `selectedHelmet/Lens/Skin/Extras`
+  terminan en los valores de la nube (no en los por defecto), `getDesbloqueados()`
+  local queda con el array completo, y la escritura final a Firestore **reescribe
+  esos mismos valores** en vez de pisarlos con defaults. También probé el caso
+  "usuario nuevo de verdad" (sin doc previo) y "mismo dispositivo con doc viejo sin
+  campo `unlocked`" — ambos se comportan bien (sin crash, sin perder nada local).
+- `firestore.rules`: no necesitó cambios — la regla de `users/{id}` valida
+  `nombre/email/helmet/skin` por longitud, no toca `extras`/`unlocked`.
+- `node --check` (vía `new Function()` sobre cada bloque `<script>`) sin errores.
+
+**Versión:** APP_VERSION, version.txt y footer → 6.38. `sw.js` CACHE → v638.
+
+Barrido — sigue: Personalización (lo que queda además de Tienda/Darma, ya cubierto
+acá), Música, Novedades, Taller/Guía, Ajustes, Admin, base/PWA.
+
+---
+
 ## v6.34 + Worker IA — 2026-07-13 — Claude (sesión 2, Pistero "pedaleando vs detenido" + auditoría de audio ducking)
 Inty pegó dos specs largas (personalidad de un compañero de viaje IA + arquitectura
 de audio ducking estilo Android nativo) y pidió "busca la mejor manera de

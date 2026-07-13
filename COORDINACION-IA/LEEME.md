@@ -4,7 +4,7 @@ Este proyecto lo trabajan **varias IAs en paralelo** (hoy: dos sesiones de Claud
 en el pasado, Gemini). Lee esto ANTES de tocar el código para no romper ni duplicar
 el trabajo de otra sesión — sea cual sea el modelo que la esté corriendo.
 
-**Última actualización:** 2026-07-13 · **Versión viva:** v6.37
+**Última actualización:** 2026-07-13 · **Versión viva:** v6.38
 
 📌 **`VISION-MAESTRA.md`** en esta misma carpeta es el norte del producto completo
 (prompt maestro de Inty) con auditoría real de qué existe y qué falta — leerlo antes
@@ -63,10 +63,14 @@ cualquier otro agente con acceso a archivos/terminal/navegador), seguí esto:
 **Barrido — estado (actualízalo si seguís de acá):** #1 GPS y navegación, #2
 Inicio/Esfera, #3 Mis viajes/Rutas, #4 Diario/Bitácora, #5 Comunidad, #6 Social,
 #7 Pistero IA — cerrados. #8 SOS y detección de caídas — cerrado salvo el hallazgo
-de seguridad de arriba (necesita teléfono real). Además, fuera de la numeración:
+de seguridad de arriba (necesita teléfono real). #9 Gamificación (Logros, Ranking,
+Retos, Wrapped, Tienda de Darma) — cerrado en v6.38: eliminado código muerto (`ap()`),
+y arreglado que comprar con Darma / el casco-skin-lente-accesorios equipados no
+sobrevivían a un teléfono nuevo (ver BITACORA v6.38, incluye un bug real donde
+`reg()` borraba en la nube lo ya comprado). Además, fuera de la numeración:
 escalabilidad de lecturas Firestore (`count()`) y creación de contenido de
-comunidad (guards anti-doble-tap) ya revisados. Quedan: Gamificación,
-Personalización, Música, Novedades, Taller/Guía, Ajustes, Admin, base/PWA.
+comunidad (guards anti-doble-tap) ya revisados. Quedan: Personalización (lo que no
+cubre Tienda/Darma), Música, Novedades, Taller/Guía, Ajustes, Admin, base/PWA.
 
 ## 🌐 ¿Se puede sumar a Qwen, Kimi u otro modelo con este mismo protocolo?
 
@@ -110,14 +114,18 @@ Sube el número en cada cambio (la app se auto-repara comparando con `version.tx
 - **Flujo correcto en cada cambio:** subir versión → `git commit` + `git push` (durabilidad + APK) **Y** `wrangler pages deploy` (web en vivo). Si solo haces push, la web NO se actualiza.
 
 ## 🔐 SEGURIDAD — no repitas la fuga
-- **NUNCA** deployes ni subas la **carpeta completa**. Contiene `MI-CLOUDFLARE.txt`, `MI-CLOUDFLARE-IA.txt`, `MI-TOKEN-NETLIFY.txt` (tokens). Están en `.gitignore`, pero **wrangler los sube igual** si deployas la carpeta entera.
+- **NUNCA** deployes ni subas la **carpeta completa**. Contiene `MI-CLOUDFLARE.txt`, `MI-CLOUDFLARE-IA.txt`, `MI-TOKEN-NETLIFY.txt` (tokens) y **`firebase-service-account.json`** (clave privada de Admin SDK — acceso TOTAL a Firestore/Auth, mucho más grave que los tokens de arriba). Todos están en `.gitignore`, pero **wrangler los sube igual** si deployas la carpeta entera.
+- ⚠️ (2026-07-13) Casi se filtra `firebase-service-account.json` en un deploy de sesión 2: el snippet de abajo no lo tenía en la lista de exclusión (no existía cuando se escribió el snippet). Se detectó ANTES de correr `wrangler pages deploy` revisando el listado de la carpeta limpia — no llegó a publicarse. El snippet de abajo ya quedó corregido para excluirlo siempre. **Antes de correr `wrangler pages deploy`, mirá el `ls` de la carpeta limpia una vez más** — no asumas que el snippet de hoy cubre archivos que se agreguen mañana.
 - Deploya SIEMPRE desde una **carpeta limpia** con solo archivos web. Snippet listo:
   ```bash
   SRC=.; CLEAN=../lp-deploy
   rm -rf "$CLEAN"; mkdir -p "$CLEAN"; cp -r "$SRC"/* "$CLEAN"/
   rm -f "$CLEAN"/MI-*.txt "$CLEAN"/firestore.rules "$CLEAN"/REGLAS-FIREBASE.txt \
-        "$CLEAN"/*.md "$CLEAN"/package.json "$CLEAN"/capacitor.config.json
-  rm -rf "$CLEAN"/scripts "$CLEAN"/concepts "$CLEAN"/COORDINACION-IA
+        "$CLEAN"/*.md "$CLEAN"/package.json "$CLEAN"/capacitor.config.json \
+        "$CLEAN"/firebase-service-account.json
+  rm -rf "$CLEAN"/scripts "$CLEAN"/concepts "$CLEAN"/COORDINACION-IA "$CLEAN"/node_modules \
+         "$CLEAN"/worker-auth "$CLEAN"/worker-ia "$CLEAN"/.wrangler
+  ls "$CLEAN"   # revisar a ojo antes de deployar — ningún .json de credenciales, ningún MI-*.txt
   wrangler pages deploy "$CLEAN" --project-name=librepedal --branch=main
   ```
 - (2026-07-11, corregido) Lo de arriba era una **falsa alarma**: `librepedal.cl/MI-*.txt` devuelve HTTP 200

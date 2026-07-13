@@ -641,7 +641,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.37</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.38</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -956,7 +956,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.37'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.38'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1589,7 +1589,11 @@ function seleccionarFondoEsfera(n){ if(n===2 && !estaDesbloqueado('fondoespacial
 function renderFondosEsfera(){ const c=document.getElementById('fondosEsferaGrid'); if(!c) return; const nombres=['Postales de Chile','Espacial'], emojis=['🏞️','🌌']; let html=''; for(let n=1;n<=2;n++){ const lock=(n===2 && !estaDesbloqueado('fondoespacial')); const sel=(esFondoModo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarFondoEsfera('+n+')">'+(lock?'<div class="lock-badge">🔒 '+PRECIOS.fondoespacial+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4">'+emojis[n-1]+'</div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
 function getDesbloqueados(){ try{ return JSON.parse(localStorage.getItem('lp_unlocked_'+(cu||'anon'))||'[]'); }catch(e){ return []; } }
 function estaDesbloqueado(id){ return !(id in PRECIOS) || getDesbloqueados().indexOf(id)!==-1; }
-function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ lpAviso('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){} au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
+function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ lpAviso('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){}
+  // Respalda en la nube lo que ya pagaste con Darma — si no, al cambiar de teléfono
+  // o reinstalar, perdías el ítem aunque tu saldo de Darma (ya gastado) sí viajaba.
+  if(cu){ try{ db.collection('users').doc(cu).set({unlocked:firebase.firestore.FieldValue.arrayUnion(id)},{merge:true}); }catch(e){} }
+  au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
 function mostrarTienda(desdeLogros){
   // Se abre desde 2 lugares distintos: el menú de Logros (ahí sí tiene sentido
   // "← Volver" a ese menú) y al tocar un ítem bloqueado en Personalizar (ahí la
@@ -2134,10 +2138,6 @@ async function reg(e){
   try{ localStorage.setItem('lp_pais',paisUsuario||''); }catch(e){}
   localStorage.setItem('lp_session',cu);
   localStorage.setItem('lp_nombre_'+cu,nombre);
-  localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
-  localStorage.setItem('lp_lens_'+cu,selectedLens);
-  localStorage.setItem('lp_skin_'+cu,selectedSkin);
-  localStorage.setItem('lp_extras_'+cu,JSON.stringify(selectedExtras));
   // authUid: uid real de Firebase Auth, ademas del id legado (cu, derivado del email).
   // Se guarda de forma aditiva para migrar mas adelante a reglas de Firestore por-dueno sin romper nada hoy.
   const _authUid = window.lpUID || (firebase.auth().currentUser && firebase.auth().currentUser.uid) || null;
@@ -2145,9 +2145,27 @@ async function reg(e){
   // volvió a pasar por el formulario) para llevar la cuenta total de suscritos sin
   // tener que leer la colección completa cada vez que alguien quiere votar — ver
   // votarComunidad() más abajo.
-  let _esUsuarioNuevo=false;
-  try{ const _prevDoc=await db.collection('users').doc(cu).get(); _esUsuarioNuevo=!_prevDoc.exists; }catch(e){}
-  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
+  let _esUsuarioNuevo=false, _prevData=null;
+  try{ const _prevDoc=await db.collection('users').doc(cu).get(); _esUsuarioNuevo=!_prevDoc.exists; if(_prevDoc.exists) _prevData=_prevDoc.data(); }catch(e){}
+  // Si ya existía cuenta en la nube (celular nuevo, reinstalación o sesión perdida),
+  // recupera el look y los ítems comprados con Darma en vez de pisarlos con los
+  // valores por defecto de este dispositivo — antes esto sobrescribía en Firestore
+  // el casco/skin/lente/extras guardados con 'giro'/'cyan'/'none'/[] cada vez que
+  // alguien volvía a iniciar sesión en un teléfono nuevo, borrando lo ya comprado.
+  let _unlockedFinal=getDesbloqueados();
+  if(_prevData){
+    if(_prevData.helmet) selectedHelmet=_prevData.helmet;
+    if(_prevData.lens) selectedLens=_prevData.lens;
+    if(_prevData.skin) selectedSkin=_prevData.skin;
+    if(Array.isArray(_prevData.extras)) selectedExtras=_prevData.extras;
+    if(Array.isArray(_prevData.unlocked)){ _unlockedFinal=_unlockedFinal.concat(_prevData.unlocked.filter(function(x){return _unlockedFinal.indexOf(x)===-1;})); }
+  }
+  try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
+  localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
+  localStorage.setItem('lp_lens_'+cu,selectedLens);
+  localStorage.setItem('lp_skin_'+cu,selectedSkin);
+  localStorage.setItem('lp_extras_'+cu,JSON.stringify(selectedExtras));
+  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
   if(_esUsuarioNuevo){ try{ await db.collection('meta').doc('contadores').set({totalUsuarios:firebase.firestore.FieldValue.increment(1)},{merge:true}); }catch(e){} }
   document.getElementById('auth').style.display='none';
   document.getElementById('logoutBtn').style.display='block';
@@ -3071,16 +3089,6 @@ async function im(){
     _mapaFalloVisible('No se pudo iniciar el mapa: '+(err&&err.message?err.message:'error desconocido'));
     try{ if(window.Sentry) Sentry.captureException(err); }catch(e2){}
   }
-}
-function ap(){
-  const n=document.getElementById('np').value.trim(); const cat=document.getElementById('cp').value;
-  if(!n) return;
-  const loc = currentUserLocation || (mp ? {lat:mp.getCenter().lat, lon:mp.getCenter().lng} : null);
-  if(!loc){ lpAviso("Activa el GPS para ubicar el punto en el mapa"); return; }
-  const iconos={agua:'💧',camping:'⛺',taller:'🔧',mirador:'📸',hostel:'🏠'};
-  us.d+=20; au(); sincronizarStats();
-  db.collection('recommendations').add({user:cu,nombre:nombreUsuario,title:(iconos[cat]||'📍')+' '+n,cat:cat,desc:'Punto marcado en el mapa por la comunidad.',lat:loc.lat,lon:loc.lon,likes:0,likedBy:[],authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){ h("Punto guardado en el mapa. Veinte de Darma para ti."); }).catch(function(){ h("No se pudo guardar el punto."); });
-  document.getElementById('np').value="";
 }
 function irAlPuntoYNavegar(lat,lon,name){
   lat=parseFloat(lat); lon=parseFloat(lon); name=name||'este punto';
