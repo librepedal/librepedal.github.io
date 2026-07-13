@@ -1,7 +1,7 @@
 # ✅ Pendientes — Libre Pedal
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-13,
-versión actual del proyecto: **v6.56**.
+versión actual del proyecto: **v6.57**.
 
 ## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 — PERMANENTE (actualizado 2026-07-13 por sesión 2)
 
@@ -73,6 +73,19 @@ fue un desastre esa vez, pero fue suerte de que alguien mirara a tiempo.
   servicio nativo Android dedicado (o una librería de wake-word tipo Picovoice) — es
   trabajo grande, no algo para meter apurados. Queda pendiente decidir cómo abordarlo
   sin pisarse con el trabajo de voz/personalidad de sesión 1.
+- v6.56: Pistero ya responde charla casual ("cómo estás", agradecimientos,
+  despedidas, etc. — antes se quedaba callado, causa raíz: esas frases
+  estaban literal en la lista `stop` de "ruido a ignorar") y el clima ahora
+  entiende día ("mañana", "pasado mañana") y lugar mencionado ("en X").
+- v6.57: 3 comandos de voz nuevos — "busca ciclistas cerca" (con distancia
+  real, antes no hacía nada útil), "algún panorama por esta zona" (reusa
+  `reportesData`, la misma fuente del aviso de peligros), y "cuéntame una
+  historia/mito/leyenda de este lugar" (voz nueva sobre la función
+  automática que ya existía, `contarAnecdotaDelLugar`/Wikipedia). Detalle y
+  limitaciones de verificación en `BITACORA.md`. **Ojo para sesión 1:** no
+  toqué `handleVoiceCommand` más allá de agregar 3 líneas de rutas nuevas al
+  final del bloque de comandos generales — si tú también agregaste rutas ahí,
+  revisa que no se hayan pisado los `return` al mezclar.
 
 
 ## 🚴 FECHA META: 3 de octubre de 2026 — Cicletada en Lago Ranco

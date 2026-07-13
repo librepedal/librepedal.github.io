@@ -1028,7 +1028,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.56'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.57'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2386,6 +2386,47 @@ async function contarAnecdotaDelLugar(clave, full, lat, lon){
     hAmbiente(intros[Math.floor(Math.random()*intros.length)]+' '+texto);
   }catch(e){}
 }
+// "Cuéntame otra historia de este lugar" / mitos / leyendas / nombre antiguo,
+// PEDIDO por voz (a diferencia de contarAnecdotaDelLugar de arriba, que es
+// automática y suena una sola vez por zona sin que nadie la pida). Reusa el
+// mismo geosearch real de Wikipedia y el mismo registro de "ya contadas" (para
+// que "otra" de verdad traiga una distinta), pero SIN el freno de "una vez
+// por zona" — si lo pides a propósito, se te da, las veces que quieras
+// mientras queden candidatos sin contar cerca tuyo.
+async function _pisteroHistoriaLugar(pedirMito){
+  const loc=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+  if(!loc){ h('Necesito tu ubicación para buscar la historia de este lugar — activa el GPS y pregúntame de nuevo.'); return; }
+  h('Dame un segundo, busco algo interesante de por aquí...');
+  try{
+    const gr=await fetch('https://es.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord='+loc.lat+'%7C'+loc.lon+'&gsradius=10000&gslimit=15&format=json&origin=*');
+    const gj=await gr.json();
+    const lista=(gj.query&&gj.query.geosearch)||[];
+    if(!lista.length){ h('No encontré nada documentado de este lugar en Wikipedia todavía — andas por zonas poco exploradas, ¡buena señal!'); return; }
+    const contadas=_anecdotasContadas();
+    let cand=lista.filter(function(x){ return contadas.indexOf(x.title)===-1; });
+    if(!cand.length) cand=lista; // ya se contaron todas las cercanas: se repiten (mejor que quedar mudo)
+    // Si pidió mito/leyenda específicamente, prioriza un candidato cuyo TÍTULO lo
+    // sugiera — Wikipedia no permite filtrar geosearch por contenido, así que esto
+    // es lo más certero sin inventar nada; si no hay ninguno así, se avisa honesto.
+    let elegido=null, esMitoReal=false;
+    if(pedirMito){
+      for(let i=0;i<cand.length;i++){ if(/mito|leyenda|legendari[oa]/i.test(cand[i].title)){ elegido=cand[i]; esMitoReal=true; break; } }
+    }
+    if(!elegido) elegido=cand[Math.floor(Math.random()*Math.min(cand.length,6))];
+    if(!elegido) return;
+    const sr=await fetch('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(elegido.title)+'?redirect=true');
+    const sj=await sr.json();
+    let ext=(sj.extract||'').trim();
+    if(!ext || (sj.type&&sj.type.indexOf('disambiguation')!==-1)){ h('No encontré un buen dato de este lugar justo ahora, prueba de nuevo en un rato.'); return; }
+    const frases=ext.split(/(?<=[.!?])\s+/);
+    let texto=frases.slice(0,3).join(' ');
+    if(texto.length>320) texto=frases.slice(0,2).join(' ');
+    _marcarAnecdota(elegido.title);
+    ultimoLugarAnecdota=null; // si la pediste a mano, no bloquea que la automática también suene después
+    const aviso=(pedirMito && !esMitoReal) ? 'No tengo un mito o leyenda específico documentado por aquí, pero mira este dato real: ' : '';
+    h(aviso+texto);
+  }catch(e){ h('No pude buscar la historia de este lugar ahora mismo, prueba de nuevo en un rato.'); }
+}
 // Fondo tipo GTA: postal del lugar (imagen de Wikipedia según tu ubicación).
 let ultimoFondoLugar='';
 function _fondoEl(){ let el=document.getElementById('fondoPostal'); if(!el){ el=document.createElement('div'); el.id='fondoPostal'; document.body.insertBefore(el, document.body.firstChild); } return el; }
@@ -2657,7 +2698,11 @@ function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+c
 function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText=ghostMode?'👻 ON':'👻 OFF'; btn.style.background=ghostMode?'rgba(255,0,0,0.6)':'rgba(155,89,182,0.85)'; }
 function gd(){ if(!cu) return; try{ localStorage.setItem('lp_u_'+cu,JSON.stringify(us)); localStorage.setItem('lp_j_'+cu,JSON.stringify(uj)); localStorage.setItem('lp_r_'+cu,JSON.stringify(rh)); }catch(e){ /* almacenamiento lleno o modo privado: no debe cortar la función que llamó a gd() */ } }
 async function getNombreUsuario(userId){ if(userId===cu) return nombreUsuario; try{ const doc=await db.collection('users').doc(userId).get(); if(doc.exists && doc.data().nombre) return doc.data().nombre; }catch(e){} return userId; }
-function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ if(!mp) return; sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=mlMarker([data.lat,data.lon],{icon:{html:riderMarkerHTML(data.helmet||'giro',jersey,false)}}).addTo(mp).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); } } }); }
+// usuariosCercanosData: mismo dato que los markers "sm" pero en crudo (lat/lon/nombre
+// planos) — se guarda aparte porque un marker de MapLibre no expone bien el nombre
+// para calcular "cuántos ciclistas cerca" por voz sin tener que parsear el popup HTML.
+let usuariosCercanosData=[];
+function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).onSnapshot(async function(snapshot){ if(!mp) return; sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; usuariosCercanosData=[]; for(const doc of snapshot.docs){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=await getNombreUsuario(doc.id); usuariosCercanosData.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon}); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=mlMarker([data.lat,data.lon],{icon:{html:riderMarkerHTML(data.helmet||'giro',jersey,false)}}).addTo(mp).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); } } }); }
 /* ===== CICLISTAS DE LA COMUNIDAD: pelotón demo por todo Chile + usuarios reales al entrar ===== */
 // Al registrarse o entrar, publica tu zona aproximada (~1 km, por privacidad):
 // así apareces al tiro en el mapa sin esperar a pedalear.
@@ -3752,6 +3797,25 @@ function toggleRadarOnMap(){
     h("Radar desactivado.");
   }
 }
+// "Busca ciclistas cerca" por voz: antes solo abría el mapa sin decir nada útil,
+// y el radar en sí solo contaba "en el mundo" (sin filtrar por distancia real).
+// Ahora activa el radar (si no estaba activo) Y filtra por cercanía real usando
+// tu posición actual — con nombre y distancia de cada uno, no solo un número.
+function _pisteroCiclistasCerca(){
+  const loc=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+  if(!radarActive) toggleRadarOnMap(); else cv('map');
+  if(!loc){ h('Activa el GPS para que te diga qué tan cerca están — por ahora te dejo el radar abierto con todos los que hay visibles.'); return; }
+  const RADIO_KM=50; // "cerca" para alguien en ruta, no solo a la vuelta de la esquina
+  setTimeout(function(){
+    const cercanos=usuariosCercanosData.map(function(u){ return Object.assign({}, u, {dist: calculateDistance(loc.lat,loc.lon,u.lat,u.lon)/1000}); })
+      .filter(function(u){ return u.dist<=RADIO_KM; })
+      .sort(function(a,b){ return a.dist-b.dist; });
+    if(!cercanos.length){ h('Por ahora no veo otros ciclistas a menos de '+RADIO_KM+' kilómetros tuyo. Puede que aparezcan más adelante en la ruta.'); return; }
+    const top=cercanos.slice(0,3);
+    const texto=top.map(function(u){ return (u.nombre||'un ciclista')+' a '+u.dist.toFixed(1)+' km'; }).join(', ');
+    h('Encontré '+cercanos.length+' ciclista'+(cercanos.length>1?'s':'')+' cerca tuyo: '+texto+(cercanos.length>3?', y algunos más':'')+'. Tócalos en el mapa para ver quiénes son.');
+  }, 1500); // deja que termine de cargar usuariosCercanosData (subscribeToUsers, si no estaba activo)
+}
 async function addRouteAlert(){ const type=await lpPedirTexto("¿Qué reportas?","bache, perro, peligro..."); if(!type) return; const desc=await lpPedirTexto("Descripción:"); if(!desc) return; const hora=new Date().toLocaleTimeString(); db.collection('routeAlerts').add({user:cu,nombre:nombreUsuario,type:type,desc:desc,h:hora,lat:us.la||null,lon:us.lo||null,timestamp:firebase.firestore.FieldValue.serverTimestamp()}); h("Reporte enviado. Gracias por avisar."); }
 function em(){ const i=document.getElementById('chi'), t=i.value.trim(); if(!t||!cu) return; const n=new Date(), h2=(n.getHours().toString().padStart(2,'0'))+':'+(n.getMinutes().toString().padStart(2,'0')); db.collection('chat').add({a:cu,nombre:nombreUsuario,t:t,h:h2,ts:firebase.firestore.FieldValue.serverTimestamp()}); i.value=""; }
 function rc(){ const c=document.getElementById('chm'); if(!c) return; c.innerHTML=cm.map(function(m){ return '<div class="ms '+(m.a===cu?'sf':'ot')+'">'+(m.a!==cu?'<div class="ma">'+escapeHTML(m.nombre||m.a)+' · '+escapeHTML(m.h)+'</div>':'')+'<div class="mb">'+escapeHTML(m.t)+'</div>'+(m.a===cu?'<div class="ma" style="text-align:right;margin-top:3px">'+escapeHTML(m.h)+'</div>':'')+'</div>'; }).join(''); c.scrollTop=c.scrollHeight; }
@@ -3990,6 +4054,26 @@ function avisarReportesCercanos(lat,lon){
       return;
     }
   }
+}
+// "Algún panorama por esta zona": usa los datos REALES que ya publicó la
+// comunidad (miradores, picadas/datos útiles, alojamiento — reportesData, la
+// misma fuente que ya alimenta el aviso proactivo de peligros) filtrados por
+// distancia real a tu posición. Si no hay nada marcado por acá, lo dice
+// honestamente en vez de inventar algo — mismo principio que las anécdotas de
+// Wikipedia (mejor callar que inventar).
+const CATS_PANORAMA={mirador:1, util:1, alojamiento:1};
+function _pisteroPanoramaCerca(){
+  const loc=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+  if(!loc){ h('Necesito tu ubicación para buscar panoramas cerca — activa el GPS y pregúntame de nuevo.'); return; }
+  const RADIO_KM=25;
+  const cercanos=(reportesData||[]).filter(function(r){ return CATS_PANORAMA[r.cat] && r.lat!=null && r.lon!=null; })
+    .map(function(r){ return Object.assign({}, r, {dist: calculateDistance(loc.lat,loc.lon,r.lat,r.lon)/1000}); })
+    .filter(function(r){ return r.dist<=RADIO_KM; })
+    .sort(function(a,b){ return a.dist-b.dist; });
+  if(!cercanos.length){ h('No tengo ningún panorama marcado por la comunidad cerca tuyo todavía. Si conoces algo bueno por acá, repórtalo con "Reportar en Ruta" y le sirve al que venga después.'); return; }
+  const top=cercanos.slice(0,3);
+  const texto=top.map(function(r){ const info=REPORTE_CATS[r.cat]||{e:'📍',l:'Dato'}; const desc=(r.text||'').split(/[.!?]/)[0]; return info.e+' '+desc+' (a '+r.dist.toFixed(1)+' km)'; }).join('. ');
+  h('Por esta zona la comunidad marcó: '+texto+'. Míralo en el mapa para más detalle.');
 }
 const SUPERFICIE_TIPOS={asfalto:'🛣️ Asfalto',ripio:'🪨 Ripio',tierra:'🟤 Tierra',mixto:'🔀 Mixto'};
 const DIFICULTAD_NIVELES={facil:'🟢 Fácil',media:'🟡 Media',dificil:'🔴 Difícil'};
@@ -7109,7 +7193,20 @@ function handleVoiceCommand(raw){
   // "amistad" (solicitudes de amistad) no comparte raíz con "amigo" como texto —
   // antes se perdía en el mismo bug de destino falso.
   if(/amigo|amistad/.test(t)){ cv('chat'); showFriendsList(); return; }
-  if(/ciclistas?( cerca| en el mapa)?$|busca ciclistas|d[oó]nde hay ciclistas/.test(t)){ cv('map'); h("Aquí está el mapa con los ciclistas de la comunidad."); return; }
+  // "Busca ciclistas cerca": antes solo abría el mapa sin decir nada útil — ahora
+  // activa el radar de verdad y contesta con nombre y distancia real, no solo
+  // "aquí está el mapa" (que dejaba al usuario mirando la pantalla para
+  // averiguarlo él mismo, justo lo que "manos libres" no debería exigir).
+  if(/ciclistas?( cerca| en el mapa)?$|busca ciclistas|d[oó]nde hay ciclistas/.test(t)){ _pisteroCiclistasCerca(); return; }
+  // "Algún panorama por aquí": datos reales de la comunidad (miradores, picadas,
+  // alojamiento) cerca de tu posición — antes esto no existía como pregunta de
+  // voz, solo se podía ver mirando el mapa.
+  if(/panorama|qu[eé] hacer (por aqu[ií]|por ac[aá]|cerca|por esta zona)|algo (que ver|para ver) cerca|picada cerca|hay algo (interesante|entretenido) (por aqu[ií]|cerca)/.test(t)){ _pisteroPanoramaCerca(); return; }
+  // "Cuéntame otra historia/mito/leyenda de este lugar" / "cómo se llamaba antes
+  // este lugar": versión PEDIDA de la anécdota de Wikipedia que ya sonaba sola al
+  // entrar a una zona nueva — "otra" trae una distinta (mismo registro de ya
+  // contadas), y sin el freno de "una vez por zona" porque acá lo pediste tú.
+  if(/(cu[eé]ntame|dime|sabes)(me)? (una |otra |alg[uú]n |alguna )?(historia|dato|algo|mito|leyenda)( de este lugar| de por aqu[ií]| del lugar| de ac[aá])?|hay (alg[uú]n |alguna )?(mito|leyenda) (de este lugar|por aqu[ií]|de por ac[aá])|c[oó]mo se llamaba (antes )?este lugar|nombre antiguo de este lugar|otra historia/.test(t)){ _pisteroHistoriaLugar(/mito|leyenda/.test(t)); return; }
   if(/taller|reparar|arreglar|mecanic|se me (pinch|rompi[oó])|bicicleta rota|no funciona mi bici/.test(t)){ cv('mac'); h("El taller MacGyver."); return; }
   if(/gu[ií]a|hospedaje|hostal|hostel|alojamiento|d[oó]nde.{0,15}(dormir|acampar)|\bacampar\b|camping/.test(t)){ cv('gui'); h("La CicloGuía."); return; }
   if(/estadistica|grafico|progreso|mi avance|mi rendimiento|como voy/.test(t)){ cv('stats'); h("Tus estadísticas."); return; }

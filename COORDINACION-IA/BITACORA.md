@@ -4,6 +4,70 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.57 — 2026-07-13 — Claude (sesión 2, Pistero: ciclistas cerca, panorama por la zona, historia/mito del lugar)
+
+Pedido de Inty: "sigamos ampliando, por ejemplo pistero busca ciclistas
+cerca, algún panorama que hacer por esta zona, cuéntame otra historia de
+este lugar, pueden ser mitos, leyendas, cómo se llama este lugar antes de,
+cosas por el estilo que sea un cabrón con conocimiento."
+
+**1. "Busca ciclistas cerca" — ya existía el disparador de voz pero no hacía
+nada útil**, solo abría el radar en el mapa sin decir nada. Se agregó
+`usuariosCercanosData` (array global nuevo, poblado en `subscribeToUsers()`
+junto al array de marcadores existente `sm`, porque los marcadores de
+Leaflet no exponen datos consultables limpios) y `_pisteroCiclistasCerca()`:
+calcula distancia real con `calculateDistance()` (la misma función que usa
+toda la app) a cada ciclista visible, filtra a 50km, ordena por cercanía y
+dice los 3 más cercanos con nombre y distancia — o lo dice honestamente si
+no hay nadie cerca, en vez de quedarse callado.
+
+**2. "Algún panorama por esta zona" — no existía.** Se reusa `reportesData`
+(la misma fuente que ya alimenta el aviso proactivo de peligros en
+`avisarReportesCercanos()`) filtrando por categorías con sentido de
+panorama (mirador, dato útil/picada, alojamiento — `CATS_PANORAMA`), a 25km,
+ordenado por cercanía. Si no hay nada marcado por la comunidad en la zona,
+lo dice honesto e invita a reportarlo, sin inventar nada.
+
+**3. "Cuéntame una historia / mito / leyenda de este lugar" — ya existía
+`contarAnecdotaDelLugar()` pero era SOLO automática** (dispara una vez por
+zona al llegar) y no tenía ningún gatillo de voz. Se creó
+`_pisteroHistoriaLugar(pedirMito)`, que reusa el mismo patrón ya probado en
+producción (geosearch de Wikipedia en español + summary API, con el mismo
+principio de "sin dato real cerca, mejor callar que inventar"). Si Inty pide
+específicamente mito/leyenda, prioriza un resultado cuyo TÍTULO lo sugiera
+(Wikipedia no permite filtrar geosearch por contenido) y si no encuentra
+ninguno así, lo avisa honesto en vez de fingir que encontró un mito.
+
+**Verificación real hecha:** las 3 frases nuevas quedaron enrutadas en
+`handleVoiceCommand` con regex nuevas. Se armó un set de 11 frases de prueba
+(9 positivas + 2 de control negativo: "llevame a santiago", "cuánto me
+falta") y se verificaron los regex de forma standalone en Node (independiente
+del cierre léxico de la app — ver limitación abajo), con 11/11 correctos,
+incluyendo un caso real que el primer borrador del regex de historia NO
+cubría ("cuéntame una leyenda de por aquí") y que se corrigió antes de dar
+por terminado. Los cuerpos de `_pisteroCiclistasCerca()` y
+`_pisteroPanoramaCerca()` se verificaron por revisión manual línea a línea
+(no por ejecución dinámica — ver limitación abajo), confirmando que reusan
+exactamente el mismo patrón cálculo-de-distancia/filtro/orden que
+`avisarReportesCercanos()`, ya en producción, y que las claves de
+`REPORTE_CATS` (`.e`, `.l`) usadas existen tal como se referencian.
+
+**Limitación real de este sandbox, documentada honestamente:** el código de
+la app vive dentro de un IIFE (`(function(){...})()`, línea ~1799) —
+`currentUserLocation`, `reportesData`, `usuariosCercanosData`, `h()`, etc. son
+privados a ese cierre. Intentar simular datos vía `window.currentUserLocation
+= ...` desde fuera (como se hizo para probar `_pisteroDecirClima` antes) NO
+llega a la variable real: crea una propiedad de `window` sin relación con el
+binding léxico interno, y las funciones reales nunca la ven (mismo tipo de
+problema, a nivel de arquitectura, que causó el incidente real de Firestore
+documentado en v6.4x — pero esta vez detectado ANTES de escribir nada mal,
+no después). No hay forma de mockear el estado interno desde fuera sin tocar
+el código fuente; por eso la verificación de estas dos funciones fue manual
+en vez de dinámica. Queda pendiente probarlas con datos reales en el
+teléfono de Inty.
+
+---
+
 ## v6.56 — 2026-07-13 — Claude (sesión 2, Pistero se quedaba callado con charla casual, y el clima no entendía día/lugar)
 
 Dos reportes reales de Inty: "le pregunté a Pistero cómo estaba y se quedó
