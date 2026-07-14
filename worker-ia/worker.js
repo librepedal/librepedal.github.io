@@ -126,6 +126,21 @@ export default {
     let body = null;
     if (request.method === "POST") { try { body = await request.json(); } catch (e) {} }
 
+    // ===== VOZ NEURONAL (TTS): una voz más humana que la robótica del sistema, GRATIS por
+    // Workers AI. La app la usa cuando hay señal (con fallback a la voz nativa offline). =====
+    const ttsText = url.searchParams.get("tts") || (body && body.tts);
+    if (ttsText) {
+      // MeloTTS de Workers AI: input correcto = { prompt } (el campo lang gatilla "Invalid input").
+      try {
+        const r = await env.AI.run("@cf/myshell-ai/melotts", { prompt: String(ttsText).slice(0, 480) });
+        const audio = r && (r.audio || r.audio_data);
+        if (!audio) return new Response(JSON.stringify({ error: "sin_audio", claves: r && typeof r === "object" ? Object.keys(r) : typeof r }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ audio: audio }), { headers: { ...cors, "Content-Type": "application/json" } });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "tts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    }
+
     let messages, maxTokens;
     if (body && body.mensaje) {
       const sys = personalidad(body.usuario, body.hospedajes, body.contexto);
