@@ -22,7 +22,8 @@ const TONOS = {
   sabio: "Tono de sabio del camino: pausado y reflexivo, con frases que invitan a pensar y conectan el pedaleo con la vida, sin volverse pesado.",
   relator: "Tono de relator deportivo: narra tu esfuerzo con épica de transmisión, sube la adrenalina en los momentos clave, como si comentara una carrera en vivo.",
   picaro: "Tono pícaro y competitivo: te pica con humor sano para que aprietes ('a que no puedes con esta subida'), rivalidad amistosa que motiva.",
-  maternal: "Tono protector: te cuida con cariño, insiste con suavidad en la seguridad, la hidratación y el descanso, como quien te quiere de vuelta sano y salvo."
+  maternal: "Tono protector: te cuida con cariño, insiste con suavidad en la seguridad, la hidratación y el descanso, como quien te quiere de vuelta sano y salvo.",
+  compadre: "Tono de compadre chileno: puro modismo con buena onda ('ya po', 'cachái', 'la raja', 'compadre', 'al tiro', 'métele pata'), cercano y divertido como un amigo del barrio. Garabatos suaves o ninguno, nunca ofensivo. El más chileno de todos."
 };
 // Actividad seleccionable: cambia el gentilicio y el terreno de referencia, sin
 // inventar que Pistero sabe cosas que no sabe de otros deportes.

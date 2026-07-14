@@ -668,6 +668,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="quick-links">
   <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
   <button class="ab sec" style="margin:0" id="vozNeuralBtn" onclick="toggleVozNeural()"><i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: OFF</button>
+  <button class="ab sec" style="margin:0" id="generoBtn" onclick="toggleGenero()"><i class="fas fa-person"></i> Guía: Pistero</button>
   <button class="ab sec" style="margin:0" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
   <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
   <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
@@ -1042,7 +1043,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.65'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.66'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1540,7 +1541,8 @@ const PERSONALIDADES=[
   {id:'sabio', label:'🦉 Sabio del camino'},
   {id:'relator', label:'🎙️ Relator deportivo'},
   {id:'picaro', label:'😏 Pícaro (te pica)'},
-  {id:'maternal', label:'🫶 Protector'}
+  {id:'maternal', label:'🫶 Protector'},
+  {id:'compadre', label:'🧉 El Compadre (chileno puro)'}
 ];
 let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
 function elegirPersonalidad(id){
@@ -1878,6 +1880,9 @@ function calcularGastos(){
 let vozCola=[], vozHablando=false, vozTimerFin=null;
 let vozMejorada = localStorage.getItem('lp_vozneural')==='on'; // voz neuronal (Worker MeloTTS español) con fallback a la nativa
 let _vozNeuralAudio = null;
+let pisteroGenero = localStorage.getItem('lp_genero')||'l'; // 'l'=Pistero (Lorenzo) / 'c'=Pistera (Catalina)
+let VOCES_MANIFEST = null; // índice de frases fijas pre-generadas en voz chilena (Azure), se carga de voces/manifest.json
+(function(){ try{ fetch('voces/manifest.json').then(function(r){return r.ok?r.json():null;}).then(function(m){ VOCES_MANIFEST=m; }).catch(function(){}); }catch(e){} })();
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }
 function pararVoz(){ vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
 function h(t){
@@ -1899,8 +1904,10 @@ function _reproducirVoz(item){
   clearTimeout(vozTimerFin);
   // Voz neuronal (más humana, español real) si está activada y hay red. Si falla o tarda, cae a la nativa.
   if(vozMejorada && navigator.onLine){
-    vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso: cubre el fetch; _vozNeural lo recalibra con la duración real del audio
-    _vozNeural(item, durEst);
+    vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso: cubre el fetch; se recalibra con la duración real
+    // 1º frase fija con voz chilena pre-generada (Azure). Si no existe, 2º MeloTTS. Si falla, nativa.
+    const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
+    if(_id){ _vozArchivo(item, durEst, _id); } else { _vozNeural(item, durEst); }
     return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
@@ -1918,6 +1925,20 @@ function _vozNativaOWeb(item, durEst){
     u.onend=u.onerror=function(){ clearTimeout(vozTimerFin); _vozSiguiente(); };
     speechSynthesis.speak(u);
   }catch(e){ clearTimeout(vozTimerFin); _vozSiguiente(); }
+}
+function _vozArchivo(item, durEst, id){
+  // Reproduce la frase fija ya grabada en voz chilena (Azure): voces/{genero}{id}.mp3.
+  // Si el archivo no carga (404, red), cae a la voz neuronal MeloTTS.
+  let cayo=false;
+  const fallback=function(){ if(cayo) return; cayo=true; _vozNeural(item, durEst); };
+  try{
+    const a=new Audio('voces/'+pisteroGenero+id+'.mp3');
+    _vozNeuralAudio=a;
+    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
+    a.onerror=function(){ fallback(); };
+    const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
+  }catch(e){ fallback(); }
 }
 function _vozNeural(item, durEst){
   let cayo=false;
@@ -1967,6 +1988,15 @@ function toggleVozNeural(){
   if(b) b.innerHTML='<i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: '+(vozMejorada?'ON':'OFF');
   if(vozMejorada){ pararVoz(); if(!vozActiva){ vozActiva=true; localStorage.setItem('lp_voz','on'); } h("Voz mejorada activada. Así me escucho ahora, ¿mejor así?"); }
   else h("Voz mejorada desactivada, vuelvo a la voz de siempre.");
+}
+function toggleGenero(){
+  pisteroGenero = (pisteroGenero==='l') ? 'c' : 'l';
+  localStorage.setItem('lp_genero', pisteroGenero);
+  const b=document.getElementById('generoBtn');
+  const esP = pisteroGenero==='l';
+  if(b) b.innerHTML='<i class="fas fa-'+(esP?'person':'person-dress')+'"></i> Guía: '+(esP?'Pistero':'Pistera');
+  pararVoz();
+  h(esP ? 'Ahora soy Pistero, tu compañero de ruta.' : 'Ahora soy Pistera, tu compañera de ruta.');
 }
 
 function skinColor(id){ const s=skinOptions.find(function(x){return x.id===id;}); return s?s.c:'#fc4c02'; }
@@ -2243,21 +2273,24 @@ const FRASES_ARQ={
     maternal:["Ojo con el corazón en la cuesta, mijo: baja un cambio y no te exijas de más.","Sube con calma, toma agua arriba. Prefiero que llegues tarde a que llegues mal.","No te la juegues toda en la subida, guárdate un poco.","Despacito la cuesta, que nadie te espera con reloj."],
     directo:["Subida. Baja un cambio, cadencia estable.","Cuesta arriba: reparte el esfuerzo, no arranques fuerte.","Mantén ritmo constante hasta la cima."],
     relator:["¡Y encara la subida! El público contiene la respiración… ¿podrá con ella?","¡Ataca la cuesta! Esto separa a los grandes. ¡Vamos, vamos!","La montaña lo desafía… ¡y él responde pedaleando con todo!"],
-    aventurero:["¡Esta cuesta es tuya! Arriba te espera una vista que vale cada gota de sudor.","¡Épica subida! Conquístala y cuéntalo después.","Lo desconocido está arriba. ¡Dale que la aventura no espera!"]
+    aventurero:["¡Esta cuesta es tuya! Arriba te espera una vista que vale cada gota de sudor.","¡Épica subida! Conquístala y cuéntalo después.","Lo desconocido está arriba. ¡Dale que la aventura no espera!"],
+    compadre:["Ya po, apretá que esta cuesta es puro cuento. ¡Dale que podí!","No aflojís, compadre, que arriba está la raja de vista. Métele pata.","Esta subidita es na, pura finta. Le ganái con los ojos cerrados, cachái."]
   },
   rapido:{
     entrenador:["Buen ritmo. Sostén esa cadencia sin trabar los hombros.","Vas fuerte. Controla la respiración, mantén la línea.","Velocidad sólida. Ojo con las curvas, no pierdas la técnica."],
     picaro:["¡Uy, se soltó el fierita! ¿Y esa velocidad de dónde salió? 😏","Ah, ahora sí te pusiste las pilas. A ver si aguantas.","Vas volando… no vaya a ser que te quedes sin pila a la mitad."],
     sabio:["La velocidad embriaga, pero el camino se disfruta mirando, no corriendo.","Vas rápido; recuerda que llegar no es la meta, es el pretexto.","Rápido está bien, pero no tanto que te pierdas el paisaje."],
     maternal:["Despacio con esa velocidad, mijo, ojo con los baches y las curvas.","Vas muy rápido, frena un poquito, prefiero verte llegar entero.","Cuidado a esa velocidad, las dos manos firmes."],
-    relator:["¡Y acelera! ¡Vuela por el camino! ¡El viento no lo alcanza!","¡Velocidad de campeonato! ¡El cronómetro tiembla!"]
+    relator:["¡Y acelera! ¡Vuela por el camino! ¡El viento no lo alcanza!","¡Velocidad de campeonato! ¡El cronómetro tiembla!"],
+    compadre:["¡Uuuh, andái enchufao hoy, volando bajito! ¡Así se hace po, la raja!","Cómo le picái, compadre, vai como bala. ¡No pares, crack!"]
   },
   lento:{
     picaro:["¿Vas pedaleando o buscando monedas en el suelo? 😏","Mi abuelita ya llegó y te está esperando.","Dale color, que a este ritmo te pilla la noche."],
     sensible:["Tranquilo, tu ritmo es válido. Lo importante es que estás rodando.","No te compares con nadie. A tu paso está perfecto.","Cada pedalada cuenta, aunque sea suave. Vas bien."],
     relajado:["Rico ese ritmo tranqui, sin apuros. Disfruta.","Así, suavecito, que la vida no es una carrera.","Buen paso de paseo. Respira y mira alrededor."],
     maternal:["Despacito está bien, mijo, no te agites de más.","A ese ritmo cuidas el cuerpo. Bien ahí, con calma."],
-    entrenador:["Ritmo bajo: aprovecha para soltar piernas y recuperar. Luego aprietas."]
+    entrenador:["Ritmo bajo: aprovecha para soltar piernas y recuperar. Luego aprietas."],
+    compadre:["Tranqui no má, sin apuro. La ruta no se arranca, tómate tu tiempo cachái.","Suave que suave se llega igual. Esto es pa' pasarlo bien, no pa' reventarse."]
   }
 };
 function obtenerFraseUnica(categoria){
@@ -2667,6 +2700,7 @@ window.onload = async function(){
     document.getElementById('welcome-name').innerText=nombreUsuario;
     const vb=document.getElementById('vozBtn'); if(vb) vb.innerHTML='<i class="fas fa-volume-'+(vozActiva?'high':'xmark')+'"></i> Voz: '+(vozActiva?'ON':'OFF');
     const vnb=document.getElementById('vozNeuralBtn'); if(vnb) vnb.innerHTML='<i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: '+(vozMejorada?'ON':'OFF');
+    const gnb=document.getElementById('generoBtn'); if(gnb){ const esP=pisteroGenero==='l'; gnb.innerHTML='<i class="fas fa-'+(esP?'person':'person-dress')+'"></i> Guía: '+(esP?'Pistero':'Pistera'); }
     us=_lsJSON('lp_u_'+cu, {d:0,n:'Novato',di:0,c:0,la:null,lo:null});
     uj=_lsJSON('lp_j_'+cu, []);
     rh=_lsJSON('lp_r_'+cu, []);
