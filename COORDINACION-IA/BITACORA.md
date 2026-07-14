@@ -4,6 +4,35 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.63 — 2026-07-14 — Claude (sesión 2, rediseño tarjeta "Mis Rutas")
+
+Pedido de Inty: "los botones están mal no se ve bien, hay mucho texto."
+
+**Antes:** cada ruta grabada mostraba 6 botones con texto en una sola fila
+apretada junto a la info ("Ver", "📈 Perfil", "🎬 Video", "🏁 Segmento", "📤
+GPX", "Borrar") — en pantallas de celular esto se veía saturado, con texto
+compitiendo por espacio horizontal.
+
+**Ahora:** la tarjeta completa es el botón "Ver" (toque directo abre la ruta
+en el mapa, patrón común en apps móviles), y debajo queda una fila de 5
+íconos circulares compactos (📈🎬🏁📤🗑️) sin texto, con `title` para el
+tooltip de escritorio. `.route-item-actions` corta la propagación del click
+(`event.stopPropagation()`) para que tocar un ícono no dispare también el
+"Ver" de la tarjeta. Se creó una clase nueva `.route-icon-btn` en vez de
+reusar `.route-btn` — esa sigue con texto en otros lugares (SOS, agregar
+amigo) y no debía volverse circular ahí.
+
+**Verificación real hecha:** en navegador (viewport móvil 375px), con datos
+simulados incluyendo una ruta con bitácora (hospedaje + notas). Confirmado
+por medición real del DOM: tarjeta 355px de ancho (sin desbordar el
+viewport), fila de acciones 329px con los 5 íconos en una sola línea sin
+necesitar salto (`flex-wrap` de respaldo si algún celular es más angosto),
+0 apariciones de texto "Ver"/"Borrar" en el contenido. Confirmado que tocar
+un ícono de acción NO dispara también el "Ver" de la tarjeta (mockeando
+`showSingleRoute`/`verPerfilElevacion` y verificando cuál se llamó).
+
+---
+
 ## v6.62 — 2026-07-14 — Claude (sesión 2, fix real de la caída: lecturas redundantes de Firestore)
 
 Causa raíz de la cuota agotada, confirmada con datos reales de Firebase

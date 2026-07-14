@@ -214,10 +214,19 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .ms.ot .mb{background:rgba(255,255,255,0.1);color:#fff}
 .ma{font-size:0.6rem;color:#888;margin-bottom:2px}
 .cia{display:flex;gap:4px}.cia input{flex:1;margin:0}.cia button{width:auto;padding:8px 12px;margin:0}
-.route-history-item{background:var(--gl);padding:10px;border-radius:8px;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
-.route-item-info{flex:1}.route-item-actions{display:flex;gap:4px}
+.route-history-item{background:var(--gl);padding:12px;border-radius:12px;margin:8px 0;display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.route-item-info{flex:1}.route-item-actions{display:flex;gap:8px;flex-wrap:wrap}
 .route-btn{background:var(--p);color:#000;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:0.7rem}
 .route-btn.delete{background:var(--r);color:#fff}
+/* Iconos de acción de "Mis Rutas" (2026-07-14): antes eran 6 botones con texto
+   ("Ver","📈 Perfil","🎬 Video","🏁 Segmento","📤 GPX","Borrar") apretados junto
+   al texto de la ruta — se veía saturado en pantallas chicas. Ahora la tarjeta
+   entera es el botón "Ver" (toque directo), y el resto son iconos compactos y
+   circulares en una fila que se ajusta sola (flex-wrap). Clase aparte de
+   .route-btn a propósito: esa sigue usándose en otros lados con texto (SOS,
+   agregar amigo) y no debe volverse circular ahí. */
+.route-icon-btn{background:rgba(255,255,255,0.07);color:#dfeaf5;border:1px solid rgba(255,255,255,0.16);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;padding:0;flex:none}
+.route-icon-btn.delete{background:rgba(239,68,68,0.14);border-color:rgba(239,68,68,0.4);margin-left:auto}
 .music-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:6px}
 .music-btn{padding:8px 0;border-radius:8px;text-decoration:none;color:#fff;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;font-size:0.9rem}
 .lp-player{background:linear-gradient(160deg,rgba(252,76,2,0.07),rgba(10,14,25,0.85));border:1px solid rgba(252,76,2,0.35);border-radius:14px;padding:10px 12px;margin-top:6px;backdrop-filter:blur(6px)}
@@ -1032,7 +1041,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.62'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.63'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3321,7 +3330,7 @@ function renderRutas(){
   if(arr.length===0){ html='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; }
   else{
     html='';
-    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8">🏠 '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic">📓 '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions"><button class="route-btn" onclick="showSingleRoute(\''+d.localId+'\')">Ver</button><button class="route-btn" onclick="verPerfilElevacion(\''+d.localId+'\')">📈 Perfil</button><button class="route-btn" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬 Video</button><button class="route-btn" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁 Segmento</button><button class="route-btn" onclick="exportarRutaGPX(\''+d.localId+'\')">📤 GPX</button><button class="route-btn delete" onclick="deleteRoute(\''+d.localId+'\')">Borrar</button></div></div>'; });
+    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8">🏠 '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic">📓 '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item" onclick="showSingleRoute(\''+d.localId+'\')"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions" onclick="event.stopPropagation()"><button class="route-icon-btn" title="Perfil de elevación" onclick="verPerfilElevacion(\''+d.localId+'\')">📈</button><button class="route-icon-btn" title="Video 3D" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬</button><button class="route-icon-btn" title="Crear segmento" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁</button><button class="route-icon-btn" title="Exportar GPX" onclick="exportarRutaGPX(\''+d.localId+'\')">📤</button><button class="route-icon-btn delete" title="Borrar ruta" onclick="deleteRoute(\''+d.localId+'\')">🗑️</button></div></div>'; });
   }
   targets.forEach(function(c){ c.innerHTML=html; });
 }
