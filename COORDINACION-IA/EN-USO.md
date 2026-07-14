@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-14
-Terminó: v6.62 — eliminadas 8 lecturas redundantes de Firestore (causa real de la cuota agotada, confirmada con datos de Firebase Console). Commiteado, pusheado (00c2134) y desplegado, live verificado. Falta verificar en vivo contra Firestore real cuando resetee la cuota (ver BITACORA "no verificado").
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — rediseño de la tarjeta "Mis Rutas" (6 botones con texto → tarjeta tap-to-view + 5 iconos circulares). No toca voz/personalidad ni cuota de Firestore.
 ```
 
 ---
