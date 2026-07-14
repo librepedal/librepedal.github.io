@@ -1043,7 +1043,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.67'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.68'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4348,17 +4348,38 @@ function _calcularReportesAvisoRelevantes(){
     return ms==null || ms<=vig; // sin timestamp aún (recién publicado, servidor no confirmó) cuenta como vigente
   });
 }
+// Frase chistosa del control policial (guiño a "El Club de la Comedia": Sergio Freire).
+// Alterna entre las 2 tomas torpes; ambas están pre-grabadas en voz chilena (manifest).
+let _policiaAlterna=0;
+const _POLICIA_CHISTOSO=[
+  "Buenos días, buenas tardes… control a tres kilómetros.",
+  "Eeeh… buenos días, buenas tardes… hay control a tres kilómetros, no má."
+];
 function avisarReportesCercanos(lat,lon){
   if(!reportesAvisoRelevantes.length || !vozActiva || vozOcupada() || vozCola.length) return;
+  // El control policial le interesa sobre todo al motorizado (va rápido): se avisa
+  // con 3 km de anticipación en moto/auto, más cerca en bici/caminata.
+  const esMoto=(typeof actividadTipo!=='undefined' && actividadTipo==='moto');
   for(let i=0;i<reportesAvisoRelevantes.length;i++){
     const r=reportesAvisoRelevantes[i];
-    if(Math.abs(r.lat-lat)>REPORTE_AVISO_MARGEN_DEG || Math.abs(r.lon-lon)>REPORTE_AVISO_MARGEN_DEG) continue; // descarte barato
+    const esPolicia=(r.cat==='policia');
+    const margen=(esPolicia&&esMoto)?0.04:REPORTE_AVISO_MARGEN_DEG; // ~4 km de descarte barato para policía en moto
+    if(Math.abs(r.lat-lat)>margen || Math.abs(r.lon-lon)>margen) continue;
     const id=r.id||(r.lat+','+r.lon+','+r.cat);
     if(reportesAvisados.has(id)) continue;
-    if(calculateDistance(lat,lon,r.lat,r.lon)<=400){
+    const dist=calculateDistance(lat,lon,r.lat,r.lon);
+    const umbral=esPolicia?(esMoto?3000:600):400;
+    if(dist<=umbral){
       reportesAvisados.add(id);
-      const c=REPORTE_CATS[r.cat];
-      h('Ojo, '+c.e+' '+c.l.toLowerCase()+' reportado por la comunidad a unos metros: '+r.text);
+      if(esPolicia && esMoto && pisteroPersonalidad==='humoristico'){
+        h(_POLICIA_CHISTOSO[(_policiaAlterna++)%_POLICIA_CHISTOSO.length]); // frase torpe pre-grabada, alternada
+      } else if(esPolicia){
+        const km=dist/1000;
+        h('Atento, control de carabineros reportado por la comunidad '+(km>=1?('a '+km.toFixed(1).replace('.',',')+' kilómetros'):'a unos metros')+'. Tranquilo y a lo legal.');
+      } else {
+        const c=REPORTE_CATS[r.cat];
+        h('Ojo, '+c.e+' '+c.l.toLowerCase()+' reportado por la comunidad a unos metros: '+r.text);
+      }
       return;
     }
   }
