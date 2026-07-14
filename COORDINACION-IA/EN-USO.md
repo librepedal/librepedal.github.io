@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-14
-Terminó: v6.71 — Pistero invisible en video 3D corregido de raíz (se dibujaba en un Marker HTML tapado por el canvas de composición; ahora se dibuja directo en ese canvas con project()). Verificado con pruebas reales (carga, dibujo, rotación). Nota para sesión 1 en BITACORA sobre el toggle "Voz mejorada" confundiendo a Inty con los arquetipos. Commiteado, pusheado (d8ab36f) y desplegado, live verificado.
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — plan de simplificación de interfaz pedido por Inty (fusionar Viajes/Rutas duplicados, reducir accesos repetidos a Stats/Logros, renombrar botones de "compartir ubicación", quitar fila duplicada de la esfera, revisar botones sobredimensionados). Trabajo de varios pasos, candado se actualiza según avance.
 ```
 
 ---
