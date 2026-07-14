@@ -4,6 +4,22 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## Seguridad — 2026-07-14 — firestore.rules PUBLICADO (Inty, no una IA)
+
+Inty publicó `firestore.rules` en Firebase Console (proyecto `librepedal-cb983`),
+cerrando el hueco de privacidad real que llevaba varias versiones documentado
+como el ítem más urgente pendiente: la colección `diarios` en producción
+permitía que cualquier usuario logueado leyera, sobrescribiera o borrara el
+diario personal (reflexiones privadas) de OTRO usuario, con ID de documento
+predecible. El fix (`isOwnerByCu()` en vez de `isOwnerOrLegacy()`, que NO
+servía para esta colección) ya estaba listo en el repo hace tiempo — solo
+faltaba publicarlo, y eso es intencionalmente tarea exclusiva de Inty (cambio
+de control de acceso sobre producción, ninguna IA lo hace por su cuenta). No
+requiere deploy de la app ni cambia versión — es un cambio en Firebase, no en
+`index.html`.
+
+---
+
 ## v6.59 — 2026-07-13 — Claude (sesión 1, CORRIGE mismatch de versión + frases por arquetipo en vivo)
 Arreglo de un error MÍO: al hacer v6.55 offline, sesión 2 ya había avanzado a 6.58 en la carpeta compartida;
 mi sed de APP_VERSION (buscaba 6.54) falló, pero mi `printf version.txt` sí corrió → dejó version.txt=6.55

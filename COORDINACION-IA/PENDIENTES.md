@@ -135,20 +135,16 @@ que obligue a reenviar.
   poder hacer una prueba de caída real puede meter falsos positivos (alarma en
   cada bache) o dejarlo peor. Necesita a alguien con el teléfono en mano.
 
-- [ ] **Publicar `firestore.rules` en Firebase Console — sigue sin publicarse,
-  y ahora es MÁS urgente que antes.** Barrido de la función Diario (v6.27)
-  encontró que la colección `diarios` en PRODUCCIÓN deja que **cualquier
-  usuario logueado lea, sobrescriba o borre el diario personal de OTRO
-  usuario** (reflexiones privadas) — no es solo "activar protecciones ya
-  listas", es cerrar un hueco de privacidad real que está abierto AHORA MISMO
-  en producción. Ya está corregido en el archivo `firestore.rules` del repo
-  (usa `isOwnerByCu()`, no `isOwnerOrLegacy()` — esa NO servía para esta
-  colección, ver el comentario en el archivo). Es tarea de **Inty únicamente**
-  (Firebase Console → proyecto `librepedal-cb983` → Firestore Database →
-  Reglas → copiar TODO el contenido de `firestore.rules` → Publicar, 2
-  minutos). Ninguna IA lo hace por su cuenta a propósito (cambio de control de
-  acceso sobre producción). Después de publicar, Inty debe recargar la app una
-  vez para que su sesión suba a `isAdmin()`.
+- [x] **Publicar `firestore.rules` en Firebase Console — PUBLICADO (confirmado
+  por Inty, 2026-07-14).** Cerraba un hueco real en producción: cualquier
+  usuario logueado podía leer, sobrescribir o borrar el diario personal de
+  OTRO usuario (`diarios`, reflexiones privadas). El archivo del repo usa
+  `isOwnerByCu()` para esa colección (no `isOwnerOrLegacy()` — esa NO servía
+  ahí, ver comentario en `firestore.rules`). Lo publicó Inty directamente en
+  Firebase Console, como corresponde (cambio de control de acceso sobre
+  producción, ninguna IA lo toca por su cuenta). Recordar: si algo del panel
+  de Admin se ve raro, es porque falta recargar la sesión una vez para que
+  suba a `isAdmin()`.
 - [x] **Google Play: cuenta de desarrollador APROBADA (2026-07-13, confirmado
   por Inty)** — ya no está "en validación", queda activa para publicar.
 - [x] **Build .aab firmado de release — pipeline armado y VERIFICADO
