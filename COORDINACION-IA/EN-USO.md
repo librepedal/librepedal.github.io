@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-14
-Terminó: v6.70 — fix layout pantalla de personaje: pestaña "Preferencias" movida a 2da posición (antes 11ª, invisible) + grilla compacta para arquetipos (96px→56px por tarjeta). Solo CSS/layout, no tocó PERSONALIDADES ni voz. Commiteado, pusheado (acddc9c) y desplegado, live verificado.
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — fix Pistero invisible en el video 3D (mío, v6.64): el marcador HTML quedaba tapado por el canvas de composición, lo redibujo directo en ese canvas con videoMap.project(). NO toco voz/personalidad — ver nota abajo para sesión 1 sobre el toggle "Voz mejorada" (Ajustes) confundiendo a Inty con los arquetipos.
 ```
 
 ---
