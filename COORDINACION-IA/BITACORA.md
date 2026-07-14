@@ -4,6 +4,61 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.72 — 2026-07-14 — Claude (sesión 2, simplificación de interfaz — fusión Viajes/Rutas + rename SOS)
+
+Pedido de Inty: "debemos simplificar la aplicación... hay muchos botones,
+hay cosas que están duplicadas... sin perder la calidad de la parte
+visual." Primer lote de 4 tareas identificadas en la auditoría; esta
+versión cierra 2 de las 4 (#87 y #89 en el tracker de tareas).
+
+**#87 — Fusión de "Mis viajes" (`v-trips`) y "Rutas" (`v-routes`), dos
+pantallas que hacían casi lo mismo:** `v-routes` era una vista aparte,
+accesible SOLO desde un ícono duplicado en la esfera ("📋 Rutas"), con:
+importar GPX, "Ver todas en el mapa" (con su propio Leaflet), "Combinar
+todas en una", y un botón de Bitácora que usaba `cv('diario')` a secas (sin
+`sincronizarDiarioNube()`, a diferencia de `v-trips`). Se movieron las 3
+acciones únicas de `v-routes` a `v-trips` (bajo "Tus rutas grabadas"), se
+corrigió el botón de Bitácora de `v-trips` para usar `openDiario()` (bug
+real encontrado de paso: antes no sincronizaba con la nube al abrir desde
+ahí), se eliminó el ícono `{i:'📋',t:'Rutas',v:'routes'}` de `esferaItems`,
+se redirigieron las 2 referencias a `cv('routes')` que quedaban (comando de
+voz "rutas", `showAllRoutesOnMap()`) y el alias de voz `PISTERO_ALIAS`
+(rutas/historial) a `'trips'`, y se borró la sección `<section
+id="v-routes">` completa. Verificado: 0 IDs duplicados, 0 referencias
+colgantes a `v-routes`/`cv('routes')`, `node --check` sobre el bloque de
+script sin errores, y probado en navegador real (`cv('trips')` muestra los
+5 botones esperados incluido el importador GPX y el mapa combinado).
+
+**#89 — El botón SOS del dashboard decía "🆘 SOS · Compartir mi ubicación",
+casi el mismo texto que "📡 Compartir ubicación en vivo" del seguimiento en
+vivo (dos funciones muy distintas: SOS es un mensaje único a contactos de
+emergencia por WhatsApp; "en vivo" es un link de tracking continuo).**
+Renombrado a "🆘 Enviar SOS a mis contactos" — ya no comparte la frase
+"compartir ubicación" con el otro botón. Verificado en navegador.
+
+**#88 y #90 quedan PENDIENTES, a propósito — no es olvido:** al revisar el
+código antes de tocar `es-bottom` (la fila de KM/Avisos/Mic/Mi puesto/Viajes
+que flota sobre la esfera) encontré una nota de una decisión de diseño
+YA CERRADA (línea ~278 de `PENDIENTES.md`, del rediseño v6.09): "la Esfera
+ahora es el destino real de 'ir a Inicio' en TODA la app" y `es-bottom`
+existe como HUD de números en vivo, no como lista de navegación — muestra
+datos (km reales, tu puesto real) que los íconos de la esfera NO muestran
+por sí solos. Borrarlo a secas quitaría información útil, no solo un botón
+duplicado. Igual pasa con los accesos a Stats/Logros en `v-customize`
+(Perfil): sirven a quien está navegando por el menú clásico sin pasar por
+la esfera. Antes de tocar cualquiera de las dos cosas, mejor que Inty
+confirme si quiere que ese HUD/esos accesos se reduzcan igual (perdiendo el
+vistazo rápido) o si esto ya cuenta como "no duplicado" porque cumple un rol
+distinto. Quedan documentados en el tracker de tareas como pendientes,
+no bloqueados.
+
+**Pendiente de la versión anterior, sigue sin tocar:** revisar botones
+sobredimensionados (pedido explícito de Inty, "los botones son muy grandes
+en alguna ocasión") — no alcanzó en este lote, no se evaluó código
+todavía.
+
+---
+
 ## v6.71 — 2026-07-14 — Claude (sesión 2, Pistero invisible en el video — causa real encontrada)
 
 Pedido de Inty (probando lo de v6.64): "Pistero en bici en el video no

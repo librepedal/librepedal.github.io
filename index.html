@@ -642,7 +642,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="quick-links">
   <button class="btrip" onclick="cv('trips')">🗺️ Mis viajes</button>
 </div>
-<button class="ab" style="margin-top:6px;background:#dc2626;color:#fff;font-weight:800" onclick="enviarSOS()">🆘 SOS · Compartir mi ubicación</button>
+<button class="ab" style="margin-top:6px;background:#dc2626;color:#fff;font-weight:800" onclick="enviarSOS()">🆘 Enviar SOS a mis contactos</button>
 </section>
 
 <section id="v-musica" class="view">
@@ -736,12 +736,16 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <section id="v-trips" class="view">
 <div class="section-info"><h4>🗺️ Mis viajes</h4><p>Tus recorridos grabados, viajes planificados y bitácora, todo en un solo lugar.</p></div>
 <button class="ab" onclick="showNewTripForm()">➕ Planificar viaje multi-destino</button>
-<button class="btrip" style="margin-top:6px" onclick="cv('diario')">📓 Ciclo Bitácora</button>
+<button class="btrip" style="margin-top:6px" onclick="openDiario()">📓 Ciclo Bitácora</button>
 <h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">🛣️ Tus rutas grabadas</h4>
-<!-- Antes esto vivía SOLO en v-routes (una vista aparte, un toque extra): quien
-     salía a pedalear con "Iniciar navegación" (el camino normal, no el planificador
-     multi-destino) nunca veía su recorrido acá, aunque sí había quedado guardado. -->
 <div id="trips-rutas-list" class="js-rutas-list"></div>
+<input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
+<button class="ab" style="margin-top:6px;background:linear-gradient(135deg,#10b981,#059669);color:#042417;font-weight:800" onclick="document.getElementById('gpxFileInput').click()">📥 Importar ruta (GPX de Strava, Wikiloc o Komoot)</button>
+<div class="quick-links" style="margin-top:6px">
+  <button class="ab sec" style="margin:0" onclick="showAllRoutesOnMap()">Ver todas en el mapa</button>
+  <button class="ab sec" style="margin:0" onclick="combineAllRoutes()">Combinar todas en una</button>
+</div>
+<div id="map-routes-all" style="margin-top:12px;display:none"><div id="map-all-routes"></div></div>
 <h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">📋 Viajes planificados</h4>
 <div id="trips-list"></div>
 </section>
@@ -822,18 +826,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <label class="ab sec" style="display:block;margin:0;cursor:pointer;text-align:center">⬆️ Restaurar desde archivo<input type="file" accept="application/json,.json" onchange="importarMisDatos(this)" style="display:none"></label></div>
 <button class="ab sec" onclick="cv('dash');abrirEsfera()">← Volver al inicio</button>
 <div id="diarioHistorial" style="margin-top:14px"></div>
-</section>
-
-<section id="v-routes" class="view">
-<div class="section-info"><h4>Historial de rutas</h4><p>Recorridos grabados: video, perfil de elevación y tu bitácora.</p></div>
-<button class="ab sec" style="margin-bottom:10px" onclick="openDiario()">📓 Ciclo Bitácora</button>
-<input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
-<button class="ab" style="margin-bottom:10px;background:linear-gradient(135deg,#10b981,#059669);color:#042417;font-weight:800" onclick="document.getElementById('gpxFileInput').click()">📥 Importar ruta (GPX de Strava, Wikiloc o Komoot)</button>
-<div id="routes-list" class="js-rutas-list"></div>
-<button class="ab" style="margin-top:10px" onclick="showAllRoutesOnMap()">Ver todas en el mapa</button>
-<button class="ab sec" onclick="combineAllRoutes()">Combinar todas en una</button>
-<button class="ab sec" onclick="cv('dash');abrirEsfera()">← Volver a Inicio</button>
-<div id="map-routes-all" style="margin-top:12px;display:none"><div id="map-all-routes"></div></div>
 </section>
 
 <section id="v-chat" class="view">
@@ -1053,7 +1045,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.71'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.72'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2395,7 +2387,7 @@ const PISTERO_NOMBRES={dash:'Inicio',map:'el Mapa',trips:'Mis viajes',routes:'el
 // El modelo a veces manda un id "natural" en vez del id EXACTO que le dimos en el
 // prompt (dice "perfil" en vez de "customize", "inicio" en vez de "dash") — sin esto,
 // la orden se rechazaba en silencio y el ciclista no se enteraba de que no pasó nada.
-const PISTERO_ALIAS={inicio:'dash',home:'dash',perfil:'customize',personaje:'customize',social:'chat',amigos:'chat',mapa:'map',taller:'mac',mecanica:'mac',guia:'gui',cicloguia:'gui',hospedaje:'gui',hospedajes:'gui',viajes:'trips','mis viajes':'trips',rutas:'routes',historial:'routes',bitacora:'diario',diario:'diario',estadisticas:'stats',estadistica:'stats'};
+const PISTERO_ALIAS={inicio:'dash',home:'dash',perfil:'customize',personaje:'customize',social:'chat',amigos:'chat',mapa:'map',taller:'mac',mecanica:'mac',guia:'gui',cicloguia:'gui',hospedaje:'gui',hospedajes:'gui',viajes:'trips','mis viajes':'trips',rutas:'trips',historial:'trips',bitacora:'diario',diario:'diario',estadisticas:'stats',estadistica:'stats'};
 function _pisteroResolverVista(arg){
   if(!arg) return null;
   if(PISTERO_VISTAS_OK[arg]) return arg;
@@ -3433,8 +3425,6 @@ function finalizarRutaPorInactividad(){
 }
 setInterval(finalizarRutaPorInactividad,60000);
 function renderRutas(){
-  // Se pinta en TODOS los contenedores con esta clase (hoy: v-routes Y v-trips) — un
-  // recorrido grabado con GPS aparece en los dos lugares sin duplicar la consulta.
   const targets=document.querySelectorAll('.js-rutas-list'); if(!targets.length) return;
   const arr=rutasLocales().slice().sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);}).slice(0,60);
   let html;
@@ -3793,7 +3783,7 @@ function cerrarVideoRuta(){
   videoRiderMarker=null; videoRiderEl=null; // el contenedor del mapa ya se destruyó junto con el marcador
   document.getElementById('video-screen').classList.remove('active');
 }
-function showAllRoutesOnMap(){ const arr=rutasLocales().filter(function(d){return d.points&&d.points.length;}); if(!arr.length){ h("No tienes rutas todavía."); return; } cv('routes'); setTimeout(function(){ const mc=document.getElementById('map-routes-all'); if(mc) mc.style.display='block'; if(!mapAllRoutes){ mapAllRoutes=L.map('map-all-routes').setView([20,0],2); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAllRoutes); } mapAllRoutes.eachLayer(function(layer){ if(layer instanceof L.Polyline) mapAllRoutes.removeLayer(layer); }); const colors=['#fc4c02','#ff0055','#ffd700','#2ecc71','#9b59b6','#ff6600','#00ff88']; let ci=0; const allB=[]; arr.forEach(function(d){ const points=d.points.map(function(p){return [p.lat,p.lon];}); const pl=L.polyline(points,{color:colors[ci%colors.length],weight:4,opacity:0.8}).addTo(mapAllRoutes); pl.bindPopup('<b>'+new Date(d.startTime).toLocaleDateString()+'</b><br>'+(d.distance||0).toFixed(2)+' km'); allB.push.apply(allB,points); ci++; }); if(allB.length>0) mapAllRoutes.fitBounds(L.latLngBounds(allB),{padding:[50,50]}); mapAllRoutes.invalidateSize(); h(arr.length+" rutas en el mapa."); },300); }
+function showAllRoutesOnMap(){ const arr=rutasLocales().filter(function(d){return d.points&&d.points.length;}); if(!arr.length){ h("No tienes rutas todavía."); return; } cv('trips'); setTimeout(function(){ const mc=document.getElementById('map-routes-all'); if(mc) mc.style.display='block'; if(!mapAllRoutes){ mapAllRoutes=L.map('map-all-routes').setView([20,0],2); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAllRoutes); } mapAllRoutes.eachLayer(function(layer){ if(layer instanceof L.Polyline) mapAllRoutes.removeLayer(layer); }); const colors=['#fc4c02','#ff0055','#ffd700','#2ecc71','#9b59b6','#ff6600','#00ff88']; let ci=0; const allB=[]; arr.forEach(function(d){ const points=d.points.map(function(p){return [p.lat,p.lon];}); const pl=L.polyline(points,{color:colors[ci%colors.length],weight:4,opacity:0.8}).addTo(mapAllRoutes); pl.bindPopup('<b>'+new Date(d.startTime).toLocaleDateString()+'</b><br>'+(d.distance||0).toFixed(2)+' km'); allB.push.apply(allB,points); ci++; }); if(allB.length>0) mapAllRoutes.fitBounds(L.latLngBounds(allB),{padding:[50,50]}); mapAllRoutes.invalidateSize(); h(arr.length+" rutas en el mapa."); },300); }
 // Dibuja cada ruta como su PROPIA línea (nunca una sola polilínea continua): si se
 // concatenan todos los puntos de rutas distintas en una sola línea, queda una "línea
 // recta" fea uniendo el final de una ruta con el inicio de la siguiente aunque estén
@@ -7132,7 +7122,7 @@ async function reporteDeViaje(){
 // De paso ganan acceso global cosas que antes estaban enterradas: Bitácora (estaba a
 // 3 toques), Música, Novedades y Ajustes.
 const esferaItems=[
- {i:'🧭',t:'Mis viajes',v:'trips'},{i:'📋',t:'Rutas',v:'routes'},{i:'📓',t:'Bitácora',v:'diario'},
+ {i:'🧭',t:'Mis viajes',v:'trips'},{i:'📓',t:'Bitácora',v:'diario'},
  {i:'🛠️',t:'Taller',v:'mac'},{i:'📖',t:'Guía',v:'gui'},{i:'📊',t:'Stats',v:'stats'},
  {i:'🏆',t:'Logros',fn:'mostrarLogrosComunidad'},{i:'🎵',t:'Música',v:'musica'},{i:'📰',t:'Novedades',v:'novedades'},
  {i:'⚙️',t:'Ajustes',v:'ajustes'},{i:'🆘',t:'SOS',fn:'enviarSOS'}
@@ -7618,7 +7608,7 @@ function handleVoiceCommand(raw){
   // ubicación — antes ninguna calzaba con nada y terminaban armando un viaje falso
   // a "donde estoy" (mismo bug que toda esta función).
   if(/\bmapa\b|d[oó]nde (estoy|ando|me encuentro)|mi ubicaci[oó]n/.test(t)){ cv('map'); h("Aquí está el mapa."); return; }
-  if(/\brutas?\b/.test(t)){ cv('routes'); h("Tus rutas."); return; }
+  if(/\brutas?\b/.test(t)){ cv('trips'); h("Tus rutas."); return; }
   if(/\bviajes?\b|navegaci[oó]n/.test(t)){ cv('trips'); h("Tus viajes."); return; }
   if(/chat|social|mensaje/.test(t)){ cv('chat'); h("Abriendo el chat."); return; }
   // "amistad" (solicitudes de amistad) no comparte raíz con "amigo" como texto —

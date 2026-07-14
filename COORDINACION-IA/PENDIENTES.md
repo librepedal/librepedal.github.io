@@ -1,7 +1,33 @@
 # ✅ Pendientes — Libre Pedal
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-14,
-versión actual del proyecto: **v6.62**.
+versión actual del proyecto: **v6.72**.
+
+## 🧩 Simplificación de interfaz pedida por Inty (2026-07-14) — EN CURSO
+
+Inty: "debemos simplificar la aplicación... hay muchos botones, hay cosas
+que están duplicadas... sin perder la calidad de la parte visual... los
+botones son muy grandes en alguna ocasión." Ver detalle completo en la
+entrada **v6.72** de `BITACORA.md`.
+
+- [x] Fusionar "Mis viajes"/"Rutas" (dos pantallas casi iguales) en una sola
+  (`v-trips`), de paso arreglado un bug real (Bitácora sin sincronizar).
+- [ ] Reducir accesos duplicados a Stats (4 lugares) y Logros (3 lugares).
+  **OJO antes de tocar:** el `es-bottom` (HUD flotante sobre la esfera con
+  km/avisos/mic/puesto/viajes) es una decisión de diseño ya cerrada en v6.09
+  (ver más abajo, "la Esfera es el destino real de Inicio") — muestra
+  números en vivo, no es solo navegación duplicada. Los accesos en
+  `v-customize` (Perfil) sirven a quien usa el menú clásico sin pasar por
+  la esfera. Confirmar con Inty si de todas formas quiere que se reduzcan
+  (perdiendo el vistazo rápido) antes de borrar algo protegido por esa
+  decisión previa.
+- [x] Renombrar "Compartir ubicación" del SOS vs. seguimiento en vivo (ya no
+  comparten texto).
+- [ ] Quitar fila duplicada de la esfera (`es-bottom`) — mismo OJO que
+  arriba: no borrar sin confirmar con Inty, es HUD con datos reales, no
+  solo íconos repetidos.
+- [ ] Revisar botones sobredimensionados en toda la app (pedido explícito,
+  aún sin auditar).
 
 ## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 — PERMANENTE (actualizado 2026-07-13 por sesión 2)
 
