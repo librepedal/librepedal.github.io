@@ -667,6 +667,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="section-info"><h4>⚙️ Ajustes</h4><p>Voz, pantalla, GPS y mantenimiento de la app.</p></div>
 <div class="quick-links">
   <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
+  <button class="ab sec" style="margin:0" id="vozNeuralBtn" onclick="toggleVozNeural()"><i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: OFF</button>
   <button class="ab sec" style="margin:0" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
   <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
   <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
@@ -1041,7 +1042,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.64'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.65'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1875,8 +1876,10 @@ function calcularGastos(){
    - hAmbiente(t): comentario ambiental (bromas, anécdotas, travieso): si Pistero está ocupado, se descarta sin más.
    - hCorta(t): corta lo que suene y habla ya (pasos del tutorial, urgencias). */
 let vozCola=[], vozHablando=false, vozTimerFin=null;
+let vozMejorada = localStorage.getItem('lp_vozneural')==='on'; // voz neuronal (Worker MeloTTS español) con fallback a la nativa
+let _vozNeuralAudio = null;
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }
-function pararVoz(){ vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} _pisteroCalla(); }
+function pararVoz(){ vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
 function h(t){
   mostrarBocadillo(t);
   if(!vozActiva) return;
@@ -1887,12 +1890,24 @@ function h(t){
 }
 function hAmbiente(t){ if(vozOcupada()||vozCola.length) return; h(t); }
 function hCorta(t){ pararVoz(); h(t); }
+function _durEstVoz(txt){ return Math.min(55000, Math.max(1800, txt.length*75)); }
 function _reproducirVoz(item){
   vozHablando=true;
-  const durEst=Math.min(55000, Math.max(1800, item.limpio.length*75));
+  const durEst=_durEstVoz(item.limpio);
   mostrarBocadillo(item.t, durEst+600);
   _pisteroHabla(durEst);
-  clearTimeout(vozTimerFin); vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado, nunca antes del fin natural
+  clearTimeout(vozTimerFin);
+  // Voz neuronal (más humana, español real) si está activada y hay red. Si falla o tarda, cae a la nativa.
+  if(vozMejorada && navigator.onLine){
+    vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso: cubre el fetch; _vozNeural lo recalibra con la duración real del audio
+    _vozNeural(item, durEst);
+    return;
+  }
+  vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
+  _vozNativaOWeb(item, durEst);
+}
+function _vozNativaOWeb(item, durEst){
+  clearTimeout(vozTimerFin); vozTimerFin=setTimeout(_vozSiguiente, Math.round((durEst||_durEstVoz(item.limpio))*1.4)+800);
   if(lpTTS.disponible()){ lpTTS.hablar(item.limpio); return; } // nativa: avanza con el tiempo estimado
   if(!('speechSynthesis' in window)) return;
   try{
@@ -1903,6 +1918,33 @@ function _reproducirVoz(item){
     u.onend=u.onerror=function(){ clearTimeout(vozTimerFin); _vozSiguiente(); };
     speechSynthesis.speak(u);
   }catch(e){ clearTimeout(vozTimerFin); _vozSiguiente(); }
+}
+function _vozNeural(item, durEst){
+  let cayo=false;
+  const fallback=function(){ if(cayo) return; cayo=true; _vozNativaOWeb(item, durEst); };
+  const ctrl=new AbortController();
+  const to=setTimeout(function(){ try{ctrl.abort();}catch(e){} fallback(); }, 6000); // >6s = mejor la voz nativa ya
+  fetch(IA_URL+'?tts='+encodeURIComponent(item.limpio.slice(0,480)), {signal:ctrl.signal})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      clearTimeout(to);
+      if(cayo) return;
+      if(!d || !d.audio){ fallback(); return; }
+      try{
+        const a=new Audio('data:audio/wav;base64,'+d.audio);
+        _vozNeuralAudio=a;
+        a.onloadedmetadata=function(){ // recalibra animación de boca, ducking y respaldo al largo REAL del audio
+          if(isFinite(a.duration) && a.duration>0){
+            clearTimeout(vozTimerFin);
+            _pisteroHabla(a.duration*1000+300);
+            vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500);
+          }
+        };
+        a.onended=a.onerror=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
+        const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
+      }catch(e){ fallback(); }
+    })
+    .catch(function(){ clearTimeout(to); fallback(); });
 }
 function _vozSiguiente(){
   vozHablando=false;
@@ -1917,6 +1959,14 @@ function toggleVoz(){
   if(b) b.innerHTML='<i class="fas fa-volume-'+(vozActiva?'high':'xmark')+'"></i> Voz: '+(vozActiva?'ON':'OFF');
   if(vozActiva) h("Voz activada. Te acompaño en el camino.");
   else pararVoz();
+}
+function toggleVozNeural(){
+  vozMejorada=!vozMejorada;
+  localStorage.setItem('lp_vozneural', vozMejorada?'on':'off');
+  const b=document.getElementById('vozNeuralBtn');
+  if(b) b.innerHTML='<i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: '+(vozMejorada?'ON':'OFF');
+  if(vozMejorada){ pararVoz(); if(!vozActiva){ vozActiva=true; localStorage.setItem('lp_voz','on'); } h("Voz mejorada activada. Así me escucho ahora, ¿mejor así?"); }
+  else h("Voz mejorada desactivada, vuelvo a la voz de siempre.");
 }
 
 function skinColor(id){ const s=skinOptions.find(function(x){return x.id===id;}); return s?s.c:'#fc4c02'; }
@@ -2616,6 +2666,7 @@ window.onload = async function(){
     updateGhostButton();
     document.getElementById('welcome-name').innerText=nombreUsuario;
     const vb=document.getElementById('vozBtn'); if(vb) vb.innerHTML='<i class="fas fa-volume-'+(vozActiva?'high':'xmark')+'"></i> Voz: '+(vozActiva?'ON':'OFF');
+    const vnb=document.getElementById('vozNeuralBtn'); if(vnb) vnb.innerHTML='<i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: '+(vozMejorada?'ON':'OFF');
     us=_lsJSON('lp_u_'+cu, {d:0,n:'Novato',di:0,c:0,la:null,lo:null});
     uj=_lsJSON('lp_j_'+cu, []);
     rh=_lsJSON('lp_r_'+cu, []);
