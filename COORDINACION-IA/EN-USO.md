@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-14 (ahora)
-Tocando: index.html — SOLO layout/CSS de la pantalla de personaje (#v-customize): reordenar pestaña "Preferencias" (queda última de 11, ahí vive Personalidad/Arquetipos, casi invisible), agregar clase de grilla a #personalidadGrid (se apilaba vertical, sin grid), e indicador visual de scroll en la fila de pestañas. NO toco PERSONALIDADES, arquetipos de voz ni nada de sesión 1 — solo el contenedor visual.
+LIBRE
+Última sesión: 2
+Hasta: 2026-07-14
+Terminó: v6.70 — fix layout pantalla de personaje: pestaña "Preferencias" movida a 2da posición (antes 11ª, invisible) + grilla compacta para arquetipos (96px→56px por tarjeta). Solo CSS/layout, no tocó PERSONALIDADES ni voz. Commiteado, pusheado (acddc9c) y desplegado, live verificado.
 ```
 
 ---
