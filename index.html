@@ -1043,7 +1043,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.66'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.67'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5817,6 +5817,16 @@ function initVoz(){
 // antes, porque es la orden más urgente y no puede tener fricción.
 let manosLibresOn=(function(){ try{ return localStorage.getItem('lp_manos_libres')==='1'; }catch(e){ return false; } })();
 let _reconocimientoContinuo=null, _manosLibresPausado=false, _tocandoNativoContinuo=false;
+// Auto-apagado: si en manos libres nadie le habla por un buen rato, el micrófono NO
+// tiene por qué seguir encendido gastando batería. Se apaga solo tras 12 min de silencio.
+let _manosLibresUltimoUso=Date.now();
+const _MANOS_LIBRES_MAX_INACTIVO=12*60*1000;
+function _manosLibresInactivoDemasiado(){ return (Date.now()-_manosLibresUltimoUso) > _MANOS_LIBRES_MAX_INACTIVO; }
+function _autoApagarManosLibres(){
+  manosLibresOn=false; try{ localStorage.setItem('lp_manos_libres','0'); }catch(e){}
+  _detenerEscuchaContinua(); _actualizarBtnManosLibres();
+  h('Apagué el micrófono de manos libres porque llevabas rato sin usarlo, para cuidarte la batería. Actívalo de nuevo cuando quieras.');
+}
 // Reporte real: Inty quería activar manos libres A MITAD DE UNA NAVEGACIÓN
 // activa, tuvo que salir a Ajustes para hacerlo, y "Atrás" lo devolvió a
 // Inicio en vez de a la navegación (la pantalla de navegación es un overlay
@@ -5842,6 +5852,7 @@ function toggleManosLibres(){
     // pantalla a mano, deja de escuchar. Mejor decirlo de entrada que dejar que
     // alguien crea que le está fallando el micrófono.
     h('Manos libres activado. Dime "Pistero" y lo que necesites, sin tocar nada. Para callarme en cualquier momento, solo di "cállate". Eso sí: mantén la pantalla encendida, si la apagas dejo de escucharte.');
+    _manosLibresUltimoUso=Date.now();
     _iniciarEscuchaContinua();
   } else {
     h('Manos libres desactivado.');
@@ -5853,9 +5864,10 @@ function _procesarFraseManosLibres(t){
   const norm=normalizar(t);
   // El silencio funciona SIEMPRE, sin necesitar el nombre — es la orden más
   // urgente y no puede depender de que Pistero "te haya escuchado bien" el nombre.
-  if(/^(detente|para|ya)\.?$/.test(norm) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(norm)){ handleVoiceCommand(t); return; }
+  if(/^(detente|para|ya)\.?$/.test(norm) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(norm)){ _manosLibresUltimoUso=Date.now(); handleVoiceCommand(t); return; }
   const m=t.match(/pistero[,:.]?\s*(.*)$/i);
   if(!m) return; // no te dirigiste a él por su nombre: sigue escuchando en silencio, no interrumpe
+  _manosLibresUltimoUso=Date.now(); // te dirigiste a él: sigue despierto
   const resto=(m[1]||'').trim();
   if(!resto){ h('Dime.'); return; }
   handleVoiceCommand(resto);
@@ -5880,7 +5892,7 @@ function _iniciarEscuchaContinua(){
   // sin hablar) — no es un error real, el navegador lo corta y este mismo onend
   // lo reinicia solo.
   r.onerror=function(){};
-  r.onend=function(){ _reconocimientoContinuo=null; if(manosLibresOn && !_manosLibresPausado) setTimeout(function(){ if(manosLibresOn && !_manosLibresPausado) _iniciarEscuchaContinua(); }, 250); };
+  r.onend=function(){ _reconocimientoContinuo=null; if(manosLibresOn && _manosLibresInactivoDemasiado()){ _autoApagarManosLibres(); return; } if(manosLibresOn && !_manosLibresPausado) setTimeout(function(){ if(manosLibresOn && !_manosLibresPausado) _iniciarEscuchaContinua(); }, 250); };
   _reconocimientoContinuo=r;
   try{ r.start(); }catch(e){}
 }
@@ -5895,6 +5907,7 @@ async function _iniciarEscuchaContinuaNativa(){
   if(_tocandoNativoContinuo) return;
   _tocandoNativoContinuo=true;
   while(manosLibresOn && !_manosLibresPausado){
+    if(_manosLibresInactivoDemasiado()){ _autoApagarManosLibres(); break; }
     const t=await _micNativoEscuchar();
     if(!manosLibresOn || _manosLibresPausado) break;
     if(t){ const sinEco=quitarEcoPistero(t)||t; _procesarFraseManosLibres(sinEco); }
