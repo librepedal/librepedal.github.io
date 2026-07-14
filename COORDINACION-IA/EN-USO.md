@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — voces chilenas Azure por arquetipo (Pistero/Pistera) + El Compadre, v6.66, commit 33ddb6e, deployado y pusheado.
+Última sesión: 1 — +123 frases generales en voz chilena (192 total) + auto-off manos libres, v6.67, commit cfdb45f, deployado y pusheado.
 ```
 
 ---
