@@ -4,6 +4,36 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.65 — 2026-07-14 — Claude (sesión 1, Voz neuronal española + Pistero proactivo)
+
+Pedido de Inty: voz "más humana, más real" — la voz nativa/web sonaba robótica, y la
+muestra inicial de MeloTTS "hablaba como un gringo tratando de hablar español". Decidió
+ir con **el modelo gratis** (MeloTTS por el Worker), no premium.
+
+**Backend (Worker `librepedal-ia`):**
+- Ruta nueva `GET IA_URL/?tts=<texto>` → `{audio: base64 WAV, via}` con MeloTTS (`@cf/myshell-ai/melotts`), gratis.
+- **El acento gringo era por el idioma:** sin `lang`, MeloTTS usa fonética inglesa. El campo
+  es `lang` pero en **MAYÚSCULA** (`"ES"`); `"es"` minúscula da 8002. Averiguado por sondeo
+  empírico (los tokens no leen la API de esquemas). Reintenta ES x2 (el 8002/3043 es
+  transitorio) y como último recurso genera sin lang antes de dejar a Pistero mudo. Commits `dc5e5a2`, `dfc3f11`.
+- `personalidad()`: regla 8 de **PROACTIVIDAD** (se adelanta a riesgos/oportunidades) + soporta `u.preferencias`. Commit `9dc9368`.
+
+**App (`index.html`):**
+- Botón **"🪄 Voz mejorada"** en Ajustes (`toggleVozNeural`, persistido en `lp_vozneural`).
+  ON + red → Pistero habla con la voz neuronal española; si el fetch falla/tarda >6s → cae
+  solo a la voz nativa (`_vozNativaOWeb`). Recalibra boca/ducking/timers con la duración REAL
+  del audio (`onloadedmetadata`) para no pisarse. `pararVoz` detiene también el audio neural. Commit `b844e59`.
+- **Verificado en navegador real:** funciones OK, toggle flip `lp_vozneural`, fetch CORS `via=ES`, WAV decodifica a 2.92s reproducibles.
+
+**Nota de costo (por si escala a 5.000 usuarios):** frases fijas se pueden pre-generar 1 vez
+(gratis, cabe en capa gratuita) y el chat en vivo queda en MeloTTS gratis → ≈US$0/mes. Voz
+premium emotiva (ElevenLabs/Azure es-CL) solo tendría sentido como feature de pago autofinanciada.
+
+**Pendiente futuro:** la app aún no envía `u.preferencias` (falta plumbing en index.html);
+variedad de voces por arquetipo necesitaría voz premium (MeloTTS tiene un solo timbre).
+
+---
+
 ## v6.64 — 2026-07-14 — Claude (sesión 2, Video 3D de ruta: mapa vectorial + edificios 3D + Pistero en bici)
 
 Pedido de Inty: "el mapa le falta calidad... tiene a ponerse negro en algunas

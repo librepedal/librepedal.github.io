@@ -32,10 +32,8 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-14 (ahora)
-Tocando: index.html — fix aviso de giros tardío (checkNavigationSteps medía distancia al punto equivocado). No toca voz/personalidad, solo la lógica de navegación turn-by-turn.
+LIBRE
+Última sesión: 1 — terminó voz neuronal en la app (v6.65), commit b844e59, deployado y pusheado.
 ```
 
 ---

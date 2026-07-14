@@ -1,3 +1,11 @@
+# 🎙️ Voz neuronal en la app — ✅ YA APLICADO (v6.65, commit b844e59)
+
+> **HECHO 2026-07-14 (sesión 1):** todo lo de este documento ya está en `index.html`, deployado y
+> pusheado. Idioma final = `lang:"ES"` en MAYÚSCULA (no "sin lang"). Verificado en navegador (via=ES,
+> WAV 2.92s reproducible). Este archivo queda como referencia histórica. Nada pendiente aquí.
+
+---
+
 # 🎙️ Voz neuronal en la app — CÓDIGO LISTO PARA PEGAR (sesión 1)
 
 **Estado:** el BACKEND ya está LIVE y probado (commits `dc5e5a2` worker /tts + `9dc9368` Pistero proactivo).
