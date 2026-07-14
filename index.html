@@ -2082,6 +2082,15 @@ async function actualizarBadgeAdmin(){
   }catch(e){}
   localStorage.setItem('lp_admin_last_seen', Date.now());
 }
+// El correo vive en /usersPrivate/{id} desde 2026-07-14 (ver reg() y
+// firestore.rules) — solo el dueño o el admin real pueden leerlo. Las dos
+// vistas de admin que antes leían d.email directo de /users (público) ahora
+// piden este mapa aparte y lo cruzan por id de documento (mismo `cu`).
+async function _mapaEmailsPrivados(){
+  const map={};
+  try{ const snap=await db.collection('usersPrivate').get(); snap.forEach(function(doc){ map[doc.id]=doc.data().email||''; }); }catch(e){}
+  return map;
+}
 async function mostrarTodosRegistrados(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede ver esta lista.'); return; }
   document.getElementById('modalTitle').innerText='👥 Todos los registrados';
@@ -2090,12 +2099,13 @@ async function mostrarTodosRegistrados(){
   document.getElementById('userModal').classList.add('on');
   try{
     const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    const emails=await _mapaEmailsPrivados();
     let html='<p style="font-size:0.8rem;color:var(--p);margin-bottom:8px">Total: '+snap.size+' registrados</p>';
     snap.forEach(function(doc){
       const d=doc.data();
       const fecha=d.createdAt?new Date(d.createdAt.seconds*1000).toLocaleDateString():'—';
       const compartiendo=(d.lat&&d.lon)?'<span style="color:var(--g)">📍 comparte ubicación</span>':'<span style="color:#888">sin ubicación compartida</span>';
-      html+='<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.nombre||'(sin nombre)')+'</strong><div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(d.email||'')+'</div><div style="font-size:0.68rem;color:#7d8ba0;margin-top:2px">'+fecha+' · '+compartiendo+'</div></div>';
+      html+='<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.nombre||'(sin nombre)')+'</strong><div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(emails[doc.id]||'')+'</div><div style="font-size:0.68rem;color:#7d8ba0;margin-top:2px">'+fecha+' · '+compartiendo+'</div></div>';
     });
     c.innerHTML=html;
   }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar la lista.</p>'; }
@@ -2755,7 +2765,12 @@ async function reg(e){
   try{ localStorage.setItem('lp_actividad',actividadTipo); }catch(e){}
   try{ localStorage.setItem('lp_personalidad',pisteroPersonalidad); }catch(e){}
   _aplicarTemaActividad();
-  try{ await db.collection('users').doc(cu).set({email:e_val,nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,piel:selectedPiel,ojos:selectedOjos,labios:selectedLabios,vello:selectedVello,peinado:selectedPeinado,panuelo:selectedPanuelo,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
+  try{ await db.collection('users').doc(cu).set({nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,piel:selectedPiel,ojos:selectedOjos,labios:selectedLabios,vello:selectedVello,peinado:selectedPeinado,panuelo:selectedPanuelo,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
+  // El correo va APARTE, en un documento privado que solo el dueño (o el admin
+  // real) puede leer — antes vivía en /users/{id}, que es de lectura pública a
+  // propósito (Ranking mundial, "ver perfil de otro"), así que cualquiera podía
+  // sacar el correo de toda la comunidad sin ser admin. Ver firestore.rules.
+  try{ await db.collection('usersPrivate').doc(cu).set({email:e_val},{merge:true}); }catch(err){ console.error(err); }
   if(_esUsuarioNuevo){ try{ await db.collection('meta').doc('contadores').set({totalUsuarios:firebase.firestore.FieldValue.increment(1)},{merge:true}); }catch(e){} }
   document.getElementById('auth').style.display='none';
   document.getElementById('logoutBtn').style.display='block';
@@ -4615,9 +4630,10 @@ async function exportarUsuariosAdmin(){
   h('Obteniendo lista de usuarios registrados...');
   try{
     const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    const emails=await _mapaEmailsPrivados();
     const rows=[['Nombre','Email']]; // solo nombre y correo: para tu respaldo de registros
     snap.forEach(function(doc){ const d=doc.data();
-      rows.push([ d.nombre||'', d.email||'' ]);
+      rows.push([ d.nombre||'', emails[doc.id]||'' ]);
     });
     const csv=rows.map(function(r){ return r.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
     const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});

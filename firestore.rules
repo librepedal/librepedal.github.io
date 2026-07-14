@@ -66,6 +66,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Correo de cada usuario, SEPARADO del perfil público (2026-07-14): antes
+    // vivía dentro de /users/{id}, que es de lectura pública a propósito (el
+    // Ranking mundial y "ver perfil de otro ciclista" necesitan leer a TODOS
+    // los usuarios) — eso significaba que cualquiera con la config pública de
+    // Firebase (visible en el código del sitio, como en cualquier app web)
+    // podía sacar el correo de TODA la comunidad sin ser admin ni estar
+    // logueado, sin pasar por la app. El id del documento es el mismo `cu`
+    // que usa /users/{id}. Solo el dueño (o el admin real, para el export en
+    // CSV del panel) puede leerlo.
+    match /usersPrivate/{id} {
+      allow read: if signedIn() && (request.auth.uid == id || isAdmin());
+      allow write: if signedIn() && request.auth.uid == id && strOk('email', 120);
+    }
+
     // Contador de suscritos totales (para no leer TODA la colección `users` cada
     // vez que alguien abre Comunidad o intenta votar — con miles de usuarios eso
     // eran miles de lecturas por un solo clic). Solo un documento, se incrementa

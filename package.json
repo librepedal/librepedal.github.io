@@ -8,13 +8,14 @@
     "native:add": "node scripts/copy-web.js && npx cap add android && node scripts/patch-android.js && npx cap sync android"
   },
   "dependencies": {
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/android": "^6.1.2",
     "@capacitor-community/background-geolocation": "^1.2.23",
+    "@capacitor-community/speech-recognition": "^6.0.1",
     "@capacitor-community/text-to-speech": "^5.0.0",
-    "@capacitor-community/speech-recognition": "^6.0.1"
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.2"
+    "@capacitor/cli": "^6.1.2",
+    "firebase-admin": "^14.1.0"
   }
 }

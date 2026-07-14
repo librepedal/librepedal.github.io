@@ -106,22 +106,38 @@ que obligue a reenviar.
 
 ## 🔴 LO MÁS URGENTE — leer primero, cualquiera de las dos sesiones
 
-- [ ] **⚠️ El correo de TODOS los usuarios se puede leer sin ser admin ni estar
-  logueado — decisión de Inty, no se tocó a ciegas.** Encontrado en el barrido
-  de Admin (v6.42, revisando `exportarUsuariosAdmin`). La colección `users` en
-  `firestore.rules` tiene `allow read: if true` (necesario para que funcionen el
-  Ranking mundial y "ver perfil de otro ciclista", que leen a TODOS los
-  usuarios) — pero el documento de cada usuario también guarda `email` (lo
-  escribe `reg()` al registrarse). Resultado: cualquiera con la config pública
-  de Firebase (que ya está a la vista en el código del sitio, como en cualquier
-  app web) puede pedir la colección `users` completa directo por el SDK y sacar
-  el correo de cada persona registrada, sin pasar por la app ni ser admin — el
-  botón "Exportar usuarios" del Panel Admin es solo una comodidad, NO es la
-  única puerta. No lo arreglé porque el fix real (sacar `email` del documento
-  público y guardarlo aparte, en un doc que solo el dueño pueda leer) es un
-  cambio de esquema con migración de datos existentes, no un ajuste de una
-  línea — y toca las reglas de Firestore, que solo Inty publica. Necesita que
-  Inty decida el enfoque (¿doc privado aparte? ¿aceptar el riesgo por ahora?).
+- [ ] **🚨 Cuota diaria de Firestore agotada (detectado 2026-07-14 ~02:26
+  UTC) — la app real estuvo/está caída para TODOS los usuarios, no solo
+  para tareas de admin.** Verificado directo contra la API pública de
+  Firestore (sin credenciales, la misma ruta que usa cualquier usuario
+  desde el celular): `curl https://firestore.googleapis.com/v1/projects/librepedal-cb983/databases/(default)/documents/meta/contadores`
+  devolvía `429 RESOURCE_EXHAUSTED`. Causa casi segura: el proyecto está en
+  el plan gratuito Spark, con tope diario fijo (50.000 lecturas / 20.000
+  escrituras / 20.000 borrados por día) — con el crecimiento de usuarios ya
+  se superó. El tope resetea solo a medianoche hora de Los Ángeles (~4-5h
+  después de detectado). Decisión de Inty pendiente: esperar el reset cada
+  vez que vuelva a pasar, o evaluar el plan Blaze (pago por uso, incluye la
+  MISMA cuota gratis + no se cae si te pasas, pero requiere que Inty agregue
+  una tarjeta en Firebase Console — ninguna IA lo activa). Si esto se repite
+  seguido a medida que crece la comunidad, va a necesitar resolverse antes
+  de mostrar la app en el evento de Lago Ranco.
+
+- [~] **⚠️ El correo de TODOS los usuarios se puede leer sin ser admin ni estar
+  logueado — Inty ya decidió el enfoque (2026-07-14): doc privado aparte.
+  CÓDIGO LISTO, falta migrar datos + publicar reglas + deploy.** Fix: `email`
+  ya no se escribe en `/users/{id}` (público) — `reg()` ahora lo guarda en
+  `/usersPrivate/{id}` (nueva colección, solo dueño+admin la leen, ver
+  `firestore.rules`). `mostrarTodosRegistrados()` y `exportarUsuariosAdmin()`
+  actualizadas para leer el correo desde ahí (`_mapaEmailsPrivados()`).
+  Migración de los usuarios YA registrados lista en
+  `scripts/migrate-email-privado.js` (dry run por defecto, `--escribir` para
+  aplicar de verdad) pero **sin correr todavía — bloqueado por cuota de
+  Firestore agotada** (ver aviso de "Cuota Firestore agotada" más abajo,
+  entrada del 2026-07-14). Cuando haya cuota: 1) correr el script en dry run
+  y revisar, 2) correr con `--escribir`, 3) publicar el `firestore.rules`
+  actualizado (agrega el bloque `usersPrivate`), 4) deploy del código. Los
+  tres pasos deben ir juntos para no dejar una ventana donde un registro
+  nuevo no logre guardar su correo en ningún lado.
 - [ ] **⚠️ Posible falla de seguridad en detección de caídas — necesita prueba
   con teléfono real, nadie la puede hacer sin dispositivo.** Encontrado en el
   barrido #8 (v6.37, ver `BITACORA.md`): el chequeo de "¿sigues quieto tras el

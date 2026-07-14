@@ -4,6 +4,72 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## 🚨 2026-07-14 — Cuota de Firestore agotada (proyecto entero, no solo admin)
+
+Al intentar respaldar `users` antes de migrar (ver entrada siguiente), el
+Admin SDK devolvió `RESOURCE_EXHAUSTED: Quota exceeded` incluso en la
+lectura de UN solo documento. Para descartar que fuera un problema de las
+credenciales del service account, se probó directo contra la API pública de
+Firestore sin ninguna autenticación (`curl
+https://firestore.googleapis.com/v1/projects/librepedal-cb983/databases/(default)/documents/meta/contadores`)
+— **mismo error, 429 RESOURCE_EXHAUSTED.** Eso confirma que no es un
+problema de mis credenciales: es la cuota del proyecto completo agotada, lo
+que significa que la app real estaba fallando para CUALQUIER usuario
+(ranking, chat, GPS, reportes, todo). Causa casi segura: plan gratuito
+Spark, tope diario fijo. Avisado a Inty de inmediato (interrumpe la tarea en
+curso porque afecta usuarios reales ahora mismo, no solo a mí). Ninguna
+acción de facturación tomada — eso es exclusivamente de Inty. Detalle y
+opciones en `PENDIENTES.md`, sección 🔴 más urgente.
+
+---
+
+## Código listo (sin deploy) — 2026-07-14 — Claude (sesión 2, fix email expuesto: usersPrivate)
+
+Continuación del ítem de seguridad más urgente pendiente en el proyecto:
+Inty decidió el enfoque (doc privado aparte) vía pregunta directa. Se
+implementó el fix completo a nivel de código, pero **NO se desplegó ni se
+migraron datos** — bloqueado por la cuota de Firestore agotada (entrada de
+arriba). No tenía sentido desplegar código a medias sin poder verificarlo
+contra Firestore real ni correr la migración.
+
+**Cambios de código:**
+- `firestore.rules`: nueva colección `usersPrivate/{id}` — `allow read: if
+  signedIn() && (request.auth.uid == id || isAdmin())`, `allow write:` solo
+  el dueño. El id del documento es el mismo `cu` que ya usa `/users/{id}`.
+- `reg()`: ya NO escribe `email` en `/users/{cu}` (público) — lo escribe
+  aparte en `/usersPrivate/{cu}`.
+- `mostrarTodosRegistrados()` y `exportarUsuariosAdmin()` (las dos vistas de
+  admin que mostraban el correo): actualizadas para leerlo desde
+  `usersPrivate` vía un helper nuevo `_mapaEmailsPrivados()` (trae toda la
+  colección y cruza por id de documento), en vez de `d.email` del doc
+  público.
+- `scripts/migrate-email-privado.js` (nuevo): migra los usuarios YA
+  registrados — copia `email` a `usersPrivate` y lo borra de `users`. Corre
+  en modo DRY RUN por defecto (no escribe nada, solo informa qué haría);
+  `--escribir` para aplicarlo de verdad. Idempotente (seguro de correr más
+  de una vez).
+
+**Verificación real hecha:** `node --check` sobre `index.html` y sobre el
+script de migración, 0 errores. Grep exhaustivo confirmando que no quedó
+ningún otro punto de lectura/escritura de `email` sobre el documento público
+(antes de este cambio había 2 lugares que lo leían de ahí, no 1 —
+`exportarUsuariosAdmin` y `mostrarTodosRegistrados`, ambas corregidas).
+
+**Lo que falta, en orden, apenas haya cuota:**
+1. `node scripts/backup-firestore.js` (respaldo completo real, no solo de
+   email) — ya se intentó, falló por la cuota, hay que reintentarlo.
+2. `node scripts/migrate-email-privado.js` (dry run) y revisar el resumen.
+3. `node scripts/migrate-email-privado.js --escribir` (migración real).
+4. Inty publica el `firestore.rules` actualizado (bloque `usersPrivate`
+   nuevo) en Firebase Console — igual que la vez pasada.
+5. Deploy del código (`index.html`/`version.txt`/`sw.js`).
+Los pasos 3, 4 y 5 deben quedar juntos en la misma ventana de tiempo para no
+dejar un hueco donde un registro nuevo no logre guardar su correo en
+ningún lado (mientras el código nuevo ya no escribe en `users` pero las
+reglas de `usersPrivate` todavía no están publicadas).
+
+---
+
 ## v6.61 — 2026-07-14 — Claude (sesión 2, avisos de pendiente/ritmo por modo + rutero vs cicloviajero)
 
 Pedido de Inty: "esto debe quedar adaptado para ciclistas, caminantes y
