@@ -4,6 +4,59 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.64 — 2026-07-14 — Claude (sesión 2, Video 3D de ruta: mapa vectorial + edificios 3D + Pistero en bici)
+
+Pedido de Inty: "el mapa le falta calidad... tiene a ponerse negro en algunas
+partes... me gustaría que tuviera más cuerpo, que las casas y edificios se
+vean 3D... me gustaría que se viera a Pistero recorriendo en bicicleta."
+
+**Causa raíz del mapa negro:** el video usaba tiles RASTER de OpenTopoMap
+(imágenes PNG por tile). Un vuelo de cámara rápido pide muchísimos tiles muy
+seguido — más de lo que esa capa aguanta a ese ritmo — y un estilo raster
+puro no tiene ningún color de fondo definido: si un tile no llega a tiempo,
+se ve negro puro, sin nada detrás. Además, el vuelo arrancaba con un
+`setTimeout` fijo de 400ms sin esperar a que el mapa terminara de cargar la
+vista inicial.
+
+**Fix:** el mapa del video ahora usa el MISMO proveedor que ya usa con éxito
+el mapa principal de la app — `https://tiles.openfreemap.org/styles/liberty`
+(OpenFreeMap, vectorial, gratis y sin cuenta, ya integrado en `LP_ESTILO_CALLES`
+desde antes). Dos beneficios de una sola vez: (1) todo estilo vectorial trae
+un color de fondo definido — un tile que tarda ya no se ve negro, se ve el
+fondo del estilo; (2) el estilo `liberty` ya trae de fábrica una capa
+`building-3d` (`fill-extrusion` con la altura REAL de cada edificio desde
+OpenStreetMap, no una textura plana) — confirmado revisando el JSON del
+estilo antes de usarlo. El terreno (Mapterhorn) se mantiene igual que antes.
+También se cambió el arranque del vuelo de un `setTimeout` fijo a
+`videoMap.once('idle', ...)` — espera a que calles/edificios/terreno
+terminen de pintar la vista inicial antes de empezar a volar.
+
+**Pistero en bici:** nuevo marcador HTML (`_riderMarkerVideoSVG()`, ícono
+chico vista de lado, colores de marca) que sigue el mismo lat/lon que
+maneja la cámara en cada frame, con `rotationAlignment:'map'` para que gire
+según el rumbo real de la ruta (`videoBearing - 90`, porque el ícono se
+dibujó mirando al este por defecto).
+
+**Verificación real hecha:** `node --check`, 0 errores. En navegador:
+confirmado que el estilo carga con las capas `building`/`building-3d`
+presentes (`getStyle().layers`), que el SVG del marcador es válido y
+parseable, y que la fórmula de rotación (`bearing-90`) calza con la
+convención documentada de MapLibre para `rotationAlignment:'map'`
+razonando los 4 casos cardinales (0°→-90°, 90°→0°, 180°→90°, 270°→180°),
+verificado sin errores de consola en cada paso.
+
+**No verificado — honesto:** el render final en píxeles (¿realmente ya no
+se ve negro? ¿los edificios se ven bien en 3D? ¿Pistero se ve bien y gira
+para el lado correcto?) NO se pudo confirmar en este sandbox — la pestaña
+de vista previa queda con `document.hidden=true`, lo mismo que ya bloqueaba
+las animaciones WAAPI del prototipo de Pistero esta sesión, y acá también
+congela el render loop interno de MapLibre (el mapa nunca termina de
+disparar su evento `load` real). Falta que Inty grabe un video de prueba en
+su teléfono y confirme cómo se ve. Si Pistero queda mirando para el lado
+contrario al que avanza, el arreglo es trivial (sumar 180 más al offset).
+
+---
+
 ## v6.63 — 2026-07-14 — Claude (sesión 2, rediseño tarjeta "Mis Rutas")
 
 Pedido de Inty: "los botones están mal no se ve bien, hay mucho texto."
