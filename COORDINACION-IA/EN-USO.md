@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-14
-Terminó: v6.63 — rediseño tarjeta "Mis Rutas" (tap-to-view + 5 iconos circulares en vez de 6 botones con texto). Commiteado, pusheado (3a60334) y desplegado, live verificado.
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — Video 3D de ruta: cambio a mapa vectorial OpenFreeMap (arregla mapa negro, trae edificios 3D) + marcador de Pistero en bici siguiendo la ruta. No toca voz/personalidad.
 ```
 
 ---
