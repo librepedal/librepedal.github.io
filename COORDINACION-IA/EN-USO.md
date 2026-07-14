@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — +123 frases generales en voz chilena (192 total) + auto-off manos libres, v6.67, commit cfdb45f, deployado y pusheado.
+Última sesión: 1 — feature Carabineros (aviso 3km motorizados + frase chistosa alternada), v6.68, commit 0f93de4, deployado y pusheado.
 ```
 
 ---
