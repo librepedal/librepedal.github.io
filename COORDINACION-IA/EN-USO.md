@@ -32,8 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 1 — voz chilena Azure EN VIVO para frases dinámicas vía Worker /aztts (adiós gringa), v6.69, commit 41e752b, deployado y pusheado. OJO: Azure ahora es dependencia de runtime, NO borrar la suscripción.
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — SOLO layout/CSS de la pantalla de personaje (#v-customize): reordenar pestaña "Preferencias" (queda última de 11, ahí vive Personalidad/Arquetipos, casi invisible), agregar clase de grilla a #personalidadGrid (se apilaba vertical, sin grid), e indicador visual de scroll en la fila de pestañas. NO toco PERSONALIDADES, arquetipos de voz ni nada de sesión 1 — solo el contenedor visual.
 ```
 
 ---
