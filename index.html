@@ -1053,7 +1053,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.70'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.71'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3614,31 +3614,44 @@ function abrirVideoRuta(id){
 // gruesos y colores de marca a propósito: en el video queda del tamaño de un
 // ícono, no de un personaje grande, así que el detalle fino se pierde y lo
 // que se ve es la silueta.
-function _riderMarkerVideoSVG(){
-  return '<svg viewBox="0 0 64 40" style="width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.55))">'
-    +'<ellipse cx="31" cy="34" rx="24" ry="3" fill="rgba(0,0,0,0.35)"/>'
-    +'<circle cx="13" cy="26" r="8.4" fill="#161616" stroke="#eee" stroke-width="1.3"/>'
-    +'<circle cx="49" cy="26" r="8.4" fill="#161616" stroke="#eee" stroke-width="1.3"/>'
-    +'<path d="M13 26 L27 12 L31 26 M27 12 L45 13 M31 26 L49 26" stroke="var(--p)" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-    +'<path d="M27 13 Q22 2 38 3" stroke="#1c2636" stroke-width="5.6" fill="none" stroke-linecap="round"/>'
-    +'<circle cx="41" cy="3" r="4.6" fill="#1c2636"/>'
-    +'<path d="M39 1 L44 -0.6" stroke="var(--g)" stroke-width="2.2" stroke-linecap="round"/>'
-    +'<path d="M38 4 L45 13" stroke="#1c2636" stroke-width="2.6" stroke-linecap="round"/>'
-    +'<path d="M29 18 L31 26" stroke="#1c2636" stroke-width="2.6" stroke-linecap="round"/>'
+// 2026-07-14: Pistero NO se veía en el video — causa real: era un marcador
+// HTML/CSS de MapLibre, pero #video-canvas-out (el canvas que compone la
+// barra de stats Y que es lo que de verdad se graba) se dibuja ENCIMA de
+// #video-map con drawImage(mc,...) — eso copia SOLO el canvas WebGL del
+// mapa, nunca los elementos HTML superpuestos como un Marker. El marcador
+// quedaba 100% tapado, tanto en la vista previa como en el archivo grabado.
+// Fix real: dejar de usar un Marker de MapLibre y dibujar a Pistero DIRECTO
+// en el mismo canvas de composición, cada cuadro, en la posición de pantalla
+// que da videoMap.project() — así queda en el mismo pipeline que sí se ve y
+// se graba. De paso, colores fijos (sin var(--p)) porque una imagen rasterizada
+// aparte no hereda las variables CSS de la página.
+function _riderCanvasSVG(){
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40">'
+    +'<circle cx="13" cy="27" r="8.6" fill="#161616" stroke="#e8e8e8" stroke-width="1.4"/>'
+    +'<circle cx="13" cy="27" r="4.2" fill="none" stroke="#666" stroke-width="1"/>'
+    +'<circle cx="49" cy="27" r="8.6" fill="#161616" stroke="#e8e8e8" stroke-width="1.4"/>'
+    +'<circle cx="49" cy="27" r="4.2" fill="none" stroke="#666" stroke-width="1"/>'
+    +'<path d="M13 27 L28 13 L32 27 M28 13 L45 15 M32 27 L49 27" stroke="#fc4c02" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<circle cx="32" cy="27" r="3.4" fill="#20344a"/>'
+    +'<path d="M26 16 Q21 4 34 1.5 Q43 0.5 41 9 Q35 6.5 30 14 Q28 15.5 26 16 Z" fill="#20344a"/>'
+    +'<path d="M27 16 L32 27" stroke="#20344a" stroke-width="4" stroke-linecap="round"/>'
+    +'<path d="M36 6 L45 15" stroke="#20344a" stroke-width="3.2" stroke-linecap="round"/>'
+    +'<circle cx="42" cy="3.5" r="5.2" fill="#161616"/>'
+    +'<path d="M37.5 3 Q42 -1.5 47 2" stroke="#fc4c02" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
+    +'<circle cx="44.5" cy="4" r="1.5" fill="#f0c39a"/>'
     +'</svg>';
 }
-let videoRiderMarker=null, videoRiderEl=null;
-function _crearRiderMarkerVideo(lon,lat){
-  if(videoRiderMarker){ try{ videoRiderMarker.remove(); }catch(e){} videoRiderMarker=null; }
-  videoRiderEl=document.createElement('div');
-  videoRiderEl.style.cssText='width:52px;height:33px';
-  videoRiderEl.innerHTML=_riderMarkerVideoSVG();
-  videoRiderMarker=new maplibregl.Marker({element:videoRiderEl, anchor:'center', rotationAlignment:'map', pitchAlignment:'map'})
-    .setLngLat([lon,lat]).setRotation(0).addTo(videoMap);
+let videoRiderImg=null;
+function _cargarRiderImg(){
+  if(videoRiderImg) return videoRiderImg;
+  const img=new Image();
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(_riderCanvasSVG());
+  videoRiderImg=img;
+  return img;
 }
 function initVideoMap(){
   if(videoMap){ try{ videoMap.remove(); }catch(e){} videoMap=null; }
-  if(videoRiderMarker){ try{ videoRiderMarker.remove(); }catch(e){} videoRiderMarker=null; }
+  _cargarRiderImg();
   const pts=videoRouteData.points, start=pts[0];
   // 2026-07-14: antes usaba tiles raster de OpenTopoMap para el mapa del video —
   // un vuelo rápido pide MUCHOS tiles muy seguido, y esa capa no aguantaba el
@@ -3660,7 +3673,6 @@ function initVideoMap(){
     try{ videoMap.setTerrain({source:'terreno',exaggeration:1.4}); }catch(e){}
     videoMap.addSource('ruta-recorrida',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[]}}});
     videoMap.addLayer({id:'ruta-recorrida-line',type:'line',source:'ruta-recorrida',paint:{'line-color':'#fc4c02','line-width':5,'line-opacity':0.95}});
-    _crearRiderMarkerVideo(start.lon, start.lat);
     const out=document.getElementById('video-canvas-out'), mc=videoMap.getCanvas();
     out.width=mc.width; out.height=mc.height; videoCompositeCtx=out.getContext('2d');
     // Espera a que el estilo (calles, edificios, terreno) termine de pintar la
@@ -3691,25 +3703,42 @@ function iniciarVueloRuta(){
     const tgtB=_bearingEntrePuntos({lat:lat,lon:lon}, pts[jLA]);
     videoBearing=_lerpAng(videoBearing, tgtB, 0.05);
     videoMap.jumpTo({center:[lon,lat], zoom:15.4, pitch:64, bearing:videoBearing});
-    // El ícono de Pistero se dibujó mirando al este (90°) en reposo, así que se
-    // rota -90° respecto del rumbo real para que apunte hacia donde avanza.
-    if(videoRiderMarker){ videoRiderMarker.setLngLat([lon,lat]); videoRiderMarker.setRotation(videoBearing-90); }
     const recorridos=pts.slice(0,i+1).map(function(p){return [p.lon,p.lat];}); recorridos.push([lon,lat]);
     const src=videoMap.getSource('ruta-recorrida'); if(src) src.setData({type:'Feature',geometry:{type:'LineString',coordinates:recorridos}});
-    _dibujarCompositeVideo(progreso);
+    _dibujarCompositeVideo(progreso, lon, lat, videoBearing);
     document.getElementById('videoProgressFill').style.width=(progreso*100)+'%';
     if(progreso<1){ videoRafId=requestAnimationFrame(frame); }
     else { videoRafId=null; document.getElementById('video-status').innerText='¡Listo! Repítelo o graba el video.'; document.getElementById('btnReplayVideo').style.display=''; }
   }
   videoRafId=requestAnimationFrame(frame);
 }
-function _dibujarCompositeVideo(progreso){
+function _dibujarCompositeVideo(progreso, lon, lat, bearingDeg){
   if(!videoCompositeCtx||!videoMap) return;
   const out=document.getElementById('video-canvas-out'), mc=videoMap.getCanvas();
   if(out.width!==mc.width||out.height!==mc.height){ out.width=mc.width; out.height=mc.height; }
   const ctx=videoCompositeCtx, d=videoRouteData;
   ctx.clearRect(0,0,out.width,out.height);
   ctx.drawImage(mc,0,0,out.width,out.height);
+  // Pistero en su bici, en la PUNTA de la línea que se traza (misma coordenada
+  // que maneja la cámara): se dibuja acá, DENTRO del mismo canvas que se graba,
+  // en vez de un Marker HTML aparte (ver nota arriba, esa era la causa real de
+  // que no se viera). videoMap.project() da la posición en pantalla real,
+  // considerando el pitch/zoom/bearing actual de la cámara 3D.
+  if(lon!=null && lat!=null && videoRiderImg && videoRiderImg.complete && videoRiderImg.naturalWidth){
+    try{
+      const p=videoMap.project([lon,lat]);
+      const w=out.width*0.1, h=w*(40/64);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.fillStyle='rgba(0,0,0,0.32)';
+      ctx.beginPath(); ctx.ellipse(0, h*0.34, w*0.42, h*0.13, 0, 0, Math.PI*2); ctx.fill();
+      // el ícono se dibujó mirando al este (0°=derecha); se rota -90° respecto
+      // del rumbo real para que la rueda delantera apunte hacia donde avanza.
+      ctx.rotate((bearingDeg-90)*Math.PI/180);
+      ctx.drawImage(videoRiderImg, -w/2, -h/2, w, h);
+      ctx.restore();
+    }catch(e){ /* si project() falla en algún borde del vuelo, se salta ese cuadro no más */ }
+  }
   const barH=out.height*0.16, pad=out.width*0.045, fs=out.width*0.028;
   ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,out.height-barH,out.width,barH);
   ctx.fillStyle='#fc4c02'; ctx.font='700 '+fs+'px system-ui,sans-serif'; ctx.textAlign='left'; ctx.fillText('Libre Pedal', pad, out.height-barH*0.62);

@@ -4,6 +4,61 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.71 — 2026-07-14 — Claude (sesión 2, Pistero invisible en el video — causa real encontrada)
+
+Pedido de Inty (probando lo de v6.64): "Pistero en bici en el video no
+funcionó bien, se supone que debería ir en la punta de la línea que se
+traza y debe verse como un ciclista no como una imagen plana."
+
+**Causa raíz real:** el marcador de Pistero (v6.64) era un `Marker` de
+MapLibre — un `<div>` HTML posicionado por CSS encima del mapa. Pero
+`#video-canvas-out` (el `<canvas>` que compone la barra de estadísticas Y
+que es la fuente real de `captureStream()` para el video grabado) se dibuja
+ENCIMA de `#video-map` con `ctx.drawImage(mc,...)`, donde `mc` es SOLO el
+canvas WebGL del mapa — eso NO incluye elementos HTML superpuestos como un
+Marker. Resultado: Pistero quedaba 100% tapado, tanto en la vista previa
+como en el archivo descargado. Nunca se vio, en ningún momento — no era un
+problema de posición ni de arte, era que literalmente no estaba en la
+imagen que se ve/graba.
+
+**Fix real:** se dejó de usar `maplibregl.Marker` por completo. Ahora
+Pistero se dibuja DIRECTO en `videoCompositeCtx` (el mismo canvas de
+salida), cada cuadro, en la posición de pantalla que da
+`videoMap.project([lon,lat])` — el mismo pipeline que sí se ve y se graba.
+Sigue estando en la punta exacta de la línea que se traza (mismo lon/lat
+que maneja la cámara). De paso se mejoró el arte: antes eran casi puros
+trazos delgados (se habría visto como alambre, no como un cuerpo sólido);
+ahora el torso del ciclista es una forma RELLENA, más el color de marca en
+el marco de la bici y una sombra en el suelo para que se sienta apoyado en
+el terreno, no pegado encima como una calcomanía.
+
+**Verificación real hecha — mucho más sólida que la de v6.64:** a diferencia
+del mapa/marcador anterior (que dependía del render loop de MapLibre,
+congelado en este sandbox por `document.hidden`), este dibujo es Canvas 2D
+puro + carga de imagen, que SÍ funciona en este entorno. Confirmado con
+pruebas reales: la imagen carga (240×150px), se dibuja sin error, el píxel
+central cambia de verdad respecto al fondo (RGB real distinto, no
+transparente), y — la prueba más concluyente — el ANCHO del perfil
+horizontal de la silueta cambia de 70px (de lado, sin rotar) a 40px
+(rotada 90°) exactamente como corresponde a un ícono que gira de verdad
+según el rumbo, no uno pegado estático.
+
+**Sobre el otro reporte de Inty (voz de arquetipo que no cambia):**
+investigado, NO es un bug de código — es una confusión de UX real: el
+sistema de voz chilena (lo que hace sonar distinto cada arquetipo) está
+detrás del toggle **"Voz mejorada"** en ⚙️ Ajustes (`vozMejorada`, default
+OFF), una pantalla DISTINTA de donde se eligen los arquetipos (Perfil →
+Preferencias). Sin ese toggle prendido, `_reproducirVoz()` cae directo a
+`_vozNativaOWeb()` (la voz nativa del navegador) sin importar qué
+arquetipo esté elegido — línea 1916: `if(vozMejorada && navigator.onLine)`.
+No se tocó nada de esto (es sistema de voz de sesión 1) — se le explicó a
+Inty dónde está el toggle. **Ojo para sesión 1:** vale la pena considerar
+si "Voz mejorada" debería venir ON por defecto ahora que es una función
+estable, o si el selector de arquetipo debería mencionar/enlazar a este
+toggle para que no quede escondido en otra pantalla.
+
+---
+
 ## v6.70 — 2026-07-14 — Claude (sesión 2, arquetipos invisibles + pantalla de personaje ocupaba mucho espacio)
 
 Pedido de Inty (probando lo nuevo de voz de sesión 1): "no veo en la app los
