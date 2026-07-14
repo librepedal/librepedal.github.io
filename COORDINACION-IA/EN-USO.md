@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-14 (ahora)
-Tocando: index.html — rediseño de la tarjeta "Mis Rutas" (6 botones con texto → tarjeta tap-to-view + 5 iconos circulares). No toca voz/personalidad ni cuota de Firestore.
+LIBRE
+Última sesión: 2
+Hasta: 2026-07-14
+Terminó: v6.63 — rediseño tarjeta "Mis Rutas" (tap-to-view + 5 iconos circulares en vez de 6 botones con texto). Commiteado, pusheado (3a60334) y desplegado, live verificado.
 ```
 
 ---
