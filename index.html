@@ -1045,7 +1045,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.72'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.73'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1937,8 +1937,9 @@ function _vozArchivo(item, durEst, id){
     const a=new Audio('voces/'+pisteroGenero+id+'.mp3');
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onplaying=function(){ cayo=true; }; // ya suena: comprometidos con este audio, no dispares un segundo (evita voz duplicada)
     a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
-    a.onerror=function(){ fallback(); };
+    a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
@@ -1953,8 +1954,9 @@ function _vozAzureRuntime(item, durEst){
     const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
     a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
-    a.onerror=function(){ fallback(); };
+    a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
@@ -2004,7 +2006,8 @@ function toggleVozNeural(){
   localStorage.setItem('lp_vozneural', vozMejorada?'on':'off');
   const b=document.getElementById('vozNeuralBtn');
   if(b) b.innerHTML='<i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: '+(vozMejorada?'ON':'OFF');
-  if(vozMejorada){ pararVoz(); if(!vozActiva){ vozActiva=true; localStorage.setItem('lp_voz','on'); } h("Voz mejorada activada. Así me escucho ahora, ¿mejor así?"); }
+  pararVoz(); // corta SIEMPRE lo que esté sonando antes de confirmar — si no, la voz vieja y la nueva se encimaban (sonaba duplicada)
+  if(vozMejorada){ if(!vozActiva){ vozActiva=true; localStorage.setItem('lp_voz','on'); } h("Voz mejorada activada. Así me escucho ahora, ¿mejor así?"); }
   else h("Voz mejorada desactivada, vuelvo a la voz de siempre.");
 }
 function toggleGenero(){
