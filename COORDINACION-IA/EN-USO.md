@@ -33,9 +33,9 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1
-Hasta: 2026-07-14 01:30
-Terminó: v6.59 — corrige mismatch de version.txt (habia quedado 6.55 vs 6.58 de sesion 2) + frases en ruta por arquetipo (FRASES_ARQ). Commiteado, pusheado (53a778c) y desplegado, live 6.59 verificado.
+Última sesión: 2
+Hasta: 2026-07-14
+Terminó: marcar cerrado firestore.rules (publicado por Inty en Firebase Console, no requirió deploy). Commiteado y pusheado (e0e55a8).
 ```
 
 ---
