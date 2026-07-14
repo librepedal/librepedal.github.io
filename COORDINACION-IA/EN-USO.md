@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-14
-Terminó: marcar cerrado firestore.rules (publicado por Inty en Firebase Console, no requirió deploy). Commiteado y pusheado (e0e55a8).
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — precisión del perfil de elevación (subida/bajada) usando DEM real (Open-Meteo) en vez de solo altitud GPS del celular
 ```
 
 ---
