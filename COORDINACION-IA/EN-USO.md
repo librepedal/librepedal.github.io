@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-14
-Terminó: v6.60 — perfil de elevación afinado con DEM real (Open-Meteo), corrige el sesgo de la altitud GPS del celular. Commiteado, pusheado (1b67655) y desplegado, live verificado.
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — umbrales de pendiente/ritmo adaptados por modo (ciclismo/mtb/trekking/moto) + toggle rutero vs cicloviajero cargado
 ```
 
 ---
