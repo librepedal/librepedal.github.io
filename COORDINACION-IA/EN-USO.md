@@ -33,9 +33,9 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2
-Hasta: 2026-07-13 20:38
-Terminó: v6.58 — chips de modo en la esfera más grandes y con color propio, gentilicio moto 'viajero'->'motorizado'. Commiteado y pusheado (056788d), desplegado y verificado en librepedal.cl.
+Última sesión: 1
+Hasta: 2026-07-14 01:30
+Terminó: v6.59 — corrige mismatch de version.txt (habia quedado 6.55 vs 6.58 de sesion 2) + frases en ruta por arquetipo (FRASES_ARQ). Commiteado, pusheado (53a778c) y desplegado, live 6.59 verificado.
 ```
 
 ---
