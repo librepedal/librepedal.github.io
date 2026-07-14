@@ -119,11 +119,15 @@ que obligue a reenviar.
   Corregido: las 8 lecturas redundantes eliminadas, más `.limit(150)` en los
   dos listeners de usuarios que no tenían techo. Ver `BITACORA.md` para el
   detalle completo y lo que falta verificar en vivo (bloqueado por la misma
-  cuota mientras no resetee). **Sigue pendiente la decisión de fondo:**
-  ¿esperar el reset cada vez, o evaluar Blaze como colchón? Con el bug
-  corregido, el costo proyectado en Blaze a 5.000 usuarios es bajo (~$2-17
-  USD/mes según actividad, ver conversación del 2026-07-14) — decisión de
-  Inty, ninguna IA activa facturación.
+  cuota mientras no resetee). **Decisión de Inty (2026-07-14): por ahora
+  seguir en el plan gratis Spark, sin activar Blaze.** No pagar nada sigue
+  siendo la única restricción dura del proyecto. Con el bug de lecturas
+  corregido en v6.62, el uso real debería bajar mucho y quedar dentro del
+  tope gratis en el día a día — si la cuota se agota de nuevo, es señal de
+  revisar primero si apareció otro patrón similar antes de pensar en pagar.
+  El costo estimado en Blaze si algún día se reconsidera (~$2-17 USD/mes a
+  5.000 usuarios, ver conversación del 2026-07-14) queda solo como
+  referencia, no como plan activo.
 
 - [~] **⚠️ El correo de TODOS los usuarios se puede leer sin ser admin ni estar
   logueado — Inty ya decidió el enfoque (2026-07-14): doc privado aparte.
