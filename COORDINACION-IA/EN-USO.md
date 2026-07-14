@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-14 (ahora)
-Tocando: index.html + firestore.rules — mover email de users público a usersPrivate (fix de exposición). SOLO código, sin deploy todavía: cuota de Firestore agotada (proyecto entero, ver BITACORA), migración de datos pendiente hasta que Inty resuelva la cuota.
+LIBRE
+Última sesión: 2
+Hasta: 2026-07-14
+Terminó: fix email expuesto (usersPrivate) — CÓDIGO LISTO Y COMMITEADO (83a0c07), pero SIN DEPLOY y SIN MIGRAR TODAVÍA. Bloqueado por cuota de Firestore agotada (proyecto entero, ver BITACORA). Próximo paso, apenas haya cuota: correr scripts/migrate-email-privado.js, que Inty publique firestore.rules, y deployar todo junto — ver BITACORA/PENDIENTES para el orden exacto.
 ```
 
 ---
