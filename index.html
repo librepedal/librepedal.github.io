@@ -978,6 +978,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="customization-section" style="margin-top:0"><h3>⚡ Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
   <div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
   <div class="customization-section"><h3>🧭 Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
+  <div class="customization-section" id="cicloCargadoBox" style="display:none"><h3>🎒 ¿Cómo andas en bici?</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Un cicloviajero con alforjas anda a otro ritmo que un rutero liviano — esto ajusta a qué pendiente y velocidad te aviso.</p><div style="display:flex;gap:8px"><button class="ab sec" id="btnRutero" style="flex:1;margin:0" onclick="setCicloCargado(false)">🏁 Rutero (liviano)</button><button class="ab sec" id="btnCicloviajero" style="flex:1;margin:0" onclick="setCicloCargado(true)">🎒 Cicloviajero (cargado)</button></div></div>
   <div class="customization-section"><h3>🎭 Personalidad de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Sigue siendo Pistero, solo cambia el tono con el que te habla.</p><div id="personalidadGrid"></div></div>
 </div>
 <button class="bg" onclick="saveCustomization()">💾 Guardar personaje</button>
@@ -1031,7 +1032,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.60'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.61'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1454,7 +1455,7 @@ function elegirActividad(id, silencioso){
   // preferencia sin ningún aviso. Se sube a su perfil igual que casco/lentes/skin.
   if(cu){ try{ db.collection('users').doc(cu).set({actividad:id},{merge:true}).catch(function(){}); }catch(e){} }
   _aplicarTemaActividad();
-  renderActividadGrid(); renderModoRegistro(); renderModoRapidoEsfera();
+  renderActividadGrid(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
   if(!silencioso) h('Listo, ahora te acompaño como '+_actividadActual().gentilicio+'.');
 }
 function renderActividadGrid(){
@@ -1486,10 +1487,35 @@ function renderModoRapidoEsfera(){
     return '<div class="es-modo-chip'+(sel?' selected':'')+'" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="elegirActividad(\''+a.id+'\')" title="'+a.label.replace(/"/g,'')+'"><div class="es-modo-ico">'+a.icono+'</div><div class="es-modo-txt">'+a.corto+'</div></div>';
   }).join('');
 }
+// Cicloviajero cargado (alforjas, bici de touring) vs rutero liviano: mismo
+// modo "ciclismo", pero el peso extra cambia el ritmo real y a qué pendiente
+// ya se siente el esfuerzo — pedido explícito de Inty ("no es lo mismo un
+// rutero que un cicloviajero, anda en otras velocidades por el peso que
+// carga"). Guardado aparte (no es un actividadTipo nuevo) para no tocar OSRM,
+// tema visual ni el resto del sistema de ACTIVIDADES — solo afecta ritmo y
+// sensibilidad de avisos de pendiente. Declarado ANTES del auto-arranque de
+// abajo (renderModoRapidoEsfera etc.) porque ese arranque ya llama a
+// _actualizarBtnCicloCargado() — declararlo después revienta con "cannot
+// access before initialization" (bug real, encontrado al verificar en vivo).
+let cicloCargado=(function(){ try{ return localStorage.getItem('lp_ciclo_cargado')==='1'; }catch(e){ return false; } })();
+function setCicloCargado(on){
+  cicloCargado=!!on;
+  try{ localStorage.setItem('lp_ciclo_cargado', cicloCargado?'1':'0'); }catch(e){}
+  _actualizarBtnCicloCargado();
+  h(cicloCargado ? 'Listo, ahora ajusto los avisos al ritmo de un cicloviajero cargado.' : 'Listo, ahora ajusto los avisos al ritmo de un rutero liviano.');
+}
+function _actualizarBtnCicloCargado(){
+  const box=document.getElementById('cicloCargadoBox'); if(!box) return;
+  box.style.display=(typeof actividadTipo!=='undefined' && actividadTipo==='ciclismo') ? '' : 'none';
+  const bR=document.getElementById('btnRutero'), bC=document.getElementById('btnCicloviajero');
+  const on='background:var(--p);box-shadow:0 3px 10px rgba(0,0,0,0.4),0 0 14px rgba(252,76,2,0.45)', off='background:#2a3147;box-shadow:none';
+  if(bR) bR.style.cssText='flex:1;margin:0;'+(!cicloCargado?on:off);
+  if(bC) bC.style.cssText='flex:1;margin:0;'+(cicloCargado?on:off);
+}
 // Aplica el tema y pinta el selector apenas carga el script — así la pantalla de
 // registro (y una sesión que vuelve) ya se ven con el color correcto desde el
 // primer pintado, no recién después de loguearse.
-_aplicarTemaActividad(); renderModoRegistro(); renderModoRapidoEsfera();
+_aplicarTemaActividad(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
 // ===== Personalidad de Pistero: el tono cambia, la identidad (Pistero, chileno,
 // experto) no. 'cercano' es el default — mismo tono que siempre tuvo la app.
 const PERSONALIDADES=[
@@ -1533,7 +1559,20 @@ function _ritmoUmbrales(){
   if(m==='trekking') return {lento:3, normal:7};
   if(m==='moto') return {lento:20, normal:90};
   if(m==='mtb') return {lento:6, normal:14};
+  if(m==='ciclismo' && cicloCargado) return {lento:6, normal:12}; // más lento por el peso de la carga
   return {lento:RITMO_LENTO_MAX, normal:RITMO_NORMAL_MAX};
+}
+// Umbral de pendiente (%) a partir del cual vale la pena avisar/comentar: a
+// un caminante no le importa un 4% (lo hace sin pensarlo), a un cicloviajero
+// cargado un 3% ya se siente en las piernas, y a alguien motorizado casi
+// nada le hace ruido salvo una cuesta de verdad.
+function _umbralPendiente(){
+  const m=(typeof actividadTipo!=='undefined')?actividadTipo:'ciclismo';
+  if(m==='trekking') return 8;
+  if(m==='moto') return 12;
+  if(m==='mtb') return 5;
+  if(m==='ciclismo' && cicloCargado) return 3;
+  return 4;
 }
 let nextHydrateKm = 5, nextEatKm = 20;
 let recognition = null, micOn = false;
@@ -2991,10 +3030,11 @@ function comentarPendiente(buffer, sp){
   if(sp===0) return; // parado no hay pendiente que comentar
   const pend=calcularPendienteActual(buffer);
   if(pend==null) return;
+  const umbral=_umbralPendiente(), salida=umbral/2; // salir de la zona con la mitad del umbral de entrada (histéresis)
   let zonaNueva=zonaPendienteActual;
-  if(zonaPendienteActual==='subida'){ if(pend<2.0) zonaNueva='plano'; }
-  else if(zonaPendienteActual==='bajada'){ if(pend>-2.0) zonaNueva='plano'; }
-  else { if(pend>4.0) zonaNueva='subida'; else if(pend<-4.0) zonaNueva='bajada'; }
+  if(zonaPendienteActual==='subida'){ if(pend<salida) zonaNueva='plano'; }
+  else if(zonaPendienteActual==='bajada'){ if(pend>-salida) zonaNueva='plano'; }
+  else { if(pend>umbral) zonaNueva='subida'; else if(pend<-umbral) zonaNueva='bajada'; }
   if(zonaNueva===zonaPendienteActual) return;
   zonaPendienteActual=zonaNueva;
   if(!vozActiva || vozOcupada() || vozCola.length) return;
@@ -4981,8 +5021,9 @@ function _pendienteActualTexto(){
       for(let i=iNow+1;i<rutaPerfil.length;i++){ if(rutaPerfil[i].d-dNow>=180){ iAhead=i; break; } }
       if(iAhead>=0){
         const grade=((rutaPerfil[iAhead].ele-eleNow)/(rutaPerfil[iAhead].d-dNow))*100;
-        if(grade>=4) return 'Vamos en subida ahora mismo, dale con ganas.';
-        if(grade<=-4) return 'Vamos en bajada ahora mismo, ojo con la velocidad.';
+        const _u=_umbralPendiente();
+        if(grade>=_u) return 'Vamos en subida ahora mismo, dale con ganas.';
+        if(grade<=-_u) return 'Vamos en bajada ahora mismo, ojo con la velocidad.';
         return 'Vamos en terreno más o menos plano por ahora.';
       }
     }
@@ -5006,9 +5047,9 @@ function avisarPendienteAnticipada(lat,lon){
   const grade=((rutaPerfil[iAhead].ele-eleNow)/dSeg)*100;
   const key=Math.round(rutaPerfil[iAhead].d/150);
   if(pendAntAvisadas.has(key)) return;
-  const dist=Math.round(dSeg/10)*10;
-  if(grade>=5){ pendAntAvisadas.add(key); pendAntCooldown=ahora; h('Ojo, se viene una subida en los próximos '+dist+' metros. Baja un cambio y dosifica.'); }
-  else if(grade<=-5){ pendAntAvisadas.add(key); pendAntCooldown=ahora; h('Prepárate: viene una bajada en unos '+dist+' metros. Ojo con la velocidad y los frenos.'); }
+  const dist=Math.round(dSeg/10)*10, umbral=_umbralPendiente();
+  if(grade>=umbral){ pendAntAvisadas.add(key); pendAntCooldown=ahora; h('Ojo, se viene una subida en los próximos '+dist+' metros. Baja un cambio y dosifica.'); }
+  else if(grade<=-umbral){ pendAntAvisadas.add(key); pendAntCooldown=ahora; h('Prepárate: viene una bajada en unos '+dist+' metros. Ojo con la velocidad y los frenos.'); }
 }
 function _distPuntoASegmento(plat,plon, alat,alon, blat,blon){
   const R=6371000, tr=Math.PI/180, cl=Math.cos(plat*tr);

@@ -4,6 +4,60 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.61 — 2026-07-14 — Claude (sesión 2, avisos de pendiente/ritmo por modo + rutero vs cicloviajero)
+
+Pedido de Inty: "esto debe quedar adaptado para ciclistas, caminantes y
+motorizados... no es lo mismo un rutero que un cicloviajero, el cicloviajero
+anda en otras velocidades por el peso que carga y el tipo de bici."
+
+**Causa raíz: los umbrales de pendiente eran fijos, sin importar el modo.**
+`comentarPendiente()` entraba en "subida"/"bajada" con un 4%/-4% fijo (y
+salía con 2%/-2%), `avisarPendienteAnticipada()` avisaba desde 5%/-5%, y
+`_pendienteActualTexto()` desde 4%/-4% — ni uno de los tres miraba
+`actividadTipo`. Un caminante (que tolera pendientes mucho más pronunciadas
+sin esfuerzo real) recibía la misma sensibilidad que alguien motorizado (que
+casi no nota una pendiente normal), y un cicloviajero cargado con alforjas
+recibía la misma sensibilidad que un rutero liviano — a pesar de que el
+mismo % de pendiente se siente completamente distinto según el peso que se
+carga.
+
+**Fix:** nueva `_umbralPendiente()` (análoga a la ya existente
+`_ritmoUmbrales()`) con un valor por modo: trekking 8%, ciclismo 4%, mtb 5%,
+moto 12%. Los tres puntos de aviso (`comentarPendiente`,
+`avisarPendienteAnticipada`, `_pendienteActualTexto`) ahora la usan en vez de
+números fijos.
+
+**Rutero vs cicloviajero — nuevo, dentro del modo "ciclismo":** en vez de
+crear un `actividadTipo` nuevo (que habría tocado OSRM, tema visual y todo
+el sistema de `ACTIVIDADES`, con mucho más riesgo/alcance del necesario), se
+agregó una preferencia liviana `cicloCargado` (Preferencias → Actividad →
+nueva caja "🎒 ¿Cómo andas en bici?", solo visible en modo ciclismo).
+Activada, baja el umbral de pendiente a 3% (un cicloviajero cargado siente
+un 3% en las piernas) y el ritmo lento/normal de 8/16 km/h a 6/12 km/h (el
+peso extra hace más lento el ritmo "normal" real). Se guarda en localStorage
+y se sube al perfil igual que el resto de preferencias.
+
+**Bug real encontrado y corregido en la propia verificación:** la primera
+versión declaraba `let cicloCargado` DESPUÉS del auto-arranque de la esfera
+(`_aplicarTemaActividad(); renderModoRegistro(); ...`), pero ese arranque ya
+llamaba a `_actualizarBtnCicloCargado()`, que lee `cicloCargado` — "cannot
+access 'cicloCargado' before initialization" (temporal dead zone),
+reventando la carga inicial de la app. Se detectó al abrir la app en el
+navegador (no solo con `node --check`, que no ve este tipo de error de
+orden de ejecución) y se corrigió moviendo la declaración antes del
+auto-arranque.
+
+**Verificación real:** confirmado que `_umbralPendiente()`/`_ritmoUmbrales()`
+devuelven los valores correctos por modo y con/sin `cicloCargado`; que el
+toggle rutero/cicloviajero se guarda en localStorage y cambia el estado
+visual; que la caja se muestra solo en modo ciclismo (oculta en trekking);
+y con datos reales de un buffer de posiciones (pendiente real calculada:
+3.45%) que la MISMA pendiente dispara "subida" para el cicloviajero cargado
+(umbral 3%) pero se queda en "plano" para el rutero (umbral 4%) — exactamente
+la diferenciación pedida.
+
+---
+
 ## v6.60 — 2026-07-14 — Claude (sesión 2, perfil de elevación afinado con DEM real)
 
 Pedido de Inty, con referencias: MOP/GEOMOP (visor oficial de Vialidad),
