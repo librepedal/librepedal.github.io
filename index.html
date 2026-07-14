@@ -5379,9 +5379,41 @@ function subscribeToUsersOnNavMap(){
   _unsubUsersOnNavMap=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; snapshot.docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } }); });
 }
 function getTurnInstruction(type,modifier,street){ const s=street?' por '+street:''; switch(type){ case 'depart':return 'Comienza el recorrido'+s; case 'arrive':return 'Has llegado a tu destino'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return 'Gira a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'Gira a la derecha'+s; if(modifier&&modifier.indexOf('sharp')!==-1) return 'Giro pronunciado'+s; return 'Gira'+s; case 'roundabout': case 'rotary': return 'Toma la rotonda'+s; case 'merge': return 'Incorpórate'+s; case 'fork': if(modifier&&modifier.indexOf('left')!==-1) return 'En la bifurcación, mantente a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'En la bifurcación, mantente a la derecha'+s; return 'Toma la bifurcación'+s; case 'end of road': return 'Al final del camino'+s; case 'continue': return 'Sigue recto'+s; case 'new name': return 'Continúa'+s; default: return 'Continúa'+s; } }
-function checkNavigationSteps(lat,lon){ if(currentStepIndex>=navSteps.length) return; const step=navSteps[currentStepIndex]; const loc=getStepLocation(step); if(!loc) return; const dist=calculateDistance(lat,lon,loc.lat,loc.lon); let rem=0; for(let i=currentStepIndex;i<navSteps.length;i++) rem+=navSteps[i].distance; document.getElementById('navDist').innerText=formatDistance(rem); document.getElementById('etaDist').innerText=(rem/1000).toFixed(2)+' km'; if(dist<100&&lastSpokenStep!==currentStepIndex){ showStepInstruction(currentStepIndex); lastSpokenStep=currentStepIndex; } if(dist<20){ currentStepIndex++; if(currentStepIndex<navSteps.length){ setTimeout(function(){ showStepInstruction(currentStepIndex); },2000); } else { showArrival(); } } }
-function getStepLocation(step){ if(!step.geometry||!step.geometry.coordinates||!step.geometry.coordinates.length) return null; const c=step.geometry.coordinates[step.geometry.coordinates.length-1]; return {lat:c[1],lon:c[0]}; }
-function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSteps[i]; document.getElementById('navIcon').innerText=getStepIcon(step.maneuver.type,step.maneuver.modifier); document.getElementById('navText').innerText=step.instruction; document.getElementById('navDist').innerText=formatDistance(step.distance); showAlert(step.instruction); h(step.instruction); }
+// 2026-07-14: bug real reportado por Inty — los avisos de giro llegaban tarde
+// (a veces prácticamente al llegar al giro, no antes). Causa: esta función
+// medía la distancia al FINAL de la geometría del paso ACTUAL — que en
+// realidad es el INICIO del paso SIGUIENTE, o sea el punto del PRÓXIMO giro —
+// pero anunciaba la instrucción del paso actual (la de un giro que, si existía,
+// ya había pasado). El aviso correcto solo salía en la rama de abajo, cuando ya
+// se estaba a menos de 20m del giro, y encima con un setTimeout de 2s extra —
+// para cuando se alcanzaba a decir, muchas veces el ciclista ya había pasado el
+// punto. Fix: usar maneuver.location directo (OSRM ya lo entrega, no hay que
+// derivarlo de la geometría) — así la distancia medida y la instrucción
+// anunciada corresponden SIEMPRE al mismo punto, con aviso anticipado real.
+function checkNavigationSteps(lat,lon){
+  if(currentStepIndex>=navSteps.length) return;
+  const step=navSteps[currentStepIndex];
+  const ml=step.maneuver&&step.maneuver.location;
+  if(!ml) return;
+  const loc={lat:ml[1],lon:ml[0]};
+  const dist=calculateDistance(lat,lon,loc.lat,loc.lon);
+  let rem=0; for(let i=currentStepIndex;i<navSteps.length;i++) rem+=navSteps[i].distance;
+  document.getElementById('navDist').innerText=formatDistance(rem);
+  document.getElementById('etaDist').innerText=(rem/1000).toFixed(2)+' km';
+  // Aviso ANTICIPADO real: a 120m del giro (no del final del tramo actual),
+  // con margen de sobra para que llegue a tiempo aunque la voz esté ocupada
+  // con otra cosa (showStepInstruction interrumpe, no encola). El paso
+  // "arrive" no usa este aviso temprano — diría "llegaste" 120m antes de
+  // llegar; la llegada real la celebra showArrival() más abajo.
+  if(dist<120 && lastSpokenStep!==currentStepIndex && step.maneuver.type!=='arrive'){
+    showStepInstruction(currentStepIndex); lastSpokenStep=currentStepIndex;
+  }
+  if(dist<15){
+    currentStepIndex++;
+    if(currentStepIndex>=navSteps.length) showArrival();
+  }
+}
+function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSteps[i]; document.getElementById('navIcon').innerText=getStepIcon(step.maneuver.type,step.maneuver.modifier); document.getElementById('navText').innerText=step.instruction; document.getElementById('navDist').innerText=formatDistance(step.distance); showAlert(step.instruction); hCorta(step.instruction); }
 function getStepIcon(type,modifier){ switch(type){ case 'depart':return '🚴'; case 'arrive':return '🏁'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return '⬅️'; if(modifier&&modifier.indexOf('right')!==-1) return '➡️'; return '🔄'; case 'roundabout': case 'rotary': return '🔁'; case 'fork': return '🔱'; case 'continue': return '⬆️'; default: return '➡️'; } }
 function showAlert(text){ const a=document.getElementById('navAlert'); a.innerText=text; a.classList.add('show'); setTimeout(function(){ a.classList.remove('show'); },3000); }
 function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada(); setTimeout(endNavigation,2500); }
