@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-14
-Terminó: v6.64 — Video 3D de ruta: mapa vectorial OpenFreeMap (arregla mapa negro, trae edificios 3D) + marcador de Pistero en bici. Commiteado, pusheado (9236b4c) y desplegado, live verificado. Falta que Inty confirme el render final en su teléfono (ver BITACORA "no verificado", limitación de sandbox).
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — fix aviso de giros tardío (checkNavigationSteps medía distancia al punto equivocado). No toca voz/personalidad, solo la lógica de navegación turn-by-turn.
 ```
 
 ---
