@@ -32,10 +32,15 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
+LIBRE
 Sesión: 2
-Desde: 2026-07-14 (ahora)
-Tocando: index.html — plan de simplificación de interfaz pedido por Inty (fusionar Viajes/Rutas duplicados, reducir accesos repetidos a Stats/Logros, renombrar botones de "compartir ubicación", quitar fila duplicada de la esfera, revisar botones sobredimensionados). Trabajo de varios pasos, candado se actualiza según avance.
+Hasta: 2026-07-14 — v6.72 deployada y pusheada (commit 6c9e63d).
+Hecho: fusión Viajes/Rutas (#87) + rename botón SOS (#89). Quedan pendientes
+(sin bloquear, ver PENDIENTES.md): #88 (accesos a Stats/Logros) y #90
+(fila es-bottom de la esfera) — a propósito no tocados, chocan con una
+decisión de diseño ya cerrada (v6.09, es-bottom es HUD no navegación
+duplicada); falta confirmar con Inty antes de tocarlos. También sigue
+pendiente revisar botones sobredimensionados (pedido explícito de Inty).
 ```
 
 ---
