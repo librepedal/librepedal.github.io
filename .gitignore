@@ -23,3 +23,4 @@ package-lock.json
 .wrangler/
 firebase-service-account.json
 muestra-voz-pistero.wav
+muestra-voz-ES.wav

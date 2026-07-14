@@ -131,15 +131,22 @@ export default {
     // Workers AI. La app la usa cuando hay señal (con fallback a la voz nativa offline). =====
     const ttsText = url.searchParams.get("tts") || (body && body.tts);
     if (ttsText) {
-      // MeloTTS de Workers AI: input correcto = { prompt } (el campo lang gatilla "Invalid input").
-      try {
-        const r = await env.AI.run("@cf/myshell-ai/melotts", { prompt: String(ttsText).slice(0, 480) });
-        const audio = r && (r.audio || r.audio_data);
-        if (!audio) return new Response(JSON.stringify({ error: "sin_audio", claves: r && typeof r === "object" ? Object.keys(r) : typeof r }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
-        return new Response(JSON.stringify({ audio: audio }), { headers: { ...cors, "Content-Type": "application/json" } });
-      } catch (e) {
-        return new Response(JSON.stringify({ error: "tts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      // MeloTTS de Workers AI: el idioma va en MAYÚSCULA (lang:"ES"). Ojo:
+      //  - "es" (minúscula) => 8002 Invalid input.  - sin lang => fonética inglesa (suena a gringo).
+      //  - "ES" a veces da un 8002/3043 transitorio => reintentamos, y como último recurso
+      //    generamos sin lang (inglés) antes de dejar a Pistero mudo.
+      const t = String(ttsText).slice(0, 480);
+      const intentos = [{ prompt: t, lang: "ES" }, { prompt: t, lang: "ES" }, { prompt: t }];
+      let audio = null, err = "", via = "";
+      for (const inp of intentos) {
+        try {
+          const r = await env.AI.run("@cf/myshell-ai/melotts", inp);
+          audio = r && (r.audio || r.audio_data);
+          if (audio) { via = inp.lang ? "ES" : "sin-lang(ingles)"; break; }
+        } catch (e) { err = String(e); }
       }
+      if (audio) return new Response(JSON.stringify({ audio: audio, via: via }), { headers: { ...cors, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "tts", detalle: err }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
     let messages, maxTokens;
