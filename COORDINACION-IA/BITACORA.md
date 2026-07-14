@@ -4,6 +4,27 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.66 — 2026-07-14 — Claude (sesión 1, Voces chilenas por arquetipo: Pistero/Pistera)
+
+Inty aprobó las voces chilenas de Azure ("ya hermoso están bien las voces") y pidió que si
+la voz es mujer, el guía se llame **Pistera**. También pidió un arquetipo **"Chileno puro" (El Compadre)**.
+
+- **Catálogo pre-generado (Azure es-CL, GRATIS):** 69 frases fijas grabadas UNA vez en voz chilena
+  real — Lorenzo (Pistero) y Catalina (Pistera) — con modulación SSML por arquetipo (entrenador
+  enérgico, sabio pausado, sensible suave, etc.). Script: `scripts/gen-voces.py`. Servidas desde
+  `voces/` + `voces/manifest.json` (frase→id). 138 archivos, 0 fallos.
+- **App:** al hablar una frase fija con "Voz mejorada" ON, suena `voces/{genero}{id}.mp3` (chileno);
+  si no hay archivo → MeloTTS; si falla → nativa. Selector **Guía: Pistero/Pistera** en Ajustes (`toggleGenero`, `lp_genero`).
+- **Arquetipo El Compadre** (chileno puro, buena onda, "ya po/cachái/la raja") en PERSONALIDADES +
+  FRASES_ARQ (subida/rápido/lento) + Worker TONOS. Frases ORIGINALES (no clips de terceros, por derechos).
+- **Verificado en navegador:** manifest carga 69 frases; frase compadre → l037.mp3 (200 OK, se descarga y suena); fallback intacto.
+- **Azure es temporal:** solo se usó para generar. Recordar a Inty borrar la suscripción (ver memoria [[librepedal-azure-tts-temporal]]).
+
+**Pendiente:** feature Carabineros en el mapa (aviso a 3 km motorizados + frase "buenos días buenas
+tardes" del chistoso, toma torpe por elegir); pre-generar más frases (saludos/llegada/bajada); enviar preferencias al Worker.
+
+---
+
 ## v6.65 — 2026-07-14 — Claude (sesión 1, Voz neuronal española + Pistero proactivo)
 
 Pedido de Inty: voz "más humana, más real" — la voz nativa/web sonaba robótica, y la

@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — terminó voz neuronal en la app (v6.65), commit b844e59, deployado y pusheado.
+Última sesión: 1 — voces chilenas Azure por arquetipo (Pistero/Pistera) + El Compadre, v6.66, commit 33ddb6e, deployado y pusheado.
 ```
 
 ---
