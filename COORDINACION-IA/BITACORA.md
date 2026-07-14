@@ -4,6 +4,19 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.55 — 2026-07-13 — Claude (sesión 1, frases EN RUTA por arquetipo) ⚠️ ESCRITO OFFLINE, PENDIENTE DEPLOY
+Internet caído (git push/deploy/API no responden). Se hizo TODO lo posible sin red: código local + `node`.
+**Continuación de v6.54:** los arquetipos ya cambiaban el CHAT; ahora también cambian las FRASES EN RUTA.
+- `FRASES_ARQ` (nuevo): frases con el sabor de cada arquetipo para subida/rápido/lento (los momentos donde
+  más se siente la personalidad). Cubre entrenador, picaro, sabio, relajado, sensible, maternal, directo,
+  relator, aventurero (los más distintos). El que no tenga banco para una categoría cae a las genéricas.
+- `obtenerFraseUnica(categoria)` ahora prefiere `FRASES_ARQ[cat][pisteroPersonalidad]` si existe; si no,
+  `poolPais(categoria)` de siempre. 100% ADITIVO — el comportamiento actual es el fallback, sin riesgo.
+  Repeticiones rastreadas por pool separado (`categoria@arquetipo`) para no confundir índices.
+**Verificado OFFLINE:** llaves balanceadas (0); simulación en Node de la selección → picaro/sabio sacan SU
+frase, y cercano/directo-sin-banco caen a la genérica correctamente.
+**⚠️ PENDIENTE cuando vuelva internet:** (1) `wrangler pages deploy` + `git push`; (2) probar en navegador
+que la frase cambia al cambiar de personalidad. NO está en vivo todavía — el commit es local, listo para subir.
 ## v6.58 — 2026-07-13 — Claude (sesión 2, chips de modo en la esfera + gentilicio moto)
 
 Reporte de Inty: "arregla los botones de modos arriba de la esfera están muy
