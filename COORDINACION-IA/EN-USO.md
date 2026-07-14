@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — feature Carabineros (aviso 3km motorizados + frase chistosa alternada), v6.68, commit 0f93de4, deployado y pusheado.
+Última sesión: 1 — voz chilena Azure EN VIVO para frases dinámicas vía Worker /aztts (adiós gringa), v6.69, commit 41e752b, deployado y pusheado. OJO: Azure ahora es dependencia de runtime, NO borrar la suscripción.
 ```
 
 ---
