@@ -4,6 +4,65 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.62 — 2026-07-14 — Claude (sesión 2, fix real de la caída: lecturas redundantes de Firestore)
+
+Causa raíz de la cuota agotada, confirmada con datos reales de Firebase
+Console que compartió Inty: **170K lecturas vs 2.900 escrituras el día del
+pico (58:1), y 68K lecturas vs 117 escrituras el mismo día de hoy (581:1).**
+Una proporción así de desbalanceada no la explica el crecimiento de
+usuarios — es la huella de código que lee lo mismo una y otra vez sin que
+corresponda a una acción real.
+
+**El patrón, encontrado en 8 lugares distintos:** `getNombreUsuario(userId)`
+hace un `.get()` COMPLETO a `/users/{userId}` — una lectura nueva — cada vez
+que se llama. Pero en 8 listeners (`subscribeToUsers`, el mismo listener
+duplicado en el mapa de navegación, `subscribeToChat`,
+`subscribeToRouteAlerts`, `subscribeToComments`, `loadRepairTips`,
+`renderHostelsLista`, `loadRecommendations`) se llamaba `getNombreUsuario`
+por cada documento del resultado, aunque el nombre YA viniera en el mismo
+documento que se acababa de leer (`nombre:nombreUsuario` se guarda desde
+siempre en `chat`, `routeAlerts`, `guiComments`, `repairTips`, `hostels`,
+`recommendations`, y `users` al registrarse). Con varios usuarios moviéndose
+a la vez con el mapa abierto, cada actualización de posición de CUALQUIERA
+hacía que TODOS los demás listeners activos volvieran a leer el nombre de
+cada usuario visible — el peor caso posible es exactamente un evento
+grupal con muchos ciclistas juntos (como la cicletada de Lago Ranco),
+donde esto puede agotar la cuota diaria completa en minutos.
+
+**Fix:** las 8 llamadas se reemplazaron por leer `data.nombre` directo del
+documento ya obtenido (con `||data.user` o `||doc.id` de respaldo para
+documentos viejos que no tengan el campo, sin romper nada). Además,
+`subscribeToUsers()` y su duplicado en el mapa de navegación ahora tienen
+`.limit(150)` — antes no tenían techo, así que la consulta crecía sin
+control a medida que crece la base de usuarios. `getNombreUsuario()` en sí
+NO se tocó — sigue existiendo para los 3 usos legítimos donde el nombre no
+viene en los datos ya cargados (abrir chat con un amigo, lista de amigos,
+solicitudes de amistad) — esos no están en un listener de alta frecuencia,
+se disparan solo cuando el usuario navega a esas pantallas a propósito.
+
+**Verificación real hecha:** `node --check` sobre `index.html`, 0 errores
+(encontró y corrigió en el camino un bug propio: al convertir un `for` en
+`.forEach()` en el listener del mapa de navegación quedó un `onSnapshot(...)`
+sin cerrar — el cierre de llaves original no calzaba con la nueva forma).
+Grep exhaustivo confirmando que las 8 colecciones fuente sí guardan `nombre`
+en el documento (revisando cada función que escribe: `reg()`, `em()`,
+`addRouteAlert()`, `addComment()`, `addRepairTip()`, `addHostel()`,
+`addRecommendation()`). Pruebas aisladas en Node (sin necesitar Firestore,
+que sigue con la cuota agotada) simulando snapshots reales: confirmado que
+`subscribeToComments` filtra correctamente votos/comentarios vacíos y usa
+`data.user` como respaldo en un documento legado sin `nombre`; confirmado
+que `loadRecommendations` filtra títulos `TEST-*`, arma el HTML con el
+nombre correcto, y preserva el estado "me gusta" — ambas con salida
+verificada carácter por carácter.
+
+**No verificado (honesto):** el comportamiento en vivo contra Firestore real
+(los `onSnapshot` reales, los marcadores en el mapa con Leaflet/MapLibre)
+sigue bloqueado por la cuota agotada — apenas resetee o Inty decida sobre
+Blaze, hay que abrir la app real y confirmar que el mapa de ciclistas, el
+chat, y las demás listas siguen mostrando los nombres correctos.
+
+---
+
 ## 🚨 2026-07-14 — Cuota de Firestore agotada (proyecto entero, no solo admin)
 
 Al intentar respaldar `users` antes de migrar (ver entrada siguiente), el

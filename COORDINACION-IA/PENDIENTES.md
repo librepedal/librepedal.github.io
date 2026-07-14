@@ -1,7 +1,7 @@
 # ✅ Pendientes — Libre Pedal
 
-Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-13,
-versión actual del proyecto: **v6.57**.
+Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-14,
+versión actual del proyecto: **v6.62**.
 
 ## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 — PERMANENTE (actualizado 2026-07-13 por sesión 2)
 
@@ -106,21 +106,24 @@ que obligue a reenviar.
 
 ## 🔴 LO MÁS URGENTE — leer primero, cualquiera de las dos sesiones
 
-- [ ] **🚨 Cuota diaria de Firestore agotada (detectado 2026-07-14 ~02:26
-  UTC) — la app real estuvo/está caída para TODOS los usuarios, no solo
-  para tareas de admin.** Verificado directo contra la API pública de
-  Firestore (sin credenciales, la misma ruta que usa cualquier usuario
-  desde el celular): `curl https://firestore.googleapis.com/v1/projects/librepedal-cb983/databases/(default)/documents/meta/contadores`
-  devolvía `429 RESOURCE_EXHAUSTED`. Causa casi segura: el proyecto está en
-  el plan gratuito Spark, con tope diario fijo (50.000 lecturas / 20.000
-  escrituras / 20.000 borrados por día) — con el crecimiento de usuarios ya
-  se superó. El tope resetea solo a medianoche hora de Los Ángeles (~4-5h
-  después de detectado). Decisión de Inty pendiente: esperar el reset cada
-  vez que vuelva a pasar, o evaluar el plan Blaze (pago por uso, incluye la
-  MISMA cuota gratis + no se cae si te pasas, pero requiere que Inty agregue
-  una tarjeta en Firebase Console — ninguna IA lo activa). Si esto se repite
-  seguido a medida que crece la comunidad, va a necesitar resolverse antes
-  de mostrar la app en el evento de Lago Ranco.
+- [x] **🚨 Cuota diaria de Firestore agotada — CAUSA RAÍZ ENCONTRADA Y
+  CORREGIDA en v6.62 (2026-07-14).** No era el crecimiento de usuarios: Inty
+  compartió el panel de Firebase Console (170K lecturas vs 2.900 escrituras
+  en el pico, 58:1 — y 68K lecturas vs 117 escrituras ese mismo día, 581:1).
+  Causa real: 8 listeners (`subscribeToUsers`, su duplicado en el mapa de
+  navegación, chat, alertas de ruta, comentarios de guía, trucos de taller,
+  alojamientos, recomendaciones) pedían el nombre de cada usuario con una
+  lectura EXTRA (`getNombreUsuario`) aunque el nombre ya viniera en el mismo
+  documento — con varios ciclistas moviéndose juntos (el peor caso: un
+  evento como Lago Ranco), esto podía agotar la cuota diaria en minutos.
+  Corregido: las 8 lecturas redundantes eliminadas, más `.limit(150)` en los
+  dos listeners de usuarios que no tenían techo. Ver `BITACORA.md` para el
+  detalle completo y lo que falta verificar en vivo (bloqueado por la misma
+  cuota mientras no resetee). **Sigue pendiente la decisión de fondo:**
+  ¿esperar el reset cada vez, o evaluar Blaze como colchón? Con el bug
+  corregido, el costo proyectado en Blaze a 5.000 usuarios es bajo (~$2-17
+  USD/mes según actividad, ver conversación del 2026-07-14) — decisión de
+  Inty, ninguna IA activa facturación.
 
 - [~] **⚠️ El correo de TODOS los usuarios se puede leer sin ser admin ni estar
   logueado — Inty ya decidió el enfoque (2026-07-14): doc privado aparte.
