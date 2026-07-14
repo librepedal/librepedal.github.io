@@ -4,6 +4,13 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.59 — 2026-07-13 — Claude (sesión 1, CORRIGE mismatch de versión + frases por arquetipo en vivo)
+Arreglo de un error MÍO: al hacer v6.55 offline, sesión 2 ya había avanzado a 6.58 en la carpeta compartida;
+mi sed de APP_VERSION (buscaba 6.54) falló, pero mi `printf version.txt` sí corrió → dejó version.txt=6.55
+con APP_VERSION=6.58 (mismatch que rompe la auto-actualización) y lo pusheé sin querer. Detectado al leer el
+lockstep. Corregido: los 3 (APP_VERSION/version.txt/sw.js) + footer a **6.59** consistentes. El FRASES_ARQ
+(frases en ruta por arquetipo, de v6.55) queda sobre la base 6.58 de sesión 2, ahora sí bien versionado y
+DESPLEGADO. Respeté el candado `EN-USO.md` (estaba LIBRE, lo puse OCUPADO y lo libero al terminar).
 ## v6.55 — 2026-07-13 — Claude (sesión 1, frases EN RUTA por arquetipo) ⚠️ ESCRITO OFFLINE, PENDIENTE DEPLOY
 Internet caído (git push/deploy/API no responden). Se hizo TODO lo posible sin red: código local + `node`.
 **Continuación de v6.54:** los arquetipos ya cambiaban el CHAT; ahora también cambian las FRASES EN RUTA.
