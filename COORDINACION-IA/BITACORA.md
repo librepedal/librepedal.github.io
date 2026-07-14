@@ -4,6 +4,50 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.70 — 2026-07-14 — Claude (sesión 2, arquetipos invisibles + pantalla de personaje ocupaba mucho espacio)
+
+Pedido de Inty (probando lo nuevo de voz de sesión 1): "no veo en la app los
+arquetipos y los iconos de personaje y skins ocupan mucho espacio."
+
+**Causa raíz #1 — arquetipos "invisibles":** la pantalla de personaje tiene
+11 pestañas (Casco, Color, Piel, Peinado, Ojos, Labios, Vello facial,
+Lentes, Pañuelo, Accesorios, Preferencias) en una fila con scroll horizontal
+y **sin barra de scroll visible** (`scrollbar-width:none`). "Preferencias"
+—donde viven Personalidad/Arquetipos y Actividad— era la ÚLTIMA de las 11,
+así que en un celular quedaba fuera de pantalla sin ninguna señal de que
+había más pestañas para el lado. Fix: se movió "Preferencias" a la
+**segunda posición** (justo después de Casco), y se agregó un degradado en
+el borde derecho de la fila de pestañas (`mask-image`) que insinúa
+visualmente "hay más para el lado" — sin necesitar JS, funciona sin importar
+en qué pestaña estés parado.
+
+**Causa raíz #2 — "ocupan mucho espacio":** `#personalidadGrid` (los 13
+arquetipos) era el ÚNICO contenedor de esa pestaña sin ninguna clase de
+grilla (todos los demás — estilos, fondos, actividad — usan
+`.accessory-grid`). Sin grilla, cada tarjeta de personalidad heredaba
+`min-height:96px` de `.custom-option` (pensado para tarjetas con ícono
+grande) y se apilaba una debajo de otra en una sola columna — más de 1000px
+de scroll solo para elegir personalidad. Fix: nueva clase `.personalidad-grid`
+(2 columnas, sin la altura mínima de 96px — estas son tarjetas de puro
+texto). Clase aparte de `.accessory-grid` a propósito, para no tocar el
+tamaño de columna de las otras grillas de esa misma pestaña.
+
+**Ojo para sesión 1:** este cambio es SOLO de layout/CSS de la pantalla de
+personaje — no se tocó `PERSONALIDADES`, ningún arquetipo de voz, ni código
+de `/aztts`. Los 13 arquetipos actuales de sesión 1 siguen intactos, solo se
+ven más chico y en la pestaña correcta.
+
+**Verificación real hecha:** en navegador (viewport móvil 375px), llamando
+`_tabPersonalizar('prefs')` directo y midiendo el DOM real: confirmado que
+la pestaña "prefs" ahora es la 2ª de 11 (antes 11ª), que se activa
+correctamente al tocarla, que `#personalidadGrid` mide `display:grid` con
+2 columnas de 173.5px reales, que 2 tarjetas de arquetipos caen en la MISMA
+fila (confirmando 2 columnas de verdad, no una coincidencia visual), y que
+la altura de cada tarjeta bajó de 96px+ a **56px** — una reducción real de
+espacio de ~68% para esa sección.
+
+---
+
 ## v6.66 — 2026-07-14 — Claude (sesión 1, Voces chilenas por arquetipo: Pistero/Pistera)
 
 Inty aprobó las voces chilenas de Azure ("ya hermoso están bien las voces") y pidió que si

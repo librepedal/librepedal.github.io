@@ -113,7 +113,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 /* "Perfil y personaje" por pestañas: antes eran ~8 secciones apiladas visibles a
    la vez (mucho scroll para elegir cosas chicas) — ahora se ve UNA categoría por
    vez, con el personaje siempre fijo arriba. */
-.tabs-personalizar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs-personalizar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%)}
 .tabs-personalizar::-webkit-scrollbar{display:none}
 .tab-pill{flex:0 0 auto;padding:7px 13px;border-radius:20px;background:var(--gl);border:1px solid #242c3e;color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
 .tab-pill.active{background:var(--p);color:#03121a;border-color:var(--p)}
@@ -121,6 +121,16 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .tab-panel.active{display:block}
 .skin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
 .custom-option{background:var(--gl);border:2px solid #333;border-radius:10px;padding:8px 6px;cursor:pointer;text-align:center;transition:all 0.3s;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.35);min-height:96px;display:flex;flex-direction:column;justify-content:center}
+/* Personalidad de Pistero (2026-07-14): #personalidadGrid no tenía NINGUNA
+   clase de grilla — a diferencia de estilosGrid/fondosEsferaGrid/actividadGrid
+   (todas .accessory-grid), los 12 arquetipos se apilaban uno debajo del otro a
+   96px+ cada uno (la altura mínima de .custom-option, pensada para tarjetas con
+   ícono grande) — más de 1000px de scroll solo para elegir personalidad. Acá
+   son puras tarjetas de texto, así que van en 2 columnas con una altura mucho
+   más chica. Clase aparte de .accessory-grid a propósito: esa la usan otras
+   grillas de esta pestaña y no quiero tocar su tamaño de columna. */
+.personalidad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.personalidad-grid .custom-option{min-height:auto;padding:10px 12px}
 .custom-option::before{content:'';position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.16) 0%,rgba(255,255,255,0.04) 35%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.2) 100%);pointer-events:none}
 .custom-option.selected{border-color:var(--g);box-shadow:0 0 15px var(--g);background:rgba(255,215,0,0.14)}
 .custom-option svg{width:100%;height:44px;margin-bottom:6px}
@@ -964,6 +974,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
 <div class="tabs-personalizar" id="tabsPersonalizar">
   <button class="tab-pill active" data-tab="casco" onclick="_tabPersonalizar('casco')">🪖 Casco</button>
+  <button class="tab-pill" data-tab="prefs" onclick="_tabPersonalizar('prefs')">⚙️ Preferencias</button>
   <button class="tab-pill" data-tab="color" onclick="_tabPersonalizar('color')">🎨 Color</button>
   <button class="tab-pill" data-tab="piel" onclick="_tabPersonalizar('piel')">🧑 Piel</button>
   <button class="tab-pill" data-tab="peinado" onclick="_tabPersonalizar('peinado')">💇 Peinado</button>
@@ -973,7 +984,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="tab-pill" data-tab="lentes" onclick="_tabPersonalizar('lentes')">🕶️ Lentes</button>
   <button class="tab-pill" data-tab="panuelo" onclick="_tabPersonalizar('panuelo')">🧣 Pañuelo</button>
   <button class="tab-pill" data-tab="accesorios" onclick="_tabPersonalizar('accesorios')">✨ Accesorios</button>
-  <button class="tab-pill" data-tab="prefs" onclick="_tabPersonalizar('prefs')">⚙️ Preferencias</button>
 </div>
 <div class="tab-panel active" data-panel="casco"><div class="customization-section" style="margin-top:0"><div class="helmet-grid" id="customizeHelmetGrid"></div></div></div>
 <div class="tab-panel" data-panel="color"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizeSkinGrid"></div></div></div>
@@ -990,7 +1000,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
   <div class="customization-section"><h3>🧭 Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
   <div class="customization-section" id="cicloCargadoBox" style="display:none"><h3>🎒 ¿Cómo andas en bici?</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Un cicloviajero con alforjas anda a otro ritmo que un rutero liviano — esto ajusta a qué pendiente y velocidad te aviso.</p><div style="display:flex;gap:8px"><button class="ab sec" id="btnRutero" style="flex:1;margin:0" onclick="setCicloCargado(false)">🏁 Rutero (liviano)</button><button class="ab sec" id="btnCicloviajero" style="flex:1;margin:0" onclick="setCicloCargado(true)">🎒 Cicloviajero (cargado)</button></div></div>
-  <div class="customization-section"><h3>🎭 Personalidad de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Sigue siendo Pistero, solo cambia el tono con el que te habla.</p><div id="personalidadGrid"></div></div>
+  <div class="customization-section"><h3>🎭 Personalidad de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Sigue siendo Pistero, solo cambia el tono con el que te habla.</p><div id="personalidadGrid" class="personalidad-grid"></div></div>
 </div>
 <button class="bg" onclick="saveCustomization()">💾 Guardar personaje</button>
 </section>
@@ -1043,7 +1053,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.69'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.70'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
