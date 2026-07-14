@@ -33,14 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Sesión: 2
-Hasta: 2026-07-14 — v6.72 deployada y pusheada (commit 6c9e63d).
-Hecho: fusión Viajes/Rutas (#87) + rename botón SOS (#89). Quedan pendientes
-(sin bloquear, ver PENDIENTES.md): #88 (accesos a Stats/Logros) y #90
-(fila es-bottom de la esfera) — a propósito no tocados, chocan con una
-decisión de diseño ya cerrada (v6.09, es-bottom es HUD no navegación
-duplicada); falta confirmar con Inty antes de tocarlos. También sigue
-pendiente revisar botones sobredimensionados (pedido explícito de Inty).
+Última sesión: 1 — fix voz duplicada al cambiar Voz mejorada, v6.73, deployado y pusheado.
 ```
 
 ---
