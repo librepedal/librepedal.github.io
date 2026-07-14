@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-14 (ahora)
-Tocando: index.html — eliminar lecturas redundantes de Firestore (getNombreUsuario() re-pide el nombre por cada usuario cuando ya viene en el documento). Causa real confirmada con datos de Firebase Console: 170K lecturas vs 2.9K escrituras en el pico. Este SÍ se puede deployar apenas esté listo (no depende de cuota para el código en sí, aunque igual hay que probarlo con cuidado).
+LIBRE
+Última sesión: 2
+Hasta: 2026-07-14
+Terminó: v6.62 — eliminadas 8 lecturas redundantes de Firestore (causa real de la cuota agotada, confirmada con datos de Firebase Console). Commiteado, pusheado (00c2134) y desplegado, live verificado. Falta verificar en vivo contra Firestore real cuando resetee la cuota (ver BITACORA "no verificado").
 ```
 
 ---
