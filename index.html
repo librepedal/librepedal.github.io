@@ -1031,7 +1031,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.59'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.60'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3297,6 +3297,50 @@ function calcularDesnivel(points){
   }
   return {subida:Math.round(subida), bajada:Math.round(bajada), altMax:Math.round(Math.max.apply(null,suavizado)), altMin:Math.round(Math.min.apply(null,suavizado)), perfil:perfil};
 }
+
+/* ===== PERFIL AFINADO CON DEM REAL (2026-07-14, pedido de Inty con
+   referencias: MOP/GEOMOP, mapas topográficos de curvas de nivel, Komoot).
+   Ninguna de esas tres es integrable como API gratuita por lotes: MOP/GEOMOP
+   y los mapas topográficos son visores para mirar, no servicios de consulta
+   programática, y Komoot no publica API pública — sirven como referencia de
+   qué tan preciso debería verse el resultado, no como fuente de datos. Se usa
+   en cambio el mismo DEM (Copernicus, vía Open-Meteo) que YA usa con éxito
+   avisarPendienteAnticipada() más abajo — gratis, sin llave, probado en esta
+   app — para corregir el sesgo real de la altitud del GPS del celular (no es
+   solo ruido: puede venir sistemáticamente desviada varios metros, y el
+   promedio móvil de calcularDesnivel() no arregla eso). Se recalcula solo al
+   ABRIR el perfil (no en cada ruta grabada) y el resultado se cachea. */
+function _muestrearParaDEM(points, maxSamples){
+  const validos=(points||[]).filter(function(p){return p.lat!=null && p.lon!=null;});
+  if(validos.length<2) return [];
+  let total=0; const acum=[0];
+  for(let i=1;i<validos.length;i++){ total+=calculateDistance(validos[i-1].lat,validos[i-1].lon,validos[i].lat,validos[i].lon); acum.push(total); }
+  const step=Math.max(25, total/((maxSamples-1)||1));
+  const out=[]; let next=0;
+  for(let i=0;i<validos.length;i++){ if(acum[i]>=next-1){ out.push(validos[i]); next+=step; } }
+  if(out[out.length-1]!==validos[validos.length-1]) out.push(validos[validos.length-1]);
+  return out;
+}
+async function _elevacionDEM(points){
+  const muestras=_muestrearParaDEM(points, 480); // varias tandas de a 100: alcanza para rutas largas de cicloturismo
+  if(muestras.length<3) return null;
+  const LOTE=100, conElevacion=[];
+  for(let i=0;i<muestras.length;i+=LOTE){
+    const tanda=muestras.slice(i,i+LOTE);
+    const lats=tanda.map(function(p){return p.lat.toFixed(5);}).join(',');
+    const lons=tanda.map(function(p){return p.lon.toFixed(5);}).join(',');
+    const r=await _fetchT('https://api.open-meteo.com/v1/elevation?latitude='+lats+'&longitude='+lons, 12000);
+    const j=await r.json(); const ele=(j&&j.elevation)||[];
+    if(ele.length!==tanda.length) return null; // respuesta rara: mejor no mezclar datos a medias
+    for(let k=0;k<tanda.length;k++) conElevacion.push({lat:tanda[k].lat, lon:tanda[k].lon, alt:ele[k]});
+  }
+  return conElevacion;
+}
+async function calcularDesnivelDEM(points){
+  try{ const conElevacion=await _elevacionDEM(points); return conElevacion ? calcularDesnivel(conElevacion) : null; }
+  catch(e){ return null; }
+}
+
 function _svgPerfilElevacion(d){
   const W=320, H=110, PAD=6;
   const distTotal=d.perfil[d.perfil.length-1].dist||1;
@@ -3314,23 +3358,47 @@ function _svgPerfilElevacion(d){
     +'</svg>';
 }
 function verPerfilElevacion(id){
-  function conPuntos(points){
-    const d=calcularDesnivel(points);
+  function pintar(d, refinando){
     document.getElementById('modalTitle').innerText='📈 Perfil de elevación';
     const c=document.getElementById('modalContent');
-    if(!d){ c.innerHTML='<p style="color:#888;text-align:center;padding:20px 0">Esta ruta no tiene datos de altitud (se grabó antes de esta función, o tu celular no reporta altitud).</p>'; document.getElementById('userModal').classList.add('on'); return; }
+    if(!d){ c.innerHTML='<p style="color:#888;text-align:center;padding:20px 0">Esta ruta no tiene datos de altitud (se grabó antes de esta función, tu celular no reporta altitud, y no hay conexión para buscarla en un mapa topográfico).</p>'; document.getElementById('userModal').classList.add('on'); return; }
     c.innerHTML=_svgPerfilElevacion(d)
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">'
       +'<div class="stat-card"><div class="stat-value" style="color:#10b981">+'+d.subida+'m</div><div class="stat-label">Subida</div></div>'
       +'<div class="stat-card"><div class="stat-value" style="color:#ff6b6b">-'+d.bajada+'m</div><div class="stat-label">Bajada</div></div>'
       +'<div class="stat-card"><div class="stat-value">'+d.altMax+'m</div><div class="stat-label">Altura máx.</div></div>'
       +'<div class="stat-card"><div class="stat-value">'+d.altMin+'m</div><div class="stat-label">Altura mín.</div></div>'
-      +'</div>';
+      +'</div>'
+      +(refinando ? '<p id="elevRefinando" style="color:#7c93a8;font-size:0.68rem;text-align:center;margin:8px 0 0">📡 Afinando con datos topográficos reales…</p>' : '');
     document.getElementById('userModal').classList.add('on');
   }
+  function pintarCargando(){
+    document.getElementById('modalTitle').innerText='📈 Perfil de elevación';
+    document.getElementById('modalContent').innerHTML='<p style="color:#888;text-align:center;padding:20px 0">Buscando la altitud real de esta ruta…</p>';
+    document.getElementById('userModal').classList.add('on');
+  }
+  function sigueAbierto(){
+    const modal=document.getElementById('userModal'), t=document.getElementById('modalTitle');
+    return modal && modal.classList.contains('on') && t && t.innerText.indexOf('elevaci')!==-1;
+  }
+  async function conPuntos(points, firebaseId, cache){
+    if(cache && cache.perfil && cache.perfil.length){ pintar(cache); return; }
+    const dGps=calcularDesnivel(points);
+    if(dGps){ pintar(dGps, true); } else { pintarCargando(); }
+
+    const dDem=await calcularDesnivelDEM(points);
+    const aviso=document.getElementById('elevRefinando'); if(aviso) aviso.remove();
+    if(!sigueAbierto()) return; // el usuario ya cerró el modal o navegó a otra pantalla
+    if(!dDem){ if(!dGps) pintar(null); return; }
+    pintar(dDem);
+
+    const r=_rutaPorId(id);
+    if(r){ const arr=rutasLocales(); const x=arr.find(function(y){return y.localId===r.localId;}); if(x){ x.elevDEM=dDem; rutasLocalesSet(arr); } }
+    if(firebaseId){ db.collection('routes').doc(firebaseId).update({elevDEM:dDem}).catch(function(){}); }
+  }
   const r=_rutaPorId(id);
-  if(r&&r.points&&r.points.length){ conPuntos(r.points); return; }
-  db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ conPuntos(doc.data().points||[]); } else { h("No pude abrir esa ruta."); } }).catch(function(){ h("No pude abrir esa ruta."); });
+  if(r&&r.points&&r.points.length){ conPuntos(r.points, r.firebaseId, r.elevDEM); return; }
+  db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ const dd=doc.data(); conPuntos(dd.points||[], id, dd.elevDEM); } else { h("No pude abrir esa ruta."); } }).catch(function(){ h("No pude abrir esa ruta."); });
 }
 
 /* ===== VIDEO 3D DE LA RUTA (estilo Relive): vuelo de cámara sobre terreno 3D real

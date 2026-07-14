@@ -4,6 +4,49 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.60 — 2026-07-14 — Claude (sesión 2, perfil de elevación afinado con DEM real)
+
+Pedido de Inty, con referencias: MOP/GEOMOP (visor oficial de Vialidad),
+mapas topográficos de curvas de nivel, y Komoot ("quiero que sea lo más
+exacto"). Investigación honesta primero: ninguna de esas tres fuentes tiene
+una API pública gratuita apta para esto — MOP/GEOMOP y los mapas
+topográficos son visores para mirar con los ojos, no servicios de consulta
+programática por lote, y Komoot no publica API pública. Sirven como
+referencia de qué tan preciso debería verse el resultado, no como fuente de
+datos integrable.
+
+**Causa raíz real del desnivel impreciso:** `calcularDesnivel()` (perfil de
+rutas grabadas, "Mis Rutas") usa solo la altitud que reporta el GPS del
+celular. Eso no es solo ruido — puede venir sistemáticamente desviada varios
+metros, y un promedio móvil no corrige un sesgo sistemático, solo jitter.
+
+**Fix:** se agregó `_muestrearParaDEM()` + `_elevacionDEM()` +
+`calcularDesnivelDEM()`, que reusan el MISMO DEM (Copernicus, vía Open-Meteo)
+que ya usa con éxito `avisarPendienteAnticipada()` en esta misma app —
+gratis, sin llave, ya probado en producción. `verPerfilElevacion()` ahora:
+1) pinta de inmediato el perfil basado en GPS (si existe) para que no se
+sienta lento, 2) en paralelo pide el perfil real por DEM (por lotes de 100
+puntos, hasta 480 muestras — alcanza rutas largas de cicloturismo), 3) al
+llegar lo reemplaza en pantalla, y 4) lo cachea (local + Firestore) para no
+volver a pedirlo. Si el celular no reportó altitud en absoluto (antes
+mostraba "sin datos"), ahora igual puede mostrar el perfil vía DEM con solo
+lat/lon. Sin red disponible, cae con gracia a lo que ya había (o al mensaje
+de "sin datos" si tampoco hay eso).
+
+**Verificación real:** llamada real (no mockeada) a Open-Meteo con
+coordenadas reales de la Ruta 60-CH, con una altitud GPS con ruido inyectado
+a propósito (salto imposible de 200m). Resultado: versión GPS calculó +170m
+de subida falsa; versión DEM (topografía real) calculó +16m — la diferencia
+que se buscaba corregir. Probado también el flujo completo del modal:
+pintado instantáneo con GPS, reemplazo en pantalla tras ~2s con el dato DEM,
+caché en localStorage confirmada, segunda apertura instantánea (0.2ms, sin
+red). Se encontró y corrigió un bug real en la primera pasada: el aviso
+"Afinando con datos topográficos…" quedaba pegado en pantalla después de
+terminar, porque `pintar()` lo agregaba siempre sin condición — ahora es un
+parámetro explícito, solo aparece en el pintado intermedio.
+
+---
+
 ## Seguridad — 2026-07-14 — firestore.rules PUBLICADO (Inty, no una IA)
 
 Inty publicó `firestore.rules` en Firebase Console (proyecto `librepedal-cb983`),
