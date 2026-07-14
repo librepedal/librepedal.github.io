@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
-Última sesión: 2
-Hasta: 2026-07-14
-Terminó: fix email expuesto (usersPrivate) — CÓDIGO LISTO Y COMMITEADO (83a0c07), pero SIN DEPLOY y SIN MIGRAR TODAVÍA. Bloqueado por cuota de Firestore agotada (proyecto entero, ver BITACORA). Próximo paso, apenas haya cuota: correr scripts/migrate-email-privado.js, que Inty publique firestore.rules, y deployar todo junto — ver BITACORA/PENDIENTES para el orden exacto.
+OCUPADO
+Sesión: 2
+Desde: 2026-07-14 (ahora)
+Tocando: index.html — eliminar lecturas redundantes de Firestore (getNombreUsuario() re-pide el nombre por cada usuario cuando ya viene en el documento). Causa real confirmada con datos de Firebase Console: 170K lecturas vs 2.9K escrituras en el pico. Este SÍ se puede deployar apenas esté listo (no depende de cuota para el código en sí, aunque igual hay que probarlo con cuidado).
 ```
 
 ---
