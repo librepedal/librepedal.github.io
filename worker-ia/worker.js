@@ -128,6 +128,31 @@ export default {
     let body = null;
     if (request.method === "POST") { try { body = await request.json(); } catch (e) {} }
 
+    // ===== VOZ CHILENA EN VIVO (Azure es-CL) para las frases DINÁMICAS (saludo con nombre,
+    // calles de navegación, números, chat) que no se pueden pre-grabar. Proxy seguro: la
+    // llave vive en el secreto AZURE_TTS_KEY, nunca en la app. Devuelve MP3 directo. =====
+    const azText = url.searchParams.get("aztts") || (body && body.aztts);
+    if (azText) {
+      const key = env.AZURE_TTS_KEY;
+      if (!key) return new Response(JSON.stringify({ error: "sin_llave_azure" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      const region = env.AZURE_TTS_REGION || "eastus";
+      const voz = (url.searchParams.get("g") === "c") ? "es-CL-CatalinaNeural" : "es-CL-LorenzoNeural";
+      const t = String(azText).slice(0, 480).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const ssml = "<speak version='1.0' xml:lang='es-CL'><voice name='" + voz + "'>" + t + "</voice></speak>";
+      try {
+        const r = await fetch("https://" + region + ".tts.speech.microsoft.com/cognitiveservices/v1", {
+          method: "POST",
+          headers: { "Ocp-Apim-Subscription-Key": key, "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "audio-24khz-96kbitrate-mono-mp3", "User-Agent": "LibrePedal" },
+          body: ssml
+        });
+        if (!r.ok) return new Response(JSON.stringify({ error: "aztts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        const buf = await r.arrayBuffer();
+        return new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "aztts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    }
+
     // ===== VOZ NEURONAL (TTS): una voz más humana que la robótica del sistema, GRATIS por
     // Workers AI. La app la usa cuando hay señal (con fallback a la voz nativa offline). =====
     const ttsText = url.searchParams.get("tts") || (body && body.tts);

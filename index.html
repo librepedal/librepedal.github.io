@@ -1043,7 +1043,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.68'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.69'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1907,7 +1907,7 @@ function _reproducirVoz(item){
     vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso: cubre el fetch; se recalibra con la duración real
     // 1º frase fija con voz chilena pre-generada (Azure). Si no existe, 2º MeloTTS. Si falla, nativa.
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
-    if(_id){ _vozArchivo(item, durEst, _id); } else { _vozNeural(item, durEst); }
+    if(_id){ _vozArchivo(item, durEst, _id); } else { _vozAzureRuntime(item, durEst); }
     return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
@@ -1928,11 +1928,27 @@ function _vozNativaOWeb(item, durEst){
 }
 function _vozArchivo(item, durEst, id){
   // Reproduce la frase fija ya grabada en voz chilena (Azure): voces/{genero}{id}.mp3.
-  // Si el archivo no carga (404, red), cae a la voz neuronal MeloTTS.
+  // Si el archivo no carga (404, red), cae a la voz chilena EN VIVO (no a la gringa).
   let cayo=false;
-  const fallback=function(){ if(cayo) return; cayo=true; _vozNeural(item, durEst); };
+  const fallback=function(){ if(cayo) return; cayo=true; _vozAzureRuntime(item, durEst); };
   try{
     const a=new Audio('voces/'+pisteroGenero+id+'.mp3');
+    _vozNeuralAudio=a;
+    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
+    a.onerror=function(){ fallback(); };
+    const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
+  }catch(e){ fallback(); }
+}
+function _vozAzureRuntime(item, durEst){
+  // Voz chilena Azure EN VIVO para frases dinámicas (nombre, calles, números, chat).
+  // Va por el Worker (/aztts, la llave está segura en el servidor). Si falla, voz nativa
+  // (NO MeloTTS: esa es la "gringa" que no queremos). Cachea en Cloudflare, así frases
+  // repetidas no vuelven a pegarle a Azure.
+  let cayo=false;
+  const fallback=function(){ if(cayo) return; cayo=true; _vozNativaOWeb(item, durEst); };
+  try{
+    const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
