@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-14 (ahora)
-Tocando: index.html — umbrales de pendiente/ritmo adaptados por modo (ciclismo/mtb/trekking/moto) + toggle rutero vs cicloviajero cargado
+LIBRE
+Última sesión: 2
+Hasta: 2026-07-14
+Terminó: v6.61 — avisos de pendiente/ritmo adaptados por modo + toggle rutero vs cicloviajero cargado. Commiteado, pusheado (a7f9b42) y desplegado, live verificado.
 ```
 
 ---
