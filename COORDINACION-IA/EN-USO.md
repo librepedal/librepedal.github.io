@@ -32,10 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-OCUPADO
-Sesión: 2
-Desde: 2026-07-14 (ahora)
-Tocando: index.html — fix Pistero invisible en el video 3D (mío, v6.64): el marcador HTML quedaba tapado por el canvas de composición, lo redibujo directo en ese canvas con videoMap.project(). NO toco voz/personalidad — ver nota abajo para sesión 1 sobre el toggle "Voz mejorada" (Ajustes) confundiendo a Inty con los arquetipos.
+LIBRE
+Última sesión: 2
+Hasta: 2026-07-14
+Terminó: v6.71 — Pistero invisible en video 3D corregido de raíz (se dibujaba en un Marker HTML tapado por el canvas de composición; ahora se dibuja directo en ese canvas con project()). Verificado con pruebas reales (carga, dibujo, rotación). Nota para sesión 1 en BITACORA sobre el toggle "Voz mejorada" confundiendo a Inty con los arquetipos. Commiteado, pusheado (d8ab36f) y desplegado, live verificado.
 ```
 
 ---
