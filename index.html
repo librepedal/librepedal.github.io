@@ -58,6 +58,9 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 @keyframes supernova{0%{opacity:0;transform:scale(0.05)}10%{opacity:1}55%{opacity:0.8}100%{opacity:0;transform:scale(2.8)}}
 .es-bottom{position:absolute;bottom:16px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:14px;z-index:3}
 .es-ind{display:flex;flex-direction:column;align-items:center;min-width:52px;background:none;border:none;color:#cfeeff;cursor:pointer}
+/* Una sola lógica de navegación: el es-bottom es HUD de DATOS, no un segundo menú.
+   km / mi puesto / viajes se miran de un vistazo; para ir a esas secciones está la Esfera. */
+.es-dato{cursor:default;user-select:none}
 .es-ind-v{font-size:1.05rem;font-weight:800;color:var(--p);text-shadow:0 0 8px rgba(252,76,2,0.6)}
 .es-ind-l{font-size:0.6rem;color:#8fb0c8;text-transform:uppercase;letter-spacing:1px}
 .es-badge{position:relative}
@@ -582,15 +585,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div id="esferaWrap"></div>
 <button class="es-classic" onclick="cerrarEsfera()">☰ Menú clásico</button>
 <div class="es-bottom">
-  <button class="es-ind" onclick="cerrarEsfera();cv('stats')"><span class="es-ind-v" id="esKm">0</span><span class="es-ind-l">km</span></button>
+  <div class="es-ind es-dato"><span class="es-ind-v" id="esKm">0</span><span class="es-ind-l">km</span></div>
   <!-- Antes "Avisos" y "Mensajes" eran DOS botones que llevaban al mismo lugar en el
        fondo (Social ya tiene amigos+solicitudes+chat juntos) — se fusionan en uno
        para liberar un espacio en la fila, que ahora usa "Mi puesto" (rango real en
        el ranking, antes solo visible adentro de Estadísticas). -->
   <button class="es-ind es-badge" id="esAvisos" data-n="0" onclick="cerrarEsfera();cv('chat')"><span class="es-ind-v">🔔</span><span class="es-ind-l">Avisos</span></button>
   <button class="es-mic" id="esMic" onclick="toggleMic()"><i class="fas fa-microphone"></i></button>
-  <button class="es-ind" onclick="cerrarEsfera();mostrarLogrosComunidad()"><span class="es-ind-v" id="esPuesto">—</span><span class="es-ind-l">mi puesto</span></button>
-  <button class="es-ind" onclick="cerrarEsfera();cv('trips')"><span class="es-ind-v" id="esViajes">0</span><span class="es-ind-l">viajes</span></button>
+  <div class="es-ind es-dato"><span class="es-ind-v" id="esPuesto">—</span><span class="es-ind-l">mi puesto</span></div>
+  <div class="es-ind es-dato"><span class="es-ind-v" id="esViajes">0</span><span class="es-ind-l">viajes</span></div>
 </div>
 </div>
 <header>
@@ -1060,7 +1063,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.74'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.75'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
