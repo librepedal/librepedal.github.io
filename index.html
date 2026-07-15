@@ -1096,7 +1096,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.81'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.82'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5258,6 +5258,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2);
   const elS=Math.floor(tiempoActivoMs()/1000), mm=Math.floor(elS/60), ss=elS%60;
   document.getElementById('navTime').innerText=mm+':'+(ss<10?'0':'')+ss;
+  _detectarModoEquivocado(speed);
   checkFuel(totalDistance);
   actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
@@ -5563,7 +5564,30 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     anunciarClimaRuta(destLat,destLon,'Clima en tu destino'); // antes de salir a pedalear
   }catch(err){ console.error(err); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'No pude calcular la ruta: parece que estás sin señal. Prueba de nuevo cuando tengas internet.' : 'No pude calcular la ruta ahora. Inténtalo otra vez.'); endNavigation(); }
 }
+/* MODO EQUIVOCADO — reporte real de Inty (2026-07-14): iba en AUTO a 82 km/h pero la app estaba
+   en modo BICI, así que Pistero le hablaba de pedalear y de tomar agua. Los umbrales por modo ya
+   existían y estaban bien; el problema era que nadie le avisaba a la app que había cambiado de
+   vehículo. 82 km/h sostenidos NO son pedaleando: la app tiene que darse cuenta sola.
+   Se cambia UNA vez por sesión y se avisa siempre, con cómo revertirlo. */
+let _velAltaDesde=0, _autoModoHecho=false;
+function _detectarModoEquivocado(sp){
+  const m=(typeof actividadTipo!=='undefined')?actividadTipo:'ciclismo';
+  if(m==='moto' || _autoModoHecho){ return; }
+  if(!sp){ _velAltaDesde=0; return; }
+  const techo=(m==='trekking')?18:50; // a pie >18 km/h, o en bici >50 km/h, sostenidos = vas en vehículo
+  if(sp>techo){
+    if(!_velAltaDesde){ _velAltaDesde=Date.now(); return; }
+    if(Date.now()-_velAltaDesde>60000){ // un minuto entero, para no confundir una bajada rápida
+      _autoModoHecho=true;
+      try{ elegirActividad('moto', true); }catch(e){}
+      h('Oye, llevas un rato a '+Math.round(sp)+' por hora. Eso no es pedaleando, así que me cambié a modo vehículo para no hablarte tonteras de bici. Si me equivoqué, cámbialo en tu perfil.');
+    }
+  } else { _velAltaDesde=0; }
+}
+// Reporte real de Inty (2026-07-14): "voy en auto y recomienda agua". En modo vehículo no
+// corresponde — nadie necesita hidratarse cada 5 km ni comer una barra por ir manejando.
 function checkFuel(distKm){
+  if(typeof actividadTipo!=='undefined' && actividadTipo==='moto') return;
   if(distKm>=nextHydrateKm){ h("Llevas "+Math.round(distKm)+" kilómetros. Toma un par de tragos de agua para no deshidratarte."); nextHydrateKm+=5; }
   if(distKm>=nextEatKm){ h("Vas en "+Math.round(distKm)+" kilómetros. Come algo ligero, una fruta o una barra, para recargar energía."); nextEatKm+=20; }
 }
