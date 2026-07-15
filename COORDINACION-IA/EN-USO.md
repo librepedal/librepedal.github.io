@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — rediseño Nocturno Pro Fase 2 (Inicio + base del sistema de botones), v6.77, deployado y pusheado.
+Última sesión: 1 — íconos propios de la Esfera (fuera los 10 emojis), v6.78, deployado y pusheado.
 ```
 
 ---
