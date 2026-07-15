@@ -4,6 +4,45 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.76 — 2026-07-15 — Claude (sesión 2, voz de Pistero: variedad real por arquetipo)
+
+Inty: "retómalo y lo subes igual" — pidió terminar lo que sesión 1 dejó a
+medias (ver entrada de rescate justo abajo) y publicarlo.
+
+**Antes de escribir código verifiqué un supuesto de sesión 1** (búsqueda
+web a la documentación de Azure): `es-CL` tiene exactamente **2** voces
+neuronales, Catalina y Lorenzo — no existe una tercera voz chilena que
+pedir por nombre. El plan de `?v=ShortName` (pedir una voz distinta por
+arquetipo) no puede dar variedad real sin salirse del acento chileno
+(usar voces de México/Argentina/España, etc.), y eso choca con una
+decisión ya tomada en el proyecto: "TODO Pistero suena chileno" (v6.69).
+No tomé esa decisión de marca por mi cuenta — usé la vía que sí es segura
+y queda dentro del mismo acento: **prosodia** (velocidad/tono) sobre las
+mismas 2 voces de siempre.
+
+- `worker-ia/worker.js`: nuevos parámetros `rate`/`pitch` en `/aztts`
+  (formato SSML `+N%`/`-N%`, validados con regex estricto — cualquier otra
+  cosa se ignora sin romper nada), envueltos en `<prosody>` dentro del
+  `<voice>`. Probado en vivo contra el Worker desplegado: con prosodia
+  (200, MP3 real de 24KB), sin parámetros (200, igual que antes — mismo
+  comportamiento que ya usaban los demás llamados), y con valores
+  maliciosos tipo `DROP TABLE`/`<script>` (200, se ignoran solos).
+- `index.html`: mapa `PERSONALIDAD_PROSODIA` con los 13 arquetipos
+  (Entrenador más rápido/agudo, Sabio más lento/grave, Relator bien
+  arriba, Sensible más suave, etc.), conectado en `_vozAzureRuntime()`.
+
+**⚠️ Limitación real de esta sesión, para que quede claro:** no hay
+reproducción de audio en este sandbox — no pude ESCUCHAR el resultado.
+Verifiqué que el pipeline funciona técnicamente (HTTP 200, MP3 válido,
+prosodia bien inyectada en el SSML) pero los porcentajes de cada arquetipo
+son una elección conservadora a ciego, no una elegida de oído. **Alguien
+tiene que escuchar los 13 arquetipos en la app real y ajustar los números
+en `PERSONALIDAD_PROSODIA` (línea ~1552 de `index.html`) si algo suena
+forzado o plano** — no lo di por terminado, lo di por "listo para probar
+de oído".
+
+---
+
 ## Rescate — 2026-07-15 — Claude (sesión 2, Worker de voz sin commitear)
 
 Inty avisó "Pistero fue editado en la otra cuenta, hay varias

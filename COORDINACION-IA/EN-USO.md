@@ -33,7 +33,11 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — es-bottom ya no duplica navegación (datos vs acciones), v6.75, deployado y pusheado.
+Última sesión: 2 — v6.76, variedad de voz por arquetipo (prosodia sobre
+Catalina/Lorenzo, ver BITÁCORA), deployado (Pages + Worker) y pusheado.
+⚠️ Pide oído real: los 13 valores de PERSONALIDAD_PROSODIA (index.html
+~línea 1552) se eligieron sin poder escuchar audio en el sandbox — quien
+los pruebe en la app real, ajústelos si algo suena forzado.
 ```
 
 ---
