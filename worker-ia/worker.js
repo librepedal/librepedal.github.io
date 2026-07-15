@@ -137,10 +137,20 @@ export default {
       if (!key) return new Response(JSON.stringify({ error: "sin_llave_azure" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       const region = env.AZURE_TTS_REGION || "eastus";
       // Voz: por defecto la chilena según género; o una específica vía ?v=ShortName (variedad por arquetipo).
+      // OJO: es-CL solo tiene 2 voces neuronales (Catalina/Lorenzo) — no hay más "voces" chilenas
+      // que pedir por nombre. La variedad real por arquetipo (Entrenador, Sabio, Pícaro, etc.) se
+      // logra con prosodia (rate/pitch) sobre esas mismas 2 voces, no cambiando de voz.
       const vParam = url.searchParams.get("v");
       const voz = (vParam && /^es-[A-Z]{2}-[A-Za-z]+Neural$/.test(vParam)) ? vParam : ((url.searchParams.get("g") === "c") ? "es-CL-CatalinaNeural" : "es-CL-LorenzoNeural");
       const t = String(azText).slice(0, 480).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      const ssml = "<speak version='1.0' xml:lang='es-CL'><voice name='" + voz + "'>" + t + "</voice></speak>";
+      // rate/pitch: porcentaje con signo, ej "+10%"/"-15%" (formato SSML de Azure). Se validan
+      // estrictos porque van directo al SSML — cualquier otra cosa se ignora, sin prosodia.
+      const rateP = url.searchParams.get("rate");
+      const pitchP = url.searchParams.get("pitch");
+      const rate = (rateP && /^[+-]\d{1,2}%$/.test(rateP)) ? rateP : null;
+      const pitch = (pitchP && /^[+-]\d{1,2}%$/.test(pitchP)) ? pitchP : null;
+      const inner = (rate || pitch) ? ("<prosody rate='" + (rate || "+0%") + "' pitch='" + (pitch || "+0%") + "'>" + t + "</prosody>") : t;
+      const ssml = "<speak version='1.0' xml:lang='es-CL'><voice name='" + voz + "'>" + inner + "</voice></speak>";
       try {
         const r = await fetch("https://" + region + ".tts.speech.microsoft.com/cognitiveservices/v1", {
           method: "POST",

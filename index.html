@@ -1565,6 +1565,19 @@ const PERSONALIDADES=[
   {id:'compadre', label:'🧉 El Compadre (chileno puro)'}
 ];
 let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
+// Variedad de voz por arquetipo: Azure es-CL solo tiene 2 voces (Catalina/Lorenzo), no hay
+// más "voces" chilenas que pedir por nombre — así que la variedad viene de prosodia
+// (velocidad/tono) sobre esa misma voz, no de cambiar de voz. Números conservadores a
+// propósito (nunca se escuchó en vivo: mejor quedarse corto que sonar robótico o forzado).
+const PERSONALIDAD_PROSODIA={
+  cercano:{rate:'+0%',pitch:'+0%'}, aventurero:{rate:'+8%',pitch:'+3%'},
+  entrenador:{rate:'+15%',pitch:'+5%'}, relajado:{rate:'-12%',pitch:'-3%'},
+  humoristico:{rate:'+10%',pitch:'+6%'}, guia:{rate:'-5%',pitch:'+0%'},
+  sensible:{rate:'-10%',pitch:'-4%'}, directo:{rate:'+12%',pitch:'-2%'},
+  sabio:{rate:'-15%',pitch:'-6%'}, relator:{rate:'+20%',pitch:'+8%'},
+  picaro:{rate:'+5%',pitch:'+7%'}, maternal:{rate:'-8%',pitch:'-2%'},
+  compadre:{rate:'+3%',pitch:'+0%'}
+};
 function elegirPersonalidad(id){
   if(!PERSONALIDADES.some(function(p){return p.id===id;})) return;
   pisteroPersonalidad=id; try{ localStorage.setItem('lp_personalidad',id); }catch(e){}
@@ -1969,7 +1982,8 @@ function _vozAzureRuntime(item, durEst){
   let cayo=false;
   const fallback=function(){ if(cayo) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
-    const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
+    const pros=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
+    const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&rate='+encodeURIComponent(pros.rate)+'&pitch='+encodeURIComponent(pros.pitch));
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
