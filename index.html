@@ -1096,7 +1096,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.80'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.81'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5266,7 +5266,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   avisarReportesCercanos(lat,lon);
   _avisoLluviaProactivo(lat,lon);
   _verificarFatiga(tiempoActivoMs(), speed);
-  checkNavigationSteps(lat,lon);
+  checkNavigationSteps(lat,lon,speed);
   verificarDesviacion(lat,lon);
   compararRitmoHistorico(totalDistance, tiempoActivoMs());
   _guardarEstadoNavParaReanudar();
@@ -5401,7 +5401,7 @@ async function recalcularRuta(lat,lon){
     if(routeLine && navMap) navMap.removeLayer(routeLine);
     if(navMap) routeLine=L.polyline(latlngs,{color:'#fc4c02',weight:6,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(navMap);
     navSteps=steps.map(function(step,index){ return {instruction:getTurnInstruction(step.maneuver.type,step.maneuver.modifier,step.name),distance:step.distance,maneuver:step.maneuver,geometry:step.geometry,index:index}; });
-    currentStepIndex=0; lastSpokenStep=-1; routeTotalDistance=route.distance/1000; routeTotalDuration=Math.round(route.duration/60);
+    currentStepIndex=0; lastSpokenStep=-1; _navDistPrev=Infinity; routeTotalDistance=route.distance/1000; routeTotalDuration=Math.round(route.duration/60);
     const arrival=new Date(Date.now()+route.duration*1000);
     document.getElementById('etaTime').innerText=arrival.getHours().toString().padStart(2,'0')+':'+arrival.getMinutes().toString().padStart(2,'0');
     document.getElementById('etaDist').innerText=routeTotalDistance.toFixed(2)+' km';
@@ -5540,7 +5540,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     routeLine=L.polyline(latlngs,{color:'#fc4c02',weight:6,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(navMap);
     navMap.fitBounds(routeLine.getBounds(),{padding:[80,80]});
     navSteps=steps.map(function(step,index){ return {instruction:getTurnInstruction(step.maneuver.type,step.maneuver.modifier,step.name),distance:step.distance,maneuver:step.maneuver,geometry:step.geometry,index:index}; });
-    currentStepIndex=0; lastSpokenStep=-1; routeTotalDistance=route.distance/1000; routeTotalDuration=Math.round(route.duration/60);
+    currentStepIndex=0; lastSpokenStep=-1; _navDistPrev=Infinity; routeTotalDistance=route.distance/1000; routeTotalDuration=Math.round(route.duration/60);
     const arrival=new Date(Date.now()+route.duration*1000);
     document.getElementById('etaTime').innerText=arrival.getHours().toString().padStart(2,'0')+':'+arrival.getMinutes().toString().padStart(2,'0');
     document.getElementById('etaDist').innerText=routeTotalDistance.toFixed(2)+' km';
@@ -5614,7 +5614,8 @@ function getTurnInstruction(type,modifier,street){ const s=street?' por '+street
 // punto. Fix: usar maneuver.location directo (OSRM ya lo entrega, no hay que
 // derivarlo de la geometría) — así la distancia medida y la instrucción
 // anunciada corresponden SIEMPRE al mismo punto, con aviso anticipado real.
-function checkNavigationSteps(lat,lon){
+let _navDistPrev = Infinity; // distancia al giro en la muestra anterior (para detectar que ya se pasó)
+function checkNavigationSteps(lat,lon,speed){
   if(currentStepIndex>=navSteps.length) return;
   const step=navSteps[currentStepIndex];
   const ml=step.maneuver&&step.maneuver.location;
@@ -5629,12 +5630,27 @@ function checkNavigationSteps(lat,lon){
   // con otra cosa (showStepInstruction interrumpe, no encola). El paso
   // "arrive" no usa este aviso temprano — diría "llegaste" 120m antes de
   // llegar; la llegada real la celebra showArrival() más abajo.
-  if(dist<120 && lastSpokenStep!==currentStepIndex && step.maneuver.type!=='arrive'){
+  // BUG REAL (reportado por Inty en ruta, 2026-07-14): los umbrales eran FIJOS (aviso 120m,
+  // avance 15m) y eso solo funciona en bici. A 82 km/h vas a 23 m/s y el GPS entrega una
+  // posición por segundo → te mueves ~23m entre muestras y SALTAS ENTERO el radio de 15m sin
+  // que ninguna caiga adentro → currentStepIndex nunca avanza → NUNCA avisa un giro (se quedaba
+  // pegado en "Comienza el recorrido"). Y 120m a esa velocidad son 5 segundos: tarde igual.
+  // Fix: umbrales por TIEMPO, escalados con la velocidad real, + detectar que ya se pasó el giro.
+  const vms = Math.max(2, (speed||0)/3.6);        // m/s (mínimo 2 para no encogerlo detenido)
+  const avisoM = Math.max(80, vms*15);            // ~15 s de anticipación: bici ~80m, auto ~340m
+  const pasoM  = Math.max(18, vms*2.5);           // radio de paso, escalado a la velocidad
+  if(dist<avisoM && lastSpokenStep!==currentStepIndex && step.maneuver.type!=='arrive'){
     showStepInstruction(currentStepIndex); lastSpokenStep=currentStepIndex;
   }
-  if(dist<15){
+  // Avanza si entró al radio O si ya lo dejó atrás (la distancia venía bajando y empezó a subir).
+  // Esa segunda condición es la que salva a cualquier velocidad, sin depender del radio.
+  const yaPaso = (_navDistPrev < avisoM && dist > _navDistPrev + 5);
+  if(dist < pasoM || yaPaso){
+    _navDistPrev = Infinity;
     currentStepIndex++;
     if(currentStepIndex>=navSteps.length) showArrival();
+  } else {
+    _navDistPrev = dist;
   }
 }
 function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSteps[i]; document.getElementById('navIcon').innerText=getStepIcon(step.maneuver.type,step.maneuver.modifier); document.getElementById('navText').innerText=step.instruction; document.getElementById('navDist').innerText=formatDistance(step.distance); showAlert(step.instruction); hCorta(step.instruction); }
