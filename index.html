@@ -72,14 +72,20 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 /* Nocturno Pro: .stat-card SALE de esta lista — los tiles de dato ya no llevan
    degradado ni borde naranja (tienen su regla limpia más abajo). El resto de
    tarjetas conserva el tratamiento anterior hasta que les toque su fase. */
-.cd,.hostel-card,.rec-card,.route-history-item,.repair-tip,.global-comment,.gi,.chat-user-item,.nearby-user,.hostel-option,.added-dest-item{border:1px solid rgba(252,76,2,0.2)!important;background:linear-gradient(160deg,rgba(20,28,46,0.5),rgba(10,15,26,0.62))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,0,0,0.32)}
+/* FASE 3 Nocturno Pro — todas las tarjetas de la app (Mapa, Social, Guía, Taller, Perfil…).
+   Antes: degradado + borde naranja en TODAS = ruido, y el naranja perdía su significado.
+   Ahora: superficie sobria + hairline. El naranja queda reservado a la ACCIÓN. */
+.cd,.hostel-card,.rec-card,.route-history-item,.repair-tip,.global-comment,.gi,.chat-user-item,.nearby-user,.hostel-option,.added-dest-item{border:0.5px solid rgba(255,255,255,0.07)!important;background:#0f1728!important;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.28)}
 .trip-card{border:1px solid rgba(252,76,2,0.4)!important;background:linear-gradient(160deg,rgba(18,26,44,0.62),rgba(9,13,24,0.7))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.section-info{background:linear-gradient(160deg,rgba(252,76,2,0.1),rgba(10,15,26,0.5))!important;border:1px solid rgba(252,76,2,0.42)!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+/* FASE 3: el encabezado de cada pantalla deja de gritar naranja. Es contexto, no acción. */
+.section-info{background:#0f1728!important;border:0.5px solid rgba(255,255,255,0.07)!important;border-radius:14px}
 /* Nocturno Pro: los números se leen por jerarquía, no por glow de neón. */
 .stat-value,.speed-value{text-shadow:none}
 .gtt{background:rgba(255,255,255,0.05);border:1px solid rgba(252,76,2,0.28)}
 .gtt.on{box-shadow:0 0 12px rgba(252,76,2,0.45)}
-input,select,textarea{background:rgba(6,10,18,0.72)!important;border:1px solid rgba(252,76,2,0.28)!important}
+/* FASE 3: los campos usan hairline neutro; el naranja aparece solo al enfocar (foco = acción). */
+input,select,textarea{background:#070b14!important;border:0.5px solid rgba(255,255,255,0.10)!important;border-radius:11px!important;padding:11px 12px!important}
+input:focus,select:focus,textarea:focus{border-color:rgba(252,76,2,0.75)!important;outline:none}
 header{background:rgba(6,10,18,0.55)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(252,76,2,0.22)}
 nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(252,76,2,0.24)}
 .speed-display,.performance-bar,.chart-container{border:1px solid rgba(252,76,2,0.28)!important;background:linear-gradient(160deg,rgba(16,24,40,0.6),rgba(8,12,22,0.68))!important}
@@ -185,7 +191,7 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .chart-bar-item{flex:1;background:var(--p);border-radius:4px 4px 0 0;min-height:5px;transition:height 0.5s}
 #map,#map-all-routes,#map-hostel-select{height:280px;width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222}
 #map-hostel-select.show{display:block}
-.cd{background:var(--gl);padding:12px;border-radius:10px;margin-bottom:10px;border:1px solid #222}
+.cd{background:var(--gl);padding:14px;border-radius:14px;margin-bottom:10px;border:1px solid #222}
 #sugerencias-dest{position:absolute;top:100%;left:0;right:0;z-index:1500;background:#0d1426;border:1px solid var(--p);border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;display:none;box-shadow:0 8px 18px rgba(0,0,0,0.5)}
 #sugerencias-dest.show{display:block}
 #sugerencias-dest .sug{padding:9px 11px;border-bottom:1px solid #1a2740;cursor:pointer;font-size:0.82rem;color:#dfe7ff;line-height:1.3}
@@ -195,7 +201,8 @@ nav{position:fixed;bottom:0;width:100%;background:rgba(10,15,29,0.99);display:fl
 .nb{background:none;border:none;color:#666;cursor:pointer;transition:0.3s;padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .nb i{font-size:1.2rem}
 .nb span{font-size:0.55rem;font-weight:700}
-.nb.on{color:var(--p);filter:drop-shadow(0 0 8px var(--p));background:rgba(252,76,2,0.1);border-radius:12px}
+/* FASE 3: el activo se marca por COLOR, no por glow de neón. */
+.nb.on{color:var(--p);background:rgba(252,76,2,0.12);border-radius:12px}
 input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:0.85rem;outline:none}
 /* Nocturno Pro — sistema de botones: UN secundario (este) y UN primario (.bg).
    Sin glows ni degradados: el color se reserva para la acción, no para decorar. */
@@ -1085,7 +1092,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.78'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.79'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
