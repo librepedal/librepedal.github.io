@@ -69,10 +69,14 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .es-mic.listening{background:radial-gradient(circle at 50% 40%,rgba(255,45,107,0.5),rgba(180,0,255,0.2));border-color:#ff2d6b;box-shadow:0 0 26px rgba(255,45,107,0.6)}
 /* ===== Look premium unificado (glass + neón) en toda la app ===== */
 .bg,.bd,.btrip,.bpdf{border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.2);letter-spacing:0.3px}
-.stat-card,.cd,.hostel-card,.rec-card,.route-history-item,.repair-tip,.global-comment,.gi,.chat-user-item,.nearby-user,.hostel-option,.added-dest-item{border:1px solid rgba(252,76,2,0.2)!important;background:linear-gradient(160deg,rgba(20,28,46,0.5),rgba(10,15,26,0.62))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,0,0,0.32)}
+/* Nocturno Pro: .stat-card SALE de esta lista — los tiles de dato ya no llevan
+   degradado ni borde naranja (tienen su regla limpia más abajo). El resto de
+   tarjetas conserva el tratamiento anterior hasta que les toque su fase. */
+.cd,.hostel-card,.rec-card,.route-history-item,.repair-tip,.global-comment,.gi,.chat-user-item,.nearby-user,.hostel-option,.added-dest-item{border:1px solid rgba(252,76,2,0.2)!important;background:linear-gradient(160deg,rgba(20,28,46,0.5),rgba(10,15,26,0.62))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,0,0,0.32)}
 .trip-card{border:1px solid rgba(252,76,2,0.4)!important;background:linear-gradient(160deg,rgba(18,26,44,0.62),rgba(9,13,24,0.7))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .section-info{background:linear-gradient(160deg,rgba(252,76,2,0.1),rgba(10,15,26,0.5))!important;border:1px solid rgba(252,76,2,0.42)!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.stat-value,.speed-value{text-shadow:0 0 10px rgba(252,76,2,0.45)}
+/* Nocturno Pro: los números se leen por jerarquía, no por glow de neón. */
+.stat-value,.speed-value{text-shadow:none}
 .gtt{background:rgba(255,255,255,0.05);border:1px solid rgba(252,76,2,0.28)}
 .gtt.on{box-shadow:0 0 12px rgba(252,76,2,0.45)}
 input,select,textarea{background:rgba(6,10,18,0.72)!important;border:1px solid rgba(252,76,2,0.28)!important}
@@ -150,7 +154,7 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .view{display:none;animation:su 0.3s;min-height:100%}
 .view.on{display:block}
 @keyframes su{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.speed-display{background:linear-gradient(135deg,#151b2e,#0a0f1d);border:2px solid var(--p);border-radius:15px;padding:15px;text-align:center;margin-bottom:12px}
+.speed-display{background:#0f1728;border:0.5px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px}
 .speed-value{font-size:2.5rem;font-weight:800;color:var(--p);line-height:1}
 .speed-label{font-size:0.8rem;color:#888;margin-top:3px}
 .speed-status{font-size:0.75rem;color:var(--g);margin-top:6px;font-weight:700}
@@ -161,10 +165,16 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 #navPausaBadge{margin:0 0 6px}
 .darma-badge{display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;font-weight:800;padding:10px 12px;border-radius:12px;margin-bottom:10px;cursor:pointer;font-size:0.95rem;box-shadow:0 3px 10px rgba(255,215,0,0.25)}
 .darma-badge small{font-weight:700;opacity:0.75;font-size:0.62rem}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
-.stat-card{background:var(--gl);padding:10px;border-radius:8px;text-align:center;border:1px solid #222}
-.stat-value{font-size:1.3rem;font-weight:800;color:var(--p)}
-.stat-label{font-size:0.65rem;color:#888;margin-top:3px}
+/* Tarjeta hero de Inicio + la firma visual ciclista (perfil de ruta al fondo) */
+.hero-viaje{position:relative;overflow:hidden;background:#0f1728;border:0.5px solid rgba(255,255,255,0.07);border-radius:18px;padding:16px;margin-bottom:14px}
+.hero-ruta{position:absolute;top:10px;left:0;width:100%;height:46px;opacity:0.42;pointer-events:none}
+.hero-t{position:relative;margin:0 0 12px 0;font-size:1.05rem;font-weight:700;color:#fff;letter-spacing:-0.2px}
+.hero-viaje input,.hero-viaje button,.hero-viaje > div{position:relative}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+/* Tiles de dato: sin borde, superficie sutil — se leen de un vistazo. */
+.stat-card{background:#0f1728;padding:13px 11px;border-radius:14px;text-align:left;border:none}
+.stat-value{font-size:1.35rem;font-weight:700;color:#fff;line-height:1.15}
+.stat-label{font-size:0.66rem;color:#6b7688;margin-top:2px;letter-spacing:0.3px}
 .performance-bar{background:#222;border-radius:10px;height:20px;margin:8px 0;overflow:hidden;position:relative}
 .performance-bar::after{content:attr(data-pct);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.6);pointer-events:none}
 .performance-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:10px;transition:width 0.5s;overflow:hidden;font-size:0;color:transparent}
@@ -185,14 +195,21 @@ nav{position:fixed;bottom:0;width:100%;background:rgba(10,15,29,0.99);display:fl
 .nb span{font-size:0.55rem;font-weight:700}
 .nb.on{color:var(--p);filter:drop-shadow(0 0 8px var(--p));background:rgba(252,76,2,0.1);border-radius:12px}
 input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:0.85rem;outline:none}
-.ab{width:100%;padding:11px;background:#0c7a93;color:#dffbff;border:1px solid rgba(252,76,2,0.55);border-radius:12px;font-weight:700;cursor:pointer;margin-top:6px;font-size:0.85rem;letter-spacing:0.4px;box-shadow:0 3px 10px rgba(0,0,0,0.4),0 0 14px rgba(252,76,2,0.25);transition:0.2s;position:relative;overflow:hidden}
+/* Nocturno Pro — sistema de botones: UN secundario (este) y UN primario (.bg).
+   Sin glows ni degradados: el color se reserva para la acción, no para decorar. */
+.ab{width:100%;min-height:44px;padding:12px 14px;background:#131c2f;color:#dfe7ff;border:0.5px solid rgba(255,255,255,0.10);border-radius:12px;font-weight:600;cursor:pointer;margin-top:8px;font-size:0.85rem;letter-spacing:0.2px;transition:background .18s ease,border-color .18s ease;position:relative;overflow:hidden}
+.ab:hover{background:#1a2438;border-color:rgba(255,255,255,0.18)}
+.ab:active{transform:scale(0.985)}
 .ab::before{content:'';position:absolute;inset:0;border-radius:11px;background:linear-gradient(180deg,rgba(255,255,255,0.38) 0%,rgba(255,255,255,0.06) 40%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.2) 100%);pointer-events:none}
 .ab:hover{background:#118aa6;box-shadow:0 3px 10px rgba(0,0,0,0.4),0 0 20px rgba(252,76,2,0.4)}
 .ab:active{transform:scale(0.97)}
-.ab.sec{background:#2a3147;color:#fff}
+.ab.sec{background:#1a2438;color:#dfe7ff;border-color:rgba(255,255,255,0.08)}
 .bg,.bd,.bpdf,.btrip{width:100%;font-size:0.85rem;padding:10px;border:none;border-radius:8px;font-weight:800;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.35)}
 .bg::before,.bd::before,.bpdf::before,.btrip::before{content:'';position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.06) 40%,rgba(0,0,0,0.16) 100%);pointer-events:none}
-.bg{background:#10b981;color:#000}.bd{background:var(--g);color:#000}.bpdf{background:#e74c3c;color:#fff}.btrip{background:#9b59b6;color:#fff}
+.bg{background:#fc4c02;color:#fff}
+.bd{background:#1c2740;color:#ffd166;border-color:rgba(255,209,102,0.35)}
+.bpdf{background:#2a1418;color:#ff8a8a;border-color:rgba(255,90,90,0.35)}
+.btrip{background:#131c2f;color:#dfe7ff}
 .gt{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px}
 .gtt{background:rgba(255,255,255,0.05);padding:5px 10px;border-radius:12px;white-space:nowrap;cursor:pointer;border:1px solid #333;font-size:0.7rem}
 .gtt.on{background:var(--p);color:#000;border-color:var(--p);font-weight:bold}
@@ -390,7 +407,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .ab:active,.bg:active,.bd:active,.bpdf:active,.btrip:active,.route-btn:active,.rec-btn:active,.gps-btn:active,.btn:active,.music-btn:active{transform:scale(.95)}
 @media(hover:hover){.ab:hover,.bg:hover,.bd:hover,.bpdf:hover,.btrip:hover{filter:brightness(1.08);box-shadow:0 6px 18px rgba(0,0,0,.5)}}
 /* Paleta sobria y coherente para los botones de acción (colores apagados, elegantes) */
-.bg{background:linear-gradient(160deg,#0e9e73,#0a7a58)!important;color:#eafff7!important}
+/* PRIMARIO único: naranja = acción. Sin degradado. */
+.bg{background:#fc4c02!important;color:#fff!important;border-color:transparent!important;font-weight:600!important}
+.bg:hover{background:#ff5f1c!important}
 .bd{background:linear-gradient(160deg,#cfa93a,#a8862b)!important;color:#1a1400!important}
 .bpdf{background:linear-gradient(160deg,#c24a3e,#9c3a30)!important;color:#fff!important}
 .btrip{background:linear-gradient(160deg,#6b5a97,#4f4276)!important;color:#f2eeff!important}
@@ -617,8 +636,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <main>
 <section id="v-dash" class="view on">
 <div class="section-info"><h4>Inicio</h4><p><strong id="welcome-name"></strong>, toca el micrófono o escribe abajo a dónde quieres ir.</p></div>
-<div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-bottom:14px">
-<h4 style="color:var(--p);margin:0 0 8px 0;font-size:0.9rem">▶️ Iniciar viaje</h4>
+<div class="hero-viaje">
+<svg class="hero-ruta" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,44 40,38 70,42 110,21 150,28 190,10 230,17 270,6 300,11" fill="none" stroke="#fc4c02" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="270" cy="6" r="4" fill="#fc4c02"/></svg>
+<h4 class="hero-t">¿A dónde pedaleamos hoy?</h4>
 <input type="text" id="quick-start" placeholder="Origen (automático)" readonly>
 <div style="position:relative">
   <input type="text" id="quick-dest" placeholder="¿A dónde vamos?" autocomplete="off" oninput="sugerirDestino(this.value)">
@@ -1063,7 +1083,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.76'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.77'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
