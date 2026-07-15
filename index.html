@@ -130,7 +130,8 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
    vez, con el personaje siempre fijo arriba. */
 .tabs-personalizar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%)}
 .tabs-personalizar::-webkit-scrollbar{display:none}
-.tab-pill{flex:0 0 auto;padding:7px 13px;border-radius:20px;background:var(--gl);border:1px solid #242c3e;color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
+/* Pestañas de Perfil: eran 32px de alto. Suben a 38 para el dedo (van en tira scrolleable). */
+.tab-pill{flex:0 0 auto;min-height:38px;padding:9px 14px;border-radius:20px;background:var(--gl);border:0.5px solid rgba(255,255,255,0.09);color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
 .tab-pill.active{background:var(--p);color:#03121a;border-color:var(--p)}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
@@ -303,10 +304,13 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .music-deezer{background:#A2C2E0;color:#000}.music-soundcloud{background:#FF5500}.music-amazon{background:#25D1DA;color:#000}
 .section-info{background:rgba(252,76,2,0.08);border:1px solid var(--p);padding:10px;border-radius:10px;margin-bottom:12px;font-size:0.8rem;line-height:1.4}
 .section-info h4{margin:0 0 6px 0;color:var(--p);font-size:0.9rem}
-.secret-btn{background:var(--g);color:#000;border:none;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;width:100%;margin-top:8px;font-size:0.85rem}
+/* Área táctil: era 31px de alto a lo ancho de la pantalla — difícil de acertar pedaleando.
+   Estándar táctil = 44px (mismo que .ab del sistema). */
+.secret-btn{background:var(--g);color:#000;border:none;min-height:44px;padding:12px;border-radius:12px;cursor:pointer;font-weight:700;width:100%;margin-top:8px;font-size:0.85rem}
 .secret-form{background:rgba(255,215,0,0.1);padding:10px;border-radius:8px;margin-top:8px;display:none}
 .secret-form.show{display:block}
-.gps-btn{background:#ff6600;color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;width:100%;margin-top:6px;font-size:0.85rem}
+/* Mismo caso: 31px de alto a lo ancho. Se sube al estándar táctil de 44px. */
+.gps-btn{background:#fc4c02;color:#fff;border:none;min-height:44px;padding:12px;border-radius:12px;cursor:pointer;font-weight:700;width:100%;margin-top:6px;font-size:0.85rem}
 .gps-status{background:rgba(255,102,0,0.2);padding:6px;border-radius:6px;margin-top:6px;font-size:0.75rem;text-align:center;display:none}
 .gps-status.show{display:block}
 .user-list-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:4000;display:none;flex-direction:column;padding:15px;overflow-y:auto}
@@ -759,7 +763,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;padding:7px 14px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:2px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.59</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.59</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
@@ -1092,7 +1096,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.79'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.80'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
