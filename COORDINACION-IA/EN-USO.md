@@ -33,11 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — v6.76, variedad de voz por arquetipo (prosodia sobre
-Catalina/Lorenzo, ver BITÁCORA), deployado (Pages + Worker) y pusheado.
-⚠️ Pide oído real: los 13 valores de PERSONALIDAD_PROSODIA (index.html
-~línea 1552) se eligieron sin poder escuchar audio en el sandbox — quien
-los pruebe en la app real, ajústelos si algo suena forzado.
+Última sesión: 1 — rediseño Nocturno Pro Fase 2 (Inicio + base del sistema de botones), v6.77, deployado y pusheado.
 ```
 
 ---
