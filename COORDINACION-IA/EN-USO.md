@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — rediseño Nocturno Pro Fase 1 (top bar: ficha de usuario con menú), v6.74, deployado y pusheado.
+Última sesión: 1 — es-bottom ya no duplica navegación (datos vs acciones), v6.75, deployado y pusheado.
 ```
 
 ---

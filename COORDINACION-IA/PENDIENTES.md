@@ -23,9 +23,12 @@ entrada **v6.72** de `BITACORA.md`.
   decisión previa.
 - [x] Renombrar "Compartir ubicación" del SOS vs. seguimiento en vivo (ya no
   comparten texto).
-- [ ] Quitar fila duplicada de la esfera (`es-bottom`) — mismo OJO que
-  arriba: no borrar sin confirmar con Inty, es HUD con datos reales, no
-  solo íconos repetidos.
+- [x] **RESUELTO (v6.75, sesión 1).** Inty confirmó "sin redundancia... la
+  navegación debe seguir la misma lógica" y delegó la decisión. NO se borró el
+  HUD (se conserva el valor de v6.09): se separó por tipo — km / mi puesto /
+  viajes pasaron a DATO puro (`<div class="es-dato">`, sin onclick), y 🔔 Avisos
+  (notificación) + 🎤 Mic (acción) siguen accionables. Para ir a Stats/Logros/
+  Viajes hay UN solo camino: la Esfera.
 - [ ] Revisar botones sobredimensionados en toda la app (pedido explícito,
   aún sin auditar).
 
