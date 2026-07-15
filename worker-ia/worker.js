@@ -136,7 +136,9 @@ export default {
       const key = env.AZURE_TTS_KEY;
       if (!key) return new Response(JSON.stringify({ error: "sin_llave_azure" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       const region = env.AZURE_TTS_REGION || "eastus";
-      const voz = (url.searchParams.get("g") === "c") ? "es-CL-CatalinaNeural" : "es-CL-LorenzoNeural";
+      // Voz: por defecto la chilena según género; o una específica vía ?v=ShortName (variedad por arquetipo).
+      const vParam = url.searchParams.get("v");
+      const voz = (vParam && /^es-[A-Z]{2}-[A-Za-z]+Neural$/.test(vParam)) ? vParam : ((url.searchParams.get("g") === "c") ? "es-CL-CatalinaNeural" : "es-CL-LorenzoNeural");
       const t = String(azText).slice(0, 480).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       const ssml = "<speak version='1.0' xml:lang='es-CL'><voice name='" + voz + "'>" + t + "</voice></speak>";
       try {
