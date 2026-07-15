@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — FIX: no avisaba giros con pantalla apagada (umbrales escalados por velocidad), v6.81, deployado y pusheado.
+Última sesión: 1 — FIX: detecta solo el modo vehículo + no ofrece agua manejando, v6.82, deployado y pusheado.
 ```
 
 ---
