@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — fix voz duplicada al cambiar Voz mejorada, v6.73, deployado y pusheado.
+Última sesión: 1 — rediseño Nocturno Pro Fase 1 (top bar: ficha de usuario con menú), v6.74, deployado y pusheado.
 ```
 
 ---
