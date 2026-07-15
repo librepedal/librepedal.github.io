@@ -4,6 +4,23 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## Rescate — 2026-07-15 — Claude (sesión 2, Worker de voz sin commitear)
+
+Inty avisó "Pistero fue editado en la otra cuenta, hay varias
+modificaciones". Encontré `worker-ia/worker.js` modificado localmente sin
+commitear (sesión 1 no alcanzó a subirlo): agrega soporte para
+`?v=NombreDeVozNeural` en `/aztts`, para poder pedir una voz neuronal
+específica en vez de solo elegir por género. Compatible hacia atrás — sin
+el parámetro sigue igual que antes.
+
+**No estaba conectado desde `index.html`** (no hay ningún lugar que mande
+`?v=`) — es la mitad de un cambio, la otra mitad (elegir qué voz usa cada
+arquetipo) sigue pendiente, seguramente lo que sesión 1 iba a hacer
+después. Con permiso de Inty: comité el código (`9993fee`) y **desplegué
+el Worker a producción** (`npx wrangler deploy` con `MI-CLOUDFLARE-IA.txt`)
+para que la capacidad esté lista y no se pierda. No toqué `index.html` —
+eso es territorio de sesión 1 (qué voz asignarle a cada arquetipo).
+
 ## v6.72 — 2026-07-14 — Claude (sesión 2, simplificación de interfaz — fusión Viajes/Rutas + rename SOS)
 
 Pedido de Inty: "debemos simplificar la aplicación... hay muchos botones,
