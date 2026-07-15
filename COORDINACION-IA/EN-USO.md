@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — rediseño Nocturno Pro COMPLETO (Fases 1-3 + íconos propios), v6.79, deployado y pusheado.
+Última sesión: 1 — FIX: no avisaba giros con pantalla apagada (umbrales escalados por velocidad), v6.81, deployado y pusheado.
 ```
 
 ---
