@@ -196,6 +196,17 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .gi{background:rgba(252,76,2,0.05);padding:10px;border-radius:8px;margin-bottom:6px;border-left:3px solid var(--p);cursor:pointer}
 .hdr-right{display:flex;align-items:center;gap:6px}
 .logout-btn{background:rgba(255,0,0,0.3);border:1px solid #ff3333;color:#fff;padding:5px 9px;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;display:none;white-space:nowrap}
+/* Rediseño Nocturno Pro — ficha de usuario con menú (reemplaza las 3 píldoras del top bar) */
+.uchip-wrap{position:relative}
+.uchip{display:inline-flex;align-items:center;gap:7px;background:rgba(252,76,2,0.14);border:0.5px solid rgba(252,76,2,0.45);border-radius:20px;padding:3px 8px 3px 3px;cursor:pointer;color:#ffd9c6;font-weight:700;font-size:0.72rem;white-space:nowrap}
+.uchip:hover{background:rgba(252,76,2,0.2)}
+.uchip-av{width:26px;height:26px;border-radius:50%;background:#fc4c02;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;flex:none}
+.uchip-caret{font-size:0.55rem;color:#ffab8a;opacity:0.85}
+.umenu{position:absolute;right:0;top:calc(100% + 8px);background:#0f1728;border:0.5px solid rgba(255,255,255,0.13);border-radius:12px;padding:6px;min-width:190px;display:none;flex-direction:column;gap:2px;z-index:1200;box-shadow:0 12px 34px rgba(0,0,0,0.55)}
+.umenu.on{display:flex}
+.umenu button{background:none;border:none;color:#dfe7ff;text-align:left;padding:10px 12px;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.umenu button:hover{background:rgba(255,255,255,0.07)}
+.umenu .umenu-danger{color:#ff7a7a}
 .ghost-toggle{background:rgba(155,89,182,0.85);border:1px solid #9b59b6;color:#fff;padding:5px 9px;border-radius:10px;font-size:0.68rem;font-weight:700;cursor:pointer;display:none;white-space:nowrap}
 .map-controls{position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px}
 .map-btn{background:rgba(10,18,30,0.72);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:0.75rem;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
@@ -589,10 +600,14 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </div>
 <div class="hdr-right">
 <button class="es-globe" id="btnEsferaHeader" onclick="abrirEsfera()" title="Esfera de apps">🌐</button>
-<button class="ghost-toggle" id="ghostBtn" onclick="toggleGhost()">👻 OFF</button>
 <button class="es-globe" onclick="cv('ajustes')" title="Ajustes">⚙️</button>
-<div class="ulvl"><span id="nv">Novato</span></div>
-<button class="logout-btn" id="logoutBtn" onclick="cerrarSesion()">Salir</button>
+<div class="uchip-wrap">
+<button class="uchip" onclick="toggleUserMenu(event)" aria-label="Menú de usuario"><span class="uchip-av"><i class="fas fa-bicycle"></i></span><span class="uchip-lvl" id="nv">Novato</span><i class="fas fa-chevron-down uchip-caret"></i></button>
+<div class="umenu" id="uMenu">
+<button id="ghostBtn" onclick="toggleGhost();cerrarUserMenu()">👻 Modo fantasma: OFF</button>
+<button id="logoutBtn" class="umenu-danger" onclick="cerrarSesion()"><i class="fas fa-right-from-bracket"></i> Salir</button>
+</div>
+</div>
 </div>
 </header>
 
@@ -1045,7 +1060,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.73'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.74'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2909,7 +2924,12 @@ async function reg(e){
 
 async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
 function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
-function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText=ghostMode?'👻 ON':'👻 OFF'; btn.style.background=ghostMode?'rgba(255,0,0,0.6)':'rgba(155,89,182,0.85)'; }
+// Ahora vive dentro del menú de la ficha de usuario: sin fondo de píldora, el estado
+// se marca con el cian de Pistero cuando está activo.
+function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText='👻 Modo fantasma: '+(ghostMode?'ON':'OFF'); btn.style.color=ghostMode?'#12b3a6':''; }
+function toggleUserMenu(e){ if(e&&e.stopPropagation) e.stopPropagation(); const m=document.getElementById('uMenu'); if(m) m.classList.toggle('on'); }
+function cerrarUserMenu(){ const m=document.getElementById('uMenu'); if(m) m.classList.remove('on'); }
+document.addEventListener('click', function(e){ if(!e.target.closest || !e.target.closest('.uchip-wrap')) cerrarUserMenu(); });
 function gd(){ if(!cu) return; try{ localStorage.setItem('lp_u_'+cu,JSON.stringify(us)); localStorage.setItem('lp_j_'+cu,JSON.stringify(uj)); localStorage.setItem('lp_r_'+cu,JSON.stringify(rh)); }catch(e){ /* almacenamiento lleno o modo privado: no debe cortar la función que llamó a gd() */ } }
 async function getNombreUsuario(userId){ if(userId===cu) return nombreUsuario; try{ const doc=await db.collection('users').doc(userId).get(); if(doc.exists && doc.data().nombre) return doc.data().nombre; }catch(e){} return userId; }
 // usuariosCercanosData: mismo dato que los markers "sm" pero en crudo (lat/lon/nombre
