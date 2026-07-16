@@ -4,6 +4,42 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.88 — 2026-07-17 — Claude (sesión 1, pestaña Mapa ordenada)
+
+Inty: *"fíjate en los botones que dejaste en ese mapa… debería haber un solo
+mapa para todo, no entiendo esa lógica"*. Le expliqué que hay 3 tipos de mapa
+(pestaña Mapa = explorar, mapa de navegación = pantalla aparte, mini-mapas de
+"elegir punto" en formularios). Eligió el alcance **"ordenar la pestaña Mapa"**
+(rápido, sin riesgo; la fusión con el mapa de navegación queda para después).
+
+Los botones eran un revoltijo (una capa + un estilo + un salto a otra vista +
+una acción). Ahora:
+- **CAPAS** (chips que muestran/ocultan): 🚴 Ciclistas · 🚨 Pacos y peligros ·
+  🥖 Puntos útiles · 📸 Miradores. Los reportes se agrupan por categoría
+  (`CAPA_GRUPOS`) y cada chip filtra los marcadores de verdad. Encendida = cian.
+- **ESTILO** (calles/topo/satélite) → control flotante 🏔️ en la esquina del mapa.
+- **REPORTAR** → sigue como FAB 📍.
+- **🧭 CicloGuía** sale del mapa (se salía a una lista, era lo más confuso) y se
+  reubica en "Mis viajes" (su tema: hospedajes/panoramas). Verifiqué que no
+  quedara huérfana.
+
+Refactor de bajo riesgo: se extrajo el dibujado de marcadores a
+`renderReporteMarkers()` (mismo código de antes); `subscribeToReportes` lo llama
+y los toggles re-dibujan desde `reportesData`. Verificado: sin errores de
+consola; el filtro da los subconjuntos correctos (apagar "Pacos y peligros"
+oculta policía/accidentes, respeta el desmentido Waze); chips, estilo flotante y
+FAB visibles y sin solaparse. **No pude tomar screenshot** (el panel Browser no
+captura esta sesión — problema de infra; MapLibre + WebGL cuelga la captura);
+verifiqué por DOM, estilos computados y la lógica del filtro.
+
+Pendiente relacionado (idea de Inty, para más adelante): **mapa único de verdad**
+= que la pestaña Mapa sea también la de navegación (fusionar con el mapa de nav).
+Es el paso grande/riesgoso; quedó fuera de este alcance a propósito.
+
+Deploy: librepedal.cl/version.txt → 6.88 + push a GitHub.
+
+---
+
 ## v6.87 — 2026-07-16 — Claude (sesión 1, "botones que no funcionan")
 
 Inty: *"tenemos botones que no funcionan… revisa todo"*. Barrido completo y
