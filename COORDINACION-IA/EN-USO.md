@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — FIX: detecta solo el modo vehículo + no ofrece agua manejando, v6.82, deployado y pusheado.
+Última sesión: 1 — avisos de puntos con dirección + sistema de botones cerrado (0 degradados/glows/turquesa), v6.85, deployado y pusheado.
 ```
 
 ---
