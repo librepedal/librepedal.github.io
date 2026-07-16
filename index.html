@@ -1096,7 +1096,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.82'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.83'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3343,8 +3343,9 @@ function ug(p){
   actualizarZona(la,lo); // detecta ciudad/carretera en segundo plano
   bromasDelCamino(sp);
   comentarPendiente(pendienteHistory, sp);
-  avisarPuntosCercanos(la,lo);
-  avisarReportesCercanos(la,lo);
+  _detectarModoEquivocado(sp); // también en GPS libre, no solo navegando a un destino
+  avisarPuntosCercanos(la,lo,sp);
+  avisarReportesCercanos(la,lo,sp);
   _avisoLluviaProactivo(la,lo);
   _verificarFatiga(tiempoActivoMs(), sp);
   // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
@@ -4175,19 +4176,31 @@ const FRASES_AVISO={agua:'Ojo, a unos metros hay un punto de agua marcado por la
 // ~300m de margen grueso en grados (sobra, es solo para descartar barato antes del
 // cálculo real de distancia, que es harto más caro por la trigonometría).
 const AVISO_MARGEN_DEG=0.01;
-function avisarPuntosCercanos(lat,lon){
+/* BUG REAL (Inty, 2026-07-14): "avisó del mirador mucho después de que lo pasé".
+   El radio era un CÍRCULO FIJO de 300m — y un círculo NO tiene dirección: estar 300m DESPUÉS
+   del punto también cumple <=300. Con muestras de GPS separadas (en auto, o con la pantalla
+   apagada) la primera muestra que cae dentro del círculo puede ser cuando YA lo pasaste → te
+   avisa tarde, cuando ya no sirve de nada. Fix: radio escalado a la velocidad (~25s de
+   anticipación) + avisar SOLO si la distancia viene bajando (te estás acercando). */
+let _distPrevPunto={};
+function avisarPuntosCercanos(lat,lon,speed){
   // Los puntos se suscriben normalmente al abrir el mapa; si el ciclista nunca lo
   // abrió (arrancó directo a navegar), los pedimos igual aquí para que el aviso
   // funcione sin depender de haber visitado esa pantalla primero.
   if(!pointsUnsub) subscribeToMapPoints();
   if(!puntosAvisoRelevantes.length || !vozActiva || vozOcupada() || vozCola.length) return;
+  const _vms=Math.max(2,(speed||0)/3.6);
+  const _radio=Math.max(300, _vms*25); // bici ~300m, auto a 82 ~570m: siempre ~25s antes
   for(let i=0;i<puntosAvisoRelevantes.length;i++){
     const d=puntosAvisoRelevantes[i];
     if(Math.abs(d.lat-lat)>AVISO_MARGEN_DEG || Math.abs(d.lon-lon)>AVISO_MARGEN_DEG) continue; // descarte barato
     const tipo=CATEGORIAS_AVISO[d.cat];
     const id=d.id||(d.lat+','+d.lon);
     if(puntosAvisados.has(id)) continue;
-    if(calculateDistance(lat,lon,d.lat,d.lon)<=300){
+    const _dist=calculateDistance(lat,lon,d.lat,d.lon);
+    const _prev=_distPrevPunto[id]; _distPrevPunto[id]=_dist;
+    const _acercandose=(_prev===undefined)||(_dist<_prev); // si ya lo dejaste atrás, avisar no sirve
+    if(_dist<=_radio && _acercandose){
       puntosAvisados.add(id);
       const nombre=(d.title||'').replace(/^[^\wÁÉÍÓÚáéíóúñÑ]+/,'').trim();
       h(FRASES_AVISO[tipo]+(nombre?(' '+nombre+'.'):''));
@@ -4473,7 +4486,8 @@ const _POLICIA_CHISTOSO=[
   "Buenos días, buenas tardes… control a tres kilómetros.",
   "Eeeh… buenos días, buenas tardes… hay control a tres kilómetros, no má."
 ];
-function avisarReportesCercanos(lat,lon){
+let _distPrevRep={};
+function avisarReportesCercanos(lat,lon,speed){
   if(!reportesAvisoRelevantes.length || !vozActiva || vozOcupada() || vozCola.length) return;
   // El control policial le interesa sobre todo al motorizado (va rápido): se avisa
   // con 3 km de anticipación en moto/auto, más cerca en bici/caminata.
@@ -4486,8 +4500,14 @@ function avisarReportesCercanos(lat,lon){
     const id=r.id||(r.lat+','+r.lon+','+r.cat);
     if(reportesAvisados.has(id)) continue;
     const dist=calculateDistance(lat,lon,r.lat,r.lon);
-    const umbral=esPolicia?(esMoto?3000:600):400;
-    if(dist<=umbral){
+    // Mismo fix que los puntos: el umbral era un círculo fijo (sin dirección) y avisaba
+    // igual DESPUÉS de pasar el peligro. Ahora escala con la velocidad y solo avisa si te
+    // estás acercando — un peligro que ya dejaste atrás no se avisa, se calla.
+    const _vms=Math.max(2,(speed||0)/3.6);
+    const umbral=esPolicia?(esMoto?3000:600):Math.max(400,_vms*20);
+    const _prev=_distPrevRep[id]; _distPrevRep[id]=dist;
+    const _acercandose=(_prev===undefined)||(dist<_prev);
+    if(dist<=umbral && _acercandose){
       reportesAvisados.add(id);
       if(esPolicia && esMoto && pisteroPersonalidad==='humoristico'){
         h(_POLICIA_CHISTOSO[(_policiaAlterna++)%_POLICIA_CHISTOSO.length]); // frase torpe pre-grabada, alternada
@@ -5263,8 +5283,8 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
   bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
   if(rutaPerfil.length) avisarPendienteAnticipada(lat,lon); else comentarPendiente(navPendienteHistory, speed);
-  avisarPuntosCercanos(lat,lon);
-  avisarReportesCercanos(lat,lon);
+  avisarPuntosCercanos(lat,lon,speed);
+  avisarReportesCercanos(lat,lon,speed);
   _avisoLluviaProactivo(lat,lon);
   _verificarFatiga(tiempoActivoMs(), speed);
   checkNavigationSteps(lat,lon,speed);
