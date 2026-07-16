@@ -81,7 +81,8 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .section-info{background:#0f1728!important;border:0.5px solid rgba(255,255,255,0.07)!important;border-radius:14px}
 /* Nocturno Pro: los números se leen por jerarquía, no por glow de neón. */
 .stat-value,.speed-value{text-shadow:none}
-.gtt{background:rgba(255,255,255,0.05);border:1px solid rgba(252,76,2,0.28)}
+/* Chips: el borde naranja los hacía competir con la acción. Hairline neutro. */
+.gtt{background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.09)}
 .gtt.on{box-shadow:0 0 12px rgba(252,76,2,0.45)}
 /* FASE 3: los campos usan hairline neutro; el naranja aparece solo al enfocar (foco = acción). */
 input,select,textarea{background:#070b14!important;border:0.5px solid rgba(255,255,255,0.10)!important;border-radius:11px!important;padding:11px 12px!important}
@@ -286,9 +287,14 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 #lpDuckBadge{display:none;color:var(--g);font-size:0.68rem;font-weight:800;animation:esPulse 1s ease-in-out infinite}
 .lp-player.ducking #lpDuckBadge{display:inline}
 .lp-player-controls{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:8px}
-.lp-player-controls button,.lp-file-btn{background:#0c7a93;border:1px solid rgba(252,76,2,0.5);color:#eafeff;border-radius:50%;width:38px;height:38px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;position:relative;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.4),0 0 10px rgba(252,76,2,0.3)}
+/* Controles de Música: eran los últimos con el turquesa viejo (#0c7a93), borde naranja y glow.
+   Al sistema: superficie sobria, hairline, 44px de área táctil. */
+.lp-player-controls button,.lp-file-btn{background:#131c2f;border:0.5px solid rgba(255,255,255,0.10);color:#dfe7ff;border-radius:50%;width:44px;height:44px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s ease,border-color .18s ease;position:relative;overflow:hidden}
+.lp-player-controls button:hover,.lp-file-btn:hover{background:#1a2438;border-color:rgba(255,255,255,0.18)}
 .lp-player-controls button::before,.lp-file-btn::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.05) 40%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.22) 100%);pointer-events:none}
-.lp-player-controls .lp-play{width:48px;height:48px;font-size:1.25rem;background:rgba(252,76,2,0.18);box-shadow:0 0 14px rgba(252,76,2,0.35)}
+/* Play = la acción principal del reproductor, así que le toca el naranja sólido del sistema (sin glow). */
+.lp-player-controls .lp-play{width:52px;height:52px;font-size:1.25rem;background:#fc4c02;border-color:transparent;color:#fff;box-shadow:none}
+.lp-player-controls .lp-play:hover{background:#ff5f1c}
 .lp-player-controls button:active,.lp-file-btn:active{transform:scale(0.9)}
 .lp-player-note{font-size:0.62rem;color:#7d8ba0;margin-top:8px;line-height:1.4;text-align:center}
 .lp-player-eq{display:none;align-items:flex-end;gap:2px;height:14px}
@@ -296,7 +302,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .lp-player-eq i{width:3px;background:var(--p);border-radius:2px;animation:lpEq .7s ease-in-out infinite alternate}
 .lp-player-eq i:nth-child(2){animation-delay:.2s}.lp-player-eq i:nth-child(3){animation-delay:.4s}
 @keyframes lpEq{0%{height:4px}100%{height:14px}}
-#pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0c7a93;border:2px solid var(--p);box-shadow:0 3px 10px rgba(0,0,0,0.4),0 0 16px rgba(252,76,2,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
+/* Pistero travieso: llevaba el turquesa viejo + borde naranja + glow. En Nocturno Pro el
+   cian ES la identidad de Pistero (lo distingue del naranja de acción), así que le corresponde. */
+#pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
 #pisteroPeek::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.24) 100%);pointer-events:none}
 #pisteroPeek.peek{right:12px}
 .music-btn span{display:none}
@@ -421,11 +429,16 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 @media(hover:hover){.ab:hover,.bg:hover,.bd:hover,.bpdf:hover,.btrip:hover{filter:brightness(1.08);box-shadow:0 6px 18px rgba(0,0,0,.5)}}
 /* Paleta sobria y coherente para los botones de acción (colores apagados, elegantes) */
 /* PRIMARIO único: naranja = acción. Sin degradado. */
-.bg{background:#fc4c02!important;color:#fff!important;border-color:transparent!important;font-weight:600!important}
+/* El primario se usa SIN .ab (class="bg" a secas), así que no heredaba el tamaño del sistema:
+   quedaba en 40px mientras el secundario medía 44. Al revés de lo que corresponde. */
+.bg{background:#fc4c02!important;color:#fff!important;border-color:transparent!important;font-weight:600!important;min-height:44px;padding:12px 14px;border-radius:12px}
 .bg:hover{background:#ff5f1c!important}
-.bd{background:linear-gradient(160deg,#cfa93a,#a8862b)!important;color:#1a1400!important}
-.bpdf{background:linear-gradient(160deg,#c24a3e,#9c3a30)!important;color:#fff!important}
-.btrip{background:linear-gradient(160deg,#6b5a97,#4f4276)!important;color:#f2eeff!important}
+/* Restos del tema viejo: estos !important resucitaban los degradados dorado/rojo/morado y
+   pisaban el sistema Nocturno Pro (por eso .btrip seguía saliendo morado). Ahora son
+   variantes sobrias del MISMO sistema: superficie + color solo en el texto. */
+.bd{background:#1c2740!important;color:#ffd166!important;border-color:rgba(255,209,102,0.3)!important}
+.bpdf{background:#2a1418!important;color:#ff8a8a!important;border-color:rgba(255,90,90,0.3)!important}
+.btrip{background:#131c2f!important;color:#dfe7ff!important;border-color:rgba(255,255,255,0.10)!important}
 .bg,.bd,.bpdf,.btrip{border:1px solid rgba(255,255,255,0.13)!important;border-radius:12px!important;box-shadow:0 3px 12px rgba(0,0,0,0.42),inset 0 1px 0 rgba(255,255,255,0.13)!important;letter-spacing:.3px}
 /* Nav inferior sobria con indicador elegante del activo */
 .nb{position:relative;transition:color .2s,transform .12s}
@@ -791,7 +804,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">🛣️ Tus rutas grabadas</h4>
 <div id="trips-rutas-list" class="js-rutas-list"></div>
 <input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
-<button class="ab" style="margin-top:6px;background:linear-gradient(135deg,#10b981,#059669);color:#042417;font-weight:800" onclick="document.getElementById('gpxFileInput').click()">📥 Importar ruta (GPX de Strava, Wikiloc o Komoot)</button>
+<button class="ab" style="margin-top:6px" onclick="document.getElementById('gpxFileInput').click()">📥Importar ruta (GPX de Strava, Wikiloc o Komoot)</button>
 <div class="quick-links" style="margin-top:6px">
   <button class="ab sec" style="margin:0" onclick="showAllRoutesOnMap()">Ver todas en el mapa</button>
   <button class="ab sec" style="margin:0" onclick="combineAllRoutes()">Combinar todas en una</button>
@@ -881,7 +894,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-chat" class="view">
 <div class="section-info"><h4>Social</h4><p>Tus amigos, solicitudes y el chat global de la comunidad.</p></div>
-<button class="ab" style="margin-bottom:10px;background:linear-gradient(135deg,var(--p),#ff8a4c);font-weight:800" onclick="invitarAmigos()">📤 Invita a un amigo a pedalear</button>
+<button class="ab bg" style="margin-bottom:10px" onclick="invitarAmigos()">📤 Invita a un amigo a pedalear</button>
 <div class="quick-links">
   <button class="btrip" style="margin:0" onclick="showFriendsList()">👥 Amigos y mensajes</button>
   <button class="bd" style="margin:0" onclick="showFriendRequests()">📨 Solicitudes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
@@ -1096,7 +1109,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.83'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.85'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
