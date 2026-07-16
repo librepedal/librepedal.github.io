@@ -106,6 +106,13 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn() && strOk('text', 600) && strOk('comuna', 80) && strOk('cat', 30);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
+      // Confirmación comunitaria estilo Waze (v6.86): CUALQUIER usuario logueado puede
+      // decir "sigue ahí" / "ya no está", pero SOLO tocando los campos de confirmación —
+      // no puede alterar el texto, la categoría ni la ubicación del reporte de otro.
+      // Sin esto, los botones 👍/🚫 fallan en silencio para todos menos el autor.
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['confirmadoPor', 'desmentidoPor', 'lastConfirm']);
     }
 
     // Alertas de ruta

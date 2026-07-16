@@ -258,7 +258,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .novedad-del{background:none;border:none;cursor:pointer;font-size:0.85rem;opacity:0.7;padding:0 4px}
 .global-comment .time{color:#888;font-size:0.7rem}
 .global-comment .text{margin:4px 0;line-height:1.3;font-size:0.85rem}
-.cc{display:flex;flex-direction:column;height:calc(100vh - 210px)}
+/* Antes: height:calc(100vh - 210px) — un número mágico que NO reservaba la barra
+   inferior (60px) ni contaba el alto real del encabezado, así que en móvil la fila
+   de entrada (micrófono/enviar) se iba DEBAJO de la pantalla. Ahora flex-fill dentro
+   de la vista (que es flex column), y el área de mensajes scrollea sola. */
+.cc{display:flex;flex-direction:column;flex:1;min-height:0}
+/* La vista de chat se acota a la pantalla (menos barra superior ~51 + barra inferior 60
+   + respiro). Así .cc (flex:1) llena el resto y la fila de entrada queda SIEMPRE visible
+   sobre la barra, sin scroll de página. dvh corrige la barra dinámica del navegador móvil. */
+#v-pistero.view.on,#v-chat.view.on{display:flex;flex-direction:column;height:calc(100vh - 130px);height:calc(100dvh - 130px)}
 .cm{flex:1;overflow-y:auto;padding:8px;background:#0b1120;border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:6px}
 .ms{margin-bottom:8px;max-width:85%}.ms.sf{margin-left:auto;text-align:right}
 .mb{display:inline-block;padding:6px 10px;border-radius:12px;line-height:1.2;font-size:0.85rem}
@@ -924,7 +932,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </section>
 
 <style>
-#pisteroMsgs{display:flex;flex-direction:column;gap:2px;overflow-y:auto;height:calc(100vh - 250px);min-height:320px;padding:6px 2px}
+#pisteroMsgs{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;min-height:0;padding:6px 2px}
 .pmsg{max-width:86%;padding:9px 13px;border-radius:15px;margin:5px 0;font-size:0.87rem;line-height:1.45;word-wrap:break-word;white-space:pre-wrap}
 .pmsg-yo{background:var(--p);color:#2a0e02;align-self:flex-end;border-bottom-right-radius:5px;font-weight:600}
 .pmsg-pistero{background:rgba(18,179,166,0.08);border:1px solid rgba(18,179,166,0.4);color:#e9edf3;align-self:flex-start;border-bottom-left-radius:5px}
@@ -1117,7 +1125,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.86'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.87'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
