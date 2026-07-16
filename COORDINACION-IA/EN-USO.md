@@ -33,7 +33,7 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — avisos de puntos con dirección + sistema de botones cerrado (0 degradados/glows/turquesa), v6.85, deployado y pusheado.
+Última sesión: 1 — reportes estilo Waze (confirmación comunitaria "sigue ahí"/"ya no está", el pin dura hasta que 2 lo desmientan, no por reloj) + FAB de reportar sobre el mapa + Fase 3 Nocturno Pro (section-info sin naranja, .cd/.cm unificadas, burbujas de Pistero en cian). v6.86 deployado (librepedal.cl → 6.86) y pusheado.
 ```
 
 ---

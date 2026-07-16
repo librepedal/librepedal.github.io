@@ -4,6 +4,57 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.86 — 2026-07-16 — Claude (sesión 1, reportes estilo Waze + páginas Nocturno Pro)
+
+Inty: *"reportar y no se quita hasta que alguien diga que no hay nadie, igual
+que Waze"* + *"termina de embellecer la app con las nuevas páginas como
+quedamos"*.
+
+**Reportes que no caducan por reloj (modelo Waze):**
+- Confirmación comunitaria en cada reporte: 👍 "Sigue ahí" / 🚫 "Ya no está",
+  tanto en el popup del mapa como en la lista del Mapa Comunitario. Con
+  **2 desmentidos** (`REPORTE_DESMENTIDO_UMBRAL`) el pin desaparece para
+  todos. `arrayUnion` evita el doble voto del mismo usuario (mismo patrón
+  que las rodadas). +2 Darma solo la 1ª vez (guardado contra farmeo).
+- El pin ya **no se quita por tiempo** — solo cuando la comunidad lo baja.
+  La vigencia por categoría queda SOLO para el aviso proactivo de voz
+  (Pistero no grita un control de hace 3 h), y cada "sigue ahí" reinicia ese
+  reloj (`_reporteEdadMs` usa `lastConfirm` sobre `ts`).
+- `reporteVisible()` centraliza la regla; aplicada en el mapa, la lista, el
+  aviso proactivo y la consulta "¿hay peligros en mi ruta?".
+- **Botón flotante 📍 REPORTAR** sobre el mapa (estilo Waze), a mano. Se
+  quitó el "Reportar" redundante de la fila (Inty: "sin redundancia de
+  botones"); el FAB queda como único primario naranja y la fila pasa a 3
+  columnas neutras.
+
+**Embellecer páginas (Fase 3 Nocturno Pro):**
+- `.section-info`: el `h4` deja de gritar naranja (era contexto, no acción)
+  → texto claro `#eaf1fb`; eliminada la regla vieja naranja duplicada.
+- `.cd`: tarjeta translúcida gris (`#fff`/0.08 + borde `#222`) → `#0f1728` +
+  hairline, igual que el resto del sistema (Diario, Ajustes, Respaldo…).
+- `.cm` y la tarjeta negra suelta de Recomendaciones → sistema de tarjetas.
+- Burbujas de Pistero en su chat: borde naranja → **cian** (su color de
+  identidad Nocturno Pro; tú=naranja acción, Pistero=cian).
+
+**Verificado** (el sandbox NO deja tomar screenshots esta sesión — problema
+de infraestructura del panel Browser, no del código): sin errores de consola;
+estilos computados confirmados en vivo (`.section-info` `#0f1728` + h4 claro,
+`.cd` `#0f1728`, FAB naranja 58×58, fila del mapa 0 botones naranjas);
+`reporteVisible` da true/true/false para 0/1/2 desmentidos; la UI de
+confirmación renderiza (botones + conteos "✔ 3 confirman · ✖ 1 dice que no")
+y un reporte con 2 desmentidos desaparece de la lista. **Falta que Inty lo
+mire a ojo en la ruta.**
+
+⚠️ **Aviso de seguridad para el próximo deploy:** el snippet de carpeta
+limpia de `LEEME.md` NO excluye `librepedal-release.keystore` (la clave de
+firma de Play Store) — apareció en el `ls` de la carpeta limpia y lo saqué a
+mano antes de deployar. **Agregar `*.keystore`/`*.jks` a la lista de
+exclusión del snippet** (no lo toqué ahora por la regla de no editar LEEME a
+mitad de sesión). Deploy hecho a Cloudflare Pages (librepedal.cl/version.txt
+→ 6.86 en vivo) + push a GitHub.
+
+---
+
 ## v6.76 — 2026-07-15 — Claude (sesión 2, voz de Pistero: variedad real por arquetipo)
 
 Inty: "retómalo y lo subes igual" — pidió terminar lo que sesión 1 dejó a
