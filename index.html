@@ -312,6 +312,18 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 @keyframes lpEq{0%{height:4px}100%{height:14px}}
 /* Pistero travieso: llevaba el turquesa viejo + borde naranja + glow. En Nocturno Pro el
    cian ES la identidad de Pistero (lo distingue del naranja de acción), así que le corresponde. */
+/* Capas del mapa (pedido de Inty: "un solo mapa para todo", botones con lógica clara).
+   Chips que MUESTRAN/OCULTAN lo que ves: ciclistas, pacos/peligros, puntos, miradores.
+   Encendida = cian (identidad de la comunidad); apagada = gris neutro. */
+.mapcapas{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.mapcapas::-webkit-scrollbar{display:none}
+.capachip{flex:0 0 auto;background:#131c2f;border:0.5px solid rgba(255,255,255,0.10);color:#8b97ad;border-radius:999px;padding:8px 13px;font-size:0.78rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.capachip.on{background:rgba(18,179,166,0.15);border-color:#12b3a6;color:#5fe0d3}
+.capachip:active{transform:scale(.96)}
+/* Estilo del mapa (calles/topo/satélite): control flotante en el mapa, no un botón suelto
+   que se confunde con las capas. Es un ajuste de VISTA, no una capa de datos. */
+.map-estilo-btn{position:absolute;right:14px;top:12px;z-index:500;background:rgba(15,20,35,0.92);color:#dfe7ff;border:0.5px solid rgba(255,255,255,0.12);width:44px;height:44px;border-radius:12px;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.map-estilo-btn:active{transform:scale(0.94)}
 /* Botón flotante de reportar, estilo Waze: a mano sobre el mapa (antes estaba perdido en una
    fila de botones). Pedido de Inty: "botón accesible para reportar policía en el mismo mapa". */
 #fabReportar{position:absolute;right:14px;bottom:78px;width:58px;height:58px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
@@ -817,6 +829,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="section-info"><h4>🗺️ Mis viajes</h4><p>Tus recorridos grabados, viajes planificados y bitácora, todo en un solo lugar.</p></div>
 <button class="ab" onclick="showNewTripForm()">➕ Planificar viaje multi-destino</button>
 <button class="btrip" style="margin-top:6px" onclick="openDiario()">📓 Ciclo Bitácora</button>
+<button class="btrip" style="margin-top:6px" onclick="cv('gui')">🧭 CicloGuía · hospedajes y panoramas</button>
 <h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">🛣️ Tus rutas grabadas</h4>
 <div id="trips-rutas-list" class="js-rutas-list"></div>
 <input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
@@ -858,14 +871,16 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </section>
 
 <section id="v-map" class="view">
-<div class="section-info"><h4>Mapa Global</h4><p>Ciclistas, puntos de agua, talleres y miradores.</p></div>
-<div class="quick-links" style="grid-template-columns:1fr 1fr 1fr">
-  <button class="ab sec" style="margin:0" onclick="toggleRadarOnMap()">🚴 Ciclistas</button>
-  <button class="ab sec" style="margin:0" onclick="cv('gui')">🧭 CicloGuía</button>
-  <button class="ab sec" style="margin:0" id="btnCapaMapa" onclick="toggleCapaMapa()">🏔️ Topográfico</button>
+<div class="section-info"><h4>Mapa</h4><p>Tu mundo ciclista en un solo mapa: la comunidad y los reportes de la ruta. Toca una capa para mostrarla u ocultarla.</p></div>
+<div class="mapcapas">
+  <button class="capachip" id="capaCiclistas" onclick="toggleCapaCiclistas(this)">🚴 Ciclistas</button>
+  <button class="capachip on" id="capaPeligros" onclick="toggleCapaReportes('peligros',this)">🚨 Pacos y peligros</button>
+  <button class="capachip on" id="capaPuntos" onclick="toggleCapaReportes('puntos',this)">🥖 Puntos útiles</button>
+  <button class="capachip on" id="capaMiradores" onclick="toggleCapaReportes('miradores',this)">📸 Miradores</button>
 </div>
 <div style="position:relative">
   <div id="map"></div>
+  <button id="btnCapaMapa" class="map-estilo-btn" onclick="toggleCapaMapa()" title="Cambiar el estilo del mapa (calles / topográfico / satélite)">🏔️</button>
   <button id="fabReportar" onclick="reportarEnRuta()" title="Reportar algo en el mapa">📍<span>REPORTAR</span></button>
   <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación">🎯</button>
 </div>
@@ -1125,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.87'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.88'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4077,7 +4092,8 @@ async function toggleAhorroGPS(){
   h(gpsAhorro?'Ahorro de GPS activado. Va a gastar menos batería, con un poco menos de precisión.':'Ahorro de GPS desactivado. Vuelvo a la máxima precisión.');
 }
 function _estiloDeCapa(t){ return t==='topo'?LP_ESTILO_TOPO:t==='sat'?LP_ESTILO_SAT:LP_ESTILO_CALLES; }
-function _actualizarBtnCapaMapa(){ const b=document.getElementById('btnCapaMapa'); if(b) b.innerHTML=(capaMapaTipo==='calles')?'🏔️ Topográfico':(capaMapaTipo==='topo')?'🛰️ Satélite':'🗺️ Ver calles'; }
+/* Control flotante: muestra el ícono del estilo AL QUE saltarás al tocarlo (calles→topo→sat→calles). */
+function _actualizarBtnCapaMapa(){ const b=document.getElementById('btnCapaMapa'); if(b){ b.innerHTML=(capaMapaTipo==='calles')?'🏔️':(capaMapaTipo==='topo')?'🛰️':'🗺️'; b.title=(capaMapaTipo==='calles')?'Mapa en calles · toca para topográfico':(capaMapaTipo==='topo')?'Mapa topográfico · toca para satélite':'Mapa satélite · toca para calles'; } }
 function toggleCapaMapa(){
   if(!mp) return;
   capaMapaTipo=(capaMapaTipo==='calles')?'topo':(capaMapaTipo==='topo')?'sat':'calles';
@@ -4666,14 +4682,45 @@ async function confirmarReporte(id, sigue){
   }catch(e){ lpAviso('No se pudo registrar tu confirmación, intenta de nuevo en un rato.'); }
   try{ if(mp) mp.closePopup(); }catch(e){}
 }
+// ===== Capas del mapa (pedido de Inty: "un solo mapa para todo"). Los reportes se
+// agrupan en 3 capas que se muestran/ocultan con los chips; ciclistas es aparte (radar). =====
+const CAPA_GRUPOS={
+  peligros:['policia','critico','accidente','objeto','animal','taco'],
+  puntos:['util','alojamiento','superficie'],
+  miradores:['mirador']
+};
+let mapaCapas={peligros:true, puntos:true, miradores:true};
+function _grupoDeCat(cat){ for(const g in CAPA_GRUPOS){ if(CAPA_GRUPOS[g].indexOf(cat)>=0) return g; } return 'puntos'; }
+// Dibuja los marcadores de reportes desde reportesData, respetando reporteVisible (Waze)
+// y las capas encendidas. Reutilizable: lo llama el snapshot y también cada toggle de capa.
+function renderReporteMarkers(){
+  if(!mp) return;
+  reporteMarkers.forEach(function(m){ mp.removeLayer(m); }); reporteMarkers=[];
+  reportesData.filter(reporteVisible).forEach(function(r){
+    if(!(r.lat&&r.lon)) return;
+    if(!mapaCapas[_grupoDeCat(r.cat)]) return; // capa apagada
+    const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util;
+    const badge=lpBadgeHTML(c.e, r.cat==='critico'?c.c:null);
+    const extra=(r.superficie||r.dificultad)?('<br>'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')):'';
+    const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</small>'+_confirmCountsHTML(r)+'<br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'+_confirmBtnsHTML(r.id));
+    reporteMarkers.push(mk);
+  });
+}
+function toggleCapaReportes(grupo, el){
+  mapaCapas[grupo]=!mapaCapas[grupo];
+  if(el) el.classList.toggle('on', mapaCapas[grupo]);
+  renderReporteMarkers();
+}
+function toggleCapaCiclistas(el){
+  toggleRadarOnMap(); // ya sube/baja el radar y sus marcadores
+  if(el) el.classList.toggle('on', radarActive);
+}
 function subscribeToReportes(){
   db.collection('reportes').orderBy('ts','desc').limit(200).onSnapshot(function(snap){
     const docs=[]; snap.forEach(function(d){ const x=d.data(); x.id=d.id; docs.push(x); });
     reportesData=docs; _calcularReportesAvisoRelevantes();
-    const visibles=docs.filter(reporteVisible); // los que la comunidad no ha desmentido
-    reporteMarkers.forEach(function(m){ if(mp) mp.removeLayer(m); }); reporteMarkers=[];
-    if(mp){ visibles.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const badge=lpBadgeHTML(c.e, r.cat==='critico'?c.c:null); const extra=(r.superficie||r.dificultad)?('<br>'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')):''; const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</small>'+_confirmCountsHTML(r)+'<br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'+_confirmBtnsHTML(r.id)); reporteMarkers.push(mk); } }); }
-    renderReportesComunidad(visibles);
+    renderReporteMarkers();
+    renderReportesComunidad(docs.filter(reporteVisible));
   });
 }
 function renderReportesComunidad(docs){
