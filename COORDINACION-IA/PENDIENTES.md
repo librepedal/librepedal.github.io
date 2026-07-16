@@ -166,13 +166,11 @@ que obligue a reenviar.
   SDK: `users con email público = 0`, `usersPrivate con email = 21`. El código
   (`reg()` escribe en `/usersPrivate`, `_mapaEmailsPrivados()` lee de ahí) ya
   está en vivo desde v6.86.
-  **FALTA (paso de Inty, no lo hace ninguna IA): publicar `firestore.rules`**
-  en la Console — agrega el bloque `usersPrivate` (líneas 78-81). Hasta que lo
-  publique: (a) los registros NUEVOS no pueden guardar su correo (reg() escribe
-  en usersPrivate y la regla aún no lo permite), y (b) el export CSV del panel
-  admin no verá correos (la lectura de usersPrivate requiere la regla). La fuga
-  en sí YA está cerrada (los correos no están en la colección pública); esto
-  que falta es para restaurar la función y proteger a futuro.
+  **Reglas PUBLICADAS por Inty (2026-07-16 12:37).** Verificado contra la API
+  de Firebase Rules en vivo: el bloque `usersPrivate` está activo (read
+  dueño+admin, write dueño). Con esto el ciclo queda 100% cerrado: fuga sellada,
+  migración hecha, registros nuevos guardan correo y el export admin lo lee.
+  **NADA pendiente en este ítem.**
 - [ ] **⚠️ Posible falla de seguridad en detección de caídas — necesita prueba
   con teléfono real, nadie la puede hacer sin dispositivo.** Encontrado en el
   barrido #8 (v6.37, ver `BITACORA.md`): el chequeo de "¿sigues quieto tras el
