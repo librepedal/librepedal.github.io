@@ -193,7 +193,7 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .chart-bar-item{flex:1;background:var(--p);border-radius:4px 4px 0 0;min-height:5px;transition:height 0.5s}
 #map,#map-all-routes,#map-hostel-select{height:280px;width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222}
 #map-hostel-select.show{display:block}
-.cd{background:var(--gl);padding:14px;border-radius:14px;margin-bottom:10px;border:1px solid #222}
+.cd{background:#0f1728;padding:14px;border-radius:14px;margin-bottom:10px;border:0.5px solid rgba(255,255,255,0.07)}
 #sugerencias-dest{position:absolute;top:100%;left:0;right:0;z-index:1500;background:#0d1426;border:1px solid var(--p);border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;display:none;box-shadow:0 8px 18px rgba(0,0,0,0.5)}
 #sugerencias-dest.show{display:block}
 #sugerencias-dest .sug{padding:9px 11px;border-bottom:1px solid #1a2740;cursor:pointer;font-size:0.82rem;color:#dfe7ff;line-height:1.3}
@@ -259,7 +259,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .global-comment .time{color:#888;font-size:0.7rem}
 .global-comment .text{margin:4px 0;line-height:1.3;font-size:0.85rem}
 .cc{display:flex;flex-direction:column;height:calc(100vh - 210px)}
-.cm{flex:1;overflow-y:auto;padding:6px;background:rgba(0,0,0,0.3);border-radius:8px;margin-bottom:6px}
+.cm{flex:1;overflow-y:auto;padding:8px;background:#0b1120;border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:6px}
 .ms{margin-bottom:8px;max-width:85%}.ms.sf{margin-left:auto;text-align:right}
 .mb{display:inline-block;padding:6px 10px;border-radius:12px;line-height:1.2;font-size:0.85rem}
 .ms.sf .mb{background:var(--p);color:#000}
@@ -304,14 +304,22 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 @keyframes lpEq{0%{height:4px}100%{height:14px}}
 /* Pistero travieso: llevaba el turquesa viejo + borde naranja + glow. En Nocturno Pro el
    cian ES la identidad de Pistero (lo distingue del naranja de acción), así que le corresponde. */
+/* Botón flotante de reportar, estilo Waze: a mano sobre el mapa (antes estaba perdido en una
+   fila de botones). Pedido de Inty: "botón accesible para reportar policía en el mismo mapa". */
+#fabReportar{position:absolute;right:14px;bottom:78px;width:58px;height:58px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+#fabReportar:active{transform:scale(0.94)}
+#fabReportar span{position:absolute;bottom:-17px;font-size:0.55rem;font-weight:700;color:#ffb089;letter-spacing:0.5px}
 #pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
 #pisteroPeek::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.24) 100%);pointer-events:none}
 #pisteroPeek.peek{right:12px}
 .music-btn span{display:none}
 .music-spotify{background:#1DB954}.music-youtube{background:#FF0000}.music-apple{background:#FA243C}
 .music-deezer{background:#A2C2E0;color:#000}.music-soundcloud{background:#FF5500}.music-amazon{background:#25D1DA;color:#000}
-.section-info{background:rgba(252,76,2,0.08);border:1px solid var(--p);padding:10px;border-radius:10px;margin-bottom:12px;font-size:0.8rem;line-height:1.4}
-.section-info h4{margin:0 0 6px 0;color:var(--p);font-size:0.9rem}
+/* FASE 3: bg/borde/radio los fija la regla Nocturno Pro de arriba (con !important). Aquí solo
+   queda el espaciado y el texto. El h4 deja de ser naranja: el encabezado es CONTEXTO, no acción. */
+.section-info{padding:12px 14px;margin-bottom:12px;font-size:0.8rem;line-height:1.45}
+.section-info h4{margin:0 0 5px 0;color:#eaf1fb;font-size:0.92rem;font-weight:700}
+.section-info p{color:#9fb3c8;margin:0}
 /* Área táctil: era 31px de alto a lo ancho de la pantalla — difícil de acertar pedaleando.
    Estándar táctil = 44px (mismo que .ab del sistema). */
 .secret-btn{background:var(--g);color:#000;border:none;min-height:44px;padding:12px;border-radius:12px;cursor:pointer;font-weight:700;width:100%;margin-top:8px;font-size:0.85rem}
@@ -843,14 +851,14 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-map" class="view">
 <div class="section-info"><h4>Mapa Global</h4><p>Ciclistas, puntos de agua, talleres y miradores.</p></div>
-<div class="quick-links">
-  <button class="bg" style="margin:0" onclick="toggleRadarOnMap()">🚴 Ciclistas</button>
-  <button class="bd" style="margin:0" onclick="reportarEnRuta()">📍 Reportar</button>
-  <button class="btrip" style="margin:0" onclick="cv('gui')">🧭 CicloGuía</button>
+<div class="quick-links" style="grid-template-columns:1fr 1fr 1fr">
+  <button class="ab sec" style="margin:0" onclick="toggleRadarOnMap()">🚴 Ciclistas</button>
+  <button class="ab sec" style="margin:0" onclick="cv('gui')">🧭 CicloGuía</button>
   <button class="ab sec" style="margin:0" id="btnCapaMapa" onclick="toggleCapaMapa()">🏔️ Topográfico</button>
 </div>
 <div style="position:relative">
   <div id="map"></div>
+  <button id="fabReportar" onclick="reportarEnRuta()" title="Reportar algo en el mapa">📍<span>REPORTAR</span></button>
   <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación">🎯</button>
 </div>
 <div id="reportes-comunidad"></div>
@@ -919,7 +927,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 #pisteroMsgs{display:flex;flex-direction:column;gap:2px;overflow-y:auto;height:calc(100vh - 250px);min-height:320px;padding:6px 2px}
 .pmsg{max-width:86%;padding:9px 13px;border-radius:15px;margin:5px 0;font-size:0.87rem;line-height:1.45;word-wrap:break-word;white-space:pre-wrap}
 .pmsg-yo{background:var(--p);color:#2a0e02;align-self:flex-end;border-bottom-right-radius:5px;font-weight:600}
-.pmsg-pistero{background:rgba(255,255,255,0.07);border:1px solid rgba(252,76,2,0.28);color:#e9edf3;align-self:flex-start;border-bottom-left-radius:5px}
+.pmsg-pistero{background:rgba(18,179,166,0.08);border:1px solid rgba(18,179,166,0.4);color:#e9edf3;align-self:flex-start;border-bottom-left-radius:5px}
 .pmsg-pistero.pensando{opacity:0.65;font-style:italic}
 #pisteroMic.grabando{background:#dc2626;color:#fff}
 #pisteroChips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px;margin-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -951,7 +959,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-rec" class="view">
 <div class="section-info"><h4>Recomendaciones</h4><p>Lugares útiles con "Me gusta".</p></div>
-<div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-bottom:15px">
+<div class="cd" style="margin-bottom:15px">
 <input type="text" id="rec-title" placeholder="Título" maxlength="80">
 <select id="rec-cat"><option value="agua">Agua</option><option value="comida">Comida</option><option value="vista">Vista</option><option value="seguridad">Seguridad</option><option value="otro">Otro</option></select>
 <textarea id="rec-desc" rows="2" placeholder="Descripción..." maxlength="500"></textarea>
@@ -1109,7 +1117,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.85'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.86'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4390,6 +4398,18 @@ const REPORTE_CATS={
 // ayer ya no sirve de nada (y podría hasta desviar mal), pero un objeto tirado
 // en la vía puede seguir ahí días después. Cada una expira a su propio ritmo.
 const REPORTE_VIGENCIA_MS={policia:3*3600000, taco:2*3600000, accidente:6*3600000, animal:24*3600000, objeto:48*3600000, critico:72*3600000};
+// Modelo Waze (pedido de Inty): un reporte NO se quita del mapa por reloj — se queda
+// hasta que la comunidad diga "ya no está". Con 2 desmentidos ("no hay nadie") desaparece
+// para todos. La vigencia de arriba solo se usa para los AVISOS proactivos de voz (Pistero
+// no anda gritando un control policial de hace 3 horas), pero el pin sigue en el mapa.
+const REPORTE_DESMENTIDO_UMBRAL=2;
+function reporteVisible(r){ return ((r&&r.desmentidoPor||[]).length) < REPORTE_DESMENTIDO_UMBRAL; }
+// Edad para el aviso proactivo: cada "sigue ahí" reinicia el reloj (igual que Waze),
+// así un peligro que la gente sigue confirmando no se apaga solo.
+function _reporteEdadMs(r){
+  const base=(r.lastConfirm&&r.lastConfirm.seconds)?r.lastConfirm.seconds:((r.ts&&r.ts.seconds)?r.ts.seconds:null);
+  return base==null?null:(Date.now()-base*1000);
+}
 // Reportes de PELIGRO por voz o texto: sin soltar el manubrio ni el volante, y
 // sin tener que abrir ningún formulario. Cada categoría tiene su propio patrón
 // de habla natural chilena + el texto que queda en el mapa + la confirmación
@@ -4464,7 +4484,8 @@ async function consultarPeligrosEnRuta(categoria, destinoTexto){
   const vig=REPORTE_VIGENCIA_MS[categoria]||24*3600000;
   const encontrados=reportesData.filter(function(r){
     if(r.cat!==categoria || r.lat==null || r.lon==null) return false;
-    const ms=(r.ts&&r.ts.seconds)?(ahora-r.ts.seconds*1000):null;
+    if(!reporteVisible(r)) return false; // la comunidad ya lo desmintió
+    const ms=_reporteEdadMs(r);
     if(ms!=null && ms>vig) return false;
     // Consulta puntual bajo pedido (no un chequeo por cada fix del GPS), así que
     // no hay apuro por saltar puntos: revisa el trazado completo para no dejar
@@ -4488,7 +4509,8 @@ function _calcularReportesAvisoRelevantes(){
   reportesAvisoRelevantes=reportesData.filter(function(r){
     const vig=REPORTE_VIGENCIA_MS[r.cat]; if(!vig) return false;
     if(!r.lat||!r.lon) return false;
-    const ms=(r.ts&&r.ts.seconds)?(ahora-r.ts.seconds*1000):null;
+    if(!reporteVisible(r)) return false; // la comunidad ya dijo que no está: no avisar
+    const ms=_reporteEdadMs(r); // cuenta desde el último "sigue ahí" si lo hubo
     return ms==null || ms<=vig; // sin timestamp aún (recién publicado, servidor no confirmó) cuenta como vigente
   });
 }
@@ -4598,13 +4620,52 @@ async function enviarReporte(){
   finally{ _enviandoReporte=false; }
 }
 function tiempoTranscurrido(ts){ if(!ts||!ts.seconds) return 'recién'; const s=Math.floor(Date.now()/1000)-ts.seconds; if(s<60) return 'recién'; const m=Math.floor(s/60); if(m<60) return 'hace '+m+' min'; const h2=Math.floor(m/60); if(h2<24) return 'hace '+h2+' h'; const d=Math.floor(h2/24); if(d<7) return 'hace '+d+' día'+(d>1?'s':''); const w=Math.floor(d/7); return 'hace '+w+' sem'; }
+// Botones "¿sigue ahí?" estilo Waze — van en el popup del mapa y en la lista.
+function _confirmBtnsHTML(id){
+  if(!id) return '';
+  return '<div style="margin-top:7px;display:flex;gap:6px">'
+    +'<button onclick="confirmarReporte(\''+id+'\',true)" style="flex:1;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer">👍 Sigue ahí</button>'
+    +'<button onclick="confirmarReporte(\''+id+'\',false)" style="flex:1;background:rgba(255,90,90,0.14);border:1px solid #ff5a5a;color:#ff8a8a;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer">🚫 Ya no está</button>'
+    +'</div>';
+}
+function _confirmCountsHTML(r){
+  const cf=(r.confirmadoPor||[]).length, ds=(r.desmentidoPor||[]).length;
+  if(!cf&&!ds) return '';
+  let s='<div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px">';
+  if(cf) s+='✔ '+cf+' confirma'+(cf>1?'n':'')+' que sigue';
+  if(cf&&ds) s+=' · ';
+  if(ds) s+='✖ '+ds+' dice'+(ds>1?'n':'')+' que no';
+  return s+'</div>';
+}
+// Confirmación comunitaria: "sigue ahí" reinicia el reloj del aviso; "ya no está" suma
+// un desmentido. Con REPORTE_DESMENTIDO_UMBRAL desmentidos el pin desaparece para todos.
+// arrayUnion evita que el mismo usuario cuente dos veces (mismo patrón que las rodadas).
+async function confirmarReporte(id, sigue){
+  if(!id || typeof db==='undefined' || !db) return;
+  const uid=window.lpUID||cu||'anon';
+  const doc=reportesData.find(function(x){ return x.id===id; });
+  const yaVoto=doc && (((doc.confirmadoPor||[]).indexOf(uid)>=0) || ((doc.desmentidoPor||[]).indexOf(uid)>=0));
+  const ref=db.collection('reportes').doc(id);
+  try{
+    if(sigue){
+      await ref.update({ confirmadoPor: firebase.firestore.FieldValue.arrayUnion(uid), lastConfirm: firebase.firestore.FieldValue.serverTimestamp() });
+      h('¡Gracias! Confirmado que sigue ahí. Así el mapa se mantiene al día.');
+    } else {
+      await ref.update({ desmentidoPor: firebase.firestore.FieldValue.arrayUnion(uid) });
+      h('Anotado: ya no está. Gracias por avisar, colega — el resto te lo agradece.');
+    }
+    if(!yaVoto){ us.d+=2; au(); if(typeof sincronizarStats==='function') sincronizarStats(); } // +2 Darma solo la 1ª vez, sin farmear
+  }catch(e){ lpAviso('No se pudo registrar tu confirmación, intenta de nuevo en un rato.'); }
+  try{ if(mp) mp.closePopup(); }catch(e){}
+}
 function subscribeToReportes(){
   db.collection('reportes').orderBy('ts','desc').limit(200).onSnapshot(function(snap){
     const docs=[]; snap.forEach(function(d){ const x=d.data(); x.id=d.id; docs.push(x); });
     reportesData=docs; _calcularReportesAvisoRelevantes();
+    const visibles=docs.filter(reporteVisible); // los que la comunidad no ha desmentido
     reporteMarkers.forEach(function(m){ if(mp) mp.removeLayer(m); }); reporteMarkers=[];
-    if(mp){ docs.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const badge=lpBadgeHTML(c.e, r.cat==='critico'?c.c:null); const extra=(r.superficie||r.dificultad)?('<br>'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')):''; const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'); reporteMarkers.push(mk); } }); }
-    renderReportesComunidad(docs);
+    if(mp){ visibles.forEach(function(r){ if(r.lat&&r.lon){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const badge=lpBadgeHTML(c.e, r.cat==='critico'?c.c:null); const extra=(r.superficie||r.dificultad)?('<br>'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')):''; const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</small>'+_confirmCountsHTML(r)+'<br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'+_confirmBtnsHTML(r.id)); reporteMarkers.push(mk); } }); }
+    renderReportesComunidad(visibles);
   });
 }
 function renderReportesComunidad(docs){
@@ -4612,7 +4673,7 @@ function renderReportesComunidad(docs){
   if(!docs.length){ cont.innerHTML='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">📍 Mapa Comunitario</h4><p style="color:#888;font-size:0.8rem;margin:0">Aún no hay reportes. ¡Sé el primero en aportar un dato de tu zona con "Reportar en Ruta"!</p></div>'; return; }
   const byZona={}; docs.forEach(function(r){ const z=r.comuna||'Mi zona'; (byZona[z]=byZona[z]||[]).push(r); });
   let html='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">📍 Mapa Comunitario · datos de la ruta</h4>';
-  Object.keys(byZona).forEach(function(z){ html+='<div style="margin-top:10px"><div style="font-weight:800;color:var(--p);font-size:0.82rem;border-bottom:1px solid #223;padding-bottom:4px;margin-bottom:6px">📌 '+escapeHTML(z)+'</div>'; byZona[z].forEach(function(r){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const extra=(r.superficie||r.dificultad)?('<div style="font-size:0.68rem;color:#a78bfa;margin-top:2px">'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')+'</div>'):''; html+='<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #15202e"><div style="font-size:1.1rem">'+c.e+'</div><div style="flex:1"><div style="font-size:0.8rem;color:#dfe7ff;line-height:1.3">'+escapeHTML(r.text)+'</div>'+extra+'<div style="font-size:0.65rem;color:#7d8ba0;margin-top:2px">'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.ts)+'</div></div></div>'; }); html+='</div>'; });
+  Object.keys(byZona).forEach(function(z){ html+='<div style="margin-top:10px"><div style="font-weight:800;color:var(--p);font-size:0.82rem;border-bottom:1px solid #223;padding-bottom:4px;margin-bottom:6px">📌 '+escapeHTML(z)+'</div>'; byZona[z].forEach(function(r){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const extra=(r.superficie||r.dificultad)?('<div style="font-size:0.68rem;color:#a78bfa;margin-top:2px">'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')+'</div>'):''; html+='<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #15202e"><div style="font-size:1.1rem">'+c.e+'</div><div style="flex:1"><div style="font-size:0.8rem;color:#dfe7ff;line-height:1.3">'+escapeHTML(r.text)+'</div>'+extra+'<div style="font-size:0.65rem;color:#7d8ba0;margin-top:2px">'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</div>'+_confirmCountsHTML(r)+_confirmBtnsHTML(r.id)+'</div></div>'; }); html+='</div>'; });
   html+='</div>'; cont.innerHTML=html;
 }
 
