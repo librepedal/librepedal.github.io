@@ -4,6 +4,40 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.87 — 2026-07-16 — Claude (sesión 1, "botones que no funcionan")
+
+Inty: *"tenemos botones que no funcionan… revisa todo"*. Barrido completo y
+seguro (sin disparar acciones tipo SOS/enviar): auditoría de existencia de
+funciones + prueba de cobertura de clic (`elementFromPoint`) en las 15 vistas
+a 375×812 y 1280×720. Dos bugs reales:
+
+1. **Los botones 👍/🚫 de confirmar reporte no hacían nada** salvo para el
+   autor. `firestore.rules` solo permitía `update` al dueño → el modelo Waze
+   (que OTROS confirmen) fallaba en silencio. Nueva regla: cualquier
+   `signedIn()` puede hacer update SI el diff solo toca
+   `confirmadoPor/desmentidoPor/lastConfirm`. **Requiere que Inty RE-PUBLIQUE
+   `firestore.rules`.**
+2. **La fila de entrada del chat (micrófono+enviar) se iba debajo de la
+   pantalla** en Pistero y Social. `.cc` usaba `height:calc(100vh - 210px)`
+   (número mágico que no reservaba la barra inferior ni el alto real del
+   encabezado). Fix: `.cc`/`#pisteroMsgs` a flex-fill + las dos vistas de chat
+   acotadas con `height:calc(100dvh - 130px)`. Verificado a 375×812 y 1280×720:
+   input sobre la barra y accesible, sin scroll de página.
+
+Descartado (no eran bugs): las 116 funciones de los 329 botones existen todas;
+el resto de "problemas" del barrido eran falsos positivos (chips en tiras de
+scroll horizontal, o botones que se alcanzan con scroll normal).
+
+**OJO para testear en local:** el service worker es network-first para HTML,
+pero si quedó un SW viejo registrado puede servir index.html cacheado y
+"comerse" los cambios de CSS. Si al probar en local no ves un cambio,
+desregistra el SW + borra caches (`caches.keys().then(...)`) y recarga. En
+producción no pasa (network-first + auto-heal por version.txt).
+
+Deploy: librepedal.cl/version.txt → 6.87 en vivo + push a GitHub.
+
+---
+
 ## (operación, sin versión) — 2026-07-16 — Claude (sesión 1, cierre de la fuga de correos)
 
 Inty: *"publiquemos"* (la sesión 2 se quedó sin créditos, me pasó el control).
