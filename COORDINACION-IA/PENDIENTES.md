@@ -158,22 +158,21 @@ que obligue a reenviar.
   5.000 usuarios, ver conversación del 2026-07-14) queda solo como
   referencia, no como plan activo.
 
-- [~] **⚠️ El correo de TODOS los usuarios se puede leer sin ser admin ni estar
-  logueado — Inty ya decidió el enfoque (2026-07-14): doc privado aparte.
-  CÓDIGO LISTO, falta migrar datos + publicar reglas + deploy.** Fix: `email`
-  ya no se escribe en `/users/{id}` (público) — `reg()` ahora lo guarda en
-  `/usersPrivate/{id}` (nueva colección, solo dueño+admin la leen, ver
-  `firestore.rules`). `mostrarTodosRegistrados()` y `exportarUsuariosAdmin()`
-  actualizadas para leer el correo desde ahí (`_mapaEmailsPrivados()`).
-  Migración de los usuarios YA registrados lista en
-  `scripts/migrate-email-privado.js` (dry run por defecto, `--escribir` para
-  aplicar de verdad) pero **sin correr todavía — bloqueado por cuota de
-  Firestore agotada** (ver aviso de "Cuota Firestore agotada" más abajo,
-  entrada del 2026-07-14). Cuando haya cuota: 1) correr el script en dry run
-  y revisar, 2) correr con `--escribir`, 3) publicar el `firestore.rules`
-  actualizado (agrega el bloque `usersPrivate`), 4) deploy del código. Los
-  tres pasos deben ir juntos para no dejar una ventana donde un registro
-  nuevo no logre guardar su correo en ningún lado.
+- [x] **⚠️ Fuga de correos CERRADA (2026-07-16, sesión 1).** El correo ya no
+  vive en `/users/{id}` (lectura pública). **Migración corrida y verificada:**
+  respaldo completo antes (`LibrePedal-Backups/firestore-2026-07-16-12-22-02`),
+  `node scripts/migrate-email-privado.js --escribir` movió los 21 correos que
+  quedaban en `/users` → `/usersPrivate` (0 errores). Verificado con el Admin
+  SDK: `users con email público = 0`, `usersPrivate con email = 21`. El código
+  (`reg()` escribe en `/usersPrivate`, `_mapaEmailsPrivados()` lee de ahí) ya
+  está en vivo desde v6.86.
+  **FALTA (paso de Inty, no lo hace ninguna IA): publicar `firestore.rules`**
+  en la Console — agrega el bloque `usersPrivate` (líneas 78-81). Hasta que lo
+  publique: (a) los registros NUEVOS no pueden guardar su correo (reg() escribe
+  en usersPrivate y la regla aún no lo permite), y (b) el export CSV del panel
+  admin no verá correos (la lectura de usersPrivate requiere la regla). La fuga
+  en sí YA está cerrada (los correos no están en la colección pública); esto
+  que falta es para restaurar la función y proteger a futuro.
 - [ ] **⚠️ Posible falla de seguridad en detección de caídas — necesita prueba
   con teléfono real, nadie la puede hacer sin dispositivo.** Encontrado en el
   barrido #8 (v6.37, ver `BITACORA.md`): el chequeo de "¿sigues quieto tras el

@@ -4,6 +4,29 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## (operación, sin versión) — 2026-07-16 — Claude (sesión 1, cierre de la fuga de correos)
+
+Inty: *"publiquemos"* (la sesión 2 se quedó sin créditos, me pasó el control).
+Se cerró por fin la fuga de correos que estaba "código listo, falta deploy"
+desde el 2026-07-14 (el código ya había subido en v6.86).
+
+1. Respaldo completo de Firestore ANTES de tocar nada →
+   `LibrePedal-Backups/firestore-2026-07-16-12-22-02` (todas las colecciones,
+   incluida `users` con los correos). Reversible.
+2. `node scripts/migrate-email-privado.js` en dry-run (mostrando solo el
+   resumen, sin volcar correos): 28 users, 21 con correo público, 0 migrados.
+3. `--escribir`: 21 correos movidos de `/users` (mundial) a `/usersPrivate`
+   (dueño+admin), 0 errores. Verificado con el Admin SDK: `users con email
+   público = 0`, `usersPrivate con email = 21`.
+
+**Pendiente de Inty (ninguna IA lo toca, regla del proyecto):** publicar
+`firestore.rules` en la Console (bloque `usersPrivate`). Hasta entonces los
+registros NUEVOS no guardan correo y el export admin no lo lee — pero la fuga
+en sí ya está cerrada. Link directo:
+`https://console.firebase.google.com/project/librepedal-cb983/firestore/rules`
+
+---
+
 ## v6.86 — 2026-07-16 — Claude (sesión 1, reportes estilo Waze + páginas Nocturno Pro)
 
 Inty: *"reportar y no se quita hasta que alguien diga que no hay nadie, igual
