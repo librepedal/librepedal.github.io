@@ -133,16 +133,19 @@ Sube el número en cada cambio (la app se auto-repara comparando con `version.tx
 ## 🔐 SEGURIDAD — no repitas la fuga
 - **NUNCA** deployes ni subas la **carpeta completa**. Contiene `MI-CLOUDFLARE.txt`, `MI-CLOUDFLARE-IA.txt`, `MI-TOKEN-NETLIFY.txt` (tokens) y **`firebase-service-account.json`** (clave privada de Admin SDK — acceso TOTAL a Firestore/Auth, mucho más grave que los tokens de arriba). Todos están en `.gitignore`, pero **wrangler los sube igual** si deployas la carpeta entera.
 - ⚠️ (2026-07-13) Casi se filtra `firebase-service-account.json` en un deploy de sesión 2: el snippet de abajo no lo tenía en la lista de exclusión (no existía cuando se escribió el snippet). Se detectó ANTES de correr `wrangler pages deploy` revisando el listado de la carpeta limpia — no llegó a publicarse. El snippet de abajo ya quedó corregido para excluirlo siempre. **Antes de correr `wrangler pages deploy`, mirá el `ls` de la carpeta limpia una vez más** — no asumas que el snippet de hoy cubre archivos que se agreguen mañana.
+- ⚠️ (2026-07-16) Mismo susto con **`librepedal-release.keystore`** (la clave de firma de Play Store): apareció en el `ls` de la carpeta limpia y se sacó a mano antes de deployar — no se filtró. El snippet de abajo **ya excluye `*.keystore`/`*.jks`** (y de paso `*.pdf`, `package-lock.json`, `prototipos/`, `.deploy-clean/`). Recordatorio: la revisión a ojo del `ls` es la última línea de defensa, hazla SIEMPRE.
 - Deploya SIEMPRE desde una **carpeta limpia** con solo archivos web. Snippet listo:
   ```bash
   SRC=.; CLEAN=../lp-deploy
   rm -rf "$CLEAN"; mkdir -p "$CLEAN"; cp -r "$SRC"/* "$CLEAN"/
   rm -f "$CLEAN"/MI-*.txt "$CLEAN"/firestore.rules "$CLEAN"/REGLAS-FIREBASE.txt \
-        "$CLEAN"/*.md "$CLEAN"/package.json "$CLEAN"/capacitor.config.json \
-        "$CLEAN"/firebase-service-account.json
+        "$CLEAN"/*.md "$CLEAN"/package.json "$CLEAN"/package-lock.json \
+        "$CLEAN"/capacitor.config.json "$CLEAN"/firebase-service-account.json \
+        "$CLEAN"/*.keystore "$CLEAN"/*.jks "$CLEAN"/*.pdf
   rm -rf "$CLEAN"/scripts "$CLEAN"/concepts "$CLEAN"/COORDINACION-IA "$CLEAN"/node_modules \
-         "$CLEAN"/worker-auth "$CLEAN"/worker-ia "$CLEAN"/.wrangler
-  ls "$CLEAN"   # revisar a ojo antes de deployar — ningún .json de credenciales, ningún MI-*.txt
+         "$CLEAN"/worker-auth "$CLEAN"/worker-ia "$CLEAN"/.wrangler \
+         "$CLEAN"/prototipos "$CLEAN"/.deploy-clean "$CLEAN"/.git
+  ls "$CLEAN"   # revisar a ojo antes de deployar — ningún .json de credenciales, ningún MI-*.txt, ningún .keystore
   wrangler pages deploy "$CLEAN" --project-name=librepedal --branch=main
   ```
 - (2026-07-11, corregido) Lo de arriba era una **falsa alarma**: `librepedal.cl/MI-*.txt` devuelve HTTP 200
