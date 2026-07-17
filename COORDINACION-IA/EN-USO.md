@@ -33,14 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — protocolo de excelencia, 3 casos aplicados (ver
-BITÁCORA v6.91/v6.92/v6.93): (1) cerró tarea #88 (Stats/Logros
-duplicados en Perfil). (2) desnivel en "elige tu ruta" estilo Komoot.
-(3) avisos de la comunidad (control, animal, peligro) en cada ruta
-candidata ANTES de elegir, estilo Waze. v6.93 deployado (librepedal.cl
-→ 6.93) y pusheado, todo verificado en navegador. Sigue el protocolo —
-próximo candidato natural: rodadas grupales con planificación
-colaborativa (estilo Strava Clubs) o superficie/dificultad por tramo.
+Última sesión: 2 — protocolo de excelencia, 4 casos aplicados (ver
+BITÁCORA v6.91-v6.94): (1) cerró tarea #88. (2) desnivel en "elige tu
+ruta" estilo Komoot. (3) avisos de la comunidad en cada ruta candidata,
+estilo Waze. (4) rodadas grupales con ruta adjunta (opcional, reutiliza
+rutas ya grabadas), estilo Strava Clubs. v6.94 deployado (librepedal.cl
+→ 6.94) y pusheado, todo verificado en navegador (sin escribir a la
+base real). Sigue el protocolo — candidatos: superficie/dificultad por
+tramo del camino, o revisar el flujo de "Ver todas en el mapa"/rutas.
 ```
 
 ---

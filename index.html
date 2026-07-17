@@ -1142,7 +1142,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.93'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.94'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6963,7 +6963,14 @@ function mostrarResumenAnual(){
     };
   }
 }
-/* ===== RODADAS GRUPALES ===== */
+/* ===== RODADAS GRUPALES =====
+   Estilo Strava Clubs (protocolo de excelencia): antes solo se podía avisar un
+   punto de encuentro en texto libre — nadie sabía qué ruta se iba a andar hasta
+   llegar. Se puede adjuntar (opcional) una de las rutas YA grabadas por quien
+   organiza: reutiliza lo que ya existe (rutasLocales) en vez de armar un
+   planificador de rutas nuevo. Se guarda solo un RESUMEN liviano (nombre,
+   distancia, desnivel si ya se calculó) — nunca el trazado completo (miles de
+   puntos GPS), para no inflar el documento ni las lecturas del listado. */
 async function crearRodada(){
   const titulo=(document.getElementById('rodadaTitulo').value||'').trim();
   const desc=(document.getElementById('rodadaDesc').value||'').trim();
@@ -6975,8 +6982,14 @@ async function crearRodada(){
   if(fecha < Date.now()-3600000){ lpAviso('Esa fecha ya pasó. Pon una fecha futura para la rodada.'); return; }
   if(_creandoRodada) return; _creandoRodada=true;
   try{
-    await db.collection('rodadas').add({titulo:titulo, desc:desc, puntoEncuentro:puntoEncuentro, fecha:fecha, creadoPor:cu, nombreCreador:nombreUsuario||'Ciclista', asistentes:[cu], authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
-    document.getElementById('rodadaTitulo').value=''; document.getElementById('rodadaDesc').value=''; document.getElementById('rodadaPunto').value=''; document.getElementById('rodadaFecha').value='';
+    const data={titulo:titulo, desc:desc, puntoEncuentro:puntoEncuentro, fecha:fecha, creadoPor:cu, nombreCreador:nombreUsuario||'Ciclista', asistentes:[cu], authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()};
+    const selRuta=document.getElementById('rodadaRutaSel'), idx=selRuta?selRuta.value:'';
+    if(idx!==''){
+      const r=rutasLocales()[Number(idx)];
+      if(r) data.ruta={nombreRuta:r.nombreRuta||'Ruta sin nombre', distance:r.distance||0, subida:(r.elevDEM&&r.elevDEM.subida)||null};
+    }
+    await db.collection('rodadas').add(data);
+    document.getElementById('rodadaTitulo').value=''; document.getElementById('rodadaDesc').value=''; document.getElementById('rodadaPunto').value=''; document.getElementById('rodadaFecha').value=''; if(selRuta) selRuta.value='';
     h('Rodada creada. Ya se avisa a la comunidad.');
     verRodadas();
   }catch(e){ lpAviso('No se pudo crear la rodada.'); }
@@ -6985,7 +6998,9 @@ async function crearRodada(){
 async function verRodadas(){
   document.getElementById('modalTitle').innerText='🚵 Rodadas grupales';
   const c=document.getElementById('modalContent');
-  c.innerHTML='<div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin-bottom:12px"><h4 style="margin:0 0 8px;font-size:0.85rem;color:var(--p)">Organizar una rodada</h4><input type="text" id="rodadaTitulo" placeholder="Título (ej: Rodada nocturna Providencia)"><input type="text" id="rodadaPunto" placeholder="Punto de encuentro"><input type="datetime-local" id="rodadaFecha"><textarea id="rodadaDesc" rows="2" placeholder="Detalles (opcional)..."></textarea><button class="ab" style="margin-top:6px" onclick="crearRodada()">Publicar rodada</button></div><div id="rodadasList"><p style="color:#888">Cargando rodadas...</p></div>';
+  const rutasOpts=rutasLocales().filter(function(r){return r.nombreRuta && r.distance;}).map(function(r,i){ return '<option value="'+i+'">'+escapeHTML(r.nombreRuta)+' · '+r.distance.toFixed(1)+' km</option>'; }).join('');
+  const selectorRuta=rutasOpts ? ('<select id="rodadaRutaSel"><option value="">Sin ruta (solo punto de encuentro)</option>'+rutasOpts+'</select>') : '';
+  c.innerHTML='<div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin-bottom:12px"><h4 style="margin:0 0 8px;font-size:0.85rem;color:var(--p)">Organizar una rodada</h4><input type="text" id="rodadaTitulo" placeholder="Título (ej: Rodada nocturna Providencia)"><input type="text" id="rodadaPunto" placeholder="Punto de encuentro"><input type="datetime-local" id="rodadaFecha">'+selectorRuta+'<textarea id="rodadaDesc" rows="2" placeholder="Detalles (opcional)..."></textarea><button class="ab" style="margin-top:6px" onclick="crearRodada()">Publicar rodada</button></div><div id="rodadasList"><p style="color:#888">Cargando rodadas...</p></div>';
   document.getElementById('userModal').classList.add('on');
   try{
     const ahora=Date.now();
@@ -6997,7 +7012,8 @@ async function verRodadas(){
       const asistentes=r.asistentes||[];
       const voy=asistentes.indexOf(cu)!==-1;
       const fecha=new Date(r.fecha).toLocaleString('es-CL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-      return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4><p>📅 '+fecha+' · 📍 '+escapeHTML(r.puntoEncuentro||'')+'</p>'+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')+'<p style="color:#7d8ba0;font-size:0.72rem">Organiza: '+escapeHTML(r.nombreCreador||'Ciclista')+' · '+asistentes.length+' confirmados</p><button class="ab '+(voy?'sec':'')+'" style="margin:0" onclick="toggleAsistenciaRodada(\''+r.id+'\')">'+(voy?'✅ Vas · toca para cancelar':'🚴 Confirmar asistencia')+'</button></div>';
+      const rutaHTML=r.ruta ? ('<p style="color:var(--g)">🛣️ '+escapeHTML(r.ruta.nombreRuta)+' · '+r.ruta.distance.toFixed(1)+' km'+(r.ruta.subida?(' · ↗'+r.ruta.subida+'m'):'')+'</p>') : '';
+      return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4><p>📅 '+fecha+' · 📍 '+escapeHTML(r.puntoEncuentro||'')+'</p>'+rutaHTML+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')+'<p style="color:#7d8ba0;font-size:0.72rem">Organiza: '+escapeHTML(r.nombreCreador||'Ciclista')+' · '+asistentes.length+' confirmados</p><button class="ab '+(voy?'sec':'')+'" style="margin:0" onclick="toggleAsistenciaRodada(\''+r.id+'\')">'+(voy?'✅ Vas · toca para cancelar':'🚴 Confirmar asistencia')+'</button></div>';
     }).join('');
   }catch(e){ document.getElementById('rodadasList').innerHTML='<p style="color:#888">No se pudieron cargar las rodadas.</p>'; }
 }

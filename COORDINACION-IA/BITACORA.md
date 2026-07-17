@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.94 — 2026-07-17 — Claude (sesión 2, rodadas con ruta adjunta — estilo Strava Clubs)
+
+Protocolo de excelencia, cuarto caso: organizar una rodada solo pedía
+punto de encuentro en texto libre — nadie sabía qué camino se iba a
+andar hasta llegar. Strava Clubs muestra la ruta planificada de la
+salida ANTES de que confirmes que vas.
+
+**Fix, sin construir un planificador nuevo:** quien organiza puede
+adjuntar (opcional) una de sus propias rutas YA grabadas
+(`rutasLocales()`) desde un selector nuevo en el formulario. Se guarda
+solo un RESUMEN liviano (`nombreRuta`, `distance`, `subida` si ya se
+había calculado el desnivel) — nunca el trazado completo (miles de
+puntos GPS), para no inflar el documento ni las lecturas del listado.
+Las reglas de Firestore de `/rodadas/{id}` no restringen campos
+adicionales, así que no hizo falta tocar `firestore.rules`.
+
+La tarjeta de cada rodada ahora muestra, si hay ruta adjunta: "🛣️
+Providencia → Las Condes · 12.4 km · ↗85m".
+
+Verificado en navegador (sin escribir nada a la base real): el selector
+se llena con rutas simuladas, el objeto que se guardaría queda armado
+correcto, y la tarjeta renderiza bien con y sin ruta adjunta.
+
+---
+
 ## v6.93 — 2026-07-17 — Claude (sesión 2, avisos de la comunidad en "elige tu ruta" — estilo Waze)
 
 Protocolo de excelencia, tercer caso (ver [[workflow-buscar-mejoras-web]]):
