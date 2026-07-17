@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.88'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.89'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3898,7 +3898,6 @@ function cerrarVideoRuta(){
   if(videoRecorder&&videoRecorder.state==='recording'){ try{ videoRecorder.stop(); }catch(e){} }
   if(videoStream){ try{ videoStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} videoStream=null; }
   if(videoMap){ try{ videoMap.remove(); }catch(e){} videoMap=null; }
-  videoRiderMarker=null; videoRiderEl=null; // el contenedor del mapa ya se destruyó junto con el marcador
   document.getElementById('video-screen').classList.remove('active');
 }
 function showAllRoutesOnMap(){ const arr=rutasLocales().filter(function(d){return d.points&&d.points.length;}); if(!arr.length){ h("No tienes rutas todavía."); return; } cv('trips'); setTimeout(function(){ const mc=document.getElementById('map-routes-all'); if(mc) mc.style.display='block'; if(!mapAllRoutes){ mapAllRoutes=L.map('map-all-routes').setView([20,0],2); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAllRoutes); } mapAllRoutes.eachLayer(function(layer){ if(layer instanceof L.Polyline) mapAllRoutes.removeLayer(layer); }); const colors=['#fc4c02','#ff0055','#ffd700','#2ecc71','#9b59b6','#ff6600','#00ff88']; let ci=0; const allB=[]; arr.forEach(function(d){ const points=d.points.map(function(p){return [p.lat,p.lon];}); const pl=L.polyline(points,{color:colors[ci%colors.length],weight:4,opacity:0.8}).addTo(mapAllRoutes); pl.bindPopup('<b>'+new Date(d.startTime).toLocaleDateString()+'</b><br>'+(d.distance||0).toFixed(2)+' km'); allB.push.apply(allB,points); ci++; }); if(allB.length>0) mapAllRoutes.fitBounds(L.latLngBounds(allB),{padding:[50,50]}); mapAllRoutes.invalidateSize(); h(arr.length+" rutas en el mapa."); },300); }
