@@ -33,7 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1 — reportes estilo Waze (confirmación comunitaria "sigue ahí"/"ya no está", el pin dura hasta que 2 lo desmientan, no por reloj) + FAB de reportar sobre el mapa + Fase 3 Nocturno Pro (section-info sin naranja, .cd/.cm unificadas, burbujas de Pistero en cian). v6.86 deployado (librepedal.cl → 6.86) y pusheado.
+Última sesión: 2 — auditoría rigurosa fin-a-fin (ver BITÁCORA v6.89): GPS,
+voz, background geo, botones/pantallas, reglas Firestore, correo expuesto
+(#80, verificado 0 riesgo activo), video 3D, formularios — todo revisado
+con verificación directa. 1 bug real encontrado y corregido (variable
+muerta en cerrarVideoRuta). v6.89 deployado (librepedal.cl → 6.89) y
+pusheado. No se encontró nada que explique "la app funciona mal" de forma
+reproducible — falta síntoma concreto de Inty para seguir con el mismo
+rigor en vez de auditar a ciegas.
 ```
 
 ---

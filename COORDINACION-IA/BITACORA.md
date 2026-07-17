@@ -4,6 +4,49 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.89 — 2026-07-17 — Claude (sesión 2, auditoría rigurosa fin-a-fin pedida por Inty)
+
+Inty: "revisa todo, si encuentro errores o que no esté haciendo lo que
+promete me voy a molestar mucho" — pidió trato de lanzamiento, cero
+tolerancia. Auditoría con verificación directa (no supuestos): código +
+producción real (librepedal.cl, base de Firestore en vivo).
+
+**Verificado sólido, sin hallazgos:**
+- GPS doble-watcher (bug histórico grave): blindado, un solo punto de
+  entrada a navegación (`calculateAndStartNavigation`→`_detenerGpsLibreSiActivo`).
+- Cola de voz (`h`/`_vozSiguiente`/watchdogs): se autorepara sola aunque
+  un audio nunca dispare `onended`.
+- Rastreo en segundo plano (`lpBackgroundGeo`): guarda contra doble-arranque.
+- Botones/pantallas: 179 `onclick` cruzados contra 574 funciones definidas,
+  cada `cv()` contra cada `<section>` → 0 referencias rotas.
+- Reglas de Firestore: sin agujeros obvios, validación por colección.
+- Correo expuesto (#80): consulté la base real vía API pública →
+  **0 de 29 usuarios reales expuestos hoy**. Falta igual correr el script
+  de migración por higiene (no hay riesgo activo).
+- Perfil de elevación DEM, video 3D, formularios (`agregarPOI` con
+  `finally`): funcionan de verdad, no son stubs.
+- App en producción: 0 errores de consola, 0 requests fallidos al cargar.
+- Últimos cambios grandes de sesión 1 (es-bottom v6.75, reportes estilo
+  Waze, Nocturno Pro Fase 3): diffs revisados, bien resueltos.
+
+**1 bug real encontrado y corregido:** `cerrarVideoRuta()` (línea ~3901)
+tenía `videoRiderMarker=null; videoRiderEl=null;` — variables que ya NO
+existen desde mi propio fix de v6.71 (se reemplazó el Marker de MapLibre
+por dibujo directo en canvas). No rompía nada en los hechos (JS no-strict
+crea globals implícitos en vez de tirar error), pero es código muerto y
+confuso, con un comentario que describe algo que ya no pasa. Eliminado,
+verificado en navegador (`cerrarVideoRuta()` corre sin error).
+
+**Para que quede claro:** no encontré nada que coincida con "la app está
+funcionando mal" de forma reproducible desde código + producción. Lo que
+NO pude verificar desde este entorno: audio en vivo, GPS real en
+movimiento, sensores Bluetooth, comportamiento con pantalla bloqueada por
+horas. Si el síntoma persiste, hace falta el detalle concreto (qué
+pantalla, qué mensaje, qué acción) para perseguirlo con el mismo rigor en
+vez de seguir revisando a ciegas.
+
+---
+
 ## v6.88 — 2026-07-17 — Claude (sesión 1, pestaña Mapa ordenada)
 
 Inty: *"fíjate en los botones que dejaste en ese mapa… debería haber un solo
