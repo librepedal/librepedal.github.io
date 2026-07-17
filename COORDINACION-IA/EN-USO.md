@@ -33,12 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — protocolo de excelencia, 7 casos aplicados (ver
-BITÁCORA v6.91-v6.97): 5 features en "elige tu ruta"/rodadas, (6) fix
-de condición de carrera en seguir.html, (7) quitado "Combinar todas en
-una" (no combinaba nada, prometía algo que no hacía — quedó solo "Ver
-todas en el mapa", el mejor de los dos). Revisado sin hallazgos: Taller
-MacGyver, hostales, Segmentos, Recomendación de rutas, onboarding, PWA.
+Última sesión: 2 — Inty conectó un token de API de Sentry (ver
+PENDIENTES.md, sección "Monitoreo real con Sentry"): primera vez que se
+pueden ver errores REALES de producción en vez de solo simular. Triaje
+de 28 issues sin resolver: 7 eran artefactos de pruebas (limpiados), 1
+bug real corregido y desplegado (v6.98: frame() del video 3D crasheaba
+con puntos de ruta con lat/lon corrupto), varios reales quedan
+documentados para la próxima sesión. Antes de esto: protocolo de
+excelencia, 7 casos aplicados (ver BITÁCORA v6.91-v6.97).
 v6.97 deployado (librepedal.cl → 6.97) y pusheado, todo verificado en
 navegador. Sigue el protocolo.
 ```

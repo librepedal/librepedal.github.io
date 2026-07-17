@@ -50,6 +50,34 @@ entrada **v6.72** de `BITACORA.md`.
   (línea ~6799 de `index.html`) — no tocado a propósito, para hacerlo bien
   con más tiempo/testing real, no a las apuradas.
 
+## 🩺 Monitoreo real con Sentry (2026-07-18) — nuevo, para ambas sesiones
+
+Inty conectó un token de API de Sentry — vive en `MI-SENTRY.txt` (gitignored,
+en la raíz del proyecto, mismo patrón que `MI-CLOUDFLARE.txt`). Con eso
+cualquier sesión puede consultar y resolver errores REALES de producción por
+API (no hace falta que Inty entre a Sentry y pegue capturas). Org
+`librepedal-gs`, proyecto `javascript` (id `4511700418494464`).
+
+Ejemplo de consulta (bash):
+```
+TOKEN=$(grep "^TOKEN=" MI-SENTRY.txt | cut -d= -f2)
+curl -s -H "Authorization: Bearer $TOKEN" "https://librepedal-gs.sentry.io/api/0/organizations/librepedal-gs/issues/?project=4511700418494464&query=is%3Aunresolved&statsPeriod=14d&limit=50"
+```
+Ojo: para distinguir un error real de un artefacto de pruebas (localhost,
+sandbox), revisa el tag `url` del evento — si dice `localhost` o
+`127.0.0.1`, es de una sesión de Claude probando, no un usuario real.
+
+**Ya corregido (v6.98):** bug real en `frame()` (video 3D) — puntos de ruta
+con lat/lon corrupto rompían la animación. Ver entrada v6.98 en BITACORA.
+
+**Quedan sin revisar** (reales, confirmar con la API antes de tocar código):
+- `obtenerFraseUnica` — `Cannot read properties of undefined (reading 'push')`, 7 eventos (issues `7611282094` y `7613232824`)
+- `FirebaseError: Missing or insufficient permissions` — 10 eventos, sin breadcrumbs, posible relación con la ventana de carrera anon→token personalizado ya documentada arriba (issue `7608893099`)
+- MapLibre `isStyleLoaded` undefined — 2 issues relacionadas, posible carrera al cambiar de capa de mapa o abrir un mapa antes de que cargue (issues `7611377185`, `7607413878`)
+- `"Can't find variable: cv"` — solo 1 evento pero raro si es real, `cv()` es la función de navegación central (issue `7607169932`)
+- MapLibre `"Source mlline_1 cannot be removed while layer... is using it"` — orden de remove entre layer/source (issue `7601335978`)
+- Varios `FetchEvent.respondWith` / IndexedDB / ServiceWorker storage — probablemente hipo de red o cupo de almacenamiento del dispositivo, baja prioridad salvo que se repitan mucho más
+
 ## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 — PERMANENTE (actualizado 2026-07-13 por sesión 2)
 
 **Pedido explícito de Inty: "quiero que desde ahora haya una coordinación sin

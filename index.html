@@ -1139,7 +1139,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.97'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.98'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3805,8 +3805,15 @@ function initVideoMap(){
 }
 function _bearingEntrePuntos(a,b){ const toRad=Math.PI/180, toDeg=180/Math.PI; const lat1=a.lat*toRad, lat2=b.lat*toRad, dLon=(b.lon-a.lon)*toRad; const y=Math.sin(dLon)*Math.cos(lat2); const x=Math.cos(lat1)*Math.sin(lat2)-Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon); return (Math.atan2(y,x)*toDeg+360)%360; }
 function iniciarVueloRuta(){
-  const pts=videoRouteData&&videoRouteData.points;
-  if(!videoMap||!pts||pts.length<2) return;
+  // Bug real reportado por Sentry en producción (Chrome Mobile, librepedal.cl):
+  // "Cannot read properties of undefined (reading 'lat')" dentro de frame() — un
+  // punto de la ruta grabada venía sin lat/lon válidos (dato de GPS corrupto que
+  // igual se guardó), y frame() no lo esperaba. Se filtra UNA vez acá, así el resto
+  // de la función (frame(), el trazo que se va dibujando, el cálculo de rumbo) nunca
+  // tiene que lidiar con puntos malos — mismo criterio que ya usa ug() con el GPS en vivo.
+  const ptsCrudos=videoRouteData&&videoRouteData.points;
+  const pts=(ptsCrudos||[]).filter(function(p){ return p && Number.isFinite(p.lat) && Number.isFinite(p.lon); });
+  if(!videoMap||pts.length<2) return;
   if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
   document.getElementById('btnReplayVideo').style.display='none';
   document.getElementById('video-status').innerText='Volando sobre tu recorrido...';

@@ -4,6 +4,51 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.98 — 2026-07-18 — Claude (sesión 2, primera vez con acceso real a Sentry — bug real de producción encontrado y corregido)
+
+**Nuevo:** Inty conectó un token de API de Sentry (org `librepedal-gs`, proyecto
+`javascript`) — guardado en `MI-SENTRY.txt` (gitignored, mismo patrón que
+`MI-CLOUDFLARE.txt`). Primera vez que se puede consultar y resolver errores
+reales de producción por API en vez de solo simular en el sandbox.
+
+**Triaje de 28 issues sin resolver:** 7 eran artefactos confirmados (pruebas
+de Claude en `localhost:8123`/`127.0.0.1:8777`, archivos temporales de
+`claude-html-preview`, y uno literalmente etiquetado "Prueba de conexión
+Sentry — ignorar" de una sesión anterior) — se marcaron `ignored`/`resolved`
+para dejar el panel limpio. El resto son reales, en dominios de producción.
+
+**Bug real corregido:** `TypeError: Cannot read properties of undefined
+(reading 'lat')` en `frame()` (video 3D de la ruta) — 11 eventos entre el
+9 y el 14 de julio, confirmado en **Chrome Mobile, librepedal.cl** (usuario
+real). Causa: un punto de una ruta grabada con `lat`/`lon` corrupto (dato de
+GPS malo que igual se guardó) rompía la animación entera sin aviso. Fix:
+`iniciarVueloRuta()` ahora filtra los puntos inválidos UNA vez al principio
+(`Number.isFinite` en lat/lon, mismo criterio que ya usa `ug()` para el GPS
+en vivo) — así `frame()`, el trazo que se dibuja y el cálculo de rumbo nunca
+tienen que lidiar con datos malos. Verificado en navegador con puntos
+corruptos mezclados (se filtran, la animación sigue) y con TODOS los puntos
+corruptos (sale en silencio, sin crashear).
+
+**Revisado, no arreglado a propósito:** `FirebaseError: Missing or
+insufficient permissions` (10 eventos, Mobile Safari, librepedal.pages.dev)
+— sin breadcrumbs, stack trace 100% interno del SDK de Firestore (no dice
+qué colección). Coincide con una ventana de carrera YA documentada en
+`firestore.rules` (sesión anónima → token personalizado) — no es sorpresa,
+es un trade-off ya aceptado. No se tocó una regla de seguridad a ciegas sin
+poder confirmar la causa exacta.
+
+**Quedan sin revisar en Sentry** (reales, dominios de producción, no se
+alcanzó): `obtenerFraseUnica` reading 'push' (7 eventos), ServiceWorker
+update failed, `isStyleLoaded` undefined (2 issues, relacionado a MapLibre),
+"Can't find variable: cv" (1 evento, raro pero preocupante si es real),
+"Source mlline_1 cannot be removed..." (orden de capas de MapLibre),
+FetchEvent.respondWith errors (varios, probablemente hipo de red normal),
+IndexedDB/storage errors (varios, probablemente cupo de almacenamiento del
+dispositivo). Quedan documentados para la próxima sesión que entre a
+Sentry — el token ya está guardado y funcionando.
+
+---
+
 ## v6.97 — 2026-07-17 — Claude (sesión 2, quita "Combinar todas en una" — no hacía lo que decía)
 
 Protocolo de excelencia, revisión del flujo "Ver todas en el mapa" en
