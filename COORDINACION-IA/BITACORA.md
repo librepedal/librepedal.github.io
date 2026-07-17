@@ -4,6 +4,51 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.91 — 2026-07-17 — Claude (sesión 2, cierra tarea #88 con criterio validado)
+
+Inty pidió arrancar el "protocolo de excelencia" (estudiar apps líderes,
+copiar su método) en todo lo tocante a botones/ubicación/facilidad de
+uso, con la app lista para probar pronto (salía a andar en bici).
+Dado el tiempo, se priorizó cerrar la tarea #88 (pendiente hace rato) en
+vez de abrir un rediseño grande a medio terminar.
+
+**Revisado primero y descartado por estar YA resuelto** (las notas viejas
+de auditoría estaban desactualizadas): pantalla de Ajustes ("22 controles
+sueltos" — hoy ya tiene headers por sección, bien organizada) y Perfil
+("16-17 controles sueltos" — hoy ya es un sistema de tabs). Botones
+sobredimensionados: revisado el CSS base (`.ab` usa 44px de alto mínimo,
+que es justo el estándar de accesibilidad táctil de Apple/Google, no
+está sobredimensionado) y no se encontró ninguna instancia real fuera de
+la pantalla de caída (que a propósito es grande, por ser un botón de
+emergencia).
+
+**#88 — cerrado de verdad:** en "Perfil y personaje" había 3 accesos a
+Stats/Logros (insignia de Darma + 2 botones) arriba de todo, antes de lo
+que el usuario va a hacer en esa pantalla (elegir casco, color, etc.) —
+duplicaban la Esfera, que desde v6.75 es el único camino real a esas
+secciones. Mismo criterio que ya validó la otra sesión con el
+`es-bottom`: el Darma queda como DATO de un vistazo (se sacó el
+`onclick`, cursor a `default`), y los 2 botones de Logros/Estadísticas se
+eliminaron. **De paso se encontró y arregló una referencia colgante**:
+el tutorial guiado (paso 8, disparable también por voz preguntando
+"¿dónde está mi ranking/logros/puesto?") apuntaba a un botón que ya no
+existe — se redirigió a `#btnEsferaHeader` (el único camino real ahora),
+verificado que el elemento existe y el texto tiene sentido.
+
+Verificado en navegador antes de publicar: la insignia ya no es
+clickeable, los botones duplicados desaparecieron, y el paso del tutorial
+apunta a un elemento real.
+
+**Pendiente real, para retomar:** el "protocolo de excelencia" completo
+(estudiar Waze/Komoot/Strava función por función y llevar cada una a ese
+nivel) recién arrancó — #88 fue el primer caso concreto aplicado. Falta
+todo lo demás (navegación tipo Komoot con superficie/dificultad ANTES de
+elegir ruta, rodadas grupales con planificación colaborativa como Strava
+Clubs, etc.) — no se tocó por falta de tiempo antes de que Inty saliera a
+andar, no por estar resuelto.
+
+---
+
 ## v6.90 — 2026-07-17 — Claude (sesión 2, 2 bugs reales con síntoma concreto de Inty)
 
 Inty dio 2 síntomas reproducibles (no a ciegas): "no he podido poner a la

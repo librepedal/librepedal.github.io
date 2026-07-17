@@ -173,7 +173,7 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 #navGpsSignalBadge{margin:0 0 6px}
 .pausa-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(96,165,250,0.14);color:#60a5fa;border:1px solid rgba(96,165,250,0.4);border-radius:20px;padding:4px 11px;font-size:0.68rem;font-weight:700;margin-top:8px}
 #navPausaBadge{margin:0 0 6px}
-.darma-badge{display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;font-weight:800;padding:10px 12px;border-radius:12px;margin-bottom:10px;cursor:pointer;font-size:0.95rem;box-shadow:0 3px 10px rgba(255,215,0,0.25)}
+.darma-badge{display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;font-weight:800;padding:10px 12px;border-radius:12px;margin-bottom:10px;cursor:default;font-size:0.95rem;box-shadow:0 3px 10px rgba(255,215,0,0.25)}
 .darma-badge small{font-weight:700;opacity:0.75;font-size:0.62rem}
 /* Tarjeta hero de Inicio + la firma visual ciclista (perfil de ruta al fondo) */
 .hero-viaje{position:relative;overflow:hidden;background:#0f1728;border:0.5px solid rgba(255,255,255,0.07);border-radius:18px;padding:16px;margin-bottom:14px}
@@ -1053,11 +1053,13 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-customize" class="view">
 <div class="section-info"><h4>Perfil y personaje</h4><p>Tu personaje aparece en todos los mapas.</p></div>
-<div class="darma-badge" onclick="cv('stats')">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
-<div class="quick-links">
-  <button class="btrip" onclick="mostrarLogrosComunidad()">🏆 Logros y comunidad</button>
-  <button class="btrip" onclick="cv('stats')">📊 Estadísticas</button>
-</div>
+<!-- Antes había 3 botones de Stats/Logros/Darma arriba de todo, antes de lo que el
+     usuario vino a hacer acá (personalizar su casco, color, etc.) — duplicaban la
+     Esfera (único camino real a esas secciones desde v6.75) y le ganaban espacio
+     al contenido de esta pantalla. Mismo criterio que ya validó la otra sesión con
+     el es-bottom: el Darma queda como DATO de un vistazo (sin onclick), no como
+     un segundo menú; Logros y Estadísticas se sacan de acá — para eso está la Esfera. -->
+<div class="darma-badge">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
 <div class="tabs-personalizar" id="tabsPersonalizar">
   <button class="tab-pill active" data-tab="casco" onclick="_tabPersonalizar('casco')">🪖 Casco</button>
@@ -1140,7 +1142,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.90'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.91'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -8029,7 +8031,7 @@ const tutorialSteps=[
   {view:'dash', sel:'.speed-display', d:'Tu velocidad en vivo. El GPS graba tu ruta solo: se guarda al detenerte, no prendas nada.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'SOS: guarda tus contactos y les mando tu ubicación por WhatsApp al toque.'},
   {view:'customize', sel:'.darma-badge', d:'Tu Darma: premio por aportar. Desbloquea cascos, skins y estilos.'},
-  {view:'customize', sel:'button[onclick="mostrarLogrosComunidad()"]', d:'Logros, Ranking y Tienda: tu avance y el Top 100 por kilómetros.'},
+  {sel:'#btnEsferaHeader', d:'Logros, Ranking y Tienda viven en tu Esfera: gírala y toca "Logros" para ver tu avance y el Top 100 por kilómetros.'},
   {view:'musica', sel:'#lpPlayer', d:'Música: radios gratis o tu propia carpeta. Baja sola cuando hablo y sube cuando termino.'},
   {view:'ajustes', sel:'#vozBtn', d:'En Ajustes controlas la voz de Pistero, el ahorro de pantalla y de GPS.'},
   {view:'map', sel:'#btnCapaMapa', d:'Tu mapa, más limpio: calles o topográfico con un toque, y tu ruta se marca en dorado a medida que avanzas.'},

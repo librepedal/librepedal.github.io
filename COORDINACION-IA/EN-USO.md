@@ -33,14 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — 2 bugs reales corregidos con síntoma concreto de Inty
-(ver BITÁCORA v6.90): (1) Reportar en Ruta ahora permite marcar el punto
-libremente en el mapa (mismo patrón que ya usa el planificador de viaje y
-el POI del diario), no solo tu GPS actual. (2) Condición de carrera de
-voz: interrumpir a Pistero (hCorta, avisos de navegación) podía disparar
-la voz nativa vieja encima de la frase nueva — arreglado con "vozGen"
-(número de turno). Ambos verificados en navegador con pruebas reales
-(no simuladas). v6.90 deployado (librepedal.cl → 6.90) y pusheado.
+Última sesión: 2 — arrancó el "protocolo de excelencia" pedido por Inty
+(estudiar apps líderes, copiar su método, aplicarlo a cada función — ver
+[[workflow-buscar-mejoras-web]] en memoria). Primer caso cerrado: tarea
+#88 (Stats/Logros duplicados en Perfil), con un hallazgo extra: un paso
+del tutorial guiado apuntaba a un botón ya borrado, corregido. v6.91
+deployado (librepedal.cl → 6.91) y pusheado. Queda pendiente TODO el
+resto del protocolo (navegación estilo Komoot, rodadas estilo Strava
+Clubs, etc.) — recién empezó, no está resuelto.
 ```
 
 ---
