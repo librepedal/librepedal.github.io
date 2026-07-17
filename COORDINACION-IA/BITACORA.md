@@ -4,6 +4,30 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.95 — 2026-07-17 — Claude (sesión 2, superficie del camino en "elige tu ruta")
+
+Protocolo de excelencia, quinto caso: cada tarjeta de "elige tu ruta"
+ahora también dice si el camino tiene ripio/tierra reportado por la
+comunidad, sumado al desnivel (v6.92) y los avisos de peligro (v6.93).
+
+**Hallazgo al construirlo:** `_reportesEnRuta()` (v6.93) usa
+`reportesAvisoRelevantes`, que filtra por `REPORTE_VIGENCIA_MS` — y la
+categoría `superficie` NO tiene vigencia definida ahí a propósito (el
+tipo de camino no "caduca" como un control policial), así que quedaba
+SIEMPRE excluida de ese aviso sin que se notara a simple vista. Se
+resolvió sin tocar esa lista: nueva función `_superficieEnRuta()` que
+busca directo en `reportesData` (todos los reportes activos, sin filtro
+de vigencia) solo la categoría `superficie`, y devuelve el tipo más
+repetido si hay varios reportes distintos en el mismo tramo (mayoría de
+votos). De paso se factorizó `_reportesCercaDe(coords, lista)` como
+helper compartido entre ambas búsquedas.
+
+Verificado en navegador: 3 reportes simulados (2 ripio + 1 tierra) sobre
+el mismo trazado dieron "🪨 Ripio reportado en el camino" (mayoría
+correcta); la otra ruta, sin reportes cerca, no mostró nada.
+
+---
+
 ## v6.94 — 2026-07-17 — Claude (sesión 2, rodadas con ruta adjunta — estilo Strava Clubs)
 
 Protocolo de excelencia, cuarto caso: organizar una rodada solo pedía

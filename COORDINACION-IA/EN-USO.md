@@ -33,14 +33,16 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — protocolo de excelencia, 4 casos aplicados (ver
-BITÁCORA v6.91-v6.94): (1) cerró tarea #88. (2) desnivel en "elige tu
-ruta" estilo Komoot. (3) avisos de la comunidad en cada ruta candidata,
-estilo Waze. (4) rodadas grupales con ruta adjunta (opcional, reutiliza
-rutas ya grabadas), estilo Strava Clubs. v6.94 deployado (librepedal.cl
-→ 6.94) y pusheado, todo verificado en navegador (sin escribir a la
-base real). Sigue el protocolo — candidatos: superficie/dificultad por
-tramo del camino, o revisar el flujo de "Ver todas en el mapa"/rutas.
+Última sesión: 2 — protocolo de excelencia, 5 casos aplicados (ver
+BITÁCORA v6.91-v6.95): (1) cerró tarea #88. (2) desnivel en "elige tu
+ruta". (3) avisos de la comunidad por ruta candidata (Waze). (4) rodadas
+con ruta adjunta (Strava Clubs). (5) superficie del camino (ripio/
+tierra) reportada por la comunidad, también en "elige tu ruta" — de
+paso se encontró que superficie quedaba silenciosamente excluida del
+aviso de peligros por no tener vigencia definida, y se resolvió con una
+búsqueda aparte. v6.95 deployado (librepedal.cl → 6.95) y pusheado,
+todo verificado en navegador. Sigue el protocolo — candidato siguiente:
+revisar el flujo de "Ver todas en el mapa"/combinar rutas, o Segmentos.
 ```
 
 ---
