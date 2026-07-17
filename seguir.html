@@ -58,7 +58,7 @@ const id = params.get('id');
 if(!id){
   mostrarError('Falta el link de seguimiento. Pídele a la persona que te lo vuelva a compartir.');
 } else {
-  let map = null, marker = null, ultimoTs = null;
+  let map = null, marker = null, ultimoTs = null, ultimaPos = null;
   function tiempoDesde(ts){
     if(!ts) return '--';
     const seg = Math.floor((Date.now() - ts) / 1000);
@@ -84,13 +84,22 @@ if(!id){
     const ts = d.ts && d.ts.toMillis ? d.ts.toMillis() : null;
     ultimoTs = ts;
     document.getElementById('actualizado').innerText = 'Última actualización: ' + tiempoDesde(ts);
+    // ultimaPos: si llega una posición nueva por Firestore MIENTRAS el mapa
+    // todavía está cargando (map.once('load') async, puede tardar unos
+    // segundos en celulares/redes lentas), antes esa posición se perdía en
+    // silencio — el 'load' solo conocía el lat/lon del snapshot que disparó
+    // la creación del mapa, no el más reciente. Ahora el handler de 'load'
+    // siempre lee la posición más fresca al momento de dispararse, no la que
+    // había cuando se agendó.
+    ultimaPos = {lat: d.lat, lon: d.lon};
     if(!map){
       map = new maplibregl.Map({ container:'map', style:'https://tiles.openfreemap.org/styles/dark', center:[d.lon, d.lat], zoom:14 });
       map.addControl(new maplibregl.NavigationControl({showCompass:false}), 'top-right');
       map.once('load', function(){
         const el = document.createElement('div');
         el.innerHTML = '<div class="pulso"></div>';
-        marker = new maplibregl.Marker({element: el}).setLngLat([d.lon, d.lat]).addTo(map);
+        marker = new maplibregl.Marker({element: el}).setLngLat([ultimaPos.lon, ultimaPos.lat]).addTo(map);
+        map.setCenter([ultimaPos.lon, ultimaPos.lat]);
       });
     } else if(marker){
       marker.setLngLat([d.lon, d.lat]);

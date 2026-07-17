@@ -33,16 +33,16 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — protocolo de excelencia, 5 casos aplicados (ver
-BITÁCORA v6.91-v6.95): (1) cerró tarea #88. (2) desnivel en "elige tu
-ruta". (3) avisos de la comunidad por ruta candidata (Waze). (4) rodadas
-con ruta adjunta (Strava Clubs). (5) superficie del camino (ripio/
-tierra) reportada por la comunidad, también en "elige tu ruta" — de
-paso se encontró que superficie quedaba silenciosamente excluida del
-aviso de peligros por no tener vigencia definida, y se resolvió con una
-búsqueda aparte. v6.95 deployado (librepedal.cl → 6.95) y pusheado,
+Última sesión: 2 — protocolo de excelencia, 6 casos aplicados (ver
+BITÁCORA v6.91-v6.96): 5 features en "elige tu ruta"/rodadas (#88
+cerrada, desnivel, avisos Waze, rodadas Strava Clubs, superficie), más
+(6) bug real de condición de carrera en seguir.html (posición perdida
+si Firestore mandaba un dato nuevo mientras el mapa aún cargaba).
+Revisado sin hallazgos: Taller MacGyver, hostales, Segmentos,
+Recomendación de rutas, onboarding, PWA. v6.96 deployado (librepedal.cl
+→ 6.96) y pusheado,
 todo verificado en navegador. Sigue el protocolo — candidato siguiente:
-revisar el flujo de "Ver todas en el mapa"/combinar rutas, o Segmentos.
+revisar el flujo de "Ver todas en el mapa"/combinar rutas (v-trips).
 ```
 
 ---

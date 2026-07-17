@@ -4,6 +4,36 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.96 — 2026-07-17 — Claude (sesión 2, condición de carrera en seguimiento en vivo — seguir.html)
+
+Protocolo de excelencia, revisión de `seguir.html` (la página externa que ve
+quien recibe tu link de "seguimiento en vivo" — no necesita cuenta ni la
+app instalada). Bug real encontrado: `map.once('load', ...)` es async y
+puede tardar unos segundos en celulares/redes lentas; si llegaba una
+posición NUEVA por Firestore mientras el mapa todavía cargaba, esa
+posición se perdía en silencio — el handler de 'load' solo conocía el
+lat/lon del snapshot que había disparado la creación del mapa, no el más
+reciente. El marcador terminaba mostrando una posición vieja hasta que
+llegara la SIGUIENTE actualización (cada 15s), en vez de la más fresca
+disponible apenas el mapa terminaba de cargar.
+
+**Fix:** variable `ultimaPos` que se actualiza en CADA snapshot; el
+handler de 'load' ahora lee `ultimaPos` al momento de dispararse, no el
+valor capturado en el closure de cuando se agendó. Verificado: la página
+sigue funcionando (estado de error, sin regresión), sin errores de
+consola.
+
+**También revisado en esta ronda, sin hallazgos** (protocolo de
+excelencia): Taller MacGyver, CicloGuía/hostales (ya tenía selección
+libre en el mapa — mejor que lo que tenían los reportes antes del fix de
+hoy), Segmentos (ya está a la altura de Strava: detección automática,
+récord personal, tabla de líderes), Recomendación de rutas (heurística
+real, no un stub), onboarding (el tutorial SÍ se dispara solo para
+usuarios nuevos), configuración PWA (manifest, iconos, theme-color todo
+correcto).
+
+---
+
 ## v6.95 — 2026-07-17 — Claude (sesión 2, superficie del camino en "elige tu ruta")
 
 Protocolo de excelencia, quinto caso: cada tarjeta de "elige tu ruta"
