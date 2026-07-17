@@ -1142,7 +1142,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.91'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.92'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5661,7 +5661,7 @@ function _elegirRutaAlternativa(routes){
     let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Encontré más de un camino posible, elige el que prefieras (o dime "la más rápida" / "la alternativa"):</p>';
     routes.forEach(function(r,i){
       const km=(r.distance/1000).toFixed(1), min=Math.round(r.duration/60);
-      html+='<div class="rep-cat" style="border:2px solid #2a3147;border-radius:12px;padding:14px;cursor:pointer;text-align:left;margin-bottom:10px" onclick="_elegirRutaAlternativaConfirmar('+i+')"><div style="font-weight:800;color:'+(i===0?'var(--p)':'#e2e8f0')+'">'+(i===0?'🚀 Ruta más rápida':'🔀 Ruta alternativa '+i)+'</div><div style="font-size:0.8rem;color:#9fb3c8;margin-top:4px">'+km+' km · '+min+' min</div></div>';
+      html+='<div class="rep-cat" style="border:2px solid #2a3147;border-radius:12px;padding:14px;cursor:pointer;text-align:left;margin-bottom:10px" onclick="_elegirRutaAlternativaConfirmar('+i+')"><div style="font-weight:800;color:'+(i===0?'var(--p)':'#e2e8f0')+'">'+(i===0?'🚀 Ruta más rápida':'🔀 Ruta alternativa '+i)+'</div><div style="font-size:0.8rem;color:#9fb3c8;margin-top:4px">'+km+' km · '+min+' min <span id="rutaDesnivel'+i+'" style="color:#5c7690">· calculando desnivel...</span></div></div>';
     });
     document.getElementById('modalTitle').innerText='🗺️ Elige tu ruta';
     document.getElementById('modalContent').innerHTML=html;
@@ -5670,6 +5670,17 @@ function _elegirRutaAlternativa(routes){
     h('Encontré '+routes.length+' caminos: '+resumenVoz+'. Dime cuál prefieres, o tócala en la pantalla.');
     _rutaAlternativaEnEspera={routes:routes};
     window._resolverEleccionRuta=function(i){ _rutaAlternativaEnEspera=null; closeModal(); delete window._resolverEleccionRuta; resolve(i); };
+    // Desnivel de cada camino ANTES de elegir (como Komoot) — no bloquea las
+    // tarjetas (ya se ven con distancia/tiempo), se rellena solo cuando llega.
+    // Si el usuario ya eligió y cerró el modal, el span no existe: no pasa nada.
+    routes.forEach(function(r,i){
+      const pts=(r.geometry&&r.geometry.coordinates||[]).map(function(c){ return {lat:c[1],lon:c[0]}; });
+      calcularDesnivelDEM(pts).then(function(d){
+        const el=document.getElementById('rutaDesnivel'+i); if(!el) return;
+        el.style.color='#9fb3c8';
+        el.innerText=d ? ('· ↗'+d.subida+'m ↘'+d.bajada+'m') : '';
+      }).catch(function(){ const el=document.getElementById('rutaDesnivel'+i); if(el) el.innerText=''; });
+    });
   });
 }
 function _elegirRutaAlternativaConfirmar(i){ if(window._resolverEleccionRuta) window._resolverEleccionRuta(i); }

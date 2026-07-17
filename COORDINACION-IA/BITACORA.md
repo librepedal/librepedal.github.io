@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.92 — 2026-07-17 — Claude (sesión 2, desnivel en "elige tu ruta" — estilo Komoot)
+
+Protocolo de excelencia, segundo caso aplicado (ver
+[[workflow-buscar-mejoras-web]]): cuando OSRM devuelve más de un camino
+posible, la tarjeta de elección (`_elegirRutaAlternativa`) solo mostraba
+distancia y tiempo — el desnivel (lo que más le importa a un ciclista
+real para decidir entre dos caminos) recién se veía DESPUÉS de elegir,
+adentro del perfil de elevación. Komoot lo muestra ANTES, en la propia
+elección.
+
+**Fix:** cada tarjeta ahora se rellena con "↗Xm ↘Ym" apenas llega el
+dato — reutiliza `calcularDesnivelDEM()` (la misma función del perfil de
+elevación con DEM real, v6.60), sin bloquear la pantalla: las tarjetas
+aparecen igual de rápido que antes (distancia/tiempo al toque) y el
+desnivel se completa solo, en paralelo, por ruta.
+
+**Verificado con datos reales de elevación** (API en vivo, no
+simulados): una ruta llana por Santiago centro dio ↗40m ↘0m; una ruta
+hacia la precordillera (mismo punto de partida) dio ↗220m ↘63m — números
+correctos y plausibles para esa geografía real. Si el usuario elige antes
+de que llegue el dato, no rompe nada (el código revisa que el elemento
+siga existiendo).
+
+---
+
 ## v6.91 — 2026-07-17 — Claude (sesión 2, cierra tarea #88 con criterio validado)
 
 Inty pidió arrancar el "protocolo de excelencia" (estudiar apps líderes,

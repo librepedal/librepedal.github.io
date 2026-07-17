@@ -33,14 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — arrancó el "protocolo de excelencia" pedido por Inty
-(estudiar apps líderes, copiar su método, aplicarlo a cada función — ver
-[[workflow-buscar-mejoras-web]] en memoria). Primer caso cerrado: tarea
-#88 (Stats/Logros duplicados en Perfil), con un hallazgo extra: un paso
-del tutorial guiado apuntaba a un botón ya borrado, corregido. v6.91
-deployado (librepedal.cl → 6.91) y pusheado. Queda pendiente TODO el
-resto del protocolo (navegación estilo Komoot, rodadas estilo Strava
-Clubs, etc.) — recién empezó, no está resuelto.
+Última sesión: 2 — protocolo de excelencia, 2 casos aplicados (ver
+BITÁCORA v6.91/v6.92 y memoria [[workflow-buscar-mejoras-web]]): (1)
+cerró tarea #88 (Stats/Logros duplicados en Perfil). (2) desnivel (↗↘)
+en las tarjetas de "elige tu ruta" cuando hay caminos alternativos,
+estilo Komoot — verificado con datos reales de elevación. v6.92
+deployado (librepedal.cl → 6.92) y pusheado. Sigue el protocolo (Inty
+todavía no sale a andar) — próximo candidato: superficie/dificultad
+mostrada ANTES de elegir ruta, o rodadas grupales estilo Strava Clubs.
 ```
 
 ---
