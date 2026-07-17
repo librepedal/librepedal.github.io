@@ -12,15 +12,13 @@ entrada **v6.72** de `BITACORA.md`.
 
 - [x] Fusionar "Mis viajes"/"Rutas" (dos pantallas casi iguales) en una sola
   (`v-trips`), de paso arreglado un bug real (Bitácora sin sincronizar).
-- [ ] Reducir accesos duplicados a Stats (4 lugares) y Logros (3 lugares).
-  **OJO antes de tocar:** el `es-bottom` (HUD flotante sobre la esfera con
-  km/avisos/mic/puesto/viajes) es una decisión de diseño ya cerrada en v6.09
-  (ver más abajo, "la Esfera es el destino real de Inicio") — muestra
-  números en vivo, no es solo navegación duplicada. Los accesos en
-  `v-customize` (Perfil) sirven a quien usa el menú clásico sin pasar por
-  la esfera. Confirmar con Inty si de todas formas quiere que se reduzcan
-  (perdiendo el vistazo rápido) antes de borrar algo protegido por esa
-  decisión previa.
+- [x] **RESUELTO (v6.91).** Reducir accesos duplicados a Stats/Logros: en
+  `v-customize` (Perfil) quedaban 2 botones + el badge de Darma clickeable
+  arriba de todo, antes del contenido real de la pantalla. Se sacaron los 2
+  botones (Logros y Estadísticas ya viven solo en la Esfera) y el badge de
+  Darma pasó a ser solo dato (sin onclick), mismo criterio que el es-bottom.
+  De paso se corrigió un paso del tutorial guiado que apuntaba al botón
+  borrado.
 - [x] Renombrar "Compartir ubicación" del SOS vs. seguimiento en vivo (ya no
   comparten texto).
 - [x] **RESUELTO (v6.75, sesión 1).** Inty confirmó "sin redundancia... la
@@ -29,8 +27,28 @@ entrada **v6.72** de `BITACORA.md`.
   viajes pasaron a DATO puro (`<div class="es-dato">`, sin onclick), y 🔔 Avisos
   (notificación) + 🎤 Mic (acción) siguen accionables. Para ir a Stats/Logros/
   Viajes hay UN solo camino: la Esfera.
-- [ ] Revisar botones sobredimensionados en toda la app (pedido explícito,
-  aún sin auditar).
+- [x] **RESUELTO (revisado v6.90, sin cambios necesarios).** Botones
+  sobredimensionados: el CSS base (`.ab`, `.bg`) usa `min-height:44px` —
+  exactamente el estándar de accesibilidad táctil de Apple/Google, no es
+  "grande". Se revisó todo el archivo buscando overrides inline con padding
+  o font-size excesivos: solo apareció el botón "Estoy bien" de la alerta de
+  caída, que a propósito es grande (acción de emergencia, no debe fallar el
+  toque). No se encontró ninguna otra instancia real.
+
+## 🔍 Encontrado en el protocolo de excelencia (2026-07-17), sin arreglar — riesgo de hacerlo mal
+
+- [ ] **Progreso de Retos multi-dispositivo.** `calcularProgresoReto()` solo
+  suma `rutasLocales()` (rutas guardadas en ESTE celular) — si alguien
+  cambia de teléfono o reinstala, su progreso de un reto activo se ve en
+  cero aunque haya pedaleado los km reales (que sí están respaldados en la
+  nube, colección `routes`). Arreglarlo bien requiere sumar nube + local SIN
+  contar la misma ruta dos veces (una ruta puede existir local Y en la nube
+  a la vez, vinculada por `firebaseId` — pero no siempre está vinculada de
+  inmediato). El riesgo de un fix apurado es peor que el bug actual:
+  duplicar kilómetros y dar por cumplido un reto que no se cumplió de
+  verdad. Encontrado por Claude sesión 2 revisando `calcularProgresoReto`
+  (línea ~6799 de `index.html`) — no tocado a propósito, para hacerlo bien
+  con más tiempo/testing real, no a las apuradas.
 
 ## 🤝 ACUERDO DE COORDINACIÓN sesión 1 ↔ sesión 2 — PERMANENTE (actualizado 2026-07-13 por sesión 2)
 
