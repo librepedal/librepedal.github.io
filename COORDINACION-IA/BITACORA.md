@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.97 — 2026-07-17 — Claude (sesión 2, quita "Combinar todas en una" — no hacía lo que decía)
+
+Protocolo de excelencia, revisión del flujo "Ver todas en el mapa" en
+Mis Viajes (pendiente desde hace unas versiones). Encontrado: dos
+botones casi idénticos — "Ver todas en el mapa" (mapa dedicado, colores
+distintos por ruta, popup con fecha y distancia) y "Combinar todas en
+una" (`combineAllRoutes()`, dibujaba las mismas rutas en el mapa
+principal, todas del MISMO color, sin popups). El nombre "Combinar"
+prometía algo que nunca hacía — no las combinaba geométricamente, solo
+las dibujaba encima con menos información que el otro botón.
+
+**Fix:** se quitó el botón y la función completa (`combineAllRoutes()`),
+junto con su variable de estado (`combinedLines`) y el código que la
+reenganchaba al cambiar la capa del mapa (`toggleCapaMapa()`) —
+limpieza completa, no solo el botón, mismo criterio que la limpieza de
+`videoRiderMarker` de la auditoría (v6.89). "Ver todas en el mapa" queda
+como el único camino, que además es el mejor de los dos.
+
+Verificado en navegador: el botón y la función ya no existen en ningún
+lado, `toggleCapaMapa()` corre sin error tras la limpieza, sin
+referencias colgantes (comandos de voz, tutorial) apuntando a lo
+borrado.
+
+---
+
 ## v6.96 — 2026-07-17 — Claude (sesión 2, condición de carrera en seguimiento en vivo — seguir.html)
 
 Protocolo de excelencia, revisión de `seguir.html` (la página externa que ve

@@ -33,16 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — protocolo de excelencia, 6 casos aplicados (ver
-BITÁCORA v6.91-v6.96): 5 features en "elige tu ruta"/rodadas (#88
-cerrada, desnivel, avisos Waze, rodadas Strava Clubs, superficie), más
-(6) bug real de condición de carrera en seguir.html (posición perdida
-si Firestore mandaba un dato nuevo mientras el mapa aún cargaba).
-Revisado sin hallazgos: Taller MacGyver, hostales, Segmentos,
-Recomendación de rutas, onboarding, PWA. v6.96 deployado (librepedal.cl
-→ 6.96) y pusheado,
-todo verificado en navegador. Sigue el protocolo — candidato siguiente:
-revisar el flujo de "Ver todas en el mapa"/combinar rutas (v-trips).
+Última sesión: 2 — protocolo de excelencia, 7 casos aplicados (ver
+BITÁCORA v6.91-v6.97): 5 features en "elige tu ruta"/rodadas, (6) fix
+de condición de carrera en seguir.html, (7) quitado "Combinar todas en
+una" (no combinaba nada, prometía algo que no hacía — quedó solo "Ver
+todas en el mapa", el mejor de los dos). Revisado sin hallazgos: Taller
+MacGyver, hostales, Segmentos, Recomendación de rutas, onboarding, PWA.
+v6.97 deployado (librepedal.cl → 6.97) y pusheado, todo verificado en
+navegador. Sigue el protocolo.
 ```
 
 ---

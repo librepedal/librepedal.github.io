@@ -834,10 +834,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div id="trips-rutas-list" class="js-rutas-list"></div>
 <input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
 <button class="ab" style="margin-top:6px" onclick="document.getElementById('gpxFileInput').click()">📥Importar ruta (GPX de Strava, Wikiloc o Komoot)</button>
-<div class="quick-links" style="margin-top:6px">
-  <button class="ab sec" style="margin:0" onclick="showAllRoutesOnMap()">Ver todas en el mapa</button>
-  <button class="ab sec" style="margin:0" onclick="combineAllRoutes()">Combinar todas en una</button>
-</div>
+<button class="ab sec" style="margin-top:6px" onclick="showAllRoutesOnMap()">🗺️ Ver todas en el mapa</button>
 <div id="map-routes-all" style="margin-top:12px;display:none"><div id="map-all-routes"></div></div>
 <h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">📋 Viajes planificados</h4>
 <div id="trips-list"></div>
@@ -1142,7 +1139,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.96'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.97'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1358,7 +1355,7 @@ const panueloOptions = [
 ojosOptions.forEach(function(o){ o.c=o.iris; });
 peinadoOptions.forEach(function(p){ p.svg=(p.svgBack||'')+(p.svgSide||''); });
 
-let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null,sumVelDist:0},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[],combinedLines=[];
+let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null,sumVelDist:0},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[];
 let categoriaActual='todos', hostelTipoActual='todos';
 let trips=[], currentTrip=null, navMap=null, helmetMarker=null, routeLine=null;
 let addedDests=[], currentFilter='hostel', allHostels=[];
@@ -3917,29 +3914,6 @@ function cerrarVideoRuta(){
   document.getElementById('video-screen').classList.remove('active');
 }
 function showAllRoutesOnMap(){ const arr=rutasLocales().filter(function(d){return d.points&&d.points.length;}); if(!arr.length){ h("No tienes rutas todavía."); return; } cv('trips'); setTimeout(function(){ const mc=document.getElementById('map-routes-all'); if(mc) mc.style.display='block'; if(!mapAllRoutes){ mapAllRoutes=L.map('map-all-routes').setView([20,0],2); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAllRoutes); } mapAllRoutes.eachLayer(function(layer){ if(layer instanceof L.Polyline) mapAllRoutes.removeLayer(layer); }); const colors=['#fc4c02','#ff0055','#ffd700','#2ecc71','#9b59b6','#ff6600','#00ff88']; let ci=0; const allB=[]; arr.forEach(function(d){ const points=d.points.map(function(p){return [p.lat,p.lon];}); const pl=L.polyline(points,{color:colors[ci%colors.length],weight:4,opacity:0.8}).addTo(mapAllRoutes); pl.bindPopup('<b>'+new Date(d.startTime).toLocaleDateString()+'</b><br>'+(d.distance||0).toFixed(2)+' km'); allB.push.apply(allB,points); ci++; }); if(allB.length>0) mapAllRoutes.fitBounds(L.latLngBounds(allB),{padding:[50,50]}); mapAllRoutes.invalidateSize(); h(arr.length+" rutas en el mapa."); },300); }
-// Dibuja cada ruta como su PROPIA línea (nunca una sola polilínea continua): si se
-// concatenan todos los puntos de rutas distintas en una sola línea, queda una "línea
-// recta" fea uniendo el final de una ruta con el inicio de la siguiente aunque estén
-// en lugares totalmente distintos del mapa.
-function combineAllRoutes(){
-  const arr=rutasLocales().slice().sort(function(a,b){return (a.startTime||0)-(b.startTime||0);}).filter(function(d){return d.points&&d.points.length>1;});
-  if(arr.length===0){ h("No hay rutas para combinar."); return; }
-  cv('map');
-  setTimeout(function(){
-    if(crl){ mp.removeLayer(crl); crl=null; }
-    if(combinedLines){ combinedLines.forEach(function(l){ mp.removeLayer(l); }); }
-    combinedLines=[];
-    const allB=[];
-    arr.forEach(function(d){
-      const points=d.points.map(function(p){return [p.lat,p.lon];});
-      const pl=mlPolyline(points,{color:'#ff0055',weight:3,opacity:0.9}).addTo(mp);
-      combinedLines.push(pl);
-      allB.push.apply(allB,points);
-    });
-    if(allB.length>0) mp.fitBounds(mlLatLngBounds(allB.map(function(p){return {lat:p[0],lon:p[1]};})),{padding:[50,50]});
-    h("Junté tus "+arr.length+" rutas en el mapa.");
-  },300);
-}
 function hg(e){ h("La señal de GPS está inestable."); }
 function gd2(a,b,c,d){ const R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); }
 // Velocidad REAL por ventana (~10s): compara el centroide de la 1ª mitad de
@@ -4115,10 +4089,9 @@ function toggleCapaMapa(){
   try{ localStorage.setItem('lp_capa_mapa',capaMapaTipo); }catch(e){}
   mp.setStyle(_estiloDeCapa(capaMapaTipo));
   // setStyle() borra TODO lo agregado con addSource/addLayer (nuestras polilíneas
-  // mlPolyline) — hay que volver a agregar la ruta en curso Y las rutas combinadas.
+  // mlPolyline) — hay que volver a agregar la ruta en curso.
   mp.once('idle',function(){
     if(crl && crl._coords && crl._coords.length>1){ crl._map=null; crl.addTo(mp); }
-    if(combinedLines && combinedLines.length){ combinedLines.forEach(function(l){ if(l._coords && l._coords.length>1){ l._map=null; l.addTo(mp); } }); }
   });
   _actualizarBtnCapaMapa();
   h(capaMapaTipo==='topo' ? "Mapa topográfico: se ven senderos y caminos rurales." : capaMapaTipo==='sat' ? "Vista satélite: el terreno real desde el cielo." : "Volví al mapa de calles.");
