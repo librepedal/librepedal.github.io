@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.89'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.90'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1988,13 +1988,24 @@ function calcularGastos(){
    - hAmbiente(t): comentario ambiental (bromas, anécdotas, travieso): si Pistero está ocupado, se descarta sin más.
    - hCorta(t): corta lo que suene y habla ya (pasos del tutorial, urgencias). */
 let vozCola=[], vozHablando=false, vozTimerFin=null;
+// vozGen: "número de turno" de la voz. Cada frase nueva (o cada corte manual) lo
+// sube. Bug real reportado por Inty: "a veces habla la voz nueva y aparece la
+// antigua de una mujer" — pasaba porque pausar un audio con play() todavía
+// pendiente (pararVoz(), o hCorta() interrumpiendo con una frase nueva) hace que
+// ese play() RECHACE con AbortError; el .catch(fallback) de esa frase YA
+// cancelada disparaba igual la voz nativa (es-ES, mujer) por encima de la frase
+// nueva que ya iba sonando — sin que nada de eso dependiera de si la frase vieja
+// seguía siendo la vigente. Cada función de voz ahora guarda el número de turno
+// con el que nació y, antes de caer a la siguiente voz de respaldo, comprueba
+// que ese turno siga siendo el actual — si ya no lo es, se queda callada.
+let vozGen=0;
 let vozMejorada = localStorage.getItem('lp_vozneural')==='on'; // voz neuronal (Worker MeloTTS español) con fallback a la nativa
 let _vozNeuralAudio = null;
 let pisteroGenero = localStorage.getItem('lp_genero')||'l'; // 'l'=Pistero (Lorenzo) / 'c'=Pistera (Catalina)
 let VOCES_MANIFEST = null; // índice de frases fijas pre-generadas en voz chilena (Azure), se carga de voces/manifest.json
 (function(){ try{ fetch('voces/manifest.json').then(function(r){return r.ok?r.json():null;}).then(function(m){ VOCES_MANIFEST=m; }).catch(function(){}); }catch(e){} })();
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }
-function pararVoz(){ vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
+function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
 function h(t){
   mostrarBocadillo(t);
   if(!vozActiva) return;
@@ -2007,6 +2018,7 @@ function hAmbiente(t){ if(vozOcupada()||vozCola.length) return; h(t); }
 function hCorta(t){ pararVoz(); h(t); }
 function _durEstVoz(txt){ return Math.min(55000, Math.max(1800, txt.length*75)); }
 function _reproducirVoz(item){
+  const miGen=++vozGen; // turno de esta frase — ver nota junto a "let vozGen" más arriba
   vozHablando=true;
   const durEst=_durEstVoz(item.limpio);
   mostrarBocadillo(item.t, durEst+600);
@@ -2017,7 +2029,7 @@ function _reproducirVoz(item){
     vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso: cubre el fetch; se recalibra con la duración real
     // 1º frase fija con voz chilena pre-generada (Azure). Si no existe, 2º MeloTTS. Si falla, nativa.
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
-    if(_id){ _vozArchivo(item, durEst, _id); } else { _vozAzureRuntime(item, durEst); }
+    if(_id){ _vozArchivo(item, durEst, _id, miGen); } else { _vozAzureRuntime(item, durEst, miGen); }
     return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
@@ -2036,11 +2048,13 @@ function _vozNativaOWeb(item, durEst){
     speechSynthesis.speak(u);
   }catch(e){ clearTimeout(vozTimerFin); _vozSiguiente(); }
 }
-function _vozArchivo(item, durEst, id){
+function _vozArchivo(item, durEst, id, miGen){
   // Reproduce la frase fija ya grabada en voz chilena (Azure): voces/{genero}{id}.mp3.
   // Si el archivo no carga (404, red), cae a la voz chilena EN VIVO (no a la gringa).
   let cayo=false;
-  const fallback=function(){ if(cayo) return; cayo=true; _vozAzureRuntime(item, durEst); };
+  // miGen!==vozGen: esta frase ya no es la vigente (se cortó o ya empezó la
+  // siguiente) — no caer a la voz de respaldo por algo que ya nadie está esperando.
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
   try{
     const a=new Audio('voces/'+pisteroGenero+id+'.mp3');
     _vozNeuralAudio=a;
@@ -2051,13 +2065,13 @@ function _vozArchivo(item, durEst, id){
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
-function _vozAzureRuntime(item, durEst){
+function _vozAzureRuntime(item, durEst, miGen){
   // Voz chilena Azure EN VIVO para frases dinámicas (nombre, calles, números, chat).
   // Va por el Worker (/aztts, la llave está segura en el servidor). Si falla, voz nativa
   // (NO MeloTTS: esa es la "gringa" que no queremos). Cachea en Cloudflare, así frases
   // repetidas no vuelven a pegarle a Azure.
   let cayo=false;
-  const fallback=function(){ if(cayo) return; cayo=true; _vozNativaOWeb(item, durEst); };
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
     const pros=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
     const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&rate='+encodeURIComponent(pros.rate)+'&pitch='+encodeURIComponent(pros.pitch));
@@ -4603,14 +4617,49 @@ function _pisteroPanoramaCerca(){
 const SUPERFICIE_TIPOS={asfalto:'🛣️ Asfalto',ripio:'🪨 Ripio',tierra:'🟤 Tierra',mixto:'🔀 Mixto'};
 const DIFICULTAD_NIVELES={facil:'🟢 Fácil',media:'🟡 Media',dificil:'🔴 Difícil'};
 let reporteCatSel=null, reporteMarkers=[];
+let reporteMapa=null, reporteMapaCoords=null, reporteMapaMarker=null;
 function reportarEnRuta(){
   reporteCatSel=null;
+  // El mapa vive DENTRO del modal: cada vez que se abre, innerHTML destruye el
+  // contenedor viejo (y con él, el mapa de MapLibre que apuntaba adentro) — hay
+  // que soltar la referencia vieja o el próximo toggle intentaría dibujar sobre
+  // un mapa ya muerto.
+  reporteMapa=null; reporteMapaCoords=null; reporteMapaMarker=null;
   let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu dato queda público en el mapa de tu zona para ayudar a otros ciclistas. Elige qué reportas:</p><div id="repCats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   Object.keys(REPORTE_CATS).forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+k+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.8rem">'+c.e+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; });
-  html+='</div><div id="repSuperficieExtra" style="display:none;margin-top:10px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." maxlength="500" style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea><button class="ab" style="margin-top:8px" onclick="enviarReporte()">📍 Publicar en mi zona (+15 Darma)</button>';
+  html+='</div><div id="repSuperficieExtra" style="display:none;margin-top:10px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." maxlength="500" style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea>'
+    +'<button class="ab sec" type="button" style="margin-top:8px" id="btnReporteMapa" onclick="toggleReporteMapa()">📍 No estoy ahí: marcar el punto en el mapa</button>'
+    +'<div id="reporte-mapa-manual" style="display:none;margin-top:8px"><div id="reporte-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div><p id="reporteMapaEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto — no tiene que ser donde estás parado tú ahora.</p></div>'
+    +'<button class="ab" style="margin-top:8px" onclick="enviarReporte()">📍 Publicar en mi zona (+15 Darma)</button>';
   document.getElementById('modalTitle').innerText='🚴 Reportar en Ruta';
   document.getElementById('modalContent').innerHTML=html;
   document.getElementById('userModal').classList.add('on');
+}
+// Igual que "elegir en el mapa" del planificador de viaje y del punto manual del
+// diario (mismo patrón en toda la app): reportar algo que NO está donde tú estás
+// parado ahora mismo (ej. viste un control policial más adelante, o te avisaron
+// de un animal atropellado en otro tramo) — antes el reporte SIEMPRE usaba tu
+// propia posición GPS, sin ninguna forma de elegir otro punto.
+function toggleReporteMapa(){
+  const cont=document.getElementById('reporte-mapa-manual'), btn=document.getElementById('btnReporteMapa');
+  if(!cont||!btn) return;
+  const abrir=cont.style.display==='none';
+  cont.style.display=abrir?'block':'none';
+  btn.innerText=abrir?'✖️ Cerrar mapa':'📍 No estoy ahí: marcar el punto en el mapa';
+  if(!abrir) return;
+  if(!reporteMapa){
+    const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
+    reporteMapa=new maplibregl.Map({container:'reporte-mapa-manual-inner', style:LP_ESTILO_CALLES, center:yo?[yo.lon,yo.lat]:[-70.65,-33.45], zoom:yo?14:5});
+    reporteMapa.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    reporteMapa.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true,showAccuracyCircle:true}),'top-right');
+    reporteMapa.on('click', function(e){
+      reporteMapaCoords={lat:e.lngLat.lat, lon:e.lngLat.lng};
+      if(reporteMapaMarker) reporteMapaMarker.remove();
+      reporteMapaMarker=new maplibregl.Marker({color:'#fc4c02'}).setLngLat(e.lngLat).addTo(reporteMapa);
+      const est=document.getElementById('reporteMapaEstado'); if(est) est.innerText='📍 Punto marcado — se va a publicar ahí, no en tu ubicación actual.';
+    });
+  }
+  setTimeout(function(){ reporteMapa.resize(); },250);
 }
 function seleccionarCatReporte(k){ reporteCatSel=k; document.querySelectorAll('#repCats .rep-cat').forEach(function(el){ el.style.borderColor = el.getAttribute('data-k')===k ? REPORTE_CATS[k].c : '#2a3147'; el.style.background = el.getAttribute('data-k')===k ? 'rgba(255,255,255,0.05)' : 'transparent'; }); const extra=document.getElementById('repSuperficieExtra'); if(extra) extra.style.display=(k==='superficie')?'block':'none'; }
 let _enviandoReporte=false;
@@ -4618,8 +4667,12 @@ async function enviarReporte(){
   if(!reporteCatSel){ lpAviso('Elige primero una categoría'); return; }
   const text=document.getElementById('repText').value.trim();
   if(!text){ lpAviso('Escribe el dato que quieres compartir'); return; }
-  let loc=currentUserLocation || (us.la?{lat:us.la,lon:us.lo}:null);
-  if(!loc){ lpAviso('Necesito tu ubicación para ubicar el reporte. Activa el GPS.'); getCurrentLocation(); return; }
+  // Si marcaste un punto en el mapa (botón "No estoy ahí"), publica AHÍ — no en tu
+  // GPS. Antes el reporte siempre usaba tu ubicación actual, sin excepción: no había
+  // forma de avisar un control policial o un animal atropellado más adelante, solo
+  // lo que tuvieras justo debajo de la rueda en ese momento.
+  let loc=reporteMapaCoords || currentUserLocation || (us.la?{lat:us.la,lon:us.lo}:null);
+  if(!loc){ lpAviso('Necesito tu ubicación para ubicar el reporte. Activa el GPS, o marca el punto en el mapa.'); getCurrentLocation(); return; }
   if(_enviandoReporte) return; // evita duplicar el documento y el Darma con doble-tap
   _enviandoReporte=true;
   try{
@@ -4637,6 +4690,7 @@ async function enviarReporte(){
     }
     await db.collection('reportes').add(data);
     us.d+=15; au(); sincronizarStats();
+    reporteMapaCoords=null; reporteMapaMarker=null; // el modal se cierra igual; se limpia por prolijidad
     closeModal();
     h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
   }catch(err){ lpAviso('No se pudo enviar: '+err.message); }

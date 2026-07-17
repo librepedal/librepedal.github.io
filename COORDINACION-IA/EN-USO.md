@@ -33,14 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — auditoría rigurosa fin-a-fin (ver BITÁCORA v6.89): GPS,
-voz, background geo, botones/pantallas, reglas Firestore, correo expuesto
-(#80, verificado 0 riesgo activo), video 3D, formularios — todo revisado
-con verificación directa. 1 bug real encontrado y corregido (variable
-muerta en cerrarVideoRuta). v6.89 deployado (librepedal.cl → 6.89) y
-pusheado. No se encontró nada que explique "la app funciona mal" de forma
-reproducible — falta síntoma concreto de Inty para seguir con el mismo
-rigor en vez de auditar a ciegas.
+Última sesión: 2 — 2 bugs reales corregidos con síntoma concreto de Inty
+(ver BITÁCORA v6.90): (1) Reportar en Ruta ahora permite marcar el punto
+libremente en el mapa (mismo patrón que ya usa el planificador de viaje y
+el POI del diario), no solo tu GPS actual. (2) Condición de carrera de
+voz: interrumpir a Pistero (hCorta, avisos de navegación) podía disparar
+la voz nativa vieja encima de la frase nueva — arreglado con "vozGen"
+(número de turno). Ambos verificados en navegador con pruebas reales
+(no simuladas). v6.90 deployado (librepedal.cl → 6.90) y pusheado.
 ```
 
 ---

@@ -4,6 +4,54 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.90 — 2026-07-17 — Claude (sesión 2, 2 bugs reales con síntoma concreto de Inty)
+
+Inty dio 2 síntomas reproducibles (no a ciegas): "no he podido poner a la
+policía en el mapa" y "a veces habla la voz nueva y aparece la voz
+antigua de una mujer". Los dos tenían causa raíz real, encontrada leyendo
+el código de punta a punta (no adivinando) y verificada en navegador.
+
+**#1 — Reportar en Ruta SIEMPRE usaba tu GPS actual, sin excepción.**
+`enviarReporte()` tomaba `currentUserLocation` a la fuerza — no existía
+ninguna forma de publicar un reporte (policía, animal atropellado, etc.)
+en un punto que no fuera literalmente donde estabas parado en ese
+instante. El FAB "📍 REPORTAR" que se agregó en v6.86 llamaba a la MISMA
+función sin cambiar esto — seguía atado al GPS. Fix: se replicó el patrón
+que la app YA usa en otras 2 partes (elegir destino de viaje en el mapa,
+marcar un POI del diario en el mapa) — un mapa MapLibre inline dentro del
+mismo modal, con un botón "📍 No estoy ahí: marcar el punto en el mapa".
+`enviarReporte()` ahora usa `reporteMapaCoords || currentUserLocation`.
+Verificado en navegador: botón y contenedor se crean, el mapa se
+inicializa, reabrir el modal no crashea (el mapa viejo se suelta bien), y
+la lógica de "qué coordenada se usa" prioriza el punto marcado.
+
+**#2 — Condición de carrera real: interrumpir a Pistero (`hCorta`, usado
+por los avisos de navegación) podía disparar la voz nativa vieja (es-ES,
+mujer) ENCIMA de la frase nueva que ya iba sonando.** Causa: `pararVoz()`
+pausa el audio en curso — pero si ese audio todavía no había empezado a
+sonar de verdad (`play()` con la promesa pendiente), pausarlo hace que esa
+promesa RECHACE (comportamiento estándar del navegador), y el
+`.catch(fallback)` de la frase YA CANCELADA disparaba igual la voz nativa,
+sin enterarse de que ya no era la frase vigente. Pasaba justo en el peor
+momento: cuando Pistero te interrumpe para avisar un giro, que es
+exactamente cuando NO quieres que se pise con nada. Fix: se agregó
+`vozGen` (un número de turno que sube en cada frase nueva y en cada
+corte); cada función de voz con respaldo (`_vozArchivo`, `_vozAzureRuntime`)
+ahora comprueba que su turno siga vigente antes de caer a la siguiente
+voz de respaldo. Verificado en navegador con una prueba real (no
+simulada): se disparó una frase, se cortó de inmediato con `hCorta()`
+(mismo patrón que un aviso de navegación), y se confirmó que la voz
+nativa YA NO suena para la frase cancelada — y por separado, que el
+respaldo real (cuando el audio de verdad falla, sin ningún corte de por
+medio) sigue funcionando igual que siempre.
+
+**De paso, encontrado y anotado (no tocado, es código muerto sin riesgo):**
+`_vozNeural()` — la ruta vieja de MeloTTS — ya no la llama nadie desde
+que existe la voz chilena. Queda ahí, sin uso; se puede borrar en una
+pasada de limpieza sin apuro.
+
+---
+
 ## v6.89 — 2026-07-17 — Claude (sesión 2, auditoría rigurosa fin-a-fin pedida por Inty)
 
 Inty: "revisa todo, si encuentro errores o que no esté haciendo lo que
