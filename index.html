@@ -1142,7 +1142,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.92'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='6.93'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5656,12 +5656,31 @@ function _navRecentrar(){
 // teléfono manejando o pedaleando). Ahora también se anuncia por voz al
 // abrirse y se puede elegir hablando. =====
 let _rutaAlternativaEnEspera=null; // null, o {routes:[...]} mientras el selector espera respuesta
+// Reportes vigentes de la comunidad (peligros, tacos, superficie) que caen cerca
+// del trazado de un camino candidato — como Waze, que te avisa qué hay en la ruta
+// ANTES de tomarla, no después de chocar con eso. Corredor de 150m: bastante para
+// no perderse reportes en la vereda de enfrente, no tanto como para traer los de
+// otra calle paralela. Se muestrea el trazado (no cada punto) porque una ruta
+// larga puede traer cientos de coordenadas y esto corre por cada reporte vigente.
+function _reportesEnRuta(coords){
+  if(!coords || !coords.length || !reportesAvisoRelevantes || !reportesAvisoRelevantes.length) return [];
+  const CORREDOR_M=150, paso=Math.max(1,Math.floor(coords.length/60));
+  return reportesAvisoRelevantes.filter(function(r){
+    for(let i=0;i<coords.length;i+=paso){
+      if(calculateDistance(r.lat,r.lon,coords[i][1],coords[i][0])<=CORREDOR_M) return true;
+    }
+    return false;
+  });
+}
 function _elegirRutaAlternativa(routes){
   return new Promise(function(resolve){
     let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Encontré más de un camino posible, elige el que prefieras (o dime "la más rápida" / "la alternativa"):</p>';
     routes.forEach(function(r,i){
       const km=(r.distance/1000).toFixed(1), min=Math.round(r.duration/60);
-      html+='<div class="rep-cat" style="border:2px solid #2a3147;border-radius:12px;padding:14px;cursor:pointer;text-align:left;margin-bottom:10px" onclick="_elegirRutaAlternativaConfirmar('+i+')"><div style="font-weight:800;color:'+(i===0?'var(--p)':'#e2e8f0')+'">'+(i===0?'🚀 Ruta más rápida':'🔀 Ruta alternativa '+i)+'</div><div style="font-size:0.8rem;color:#9fb3c8;margin-top:4px">'+km+' km · '+min+' min <span id="rutaDesnivel'+i+'" style="color:#5c7690">· calculando desnivel...</span></div></div>';
+      const coords=(r.geometry&&r.geometry.coordinates)||[];
+      const repsRuta=_reportesEnRuta(coords);
+      const avisoReportes=repsRuta.length ? ('<div style="font-size:0.72rem;color:#f59e0b;margin-top:3px">⚠️ '+repsRuta.length+' aviso'+(repsRuta.length>1?'s':'')+' de la comunidad en el camino: '+repsRuta.slice(0,3).map(function(x){ const c=REPORTE_CATS[x.cat]; return c?c.e+' '+c.l:''; }).join(', ')+'</div>') : '';
+      html+='<div class="rep-cat" style="border:2px solid #2a3147;border-radius:12px;padding:14px;cursor:pointer;text-align:left;margin-bottom:10px" onclick="_elegirRutaAlternativaConfirmar('+i+')"><div style="font-weight:800;color:'+(i===0?'var(--p)':'#e2e8f0')+'">'+(i===0?'🚀 Ruta más rápida':'🔀 Ruta alternativa '+i)+'</div><div style="font-size:0.8rem;color:#9fb3c8;margin-top:4px">'+km+' km · '+min+' min <span id="rutaDesnivel'+i+'" style="color:#5c7690">· calculando desnivel...</span></div>'+avisoReportes+'</div>';
     });
     document.getElementById('modalTitle').innerText='🗺️ Elige tu ruta';
     document.getElementById('modalContent').innerHTML=html;

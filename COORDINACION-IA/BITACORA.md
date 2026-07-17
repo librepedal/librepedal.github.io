@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.93 — 2026-07-17 — Claude (sesión 2, avisos de la comunidad en "elige tu ruta" — estilo Waze)
+
+Protocolo de excelencia, tercer caso (ver [[workflow-buscar-mejoras-web]]):
+cuando hay más de un camino posible, ahora se muestra si alguno de ellos
+pasa cerca de un reporte vigente de la comunidad (control policial,
+animal en la vía, peligro, etc.) — como hace Waze antes de que elijas
+la ruta, no después de toparte con eso.
+
+**Cómo:** nueva función `_reportesEnRuta(coords)` — revisa
+`reportesAvisoRelevantes` (el mismo array ya filtrado por vigencia que
+usa `avisarReportesCercanos()` para los avisos por voz mientras
+pedaleas) contra un corredor de 150m alrededor del trazado de cada
+camino candidato. Si algo cae cerca, la tarjeta muestra "⚠️ N avisos de
+la comunidad en el camino: 👮 Control policial, 🦔 Animal en la vía".
+Corre en memoria (sin red), no retrasa nada.
+
+Verificado en navegador con reportes simulados: una ruta sin nada cerca
+no muestra aviso; la otra, con 2 reportes plantados exactamente sobre su
+trazado, mostró la advertencia con las categorías correctas. Se probó
+también con un reporte fuera del corredor (mal ubicado a propósito en la
+primera prueba) para confirmar que el filtro de distancia realmente
+descarta lo que no corresponde.
+
+---
+
 ## v6.92 — 2026-07-17 — Claude (sesión 2, desnivel en "elige tu ruta" — estilo Komoot)
 
 Protocolo de excelencia, segundo caso aplicado (ver

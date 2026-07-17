@@ -33,14 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — protocolo de excelencia, 2 casos aplicados (ver
-BITÁCORA v6.91/v6.92 y memoria [[workflow-buscar-mejoras-web]]): (1)
-cerró tarea #88 (Stats/Logros duplicados en Perfil). (2) desnivel (↗↘)
-en las tarjetas de "elige tu ruta" cuando hay caminos alternativos,
-estilo Komoot — verificado con datos reales de elevación. v6.92
-deployado (librepedal.cl → 6.92) y pusheado. Sigue el protocolo (Inty
-todavía no sale a andar) — próximo candidato: superficie/dificultad
-mostrada ANTES de elegir ruta, o rodadas grupales estilo Strava Clubs.
+Última sesión: 2 — protocolo de excelencia, 3 casos aplicados (ver
+BITÁCORA v6.91/v6.92/v6.93): (1) cerró tarea #88 (Stats/Logros
+duplicados en Perfil). (2) desnivel en "elige tu ruta" estilo Komoot.
+(3) avisos de la comunidad (control, animal, peligro) en cada ruta
+candidata ANTES de elegir, estilo Waze. v6.93 deployado (librepedal.cl
+→ 6.93) y pusheado, todo verificado en navegador. Sigue el protocolo —
+próximo candidato natural: rodadas grupales con planificación
+colaborativa (estilo Strava Clubs) o superficie/dificultad por tramo.
 ```
 
 ---
