@@ -1139,7 +1139,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='6.99'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.00'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2915,12 +2915,21 @@ function cadenaClick(v){
     const buf=ac.createBuffer(1,len,ac.sampleRate); const d=buf.getChannelData(0);
     for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
     const src=ac.createBufferSource(); src.buffer=buf;
-    // Dos resonancias metálicas (le dan el timbre de metal, no de ruido plano)
+    // Queja real de Inty: "genérico y muy fuerte". Causa 1 (genérico): solo tenía dos
+    // resonancias agudas (2.9-5.7kHz) — sonaba a "tic" fino de sintetizador, sin el
+    // cuerpo grave metálico de un trinquete real. Se agrega bp0 (grave) para el "clac"
+    // mecánico. Causa 2 (fuerte): bp1+bp2 se sumaban en el mismo nodo de ganancia ANTES
+    // de aplicar v — dos resonancias sumadas suenan más fuerte de lo que v sugiere. Se
+    // compensa con un factor fijo (*0.55) en vez de subir v en cada lugar que lo llama.
+    const bp0=ac.createBiquadFilter(); bp0.type='bandpass'; bp0.frequency.value=950+Math.random()*250; bp0.Q.value=3.5;
     const bp1=ac.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value=2900+Math.random()*500; bp1.Q.value=6.5;
-    const bp2=ac.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value=5000+Math.random()*700; bp2.Q.value=10;
-    const g=ac.createGain(); g.gain.value=(v==null?0.05:v);
+    const bp2=ac.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value=5000+Math.random()*700; bp2.Q.value=7;
+    const g=ac.createGain(); g.gain.value=(v==null?0.05:v)*0.55;
+    const gBody=ac.createGain(); gBody.gain.value=0.5; // el grave aporta cuerpo, no debe tapar el "tic"
     const send=ac.createGain(); send.gain.value=0.07; // pizca de reverb = "alta calidad", sin embarrar
-    src.connect(bp1); src.connect(bp2); bp1.connect(g); bp2.connect(g); g.connect(ac.destination); g.connect(send); send.connect(verb);
+    src.connect(bp0); src.connect(bp1); src.connect(bp2);
+    bp0.connect(gBody); gBody.connect(g); bp1.connect(g); bp2.connect(g);
+    g.connect(ac.destination); g.connect(send); send.connect(verb);
     src.start(t0);
   }catch(e){}
 }
@@ -3167,7 +3176,7 @@ const lpBackgroundGeo = (function(){
 // manual; ahora el único control de privacidad es el modo fantasma). El GPS arranca
 // solo; el micrófono se "precalienta" para no sorprender la primera vez que se use.
 function solicitarPermisosEsenciales(){
-  if(!ig) toggleGPS();
+  if(!ig) toggleGPS(true); // silencioso: recién se abrió la app, no es un viaje que el usuario decidió empezar
   if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
     navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
       stream.getTracks().forEach(function(t){ t.stop(); });
@@ -3179,7 +3188,13 @@ function _actualizarBtnGPS(){
   if(ig){ btn.innerText='⏹️ Detener GPS'; btn.style.background='#dc2626'; btn.style.color='#fff'; }
   else { btn.innerText='📍 Iniciar GPS'; btn.style.background='#10b981'; btn.style.color='#000'; }
 }
-function toggleGPS(){
+// silencioso: cuando el GPS se prende SOLO (al iniciar sesión, para grabar sin que
+// tengas que acordarte de apretar un botón — ver solicitarPermisosEsenciales), no
+// tiene sentido que Pistero anuncie "estoy grabando tu viaje" ni te recuerde revisar
+// la presión de las ruedas apenas abres la app: quejas reales de Inty, esos avisos
+// solo deberían sonar cuando el viaje arranca de verdad (tocas el botón, o pides una
+// ruta). El GPS sigue grabando igual en silencio; solo se calla el aviso inmediato.
+function toggleGPS(silencioso){
   const btn=document.getElementById('btnGPSLibre');
   if(!ig){
     rutaDocId=null; puntosGuardados=0; spAnterior=0;
@@ -3199,16 +3214,16 @@ function toggleGPS(){
       lpBackgroundGeo.start(); ig=true;
       if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
-      lpWakeLock.enable();
+      lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
-      h("GPS activado. Sigo grabando tu ruta aunque apagues la pantalla.");
+      if(!silencioso) h("GPS activado. Sigo grabando tu ruta aunque apagues la pantalla.");
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
       ig=true; if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
-      lpWakeLock.enable();
+      lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
-      h("GPS activado. Estoy grabando tu ruta.");
+      if(!silencioso) h("GPS activado. Estoy grabando tu ruta.");
     } else { lpAviso("Tu dispositivo no soporta GPS"); }
   } else {
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
@@ -8224,7 +8239,7 @@ const lpWakeLock = (function(){
     if(wanted && document.visibilityState==='visible' && !lock) request();
   });
   return {
-    enable: function(){ wanted=true; request(); lpSalud.start(); },
+    enable: function(silencioso){ wanted=true; request(); lpSalud.start(silencioso); },
     disable: function(){ wanted=false; if(lock){ lock.release().catch(function(){}); lock=null; } lpSalud.stop(); }
   };
 })();
@@ -8247,10 +8262,15 @@ const lpSalud = (function(){
     recurrentes.forEach(function(r){ if(mins % r.cada === 0 && typeof h==='function') h(r.msg); });
   }
   return {
-    start:function(){
+    start:function(silencioso){
       if(timer || !activo()) return; mins=0;
-      // Chequeo de la bici al partir (una sola vez, sin pisar el aviso de GPS).
-      setTimeout(function(){ if(activo() && typeof h==='function') h("Antes de salir: revisa presión de neumáticos, frenos, cadena y luces. ¡Buen viaje!"); }, 6500);
+      // Chequeo de la bici al partir (una sola vez, sin pisar el aviso de GPS) —
+      // pero SOLO si el viaje arrancó de verdad (silencioso=falsy). Si el GPS se
+      // prendió solo al abrir la app, este aviso no tiene sentido todavía: quejas
+      // reales de Inty, sonaba como si ya hubieras salido a pedalear sin haberlo
+      // decidido. Los recordatorios recurrentes (hidratación, etc.) sí siguen
+      // corriendo igual — esos ya tardan varios minutos en aparecer.
+      if(!silencioso) setTimeout(function(){ if(activo() && typeof h==='function') h("Antes de salir: revisa presión de neumáticos, frenos, cadena y luces. ¡Buen viaje!"); }, 6500);
       timer=setInterval(tick, 60000);
     },
     stop:function(){ if(timer){ clearInterval(timer); timer=null; } mins=0; }

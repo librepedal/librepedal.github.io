@@ -33,16 +33,16 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — (1) Inty conectó un token de API de Sentry (ver
-PENDIENTES.md, "Monitoreo real con Sentry") — triaje de 28 issues, 1 bug
-real corregido (v6.98: frame() del video 3D con puntos GPS corruptos).
-(2) v6.99: la Esfera (destino real de "Inicio" desde v6.09) le faltaban
-"Viaje rápido" y "Mapa" — las 2 acciones más básicas de un app de
-ciclismo, hallazgo real de Inty. Agregados primeros en la lista, antes
-que Ajustes/Música/Novedades. Antes de esto: protocolo de excelencia, 7
-casos aplicados (ver BITÁCORA v6.91-v6.97).
-v6.97 deployado (librepedal.cl → 6.97) y pusheado, todo verificado en
-navegador. Sigue el protocolo.
+Última sesión: 2 — v7.00, dos quejas UX reales de Inty:
+(1) avisos de voz al abrir la app ("estoy grabando tu viaje" y revisión
+de la bici) se disparaban con el auto-arranque silencioso del GPS al
+loguearse, no con un viaje real → parámetro `silencioso` agregado a
+toggleGPS/lpWakeLock.enable/lpSalud.start (verificado en navegador).
+(2) sonido de cadena "genérico y muy fuerte" → cadenaClick(): agregada
+resonancia grave (cuerpo mecánico) + compensación de volumen (bp1+bp2 se
+sumaban antes de aplicar v; -31.3% verificado numéricamente).
+v7.00 deployado (librepedal.cl + www → 7.00 verificado por curl) y
+pusheado. Sigue el protocolo.
 ```
 
 ---

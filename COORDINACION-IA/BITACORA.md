@@ -4,6 +4,54 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.00 — 2026-07-18 — Claude (sesión 2, dos quejas UX reales de Inty: avisos de voz al abrir la app + sonido de cadena)
+
+**Fix 1 — avisos de voz innecesarios al abrir la app:** Inty reportó que al
+iniciar sesión, Pistero dice "estoy grabando tu viaje" y recomienda revisar
+la presión de las ruedas — **antes de que el usuario haya decidido salir a
+pedalear**. Causa raíz: `solicitarPermisosEsenciales()` (llamada automática
+desde `reg()` tras el login) enciende el GPS solo (`toggleGPS()`) para
+grabar en segundo plano sin que el usuario tenga que tocar un botón — pero
+eso disparaba en cascada `lpWakeLock.enable()` → `lpSalud.start()`, que
+avisan por voz como si fuera un viaje real recién iniciado.
+
+**Fix:** parámetro `silencioso` agregado a toda la cadena
+(`toggleGPS(silencioso)` → `lpWakeLock.enable(silencioso)` →
+`lpSalud.start(silencioso)`). El GPS se sigue prendiendo solo igual (nada
+cambia en la grabación real), pero cuando el arranque es automático
+(`solicitarPermisosEsenciales`) no suena ni el aviso de "GPS activado..."
+ni el chequeo de la bici. El botón manual "📍 GPS" y el arranque real de
+navegación (`calculateAndStartNavigation`) siguen llamando sin ese
+parámetro, así que anuncian normal — solo se calló el disparo automático.
+Verificado en navegador mockeando `h()` para capturar qué se dice en cada
+camino: `{"silencioso":[],"manual":["GPS activado. Estoy grabando tu
+ruta."]}` — confirma que el camino silencioso no dice nada y el manual
+sigue igual que antes.
+
+**Fix 2 — sonido de cadena "genérico y muy fuerte":** Inty se quejó
+directo del sonido del trinquete (`cadenaClick`, usado en el loading y al
+arrastrar la esfera). Dos causas reales, no una: (a) las dos resonancias
+agudas (`bp1` 2.9kHz, `bp2` 5kHz) se sumaban en el mismo nodo de ganancia
+ANTES de aplicar el volumen `v` — sonaba más fuerte de lo que el número
+sugería; (b) solo tenía frecuencias agudas, sin cuerpo grave, por eso
+sonaba genérico/plano en vez de un "clac" mecánico real.
+
+**Fix:** se agregó `bp0` (resonancia grave, 950-1200Hz) para el cuerpo
+metálico, y se compensó el volumen total con un factor fijo (`*0.55`) en
+vez de subirlo en cada lugar que llama a `cadenaClick`. Verificado
+numéricamente (no se puede medir audio real en este sandbox): se simuló
+el grafo completo de Web Audio API con nodos mock que propagan amplitud
+real, comparando la función vieja vs la nueva para los mismos valores de
+`v` que usa la app en producción (`0.07`, `0.5`, `0.4`, `0.0475`) — los 4
+dan una reducción consistente de **-31.3%** en la amplitud que llega al
+parlante.
+
+Ambos fixes, syntax-check limpio (`node -e` sobre los `<script>`
+extraídos), deployados (librepedal.cl y www → 7.00 verificado por curl) y
+pusheados.
+
+---
+
 ## v6.99 — 2026-07-18 — Claude (sesión 2, "Viaje rápido" y "Mapa" faltaban en la Esfera)
 
 Hallazgo real de Inty, revisando la arquitectura de la esfera (no requirió
