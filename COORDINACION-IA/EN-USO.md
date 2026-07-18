@@ -33,6 +33,19 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
+Última sesión: 1 (voz), 2026-07-18 — bus de audio con PRIORIDAD (commit 5bab3fd):
+los avisos ya no se pisan (queja real de Inty). 4 niveles ambiente<info<navegación
+<seguridad, función decidirVoz + _cortarActual (interrumpe sin borrar la cola) +
+_vozSiguiente saca el de más prioridad. Caída/SOS → hUrgente. Verificado con
+tests/voz-prioridad.test.mjs (12/12) y en la app en vivo (cero errores de consola).
+FALTA: confirmar el feel final en teléfono real + DEPLOY (no desplegado aún).
+También rescaté antes cambios sin commitear (commit 45c6ae9: fix zoom móvil 16px +
+botón planificador) que estaban sueltos y se podían perder.
+OJO sesión 2: si tocas navegación, `hCorta` ahora es prioridad NAV (no corta todo);
+usa `hUrgente()` para seguridad y `hAmbiente()` para relleno.
+
+--- candado anterior ---
+LIBRE
 Última sesión: 2 — v7.00, dos quejas UX reales de Inty:
 (1) avisos de voz al abrir la app ("estoy grabando tu viaje" y revisión
 de la bici) se disparaban con el auto-arranque silencioso del GPS al
