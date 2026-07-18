@@ -4,6 +4,32 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v6.99 — 2026-07-18 — Claude (sesión 2, "Viaje rápido" y "Mapa" faltaban en la Esfera)
+
+Hallazgo real de Inty, revisando la arquitectura de la esfera (no requirió
+capturas de pantalla — este era un problema de estructura, no visual):
+la esfera tenía 10 íconos (Mis viajes, Bitácora, Taller, Guía, Stats,
+Logros, Música, Novedades, Ajustes, SOS) pero **le faltaban las dos
+acciones más básicas de un app de ciclismo: empezar a pedalear y ver el
+mapa**. Como la esfera es el destino real de "Inicio" en toda la app
+desde v6.09, esto significaba que para lo más elemental había que tocar
+"☰ Menú clásico" primero — justo lo contrario del punto de tener una
+esfera de accesos directos.
+
+**Fix:** se agregaron dos íconos nuevos, primeros en la lista (antes que
+Mis viajes): **"Viaje rápido"** (→ `v-dash`, donde vive el buscador de
+destino + "Iniciar navegación") y **"Mapa"** (→ `v-map`, el mapa
+comunitario). Iconografía nueva en el mismo estilo de línea que ya usa
+el resto (`_ICO()`, trazo 1.7, `currentColor`) — un ícono de "play" para
+viaje rápido, un pin de ubicación para mapa.
+
+Verificado en navegador: la esfera se construye bien con 12 íconos (antes
+10), ambos nuevos tienen SVG válido, y tocarlos de verdad abre `v-dash` y
+`v-map` respectivamente (simulado el evento de click real que usa
+`construirEsfera()`, no solo revisando el arreglo de datos).
+
+---
+
 ## v6.98 — 2026-07-18 — Claude (sesión 2, primera vez con acceso real a Sentry — bug real de producción encontrado y corregido)
 
 **Nuevo:** Inty conectó un token de API de Sentry (org `librepedal-gs`, proyecto

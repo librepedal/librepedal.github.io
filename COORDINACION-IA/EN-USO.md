@@ -33,14 +33,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 2 — Inty conectó un token de API de Sentry (ver
-PENDIENTES.md, sección "Monitoreo real con Sentry"): primera vez que se
-pueden ver errores REALES de producción en vez de solo simular. Triaje
-de 28 issues sin resolver: 7 eran artefactos de pruebas (limpiados), 1
-bug real corregido y desplegado (v6.98: frame() del video 3D crasheaba
-con puntos de ruta con lat/lon corrupto), varios reales quedan
-documentados para la próxima sesión. Antes de esto: protocolo de
-excelencia, 7 casos aplicados (ver BITÁCORA v6.91-v6.97).
+Última sesión: 2 — (1) Inty conectó un token de API de Sentry (ver
+PENDIENTES.md, "Monitoreo real con Sentry") — triaje de 28 issues, 1 bug
+real corregido (v6.98: frame() del video 3D con puntos GPS corruptos).
+(2) v6.99: la Esfera (destino real de "Inicio" desde v6.09) le faltaban
+"Viaje rápido" y "Mapa" — las 2 acciones más básicas de un app de
+ciclismo, hallazgo real de Inty. Agregados primeros en la lista, antes
+que Ajustes/Música/Novedades. Antes de esto: protocolo de excelencia, 7
+casos aplicados (ver BITÁCORA v6.91-v6.97).
 v6.97 deployado (librepedal.cl → 6.97) y pusheado, todo verificado en
 navegador. Sigue el protocolo.
 ```
