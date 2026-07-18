@@ -2468,7 +2468,8 @@ function obtenerFraseUnica(categoria){
   const usaArq=!!(arqPool && arqPool.length);
   const pool = usaArq ? arqPool : poolPais(categoria);
   const clave = usaArq ? (categoria+'@'+arqId) : categoria; // repeticiones separadas por pool
-  const usadas = frasesUsadas[clave]||[];
+  if(!frasesUsadas[clave]) frasesUsadas[clave]=[]; // claves de arquetipo (categoria@arqId) no venian pre-inicializadas -> .push crasheaba (bug real Sentry)
+  const usadas = frasesUsadas[clave];
   const disp = pool.filter(function(_,i){return usadas.indexOf(i)===-1;});
   let frase;
   if(disp.length===0){ frasesUsadas[clave]=[]; const idx=Math.floor(Math.random()*pool.length); frasesUsadas[clave].push(idx); frase=pool[idx]; }

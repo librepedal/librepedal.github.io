@@ -33,6 +33,15 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
+Última sesión: 1 (voz), 2026-07-19 — fix crash real de Sentry en obtenerFraseUnica:
+claves de arquetipo (categoria@arqId) no venían pre-inicializadas en frasesUsadas ->
+.push() de undefined crasheaba la 1a vez que se usaba una frase de arquetipo. Ahora
+se inicializa a [] antes del push. Verificado en navegador (reproduje el crash exacto
+'reading push' con la lógica vieja + la función arreglada devuelve frase y no crashea).
+FALTA: deploy. Sentry issues 7611282094 / 7613232824 deberían dejar de aparecer.
+
+--- candado anterior ---
+LIBRE
 Última sesión: 1 (voz), 2026-07-18 — voz chilena ENCENDIDA por defecto (arregla
 "volvió la voz antigua"): antes vozMejorada arrancaba off y al limpiar localStorage
 caía a la nativa gringa. Ahora default on salvo que el usuario la apague. Worker de
