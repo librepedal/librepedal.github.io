@@ -1999,27 +1999,46 @@ let vozCola=[], vozHablando=false, vozTimerFin=null;
 // con el que nació y, antes de caer a la siguiente voz de respaldo, comprueba
 // que ese turno siga siendo el actual — si ya no lo es, se queda callada.
 let vozGen=0;
+// Prioridad de voz: los avisos NO se pisan entre sí. Lógica probada en tests/voz-prioridad.test.mjs.
+// Niveles (mayor = más importante): ambiente < info < navegación < seguridad.
+const PRIO_VOZ = { AMBIENTE:1, INFO:2, NAV:3, SEGURIDAD:4 };
+let vozPrioActual = 0; // prioridad de lo que suena AHORA (0 = nada)
+function decidirVoz(actualPrio, nuevaPrio){
+  if(!(actualPrio>0)) return 'interrumpe';            // silencio -> habla ya
+  if(nuevaPrio===PRIO_VOZ.AMBIENTE) return 'descarta'; // ambiental nunca espera ni pisa
+  if(nuevaPrio>actualPrio) return 'interrumpe';        // más importante -> corta e impone
+  return 'encola';                                    // igual o menor -> espera turno
+}
 let vozMejorada = localStorage.getItem('lp_vozneural')==='on'; // voz neuronal (Worker MeloTTS español) con fallback a la nativa
 let _vozNeuralAudio = null;
 let pisteroGenero = localStorage.getItem('lp_genero')||'l'; // 'l'=Pistero (Lorenzo) / 'c'=Pistera (Catalina)
 let VOCES_MANIFEST = null; // índice de frases fijas pre-generadas en voz chilena (Azure), se carga de voces/manifest.json
 (function(){ try{ fetch('voces/manifest.json').then(function(r){return r.ok?r.json():null;}).then(function(m){ VOCES_MANIFEST=m; }).catch(function(){}); }catch(e){} })();
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }
-function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
-function h(t){
+function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
+// Como pararVoz pero SIN borrar la cola: para cuando algo más importante interrumpe pero lo pendiente debe seguir sonando después.
+function _cortarActual(){ vozGen++; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} }
+function h(t, prio){
+  prio = prio || PRIO_VOZ.INFO;
   mostrarBocadillo(t);
   if(!vozActiva) return;
   const limpio = limpiarParaVoz(t);
   if(!limpio) return;
-  if(vozHablando){ if(vozCola.length<3) vozCola.push({t:t,limpio:limpio}); return; }
-  _reproducirVoz({t:t,limpio:limpio});
+  const item = {t:t, limpio:limpio, prio:prio};
+  const q = decidirVoz(vozPrioActual, prio);
+  if(q==='descarta') return;                              // ambiental con algo sonando: no molesta
+  if(q==='encola'){ if(vozCola.length<4) vozCola.push(item); return; } // igual/menor: espera su turno
+  if(vozHablando) _cortarActual();                        // más importante: corta lo actual (sin perder la cola) y habla ya
+  _reproducirVoz(item);
 }
-function hAmbiente(t){ if(vozOcupada()||vozCola.length) return; h(t); }
-function hCorta(t){ pararVoz(); h(t); }
+function hAmbiente(t){ if(typeof micOn!=='undefined'&&micOn) return; h(t, PRIO_VOZ.AMBIENTE); } // broma/anécdota: calla si te está escuchando; nunca pisa nada
+function hCorta(t){ h(t, PRIO_VOZ.NAV); }        // navegación/tutorial: corta lo menos importante, pero NO pisa seguridad ni otro giro
+function hUrgente(t){ h(t, PRIO_VOZ.SEGURIDAD); } // caída/SOS: manda sobre todo
 function _durEstVoz(txt){ return Math.min(55000, Math.max(1800, txt.length*75)); }
 function _reproducirVoz(item){
   const miGen=++vozGen; // turno de esta frase — ver nota junto a "let vozGen" más arriba
   vozHablando=true;
+  vozPrioActual = item.prio || PRIO_VOZ.INFO; // qué tan importante es lo que suena ahora
   const durEst=_durEstVoz(item.limpio);
   mostrarBocadillo(item.t, durEst+600);
   _pisteroHabla(durEst);
@@ -2111,8 +2130,11 @@ function _vozNeural(item, durEst){
     .catch(function(){ clearTimeout(to); fallback(); });
 }
 function _vozSiguiente(){
-  vozHablando=false;
-  const sig=vozCola.shift();
+  vozHablando=false; vozPrioActual=0;
+  // saca el de MÁS prioridad (no el primero): un aviso importante no espera detrás de uno menor
+  let idx=-1, mejor=-1;
+  for(let i=0;i<vozCola.length;i++){ const p=vozCola[i].prio||PRIO_VOZ.INFO; if(p>mejor){ mejor=p; idx=i; } }
+  const sig = idx>=0 ? vozCola.splice(idx,1)[0] : null;
   if(sig){ vozTimerFin=setTimeout(function(){ _reproducirVoz(sig); },350); } // pausa natural entre frases
   else { _pisteroCalla(); }
 }
@@ -6502,7 +6524,7 @@ function mostrarAlertaCaida(){
   document.getElementById('crashCancelBtn').onclick=cancelarAlertaCaida;
   try{ if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]); }catch(e){}
   _sonidoAlarmaCaida();
-  if(typeof h==='function') h('Detecté un golpe fuerte. Toca "Estoy bien" si estás bien, o preparo el SOS.');
+  if(typeof hUrgente==='function') hUrgente('Detecté un golpe fuerte. Toca "Estoy bien" si estás bien, o preparo el SOS.'); // seguridad: no la pisa ninguna otra voz
   crashCountdownId=setInterval(function(){
     restante--;
     const el=document.getElementById('crashCountdown'); if(el) el.innerText=restante;
@@ -7138,7 +7160,7 @@ function enviarSOS(){
   }
   const loc = currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
   if(loc){ seguir(loc.lat,loc.lon); }
-  else if(navigator.geolocation){ h('Obteniendo tu ubicación para el SOS.'); navigator.geolocation.getCurrentPosition(function(p){ seguir(p.coords.latitude,p.coords.longitude); },function(){ seguir(null,null); },{enableHighAccuracy:true,timeout:8000,maximumAge:60000}); }
+  else if(navigator.geolocation){ hUrgente('Obteniendo tu ubicación para el SOS.'); navigator.geolocation.getCurrentPosition(function(p){ seguir(p.coords.latitude,p.coords.longitude); },function(){ seguir(null,null); },{enableHighAccuracy:true,timeout:8000,maximumAge:60000}); }
   else { seguir(null,null); }
 }
 function wmoTexto(c){ const m={0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'neblina',48:'neblina',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',66:'lluvia helada',67:'lluvia helada',71:'nieve ligera',73:'nieve',75:'nieve intensa',77:'nieve',80:'chubascos',81:'chubascos',82:'chubascos fuertes',85:'nevadas',86:'nevadas',95:'tormenta',96:'tormenta con granizo',99:'tormenta con granizo'}; return m[c]||'clima variable'; }
