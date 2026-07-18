@@ -33,6 +33,15 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
+Última sesión: 1 (voz), 2026-07-18 — voz chilena ENCENDIDA por defecto (arregla
+"volvió la voz antigua"): antes vozMejorada arrancaba off y al limpiar localStorage
+caía a la nativa gringa. Ahora default on salvo que el usuario la apague. Worker de
+voz chilena verificado vivo (devuelve MP3). Verificado en navegador. FALTA: oír en
+teléfono real + DEPLOY. (Antes en esta misma sesión: bus de PRIORIDAD de voz,
+commit 5bab3fd, avisos ya no se pisan.)
+
+--- candado anterior ---
+LIBRE
 Última sesión: 1 (voz), 2026-07-18 — bus de audio con PRIORIDAD (commit 5bab3fd):
 los avisos ya no se pisan (queja real de Inty). 4 niveles ambiente<info<navegación
 <seguridad, función decidirVoz + _cortarActual (interrumpe sin borrar la cola) +

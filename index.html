@@ -770,7 +770,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="section-info"><h4>⚙️ Ajustes</h4><p>Voz, pantalla, GPS y mantenimiento de la app.</p></div>
 <div class="quick-links">
   <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
-  <button class="ab sec" style="margin:0" id="vozNeuralBtn" onclick="toggleVozNeural()"><i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: OFF</button>
+  <button class="ab sec" style="margin:0" id="vozNeuralBtn" onclick="toggleVozNeural()"><i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: ON</button>
   <button class="ab sec" style="margin:0" id="generoBtn" onclick="toggleGenero()"><i class="fas fa-person"></i> Guía: Pistero</button>
   <button class="ab sec" style="margin:0" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
   <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
@@ -2009,7 +2009,7 @@ function decidirVoz(actualPrio, nuevaPrio){
   if(nuevaPrio>actualPrio) return 'interrumpe';        // más importante -> corta e impone
   return 'encola';                                    // igual o menor -> espera turno
 }
-let vozMejorada = localStorage.getItem('lp_vozneural')==='on'; // voz neuronal (Worker MeloTTS español) con fallback a la nativa
+let vozMejorada = localStorage.getItem('lp_vozneural')!=='off'; // voz chilena (Worker Azure) por DEFECTO ENCENDIDA; solo se apaga si el usuario la desactivó (antes arrancaba off -> "volvía la voz antigua" al reinstalar/limpiar localStorage). Fallback a la nativa si no hay red.
 let _vozNeuralAudio = null;
 let pisteroGenero = localStorage.getItem('lp_genero')||'l'; // 'l'=Pistero (Lorenzo) / 'c'=Pistera (Catalina)
 let VOCES_MANIFEST = null; // índice de frases fijas pre-generadas en voz chilena (Azure), se carga de voces/manifest.json
