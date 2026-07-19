@@ -1234,6 +1234,49 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
   }catch(e){}
 })();
 
+// BLINDAJE DE LISTENERS FIRESTORE (arregla FirebaseError "Missing or insufficient
+// permissions" reportado en Sentry, iOS Safari). Causa: un onSnapshot se engancha en
+// la ventana en que la auth pasa de anónima al token personalizado, el servidor le
+// niega permiso un instante, y como el llamado NO trae manejador de error, el error
+// queda SIN CAPTURAR (crash reportado a Sentry) y el listener muere.
+// Este parche le da a todo onSnapshot(onNext) que no traiga onError un manejador que:
+//  (1) si es el permiso-denegado transitorio del arranque, NO spamea y RE-ENGANCHA el
+//      listener solo (tope de 5 intentos, backoff) cuando la auth ya subió;
+//  (2) si es un error real, lo reporta a Sentry como antes.
+// Devuelve un unsubscribe "envoltorio" que cancela los reintentos y corta el listener
+// activo — así el que llamaba puede desuscribirse sin fugas ni listeners duplicados.
+(function(){
+  try{
+    if(!(window.firebase && firebase.firestore)) return;
+    var esBenigno=function(err){ return err && (err.code==='permission-denied' || /insufficient permissions|Missing or insufficient/i.test(String(err.message||err))); };
+    [firebase.firestore.Query, firebase.firestore.DocumentReference].forEach(function(Cls){
+      if(!Cls || !Cls.prototype || Cls.prototype.__lpSnapPatched) return;
+      var orig=Cls.prototype.onSnapshot;
+      Cls.prototype.onSnapshot=function(){
+        var args=Array.prototype.slice.call(arguments);
+        // Solo el patrón de la app: onSnapshot(onNext) — un único callback, sin onError.
+        if(!(args.length===1 && typeof args[0]==='function')) return orig.apply(this, args);
+        var query=this, onNext=args[0], intentos=0, cancelado=false, unsubActivo=null;
+        var suscribir=function(){
+          unsubActivo=orig.call(query, onNext, function(err){
+            if(cancelado) return;
+            if(esBenigno(err) && intentos<5){
+              intentos++;
+              setTimeout(function(){ if(!cancelado) suscribir(); }, 1500*intentos); // backoff: auth ya debería haber subido
+            } else if(!esBenigno(err)){
+              try{ if(window.Sentry) window.Sentry.captureException(err); }catch(e){}
+              try{ console.warn('onSnapshot error:', err && (err.code||err.message)); }catch(e){}
+            }
+          });
+        };
+        suscribir();
+        return function(){ cancelado=true; if(typeof unsubActivo==='function'){ try{ unsubActivo(); }catch(e){} } };
+      };
+      Cls.prototype.__lpSnapPatched=true;
+    });
+  }catch(e){}
+})();
+
 const helmetDesigns = [
   {id:'giro', name:'Aether', color:'#ff6600', brand:'Giro', svg:'<path d="M30 90 Q100 30 170 90 L170 100 Q100 110 30 100 Z" fill="#ff6600"/><path d="M40 85 Q100 40 160 85" fill="none" stroke="#cc5200" stroke-width="3"/><ellipse cx="70" cy="75" rx="12" ry="8" fill="#cc5200"/><ellipse cx="100" cy="70" rx="12" ry="8" fill="#cc5200"/><ellipse cx="130" cy="75" rx="12" ry="8" fill="#cc5200"/>'},
   {id:'bell', name:'Stratus', color:'#0066ff', brand:'Bell', svg:'<path d="M35 95 Q100 35 165 95 L165 105 Q100 115 35 105 Z" fill="#0066ff"/><path d="M45 85 Q100 45 155 85" fill="none" stroke="#004499" stroke-width="3"/><rect x="60" y="70" width="15" height="10" rx="5" fill="#004499"/><rect x="85" y="65" width="15" height="10" rx="5" fill="#004499"/><rect x="110" y="65" width="15" height="10" rx="5" fill="#004499"/><rect x="135" y="70" width="15" height="10" rx="5" fill="#004499"/>'},

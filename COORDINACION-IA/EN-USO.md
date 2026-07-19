@@ -33,6 +33,17 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
+Última sesión: 1, 2026-07-19 — BLINDAJE listeners Firestore (top Sentry, 12 ev iOS):
+parche global a onSnapshot (~línea 1236) que le da manejador de error a los listeners
+sin onError -> ignora el permiso-denegado benigno del arranque (carrera auth) + re-
+engancha solo + reporta errores reales; unsub envoltorio sin fugas. NO toca reglas ni
+auth. Verificado con Firestore real (chat entrega datos + unsub OK; diarios permiso-
+denegado manejado sin crash; cero errores consola). Test: firestore-blindaje.test.mjs.
+npm test verde 2/2. FALTA: confirmar en iPhone Safari (necesita el tel de Inty) + deploy.
+OJO: si tocas onSnapshot o el flujo de auth (~línea 1219-1236), lee este parche antes.
+
+--- candado anterior ---
+LIBRE
 Última sesión: 1, 2026-07-19 — fix crash Sentry mlPolyline.addTo (map undefined ->
 guard no-op; issues Sentry 7607413878/7611377185). Verificado en navegador (addTo
 undefined/null no crashea, addTo(map valido) sigue dibujando, cero errores). FALTA
