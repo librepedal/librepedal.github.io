@@ -69,9 +69,11 @@ función que dibuja el personaje, **no el click físico sobre la tarjeta de ojos
 **Nota honesta:** este lote se commiteó sin su entrada en la bitácora, saltándose
 el protocolo. Se documenta al detectarlo, en la misma sesión.
 
-Lote de 8 cambios, verificados en local y **aún sin desplegar** (el `git push`
-falla: la cuenta `intyriveraa-lab` no tiene permiso de escritura en el repo
-`librepedal/librepedal.github.io`; lo tiene que destrabar Inty):
+Lote de 8 cambios. **Desplegado a la web el 2026-07-19 junto con v7.02**
+(verificado: `librepedal.cl` responde `APP_VERSION 7.02`). El `git push` sigue
+pendiente y con él el APK/`github.io`: la cuenta activa `intyriveraa-lab` no
+tiene permiso de escritura en `librepedal/librepedal.github.io` — lo destraba
+Inty dando acceso a esa cuenta, o reconectando la cuenta `librepedal`:
 
 - `45c6ae9` fix de zoom en móvil (inputs a 16px) + botón del planificador.
 - `5bab3fd` bus de prioridad de voz para que los avisos no se pisen (+ test).
