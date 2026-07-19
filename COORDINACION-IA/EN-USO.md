@@ -33,6 +33,15 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
+Última sesión: 1, 2026-07-19 — fix crash Sentry mlPolyline.addTo (map undefined ->
+guard no-op; issues Sentry 7607413878/7611377185). Verificado en navegador (addTo
+undefined/null no crashea, addTo(map valido) sigue dibujando, cero errores). FALTA
+deploy. NOTA: el frame()/lat (10 ev) se revisó — YA estaba bien arreglado en v6.98,
+los eventos son de clientes con SW viejo cacheado; NO tocar. Antes: monté red de
+tests + CI (npm test / GitHub Actions) — ver TECNOLOGIA-A-FAVOR.md.
+
+--- candado anterior ---
+LIBRE
 Última sesión: 1 (voz), 2026-07-19 — fix crash real de Sentry en obtenerFraseUnica:
 claves de arquetipo (categoria@arqId) no venían pre-inicializadas en frasesUsadas ->
 .push() de undefined crasheaba la 1a vez que se usaba una frase de arquetipo. Ahora

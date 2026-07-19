@@ -4044,6 +4044,7 @@ function mlPolyline(latlngs, opts){
   return {
     _id:id, _map:null, _coords:coords,
     addTo:function(map){
+      if(!map) return this; // sin mapa no se agrega nada (evita crash Sentry: map.isStyleLoaded de undefined)
       this._map=map;
       const add=function(){
         if(map.getSource(id)) return;
