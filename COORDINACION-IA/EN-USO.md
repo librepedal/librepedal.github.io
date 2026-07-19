@@ -33,6 +33,13 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
+Última sesión: 1, 2026-07-19 — bump 7.00->7.01 (los 3: APP_VERSION, version.txt,
+sw.js CACHE=librepedal-v701). LOTE 7.01 LISTO PARA DEPLOY, esperando OK de Inty.
+Incluye: bus prioridad voz, voz chilena default, fix obtenerFraseUnica, red tests+CI,
+fix mlPolyline, blindaje listeners Firestore. Todo verificado. Falta: Inty da el push.
+
+--- candado anterior ---
+LIBRE
 Última sesión: 1, 2026-07-19 — BLINDAJE listeners Firestore (top Sentry, 12 ev iOS):
 parche global a onSnapshot (~línea 1236) que le da manejador de error a los listeners
 sin onError -> ignora el permiso-denegado benigno del arranque (carrera auth) + re-
