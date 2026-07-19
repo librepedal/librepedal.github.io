@@ -1,0 +1,25 @@
+name: Tests (red anti-regresiones)
+
+# Corre en CADA push y en cada pull request. Si un test falla, el commit
+# queda marcado en rojo en GitHub -> te enteras al instante de que un cambio
+# rompio algo, ANTES de desplegar y antes de que lo sufra un usuario.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:   # tambien se puede lanzar a mano desde la pestana Actions
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Traer el codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Correr los tests
+        run: npm test
