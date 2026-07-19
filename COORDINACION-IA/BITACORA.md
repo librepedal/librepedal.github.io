@@ -4,6 +4,87 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.02 — 2026-07-19 — Claude (sesión 3, auditoría: dos opciones que mentían sobre su color)
+
+**Qué se encontró (nadie lo reportó — salió de auditar la primera pantalla):**
+mirando con lupa lo que ve un ciclista nuevo al crear su personaje, dos opciones
+del catálogo mostraban un color distinto al que decía su nombre:
+
+- Casco **"Cian"** → pintaba `#fc4c02`, que es **naranja** (tono 18°).
+- Ojos **"Café"** → pintaban `#16203a`, que es **azul marino** (tono 223°).
+
+No son opciones cualquiera: son **el casco y los ojos por defecto**, o sea lo
+primero que ve alguien que abre la app por primera vez. Y el propio código dice
+que los colores base de ojos son gratis "para representar tu identidad" — pero
+el café, el color de ojos más común en Chile, en los hechos no existía.
+
+**Causa raíz:** son datos heredados, no un error de lógica. A `cyan` le cambiaron
+el color al naranja de la marca sin cambiarle el id ni el nombre; y `ojoCafe`
+conserva a propósito el iris azul oscuro del personaje original, porque otro
+comentario del mismo archivo exige que el default "reproduzca exactamente el look
+anterior". Dos intenciones legítimas que se contradicen.
+
+**Tensión consultada a Inty** (el prompt maestro pide mostrarla, no resolverla en
+silencio). Eligió la ruta sin regresiones: **no tocar ningún color existente**
+—cambiarlos le habría alterado el personaje, sin pedirlo, a todo el que tiene el
+look por defecto— sino renombrar con honestidad y agregar lo que faltaba:
+
+- `cyan` pasa a llamarse **"Naranja fuego"** (su color real, intacto).
+- Nueva opción **"Cian" `#22d3ee`** — la identidad de Pistero, gratis.
+- `ojoCafe` pasa a llamarse **"Oscuros"** (su color real, intacto).
+- Nueva opción **"Café" `#6b4423`** — gratis, como el resto de colores base.
+
+Las dos nuevas nacen gratis sin tocar la tienda: `estaDesbloqueado()` da por libre
+todo id que no esté en `PRECIOS`. Se insertaron en la posición 1 y no en la 0, a
+propósito: `ojosOptions[0]` es el respaldo cuando un id no existe, y moverlo
+habría cambiado el default de todos.
+
+**Aplicando el principio #2 (el mismo patrón en TODO el código):** se auditaron
+las **28 opciones con color** de todos los catálogos comparando nombre contra
+tono real. Solo esas 2 estaban malas. Una tercera (`verde` esmeralda, 160°) la
+marcó la herramienta y **era falso positivo** — se ve verde; se corrigió el
+umbral, no el color.
+
+**Verificación concreta:**
+1. Test nuevo `tests/colores-honestos.test.mjs`, que lee `index.html` de verdad
+   (el error estaba en los datos, no en una función: reimplementarlo no habría
+   servido de nada). Suite completa: **3/3 archivos, todo verde**.
+2. **Se probó que el test puede fallar**: contra una copia del archivo con los dos
+   bugs restaurados, se puso rojo señalando exactamente ambos (`exit 1`). Un test
+   que no puede fallar no prueba nada.
+3. Navegador real (375×812, service worker limpiado): el grid muestra "Naranja
+   fuego" naranja y "Cian" cian, ambos sin candado.
+4. `generateCharacterSVG()` — 5/5: el default sigue pintando `#16203a` y **no** se
+   volvió café; `ojoCafeReal` pinta `#6b4423`; `cianReal` pinta `#22d3ee`; y un id
+   inválido cae al default sin romperse.
+
+**No verificado (honestidad):** el grid de ojos vive dentro de "Personalizar", que
+exige entrar a la app, y entrar escribe en la base de datos real. Se probó la
+función que dibuja el personaje, **no el click físico sobre la tarjeta de ojos**.
+
+---
+
+## v7.01 — 2026-07-19 — Claude (sesión 3, lote de estabilidad; entrada escrita después, ver nota)
+
+**Nota honesta:** este lote se commiteó sin su entrada en la bitácora, saltándose
+el protocolo. Se documenta al detectarlo, en la misma sesión.
+
+Lote de 8 cambios, verificados en local y **aún sin desplegar** (el `git push`
+falla: la cuenta `intyriveraa-lab` no tiene permiso de escritura en el repo
+`librepedal/librepedal.github.io`; lo tiene que destrabar Inty):
+
+- `45c6ae9` fix de zoom en móvil (inputs a 16px) + botón del planificador.
+- `5bab3fd` bus de prioridad de voz para que los avisos no se pisen (+ test).
+- `2ecadd9` voz chilena encendida por defecto (arregla "volvió la voz antigua").
+- `11a6d01` crash real de Sentry en `obtenerFraseUnica` (push de `undefined`).
+- `d1adf6c` red de tests + CI en GitHub Actions — primera capa anti-regresiones.
+- `fe2baa0` crash de Sentry en `mlPolyline.addTo` (`map.isStyleLoaded` de undefined).
+- `9f5aa70` blindaje de listeners de Firestore contra el `FirebaseError` de
+  permisos por carrera con la autenticación.
+- `d1dde1d` bump de versión en lockstep (los 3 archivos).
+
+---
+
 ## v7.00 — 2026-07-18 — Claude (sesión 2, dos quejas UX reales de Inty: avisos de voz al abrir la app + sonido de cadena)
 
 **Fix 1 — avisos de voz innecesarios al abrir la app:** Inty reportó que al

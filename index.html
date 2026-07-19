@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.01'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.02'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1312,7 +1312,12 @@ const lensOptions = [
 ];
 
 const skinOptions = [
-  {id:'cyan', name:'Cian', c:'#fc4c02'},
+  /* 'cyan' se quedó con el naranja de la marca por historia: le cambiaron el color
+     pero no el id ni el nombre. El color NO se toca — es el casco por defecto y
+     corregirlo se lo cambiaría solo a todo el que ya lo tiene guardado. Se le pone
+     el nombre honesto y el cian de verdad (la identidad de Pistero) entra aparte. */
+  {id:'cyan', name:'Naranja fuego', c:'#fc4c02'},
+  {id:'cianReal', name:'Cian', c:'#22d3ee'},
   {id:'rojo', name:'Rojo', c:'#ff3b30'},
   {id:'verde', name:'Verde', c:'#10b981'},
   {id:'amarillo', name:'Amarillo', c:'#ffd700'},
@@ -1349,7 +1354,12 @@ const pielOptions = [
   {id:'pielProfunda', name:'Profunda', c:'#5c3520'}
 ];
 const ojosOptions = [
-  {id:'ojoCafe', name:'Café', iris:'#16203a', shape:'redondo', pestanas:false},
+  /* 'ojoCafe' conserva el iris azul oscuro del personaje original: es el ojo por
+     defecto (y el respaldo de ojosOptions[0]), así que cambiarle el color le movería
+     los ojos a todo el que nunca los eligió. Lleva el nombre que le corresponde y el
+     café de verdad entra aparte, gratis como el resto de los colores base. */
+  {id:'ojoCafe', name:'Oscuros', iris:'#16203a', shape:'redondo', pestanas:false},
+  {id:'ojoCafeReal', name:'Café', iris:'#6b4423', shape:'redondo', pestanas:false},
   {id:'ojoAzul', name:'Azules', iris:'#2f6fb0', shape:'redondo', pestanas:false},
   {id:'ojoVerde', name:'Verdes', iris:'#2e7d4f', shape:'redondo', pestanas:false},
   {id:'ojoMiel', name:'Miel', iris:'#a9702c', shape:'redondo', pestanas:false},
