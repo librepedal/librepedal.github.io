@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## 2026-07-20 — MUDANZA DE REPO (leer antes de hacer push)
+
+**El repo cambió de casa.** `git push` a `librepedal/librepedal.github.io` da **403**:
+la cuenta autenticada en este PC es `intyriveraa-lab` y no tiene permiso de
+escritura ahí. Se intentó conectar la cuenta `librepedal` y no prosperó, así que
+se tomó la ruta que no depende de ella.
+
+- **Nuevo remoto `lab`:** `github.com/intyriveraa-lab/librepedal` (privado).
+  Lleva los 326 commits completos y los 3 workflows. **Ahí se hace push ahora.**
+- **El viejo `origin` se deja tal cual**, por si algún día se recupera el acceso.
+- **La app ya no carga `librepedal.github.io`:** `capacitor.config.json` apunta a
+  **`https://librepedal.cl`**, que se despliega por wrangler desde este PC. Así el
+  APK deja de depender de una cuenta de GitHub ajena. `librepedal.github.io` se
+  dejó en `allowNavigation` por si quedan enlaces viejos dando vueltas.
+
+**La web nunca dependió de esto** — se publica por wrangler (ver LEEME).
+
+⚠️ **Lo único que sigue necesitando a Inty:** el `.aab` firmado para Play Store.
+`build-aab-release.yml` usa 4 secretos de GitHub (`ANDROID_KEYSTORE_BASE64`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`) que **no
+viajan al repo nuevo**: son credenciales de firma y las carga él. El APK de prueba
+(`build-apk.yml`) no los necesita y corre solo en cada push.
+
+---
+
 ## v7.02 — 2026-07-19 — Claude (sesión 3, auditoría: dos opciones que mentían sobre su color)
 
 **Qué se encontró (nadie lo reportó — salió de auditar la primera pantalla):**

@@ -3,9 +3,11 @@
   "appName": "Libre Pedal",
   "webDir": "www",
   "server": {
-    "url": "https://librepedal.github.io",
+    "url": "https://librepedal.cl",
     "androidScheme": "https",
     "allowNavigation": [
+      "librepedal.cl",
+      "www.librepedal.cl",
       "librepedal.github.io",
       "*.openstreetmap.org",
       "*.tile.openstreetmap.org",
