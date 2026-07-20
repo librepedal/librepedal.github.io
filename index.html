@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.07'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.08'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3510,7 +3510,7 @@ function ug(p){
   _detectarModoEquivocado(sp); // también en GPS libre, no solo navegando a un destino
   avisarPuntosCercanos(la,lo,sp);
   avisarReportesCercanos(la,lo,sp);
-  _avisoLluviaProactivo(la,lo);
+  _avisoLluviaProactivo(la,lo); vigilarClima(la,lo);
   _verificarFatiga(tiempoActivoMs(), sp);
   // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
   if(us.la && moved<0.012){ return; }
@@ -5557,7 +5557,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   if(rutaPerfil.length) avisarPendienteAnticipada(lat,lon); else comentarPendiente(navPendienteHistory, speed);
   avisarPuntosCercanos(lat,lon,speed);
   avisarReportesCercanos(lat,lon,speed);
-  _avisoLluviaProactivo(lat,lon);
+  _avisoLluviaProactivo(lat,lon); vigilarClima(lat,lon);
   _verificarFatiga(tiempoActivoMs(), speed);
   checkNavigationSteps(lat,lon,speed);
   verificarDesviacion(lat,lon);
@@ -7440,6 +7440,72 @@ async function _pisteroDecirClima(raw){
 // salir. Mira las próximas 2 horas del pronóstico horario y avisa una sola vez por
 // viaje si viene fuerte, con tiempo para buscar techo o cambiar de planes.
 let _ultimoChequeoLluvia=0, _avisoLluviaHecho=false;
+/* ===== VIGILANCIA DEL CLIMA DURANTE EL VIAJE =====
+   Pedido por Inty (2026-07-20): que la app siga mirando el clima y, si CAMBIA respecto
+   a lo que ya había pronosticado, lo diga con anticipación.
+   Antes solo existía un aviso de lluvia que sonaba UNA vez por viaje y no recordaba el
+   pronóstico anterior: si el tiempo empeoraba después, la app se quedaba muda. Ahora se
+   guarda una foto del pronóstico al empezar y cada chequeo se compara contra ella.
+   Solo se habla cuando el cambio es REAL y le cambia la decisión al ciclista — un 5% más
+   de probabilidad no le sirve a nadie y desgasta la confianza en la voz (ver DOCTRINA 2
+   en VISION-MAESTRA.md: el silencio es lo que le da valor a lo que sí se dice). */
+let _climaBase=null, _climaUltimoAviso=0;
+const CLIMA_MIN_ENTRE_AVISOS=1500000; // 25 min: ni el clima cambia tan rápido ni conviene hablar tanto
+/* Decide si el clima cambió lo suficiente como para interrumpir al ciclista.
+   Función pura y aparte para poder probarla sin salir a pedalear (tests/clima.test.mjs).
+   base y actual: {lluvia:0-100, viento:km/h, temp:°C, codigo:WMO} */
+function _cambioClimaRelevante(base, actual){
+  if(!base || !actual) return null;
+  const n=v=>(typeof v==='number' && isFinite(v)) ? v : null;
+  const lluviaB=n(base.lluvia), lluviaA=n(actual.lluvia);
+  const vientoB=n(base.viento), vientoA=n(actual.viento);
+  const tempB=n(base.temp), tempA=n(actual.temp);
+  // Tormenta: se avisa siempre, sin comparar con nada. Es la única que puede costar caro.
+  if(n(actual.codigo)!==null && actual.codigo>=95)
+    return {tipo:'tormenta', severidad:3, texto:'Ojo, se está armando tormenta por acá. Busca dónde parar, esto no es para seguir pedaleando.'};
+  if(lluviaB!==null && lluviaA!==null){
+    if(lluviaA-lluviaB>=30 && lluviaA>=50)
+      return {tipo:'empeora', severidad:2, texto:'Cambió el pronóstico: ahora dan '+Math.round(lluviaA)+' por ciento de lluvia, bastante más que hace un rato. Si puedes, busca techo.'};
+    if(lluviaB-lluviaA>=30 && lluviaA<30)
+      return {tipo:'mejora', severidad:1, texto:'Buenas noticias: se despejó el pronóstico, la lluvia bajó a '+Math.round(lluviaA)+' por ciento. Sigue tranquilo.'};
+  }
+  // El viento en contra cansa más que la lluvia y casi ninguna app lo avisa.
+  if(vientoB!==null && vientoA!==null && vientoA-vientoB>=15 && vientoA>=25)
+    return {tipo:'viento', severidad:2, texto:'Se levantó viento: van '+Math.round(vientoA)+' kilómetros por hora. Si lo tienes en contra, baja un cambio y no pelees con él.'};
+  // Mojado y con frío es donde la gente se complica de verdad.
+  if(tempB!==null && tempA!==null && tempB-tempA>=5)
+    return {tipo:'frio', severidad:2, texto:'Bajó la temperatura '+Math.round(tempB-tempA)+' grados, van '+Math.round(tempA)+'. Si andas mojado, abrígate antes de la próxima bajada.'};
+  return null;
+}
+/* Vigila el clima durante todo el viaje, no solo al principio. La primera vez guarda la
+   foto del pronóstico; después compara y solo habla si cambió de verdad. */
+async function vigilarClima(lat,lon){
+  if(!vozActiva) return;
+  const ahora=Date.now();
+  if(_climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return;
+  try{
+    const w=await climaDeZona(lat,lon);
+    if(!w||!w.current) return;
+    const horas=w.hourly&&w.hourly.precipitation_probability, tiempos=w.hourly&&w.hourly.time;
+    let lluvia=null;
+    if(horas&&tiempos){
+      const ahoraISO=(w.current.time||'').slice(0,13);
+      let idx=tiempos.findIndex(function(t){ return t.slice(0,13)>=ahoraISO; });
+      if(idx<0) idx=0;
+      const prox=horas.slice(idx,idx+2);
+      if(prox.length) lluvia=Math.max.apply(null,prox);
+    }
+    const foto={ lluvia:lluvia, viento:w.current.wind_speed_10m, temp:w.current.temperature_2m, codigo:w.current.weather_code };
+    if(!_climaBase){ _climaBase=foto; return; } // primera lectura: solo se guarda, no se habla
+    const cambio=_cambioClimaRelevante(_climaBase, foto);
+    _climaBase=foto; // la foto nueva pasa a ser la referencia
+    if(!cambio) return;
+    _climaUltimoAviso=ahora;
+    // Prioridad SEGURIDAD solo para tormenta: lo demás no debe pisar una instrucción de ruta.
+    if(cambio.severidad>=3 && typeof hUrgente==='function') hUrgente(cambio.texto);
+    else if(!vozOcupada() && !vozCola.length) h(cambio.texto);
+  }catch(e){}
+}
 async function _avisoLluviaProactivo(lat,lon){
   if(_avisoLluviaHecho || !vozActiva) return;
   const ahora=Date.now();

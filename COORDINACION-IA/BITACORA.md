@@ -4,6 +4,52 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.08 — 2026-07-20 — Claude (el clima ahora se vigila durante todo el viaje)
+
+**Pedido de Inty:** que la app siga analizando el clima y, si cambia respecto al
+pronóstico ya dado, **avise con anticipación**.
+
+**Lo que había.** `_avisoLluviaProactivo()` miraba la probabilidad de lluvia de las
+próximas 2 horas y avisaba si pasaba de 60%. Tres límites:
+1. Avisaba **una sola vez por viaje** (`_avisoLluviaHecho`): si el tiempo empeoraba
+   después, la app se quedaba muda el resto del camino.
+2. **No recordaba el pronóstico anterior**, así que no podía detectar un *cambio*.
+3. **Solo miraba lluvia.** Para un ciclista el viento en contra suele cansar más que la
+   lluvia, y bajar de temperatura estando mojado es donde la gente se complica de verdad.
+
+**Qué se hizo.** `vigilarClima()` guarda una foto del pronóstico la primera vez y en cada
+chequeo compara contra ella; la foto nueva pasa a ser la referencia, así detecta cambios
+sucesivos y no solo el primero. Ahora mira lluvia, **viento**, **temperatura** y tormenta.
+
+**Lo difícil no fue detectar cambios: fue callarse.** Una voz que comenta cada variación
+de 5% se vuelve ruido, el ciclista la apaga — y apagada no avisa ni la tormenta. Los
+umbrales están puestos para hablar solo cuando el dato **le cambia la decisión** a quien
+va arriba de la bici:
+
+| Situación | Se avisa cuando |
+|---|---|
+| Lluvia empeora | sube ≥30 puntos **y** queda ≥50% |
+| Lluvia mejora | baja ≥30 puntos **y** queda <30% (buena noticia también sirve) |
+| Viento | sube ≥15 km/h **y** queda ≥25 km/h |
+| Frío | baja ≥5 °C |
+| Tormenta | **siempre**, sin comparar nada |
+
+Mínimo 25 minutos entre avisos. Solo la tormenta usa prioridad SEGURIDAD (`hUrgente`);
+el resto **no pisa una instrucción de navegación** — ver DOCTRINA 2 en `VISION-MAESTRA.md`.
+
+**Verificación:** `tests/clima.test.mjs`, **16/16**, extrayendo la función real del
+index. La mitad de los casos verifican **silencio** (cambios chicos, datos incompletos,
+valores basura), que es la parte que de verdad protege la confianza en la voz. Suite
+completa **6/6**. Navegador real: responde correcto a los cuatro escenarios.
+
+**Pendiente (queda propuesto, no hecho):** el aviso debería ser **accionable**, no solo
+informativo. La app conoce la ruta y los hospedajes de CicloGuía: *"llueve en 20 minutos
+y el próximo techo está a 6 km"* vale mucho más que *"va a llover"*. Y con la dirección
+del viento que ya entrega Open-Meteo más el rumbo de la ruta se puede decir *"los
+próximos 15 km con viento en contra"* — algo que no hace ninguna app del rubro.
+
+---
+
 ## v7.07 — 2026-07-20 — Claude (la voz vieja se colaba a mitad de ruta)
 
 **Lo reportado por Inty:** *"por ahí se anda colando la voz que teníamos antes... en
