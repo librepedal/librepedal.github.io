@@ -1141,7 +1141,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.10'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.11'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3670,7 +3670,7 @@ function renderRutas(){
   if(arr.length===0){ html='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; }
   else{
     html='';
-    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8">🏠 '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic">📓 '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item" onclick="showSingleRoute(\''+d.localId+'\')"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions" onclick="event.stopPropagation()"><button class="route-icon-btn" title="Perfil de elevación" onclick="verPerfilElevacion(\''+d.localId+'\')">📈</button><button class="route-icon-btn" title="Video 3D" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬</button><button class="route-icon-btn" title="Crear segmento" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁</button><button class="route-icon-btn" title="Exportar GPX" onclick="exportarRutaGPX(\''+d.localId+'\')">📤</button><button class="route-icon-btn delete" title="Borrar ruta" onclick="deleteRoute(\''+d.localId+'\')">🗑️</button></div></div>'; });
+    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8">🏠 '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic">📓 '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item" onclick="showSingleRoute(\''+d.localId+'\')"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions" onclick="event.stopPropagation()"><button class="route-icon-btn" title="Perfil de elevación" onclick="verPerfilElevacion(\''+d.localId+'\')">📈</button><button class="route-icon-btn" title="Video 3D" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬</button><button class="route-icon-btn" title="Crear segmento" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁</button><button class="route-icon-btn" title="Compartir este viaje" onclick="compartirViaje(\''+d.localId+'\')">💬</button><button class="route-icon-btn" title="Exportar GPX" onclick="exportarRutaGPX(\''+d.localId+'\')">📤</button><button class="route-icon-btn delete" title="Borrar ruta" onclick="deleteRoute(\''+d.localId+'\')">🗑️</button></div></div>'; });
   }
   targets.forEach(function(c){ c.innerHTML=html; });
 }
@@ -6378,6 +6378,40 @@ function importarGPX(input){
   };
   reader.onerror=function(){ input.value=''; lpAviso('No pude abrir el archivo.'); };
   reader.readAsText(file);
+}
+/* ===== COMPARTIR UN VIAJE =====
+   Faltaba, y es de las cosas que más rinden: la app ya compartía el resumen ANUAL (una
+   vez al año) y la ubicación en vivo, pero no el viaje recién terminado — que es lo que
+   la gente muestra de verdad, todas las semanas. Cada viaje compartido es la app
+   llegando gratis a alguien que no la conoce.
+   Se arma el texto acá y se usa el compartir nativo del teléfono (WhatsApp, Instagram,
+   lo que tenga): sin depender de la API de ninguna red social ni de credenciales. */
+function _frasePresumir(km){
+  if(km>=100) return 'Hoy rompí los 100 kilómetros.';
+  if(km>=60)  return 'Buena jornada arriba de la bici.';
+  if(km>=30)  return 'Salida redonda de hoy.';
+  if(km>=10)  return 'Pedaleada de hoy, cortita pero sabrosa.';
+  return 'Salí a rodar un rato.';
+}
+function compartirViaje(id){
+  const r=(typeof _rutaPorId==='function')?_rutaPorId(id):null;
+  if(!r){ h('No encontré esa ruta para compartirla.'); return; }
+  const km=(r.distance||0), cal=Math.round(r.calories||0);
+  const fecha=r.startTime?new Date(r.startTime).toLocaleDateString('es-CL',{day:'numeric',month:'long'}):'';
+  let txt=_frasePresumir(km)+' '+km.toFixed(1)+' km';
+  if(r.duration) txt+=' en '+r.duration;
+  if(cal>0) txt+=' · '+cal+' calorías';
+  if(fecha) txt+=' ('+fecha+')';
+  txt+='\n\nGrabado con Libre Pedal 🚴 https://librepedal.cl';
+  if(navigator.share){
+    navigator.share({title:'Mi viaje en Libre Pedal', text:txt}).catch(function(){});
+    return;
+  }
+  // Sin compartir nativo (navegador de escritorio): al portapapeles, que igual sirve.
+  try{
+    navigator.clipboard.writeText(txt).then(function(){ h('Copié tu viaje al portapapeles. Pégalo donde quieras.'); })
+      .catch(function(){ lpAviso(txt); });
+  }catch(e){ lpAviso(txt); }
 }
 function exportarRutaGPX(id){
   function armar(pts,nombre){ if(!pts||!pts.length){ lpAviso('Esa ruta no tiene puntos para exportar.'); return; } _descargarGPX(_gpxDeRuta(pts,nombre), nombre); h('Ruta exportada en GPX. Súbela a Strava, Komoot o Wikiloc.'); }

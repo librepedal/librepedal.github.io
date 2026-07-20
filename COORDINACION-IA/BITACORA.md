@@ -4,6 +4,40 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.11 — 2026-07-20 — Claude (compartir el viaje recién terminado)
+
+**Hueco que nadie había visto.** La app ya compartía el **resumen anual** (una vez al año)
+y la ubicación en vivo. Lo que no existía era compartir **el viaje que acabas de
+terminar**, que es justo lo que la gente muestra de verdad — y pasa todas las semanas.
+
+**Por qué importa más de lo que parece:** cada viaje compartido es la app llegando gratis
+a alguien que no la conoce. Para un proyecto sin presupuesto de publicidad, ese es el
+motor de distribución. Los 📤 que ya había eran "invitar amigos" y "exportar GPX" (un
+archivo, no compartir).
+
+**Qué se hizo.** Botón 💬 en cada ruta guardada. Arma el texto y usa el **compartir nativo
+del teléfono** — WhatsApp, Instagram, lo que tenga — sin depender de la API de ninguna red
+social ni de credenciales. Sin compartir nativo (escritorio), copia al portapapeles.
+
+El texto se ajusta al esfuerzo real (`_frasePresumir`): sobre 100 km celebra el hito, 60
+reconoce la jornada, 30 es "salida redonda", 12 "cortita pero sabrosa", y menos de 10 se
+queda humilde. **Nunca infla lo que no fue.**
+
+**Verificación:** `tests/compartir.test.mjs`, **23/23**, extrayendo la función real del
+index. Cubre los bordes (99,9 km todavía no dice 100; exactamente 10 ya no es "un rato"),
+que **nunca salga `undefined` ni `NaN`** —eso terminaría publicado en el muro de alguien—
+y que el mensaje **lleve siempre el link**, porque sin link no sirve de nada. Navegador
+real: mensaje correcto, y una ruta inexistente no rompe nada.
+
+**Pedido de Inty que NO se hizo, y por qué:** que el usuario pueda marcar un tip como
+"ya aprendido" para no volver a escucharlo. La idea es correcta y está alineada con la
+DOCTRINA 2 (aprender de ser callado), **pero hoy los tips no se dicen solos**: viven en
+una tarjeta que el usuario abre cuando quiere. Marcar "ya me lo sé" no silenciaría nada.
+Corresponde construirlo junto con los avisos proactivos —cuando Pistero empiece a dar el
+tip al detectar la situación— y no antes, para no dejar un botón que no hace nada.
+
+---
+
 ## v7.10 — 2026-07-20 — Claude (convivencia en ciudad: educar a los DOS lados)
 
 Inty precisó el foco de «El idioma de la ruta»: *"lo importante es educar a los que no
