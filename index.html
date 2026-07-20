@@ -1155,7 +1155,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.17'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.18'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2543,6 +2543,32 @@ function poolPais(cat){
    donde más se siente la personalidad). Si el arquetipo elegido no tiene banco para
    esa categoría, cae a las frases genéricas de siempre — 100% aditivo, sin riesgo. */
 const FRASES_ARQ={
+  profunda:{
+    compadre:["Uno pedalea para acordarse de que está vivo, compadre.","La bici te devuelve lo que la semana te sacó.","Nadie que ande en bici anda tan perdido.","Al final el camino es la excusa, lo bueno es esto."],
+    entrenador:["El cuerpo aguanta mucho más de lo que la cabeza cree.","Lo que construyes hoy no se ve hoy. Se ve en tres meses.","La constancia le gana al talento, siempre.","No entrenas para la subida: entrenas para el día que importe."],
+    roquero:["Pedalear es lo más parecido a tocar fuerte sin instrumento.","El camino no pide permiso ni pide disculpas.","Hay días en que uno anda solo para escucharse.","La libertad no se compra: se pedalea."],
+    profe:["El ser humano lleva pedaleando 150 años y todavía no inventamos nada más eficiente.","La bicicleta convierte la energía en distancia mejor que cualquier animal o máquina.","Cada camino que recorres fue trazado por alguien que fue primero.","Andar en bici cambia cómo ves una ciudad para siempre."],
+    solitario:["Acá uno se encuentra.","El silencio también es compañía.","No hay que llegar a ninguna parte.","Esto es suficiente."],
+    loco:["Si lo piensas, estamos girando círculos para movernos en línea recta.","La bici es la única máquina que te hace más liviano usándola.","Pedalear es huir hacia adelante, pero de forma elegante.","Nadie ha tenido una mala idea andando en bicicleta. Ninguna."],
+    cicletero:["Una bici bien cuidada dura más que varios autos.","Uno le toma cariño a la máquina que lo lleva.","Las herramientas viejas son las que mejor funcionan.","Arreglar tu propia bici es entender cómo te mueves."],
+    sabio:["Los kilómetros no se cuentan: se acumulan en el cuerpo.","He olvidado casi todas las rutas. Ninguna de las personas.","Uno no recuerda los viajes fáciles.","La bici enseña que el destino siempre estuvo en el camino."],
+    relajado:["No hay ningún apuro. Nunca lo hubo.","El camino no se va a acabar.","Lo lindo es esto: estar acá, ahora.","Andar sin destino también es llegar."],
+    aventurero:["Los mejores lugares no salen en ningún mapa.","Perderse un poco es parte del método.","Detrás de cada curva hay algo que no conoces.","El que nunca se desvía, nunca descubre nada."],
+    maternal:["Cuídate, que el camino siempre va a estar ahí.","Lo importante es que vuelvas bien a casa.","No tienes que demostrarle nada a nadie hoy.","Descansar también es cuidar el cuerpo."],
+  },
+  ciudad:{
+    compadre:["En ciudad ojo con las puertas, compadre. Un metro de los autos.","Acá se anda atento: mucho auto, mucha prisa ajena.","Ciudad. Hazte ver y no te pegues a la vereda.","Tranquilo entre los autos, que ninguno te está esperando."],
+    entrenador:["En ciudad: posición dominante en el carril, no al borde.","Señaliza cada giro con tiempo. Previsible es seguro.","Anticipa los semáforos y evita frenar de golpe.","Mantén una marcha ágil para poder salir rápido si hace falta."],
+    roquero:["Ciudad: puro ruido y adrenalina. Ojo con las puertas.","Acá el escenario es de todos. Hazte notar.","Semáforos, bocinas, taxis. Tu ritmo igual manda.","La ciudad es un tema pesado. Tócalo con cuidado."],
+    profe:["Dato: la mayoría de los accidentes urbanos pasa en los primeros metros tras una intersección.","Un metro de los autos estacionados: es el ancho exacto de una puerta abriéndose.","Nunca por la derecha de un bus o camión: ahí no te ve nadie.","La ciclovía no es siempre lo más seguro. A veces la calzada, bien ubicado, lo es más."],
+    solitario:["Ciudad. Atento.","Mucho ruido acá.","Pasa y sigue.","Acá no se piensa: se mira."],
+    loco:["Ciudad: donde los autos creen que la calle la pagaron ellos.","Cuidado con las puertas, que se abren solas y con mala intención.","Semáforo en rojo: aprovecha de existir un rato.","Acá todos van apurados a sentarse a esperar en otro lado."],
+    cicletero:["En ciudad los frenos trabajan el triple. Revisa las pastillas seguido.","Ojo con los rieles y las tapas de alcantarilla: se llevan ruedas enteras.","La presión justa evita pinchazos con los vidrios de la calle.","Ciudad es dura con la cadena: límpiala más seguido."],
+    sabio:["La ciudad se aprende con el cuerpo, no con mapas.","Acá el que se apura llega igual, pero más asustado.","Cuarenta años pedaleando acá: la clave es que te vean venir.","La calle no es enemiga. La prisa sí."],
+    relajado:["Ciudad, pero sin apurarse. Igual llegas.","Respira, que el taco no es tuyo.","Deja pasar al apurado. Tú vas bien.","Entre autos también se puede ir tranquilo."],
+    aventurero:["¿Y si te vas por esa calle que nunca has tomado?","La ciudad tiene rincones que solo se ven en bici.","Buen momento para descubrir un atajo nuevo.","Cada barrio es un país distinto. Explóralo."],
+    maternal:["En ciudad ándate con cuidado, por favor.","Ojo con las puertas de los autos, que es lo que más pasa.","Hazte ver: luces encendidas aunque sea de día.","Si te sientes apretado entre autos, mejor te detienes."],
+  },
   bajada:{
     compadre:["Bajada, compadre. Disfrútala pero con ojo.","A soltar las piernas, pero sin confiarse.","Esta es la parte que te ganaste subiendo.","Manos firmes y a gozar."],
     entrenador:["Bajada: peso atrás, dedos en los frenos, mirada lejos.","Frena antes de la curva, nunca dentro.","Deja de pedalear y baja el centro de gravedad.","Usa los dos frenos parejo, más el trasero."],
