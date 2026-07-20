@@ -4,6 +4,86 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.15 — 2026-07-20 — Claude (auditoría de calidad: 6 defectos críticos, casi todos introducidos hoy)
+
+Inty pidió mandar el trabajo del día a **revisión con un equipo de control de calidad**.
+Se levantó una auditoría independiente sobre el diff completo v7.02→v7.14. Encontró **12
+defectos**; acá se arreglaron los 6 críticos. **La mayoría los había introducido yo hoy**,
+lo que es exactamente la razón por la que una auditoría vale la pena.
+
+**1. La detección de caídas estaba, en la práctica, APAGADA para su caso central.**
+`crashMuestrasMov` se vaciaba solo en el instante del impacto y la decisión miraba el
+**máximo de todo el búfer**. Pero una caída real no es golpe-y-quietud: es golpe, **medio
+segundo o más de revolcón** (la bici encima, el cuerpo rodando, el teléfono girando en el
+bolsillo) y recién ahí quietud. Ese revolcón dejaba muestras muy sobre el umbral, el máximo
+quedaba contaminado para siempre y el sistema concluía «sigue moviéndose». Y encima
+`_verificarQuietudTrasImpacto(1)` hacía `return` **sin agendar el segundo chequeo**, así que
+la vigilancia se cancelaba de forma permanente.
+→ Ventana deslizante de **1,2 s** (`CRASH_VENTANA_QUIETUD`): la pregunta pasó a ser
+*«¿está quieto AHORA?»* en vez de *«¿estuvo quieto todo el rato?»*. Y el primer chequeo ya
+**nunca descarta**: solo el segundo decide.
+
+**2. El filtro de velocidad descartaba toda caída mientras el GPS no enganchara.**
+El comentario decía que sin señal el marcador muestra `--`. **Es falso**: los únicos que
+escriben ahí ponen `Math.round(...)`, y el valor inicial del HTML es `0`. O sea
+`_velocidadEnPantalla()` **jamás devolvía `null`** — la red de seguridad («si no se sabe la
+velocidad, no filtres») era **código muerto**, y con el GPS aún sin fix el 0 se leía como
+«no venías andando» y **se descartaba la caída**.
+→ La señal de «no se sabe» ahora viene de `lastFixTime`: sin fix reciente (12 s), la
+velocidad es desconocida y **no se filtra nada**.
+
+**3. `sincronizarAlEntrar` podía BORRAR los kilómetros de la nube. [pérdida de datos]**
+`us` se hidrata **solo desde localStorage** — no existe ni una línea que lea `us.di` desde
+Firestore. Al reinstalar la app, limpiar datos o entrar desde otro teléfono, `us.di` arranca
+en 0, y esta función —que corre incondicionalmente al entrar— **sobrescribía los kilómetros
+de la nube con CERO**. Definitivo y silencioso. Lo introdujo el mismo arreglo de v7.12 que
+rescató a los 16 usuarios invisibles.
+→ Ahora **primero se lee la nube**: si tiene más, se **restaura al teléfono** (que es lo que
+uno espera al reinstalar) y recién entonces se sincroniza. Manda el número más grande.
+
+**4. El ranking por disciplina repetía el bug de invisibilidad de v7.12.**
+Se subía `us.dm || {}`, y **un mapa vacío no crea el campo anidado** `kmPorModo.ciclismo`.
+Como Firestore excluye del `orderBy` los documentos sin el campo, todo usuario nuevo nacía
+invisible en el ranking nuevo y la sincronización de rescate no rescataba a nadie ahí.
+→ `_kmPorModoParaNube()` escribe **siempre todas las claves que compiten**, aunque valgan 0.
+
+**5. El clima le pegaba a la API una vez por segundo.**
+El único freno miraba `_climaUltimoAviso`, que solo se actualiza **cuando se habla**. Como
+casi nunca hay algo que anunciar, el freno nunca bloqueaba: se llamaba a Open-Meteo en cada
+actualización de GPS. Batería, datos, y camino directo a que nos limiten la API — lo que
+además habría dejado sin clima a la esfera y al aviso de lluvia. Y peor: `_climaBase` se
+reemplazaba en cada vuelta, así que se comparaba contra la lectura de **hace un segundo** y
+el aviso de «cambió el pronóstico» era casi inalcanzable.
+→ Freno de **consulta** propio (`CLIMA_MIN_ENTRE_CHEQUEOS`, 15 min), separado del de aviso.
+
+**6. El botón atrás podía cancelar un SOS en curso. [seguridad]**
+`_cerrarCapaAbierta()` devolvía `false` con la alerta de caída en pantalla, y eso **no
+protegía nada**: caía a los casos siguientes. Con la cuenta regresiva corriendo, atrás podía
+**cerrar la app** y matar el temporizador, la alarma y el SOS pendiente. Un ciclista aturdido
+cancelaba su propio auxilio.
+→ La alerta de caída **se traga el botón atrás** y no pasa nada más. Se agregó la misma
+protección para la **navegación en curso**, que era el otro caso grave del informe.
+
+**Verificación:** los 6 escenarios probados en navegador real, uno por uno. Suite **8/8**.
+
+**Lo que la auditoría encontró SANO** (vale registrarlo): el manejo de unidades del
+acelerómetro, la carrera con `crashAlertaActiva`, el patrón `vozGen` contra voz duplicada,
+sacar los MP3 locales de detrás de `navigator.onLine`, la tabla de prioridades de voz,
+`_cambioClimaRelevante`, `mostrarRanking` con `kmPorModo` ausente, el blindaje de
+`onSnapshot`, `obtenerFraseUnica` y `compartirViaje`.
+
+**Quedan 6 hallazgos menores sin arreglar** (documentados en el informe): desincronización
+de la pila del historial al usar el botón atrás **de pantalla**, capas a pantalla completa
+no cubiertas por `_cerrarCapaAbierta`, dos ventanas de carrera en la cola de voz, y la clave
+anti-repetición de pendientes que depende de la velocidad. Ninguno es de seguridad.
+
+**Lección:** los tests estaban en verde (125 casos) y **ninguno de estos 6 defectos estaba
+cubierto**, porque todos viven en el pegamento entre las funciones puras y el DOM, la red y
+el estado global. Testear la función pura no basta cuando el bug está en cómo se la
+alimenta.
+
+---
+
 ## v7.14 — 2026-07-20 — Claude (los arquetipos de Pistero ahora son TIPOS DE CICLISTA)
 
 **Idea de Inty:** que los arquetipos dejen de ser rasgos abstractos («relajado»,

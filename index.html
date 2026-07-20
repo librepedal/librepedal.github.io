@@ -1141,7 +1141,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.14'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.15'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3137,7 +3137,7 @@ async function reg(e){
      final del ranking — simplemente NO EXISTÍA para él. El 2026-07-20, mirando los datos
      reales, 16 de 29 usuarios estaban en esa situación. Naciendo con el campo en 0, nadie
      vuelve a quedar invisible. */
-  try{ await db.collection('users').doc(cu).set({nombre:nombre,km:(us&&us.di)||0,darma:(us&&us.d)||0,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,piel:selectedPiel,ojos:selectedOjos,labios:selectedLabios,vello:selectedVello,peinado:selectedPeinado,panuelo:selectedPanuelo,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
+  try{ await db.collection('users').doc(cu).set({nombre:nombre,km:(us&&us.di)||0,kmPorModo:_kmPorModoParaNube(),darma:(us&&us.d)||0,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,piel:selectedPiel,ojos:selectedOjos,labios:selectedLabios,vello:selectedVello,peinado:selectedPeinado,panuelo:selectedPanuelo,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
   // El correo va APARTE, en un documento privado que solo el dueño (o el admin
   // real) puede leer — antes vivía en /users/{id}, que es de lectura pública a
   // propósito (Ranking mundial, "ver perfil de otro"), así que cualquiera podía
@@ -4109,6 +4109,20 @@ function _sumarKmModo(km){
    registran igual (sirven para tus propias estadísticas) pero no entran a ningún ranking. */
 const MODOS_QUE_COMPITEN={ciclismo:'Ruta',mtb:'MTB / Gravel',trekking:'Trekking'};
 function _modoCompite(m){ return !!MODOS_QUE_COMPITEN[m]; }
+/* Arma el mapa de kilómetros por modo SIEMPRE con todas las claves que compiten, aunque
+   valgan 0.
+   Auditoría del 2026-07-20: se subía `us.dm || {}`, y **un mapa vacío no crea el campo
+   anidado** `kmPorModo.ciclismo`. Como Firestore excluye del `orderBy` los documentos que
+   no tienen el campo, el ranking por disciplina repetía exactamente el bug que se acababa
+   de arreglar: todo usuario nuevo nacía invisible, y la sincronización de rescate no
+   rescataba a nadie en la dimensión nueva. Con las claves en 0 desde el registro, todos
+   entran al ranking desde el primer día. */
+function _kmPorModoParaNube(){
+  const out={};
+  for(const m in MODOS_QUE_COMPITEN) out[m]=0;
+  if(us && us.dm && typeof us.dm==='object'){ for(const m in us.dm){ const v=Number(us.dm[m]); if(isFinite(v)&&v>0) out[m]=v; } }
+  return out;
+}
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
@@ -4999,7 +5013,7 @@ async function sincronizarStats(){
   if(!cu) return;
   const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null;
   try{
-    await db.collection('users').doc(cu).set({km:us.di||0, kmPorModo:(us.dm&&typeof us.dm==='object')?us.dm:{}, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true});
+    await db.collection('users').doc(cu).set({km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true});
   }catch(e){
     try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarStats'}}); }catch(_){}
   }
@@ -5015,9 +5029,42 @@ async function sincronizarStats(){
    kilómetros guardados solo en su teléfono, para siempre.
    Con esto cualquiera que abra la app sube lo que tenga y entra al ranking SOLO, sin que
    nadie tenga que tocarle la cuenta ni correr una migración. */
+/* ⚠️ NUNCA subir a ciegas: primero se MIRA lo que hay en la nube.
+   Auditoría de calidad del 2026-07-20: `us` se hidrata SOLO desde localStorage (no existe
+   ni una línea que lea `us.di` desde Firestore). Si alguien reinstala la app, limpia los
+   datos del navegador o entra desde otro teléfono, `us.di` arranca en 0 — y esta función,
+   que corre incondicionalmente al entrar, le sobrescribía sus kilómetros en la nube con
+   CERO. Pérdida definitiva, silenciosa, y provocada justo por el arreglo que rescató a los
+   16 usuarios invisibles.
+   Ahora manda el número más grande: si la nube tiene más, se RESTAURA al teléfono (que es
+   lo que uno espera al reinstalar) y recién entonces se sincroniza. */
 function sincronizarAlEntrar(){
   if(!cu) return;
-  setTimeout(function(){ try{ sincronizarStats(); }catch(e){} }, 4000); // deja que la sesión termine de levantar
+  setTimeout(async function(){
+    try{
+      let nube=null;
+      try{ const doc=await db.collection('users').doc(cu).get(); if(doc.exists) nube=doc.data(); }catch(e){}
+      if(nube){
+        const kmNube=Number(nube.km)||0, kmLocal=Number(us.di)||0;
+        const daNube=Number(nube.darma)||0, daLocal=Number(us.d)||0;
+        let restaurado=false;
+        if(kmNube>kmLocal+0.05){ us.di=kmNube; restaurado=true; }
+        if(daNube>daLocal){ us.d=daNube; restaurado=true; }
+        if(nube.kmPorModo && typeof nube.kmPorModo==='object'){
+          if(!us.dm || typeof us.dm!=='object') us.dm={};
+          for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
+        }
+        if(restaurado){
+          try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
+          try{ if(typeof au==='function') au(); }catch(e){}
+          try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
+        }
+      }
+      sincronizarStats(); // recién ahora se sube, con el número correcto
+    }catch(e){
+      try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarAlEntrar'}}); }catch(_){}
+    }
+  }, 4000); // deja que la sesión termine de levantar
 }
 /* ===== EL IDIOMA DE LA RUTA =====
    Idea de Inty (2026-07-20). Nació hablando del cambio de luces: él lo planteó para
@@ -6363,13 +6410,28 @@ function _registrarPasoEnHistorial(id){
   try{ history.pushState({lpView:id}, ''); }catch(e){}
 }
 window.addEventListener('popstate', function(){
-  // 1) Si hay algo encima (modal, tutorial), el atrás cierra eso primero, como en
-  //    cualquier app. Se repone la entrada consumida para no desarmar la pila.
+  /* 1) ALERTA DE CAÍDA: se traga el botón atrás y no pasa NADA más.
+     Auditoría del 2026-07-20: antes `_cerrarCapaAbierta()` devolvía `false` acá, y eso NO
+     protegía nada — caía a los casos siguientes. Con la cuenta regresiva de 30 s corriendo,
+     apretar atrás podía **cerrar la app**, matando el temporizador, la alarma sonora y el
+     SOS pendiente. Un ciclista aturdido cancelaba su propio auxilio sin querer.
+     Ahora se repone la entrada del historial y se corta acá: de esa pantalla se sale
+     tocando "Estoy bien", a propósito. */
+  if(document.getElementById('crashAlertOverlay')){ _registrarPasoEnHistorial(_viewActual); return; }
+  /* 1b) NAVEGACIÓN EN CURSO: tampoco se sale con el botón atrás.
+     Es una pantalla a completo con el viaje grabándose; perderla de un botonazo era
+     justo la queja que originó v7.06. Se corta acá y se avisa cómo salir de verdad. */
+  const nav=document.getElementById('nav-screen');
+  if(nav && nav.classList.contains('active')){
+    _registrarPasoEnHistorial(_viewActual);
+    try{ h('Vas navegando. Para terminar el viaje usa el botón Terminar, así no se pierde tu ruta.'); }catch(e){}
+    return;
+  }
+  // 2) Si hay algo encima (modal, tutorial), el atrás cierra eso primero.
   if(_cerrarCapaAbierta()){ _registrarPasoEnHistorial(_viewActual); return; }
-  // 2) Si hay pantallas atrás dentro de la app, se vuelve a la anterior.
+  // 3) Si hay pantallas atrás dentro de la app, se vuelve a la anterior.
   if(_viewHistory.length){ volverAtras(); return; }
-  // 3) Si ya estás en el inicio, no se hace nada: ahí sí corresponde que Android
-  //    cierre la app, que es lo que espera cualquier usuario.
+  // 4) Si ya estás en el inicio, no se hace nada: ahí sí corresponde que Android cierre.
 });
 /* ===== ANALYTICS: qué usa el usuario y dónde pasa tiempo. Buffer en memoria +
    escritura ATÓMICA (FieldValue.increment) con throttle — NO escribe en cada toque
@@ -6816,6 +6878,7 @@ const CRASH_UMBRAL_G=3.5;
 let crashMuestrasMov=[];
 const CRASH_MOV_QUIETO=0.22;   // variación en g por debajo de la cual el teléfono NO se está moviendo
 const CRASH_VENTANA_MS=3600;   // cuánto rato después del golpe se juntan muestras
+const CRASH_VENTANA_QUIETUD=1200; // solo cuentan los últimos 1,2 s: la pregunta es «¿está quieto AHORA?»
 /* Velocidad mínima ANTES del golpe para tratarlo como caída de ciclista.
    Caso real (2026-07-20): a una amiga de Inty se le cayó el teléfono al suelo con la
    app abierta y saltó la alerta. Un teléfono que se cae y un ciclista que se cae se ven
@@ -6859,11 +6922,19 @@ function _crashMotionHandler(e){
     setTimeout(function(){ _verificarQuietudTrasImpacto(1); }, 1500);
     return; // el golpe mismo no cuenta como movimiento posterior
   }
-  // Junta el movimiento de los segundos siguientes al golpe. Se saltan los primeros
-  // 250 ms porque ahí todavía coletea el impacto y ensuciaría la medición.
+  /* Junta el movimiento posterior al golpe, PERO solo el RECIENTE.
+     Auditoría del 2026-07-20: antes se guardaba todo desde los 250 ms y la decisión miraba
+     el MÁXIMO de todo el búfer. Una caída real no es golpe-y-quietud: es golpe, medio
+     segundo o más de revolcón (la bici encima, el cuerpo rodando, el teléfono girando en
+     el bolsillo) y RECIÉN AHÍ quietud. Ese revolcón dejaba muestras muy sobre el umbral,
+     el máximo quedaba contaminado para siempre y el sistema concluía "sigue moviéndose"
+     — o sea, el caso central del producto no disparaba la alerta NUNCA.
+     Ahora la ventana se desliza: solo cuentan los últimos ~1,2 s, así que lo que se
+     pregunta es «¿está quieto AHORA?» y no «¿estuvo quieto todo el rato?». */
   const desde=ahora-crashUltimoImpacto;
   if(crashUltimoImpacto && desde>250 && desde<=CRASH_VENTANA_MS){
-    crashMuestrasMov.push(Math.abs(mag-(sinGravedad?0:1)));
+    crashMuestrasMov.push({t:ahora, m:Math.abs(mag-(sinGravedad?0:1))});
+    while(crashMuestrasMov.length && ahora-crashMuestrasMov[0].t>CRASH_VENTANA_QUIETUD) crashMuestrasMov.shift();
     if(crashMuestrasMov.length>500) crashMuestrasMov.shift();
   }
 }
@@ -6890,22 +6961,36 @@ function _decidirQuietudCaida(muestrasMov, velocidadGps){
   if(typeof velocidadGps!=='number' || !isFinite(velocidadGps)) return 'sindatos';
   return velocidadGps<3 ? 'caida' : 'siguemoviendose';
 }
-// Lee la velocidad mostrada devolviendo null cuando NO se sabe (GPS sin señal muestra
-// "--"). Antes eso se convertía en 0 y el sistema lo leía como "está quieto".
+/* Velocidad actual, o `null` cuando de verdad NO se sabe.
+   Auditoría del 2026-07-20: el comentario anterior decía que el marcador muestra "--" sin
+   señal. **Es falso**: los únicos que escriben ahí ponen `Math.round(...)`, o sea siempre
+   un número — y el valor inicial del HTML es `0`. Resultado: esta función jamás devolvía
+   `null`, la red de seguridad («si no se sabe la velocidad, no filtres») era código muerto,
+   y peor: mientras el GPS todavía no engancha, el marcador dice 0 → el filtro concluía
+   «no venías andando» → **se descartaba toda caída**.
+   Ahora la señal de "no se sabe" viene de donde corresponde: si no hay un fix de GPS
+   reciente, no hay velocidad confiable, y ante la duda NO se filtra. */
+const CRASH_FIX_FRESCO_MS=12000;
 function _velocidadEnPantalla(){
+  const hayFix = (typeof lastFixTime!=='undefined' && lastFixTime && (Date.now()-lastFixTime)<CRASH_FIX_FRESCO_MS);
+  if(!hayFix) return null; // sin fix reciente: velocidad desconocida, no un cero real
   const navActivo=document.getElementById('nav-screen').classList.contains('active');
   const el=document.getElementById(navActivo?'navSpeed':'spd');
   if(!el) return null;
   const v=parseFloat(String(el.innerText).replace(',','.'));
   return isFinite(v) ? v : null;
 }
-// Dos chequeos de quietud (1.5s y 3s después del golpe), no uno solo: un bache fuerte
-// puede dejarte "lento" un instante sin que sea una caída real — exigir que sigas
-// quieto un rato más filtra ese caso sin demorar tanto la alerta si sí fue una caída.
+/* Dos chequeos de quietud (1,5 s y 3 s después del golpe).
+   Auditoría del 2026-07-20: antes, si el PRIMER chequeo veía movimiento, se hacía `return`
+   y **no se agendaba el segundo** — así que el revolcón normal de una caída cancelaba la
+   vigilancia para siempre. Ahora el primero nunca descarta: solo el segundo decide. Un
+   bache sigue filtrado, porque a los 3 s quien pasó un bache va pedaleando y se ve. */
 function _verificarQuietudTrasImpacto(intento){
   if(crashAlertaActiva) return;
-  if(_decidirQuietudCaida(crashMuestrasMov, _velocidadEnPantalla())==='siguemoviendose') return; // te moviste: no fue caída
-  if(intento===1){ setTimeout(function(){ _verificarQuietudTrasImpacto(2); }, 1500); return; }
+  const muestras=crashMuestrasMov.map(function(x){ return x && typeof x==='object' ? x.m : x; });
+  const veredicto=_decidirQuietudCaida(muestras, _velocidadEnPantalla());
+  if(intento===1){ setTimeout(function(){ _verificarQuietudTrasImpacto(2); }, 1500); return; } // el primero nunca descarta
+  if(veredicto==='siguemoviendose') return; // a los 3 s sigue en movimiento: no fue caída
   mostrarAlertaCaida();
 }
 function iniciarDeteccionCaidas(){
@@ -7639,8 +7724,19 @@ let _ultimoChequeoLluvia=0, _avisoLluviaHecho=false;
    Solo se habla cuando el cambio es REAL y le cambia la decisión al ciclista — un 5% más
    de probabilidad no le sirve a nadie y desgasta la confianza en la voz (ver DOCTRINA 2
    en VISION-MAESTRA.md: el silencio es lo que le da valor a lo que sí se dice). */
-let _climaBase=null, _climaUltimoAviso=0;
+let _climaBase=null, _climaUltimoAviso=0, _climaUltimoChequeo=0;
 const CLIMA_MIN_ENTRE_AVISOS=1500000; // 25 min: ni el clima cambia tan rápido ni conviene hablar tanto
+/* Cada cuánto se CONSULTA la API — distinto de cada cuánto se HABLA.
+   Auditoría del 2026-07-20: el único freno miraba `_climaUltimoAviso`, que solo se
+   actualiza cuando efectivamente hay algo que decir. Como la mayor parte del viaje no hay
+   nada que anunciar, ese freno nunca bloqueaba y se llamaba a Open-Meteo **en cada
+   actualización de GPS** — cerca de una petición por segundo, por usuario. Batería, datos
+   móviles y camino directo a que nos limiten la API, lo que además dejaría sin clima a la
+   esfera y al aviso de lluvia.
+   Y había un segundo efecto peor: `_climaBase` se reemplazaba en cada vuelta, así que la
+   comparación era contra la lectura de hace un segundo. Ningún pronóstico se mueve 30
+   puntos en un segundo — el aviso de "cambió el pronóstico" era casi inalcanzable. */
+const CLIMA_MIN_ENTRE_CHEQUEOS=900000; // 15 min entre consultas a la API
 /* Decide si el clima cambió lo suficiente como para interrumpir al ciclista.
    Función pura y aparte para poder probarla sin salir a pedalear (tests/clima.test.mjs).
    base y actual: {lluvia:0-100, viento:km/h, temp:°C, codigo:WMO} */
@@ -7672,7 +7768,9 @@ function _cambioClimaRelevante(base, actual){
 async function vigilarClima(lat,lon){
   if(!vozActiva) return;
   const ahora=Date.now();
-  if(_climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return;
+  if(ahora-_climaUltimoChequeo<CLIMA_MIN_ENTRE_CHEQUEOS) return; // freno de CONSULTA: sin esto se llamaba a la API cada segundo
+  if(_climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return; // freno de AVISO
+  _climaUltimoChequeo=ahora;
   try{
     const w=await climaDeZona(lat,lon);
     if(!w||!w.current) return;
