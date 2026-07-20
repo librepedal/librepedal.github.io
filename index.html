@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.06'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.07'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2096,13 +2096,28 @@ function _reproducirVoz(item){
   mostrarBocadillo(item.t, durEst+600);
   _pisteroHabla(durEst);
   clearTimeout(vozTimerFin);
-  // Voz neuronal (más humana, español real) si está activada y hay red. Si falla o tarda, cae a la nativa.
-  if(vozMejorada && navigator.onLine){
-    vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso: cubre el fetch; se recalibra con la duración real
-    // 1º frase fija con voz chilena pre-generada (Azure). Si no existe, 2º MeloTTS. Si falla, nativa.
+  /* Voz chilena (Lorenzo / Catalina). Orden: 1º el MP3 ya grabado, 2º Azure en vivo,
+     y solo al final la voz del navegador.
+     OJO con la red: antes TODO este bloque estaba detrás de `navigator.onLine`, así que
+     un bajón de señal a mitad de ruta mandaba a Pistero a la voz vieja del navegador —
+     reportado por Inty (2026-07-20): "por ahí se anda colando la voz que teníamos
+     antes... en algunos momentos cambia la voz". Pero las frases fijas son ARCHIVOS
+     LOCALES (voces/*.mp3) que el service worker guarda tras oírlas una vez: no necesitan
+     internet. Solo la voz EN VIVO lo necesita, y solo ella debe depender de la red.
+     Además `navigator.onLine` miente seguido (dice que no hay red cuando sí, y al revés),
+     así que mientras menos cosas cuelguen de él, mejor. */
+  if(vozMejorada){
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
-    if(_id){ _vozArchivo(item, durEst, _id, miGen); } else { _vozAzureRuntime(item, durEst, miGen); }
-    return;
+    if(_id){
+      vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso; se recalibra con la duración real del audio
+      _vozArchivo(item, durEst, _id, miGen);
+      return;
+    }
+    if(navigator.onLine){ // frase nueva (nombres, calles, números): esa sí se genera en vivo
+      vozTimerFin=setTimeout(_vozSiguiente, 12000);
+      _vozAzureRuntime(item, durEst, miGen);
+      return;
+    }
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
   _vozNativaOWeb(item, durEst);

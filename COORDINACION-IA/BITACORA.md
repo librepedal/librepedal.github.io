@@ -4,6 +4,54 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.07 — 2026-07-20 — Claude (la voz vieja se colaba a mitad de ruta)
+
+**Lo reportado por Inty:** *"por ahí se anda colando la voz que teníamos antes... en
+algunos momentos cambia la voz y eso no está bien"*. Ya se había arreglado una vez en
+v7.01 ("volvió la voz antigua"), o sea que era una regresión con otra causa.
+
+**Causa raíz.** Todo el bloque de voz chilena estaba detrás de `navigator.onLine`:
+
+```js
+if (vozMejorada && navigator.onLine) {  // ...MP3 chileno o Azure en vivo... }
+_vozNativaOWeb(item, durEst);            // ← la voz vieja del navegador
+```
+
+Pero **las 194 frases fijas son archivos locales** (`voces/l###.mp3` y `c###.mp3`) que
+el service worker guarda tras oírlas una vez: **no necesitan internet**. Estaban
+bloqueadas detrás de una condición de red que no les corresponde.
+
+Resultado: pedaleando, cualquier bajón de señal —de un segundo— tiraba a Pistero a la
+voz del navegador. Y como el síntoma aparecía y desaparecía con la cobertura, se sentía
+como que "cambiaba sola".
+
+Se suma que `navigator.onLine` es poco fiable (reporta sin red teniéndola, y al revés),
+así que mientras menos cosas dependan de él, mejor.
+
+**Qué se cambió.** La red ahora solo condiciona lo que de verdad la necesita:
+1. Frase fija → **MP3 local**, con o sin internet.
+2. Frase nueva (calles, números, nombres) → Azure en vivo, y ahí sí se exige red.
+3. Voz del navegador: último recurso de verdad.
+
+**Verificación en navegador real**, espiando qué camino toma cada caso:
+
+| Caso | Antes | Ahora |
+|---|---|---|
+| Frase fija con internet | MP3 chileno | MP3 chileno |
+| **Frase fija SIN internet** | **voz vieja** | **MP3 chileno** ✅ |
+| Frase nueva con internet | Azure en vivo | Azure en vivo |
+| Frase nueva sin internet | voz vieja | voz vieja (no hay audio que reproducir) |
+
+**Limitación honesta que queda:** las frases dinámicas sin conexión siguen sonando con
+la voz del navegador, porque no existe un audio grabado para ellas. La solución real
+sería un botón "descargar voces" que precachee los 388 MP3, igual que ya existe
+"descargar mapa de la ruta". Queda propuesto, no hecho.
+
+**También sin verificar en terreno:** que en una ruta real, con señal intermitente, ya
+no se escuche el cambio. La lógica está probada; falta el pedaleo.
+
+---
+
 ## v7.06 — 2026-07-20 — Claude (el botón atrás del teléfono ya no cierra la app)
 
 **Lo reportado por Inty:** *"aprieto el botón de volver del teléfono para volver entre
