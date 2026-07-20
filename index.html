@@ -57,7 +57,10 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 #esFlash.boom{animation:supernova 1.05s ease-out forwards}
 @keyframes supernova{0%{opacity:0;transform:scale(0.05)}10%{opacity:1}55%{opacity:0.8}100%{opacity:0;transform:scale(2.8)}}
 .es-bottom{position:absolute;bottom:16px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:14px;z-index:3}
-.es-ind{display:flex;flex-direction:column;align-items:center;min-width:52px;background:none;border:none;color:#cfeeff;cursor:pointer}
+/* min-height 48px: medido el 2026-07-20, estos indicadores quedaban en 36px, la mitad
+   del minimo tactil. Ahora que 'mi puesto' y 'viajes' ademas NAVEGAN, tienen que poder
+   tocarse sin fallar. */
+.es-ind{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;min-height:48px;background:none;border:none;color:#cfeeff;cursor:pointer}
 /* Una sola lógica de navegación: el es-bottom es HUD de DATOS, no un segundo menú.
    km / mi puesto / viajes se miran de un vistazo; para ir a esas secciones está la Esfera. */
 .es-dato{cursor:default;user-select:none}
@@ -111,7 +114,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-modo-chip .es-modo-txt{font-size:0.6rem;font-weight:700;letter-spacing:0.02em;color:#8fb0c8;text-shadow:0 1px 3px rgba(0,0,0,0.6);opacity:0.75;transition:color 0.15s,opacity 0.15s}
 .es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.14);box-shadow:0 0 16px -2px var(--chip-c)}
 .es-modo-chip.selected .es-modo-txt{color:#fff;opacity:1}
-.es-classic{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
+.es-classic{min-height:48px;display:inline-flex;align-items:center;justify-content:center;position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
 .es-globe{background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
 #auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px 20px 40px;text-align:center;overflow-y:auto}
 .auth-box{background:#151b2e;padding:20px;border-radius:20px;border:1px solid var(--p);width:100%;max-width:400px}
@@ -315,14 +318,21 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* Capas del mapa (pedido de Inty: "un solo mapa para todo", botones con lógica clara).
    Chips que MUESTRAN/OCULTAN lo que ves: ciclistas, pacos/peligros, puntos, miradores.
    Encendida = cian (identidad de la comunidad); apagada = gris neutro. */
-.mapcapas{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.mapcapas::-webkit-scrollbar{display:none}
-.capachip{flex:0 0 auto;background:#131c2f;border:0.5px solid rgba(255,255,255,0.10);color:#8b97ad;border-radius:999px;padding:8px 13px;font-size:0.78rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+/* Los filtros del mapa se ENVUELVEN, no se deslizan.
+   Medido el 2026-07-20 en pantalla de 375 px: la fila mide 511 px, así que "Puntos útiles"
+   y "Miradores" quedaban fuera de la pantalla. Técnicamente se alcanzaban deslizando, pero
+   la barra de desplazamiento está oculta (`scrollbar-width:none`) y no había ninguna pista
+   visual: en la práctica, la mitad de los filtros del mapa no existía para el usuario.
+   Envolviendo caben los cuatro a la vista en dos filas. Y la altura sube de 34 a 48 px,
+   que es el mínimo para tocar con el dedo sin fallar. */
+.mapcapas{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 8px}
+.capachip{flex:0 0 auto;min-height:48px;display:inline-flex;align-items:center;background:#131c2f;border:0.5px solid rgba(255,255,255,0.10);color:#8b97ad;border-radius:999px;padding:8px 13px;font-size:0.78rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
 .capachip.on{background:rgba(18,179,166,0.15);border-color:#12b3a6;color:#5fe0d3}
 .capachip:active{transform:scale(.96)}
 /* Estilo del mapa (calles/topo/satélite): control flotante en el mapa, no un botón suelto
    que se confunde con las capas. Es un ajuste de VISTA, no una capa de datos. */
-.map-estilo-btn{position:absolute;right:14px;top:12px;z-index:500;background:rgba(15,20,35,0.92);color:#dfe7ff;border:0.5px solid rgba(255,255,255,0.12);width:44px;height:44px;border-radius:12px;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+/* 48px es el minimo tactil: medido el 2026-07-20 estos quedaban en 44 y 46. */
+.map-estilo-btn{position:absolute;right:14px;top:12px;z-index:500;background:rgba(15,20,35,0.92);color:#dfe7ff;border:0.5px solid rgba(255,255,255,0.12);width:48px;height:48px;border-radius:12px;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .map-estilo-btn:active{transform:scale(0.94)}
 /* Botón flotante de reportar, estilo Waze: a mano sobre el mapa (antes estaba perdido en una
    fila de botones). Pedido de Inty: "botón accesible para reportar policía en el mismo mapa". */
@@ -401,10 +411,10 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-stat .val{font-size:1rem;font-weight:800;color:var(--p)}
 .nav-stat .lbl{font-size:0.6rem;color:#888}
 .nav-close{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;border:none;width:35px;height:35px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:600}
-.nav-recenter-btn{position:absolute;right:14px;bottom:210px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:46px;height:46px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.nav-recenter-btn{position:absolute;right:14px;bottom:210px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:48px;height:48px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn{position:absolute;right:14px;bottom:266px;z-index:550;background:rgba(15,20,35,0.92);color:#7d8ba0;border:2px solid rgba(255,255,255,0.2);width:46px;height:46px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn.on{color:var(--p);border-color:var(--p);background:rgba(252,76,2,0.16)}
-.map-recenter-btn{position:absolute;right:14px;bottom:24px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:46px;height:46px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.map-recenter-btn{position:absolute;right:14px;bottom:24px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:48px;height:48px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-end-btn{width:100%;margin-top:8px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:10px 12px;border-radius:12px;font-size:0.85rem;font-weight:800;cursor:pointer}
 .nav-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(10,15,29,0.95);padding:12px;border-top:2px solid var(--p)}
 .nav-eta{display:flex;justify-content:space-around}
@@ -665,8 +675,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
        el ranking, antes solo visible adentro de Estadísticas). -->
   <button class="es-ind es-badge" id="esAvisos" data-n="0" onclick="cerrarEsfera();cv('chat')"><span class="es-ind-v">🔔</span><span class="es-ind-l">Avisos</span></button>
   <button class="es-mic" id="esMic" onclick="toggleMic()"><i class="fas fa-microphone"></i></button>
-  <div class="es-ind es-dato"><span class="es-ind-v" id="esPuesto">—</span><span class="es-ind-l">mi puesto</span></div>
-  <div class="es-ind es-dato"><span class="es-ind-v" id="esViajes">0</span><span class="es-ind-l">viajes</span></div>
+  <!-- Reportado por Inty (2026-07-20): "el número de puesto no te lleva a ningún lado".
+       Era un <div> sin acción: mostraba el dato y ahí quedaba. Si un número invita a
+       tocarlo, tiene que llevar a alguna parte. Ahora el puesto abre el ranking de tu
+       disciplina y los viajes abren tu historial de rutas. -->
+  <button class="es-ind es-dato" onclick="cerrarEsfera();mostrarRanking()" title="Ver el ranking de tu disciplina"><span class="es-ind-v" id="esPuesto">—</span><span class="es-ind-l">mi puesto</span></button>
+  <button class="es-ind es-dato" onclick="cerrarEsfera();cv('routes')" title="Ver tus rutas grabadas"><span class="es-ind-v" id="esViajes">0</span><span class="es-ind-l">viajes</span></button>
 </div>
 </div>
 <header>
@@ -1141,7 +1155,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.16'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.17'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
