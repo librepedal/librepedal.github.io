@@ -34,6 +34,11 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ```
 LIBRE — liberado por la sesión 2 el 2026-07-21.
 
+📩 SESIÓN 1: LEE `PETICION-A-SESION-1-2026-07-21.md`. Inty pidió que dejes todo corriendo
+y que dejes escrito ahí "el método que estamos usando ahora último" — no está en el repo y
+la sesión 2 no puede leer tu conversación con él ni tus mockups de claude.ai/code/artifact.
+
+
 Inty decidió seguir con el rumbo de la sesión 1 (la SPEC + el orden que están armando).
 La sesión 2 se detuvo y NO va a tocar index.html. El candado queda libre para ti.
 
