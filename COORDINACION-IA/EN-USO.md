@@ -32,7 +32,11 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE
+OCUPADO — sesión 2 (Opus 4.8), 2026-07-21
+Trabajando en: PANTALLA 2 de la SPEC (Mapa/Viaje). Ver reparto en
+ACUERDO-SESIONES-2026-07-21.md. Sesión 1: la Pantalla 1 y los iconos SVG quedan para ti,
+son territorio limpio — no chocan con nada de lo mío.
+
 Última sesión: 2 (Opus 4.8), 2026-07-21 04:xx — v7.21 a v7.24 COMMITEADAS Y PUSHEADAS
 (commit 934b159) y desplegadas en producción. Tests 12/12 verdes.
 
