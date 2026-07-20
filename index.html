@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.04'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.05'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5605,6 +5605,55 @@ function _pendienteActualTexto(){
   if(zonaPendienteActual==='bajada') return 'Vamos en bajada ahora mismo, ojo con la velocidad.';
   return 'Por ahora vamos en terreno parejo.';
 }
+/* Cuánto camino mirar hacia adelante, según a qué velocidad vas.
+   Antes eran 180 metros fijos. En bici son ~30 segundos de aviso (bien), pero en auto
+   a 60 km/h son 10 segundos: el aviso llega cuando ya pasaste el tramo. Reportado en
+   ruta el 2026-07-20 andando en auto. Ahora se mira ~35 segundos de viaje, con piso y
+   techo para que no se vuelva absurdo ni detenido ni volando. */
+function _metrosAMirar(velKmh){
+  const v=(typeof velKmh==='number' && isFinite(velKmh) && velKmh>0) ? velKmh : 18;
+  return Math.max(180, Math.min(600, (v/3.6)*35));
+}
+/* Analiza el terreno que viene mirando la FORMA del perfil, no solo los dos extremos.
+   El bug (reportado en ruta el 2026-07-20, yendo en auto): se comparaba la altura de
+   ahora contra la de un punto 180 m más adelante y nada de lo que había en medio. Si
+   el camino bajaba y volvía a subir un poco, los extremos daban "subida" aunque lo que
+   venía en realidad fuera una recta — que es justo lo que se escuchó: en plena bajada,
+   aviso de subida, y adelante había plano.
+   Ahora se recorre el tramo punto por punto acumulando cuánto sube y cuánto baja, y
+   solo se llama subida (o bajada) cuando ese sentido DOMINA de verdad y hay desnivel
+   suficiente para no ser ruido del mapa de elevación.
+   Función pura para poder testearla sin salir a pedalear (tests/pendientes.test.mjs). */
+function _analizarTerrenoAdelante(perfil, iNow, metros, umbral, minDesnivel){
+  if(!perfil || !perfil.length || iNow<0 || iNow>=perfil.length-1) return null;
+  const dNow=perfil[iNow].d, eleNow=perfil[iNow].ele;
+  let subeTotal=0, bajaTotal=0, iFin=-1, eleAnt=eleNow;
+  for(let i=iNow+1;i<perfil.length;i++){
+    if(perfil[i].d-dNow>metros) break;
+    const dif=perfil[i].ele-eleAnt;
+    if(dif>0) subeTotal+=dif; else bajaTotal+=-dif;
+    eleAnt=perfil[i].ele; iFin=i;
+  }
+  if(iFin<0) return null;
+  const dSeg=perfil[iFin].d-dNow;
+  if(dSeg<60) return null;                       // tramo demasiado corto para opinar
+  /* Sin al menos 3 tramos no se puede saber la FORMA del terreno, solo la recta entre
+     dos puntos sueltos. El perfil se muestrea con 480 puntos repartidos en toda la
+     ruta: en un viaje largo (auto) eso deja un punto cada ~200 m, y opinar con eso es
+     adivinar. Preferimos callar: un aviso equivocado es peor que ninguno. */
+  if(iFin-iNow<3) return {dist:dSeg, tipo:'plano', neto:0, grade:0, sube:subeTotal, baja:bajaTotal, sinResolucion:true};
+  const neto=perfil[iFin].ele-eleNow;
+  const grade=(neto/dSeg)*100;
+  const res={dist:dSeg, neto:neto, grade:grade, sube:subeTotal, baja:bajaTotal};
+  // Sube y baja parecido = terreno ondulado, no una subida ni una bajada.
+  const domina = Math.abs(neto)>=minDesnivel && (neto>0 ? subeTotal>=bajaTotal*2 : bajaTotal>=subeTotal*2);
+  if(!domina){ res.tipo='plano'; return res; }
+  if(grade>=umbral) res.tipo='subida';
+  else if(grade<=-umbral) res.tipo='bajada';
+  else res.tipo='plano';
+  return res;
+}
+const PEND_MIN_DESNIVEL=6; // metros: bajo esto es ruido del mapa de elevación, no un cerro
 function avisarPendienteAnticipada(lat,lon){
   if(!rutaPerfil.length || !vozActiva || vozOcupada() || vozCola.length) return;
   const ahora=Date.now();
@@ -5612,17 +5661,14 @@ function avisarPendienteAnticipada(lat,lon){
   let iNow=0, best=Infinity;
   for(let i=0;i<rutaPerfil.length;i++){ const dd=calculateDistance(lat,lon,rutaPerfil[i].lat,rutaPerfil[i].lon); if(dd<best){ best=dd; iNow=i; } }
   if(best>150) return; // lejos del perfil (fuera de ruta): no opino
-  const dNow=rutaPerfil[iNow].d, eleNow=rutaPerfil[iNow].ele;
-  let iAhead=-1;
-  for(let i=iNow+1;i<rutaPerfil.length;i++){ if(rutaPerfil[i].d-dNow>=180){ iAhead=i; break; } }
-  if(iAhead<0) return;
-  const dSeg=rutaPerfil[iAhead].d-dNow;
-  const grade=((rutaPerfil[iAhead].ele-eleNow)/dSeg)*100;
-  const key=Math.round(rutaPerfil[iAhead].d/150);
+  const r=_analizarTerrenoAdelante(rutaPerfil, iNow, _metrosAMirar(_velocidadEnPantalla()), _umbralPendiente(), PEND_MIN_DESNIVEL);
+  if(!r || r.tipo==='plano') return;
+  const key=Math.round((rutaPerfil[iNow].d+r.dist)/150);
   if(pendAntAvisadas.has(key)) return;
-  const dist=Math.round(dSeg/10)*10, umbral=_umbralPendiente();
-  if(grade>=umbral){ pendAntAvisadas.add(key); pendAntCooldown=ahora; h('Ojo, se viene una subida en los próximos '+dist+' metros. Baja un cambio y dosifica.'); }
-  else if(grade<=-umbral){ pendAntAvisadas.add(key); pendAntCooldown=ahora; h('Prepárate: viene una bajada en unos '+dist+' metros. Ojo con la velocidad y los frenos.'); }
+  pendAntAvisadas.add(key); pendAntCooldown=ahora;
+  const dist=Math.round(r.dist/10)*10;
+  if(r.tipo==='subida') h('Ojo, se viene una subida en los próximos '+dist+' metros. Baja un cambio y dosifica.');
+  else h('Prepárate: viene una bajada en unos '+dist+' metros. Ojo con la velocidad y los frenos.');
 }
 function _distPuntoASegmento(plat,plon, alat,alon, blat,blon){
   const R=6371000, tr=Math.PI/180, cl=Math.cos(plat*tr);

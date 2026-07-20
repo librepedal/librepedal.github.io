@@ -4,6 +4,55 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.05 — 2026-07-20 — Claude (avisos de subida/bajada: reporte en ruta, en auto)
+
+**Lo reportado por Inty, probando en auto:** *"en la bajada dio una instrucción de que
+más adelante venía una subida y no era así, venía una recta"*. Las subidas las avisaba
+muy bien; el problema aparecía en las bajadas.
+
+**Tres causas, no una:**
+
+**1. Se miraban solo DOS PUNTOS.** La pendiente salía de comparar la altura de donde
+estás contra la de un punto 180 m más allá — **sin mirar nada de lo que hay en medio**:
+
+```js
+const grade = ((rutaPerfil[iAhead].ele - eleNow) / (rutaPerfil[iAhead].d - dNow)) * 100;
+```
+
+Un tramo que baja y vuelve a subir apenas al final daba "subida", aunque la forma real
+del terreno fuera bajada y después plano. Es exactamente lo que se escuchó.
+
+**2. Los 180 metros eran fijos.** En bici a 18 km/h son ~35 s de anticipación: bien.
+En auto a 60 km/h son **10 segundos** — el aviso llega cuando ya pasaste el tramo. Por
+eso la falla saltó justo probando en auto.
+
+**3. Sin resolución para opinar.** El perfil se arma con `_muestrearParaDEM(points, 480)`
+— 480 puntos repartidos en TODA la ruta. En un viaje largo eso deja **un punto cada
+~200 m**, así que esos "180 m adelante" eran literalmente el punto siguiente, y la
+pendiente entre dos muestras sueltas a esa distancia es casi azar.
+
+**Qué se cambió:**
+- `_analizarTerrenoAdelante()` recorre el tramo **punto por punto** acumulando cuánto
+  sube y cuánto baja. Solo lo llama subida (o bajada) si ese sentido **domina** (el
+  doble del contrario) y hay al menos **6 m** de desnivel neto — bajo eso es ruido del
+  mapa de elevación, no un cerro.
+- `_metrosAMirar()` escala la ventana con la velocidad: ~35 segundos de viaje, con piso
+  de 180 m y techo de 600 m. En auto a 60 km/h ahora mira 583 m.
+- **Si hay menos de 3 tramos en la ventana, no se opina.** No se puede saber la forma
+  del terreno con dos puntos sueltos, y un aviso equivocado es peor que ninguno.
+
+**Verificación:** `tests/pendientes.test.mjs`, **15/15**, extrayendo las funciones
+reales desde `index.html`. Incluye el caso reportado (bajada seguida de recta → NO se
+anuncia subida), que las subidas y bajadas de verdad se siguen avisando, que el terreno
+ondulado no se confunde con una subida, y que sin resolución se calla. Suite completa
+**5/5**. Navegador real: la app carga y las tres respuestas son correctas.
+
+**Pendiente de campo:** falta volver a probarlo en ruta, idealmente en el mismo tramo
+donde falló. Los umbrales (6 m de desnivel, ventana de 35 s) están elegidos por
+criterio; si sigue avisando de más o de menos, son dos constantes.
+
+---
+
 ## v7.04 — 2026-07-20 — Claude (falsa alarma REAL reportada: teléfono que se cae ≠ ciclista que se cae)
 
 **Primera prueba de campo de la detección de caídas, y la trajo un usuario real.**
