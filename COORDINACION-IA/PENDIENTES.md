@@ -1,7 +1,42 @@
 # ✅ Pendientes — Libre Pedal
 
-Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado 2026-07-14,
-versión actual del proyecto: **v6.72**.
+Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado **2026-07-20**,
+versión actual del proyecto: **v7.14** (en vivo en librepedal.cl).
+
+---
+
+## 📌 ESTADO AL 2026-07-20 — leer antes de tomar cualquier tarea
+
+Sesión larga con Inty. **14 versiones (v7.02 → v7.14), todas desplegadas y
+verificadas.** Detalle completo en `BITACORA.md`; acá solo lo que cambia el trabajo
+de quien entre después:
+
+**Resuelto hoy (no volver a tomarlo):**
+- Detección de caídas: no avisaba una caída a velocidad, y saltaba con el teléfono
+  caído al suelo. Arreglado y con 20 tests.
+- Avisos de pendiente: miraban dos puntos sueltos y mentían en bajada. Arreglado.
+- El botón atrás del teléfono cerraba la app. Arreglado.
+- La voz vieja se colaba al bajar la señal. Arreglado.
+- **16 de 29 usuarios eran INVISIBLES en el ranking** (Firestore excluye del
+  `orderBy` los documentos sin el campo). Arreglado y se auto-repara solo.
+- Ranking separado por disciplina: los km en auto ya no compiten con los pedaleados.
+- Los arquetipos de Pistero pasaron a ser **tipos de ciclista** (12, con femenino).
+- Compartir el viaje recién terminado. Nueva landing en `/landing`.
+
+**Doctrina nueva y OBLIGATORIA:** `VISION-MAESTRA.md` tiene ahora dos doctrinas
+—cómo la app se adapta al modo de viaje, y cómo Pistero sorprende sin invadir—
+acordadas con Inty. **Leerlas antes de tocar interfaz o voz.**
+
+**Red de tests:** 8 archivos, se corren con `npm test`. Varios **leen `index.html`
+directo** en vez de reimplementar la lógica, porque los bugs estaban en los datos.
+Si un test no puede fallar, no sirve: los nuevos fallan a propósito si les cambian
+el nombre a las funciones que auditan.
+
+**Lo que necesita a Inty (nadie más puede):** los 4 secretos de firma en GitHub
+para el `.aab`, las capturas reales para la ficha de Play Store, y probar en un
+Android de verdad los umbrales de caídas.
+
+---
 
 ## 🧩 Simplificación de interfaz pedida por Inty (2026-07-14) — EN CURSO
 
@@ -217,18 +252,26 @@ que obligue a reenviar.
   dueño+admin, write dueño). Con esto el ciclo queda 100% cerrado: fuga sellada,
   migración hecha, registros nuevos guardan correo y el export admin lo lee.
   **NADA pendiente en este ítem.**
-- [ ] **⚠️ Posible falla de seguridad en detección de caídas — necesita prueba
-  con teléfono real, nadie la puede hacer sin dispositivo.** Encontrado en el
-  barrido #8 (v6.37, ver `BITACORA.md`): el chequeo de "¿sigues quieto tras el
-  impacto?" usa la velocidad del GPS (`spd`/`navSpeed`), que viene de una
-  ventana de ~10-15s de posiciones y por lo tanto LAGGEA. A los 3s post-impacto
-  la velocidad mostrada puede seguir marcando la de ANTES del choque (alta) →
-  el sistema cree que "sigues moviéndote" → **NO dispara la alerta** → podría
-  no detectar una caída real ocurrida a velocidad. El fix correcto sería medir
-  quietud con el ACELERÓMETRO (movimiento bajo tras el impacto), no con la
-  velocidad GPS — pero NO se tocó a ciegas: cambiar lógica de seguridad sin
-  poder hacer una prueba de caída real puede meter falsos positivos (alarma en
-  cada bache) o dejarlo peor. Necesita a alguien con el teléfono en mano.
+- [x] **⚠️ Falla de seguridad en detección de caídas — RESUELTA (v7.03 + v7.04,
+  2026-07-20).** El chequeo de "¿sigues quieto tras el impacto?" usaba la
+  velocidad del GPS, que viene de una ventana de 10-15s y por lo tanto laggea: a
+  los 3s de chocar a 30 km/h todavía marcaba 30 → el sistema concluía "sigue
+  andando" y **NO avisaba una caída real a velocidad**, el escenario más
+  peligroso. Fallaba también al revés: sin señal el texto es `--` y
+  `parseFloat('--')||0` daba 0 → "está quieto" → alarma sin motivo.
+  **Ahora la quietud la decide el acelerómetro** —que ya estaba conectado, es el
+  que detecta el impacto— y el GPS quedó de respaldo, sin confundir "sin señal"
+  con "detenido".
+  **Falsa alarma REAL reportada (v7.04):** a una amiga de Inty se le cayó el
+  teléfono al suelo con la app abierta y saltó la alerta. Tras el impacto, un
+  teléfono en el piso y un ciclista tirado se ven idénticos; lo que los distingue
+  es el ANTES. Bajo 5 km/h previos el golpe se ignora — y ahí el retardo del GPS
+  juega A FAVOR: leída en el instante del golpe, esa cifra ES la velocidad previa.
+  Verificado con `tests/caidas.test.mjs` (**20 casos**) y en navegador real.
+  **Lo único que queda:** los dos umbrales (`CRASH_MOV_QUIETO = 0.22 g` y
+  `CRASH_VEL_MINIMA = 5 km/h`) están elegidos por criterio, **no medidos con una
+  caída real**. Si aparecen falsas alarmas, subir `CRASH_VEL_MINIMA`; si se pierde
+  una caída real, bajarlo. Eso sí necesita el teléfono en la mano.
 
 - [x] **Publicar `firestore.rules` en Firebase Console — PUBLICADO (confirmado
   por Inty, 2026-07-14).** Cerraba un hueco real en producción: cualquier
