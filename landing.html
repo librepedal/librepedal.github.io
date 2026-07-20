@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Libre Pedal · El compañero de ruta que habla chileno</title>
+<meta name="description" content="App gratis para ciclistas, cicloviajeros, trekking y autos de apoyo. Navegación por voz en chileno, detección de caídas, aviso de cuestas y clima, mapas sin señal y una comunidad que reporta la ruta.">
+<meta name="theme-color" content="#0d1117">
+<meta property="og:title" content="Libre Pedal · El compañero de ruta que habla chileno">
+<meta property="og:description" content="Navegación por voz, detección de caídas, mapas sin señal y comunidad. Gratis, sin anuncios.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://librepedal.cl">
+<style>
+  :root{
+    --bg:#0d1117; --bg2:#131a24; --card:#161d29; --edge:#232c3b;
+    --ink:#e8eef7; --sub:#93a4bb;
+    --p:#fc4c02;      /* naranja acción */
+    --c:#22d3ee;      /* cian Pistero */
+    --g:#2ecc71;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  section{padding:clamp(48px,8vw,90px) 0}
+
+  /* HERO */
+  header{background:radial-gradient(1200px 500px at 50% -10%,rgba(252,76,2,.16),transparent 60%),var(--bg);text-align:center;padding:clamp(56px,10vw,110px) 0 clamp(40px,7vw,70px)}
+  .logo{font-size:clamp(2.6rem,9vw,4.6rem);font-weight:900;letter-spacing:-.03em;line-height:1}
+  .logo span{color:var(--p)}
+  .tag{font-size:clamp(1.05rem,3.3vw,1.5rem);color:var(--ink);margin-top:16px;font-weight:600}
+  .sub{color:var(--sub);max-width:620px;margin:14px auto 0;font-size:clamp(.95rem,2.4vw,1.08rem)}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:32px}
+  .btn{display:inline-flex;align-items:center;gap:9px;min-height:52px;padding:0 26px;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;border:1px solid transparent}
+  .btn-p{background:var(--p);color:#fff}
+  .btn-s{background:transparent;color:var(--ink);border-color:var(--edge)}
+  .libre{margin-top:18px;font-size:.86rem;color:var(--g);font-weight:600}
+
+  h2{font-size:clamp(1.5rem,4.4vw,2.2rem);font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+  .lead{color:var(--sub);max-width:660px;margin-bottom:34px;font-size:clamp(.95rem,2.3vw,1.05rem)}
+
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(265px,1fr))}
+  .card{background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:22px}
+  .card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .card p{color:var(--sub);font-size:.93rem}
+  .ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:rgba(252,76,2,.13);flex:none}
+  .ico svg{width:18px;height:18px;stroke:var(--p);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+  .modos{background:var(--bg2)}
+  .modo{background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:20px}
+  .modo .n{font-size:1.6rem}
+  .modo h3{margin:8px 0 4px;font-size:1.02rem}
+  .modo .q{color:var(--c);font-size:.88rem;font-weight:600;margin-bottom:7px}
+  .modo p{color:var(--sub);font-size:.89rem}
+
+  .destacado{background:linear-gradient(135deg,rgba(252,76,2,.1),rgba(34,211,238,.07));border:1px solid rgba(252,76,2,.4);border-radius:18px;padding:clamp(24px,5vw,38px)}
+  .destacado h2{margin-bottom:12px}
+  .destacado p{color:#cfd9e8;max-width:640px}
+  .frase{margin-top:20px;padding-left:16px;border-left:3px solid var(--p);color:var(--ink);font-weight:600;font-size:1.02rem}
+
+  .seg{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:26px}
+  .seg div{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:15px}
+  .seg b{display:block;color:var(--ink);font-size:.94rem;margin-bottom:3px}
+  .seg span{color:var(--sub);font-size:.85rem}
+
+  footer{border-top:1px solid var(--edge);padding:34px 0;text-align:center;color:var(--sub);font-size:.87rem}
+  footer a{color:var(--sub);text-decoration:none;margin:0 9px;white-space:nowrap}
+  footer a:hover{color:var(--ink)}
+  .cierre{text-align:center}
+  .cierre h2{margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">LIBRE <span>PEDAL</span></div>
+    <p class="tag">El compañero de ruta que habla chileno.</p>
+    <p class="sub">Navegación por voz, aviso de cuestas y clima, detección de caídas y una comunidad que reporta la ruta de verdad. Para el que sale tres horas y para el que sale tres semanas.</p>
+    <div class="cta">
+      <a class="btn btn-p" href="https://librepedal.cl">Probar ahora, gratis</a>
+      <a class="btn btn-s" href="#todo">Ver todo lo que hace</a>
+    </div>
+    <p class="libre">Gratis de verdad · Sin anuncios · Sin vender tus datos</p>
+  </div>
+</header>
+
+<section class="modos">
+  <div class="wrap">
+    <h2>La app se adapta a cómo viajas</h2>
+    <p class="lead">Un rutero, un cicloviajero, un caminante y un auto de apoyo no necesitan lo mismo. Libre Pedal le muestra a cada uno lo suyo, en vez de llenarte la pantalla de cosas que no vas a usar.</p>
+    <div class="grid">
+      <div class="modo"><div class="n">🏁</div><h3>Rutero</h3><p class="q">¿Cómo voy?</p><p>Ritmo, cadencia y pulso en vivo. Segmentos, vueltas y tabla de líderes. Pistero habla poco: no te rompe el ritmo.</p></div>
+      <div class="modo"><div class="n">🎒</div><h3>Cicloviajero</h3><p class="q">¿Qué viene?</p><p>Planificador de varios días, presupuesto, hospedajes, mapas sin señal y bitácora. Pistero te acompaña las horas largas.</p></div>
+      <div class="modo"><div class="n">🥾</div><h3>Trekking</h3><p class="q">¿Alcanzo?</p><p>Desnivel, luz que queda y puntos de agua. Sin nada de bicicleta estorbando la pantalla.</p></div>
+      <div class="modo"><div class="n">🚗</div><h3>Auto de apoyo</h3><p class="q">¿Dónde están?</p><p>Ves a tus ciclistas en el mapa en vivo. Pensado para acompañar grupos y cicletadas.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="todo">
+  <div class="wrap">
+    <h2>Todo lo que hace</h2>
+    <p class="lead">Sin cuentas premium ni funciones bloqueadas detrás de una suscripción.</p>
+    <div class="grid">
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v10"/><path d="M8 7a4 4 0 0 0 8 0"/><path d="M5 12a7 7 0 0 0 14 0"/></svg></span>Pistero, tu guía por voz</h3><p>Habla en chileno, no en neutro de robot. Te avisa los giros, las cuestas antes de que lleguen y te acompaña cuando llevas horas solo. Elige su personalidad y si es Pistero o Pistera.</p></div>
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4.5 8-11a8 8 0 1 0-16 0c0 6.5 8 11 8 11z"/><circle cx="12" cy="11" r="2.6"/></svg></span>Navegación de verdad</h3><p>Rutas pensadas para bicicleta, no para auto. Varios destinos en un viaje, y el mapa descargado para andar donde no hay señal.</p></div>
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 9v5"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span>Detección de caídas</h3><p>Si te caes y quedas quieto, la app lo nota y prepara el aviso a tus contactos de emergencia con tu ubicación. Tienes 30 segundos para cancelar si estás bien.</p></div>
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 15a4 4 0 0 1 .6-7.9 5.5 5.5 0 0 1 10.6-1.6A4.5 4.5 0 0 1 19 15z"/><path d="M8 19l1.5-3M12 20l1.5-3M16 19l1.5-3"/></svg></span>Clima que se vigila solo</h3><p>No solo el pronóstico al salir: la app lo sigue mirando y te avisa si cambia — lluvia, viento en contra o si baja la temperatura.</p></div>
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 17l5-8 4 5 3-4 6 7z"/><circle cx="8" cy="6" r="2"/></svg></span>Cuestas antes de sufrirlas</h3><p>Te avisa la subida o la bajada con anticipación, ajustada a cómo viajas: no es lo mismo advertirle a una bici a 20 que a un auto a 60.</p></div>
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 11h4M19 9v4"/></svg></span>Comunidad que reporta</h3><p>Perros sueltos, hoyos, controles, miradores y puntos de agua marcados por otros ciclistas. Hospedajes, "te doy alojo", chat y rodadas grupales.</p></div>
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M18 5h3v2a3 3 0 0 1-3 3M6 5H3v2a3 3 0 0 0 3 3"/></svg></span>Logros y rankings</h3><p>Segmentos, tabla de líderes, retos y tu resumen del año. Cada disciplina compite con los suyos: el que anda en auto no compite con el que pedalea.</p></div>
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span>Tu personaje</h3><p>Casco, colores, lentes, tono de piel, peinado y accesorios. Que se parezca a ti, no a un molde.</p></div>
+
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M4 19h16"/></svg></span>Sin señal, igual funciona</h3><p>Descarga el mapa de tu ruta antes de salir. El GPS sigue grabando aunque apagues la pantalla, y nada se pierde.</p></div>
+
+    </div>
+  </div>
+</section>
+
+<section class="modos">
+  <div class="wrap">
+    <div class="destacado">
+      <h2>El idioma de la ruta</h2>
+      <p>La app no solo te guía: enseña a convivir en el camino. A los que manejan y a los que pedalean, porque la convivencia se construye de los dos lados.</p>
+      <div class="seg">
+        <div><b>💡 Cambio de luces</b><span>«Algo adelante, baja la velocidad». Y si ves ciclistas en una curva ciega, avísale al que viene de frente.</span></div>
+        <div><b>🚪 La apertura holandesa</b><span>Abrir la puerta con la mano de más lejos te obliga a mirar atrás. Evita el golpe que más ciclistas manda al hospital.</span></div>
+        <div><b>📏 Un metro y medio</b><span>Al adelantar a un ciclista. En Chile es ley, no cortesía.</span></div>
+        <div><b>🚴 Y el ciclista también</b><span>Un metro de los autos estacionados, ser previsible, luces de noche, y que el rojo también es suyo.</span></div>
+      </div>
+      <p class="frase">La ruta es de todos. El que avisa, cuida.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap cierre">
+    <h2>Hecho en Chile, para los que andan acá</h2>
+    <p class="lead" style="margin:8px auto 30px">Un proyecto independiente, sin inversionistas ni publicidad. Si te sirve, cuéntale a alguien que pedalea.</p>
+    <div class="cta">
+      <a class="btn btn-p" href="https://librepedal.cl">Entrar a Libre Pedal</a>
+    </div>
+    <p class="libre">Pronto también en Google Play</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a href="https://librepedal.cl">La app</a>·<a href="/como-funciona.html">Cómo funciona</a>·<a href="/privacidad.html">Privacidad</a>·<a href="/terminos.html">Términos</a>
+    <p style="margin-top:14px">Libre Pedal · Nunca pedalees solo 🚴</p>
+  </div>
+</footer>
+
+</body>
+</html>
