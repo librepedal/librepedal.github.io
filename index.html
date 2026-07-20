@@ -63,7 +63,10 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .es-ind{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;min-height:48px;background:none;border:none;color:#cfeeff;cursor:pointer}
 /* Una sola lógica de navegación: el es-bottom es HUD de DATOS, no un segundo menú.
    km / mi puesto / viajes se miran de un vistazo; para ir a esas secciones está la Esfera. */
+/* Auditoria 2026-07-20: 'mi puesto' y 'viajes' navegan pero llevaban cursor:default,
+   o sea el usuario no tenia forma visual de saber que eran tocables. */
 .es-dato{cursor:default;user-select:none}
+button.es-dato{cursor:pointer}
 .es-ind-v{font-size:1.05rem;font-weight:800;color:var(--p);text-shadow:0 0 8px rgba(252,76,2,0.6)}
 .es-ind-l{font-size:0.6rem;color:#8fb0c8;text-transform:uppercase;letter-spacing:1px}
 .es-badge{position:relative}
@@ -115,7 +118,8 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.14);box-shadow:0 0 16px -2px var(--chip-c)}
 .es-modo-chip.selected .es-modo-txt{color:#fff;opacity:1}
 .es-classic{min-height:48px;display:inline-flex;align-items:center;justify-content:center;position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
-.es-globe{background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
+/* Medido: 37x28. El boton Atras llegaba a 22px de alto, menos de la mitad del minimo. */
+.es-globe{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
 #auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px 20px 40px;text-align:center;overflow-y:auto}
 .auth-box{background:#151b2e;padding:20px;border-radius:20px;border:1px solid var(--p);width:100%;max-width:400px}
 .auth-box h1{color:var(--p);margin:10px 0;font-size:1.3rem}
@@ -135,7 +139,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .tabs-personalizar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%)}
 .tabs-personalizar::-webkit-scrollbar{display:none}
 /* Pestañas de Perfil: eran 32px de alto. Suben a 38 para el dedo (van en tira scrolleable). */
-.tab-pill{flex:0 0 auto;min-height:38px;padding:9px 14px;border-radius:20px;background:var(--gl);border:0.5px solid rgba(255,255,255,0.09);color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab-pill{flex:0 0 auto;min-height:48px;padding:9px 14px;border-radius:20px;background:var(--gl);border:0.5px solid rgba(255,255,255,0.09);color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
 .tab-pill.active{background:var(--p);color:#03121a;border-color:var(--p)}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
@@ -203,7 +207,9 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 #sugerencias-dest .sug:active{background:rgba(252,76,2,0.14)}
 #sugerencias-dest .sug small{color:#7d8ba0;font-size:0.68rem}
 nav{position:fixed;bottom:0;width:100%;background:rgba(10,15,29,0.99);display:flex;justify-content:space-around;padding:6px 0 14px;border-top:1px solid #222;z-index:1000}
-.nb{background:none;border:none;color:#666;cursor:pointer;transition:0.3s;padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+/* Auditoria 2026-07-20: los 5 botones de la barra inferior median 38px de alto y ~35 de
+   ancho. Es el control mas usado de la app y estaba 10px bajo el minimo tactil. */
+.nb{min-height:48px;min-width:48px;background:none;border:none;color:#666;cursor:pointer;transition:0.3s;padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .nb i{font-size:1.2rem}
 .nb span{font-size:0.55rem;font-weight:700}
 /* FASE 3: el activo se marca por COLOR, no por glow de neón. */
@@ -232,7 +238,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .logout-btn{background:rgba(255,0,0,0.3);border:1px solid #ff3333;color:#fff;padding:5px 9px;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;display:none;white-space:nowrap}
 /* Rediseño Nocturno Pro — ficha de usuario con menú (reemplaza las 3 píldoras del top bar) */
 .uchip-wrap{position:relative}
-.uchip{display:inline-flex;align-items:center;gap:7px;background:rgba(252,76,2,0.14);border:0.5px solid rgba(252,76,2,0.45);border-radius:20px;padding:3px 8px 3px 3px;cursor:pointer;color:#ffd9c6;font-weight:700;font-size:0.72rem;white-space:nowrap}
+.uchip{min-height:44px;display:inline-flex;align-items:center;gap:7px;background:rgba(252,76,2,0.14);border:0.5px solid rgba(252,76,2,0.45);border-radius:20px;padding:3px 8px 3px 3px;cursor:pointer;color:#ffd9c6;font-weight:700;font-size:0.72rem;white-space:nowrap}
 .uchip:hover{background:rgba(252,76,2,0.2)}
 .uchip-av{width:26px;height:26px;border-radius:50%;background:#fc4c02;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;flex:none}
 .uchip-caret{font-size:0.55rem;color:#ffab8a;opacity:0.85}
@@ -336,7 +342,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .map-estilo-btn:active{transform:scale(0.94)}
 /* Botón flotante de reportar, estilo Waze: a mano sobre el mapa (antes estaba perdido en una
    fila de botones). Pedido de Inty: "botón accesible para reportar policía en el mismo mapa". */
-#fabReportar{position:absolute;right:14px;bottom:78px;width:58px;height:58px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+/* Auditoria severa del 2026-07-20, MEDIDO: la etiqueta 'REPORTAR' se dibujaba FUERA del
+   boton (bottom:-17px) y caia justo encima del boton de 'volver a mi ubicacion'. Solape de
+   45x9 px, y elementFromPoint sobre la palabra devolvia .map-recenter-btn: o sea, TOCAR LA
+   PALABRA REPORTAR RECENTRABA EL MAPA. Un ciclista que ve un peligro y toca el unico texto
+   que dice reportar, no reporta nada. Se sube el boton para dejar aire real entre ambos. */
+#fabReportar{position:absolute;right:14px;bottom:104px;width:58px;height:58px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
 #fabReportar:active{transform:scale(0.94)}
 #fabReportar span{position:absolute;bottom:-17px;font-size:0.55rem;font-weight:700;color:#ffb089;letter-spacing:0.5px}
 #pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
@@ -680,7 +691,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
        tocarlo, tiene que llevar a alguna parte. Ahora el puesto abre el ranking de tu
        disciplina y los viajes abren tu historial de rutas. -->
   <button class="es-ind es-dato" onclick="cerrarEsfera();mostrarRanking()" title="Ver el ranking de tu disciplina"><span class="es-ind-v" id="esPuesto">—</span><span class="es-ind-l">mi puesto</span></button>
-  <button class="es-ind es-dato" onclick="cerrarEsfera();cv('routes')" title="Ver tus rutas grabadas"><span class="es-ind-v" id="esViajes">0</span><span class="es-ind-l">viajes</span></button>
+  <button class="es-ind es-dato" onclick="cerrarEsfera();cv('trips')" title="Ver tus rutas grabadas"><span class="es-ind-v" id="esViajes">0</span><span class="es-ind-l">viajes</span></button>
 </div>
 </div>
 <header>
@@ -703,7 +714,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <main>
 <section id="v-dash" class="view on">
-<div class="section-info"><h4>Inicio</h4><p><strong id="welcome-name"></strong>, toca el micrófono o escribe abajo a dónde quieres ir.</p></div>
+<div class="section-info"><h4>Inicio</h4><p>Toca el micrófono o escribe abajo a dónde quieres ir.</p></div>
 <div class="hero-viaje">
 <svg class="hero-ruta" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,44 40,38 70,42 110,21 150,28 190,10 230,17 270,6 300,11" fill="none" stroke="#fc4c02" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="270" cy="6" r="4" fill="#fc4c02"/></svg>
 <h4 class="hero-t">¿A dónde pedaleamos hoy?</h4>
@@ -1116,7 +1127,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="stat-card"><div class="stat-value" id="statDarma">0</div><div class="stat-label">Darma</div></div>
   <div class="stat-card"><div class="stat-value" id="statAvgSpeed">0</div><div class="stat-label">Vel. media</div></div>
   <div class="stat-card"><div class="stat-value" id="statMaxSpeed">0</div><div class="stat-label">Vel. máxima</div></div>
-  <div class="stat-card"><div class="stat-value" id="statPuesto">—</div><div class="stat-label">Puesto en el ranking</div></div>
+  <button class="stat-card" onclick="mostrarRanking()" style="cursor:pointer;border:none;text-align:center" title="Ver el ranking de tu disciplina"><div class="stat-value" id="statPuesto">—</div><div class="stat-label">Puesto en el ranking</div></button>
 </div>
 <div class="section-info"><h4>Desempeño general</h4><div class="performance-bar"><div class="performance-fill" id="statPerformanceFill" style="width:0%">0%</div></div></div>
 <div class="chart-container"><h4 style="margin:0 0 8px 0;color:var(--p);font-size:0.9rem">Km por viaje</h4><div class="chart-bar" id="chartKm"></div></div>
@@ -1155,7 +1166,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.18'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.19'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3057,7 +3068,7 @@ window.onload = async function(){
     selectedPanuelo=localStorage.getItem('lp_panuelo_'+cu)||'panueloNinguno';
     ghostMode=localStorage.getItem('lp_ghost_'+cu)==='true';
     updateGhostButton();
-    document.getElementById('welcome-name').innerText=nombreUsuario;
+    {const _wn=document.getElementById('welcome-name'); if(_wn) _wn.innerText=nombreUsuario;} // el nombre se saco de la cabecera; se deja tolerante por si vuelve
     const vb=document.getElementById('vozBtn'); if(vb) vb.innerHTML='<i class="fas fa-volume-'+(vozActiva?'high':'xmark')+'"></i> Voz: '+(vozActiva?'ON':'OFF');
     const vnb=document.getElementById('vozNeuralBtn'); if(vnb) vnb.innerHTML='<i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: '+(vozMejorada?'ON':'OFF');
     const gnb=document.getElementById('generoBtn'); if(gnb){ const esP=pisteroGenero==='l'; gnb.innerHTML='<i class="fas fa-'+(esP?'person':'person-dress')+'"></i> Guía: '+(esP?'Pistero':'Pistera'); }
@@ -3245,7 +3256,7 @@ async function reg(e){
   document.getElementById('logoutBtn').style.display='block';
   document.getElementById('ghostBtn').style.display='block';
   const _ap=document.getElementById('admin-panel'); if(_ap) _ap.style.display=(cu===ADMIN_ID)?'block':'none';
-  document.getElementById('welcome-name').innerText=nombre;
+  {const _wn=document.getElementById('welcome-name'); if(_wn) _wn.innerText=nombre;} // el nombre se saco de la cabecera; se deja tolerante por si vuelve
   us=_lsJSON('lp_u_'+cu, {d:0,n:'Novato',di:0,c:0,la:null,lo:null});
   uj=_lsJSON('lp_j_'+cu, []);
   rh=_lsJSON('lp_r_'+cu, []);
