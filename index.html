@@ -1141,7 +1141,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.12'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.13'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3532,7 +3532,7 @@ function ug(p){
   // promedia y cancela justo ese ruido) muestre 0 = estás parado de verdad. Se
   // agrega sp>0 como condición: solo suma kilometraje cuando la propia app ya
   // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
-  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _sumarKmModo(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
@@ -4062,6 +4062,26 @@ function velocidadVentana(pts){
 function pv(v){ const f=document.getElementById('pf'); if(!f) return; const _u=_ritmoUmbrales(); const c=v===0?'parado':v<_u.lento?'lento':v>=_u.normal?'rapido':'normal'; f.className='ph '+sc+(c==='lento'?' worried':c==='rapido'?' happy':''); }
 function se(e){ const f=document.getElementById('pf'); if(f) f.className='ph '+sc+' '+e; }
 let _ultimoSyncStats=0;
+/* ===== KILÓMETROS POR MODO DE VIAJE =====
+   Hasta v7.12 los kilómetros se sumaban TODOS al mismo contador (`us.di`) y el ranking
+   ordenaba por ese único número, bajo el título "los cicloviajeros con más kilómetros del
+   mundo". O sea que los kilómetros hechos EN AUTO competían con los pedaleados: un viaje
+   de 300 km manejando le gana a casi cualquier ciclista real. Frente a la élite del
+   ciclismo chileno eso destruye la credibilidad del ranking completo (ver DOCTRINA 1 en
+   VISION-MAESTRA.md).
+   `us.dm` guarda el desglose por disciplina. `us.di` NO se toca: es lo que se muestra en
+   pantalla y lo que ya tienen guardado todos los usuarios — acá no se rompe nada de lo
+   que existe, solo se agrega el detalle que faltaba. */
+function _sumarKmModo(km){
+  if(!(km>0)) return;
+  if(!us.dm || typeof us.dm!=='object') us.dm={};
+  const modo=(typeof actividadTipo!=='undefined' && actividadTipo) ? actividadTipo : 'ciclismo';
+  us.dm[modo]=(us.dm[modo]||0)+km;
+}
+/* El vehículo NO compite: es un rol de apoyo, no una disciplina. Sus kilómetros se
+   registran igual (sirven para tus propias estadísticas) pero no entran a ningún ranking. */
+const MODOS_QUE_COMPITEN={ciclismo:'Ruta',mtb:'MTB / Gravel',trekking:'Trekking'};
+function _modoCompite(m){ return !!MODOS_QUE_COMPITEN[m]; }
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
@@ -4952,7 +4972,7 @@ async function sincronizarStats(){
   if(!cu) return;
   const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null;
   try{
-    await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true});
+    await db.collection('users').doc(cu).set({km:us.di||0, kmPorModo:(us.dm&&typeof us.dm==='object')?us.dm:{}, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true});
   }catch(e){
     try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarStats'}}); }catch(_){}
   }
@@ -5000,7 +5020,53 @@ function mostrarIdiomaRuta(){
     +'<p style="text-align:center;font-size:0.86rem;color:var(--g);margin:14px 0 4px;font-weight:700">La ruta es de todos.<br>El que avisa, cuida.</p>';
   document.getElementById('userModal').classList.add('on');
 }
-async function mostrarRanking(){
+/* Ranking SEPARADO POR DISCIPLINA.
+   Antes era una sola consulta `orderBy('km')` sobre el total, con el título "los
+   cicloviajeros con más kilómetros del mundo" — así que los kilómetros hechos en auto
+   competían con los pedaleados. Cada disciplina compite ahora con los suyos, y el
+   vehículo no compite: es un rol de apoyo (DOCTRINA 1).
+   El desglose por modo empezó a guardarse el 2026-07-20, así que al principio estos
+   rankings van a estar flacos. Se dice en pantalla en vez de disimularlo. */
+async function mostrarRanking(modo){
+  const actual=modo || ((typeof actividadTipo!=='undefined' && _modoCompite(actividadTipo)) ? actividadTipo : 'ciclismo');
+  _modalVolverA='mostrarLogrosComunidad';
+  document.getElementById('modalTitle').innerText='🥇 Top 100 · '+(MODOS_QUE_COMPITEN[actual]||'Ruta');
+  const c=document.getElementById('modalContent');
+  c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando ranking...</p>';
+  document.getElementById('userModal').classList.add('on');
+  await sincronizarStats();
+  // Selector de disciplina: cada una con su tabla.
+  let tabs='<div style="display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap">';
+  for(const m in MODOS_QUE_COMPITEN){
+    const on=(m===actual);
+    tabs+='<button onclick="mostrarRanking(\''+m+'\')" style="flex:1;min-height:40px;padding:0 10px;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;border:1px solid '+(on?'var(--p)':'#242c3e')+';background:'+(on?'rgba(252,76,2,0.14)':'var(--gl)')+';color:'+(on?'var(--p)':'#9fb3c8')+'">'+MODOS_QUE_COMPITEN[m]+'</button>';
+  }
+  tabs+='</div>';
+  try{
+    const snap=await db.collection('users').orderBy('kmPorModo.'+actual,'desc').limit(100).get();
+    const med=['🥇','🥈','🥉'];
+    let html=_btnVolverModal()+tabs;
+    let pos=0, filas='';
+    snap.forEach(function(doc){
+      const d=doc.data(), km=(d.kmPorModo&&d.kmPorModo[actual])||0;
+      if(km<=0) return; // sin kilómetros en esta disciplina no se muestra
+      pos++;
+      const yo=doc.id===cu;
+      filas+='<div onclick="verPerfilUsuario(\''+doc.id+'\',\'mostrarRanking\')" style="display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;margin-bottom:5px;cursor:pointer;background:'+(yo?'rgba(252,76,2,0.12)':'var(--gl)')+';border:1px solid '+(yo?'var(--p)':'#242c3e')+'"><div style="font-size:1.05rem;font-weight:800;min-width:30px;text-align:center">'+(med[pos-1]||('#'+pos))+'</div><div style="flex:1;font-weight:700;font-size:0.86rem;color:'+(yo?'var(--p)':'#dfe7ff')+'">'+escapeHTML(d.nombre||'Ciclista')+(yo?' (tú)':'')+'</div><div style="font-weight:800;color:var(--g);font-size:0.9rem">'+km.toFixed(0)+' km</div></div>';
+    });
+    if(!pos){
+      html+='<p style="color:#9fb3c8;font-size:0.84rem;line-height:1.5">Todavía nadie tiene kilómetros registrados en <strong style="color:#dfe7ff">'+(MODOS_QUE_COMPITEN[actual]||'')+'</strong>.<br><br>Los kilómetros se empezaron a separar por disciplina el 20 de julio de 2026: sal a rodar en este modo y serás el primero.</p>';
+    } else {
+      html+='<p style="color:#9fb3c8;font-size:0.82rem;margin-top:0">Los que más kilómetros suman en '+(MODOS_QUE_COMPITEN[actual]||'')+' 🌎</p>'+filas
+        +'<p style="font-size:0.68rem;color:#7d8ba0;text-align:center;margin-top:8px">Toca un ciclista para ver su perfil y sus rutas.</p>';
+    }
+    html+='<p style="font-size:0.68rem;color:#7d8ba0;text-align:center;margin-top:10px">Cada disciplina compite con los suyos. Los kilómetros en vehículo no entran: ese modo acompaña, no compite.</p>';
+    c.innerHTML=html;
+  }catch(e){
+    c.innerHTML=_btnVolverModal()+tabs+'<p style="color:#888">No se pudo cargar el ranking. Intenta de nuevo en un momento.</p>';
+  }
+}
+async function _mostrarRankingGlobalViejo(){
   _modalVolverA='mostrarLogrosComunidad';
   document.getElementById('modalTitle').innerText='🥇 Top 100 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
   await sincronizarStats();
@@ -5602,7 +5668,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
       // Mismo bug real que en ug() (GPS libre): sin exigir speed>0, el ruido normal
       // del GPS estando quieto se colaba de a poco al kilometraje aunque "speed" (ya
       // calculada arriba, con ventana de varios puntos) mostrara 0 = parado de verdad.
-      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; us.c+=dkm*30; au(); }
+      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _sumarKmModo(dkm); us.c+=dkm*30; au(); }
       gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
     }
   }

@@ -4,6 +4,47 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.13 — 2026-07-20 — Claude (ranking separado por disciplina: el auto ya no compite con la bici)
+
+**El problema.** El ranking era una sola consulta `orderBy('km','desc')` sobre un único
+contador, bajo el título *"Los cicloviajeros con más kilómetros del mundo"*. Los
+kilómetros hechos **en auto** entraban al mismo ranking que los pedaleados: un viaje de
+300 km manejando le gana a casi cualquier ciclista real. Y no era hipotético — Inty andaba
+probando la app en auto justamente este fin de semana.
+
+Frente a la élite del ciclismo chileno basta que uno vea a alguien primero con kilómetros
+de auto para que **el ranking completo pierda todo valor**.
+
+**Qué se hizo:**
+- **`us.dm`** guarda el desglose de kilómetros por disciplina. `us.di` **no se toca**: es
+  lo que se muestra en pantalla y lo que ya tienen guardado todos los usuarios — no se
+  rompe nada de lo existente, solo se agrega el detalle que faltaba.
+- `_sumarKmModo()` conectado a los **dos** puntos donde se acumulan kilómetros (GPS libre
+  y navegación), para que no quede uno sumando a ciegas.
+- `sincronizarStats()` sube `kmPorModo` junto al `km` de siempre.
+- `mostrarRanking(modo)` con **pestañas por disciplina** (Ruta · MTB / Gravel · Trekking)
+  y consulta `orderBy('kmPorModo.<modo>')`.
+- **El vehículo no compite.** Sus kilómetros se registran (sirven para las estadísticas
+  propias) pero no entran a ningún ranking: es un rol de apoyo, no una disciplina.
+- La pantalla **dice** que el desglose empezó el 20 de julio, en vez de disimular que los
+  rankings van a estar flacos al principio.
+
+**Verificación:** `tests/modos.test.mjs`, **12/12**, extrayendo la lógica real del index.
+Cubre que cada disciplina sume en lo suyo, que 300 km en auto **no** entren al contador de
+ciclismo, que datos basura (negativos, NaN, nulos) no ensucien, y que un usuario sin
+desglose previo lo cree solo. Suite completa **8/8**. Navegador real: desglose correcto
+usando el selector real de la app.
+
+**Nota de método, y vale la pena guardarla.** La primera prueba en el navegador dio TODO
+sumado en `ciclismo` y parecía un bug del código. No lo era: cambiar `window.actividadTipo`
+desde la consola **no cambia nada**, porque es una variable léxica y no una propiedad de
+`window` — exactamente la trampa que el prompt maestro documenta sobre `db`. **La prueba
+mentía, no el código.** Se repitió usando `elegirActividad()`, el selector real, y ahí sí
+quedó correcto. Antes de dar por bueno un resultado raro, revisar si la prueba está
+midiendo lo que cree medir.
+
+---
+
 ## v7.12 — 2026-07-20 — Claude (🚨 el 55% de los usuarios era INVISIBLE en el ranking)
 
 **Cómo salió.** Inty reportó que un amigo suyo había recorrido varios kilómetros y no
