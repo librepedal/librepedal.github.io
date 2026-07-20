@@ -1141,7 +1141,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.15'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.16'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2081,9 +2081,9 @@ let pisteroGenero = localStorage.getItem('lp_genero')||'l'; // 'l'=Pistero (Lore
 let VOCES_MANIFEST = null; // índice de frases fijas pre-generadas en voz chilena (Azure), se carga de voces/manifest.json
 (function(){ try{ fetch('voces/manifest.json').then(function(r){return r.ok?r.json():null;}).then(function(m){ VOCES_MANIFEST=m; }).catch(function(){}); }catch(e){} })();
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }
-function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
+function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
 // Como pararVoz pero SIN borrar la cola: para cuando algo más importante interrumpe pero lo pendiente debe seguir sonando después.
-function _cortarActual(){ vozGen++; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=null; _vozNeuralAudio=null; } }catch(e){} }
+function _cortarActual(){ vozGen++; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){} }
 function h(t, prio){
   prio = prio || PRIO_VOZ.INFO;
   mostrarBocadillo(t);
@@ -2216,7 +2216,19 @@ function _vozSiguiente(){
   let idx=-1, mejor=-1;
   for(let i=0;i<vozCola.length;i++){ const p=vozCola[i].prio||PRIO_VOZ.INFO; if(p>mejor){ mejor=p; idx=i; } }
   const sig = idx>=0 ? vozCola.splice(idx,1)[0] : null;
-  if(sig){ vozTimerFin=setTimeout(function(){ _reproducirVoz(sig); },350); } // pausa natural entre frases
+  /* La frase siguiente ya salió de la cola pero todavía no suena: durante esos 350 ms el
+     estado decía "silencio" y NADIE la protegía.
+     Auditoría del 2026-07-20: si en esa ventana entraba otra frase —hasta una broma
+     ambiental—, `decidirVoz(0, prio)` respondía 'interrumpe' fuera cual fuera su prioridad,
+     `_reproducirVoz` hacía `clearTimeout(vozTimerFin)` y **mataba el temporizador de una
+     frase que ya no estaba en ninguna cola**: se perdía para siempre. Podía tragarse un
+     aviso de seguridad o una instrucción de giro.
+     Se deja la prioridad de la frase comprometida ANUNCIADA durante la pausa, así el bus
+     la respeta como si ya estuviera sonando. */
+  if(sig){
+    vozPrioActual = sig.prio || PRIO_VOZ.INFO;
+    vozTimerFin=setTimeout(function(){ _reproducirVoz(sig); },350); // pausa natural entre frases
+  }
   else { _pisteroCalla(); }
 }
 function toggleVoz(){
@@ -6384,7 +6396,25 @@ function endNavigation(){
 // de una sesión de navegación anterior).
 let _viewHistory=[], _viewActual='dash';
 function _actualizarBtnAtras(){ const b=document.getElementById('btnAtras'); if(b) b.style.display=_viewHistory.length?'inline-flex':'none'; }
-function volverAtras(){ const prev=_viewHistory.pop(); if(prev){ cv(prev, true); if(prev==='dash') abrirEsfera(); } else { cv('dash'); abrirEsfera(); } }
+/* El botón atrás DE LA PANTALLA debe consumir una entrada del historial del navegador,
+   igual que lo haría el botón físico.
+   Auditoría del 2026-07-20: antes hacía `_viewHistory.pop()` sin tocar el historial, así
+   que cada uso dejaba una **entrada fantasma**. Caso cotidiano: Inicio → Mapa (se apila)
+   → Inicio desde la barra (se limpia `_viewHistory`, la pila del navegador NO). Ahí el
+   primer toque al botón físico parecía **no hacer nada**, y el segundo **cerraba la app**
+   — justo lo que v7.06 vino a arreglar.
+   `_volviendoDesdeBoton` evita que el `popstate` resultante haga un segundo retroceso. */
+let _volviendoDesdeBoton=false;
+function volverAtras(){
+  if(_viewHistory.length && history.state && history.state.lpView){
+    _volviendoDesdeBoton=true;
+    history.back(); // el popstate hace el trabajo; así pila y _viewHistory quedan parejas
+    setTimeout(function(){ _volviendoDesdeBoton=false; }, 400);
+    return;
+  }
+  _volverAtrasAhora();
+}
+function _volverAtrasAhora(){ const prev=_viewHistory.pop(); if(prev){ cv(prev, true); if(prev==='dash') abrirEsfera(); } else { cv('dash'); abrirEsfera(); } }
 /* ===== BOTÓN ATRÁS DEL TELÉFONO =====
    Reportado por Inty (2026-07-20): apretar "atrás" en Android SALÍA de la app en vez de
    volver a la pantalla anterior, y al reabrirla la app arrancaba de cero — perdiendo lo
@@ -6430,7 +6460,7 @@ window.addEventListener('popstate', function(){
   // 2) Si hay algo encima (modal, tutorial), el atrás cierra eso primero.
   if(_cerrarCapaAbierta()){ _registrarPasoEnHistorial(_viewActual); return; }
   // 3) Si hay pantallas atrás dentro de la app, se vuelve a la anterior.
-  if(_viewHistory.length){ volverAtras(); return; }
+  if(_viewHistory.length){ _volverAtrasAhora(); return; }
   // 4) Si ya estás en el inicio, no se hace nada: ahí sí corresponde que Android cierre.
 });
 /* ===== ANALYTICS: qué usa el usuario y dónde pasa tiempo. Buffer en memoria +
@@ -6475,7 +6505,14 @@ function cv(id, _esVolver){
     return;
   }
   _trackPantalla(id);
-  if(id==='dash' && !_esVolver){ _viewHistory=[]; }
+  /* "Inicio" es el punto de reinicio: limpia el historial interno. Antes NO limpiaba el del
+     navegador, y esa diferencia dejaba entradas fantasma — el primer toque al botón físico
+     no hacía nada visible y el segundo cerraba la app. Ahora se reemplaza la entrada actual
+     en vez de apilar, así ambas pilas quedan parejas. */
+  if(id==='dash' && !_esVolver){
+    _viewHistory=[];
+    try{ history.replaceState({lpView:'dash'}, ''); }catch(e){}
+  }
   else if(!_esVolver && _viewActual && _viewActual!==id){
     _viewHistory.push(_viewActual); if(_viewHistory.length>15) _viewHistory.shift();
     _registrarPasoEnHistorial(id); // le da al botón atrás del teléfono algo que retroceder
