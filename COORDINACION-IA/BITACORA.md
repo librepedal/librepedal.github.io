@@ -4465,3 +4465,165 @@ Arreglado en el punto central → sirve para voz, texto, chips y órdenes a Pist
 
 ---
 ### (antes de esta sesión: v5.82–v5.89, por Gemini/Inty — ver `git log`)
+
+## v7.21 — 2026-07-20 · Concordancia (bloque 2 de la auditoría severa)
+
+Sigue la lista de "agrupar lo que tiene algo en común". Todo verificado en producción
+(librepedal.cl), 9/9 archivos de test verdes.
+
+**1. La Bitácora se abría distinta según por dónde entraras.**
+`openDiario()` hacía cuatro cosas (cargar, renderizar categorías de puntos, sincronizar
+con la nube, recargar); `cv('diario')` — que es por donde entra la esfera — hacía UNA.
+Entrando por la esfera la pantalla quedaba sin categorías de puntos y sin sincronizar.
+Ahora la inicialización vive en un solo lugar y `openDiario()` solo llama a `cv`.
+
+**2. El "volver" del ranking te dejaba donde nunca estuviste.**
+`mostrarRanking()` fijaba el destino en `mostrarLogrosComunidad`. Entrando desde "mi
+puesto", el atrás del modal te mandaba a Logros — una pantalla por la que no pasaste.
+Ahora quien abre decide el destino; si no dice nada, el modal simplemente se cierra.
+
+**3. El banco `motivacional` era mudo.** Escrito y traducido a 5 países (cl/ar/mx/es/co)
+y **ninguna línea del código lo pedía nunca**. Frases que el usuario jamás iba a oír.
+Conectado al hito de cada 10 km, que hasta hoy pasaba en silencio. Vale en ciudad y en
+carretera, con contador propio para no competir con las frases de ritmo.
+
+**4. Bug real encontrado de paso: el Pistero se quedaba mudo en el viaje siguiente.**
+`kmUltimaFrase` no se reseteaba en NINGÚN lado. Tras un viaje de 40 km quedaba en 40, y
+en el viaje siguiente la condición `us.di - kmUltimaFrase >= 1.5` era falsa durante
+cuarenta kilómetros. En vez de enganchar cada punto de inicio (hay varios), se detecta
+solo el reinicio viendo que la distancia retroceda. Margen de 0.05 km para no confundir
+ruido de GPS con viaje nuevo.
+
+**Tests nuevos:** `tests/hitos.test.mjs`, 13 casos — incluye el caso del viaje nuevo tras
+uno largo y el del ruido de GPS. Un caso falló al primer intento y **el equivocado era el
+test, no el código** (a los 42 km se cruzan cuatro decenas, no tres): corregido.
+
+**Nota de operación:** el token OAuth de wrangler expiró a mitad de sesión. El deploy sale
+con el token de API de `MI-CLOUDFLARE.txt` (`CLOUDFLARE_API_TOKEN=... npx wrangler ...`).
+Si Inty ve "Authentication error [code: 10000]", es eso.
+
+**Sigue esperando su visto bueno:** `PROPUESTA-REORGANIZACION.md` puntos 1, 2 y 3 (esfera
+a 5 ítems, sección "Mi actividad", consolidar Ajustes). Cambian dónde encuentra las cosas
+la gente que ya usa la app: no se tocan sin que él los mire.
+
+## 🚨 INCIDENTE DE SEGURIDAD — 2026-07-20 · fuga de credenciales (causada por mí)
+
+**Qué pasó.** Publiqué la v7.21 con `wrangler pages deploy .` desde la carpeta del
+proyecto. Wrangler no mira el `.gitignore`: subió también los archivos de llaves. Durante
+unos 25 minutos quedaron accesibles en librepedal.cl:
+
+- `MI-CLOUDFLARE.txt` — token de Cloudflare (el que publica la app)
+- `MI-SENTRY.txt` — token de Sentry
+- `MI-KEYSTORE-PLAYSTORE.txt` — datos del keystore de firma de Play Store (3 KB)
+- `MI-AZURE.txt`, `MI-TOKEN-NETLIFY.txt`, `MI-CLOUDFLARE-IA.txt`, `REGLAS-FIREBASE.txt`
+
+Es la **segunda vez** que pasa (la primera fue el 2026-07-11). La causa es la misma y no
+la arregla el `.gitignore`.
+
+**Qué hice.**
+1. Redeployé desde una carpeta limpia (438 archivos, solo activos web) → origen limpio.
+2. Descubrí que **no alcanzaba**: esas rutas quedan cacheadas en el borde con
+   `s-maxage=604800` (7 días) y el token no tiene permiso de Zona para purgar.
+3. Publiqué **archivos señuelo vacíos** en esas mismas rutas. Al existir como activos del
+   deploy, Cloudflare los revalida y el borde suelta lo viejo. **Verificado: las 7 rutas
+   devuelven el señuelo, ninguna devuelve credenciales.**
+4. `_headers` ahora fuerza `no-store` en `/MI-*`, `/*.txt` y `/*.rules`.
+5. Creé **`deploy-seguro.sh`**: arma la carpeta limpia, **aborta** si detecta credenciales,
+   verifica que no falte ningún activo, publica y comprueba la exposición. De ahora en
+   adelante se publica solo con eso.
+
+**Detalle que vale:** el control de completitud del script atajó que se me quedaba fuera
+`voces/` (las voces pregeneradas). Sin ese control habría publicado una app muda.
+
+**LO QUE FALTA Y NO PUEDO HACER YO — Inty:**
+> **Rotar esas credenciales.** Estuvieron públicas en internet. Aunque la ventana fue
+> corta y el dominio es de bajo tráfico, hay que darlas por comprometidas:
+> 1. Cloudflare → API Tokens → revocar y crear de nuevo el token de Pages
+> 2. Sentry → revocar el token de `MI-SENTRY.txt`
+> 3. Netlify y Azure → revocar sus tokens (el de Azure igual se iba a borrar)
+> 4. **Play Store keystore**: el archivo `.jks` en sí NO se publicó, solo los datos de
+>    `MI-KEYSTORE-PLAYSTORE.txt` (alias y contraseñas). Como todavía no hay app publicada,
+>    lo más limpio es **generar un keystore nuevo** antes de la primera subida.
+>
+> Después de rotar, actualizar los MI-*.txt locales. El `deploy-seguro.sh` los lee de ahí.
+
+## v7.22 — 2026-07-20 · Lo que Inty reportó a mano (todo verificado en producción)
+
+**1. "Arréglame la bici no va" — confirmado, y era peor.** El comando de voz exigía el
+INFINITIVO exacto ("arreglar"). Fallaban *"arréglame la bici"*, *"arregla mi bici"*,
+*"tengo un pinchazo"*, *"se me soltó la cadena"* — o sea, casi toda forma natural de
+pedirlo parado al lado de la bici. Ahora se busca la RAÍZ (arregl/repar/compon) más los
+síntomas concretos. **30 casos en `tests/taller.test.mjs`**, incluidos 6 que NO deben
+abrir el taller para no crear falsos positivos.
+
+**2. El pan 🥖.** Era la categoría `util` ("Dato Útil / Picada") y también el chip de capa.
+Ahora: 🏪 "Negocio o picada". Se agregó 🔧 "Taller de bicis" como categoría propia.
+
+**3. "Le falta simplificar los puntos de interés".** Había 10 categorías planas y CINCO
+eran lo mismo (crítico, animal, objeto, taco, accidente = un peligro). Ahora se agrupan en
+4: **⚠️ Un peligro · 🛠️ Algo que sirve · 📍 Un lugar · 👮 Control policial**. Las CLAVES
+no cambiaron a propósito: cambiarlas dejaba huérfanos todos los reportes ya guardados en
+Firestore.
+
+**4. "Abajo se pierde el mapa y está en negro" — eran TRES cosas, y la tercera es la buena:**
+- El mapa medía **280 px fijos**. Ahora ocupa el alto real (412 px a 375×812).
+- Debajo estaba el panel muerto `#route-alerts`: nadie lo llenaba, solo pintaba negro.
+  Eliminado junto con `addRouteAlert()` y `subscribeToRouteAlerts()`, ambas código muerto.
+- **Causa de fondo:** `.view` no reservaba espacio para la barra inferior fija (69 px), así
+  que el último elemento de **CADA** pantalla quedaba tapado — no era solo el mapa.
+  Arreglado una vez en `.view` con `env(safe-area-inset-bottom)`. **Verificadas las 10
+  vistas a 375 y a 320 px: ninguna deja contenido bajo la barra.**
+
+**5. Bug de despliegue encontrado de paso (afectaba a los usuarios).** `_headers` ponía
+`no-cache` en `/index.html`, pero el navegador pide `/` — y esa regla no cubre la raíz.
+Resultado: **librepedal.cl seguía sirviendo la versión anterior tras cada deploy**. Me pasó
+a mí verificando y les pasaba a los usuarios. Agregada la regla para `/`.
+
+### Lo que NO existe (revisado en el código, no supuesto)
+- **Walkie-talkie / comunicación entre ciclistas: CERO líneas.** Se conversó, nunca se construyó.
+- **"Marcar tip como aprendido": no existe** (`tipsAprendidos` no aparece en el archivo).
+- **Educación vial SÍ existe**: `mostrarIdiomaRuta()`, pero enterrada en Ajustes. Por eso
+  Inty no la encuentra. No está perdida: está mal ubicada.
+
+## v7.24 — 2026-07-21 · Aviso al motorizado, canal de rodada y los primeros aliados
+
+**1. Aviso de ciclista adelante (lo que pidió Inty).** Si un motorizado y un ciclista,
+ambos con la app, se cruzan en ruta, al motorizado se le avisa antes de que lo vea.
+Construido cuidando las críticas que hundieron a BikeShield y Cycle Safety Technologies:
+- **Solo voz.** Nada que mirar. Ese fue el reclamo más fuerte contra esas apps.
+- **Nunca culpa al ciclista.** El aviso no dice ni sugiere que el ciclista deba tener la
+  app. Termina recordando el metro y medio, que es ley: el deber del conductor es el mismo
+  haya aviso o no.
+- **Solo lo que va adelante.** Arco de 50° respecto al rumbo. A uno que ya pasaste o que
+  viene en sentido contrario no se avisa: avisos inútiles enseñan a ignorar los avisos.
+- **Distancia según velocidad**: ~25 s de anticipación, entre 150 y 800 m. A 60 km/h avisa
+  a 417 m; a 100 km/h, a 694 m.
+- Tres minutos de bloqueo por ciclista y uno por vez.
+- `liveTracking` ahora publica `modo`, sin lo cual no se puede distinguir una bici de otro auto.
+- **32 casos en `tests/ciclista-adelante.test.mjs`.** Uno falló y **el equivocado era el
+  test**: usaba marcas de reloj de 4 dígitos en vez de `Date.now()` real.
+
+**2. Canal de Rodada (Fase 1).** Seis avisos de un toque: 🕳️ Hoyo · 🚗 Auto atrás ·
+🛑 Frenando · ✋ Me quedé · 🔧 Pinchazo · 💧 Paramos. Diseño completo en
+`DISENO-CANAL-RODADA.md`. **Viaja texto, la voz se sintetiza en cada teléfono**: pesa lo
+que un mensaje, aguanta señal mala y no necesita micrófono abierto ni WebRTC. En modo
+Rutero solo suenan los tres de seguridad. Se prende al confirmar asistencia a una rodada y
+se apaga al bajarse. 29 casos en `tests/canal-rodada.test.mjs`.
+
+**3. Los primeros colaboradores, en el mapa y en la landing.** Coordenadas exactas sacadas
+de los enlaces de Google Maps de Inty:
+- La Ruka del Ciclista — Hornopirén, Hualaihué (−41.96044, −72.4682742)
+- Hostal Refugio Oasis — Llifén, Futrono (−40.193985, −72.2587829)
+- Bodega Chumpeco — Llifén, Futrono (−40.2002762, −72.2595328)
+
+Van en una lista curada aparte de `reportes`: son acuerdos, deben salir siempre y no
+caducar como un aviso de taco.
+
+**4. Landing.** Las dos funciones nuevas agregadas como puntos fuertes, y los tres aliados
+con nombre en "Quienes hacen posible". Cero menciones visibles a Pistero: la sorpresa se
+mantiene.
+
+### Pendiente
+- El cuarto enlace que mandó Inty es una coordenada suelta **sin nombre**
+  (−35.498631, −72.5226191, cerca de Constitución, Maule). **No se cargó**: no sé qué es.
+- Canal de Rodada Fase 2 (dictado a Pistero) y Fase 3 (panel del escolta).

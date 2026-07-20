@@ -168,7 +168,12 @@ header{padding:8px 12px;background:rgba(10,15,29,0.98);display:flex;justify-cont
 header h2{margin:0;font-size:1rem;font-weight:800}
 .ulvl{background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;padding:4px 10px;border-radius:12px;font-weight:800;font-size:0.7rem}
 main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
-.view{display:none;animation:su 0.3s;min-height:100%}
+/* 2026-07-20 — causa de fondo del "abajo se pierde y está en negro" que reportó Inty.
+   Ninguna vista reservaba espacio para la barra inferior (fija, 69px), así que el ÚLTIMO
+   elemento de CADA pantalla quedaba tapado por ella — no era solo el mapa. Se agrega el
+   colchón aquí, una vez, en lugar de parchear pantalla por pantalla. env() cubre el
+   gesto de inicio del iPhone y los Android con barra por gestos. */
+.view{display:none;animation:su 0.3s;min-height:100%;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 .view.on{display:block}
 @keyframes su{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .speed-display{background:#0f1728;border:0.5px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px}
@@ -198,7 +203,18 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .chart-container{background:var(--gl);padding:10px;border-radius:10px;margin:8px 0;border:1px solid #222}
 .chart-bar{display:flex;align-items:flex-end;gap:4px;height:100px;margin-top:8px}
 .chart-bar-item{flex:1;background:var(--p);border-radius:4px 4px 0 0;min-height:5px;transition:height 0.5s}
-#map,#map-all-routes,#map-hostel-select{height:280px;width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222}
+/* 2026-07-20 — Inty: "abajo se pierde el mapa y está en negro". Eran dos cosas juntas:
+   el mapa medía 280 px FIJOS (un sello de correo en un teléfono) y debajo quedaba el
+   panel muerto #route-alerts, que nadie llenaba, pintando una franja negra. El panel se
+   eliminó; acá el mapa pasa a ocupar el alto real disponible. Se descuenta el header,
+   los chips de capas y la barra inferior, con dvh (no vh) para que la barra del
+   navegador móvil al aparecer/desaparecer no deje ese vacío negro abajo. */
+#map-all-routes,#map-hostel-select{height:280px;width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222}
+#map{width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222;
+  height:calc(100dvh - 400px); min-height:240px; max-height:none; background:#1a1f2e}
+@supports not (height: 100dvh){ #map{ height:calc(100vh - 400px); } }
+/* Los 400px son medidos, no inventados: header + chips de capas (313px hasta el borde
+   superior del mapa) + barra inferior (69px) + respiro. Verificado a 375 y a 320 px. */
 #map-hostel-select.show{display:block}
 .cd{background:#0f1728;padding:14px;border-radius:14px;margin-bottom:10px;border:0.5px solid rgba(255,255,255,0.07)}
 #sugerencias-dest{position:absolute;top:100%;left:0;right:0;z-index:1500;background:#0d1426;border:1px solid var(--p);border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;display:none;box-shadow:0 8px 18px rgba(0,0,0,0.5)}
@@ -898,8 +914,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="section-info"><h4>Mapa</h4><p>Tu mundo ciclista en un solo mapa: la comunidad y los reportes de la ruta. Toca una capa para mostrarla u ocultarla.</p></div>
 <div class="mapcapas">
   <button class="capachip" id="capaCiclistas" onclick="toggleCapaCiclistas(this)">🚴 Ciclistas</button>
-  <button class="capachip on" id="capaPeligros" onclick="toggleCapaReportes('peligros',this)">🚨 Pacos y peligros</button>
-  <button class="capachip on" id="capaPuntos" onclick="toggleCapaReportes('puntos',this)">🥖 Puntos útiles</button>
+  <button class="capachip on" id="capaPeligros" onclick="toggleCapaReportes('peligros',this)">⚠️ Peligros y controles</button>
+  <button class="capachip on" id="capaPuntos" onclick="toggleCapaReportes('puntos',this)">🏪 Servicios</button>
   <button class="capachip on" id="capaMiradores" onclick="toggleCapaReportes('miradores',this)">📸 Miradores</button>
 </div>
 <div style="position:relative">
@@ -909,7 +925,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación">🎯</button>
 </div>
 <div id="reportes-comunidad"></div>
-<div id="route-alerts"></div>
 </section>
 
 <section id="v-diario" class="view">
@@ -1113,7 +1128,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
   <div class="customization-section"><h3>🧭 Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
   <div class="customization-section" id="cicloCargadoBox" style="display:none"><h3>🎒 ¿Cómo andas en bici?</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Un cicloviajero con alforjas anda a otro ritmo que un rutero liviano — esto ajusta a qué pendiente y velocidad te aviso.</p><div style="display:flex;gap:8px"><button class="ab sec" id="btnRutero" style="flex:1;margin:0" onclick="setCicloCargado(false)">🏁 Rutero (liviano)</button><button class="ab sec" id="btnCicloviajero" style="flex:1;margin:0" onclick="setCicloCargado(true)">🎒 Cicloviajero (cargado)</button></div></div>
-  <div class="customization-section"><h3>🎭 Personalidad de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Sigue siendo Pistero, solo cambia el tono con el que te habla.</p><div id="personalidadGrid" class="personalidad-grid"></div></div>
+  <div class="customization-section"><h3>🎭 Tipos de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Es el mismo Pistero: cambia el tono con el que te habla.</p><div id="personalidadGrid" class="personalidad-grid"></div></div>
 </div>
 <button class="bg" onclick="saveCustomization()">💾 Guardar personaje</button>
 </section>
@@ -1648,6 +1663,10 @@ function elegirActividad(id, silencioso){
   // preferencia sin ningún aviso. Se sube a su perfil igual que casco/lentes/skin.
   if(cu){ try{ db.collection('users').doc(cu).set({actividad:id},{merge:true}).catch(function(){}); }catch(e){} }
   _aplicarTemaActividad();
+  /* Al cambiar de modo se reengancha (o se suelta) la escucha de ciclistas cerca: la
+     función se suscribe sola si el modo es 'moto' y se da de baja si no. Así el que
+     pedalea no gasta datos escuchando algo que no le sirve. */
+  if(typeof suscribirCiclistasCerca==='function') suscribirCiclistasCerca();
   renderActividadGrid(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
   if(!silencioso) h('Listo, ahora te acompaño como '+_actividadActual().gentilicio+'.');
 }
@@ -1724,19 +1743,24 @@ function _labelPersonalidad(p){
   const fem=(typeof pisteroGenero!=='undefined' && pisteroGenero==='c');
   return fem ? (p.labelF||p.label) : p.label;
 }
+/* 2026-07-20 — Inty: "poner Pistero X Pistero Y está demás, deja el adjetivo solamente".
+   Tenía razón: la lista se titula "Tipos de Pistero", así que repetir "Pistero" en las 12
+   filas es ruido puro y encima alarga cada etiqueta hasta cortarse en pantalla angosta.
+   Queda solo el adjetivo. Los IDs no cambian: son los que guardan la preferencia del
+   usuario y las claves de los 364 bancos de frases en FRASES_ARQ. */
 const PERSONALIDADES=[
-  {id:'cercano',    label:'🚴 Pistero (el de siempre)', labelF:'🚴 Pistera (la de siempre)'},
-  {id:'compadre',   label:'🧉 Pistero Compadre',        labelF:'🧉 Pistera Comadre'},
-  {id:'entrenador', label:'💪 Pistero Entrenador',      labelF:'💪 Pistera Entrenadora'},
-  {id:'roquero',    label:'🎸 Pistero Roquero',         labelF:'🎸 Pistera Roquera'},
-  {id:'profe',      label:'🎓 Pistero Profe',           labelF:'🎓 Pistera Profe'},
-  {id:'solitario',  label:'🌄 Pistero Solitario',       labelF:'🌄 Pistera Solitaria'},
-  {id:'loco',       label:'🤪 Pistero Loco',            labelF:'🤪 Pistera Loca'},
-  {id:'cicletero',  label:'🔧 Pistero Cicletero',       labelF:'🔧 Pistera Cicletera'},
-  {id:'sabio',      label:'🎖️ Pistero Veterano',        labelF:'🎖️ Pistera Veterana'},
-  {id:'relajado',   label:'🌻 Pistero Hippie',          labelF:'🌻 Pistera Hippie'},
-  {id:'aventurero', label:'💡 Pistero Malas Ideas',     labelF:'💡 Pistera Malas Ideas'},
-  {id:'maternal',   label:'🧣 Pistero Tío',             labelF:'🧣 Pistera Tía'}
+  {id:'cercano',    label:'🚴 El de siempre', labelF:'🚴 La de siempre'},
+  {id:'compadre',   label:'🧉 Compadre',      labelF:'🧉 Comadre'},
+  {id:'entrenador', label:'💪 Entrenador',    labelF:'💪 Entrenadora'},
+  {id:'roquero',    label:'🎸 Roquero',       labelF:'🎸 Roquera'},
+  {id:'profe',      label:'🎓 Profe',         labelF:'🎓 Profe'},
+  {id:'solitario',  label:'🌄 Solitario',     labelF:'🌄 Solitaria'},
+  {id:'loco',       label:'🤪 Loco',          labelF:'🤪 Loca'},
+  {id:'cicletero',  label:'🔧 Cicletero',     labelF:'🔧 Cicletera'},
+  {id:'sabio',      label:'🎖️ Veterano',      labelF:'🎖️ Veterana'},
+  {id:'relajado',   label:'🌻 Hippie',        labelF:'🌻 Hippie'},
+  {id:'aventurero', label:'💡 Malas Ideas',   labelF:'💡 Malas Ideas'},
+  {id:'maternal',   label:'🧣 Tío',           labelF:'🧣 Tía'}
 ];
 let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
 // Variedad de voz por arquetipo: Azure es-CL solo tiene 2 voces (Catalina/Lorenzo), no hay
@@ -2687,6 +2711,7 @@ function obtenerFrasePorVelocidad(v){ const u=_ritmoUmbrales(); if(v===0) return
 const frasesCiudad = ["Ojo con las puertas de los autos estacionados, no te vayan a abrir una.","Respeta el semáforo, aunque andes apurado.","En la ciudad todos andan a mil; tú lleva tu propio ritmo.","Cuidado con el peatón pegado al celular.","Esquiva el bache, que la calle anda pelada.","Un ciclista más es un taco menos: vas aportando a Chile.","Hazte notar, toca la campanilla si tienes.","Ojo con la micro, que esa no te espera a nadie.","Vas ganándole al taco, campeón.","En las esquinas mira siempre antes de cruzar, no confíes.","En la ciudad el casco no es opcional, es tu mejor amigo.","Si hay ciclovía, úsala, que para eso está.","Ojo con los quiltros del barrio, salúdalos de lejitos.","La ciudad se ve distinta desde la bici, disfrútala.","Cuidado con el auto que dobla sin poner la señal."];
 // Detección de zona: ciudad vs carretera (reverse-geocoding, con throttle para no saturar).
 let zonaActual='carretera', zonaLastCheck=0, zonaLastPos=null, kmUltimaFrase=0, tFraseCiudad=0;
+let _ultimoHitoKm=0; // ultima decena de km ya celebrada en este viaje (ver hito motivacional)
 let spAnterior=0, rutaDocId=null, puntosGuardados=0, ultimaPosCiudad=null;
 // Cierre automático de ruta por inactividad: si llevas 12 min sin moverte, la ruta
 // queda guardada como viaje terminado y la próxima pedaleada empieza una ruta nueva
@@ -3307,7 +3332,6 @@ function publicarUbicacionInicial(){
 function subscribeToChat(){ db.collection('chat').orderBy('ts','asc').limit(100).onSnapshot(function(snapshot){ cm=snapshot.docs.map(function(doc){ const data=doc.data(); return Object.assign({},data,{nombre:data.nombre||data.a}); }); rc(); }); }
 /* Escapa texto de usuarios para evitar inyección HTML/XSS al meterlo en innerHTML. */
 function escapeHTML(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-function subscribeToRouteAlerts(){ db.collection('routeAlerts').orderBy('timestamp','desc').limit(20).onSnapshot(function(snapshot){ const c=document.getElementById('route-alerts'); if(!c) return; c.innerHTML=snapshot.docs.map(function(doc){ const data=doc.data(); return '<div class="route-alert"><strong>'+escapeHTML(data.type)+'</strong><p>'+escapeHTML(data.desc)+'</p><small>'+escapeHTML(data.nombre||data.user)+' - '+escapeHTML(data.h)+'</small></div>'; }).join(''); }); }
 function subscribeToComments(){ db.collection('guiComments').orderBy('ts','desc').limit(50).onSnapshot(function(snapshot){ const c=document.getElementById('gui-comments'); if(!c) return; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero en comentar</p>'; return; } c.innerHTML=snapshot.docs.filter(function(doc){ const data=doc.data(); return data.type!=='voto' && data.text; }).map(function(doc){ const data=doc.data(); return '<div class="global-comment"><div class="author">'+escapeHTML(data.nombre||data.user)+'</div><div class="time">'+escapeHTML(data.h)+'</div><div class="text">'+escapeHTML(data.text)+'</div></div>'; }).join(''); }); }
 function subscribeToFriendRequests(){ db.collection('friendRequests').where('to','==',cu).onSnapshot(function(snapshot){ const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}).length; const b=document.getElementById('solicBadge'); if(b){ if(pend>0){ b.innerText=pend; b.style.display='inline-block'; } else { b.style.display='none'; } } const eb=document.getElementById('esAvisos'); if(eb) eb.setAttribute('data-n', pend>0?String(Math.min(pend,99)):'0'); const nav=document.querySelector('.nb[onclick*="chat"]'); if(nav){ nav.style.position='relative'; let dot=nav.querySelector('.nav-dot'); if(pend>0){ if(!dot){ dot=document.createElement('span'); dot.className='nav-dot'; dot.style.cssText='position:absolute;top:4px;right:calc(50% - 18px);width:9px;height:9px;background:var(--r);border-radius:50%'; nav.appendChild(dot); } } else if(dot){ dot.remove(); } } if(pend>0) h('Tienes '+pend+' solicitud de amistad pendiente. Míralas en Social.'); }); }
 
@@ -3499,6 +3523,23 @@ function bromasDelCamino(sp){
     if(Date.now()-tFraseCiudad>=240000){ const _fr=(Math.random()<0.25)?obtenerFraseUnica('profunda'):obtenerFraseUnica('ciudad'); if(_fr){ h(_fr); tFraseCiudad=Date.now(); } } // ciudad: cada 4 min
   } else {
     if(us.di-kmUltimaFrase>=1.5){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera: cada 1.5 km
+  }
+  /* Auditoria 2026-07-20: el banco `motivacional` estaba escrito y traducido a 4 paises
+     (cl/ar/mx/es/co) y NADIE lo pedia nunca -> frases que el usuario jamas iba a oir.
+     Se conecta al hito de cada 10 km, que hoy pasaba en silencio: cruzar una decena es
+     logro y merece que el Pistero lo note. Va fuera del if/else para que valga en ciudad
+     y en carretera, y con su propio contador para no competir con las frases de ritmo. */
+  /* Bug encontrado de paso: kmUltimaFrase NO se reseteaba en ningun lado. Tras un viaje
+     largo quedaba alto y en el viaje siguiente la condicion (us.di - kmUltimaFrase >= 1.5)
+     era falsa durante kilometros: el Pistero se quedaba mudo al empezar de nuevo. En vez
+     de enganchar cada punto de inicio (hay varios: startQuickTrip, startNavigation,
+     saveAndStartTrip...), se detecta solo el reinicio viendo que la distancia retroceda. */
+  if(us.di+0.05 < kmUltimaFrase || us.di < _ultimoHitoKm*10){ kmUltimaFrase=0; _ultimoHitoKm=0; }
+  const _hito=Math.floor(us.di/10);
+  if(_hito>0 && _hito>_ultimoHitoKm){
+    _ultimoHitoKm=_hito;
+    const _fh=obtenerFraseUnica('motivacional');
+    if(_fh) h((_hito*10)+' kilómetros. '+_fh);
   }
 }
 /* ===== PENDIENTE EN VIVO: usa la altitud del GPS (misma fuente del perfil de
@@ -4579,7 +4620,6 @@ function _pisteroCiclistasCerca(){
     h('Encontré '+cercanos.length+' ciclista'+(cercanos.length>1?'s':'')+' cerca tuyo: '+texto+(cercanos.length>3?', y algunos más':'')+'. Tócalos en el mapa para ver quiénes son.');
   }, 1500); // deja que termine de cargar usuariosCercanosData (subscribeToUsers, si no estaba activo)
 }
-async function addRouteAlert(){ const type=await lpPedirTexto("¿Qué reportas?","bache, perro, peligro..."); if(!type) return; const desc=await lpPedirTexto("Descripción:"); if(!desc) return; const hora=new Date().toLocaleTimeString(); db.collection('routeAlerts').add({user:cu,nombre:nombreUsuario,type:type,desc:desc,h:hora,lat:us.la||null,lon:us.lo||null,timestamp:firebase.firestore.FieldValue.serverTimestamp()}); h("Reporte enviado. Gracias por avisar."); }
 function em(){ const i=document.getElementById('chi'), t=i.value.trim(); if(!t||!cu) return; const n=new Date(), h2=(n.getHours().toString().padStart(2,'0'))+':'+(n.getMinutes().toString().padStart(2,'0')); db.collection('chat').add({a:cu,nombre:nombreUsuario,t:t,h:h2,ts:firebase.firestore.FieldValue.serverTimestamp()}); i.value=""; }
 function rc(){ const c=document.getElementById('chm'); if(!c) return; c.innerHTML=cm.map(function(m){ return '<div class="ms '+(m.a===cu?'sf':'ot')+'">'+(m.a!==cu?'<div class="ma">'+escapeHTML(m.nombre||m.a)+' · '+escapeHTML(m.h)+'</div>':'')+'<div class="mb">'+escapeHTML(m.t)+'</div>'+(m.a===cu?'<div class="ma" style="text-align:right;margin-top:3px">'+escapeHTML(m.h)+'</div>':'')+'</div>'; }).join(''); c.scrollTop=c.scrollHeight; }
 /* ===== CHAT PRIVADO ENTRE AMIGOS (1 a 1) ===== */
@@ -4685,17 +4725,32 @@ let _modalVolverA=null;
 function _btnVolverModal(){ return _modalVolverA ? '<button class="ab sec" style="margin:0 0 10px;width:auto;padding:8px 14px" onclick="'+_modalVolverA+'()">← Volver</button>' : ''; }
 
 /* ===== MAPA COMUNITARIO: "Reportar en Ruta" (público, agrupado por zona) ===== */
+/* 2026-07-20 — Inty: "para dejar un local o negocio aparece un pan, muy genérico como
+   los otros iconos" + "le falta simplificar los puntos de interés". Las dos cosas eran
+   la misma: 10 categorías planas, y CINCO de ellas (crítico, animal, objeto, taco,
+   accidente) son lo mismo — un peligro. Por eso se sentía largo y genérico.
+   Ahora cada categoría declara su GRUPO y el selector se dibuja agrupado: el ciclista
+   elige primero QUÉ TIPO de cosa reporta (4 grupos) y recién ahí el detalle.
+   Las CLAVES no cambian a propósito: los reportes ya guardados en Firestore siguen
+   valiendo. Cambiar las claves habría dejado huérfano todo el mapa comunitario. */
+const REPORTE_GRUPOS={
+  peligro:{l:'⚠️ Un peligro',   h:'Algo que puede hacerte daño ahora'},
+  servicio:{l:'🛠️ Algo que sirve', h:'Dónde comer, dormir, cargar agua o arreglar la bici'},
+  lugar:{l:'📍 Un lugar',       h:'Vale la pena parar o saberlo antes'},
+  control:{l:'👮 Control policial', h:'Fiscalización en la ruta'}
+};
 const REPORTE_CATS={
-  alojamiento:{e:'🏕️',l:'Alojamiento',c:'#10b981',h:'Campings, hospedajes, acampada libre y precios'},
-  critico:{e:'⚠️',l:'Punto Crítico',c:'#ef4444',h:'Perros sueltos, caminos cortados, peligros, falta de agua'},
-  util:{e:'🥖',l:'Dato Útil / Picada',c:'#f59e0b',h:'Almacenes, talleres amigos, agua gratis, comida al paso'},
-  mirador:{e:'📸',l:'Mirador',c:'#3b82f6',h:'Spots para detenerse y registrar el paisaje'},
-  superficie:{e:'🛣️',l:'Estado del camino',c:'#8b5cf6',h:'Asfalto, ripio o tierra — y qué tan exigente está el tramo'},
-  policia:{e:'👮',l:'Control policial',c:'#3b82f6',h:'Pacos, carabineros o fiscalización en la ruta'},
-  animal:{e:'🦔',l:'Animal en la vía',c:'#78716c',h:'Animal atropellado o muerto que puede sorprenderte'},
-  objeto:{e:'🪨',l:'Objeto en la vía',c:'#f97316',h:'Piedra, fierro, rama u otro objeto atravesado'},
-  taco:{e:'🚗',l:'Taco / congestión',c:'#eab308',h:'Tráfico detenido o muy lento'},
-  accidente:{e:'🚨',l:'Accidente',c:'#dc2626',h:'Choque o atropello reciente en la vía'}
+  critico:{g:'peligro',e:'⚠️',l:'Peligro en el camino',c:'#ef4444',h:'Perros sueltos, camino cortado, sin agua'},
+  accidente:{g:'peligro',e:'🚑',l:'Accidente',c:'#dc2626',h:'Choque o atropello reciente en la vía'},
+  objeto:{g:'peligro',e:'🪨',l:'Objeto en la vía',c:'#f97316',h:'Piedra, fierro, rama u otro objeto atravesado'},
+  animal:{g:'peligro',e:'🐕',l:'Animal en la vía',c:'#78716c',h:'Perro suelto, o animal muerto que puede sorprenderte'},
+  taco:{g:'peligro',e:'🚙',l:'Taco / congestión',c:'#eab308',h:'Tráfico detenido o muy lento'},
+  util:{g:'servicio',e:'🏪',l:'Negocio o picada',c:'#f59e0b',h:'Almacén, café, comida al paso, agua gratis'},
+  taller:{g:'servicio',e:'🔧',l:'Taller de bicis',c:'#22d3ee',h:'Dónde arreglar o inflar, y si atiende ciclistas'},
+  alojamiento:{g:'servicio',e:'🏕️',l:'Dónde dormir',c:'#10b981',h:'Campings, hospedajes, acampada libre y precios'},
+  mirador:{g:'lugar',e:'📸',l:'Mirador',c:'#3b82f6',h:'Spots para detenerse y registrar el paisaje'},
+  superficie:{g:'lugar',e:'🛣️',l:'Estado del camino',c:'#8b5cf6',h:'Asfalto, ripio o tierra — y qué tan exigente está'},
+  policia:{g:'control',e:'👮',l:'Control policial',c:'#3b82f6',h:'Carabineros o fiscalización en la ruta'}
 };
 // Vigencia de cada categoría de peligro para los avisos proactivos: un taco de
 // ayer ya no sirve de nada (y podría hasta desviar mal), pero un objeto tirado
@@ -4892,7 +4947,12 @@ function reportarEnRuta(){
   // un mapa ya muerto.
   reporteMapa=null; reporteMapaCoords=null; reporteMapaMarker=null;
   let html='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu dato queda público en el mapa de tu zona para ayudar a otros ciclistas. Elige qué reportas:</p><div id="repCats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
-  Object.keys(REPORTE_CATS).forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+k+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.8rem">'+c.e+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; });
+  Object.keys(REPORTE_GRUPOS).forEach(function(gk){
+    const g=REPORTE_GRUPOS[gk];
+    const hijos=Object.keys(REPORTE_CATS).filter(function(x){ return REPORTE_CATS[x].g===gk; });
+    if(!hijos.length) return;
+    html+='<div style="margin:10px 0 4px;font-size:0.82rem;font-weight:700;color:#e2e8f0">'+g.l+'</div>';
+    hijos.forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+k+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.8rem">'+c.e+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; }); });
   html+='</div><div id="repSuperficieExtra" style="display:none;margin-top:10px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." maxlength="500" style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea>'
     +'<button class="ab sec" type="button" style="margin-top:8px" id="btnReporteMapa" onclick="toggleReporteMapa()">📍 No estoy ahí: marcar el punto en el mapa</button>'
     +'<div id="reporte-mapa-manual" style="display:none;margin-top:8px"><div id="reporte-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div><p id="reporteMapaEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto — no tiene que ser donde estás parado tú ahora.</p></div>'
@@ -5005,7 +5065,7 @@ async function confirmarReporte(id, sigue){
 // agrupan en 3 capas que se muestran/ocultan con los chips; ciclistas es aparte (radar). =====
 const CAPA_GRUPOS={
   peligros:['policia','critico','accidente','objeto','animal','taco'],
-  puntos:['util','alojamiento','superficie'],
+  puntos:['util','taller','alojamiento','superficie'], // 'taller' es categoría nueva (2026-07-20): explícita, no por el fallback
   miradores:['mirador']
 };
 let mapaCapas={peligros:true, puntos:true, miradores:true};
@@ -5025,10 +5085,36 @@ function renderReporteMarkers(){
     reporteMarkers.push(mk);
   });
 }
+/* ===== COLABORADORES — negocios aliados, curados a mano =====
+   Van aparte de `reportes` (que es lo que sube la comunidad) porque estos son acuerdos:
+   deben salir SIEMPRE, no depender de que alguien los reporte ni caducar como un aviso
+   de taco. Coordenadas sacadas de los enlaces de Google Maps que mandó Inty el
+   2026-07-21 — no son aproximadas ni inventadas: son el punto exacto del negocio.
+   En la landing aparecen como auspiciadores (sección "Quienes hacen posible"). */
+const COLABORADORES=[
+  {n:'La Ruka del Ciclista', lat:-41.96044,   lon:-72.4682742, e:'🚲',
+   d:'Punto ciclista en Hornopirén, Hualaihué. Tupuales 1.', tipo:'Punto ciclista'},
+  {n:'Hostal Refugio Oasis', lat:-40.193985,  lon:-72.2587829, e:'🛏️',
+   d:'Hospedaje en Llifén, Futrono — a orillas del lago Ranco.', tipo:'Hospedaje'},
+  {n:'Bodega Chumpeco',      lat:-40.2002762, lon:-72.2595328, e:'🏪',
+   d:'Cervecería y sandwichería en Llifén, Futrono.', tipo:'Comida y bebida'}
+];
+let colaboradorMarkers=[];
+function renderColaboradores(){
+  if(!mp) return;
+  colaboradorMarkers.forEach(function(m){ mp.removeLayer(m); }); colaboradorMarkers=[];
+  if(!mapaCapas.puntos) return; // viajan con la capa de Servicios
+  COLABORADORES.forEach(function(c){
+    const mk=mlMarker([c.lat,c.lon],{icon:{html:lpBadgeHTML(c.e,'#fc4c02')}}).addTo(mp)
+      .bindPopup('<b>'+c.e+' '+escapeHTML(c.n)+'</b><br>'+escapeHTML(c.d)+
+                 '<br><small style="color:#fc4c02">★ Colabora con Libre Pedal · '+escapeHTML(c.tipo)+'</small>');
+    colaboradorMarkers.push(mk);
+  });
+}
 function toggleCapaReportes(grupo, el){
   mapaCapas[grupo]=!mapaCapas[grupo];
   if(el) el.classList.toggle('on', mapaCapas[grupo]);
-  renderReporteMarkers();
+  renderReporteMarkers(); renderColaboradores();
 }
 function toggleCapaCiclistas(el){
   toggleRadarOnMap(); // ya sube/baja el radar y sus marcadores
@@ -5039,6 +5125,7 @@ function subscribeToReportes(){
     const docs=[]; snap.forEach(function(d){ const x=d.data(); x.id=d.id; docs.push(x); });
     reportesData=docs; _calcularReportesAvisoRelevantes();
     renderReporteMarkers();
+    renderColaboradores(); // los aliados se dibujan siempre, no dependen de que alguien los reporte
     renderReportesComunidad(docs.filter(reporteVisible));
   });
 }
@@ -5095,7 +5182,7 @@ function mostrarLogrosComunidad(){
   document.getElementById('modalTitle').innerText='🏆 Logros y comunidad';
   document.getElementById('modalContent').innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'
     +'<button class="ab" style="margin:0" onclick="mostrarLogros()">🏆 Mis logros</button>'
-    +'<button class="ab sec" style="margin:0" onclick="mostrarRanking()">🥇 Ranking mundial</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarRanking(null,&quot;mostrarLogrosComunidad&quot;)">🥇 Ranking mundial</button>'
     +'<button class="ab sec" style="margin:0" onclick="verSegmentos()">🏁 Segmentos y tabla de líderes</button>'
     +'<button class="ab sec" style="margin:0" onclick="verRetos()">🎯 Retos y temporadas</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarResumenAnual()">📊 Mi año en Libre Pedal</button>'
@@ -5209,9 +5296,14 @@ function mostrarIdiomaRuta(){
    vehículo no compite: es un rol de apoyo (DOCTRINA 1).
    El desglose por modo empezó a guardarse el 2026-07-20, así que al principio estos
    rankings van a estar flacos. Se dice en pantalla en vez de disimularlo. */
-async function mostrarRanking(modo){
+async function mostrarRanking(modo, volverA){
   const actual=modo || ((typeof actividadTipo!=='undefined' && _modoCompite(actividadTipo)) ? actividadTipo : 'ciclismo');
-  _modalVolverA='mostrarLogrosComunidad';
+  /* Auditoria 2026-07-20: el destino del "volver" estaba fijo en 'mostrarLogrosComunidad'.
+     Entrando al ranking desde "mi puesto" (esfera o Estadisticas), el atras del modal te
+     dejaba en una pantalla por la que jamas pasaste. Ahora quien abre decide, y si no
+     dice nada, no hay a donde volver: simplemente se cierra. */
+  if(volverA!==undefined) _modalVolverA=volverA;
+  else if(!modo) _modalVolverA=null;
   document.getElementById('modalTitle').innerText='🥇 Top 100 · '+(MODOS_QUE_COMPITEN[actual]||'Ruta');
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando ranking...</p>';
@@ -5403,7 +5495,7 @@ async function agregarPOI(){
   }catch(err){ lpAviso('No se pudo compartir: '+(err.code||err.message)); }
   finally{ _agregandoPOI=false; }
 }
-function openDiario(){ cv('diario'); cargarDiario(); renderPoiCats(); sincronizarDiarioNube().then(function(){ cargarDiario(); }); }
+function openDiario(){ cv('diario'); } // toda la inicializacion vive en cv('diario'), un solo lugar
 function renderDiarioEstados(){ const c=document.getElementById('diarioEstado'); if(!c) return; c.innerHTML=DIARIO_ESTADOS.map(function(s){ const sel=diarioEstadoSel===s.l; return '<button onclick="diarioEstadoSel=\''+s.l+'\';renderDiarioEstados()" style="flex:1;min-width:88px;padding:10px;border-radius:10px;border:2px solid '+(sel?'var(--p)':'#2a3147')+';background:'+(sel?'rgba(252,76,2,0.12)':'var(--gl)')+';color:#fff;font-weight:700;font-size:0.78rem;cursor:pointer">'+s.e+' '+s.l+'</button>'; }).join(''); }
 function cargarDiario(){ const km=document.getElementById('diarioKm'); if(km) km.innerText=us.di.toFixed(2); let d={}; try{ d=JSON.parse(localStorage.getItem(diarioHoyKey()))||{}; }catch(e){} diarioEstadoSel=d.estado||null; const meta=document.getElementById('diarioMeta'), comp=document.getElementById('diarioComplejo'), refl=document.getElementById('diarioReflexion'); if(meta) meta.value=d.meta||''; if(comp) comp.value=d.complejo||''; if(refl) refl.value=d.reflexion||''; renderDiarioEstados(); renderDiarioHistorial(); }
 function guardarDiario(){ const fecha=_fechaLocalYMD(); const d={estado:diarioEstadoSel, meta:document.getElementById('diarioMeta').value, complejo:document.getElementById('diarioComplejo').value, reflexion:document.getElementById('diarioReflexion').value, km:us.di, fecha:fecha, local_ts:Date.now()}; localStorage.setItem(diarioHoyKey(),JSON.stringify(d)); /* respaldo en la nube (tu cuenta) para no perderlo al cambiar de teléfono */ if(cu){ try{ db.collection('diarios').doc(cu+'_'+fecha).set({user:cu, fecha:fecha, estado:d.estado||'', meta:d.meta||'', complejo:d.complejo||'', reflexion:d.reflexion||'', km:d.km||0, ts:firebase.firestore.FieldValue.serverTimestamp()}); }catch(e){} } h('Diario guardado y respaldado en tu cuenta. Buen camino.'); renderDiarioHistorial(); }
@@ -5868,6 +5960,14 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   if(rutaPerfil.length) avisarPendienteAnticipada(lat,lon); else comentarPendiente(navPendienteHistory, speed);
   avisarPuntosCercanos(lat,lon,speed);
   avisarReportesCercanos(lat,lon,speed);
+  /* Aviso de ciclista adelante (solo si voy motorizado). El rumbo no viene en la posición,
+     así que se deduce de los dos últimos puntos del track: es más confiable que
+     coords.heading, que en teléfonos casi parados devuelve null o basura. */
+  if(typeof _revisarCiclistasAdelante==='function' && typeof gpsPoints!=='undefined' && gpsPoints && gpsPoints.length>1){
+    const _a=gpsPoints[gpsPoints.length-2], _b=gpsPoints[gpsPoints.length-1];
+    const _rumbo=(_a&&_b)?_bearingEntrePuntos({lat:_a.lat,lon:_a.lon},{lat:_b.lat,lon:_b.lon}):null;
+    _revisarCiclistasAdelante(lat,lon,_rumbo,speed);
+  }
   _avisoLluviaProactivo(lat,lon); vigilarClima(lat,lon);
   _verificarFatiga(tiempoActivoMs(), speed);
   checkNavigationSteps(lat,lon,speed);
@@ -6614,7 +6714,14 @@ function cv(id, _esVolver){
     _registrarPasoEnHistorial(id); // le da al botón atrás del teléfono algo que retroceder
   }
   _viewActual=id; _actualizarBtnAtras();
-  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
+     inicializar (sin categorias de puntos y sin sincronizar con la nube) porque cv() solo
+     hacia cargarDiario() y openDiario() hacia tres cosas mas. La misma pantalla se veia
+     distinta segun por donde entraras: eso es exactamente la falta de concordancia que
+     reporto Inty. Ahora la inicializacion vive en un solo lugar. */
+    cargarDiario(); if(typeof renderPoiCats==='function') renderPoiCats();
+    if(typeof sincronizarDiarioNube==='function') sincronizarDiarioNube().then(function(){ cargarDiario(); }).catch(function(){});
+  } }
 // Puesto real en el ranking general (no solo si estás en el Top 100): cuenta cuántos
 // ciclistas tienen más km que tú y le suma 1. Se calcula aparte porque mostrarRanking()
 // solo trae el Top 100, así que alguien fuera de esa lista antes no tenía forma de
@@ -6742,6 +6849,81 @@ function exportarRutaGPX(id){
   db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ const dd=doc.data(); armar((dd.points||[]), dd.nombreRuta||'Ruta Libre Pedal'); } else { lpAviso('No pude abrir esa ruta.'); } }).catch(function(){ lpAviso('No pude abrir esa ruta.'); });
 }
 function generarPDFBromas(){ const {jsPDF}=window.jspdf; const doc=new jsPDF(); doc.setFillColor(10,15,29); doc.rect(0,0,210,297,'F'); doc.setTextColor(252,76,2); doc.setFontSize(32); doc.text('Libre Pedal',105,80,{align:'center'}); doc.setFontSize(18); doc.text('Frases de Pistero',105,100,{align:'center'}); doc.setTextColor(255,255,255); doc.setFontSize(10); doc.text('Generado: '+new Date().toLocaleDateString(),105,150,{align:'center'}); const pagina=function(titulo,color,arr){ doc.addPage(); doc.setFillColor(color.r,color.g,color.b); doc.rect(0,0,210,20,'F'); doc.setTextColor(255,255,255); doc.setFontSize(16); doc.text(titulo,105,13,{align:'center'}); doc.setTextColor(0,0,0); doc.setFontSize(11); let y=35; arr.forEach(function(b,i){ if(y>270){ doc.addPage(); y=20; } doc.setFont(undefined,'bold'); doc.text((i+1)+'.',15,y); doc.setFont(undefined,'normal'); const lines=doc.splitTextToSize(b,170); doc.text(lines,25,y); y+=lines.length*6+4; }); }; pagina('LENTO',{r:37,g:99,b:235},frasesLento); pagina('NORMAL',{r:16,g:185,b:129},frasesNormal); pagina('RAPIDO',{r:220,g:38,b:38},frasesRapido); pagina('PARADO',{r:100,g:100,b:100},frasesParado); pagina('MOTIVACIONAL',{r:255,g:215,b:0},frasesMotivacionales); pagina('PROFUNDAS',{r:139,g:92,b:246},frasesProfundas); doc.save('LibrePedal.pdf'); h("PDF descargado."); }
+/* ===== AVISO DE CICLISTA ADELANTE (para el que va motorizado) =====
+   Pedido de Inty 2026-07-21: si un motorizado y un ciclista, ambos con la app, se
+   encuentran en ruta, avisarle al motorizado ANTES de que lo vea.
+
+   Este es el único caso donde el aviso automovilista↔ciclista se sostiene, y hay que
+   construirlo cuidando las críticas que hundieron a las apps que lo intentaron
+   (BikeShield, Cycle Safety Technologies — ver DISENO-CANAL-RODADA.md):
+
+   1. "Pone al conductor mirando el teléfono" -> acá es SOLO VOZ. No hay nada que mirar,
+      ninguna alerta visual que exija atención. Se oye y se sigue conduciendo.
+   2. "Traslada la culpa al ciclista" -> el aviso NUNCA dice ni sugiere que el ciclista
+      deba tener la app. Es una ayuda extra para el que conduce, no una obligación del
+      que pedalea. Si no hay aviso, el deber de cuidado del conductor es exactamente el
+      mismo: por eso la frase termina recordando el metro y medio, que es ley en Chile.
+   3. "Solo sirve si ambos la tienen" -> cierto, y por eso esto SUMA pero no reemplaza a
+      nada. No se anuncia como sistema de seguridad: es una cortesía entre usuarios. */
+const CICLISTA_AVISO_SEG=25;          // avisar ~25 s antes de alcanzarlo
+const CICLISTA_AVISO_MIN_M=150;       // nunca menos de 150 m: más cerca ya no da tiempo a nada
+const CICLISTA_AVISO_MAX_M=800;       // más lejos de 800 m el aviso es ruido
+const CICLISTA_AVISO_ARCO=50;         // grados a cada lado del rumbo: solo lo que está ADELANTE
+const CICLISTA_AVISO_REPETIR_MS=180000; // no repetir por el mismo ciclista antes de 3 min
+let _ciclistasCerca=[], _ciclistaAvisado={}, _ciclistaSub=null;
+
+/* La distancia de aviso sale de la velocidad real, igual que las cuestas: a 100 km/h
+   alcanzas a un ciclista mucho antes que a 40, y el aviso tiene que llegar con el mismo
+   tiempo de reacción en los dos casos. */
+function _metrosAvisoCiclista(velKmh){
+  const m=(velKmh||0)/3.6*CICLISTA_AVISO_SEG;
+  return Math.max(CICLISTA_AVISO_MIN_M, Math.min(CICLISTA_AVISO_MAX_M, m));
+}
+/* ¿Está adelante? Se compara el rumbo hacia el ciclista con el rumbo en que voy.
+   Un ciclista que ya pasé, o que va por la otra pista en sentido contrario a 300 m,
+   no se avisa: sería un aviso inútil que enseña a ignorar los avisos. */
+function _vaAdelante(rumboMio, rumboAlCiclista){
+  if(rumboMio===null || rumboMio===undefined) return true; // sin rumbo confiable, mejor avisar
+  let d=Math.abs(((rumboAlCiclista-rumboMio+540)%360)-180);
+  return d<=CICLISTA_AVISO_ARCO;
+}
+function _revisarCiclistasAdelante(miLat,miLon,miRumbo,velKmh){
+  if(typeof actividadTipo==='undefined' || actividadTipo!=='moto') return; // solo para el que va motorizado
+  if(!_ciclistasCerca.length) return;
+  const umbral=_metrosAvisoCiclista(velKmh);
+  const ahora=Date.now();
+  for(let i=0;i<_ciclistasCerca.length;i++){
+    const c=_ciclistasCerca[i];
+    if(!c || !c.lat || !c.lon) continue;
+    const m=calculateDistance(miLat,miLon,c.lat,c.lon)*1000;
+    if(m>umbral) continue;
+    const rumbo=_bearingEntrePuntos({lat:miLat,lon:miLon},{lat:c.lat,lon:c.lon});
+    if(!_vaAdelante(miRumbo,rumbo)) continue;
+    if(ahora-(_ciclistaAvisado[c.id]||0) < CICLISTA_AVISO_REPETIR_MS) continue;
+    _ciclistaAvisado[c.id]=ahora;
+    h('Ciclista adelante, a unos '+Math.round(m/10)*10+' metros. Dale su metro y medio al pasar.', PRIO_VOZ.SEGURIDAD);
+    return; // uno por vez: dos avisos encimados no se entienden
+  }
+}
+/* Solo se suscribe si vas motorizado. Al que pedalea no le sirve y le gastaría datos. */
+function suscribirCiclistasCerca(){
+  if(_ciclistaSub){ _ciclistaSub(); _ciclistaSub=null; _ciclistasCerca=[]; }
+  if(typeof actividadTipo==='undefined' || actividadTipo!=='moto') return;
+  try{
+    _ciclistaSub=db.collection('liveTracking').where('activo','==',true)
+      .onSnapshot(function(snap){
+        const arr=[];
+        snap.forEach(function(d){
+          const x=d.data();
+          if(!x || !x.lat || !x.lon) return;
+          if(x.modo==='moto') return;          // otro auto no se avisa
+          if(d.id===liveTrackId) return;        // no me aviso de mí mismo
+          arr.push({id:d.id, lat:x.lat, lon:x.lon, nombre:x.nombre});
+        });
+        _ciclistasCerca=arr;
+      }, function(){ _ciclistasCerca=[]; });
+  }catch(e){ _ciclistasCerca=[]; }
+}
 function calculateDistance(lat1,lon1,lat2,lon2){ const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1000; }
 
 function normalizar(t){ return String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
@@ -7225,7 +7407,10 @@ async function toggleSeguimientoVivo(){
   liveTrackId=cu.replace(/[^a-zA-Z0-9]/g,'')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
   const loc=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
   try{
-    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    /* `modo` se publica desde 2026-07-21 para que el aviso de ciclista adelante sepa a
+       quién avisar y de quién: un motorizado necesita saber que el punto que tiene a 400 m
+       es una BICI, no otro auto. Sin este campo el aviso no puede distinguirlos. */
+    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo'), ts:firebase.firestore.FieldValue.serverTimestamp()});
     liveTrackActivo=true; liveTrackUltimoEnvio=0;
     _actualizarBtnSeguimientoVivo();
     const url=location.origin+location.pathname.replace(/index\.html$/,'')+'seguir.html?id='+liveTrackId;
@@ -7686,6 +7871,84 @@ async function verRodadas(){
     }).join('');
   }catch(e){ document.getElementById('rodadasList').innerHTML='<p style="color:#888">No se pudieron cargar las rodadas.</p>'; }
 }
+/* ===== CANAL DE RODADA — avisos entre ciclistas del grupo y el escolta =====
+   Diseño completo en COORDINACION-IA/DISENO-CANAL-RODADA.md.
+
+   La idea central: viaja TEXTO, la voz se sintetiza en cada teléfono. En vez de
+   transmitir audio (caro, pesado, y muerto sin señal), se manda un aviso de ~20 bytes y
+   en el teléfono del que recibe lo cuenta SU Pistero, con SU arquetipo. Gasta lo que un
+   mensaje de texto, aguanta la señal mala de una cuesta y no necesita micrófono abierto.
+
+   Por qué NO el walkie-talkie con los autos: ya se intentó (Cycle Safety Technologies,
+   BikeShield) y los ciclistas lo rechazaron — solo sirve si el auto la instala, traslada
+   la culpa al ciclista y pone al conductor mirando la pantalla. Entre gente del mismo
+   grupo ninguno de esos problemas existe. */
+const RODADA_AVISOS={
+  hoyo:     {e:'🕳️', l:'Hoyo',      t:'Ojo, hoyo adelante.',         seg:true},
+  autoatras:{e:'🚗', l:'Auto atrás', t:'Auto por atrás, a la derecha.', seg:true},
+  frenando: {e:'🛑', l:'Frenando',  t:'Están frenando adelante.',     seg:true},
+  quedado:  {e:'✋', l:'Me quedé',   t:'se quedó atrás.',              seg:false},
+  pinchazo: {e:'🔧', l:'Pinchazo',  t:'tuvo un pinchazo.',            seg:false},
+  paramos:  {e:'💧', l:'Paramos',   t:'Paramos un rato.',             seg:false}
+};
+let rodadaActivaId=null, _rodadaUnsub=null, _rodadaUltimoEnvio=0;
+const RODADA_MIN_ENTRE_AVISOS=8000; // un aviso cada 8s por persona: el canal es para lo urgente, no para conversar
+
+/* El texto se arma distinto según si el aviso habla del CAMINO o de la PERSONA:
+   "Ojo, hoyo adelante" no necesita nombre; "el Manuel se quedó atrás" sí. */
+function _textoAviso(tipo, nombre){
+  const a=RODADA_AVISOS[tipo]; if(!a) return null;
+  return a.seg ? a.t : ((nombre||'Alguien')+' '+a.t);
+}
+async function enviarAvisoRodada(tipo){
+  if(!rodadaActivaId){ lpAviso('No estás en una rodada activa.'); return; }
+  if(!RODADA_AVISOS[tipo]) return;
+  const ahora=Date.now();
+  if(ahora-_rodadaUltimoEnvio < RODADA_MIN_ENTRE_AVISOS){
+    lpAviso('Espera un poco antes de mandar otro aviso.'); return;
+  }
+  _rodadaUltimoEnvio=ahora;
+  try{
+    await db.collection('rodadaAvisos').add({
+      rodada:rodadaActivaId, uid:cu, nombre:(typeof nombreUsuario!=='undefined'?nombreUsuario:'Ciclista'),
+      tipo:tipo, ts:Date.now()
+    });
+    h('Avisado al grupo.', PRIO_VOZ.INFO);
+  }catch(e){ lpAviso('No se pudo enviar el aviso.'); }
+}
+/* Escucha los avisos del grupo. Solo los NUEVOS: al entrar no se relee el historial,
+   porque oír de golpe los diez avisos de la última hora sería insoportable. */
+function escucharCanalRodada(id){
+  if(_rodadaUnsub){ _rodadaUnsub(); _rodadaUnsub=null; }
+  rodadaActivaId=id||null;
+  if(!id) return;
+  const desde=Date.now();
+  _rodadaUnsub=db.collection('rodadaAvisos').where('rodada','==',id)
+    .onSnapshot(function(snap){
+      snap.docChanges().forEach(function(ch){
+        if(ch.type!=='added') return;
+        const d=ch.doc.data();
+        if(!d || d.ts<desde) return;   // viejo: no se relee el historial
+        if(d.uid===cu) return;          // no me repito mi propio aviso
+        const a=RODADA_AVISOS[d.tipo]; if(!a) return;
+        /* En modo Rutero el canal solo dice lo de seguridad: al que está compitiendo no
+           se le interrumpe para contarle que el grupo paró a tomar agua. */
+        const compitiendo=(typeof actividadTipo!=='undefined' && actividadTipo==='ciclismo' && typeof modoRutero!=='undefined' && modoRutero);
+        if(compitiendo && !a.seg) return;
+        h(_textoAviso(d.tipo, d.nombre), a.seg?PRIO_VOZ.SEGURIDAD:PRIO_VOZ.INFO);
+      });
+    }, function(){ /* sin señal: se reintenta solo cuando vuelve */ });
+}
+function salirCanalRodada(){
+  if(_rodadaUnsub){ _rodadaUnsub(); _rodadaUnsub=null; }
+  rodadaActivaId=null;
+}
+function _botoneraRodada(){
+  return Object.keys(RODADA_AVISOS).map(function(k){
+    const a=RODADA_AVISOS[k];
+    return '<button class="ab sec" style="margin:0;min-height:56px;font-size:0.86rem" onclick="enviarAvisoRodada(\''+k+'\')">'+a.e+'<br>'+a.l+'</button>';
+  }).join('');
+}
 async function toggleAsistenciaRodada(id){
   try{
     const ref=db.collection('rodadas').doc(id);
@@ -7700,6 +7963,10 @@ async function toggleAsistenciaRodada(id){
     // la lista, en silencio). Con arrayUnion/arrayRemove cada confirmación se
     // suma/resta sola, sin importar qué haya escrito otro usuario en el medio.
     await ref.update({ asistentes: voy ? firebase.firestore.FieldValue.arrayRemove(cu) : firebase.firestore.FieldValue.arrayUnion(cu) });
+    /* El canal de rodada se prende al confirmar asistencia y se apaga al bajarse: nadie
+       tiene que acordarse de entrar a un canal aparte. Si te bajas, dejas de oír al grupo
+       en el acto — que es lo que uno espera al tocar "ya no voy". */
+    if(voy) salirCanalRodada(); else escucharCanalRodada(id);
     verRodadas();
   }catch(e){ lpAviso('No se pudo actualizar tu asistencia.'); }
 }
@@ -8756,7 +9023,13 @@ function handleVoiceCommand(raw){
   // entrar a una zona nueva — "otra" trae una distinta (mismo registro de ya
   // contadas), y sin el freno de "una vez por zona" porque acá lo pediste tú.
   if(/(cu[eé]ntame|dime|sabes)(me)? (una |otra |alg[uú]n |alguna )?(historia|dato|algo|mito|leyenda)( de este lugar| de por aqu[ií]| del lugar| de ac[aá])?|hay (alg[uú]n |alguna )?(mito|leyenda) (de este lugar|por aqu[ií]|de por ac[aá])|c[oó]mo se llamaba (antes )?este lugar|nombre antiguo de este lugar|otra historia/.test(t)){ _pisteroHistoriaLugar(/mito|leyenda/.test(t)); return; }
-  if(/taller|reparar|arreglar|mecanic|se me (pinch|rompi[oó])|bicicleta rota|no funciona mi bici/.test(t)){ cv('mac'); h("El taller MacGyver."); return; }
+  /* 2026-07-20 — Inty reportó "arréglame la bici no va" y tenía toda la razón. El patrón
+     pedía el INFINITIVO exacto ("arreglar"), así que las formas naturales de pedirlo
+     fallaban todas: "arréglame la bici", "arregla mi bici", "tengo un pinchazo", "se me
+     soltó la cadena". Solo funcionaba diciendo "taller" o "necesito arreglar la bici".
+     Ahora se busca la RAÍZ (arregl/repar/compon) y los síntomas concretos, que es como
+     habla alguien parado al lado de su bici en la ruta. Cubierto por tests/taller.test.mjs. */
+  if(/taller|arregl|repar|compone|mecanic|pinch|ponch|se me (solt|corto|rompi|salio|corri)|cadena[^.]{0,14}(rota|salida|suelta|cortada)|(rueda|neumatico|llanta|camara)[^.]{0,14}(pinch|desinfl|rota)|freno (no|suelto|malo)|bicicleta rota|no funciona mi bici|se me quedo la bici/.test(t)){ cv('mac'); h("El taller MacGyver. Cuéntame qué le pasó y te busco el truco."); return; }
   if(/gu[ií]a|hospedaje|hostal|hostel|alojamiento|d[oó]nde.{0,15}(dormir|acampar)|\bacampar\b|camping/.test(t)){ cv('gui'); h("La CicloGuía."); return; }
   if(/estadistica|grafico|progreso|mi avance|mi rendimiento|como voy/.test(t)){ cv('stats'); h("Tus estadísticas."); return; }
   // "ojos"/"piel"/"labios" sueltos quedan afuera a propósito: un ciclista real los

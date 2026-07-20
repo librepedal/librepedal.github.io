@@ -29,3 +29,6 @@ muestra-lorenzo-chileno.mp3
 muestra-catalina-chilena.mp3
 demo-voces/
 MI-SENTRY.txt
+MI-*.txt
+señuelos/
+.deploy-clean/

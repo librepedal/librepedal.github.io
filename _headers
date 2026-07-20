@@ -6,3 +6,23 @@
 
 /index.html
   Cache-Control: no-cache
+
+# 2026-07-20: la regla de arriba cubre /index.html pero NO la raíz, y el navegador pide
+# "/". Resultado: librepedal.cl seguía sirviendo la versión anterior desde la caché de
+# borde después de un deploy — a mí me pasó y a los usuarios también les pasaba.
+/
+  Cache-Control: no-cache
+
+# Incidente 2026-07-20: un deploy hecho desde la carpeta completa subio los MI-*.txt a
+# produccion. El origen se limpio en minutos, pero el borde los siguio sirviendo porque
+# quedaban cacheados con s-maxage=604800 (7 dias) y purgar exige permiso de Zona que el
+# token no tiene. Con esto, si el error se repite, la exposicion dura segundos y no dias.
+/MI-*
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow
+
+/*.txt
+  Cache-Control: no-store, max-age=0
+
+/*.rules
+  Cache-Control: no-store, max-age=0
