@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.05'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.06'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6167,6 +6167,39 @@ function endNavigation(){
 let _viewHistory=[], _viewActual='dash';
 function _actualizarBtnAtras(){ const b=document.getElementById('btnAtras'); if(b) b.style.display=_viewHistory.length?'inline-flex':'none'; }
 function volverAtras(){ const prev=_viewHistory.pop(); if(prev){ cv(prev, true); if(prev==='dash') abrirEsfera(); } else { cv('dash'); abrirEsfera(); } }
+/* ===== BOTÓN ATRÁS DEL TELÉFONO =====
+   Reportado por Inty (2026-07-20): apretar "atrás" en Android SALÍA de la app en vez de
+   volver a la pantalla anterior, y al reabrirla la app arrancaba de cero — perdiendo lo
+   que estuvieras haciendo.
+   Causa: la app cambia de pantalla mostrando y ocultando divs (.view), sin tocar el
+   historial del navegador. Para Android no había "nada atrás", así que hacía lo suyo por
+   defecto: cerrar. El historial interno (_viewHistory) ya existía y el botón de la
+   pantalla ya funcionaba; lo que faltaba era conectarlos.
+   La solución no necesita plugins: en el WebView de Capacitor el botón atrás recorre el
+   historial del navegador y solo sale cuando ya no queda nada. Dándole entradas reales,
+   se comporta como cualquiera espera. Sirve igual en la web instalada como PWA. */
+function _cerrarCapaAbierta(){
+  // El aviso de caída NUNCA se cierra con el botón atrás: es una alerta de seguridad y
+  // se sale de ella tocando "Estoy bien" a propósito.
+  if(document.getElementById('crashAlertOverlay')) return false;
+  const tut=document.getElementById('tutorialOverlay');
+  if(tut && tut.classList.contains('on')){ if(typeof cerrarTutorial==='function') cerrarTutorial(); else tut.classList.remove('on'); return true; }
+  const abiertas=document.querySelectorAll('.modal.on, #userModal.on');
+  if(abiertas.length){ abiertas[abiertas.length-1].classList.remove('on'); return true; }
+  return false;
+}
+function _registrarPasoEnHistorial(id){
+  try{ history.pushState({lpView:id}, ''); }catch(e){}
+}
+window.addEventListener('popstate', function(){
+  // 1) Si hay algo encima (modal, tutorial), el atrás cierra eso primero, como en
+  //    cualquier app. Se repone la entrada consumida para no desarmar la pila.
+  if(_cerrarCapaAbierta()){ _registrarPasoEnHistorial(_viewActual); return; }
+  // 2) Si hay pantallas atrás dentro de la app, se vuelve a la anterior.
+  if(_viewHistory.length){ volverAtras(); return; }
+  // 3) Si ya estás en el inicio, no se hace nada: ahí sí corresponde que Android
+  //    cierre la app, que es lo que espera cualquier usuario.
+});
 /* ===== ANALYTICS: qué usa el usuario y dónde pasa tiempo. Buffer en memoria +
    escritura ATÓMICA (FieldValue.increment) con throttle — NO escribe en cada toque
    (eficiente y sin carreras de datos). El panel de admin agrega estos docs. Para lo
@@ -6210,7 +6243,10 @@ function cv(id, _esVolver){
   }
   _trackPantalla(id);
   if(id==='dash' && !_esVolver){ _viewHistory=[]; }
-  else if(!_esVolver && _viewActual && _viewActual!==id){ _viewHistory.push(_viewActual); if(_viewHistory.length>15) _viewHistory.shift(); }
+  else if(!_esVolver && _viewActual && _viewActual!==id){
+    _viewHistory.push(_viewActual); if(_viewHistory.length>15) _viewHistory.shift();
+    _registrarPasoEnHistorial(id); // le da al botón atrás del teléfono algo que retroceder
+  }
   _viewActual=id; _actualizarBtnAtras();
   document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario') cargarDiario(); }
 // Puesto real en el ranking general (no solo si estás en el Top 100): cuenta cuántos

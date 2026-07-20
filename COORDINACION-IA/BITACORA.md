@@ -4,6 +4,52 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.06 — 2026-07-20 — Claude (el botón atrás del teléfono ya no cierra la app)
+
+**Lo reportado por Inty:** *"aprieto el botón de volver del teléfono para volver entre
+las pantallas de la misma aplicación, y esta se sale de la aplicación. Y cuando vuelves
+a la aplicación, vuelve a iniciar"*.
+
+**Causa raíz.** La app cambia de pantalla mostrando y ocultando `div`s (`.view.on`), sin
+tocar el historial del navegador. Para Android **no había nada atrás**, así que hacía lo
+que corresponde cuando no queda historial: cerrar la app. Y como la app se cerraba de
+verdad, al volver arrancaba de cero. No era un bug de estado: era que nunca se le dijo
+al sistema que había pantallas donde retroceder.
+
+**Lo que ya existía y no estaba conectado:** `_viewHistory` (pila interna de pantallas),
+`_viewActual` y `volverAtras()` — el botón atrás DE LA PANTALLA ya funcionaba bien. Solo
+faltaba enchufarle el botón físico.
+
+**Qué se cambió.** `cv()` ahora registra cada navegación con `history.pushState`, y un
+listener de `popstate` decide qué significa "atrás":
+
+1. **Si hay algo encima** (modal, tutorial) → lo cierra, sin cambiar de pantalla. Se
+   repone la entrada consumida para no desarmar la pila.
+2. **Si hay pantallas atrás** → vuelve a la anterior con `volverAtras()`.
+3. **Si ya estás en el inicio** → no se hace nada y Android cierra la app, que es lo que
+   cualquiera espera ahí.
+
+**El aviso de caída está explícitamente protegido:** el botón atrás NO lo cierra. Es una
+alerta de seguridad y se sale de ella tocando "Estoy bien" a propósito.
+
+**Sin plugins nuevos:** en el WebView de Capacitor el botón atrás recorre el historial
+del navegador y solo cierra cuando no queda nada, así que basta con darle entradas
+reales. Funciona igual en la web instalada como PWA.
+
+**Verificación en navegador real** (simulando el botón físico con `history.back()`):
+- Navegando dash → map → stats → customize, los tres "atrás" devolvieron
+  stats → map → dash, **sin salir de la app**. El historial pasó de 6 a 9 entradas, una
+  por pantalla.
+- Con un modal abierto: el primer atrás **cerró el modal y dejó la pantalla igual**; el
+  segundo sí cambió de pantalla.
+- Con la alerta de caída en pantalla, `_cerrarCapaAbierta()` devolvió `false`: protegida.
+
+**Pendiente de campo:** confirmarlo en el APK sobre un Android real. La lógica es la
+misma, pero el gesto de "atrás" del sistema no se puede simular del todo desde el
+navegador.
+
+---
+
 ## v7.05 — 2026-07-20 — Claude (avisos de subida/bajada: reporte en ruta, en auto)
 
 **Lo reportado por Inty, probando en auto:** *"en la bajada dio una instrucción de que
