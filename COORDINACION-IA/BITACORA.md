@@ -4,6 +4,47 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.04 — 2026-07-20 — Claude (falsa alarma REAL reportada: teléfono que se cae ≠ ciclista que se cae)
+
+**Primera prueba de campo de la detección de caídas, y la trajo un usuario real.**
+Inty reportó que **a una amiga se le cayó el teléfono al suelo con la app abierta y
+saltó la alerta "¿estás bien?"**. Falsa alarma en producción (v7.02).
+
+**Por qué pasa, y por qué v7.03 lo habría EMPEORADO.** Después del impacto, un
+teléfono tirado en el piso y un ciclista tirado en el piso se ven **idénticos**: golpe
+fuerte seguido de quietud absoluta. v7.03 acababa de hacer que la quietud pesara más
+(con razón, para no perderse caídas reales), así que por sí sola habría disparado esta
+falsa alarma **más seguido**, no menos.
+
+**Lo que los distingue no es el después, es el ANTES:** el ciclista venía andando; el
+teléfono, no.
+
+**El detalle bonito del arreglo:** la velocidad que se ve en pantalla viene de una
+ventana de 10-15s de GPS, o sea **laggea**. Ese retardo era exactamente el veneno que
+rompía la medición de quietud en v7.03 (mostraba la velocidad de antes del choque).
+Pero para mirar al pasado, ese mismo lag es **justo lo que sirve**: leída en el
+instante del golpe, esa cifra ES la velocidad previa al impacto. El defecto de un
+sensor, usado donde es virtud.
+
+Si venías a menos de **5 km/h**, el golpe se ignora. Si el GPS no sabe la velocidad,
+**no se filtra** — mejor una alarma de más que perderse una caída real por falta de
+señal.
+
+**Por qué el equilibrio importa tanto acá:** las falsas alarmas repetidas terminan en
+que alguien apague la detección desde Ajustes. **Una función apagada no salva a
+nadie.** Cada falsa alarma que se evita protege la credibilidad de las verdaderas.
+
+**Verificación:** `tests/caidas.test.mjs` pasó de 13 a **20 casos, todos en verde**,
+incluyendo el caso real reportado (teléfono al suelo estando detenido → se ignora) y
+que el ciclista a 25 km/h sigue evaluándose. Suite completa **4/4**. Navegador real:
+la app carga y las tres funciones responden correcto.
+
+**Sigue sin verificarse con teléfono:** los dos umbrales (`CRASH_MOV_QUIETO = 0.22 g`
+y `CRASH_VEL_MINIMA = 5 km/h`) están elegidos por criterio. Si aparecen más falsas
+alarmas, subir `CRASH_VEL_MINIMA`; si se pierde una caída real, bajarlo.
+
+---
+
 ## v7.03 — 2026-07-20 — Claude (detección de caídas: arreglada la falla que podía dejar sin aviso una caída real)
 
 **Qué estaba mal.** El chequeo de "¿quedaste quieto tras el golpe?" leía el **número

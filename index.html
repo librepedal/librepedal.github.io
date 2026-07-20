@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.03'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.04'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6529,6 +6529,19 @@ const CRASH_UMBRAL_G=3.5;
 let crashMuestrasMov=[];
 const CRASH_MOV_QUIETO=0.22;   // variación en g por debajo de la cual el teléfono NO se está moviendo
 const CRASH_VENTANA_MS=3600;   // cuánto rato después del golpe se juntan muestras
+/* Velocidad mínima ANTES del golpe para tratarlo como caída de ciclista.
+   Caso real (2026-07-20): a una amiga de Inty se le cayó el teléfono al suelo con la
+   app abierta y saltó la alerta. Un teléfono que se cae y un ciclista que se cae se ven
+   IGUAL después del impacto: golpe fuerte y después quietud. Lo que los distingue es el
+   ANTES — el ciclista venía andando, el teléfono no.
+   Y acá el retardo del GPS juega A FAVOR: la velocidad que se ve en el instante del
+   golpe refleja los últimos 10-15s, o sea justo antes del impacto. El mismo lag que
+   arruinaba la medición de quietud es exactamente lo que sirve para mirar al pasado.
+   Si el GPS no sabe la velocidad, NO se filtra: mejor una alarma de más que perderse
+   una caída real por falta de señal.
+   Por qué importa el equilibrio: las falsas alarmas seguidas terminan en que alguien
+   apague la función, y una función apagada no salva a nadie. */
+const CRASH_VEL_MINIMA=5;      // km/h
 // Se puede apagar desde Ajustes (ej: si vas a hacer MTB agresivo, donde los baches
 // fuertes son parte normal del andar y darían demasiadas falsas alarmas).
 let crashDeteccionOn=(function(){ try{ return localStorage.getItem('lp_crash_on')!=='0'; }catch(e){ return true; } })();
@@ -6552,6 +6565,8 @@ function _crashMotionHandler(e){
   const mag=Math.sqrt(Math.pow(a.x||0,2)+Math.pow(a.y||0,2)+Math.pow(a.z||0,2))/9.8;
   const ahora=Date.now();
   if(mag>CRASH_UMBRAL_G && ahora-crashUltimoImpacto>4000){
+    // ¿Venías andando? Si no, esto es un teléfono que se cayó, no un ciclista.
+    if(!_impactoEsDeCiclista(_velocidadEnPantalla())) return;
     crashUltimoImpacto=ahora;
     crashMuestrasMov=[];
     setTimeout(function(){ _verificarQuietudTrasImpacto(1); }, 1500);
@@ -6564,6 +6579,13 @@ function _crashMotionHandler(e){
     crashMuestrasMov.push(Math.abs(mag-(sinGravedad?0:1)));
     if(crashMuestrasMov.length>500) crashMuestrasMov.shift();
   }
+}
+/* ¿El golpe le pasó a alguien que venía andando? Función pura, testeable sin teléfono.
+   Con la velocidad desconocida devuelve true a propósito: sin señal GPS preferimos una
+   alarma de más (cuesta un toque) antes que perdernos una caída real. */
+function _impactoEsDeCiclista(velPrevia){
+  if(typeof velPrevia!=='number' || !isFinite(velPrevia)) return true;
+  return velPrevia>=CRASH_VEL_MINIMA;
 }
 /* Decide si tras el golpe la persona quedó QUIETA. Función pura y aparte para poder
    testearla sin teléfono (ver tests/caidas.test.mjs).

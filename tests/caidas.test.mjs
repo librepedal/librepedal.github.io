@@ -73,5 +73,35 @@ eq('justo bajo el mínimo de muestras (4) usa GPS',
 eq('justo en el mínimo de muestras (5) ya usa el acelerómetro',
    decidir(repetir(0.9, 5), 0), 'siguemoviendose');
 
+// ---- Filtro de "¿venías andando?" ----
+// Nació de un caso REAL: a una amiga de Inty se le cayó el teléfono al suelo con la
+// app abierta y saltó la alerta. Después del impacto, un teléfono en el piso y un
+// ciclista tirado se ven idénticos (golpe + quietud); lo único que los separa es que
+// el ciclista venía en movimiento.
+const umbralVel = html.match(/const CRASH_VEL_MINIMA\s*=\s*([\d.]+)/);
+const fuenteVel = html.match(/function _impactoEsDeCiclista\(velPrevia\)\{[\s\S]*?\n\}/);
+if (!umbralVel || !fuenteVel) {
+  console.log('\n✗ No pude extraer _impactoEsDeCiclista / CRASH_VEL_MINIMA de index.html');
+  process.exit(1);
+}
+const CRASH_VEL_MINIMA = parseFloat(umbralVel[1]);
+const esDeCiclista = new Function('CRASH_VEL_MINIMA', fuenteVel[0] + '; return _impactoEsDeCiclista;')(CRASH_VEL_MINIMA);
+
+console.log(`\n¿VENÍA ANDANDO? (umbral: ${CRASH_VEL_MINIMA} km/h)`);
+eq('TELÉFONO QUE SE CAE AL SUELO estando detenido -> se ignora (caso real 2026-07-20)',
+   esDeCiclista(0), false);
+eq('teléfono que se cae mientras caminas (3 km/h) -> se ignora',
+   esDeCiclista(3), false);
+eq('ciclista a 25 km/h -> sí se evalúa como caída',
+   esDeCiclista(25), true);
+eq('ciclista lento pero andando (justo en el umbral) -> sí se evalúa',
+   esDeCiclista(CRASH_VEL_MINIMA), true);
+eq('justo bajo el umbral -> se ignora',
+   esDeCiclista(CRASH_VEL_MINIMA - 0.1), false);
+eq('sin señal GPS (null) -> NO se filtra: mejor alarma de más que caída perdida',
+   esDeCiclista(null), true);
+eq('velocidad basura (NaN) -> tampoco se filtra',
+   esDeCiclista(NaN), true);
+
 console.log(`\n${pass} pasaron, ${fail} fallaron`);
 process.exit(fail ? 1 : 0);
