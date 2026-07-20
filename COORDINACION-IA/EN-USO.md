@@ -33,75 +33,28 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ```
 LIBRE
-Última sesión: 1, 2026-07-19 — bump 7.00->7.01 (los 3: APP_VERSION, version.txt,
-sw.js CACHE=librepedal-v701). LOTE 7.01 LISTO PARA DEPLOY, esperando OK de Inty.
-Incluye: bus prioridad voz, voz chilena default, fix obtenerFraseUnica, red tests+CI,
-fix mlPolyline, blindaje listeners Firestore. Todo verificado. Falta: Inty da el push.
+Última sesión: 2 (Opus 4.8), 2026-07-21 04:xx — v7.21 a v7.24 COMMITEADAS Y PUSHEADAS
+(commit 934b159) y desplegadas en producción. Tests 12/12 verdes.
 
---- candado anterior ---
-LIBRE
-Última sesión: 1, 2026-07-19 — BLINDAJE listeners Firestore (top Sentry, 12 ev iOS):
-parche global a onSnapshot (~línea 1236) que le da manejador de error a los listeners
-sin onError -> ignora el permiso-denegado benigno del arranque (carrera auth) + re-
-engancha solo + reporta errores reales; unsub envoltorio sin fugas. NO toca reglas ni
-auth. Verificado con Firestore real (chat entrega datos + unsub OK; diarios permiso-
-denegado manejado sin crash; cero errores consola). Test: firestore-blindaje.test.mjs.
-npm test verde 2/2. FALTA: confirmar en iPhone Safari (necesita el tel de Inty) + deploy.
-OJO: si tocas onSnapshot o el flujo de auth (~línea 1219-1236), lee este parche antes.
+MEA CULPA, para que no se repita: trabajé toda la sesión SIN leer este candado y SIN
+tomarlo. No hubo choque de puro suerte (la sesión 1 estuvo en documentos, no en
+index.html), pero llegué a tener CUATRO versiones sin commitear mientras la sesión 1
+dejaba una SPEC aprobada que yo no había leído. Eso es exactamente lo que este archivo
+existe para evitar.
 
---- candado anterior ---
-LIBRE
-Última sesión: 1, 2026-07-19 — fix crash Sentry mlPolyline.addTo (map undefined ->
-guard no-op; issues Sentry 7607413878/7611377185). Verificado en navegador (addTo
-undefined/null no crashea, addTo(map valido) sigue dibujando, cero errores). FALTA
-deploy. NOTA: el frame()/lat (10 ev) se revisó — YA estaba bien arreglado en v6.98,
-los eventos son de clientes con SW viejo cacheado; NO tocar. Antes: monté red de
-tests + CI (npm test / GitHub Actions) — ver TECNOLOGIA-A-FAVOR.md.
+Lo que toqué en index.html (por si la sesión 1 vuelve sobre esto):
+- CSS .view (padding-bottom para la barra inferior) y #map (alto real, ya no 280px fijos)
+- REPORTE_CATS reagrupado en 4 grupos + categoría nueva `taller`; el pan 🥖 fuera
+- PERSONALIDADES: etiquetas sin el prefijo "Pistero"
+- Bloques NUEVOS: CANAL DE RODADA, AVISO DE CICLISTA ADELANTE, COLABORADORES
+- Eliminado código muerto: addRouteAlert, subscribeToRouteAlerts, div #route-alerts
+- liveTracking ahora publica `modo`
+- El comando de voz del taller (regex) ampliado
 
---- candado anterior ---
-LIBRE
-Última sesión: 1 (voz), 2026-07-19 — fix crash real de Sentry en obtenerFraseUnica:
-claves de arquetipo (categoria@arqId) no venían pre-inicializadas en frasesUsadas ->
-.push() de undefined crasheaba la 1a vez que se usaba una frase de arquetipo. Ahora
-se inicializa a [] antes del push. Verificado en navegador (reproduje el crash exacto
-'reading push' con la lógica vieja + la función arreglada devuelve frase y no crashea).
-FALTA: deploy. Sentry issues 7611282094 / 7613232824 deberían dejar de aparecer.
+PENDIENTE Y SIN EMPEZAR: la SPEC-REDISENO-INICIO-MAPA-2026-07-20.md que dejó la sesión 1
+está APROBADA por Inty y NO está aplicada. Mis cambios de mapa de hoy pueden chocar con
+ella: hay que reconciliar antes de implementarla, no aplicarla encima a ciegas.
 
---- candado anterior ---
-LIBRE
-Última sesión: 1 (voz), 2026-07-18 — voz chilena ENCENDIDA por defecto (arregla
-"volvió la voz antigua"): antes vozMejorada arrancaba off y al limpiar localStorage
-caía a la nativa gringa. Ahora default on salvo que el usuario la apague. Worker de
-voz chilena verificado vivo (devuelve MP3). Verificado en navegador. FALTA: oír en
-teléfono real + DEPLOY. (Antes en esta misma sesión: bus de PRIORIDAD de voz,
-commit 5bab3fd, avisos ya no se pisan.)
-
---- candado anterior ---
-LIBRE
-Última sesión: 1 (voz), 2026-07-18 — bus de audio con PRIORIDAD (commit 5bab3fd):
-los avisos ya no se pisan (queja real de Inty). 4 niveles ambiente<info<navegación
-<seguridad, función decidirVoz + _cortarActual (interrumpe sin borrar la cola) +
-_vozSiguiente saca el de más prioridad. Caída/SOS → hUrgente. Verificado con
-tests/voz-prioridad.test.mjs (12/12) y en la app en vivo (cero errores de consola).
-FALTA: confirmar el feel final en teléfono real + DEPLOY (no desplegado aún).
-También rescaté antes cambios sin commitear (commit 45c6ae9: fix zoom móvil 16px +
-botón planificador) que estaban sueltos y se podían perder.
-OJO sesión 2: si tocas navegación, `hCorta` ahora es prioridad NAV (no corta todo);
-usa `hUrgente()` para seguridad y `hAmbiente()` para relleno.
-
---- candado anterior ---
-LIBRE
-Última sesión: 2 — v7.00, dos quejas UX reales de Inty:
-(1) avisos de voz al abrir la app ("estoy grabando tu viaje" y revisión
-de la bici) se disparaban con el auto-arranque silencioso del GPS al
-loguearse, no con un viaje real → parámetro `silencioso` agregado a
-toggleGPS/lpWakeLock.enable/lpSalud.start (verificado en navegador).
-(2) sonido de cadena "genérico y muy fuerte" → cadenaClick(): agregada
-resonancia grave (cuerpo mecánico) + compensación de volumen (bp1+bp2 se
-sumaban antes de aplicar v; -31.3% verificado numéricamente).
-v7.00 deployado (librepedal.cl + www → 7.00 verificado por curl) y
-pusheado. Sigue el protocolo.
-```
 
 ---
 
