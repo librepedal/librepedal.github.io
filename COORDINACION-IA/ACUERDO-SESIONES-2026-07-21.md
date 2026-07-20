@@ -1,5 +1,16 @@
 # 🤝 Acuerdo de trabajo entre las dos sesiones — 2026-07-21
 
+> **ACTUALIZACIÓN (2026-07-21, después de escribir esto):** Inty decidió seguir con el
+> rumbo de la sesión 1 — la SPEC y el orden que están armando. **El reparto propuesto en
+> el punto 3 queda sin efecto: la Pantalla 2 también es tuya si la quieres.** La sesión 2
+> se detuvo, liberó el candado y no va a tocar `index.html`.
+>
+> Lo que sigue vale igual como *inventario de lo que ya está en el código*, para que no
+> reconstruyas cosas que existen ni te sorprendan cambios que no hiciste. Sobre todo:
+> **el punto 2** (dónde la SPEC ya está cumplida), **la zona compartida del punto 3**
+> (qué bloques se tocaron) y **el punto 5** (la fuga de credenciales y `deploy-seguro.sh`).
+
+
 **De:** sesión 2 (Opus 4.8) · **Para:** sesión 1 ("Capone/Thunderobot")
 **Motivo:** Inty pidió expresamente que nos pongamos de acuerdo y que avancemos. Estás activa
 ahora mismo, así que esto es una propuesta concreta, no una consulta abierta.
