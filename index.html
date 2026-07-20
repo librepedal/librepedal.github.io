@@ -1140,7 +1140,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.02'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.03'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6518,6 +6518,17 @@ function borrarContactoSOS(i){ const cs=contactosSOS(); cs.splice(i,1); guardarC
    significa que preparamos todo y lo dejamos a un toque, no un envío 100% silencioso. */
 let crashDetectorActivo=false, crashUltimoImpacto=0, crashAlertaActiva=false, crashCountdownId=null;
 const CRASH_UMBRAL_G=3.5;
+/* Muestras de MOVIMIENTO tomadas del acelerómetro justo después del impacto.
+   Antes la quietud se preguntaba al número de velocidad que se ve en pantalla, y eso
+   tenía dos fallas graves (barrido #8): la velocidad viene de una ventana de 10-15s de
+   posiciones GPS, así que a los 3s de chocar a 30 km/h TODAVÍA marca 30 -> el sistema
+   creía que seguías andando y NO avisaba una caída real; y si el GPS no tenía señal el
+   texto era "--", que parseFloat convertía en 0 -> creía que estabas quieto y avisaba
+   sin motivo. El acelerómetro no tiene retardo y mide directo lo que importa: si el
+   cuerpo se está moviendo o no. */
+let crashMuestrasMov=[];
+const CRASH_MOV_QUIETO=0.22;   // variación en g por debajo de la cual el teléfono NO se está moviendo
+const CRASH_VENTANA_MS=3600;   // cuánto rato después del golpe se juntan muestras
 // Se puede apagar desde Ajustes (ej: si vas a hacer MTB agresivo, donde los baches
 // fuertes son parte normal del andar y darían demasiadas falsas alarmas).
 let crashDeteccionOn=(function(){ try{ return localStorage.getItem('lp_crash_on')!=='0'; }catch(e){ return true; } })();
@@ -6532,24 +6543,59 @@ function toggleDeteccionCaidas(){
 }
 function _crashMotionHandler(e){
   if(crashAlertaActiva) return;
+  // OJO: 'acceleration' viene SIN gravedad (quieto ≈ 0 g) y 'accelerationIncludingGravity'
+  // viene CON ella (quieto ≈ 1 g). Medir movimiento contra la base equivocada daría
+  // justo lo contrario de lo real, así que se ajusta según cuál entregó el teléfono.
+  const sinGravedad=!!e.acceleration;
   const a=e.acceleration||e.accelerationIncludingGravity;
   if(!a) return;
   const mag=Math.sqrt(Math.pow(a.x||0,2)+Math.pow(a.y||0,2)+Math.pow(a.z||0,2))/9.8;
   const ahora=Date.now();
   if(mag>CRASH_UMBRAL_G && ahora-crashUltimoImpacto>4000){
     crashUltimoImpacto=ahora;
+    crashMuestrasMov=[];
     setTimeout(function(){ _verificarQuietudTrasImpacto(1); }, 1500);
+    return; // el golpe mismo no cuenta como movimiento posterior
   }
+  // Junta el movimiento de los segundos siguientes al golpe. Se saltan los primeros
+  // 250 ms porque ahí todavía coletea el impacto y ensuciaría la medición.
+  const desde=ahora-crashUltimoImpacto;
+  if(crashUltimoImpacto && desde>250 && desde<=CRASH_VENTANA_MS){
+    crashMuestrasMov.push(Math.abs(mag-(sinGravedad?0:1)));
+    if(crashMuestrasMov.length>500) crashMuestrasMov.shift();
+  }
+}
+/* Decide si tras el golpe la persona quedó QUIETA. Función pura y aparte para poder
+   testearla sin teléfono (ver tests/caidas.test.mjs).
+   Devuelve: 'caida' | 'siguemoviendose' | 'sindatos'
+   El acelerómetro manda; el GPS solo se usa si no llegaron muestras, y sabiendo que
+   llega atrasado. Ante la falta total de datos se avisa igual: hay 30 segundos y un
+   botón para cancelar, así que equivocarse avisando cuesta un toque, y equivocarse
+   callando puede costar mucho más. */
+function _decidirQuietudCaida(muestrasMov, velocidadGps){
+  if(muestrasMov && muestrasMov.length>=5){
+    let maxMov=0;
+    for(let i=0;i<muestrasMov.length;i++) if(muestrasMov[i]>maxMov) maxMov=muestrasMov[i];
+    return maxMov<=CRASH_MOV_QUIETO ? 'caida' : 'siguemoviendose';
+  }
+  if(typeof velocidadGps!=='number' || !isFinite(velocidadGps)) return 'sindatos';
+  return velocidadGps<3 ? 'caida' : 'siguemoviendose';
+}
+// Lee la velocidad mostrada devolviendo null cuando NO se sabe (GPS sin señal muestra
+// "--"). Antes eso se convertía en 0 y el sistema lo leía como "está quieto".
+function _velocidadEnPantalla(){
+  const navActivo=document.getElementById('nav-screen').classList.contains('active');
+  const el=document.getElementById(navActivo?'navSpeed':'spd');
+  if(!el) return null;
+  const v=parseFloat(String(el.innerText).replace(',','.'));
+  return isFinite(v) ? v : null;
 }
 // Dos chequeos de quietud (1.5s y 3s después del golpe), no uno solo: un bache fuerte
 // puede dejarte "lento" un instante sin que sea una caída real — exigir que sigas
 // quieto un rato más filtra ese caso sin demorar tanto la alerta si sí fue una caída.
 function _verificarQuietudTrasImpacto(intento){
   if(crashAlertaActiva) return;
-  const navActivo=document.getElementById('nav-screen').classList.contains('active');
-  const el=document.getElementById(navActivo?'navSpeed':'spd');
-  const spActual=el?(parseFloat(el.innerText)||0):0;
-  if(spActual>=3) return; // ya te moviste de nuevo, no era caída
+  if(_decidirQuietudCaida(crashMuestrasMov, _velocidadEnPantalla())==='siguemoviendose') return; // te moviste: no fue caída
   if(intento===1){ setTimeout(function(){ _verificarQuietudTrasImpacto(2); }, 1500); return; }
   mostrarAlertaCaida();
 }

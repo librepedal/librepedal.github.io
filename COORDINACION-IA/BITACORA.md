@@ -4,6 +4,62 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.03 — 2026-07-20 — Claude (detección de caídas: arreglada la falla que podía dejar sin aviso una caída real)
+
+**Qué estaba mal.** El chequeo de "¿quedaste quieto tras el golpe?" leía el **número
+de velocidad que se muestra en pantalla**:
+
+```js
+const spActual = el ? (parseFloat(el.innerText)||0) : 0;
+if (spActual >= 3) return;   // "ya te moviste, no era caída"
+```
+
+Eso fallaba en **las dos direcciones**:
+
+1. **Falso negativo (el grave, documentado en PENDIENTES desde el barrido #8):** esa
+   velocidad sale de una ventana de 10-15s de posiciones GPS, así que **laggea**. A
+   los 3s de chocar a 30 km/h el número todavía marcaba ~30 → el sistema concluía
+   "sigue andando" → **NO avisaba una caída real ocurrida a velocidad**, que es
+   justo el escenario más peligroso.
+2. **Falso positivo (no estaba visto):** sin señal GPS el elemento muestra `--`, y
+   `parseFloat('--')||0` da **0** → "está quieto" → alarma sin que pasara nada.
+
+**Causa raíz:** se le preguntaba al GPS —que responde tarde y a veces no responde—
+por algo que el acelerómetro ya sabía al instante. El acelerómetro **ya estaba
+conectado** (es el que detecta el impacto); simplemente no se usaba para el segundo
+paso.
+
+**Qué se cambió.** Tras el impacto se juntan muestras de movimiento del acelerómetro
+(saltando los primeros 250 ms, donde todavía coletea el golpe) y la quietud se decide
+con eso. El GPS quedó solo como respaldo para cuando no llegan muestras, y ya no
+confunde "sin señal" con "detenido".
+
+Detalle que importa: `acceleration` viene **sin** gravedad (quieto ≈ 0 g) y
+`accelerationIncludingGravity` **con** ella (quieto ≈ 1 g). Medir contra la base
+equivocada habría dado exactamente lo contrario de lo real, así que se ajusta según
+cuál entregue el teléfono.
+
+**Criterio ante la duda: avisar.** Si no hay datos de ningún sensor, se muestra la
+alerta igual. Hay 30 segundos y un botón "Estoy bien": equivocarse avisando cuesta un
+toque, equivocarse callando puede costar muchísimo más.
+
+**Verificación:**
+1. `tests/caidas.test.mjs` — **13/13**. El test **extrae la función real desde
+   `index.html`** (no una copia), y falla a propósito si le cambian el nombre, para
+   que no quede en verde sin probar nada. Cubre el caso exacto del bug: quieto en el
+   suelo mientras el GPS todavía marca 30 km/h → **caída**.
+2. Suite completa: **4/4 archivos en verde**.
+3. Navegador real: la app carga (`APP_VERSION 7.03`), sin errores de consola, y las
+   funciones nuevas responden correcto contra los tres escenarios.
+
+**NO verificado, y es importante:** el umbral de quietud (`CRASH_MOV_QUIETO = 0.22 g`)
+está elegido por criterio, **no medido con una caída real**. La lógica es
+demostrablemente mejor que la anterior —que directamente no podía detectar una caída
+a velocidad—, pero el número fino necesita a alguien con el teléfono en la mano.
+Ajustarlo es cambiar una sola constante.
+
+---
+
 ## 2026-07-20 — Acceso al repo restablecido (el proyecto SIGUE EN SU CASA)
 
 **Resuelto.** Durante horas el `git push` daba **403**: la cuenta autenticada en
