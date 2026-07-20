@@ -4,6 +4,56 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.12 — 2026-07-20 — Claude (🚨 el 55% de los usuarios era INVISIBLE en el ranking)
+
+**Cómo salió.** Inty reportó que un amigo suyo había recorrido varios kilómetros y no
+aparecía en el Top 100. Se consultaron los **datos reales de producción** (la colección
+`users` permite lectura pública, así que no hizo falta ninguna credencial):
+
+```
+29 usuarios totales
+16 SIN el campo `km`  →  el 55%
+16 que NUNCA sincronizaron (sin km ni darma)
+```
+
+Entre los invisibles había **gente real con nombre** —Alicia, César, Génesis, Miguel
+Jared, Ignacio, Italo, Jordan, Nolan, oscar— no cuentas de prueba. Varios **con `authUid`
+válido**, o sea autenticados correctamente.
+
+**Causa raíz (dos fallas encadenadas):**
+
+1. **Firestore excluye del `orderBy` los documentos que no tienen el campo.** No es que
+   quedaran al final de la lista: **no existían** para `orderBy('km','desc')`, pedalearan
+   lo que pedalearan. Y `reg()` creaba el usuario con nombre, casco y colores… **pero sin
+   `km`**.
+2. **No había ninguna sincronización al entrar a la app.** `sincronizarStats()` solo
+   corría durante un viaje con GPS de más de 60 segundos o al ganar Darma. Quien pedaleó
+   sin que se diera ese momento exacto dejó sus kilómetros **guardados solo en su
+   teléfono, para siempre**.
+
+Y encima el error se perdía: `catch(e){}` **vacío**. Si la escritura fallaba (permisos,
+sesión a medio levantar, sin red), nadie se enteraba jamás.
+
+**Qué se hizo:**
+- `reg()` inicializa **`km` y `darma` en 0**: nadie vuelve a nacer invisible.
+- **`sincronizarAlEntrar()`**: al abrir la app se sube lo que haya guardado localmente.
+  Los 16 usuarios existentes **se arreglan solos la próxima vez que abran la app** — sin
+  migración, sin tocarle la cuenta a nadie, sin credenciales de administrador.
+- El `catch` vacío ahora **reporta a Sentry**. Un fallo acá significa que a alguien se le
+  están quedando los kilómetros en el teléfono: eso hay que verlo, no esconderlo.
+
+**Verificación en navegador real:** el registro inicializa ambos campos, la sincronización
+de entrada existe y no rompe sin sesión, y los fallos se reportan.
+
+**Lección para el proyecto:** el bug llevaba semanas y era invisible **porque el error
+estaba silenciado**. Un `catch(e){}` vacío no es "manejar el error": es apagar la alarma
+de incendios. Revisar los demás que queden.
+
+**Pendiente inmediato (lo pidió Inty):** separar el ranking por modo de viaje, para que
+los kilómetros en auto no compitan con los pedaleados. Ver DOCTRINA 1.
+
+---
+
 ## v7.11 — 2026-07-20 — Claude (compartir el viaje recién terminado)
 
 **Hueco que nadie había visto.** La app ya compartía el **resumen anual** (una vez al año)

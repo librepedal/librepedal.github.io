@@ -1141,7 +1141,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.11'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.12'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2957,6 +2957,7 @@ window.onload = async function(){
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
+    sincronizarAlEntrar(); // sube los km que quedaron guardados solo en el teléfono
     _intentarReanudarNavegacion();
   } else {
     document.getElementById('auth').style.display='flex';
@@ -3104,7 +3105,12 @@ async function reg(e){
   try{ localStorage.setItem('lp_actividad',actividadTipo); }catch(e){}
   try{ localStorage.setItem('lp_personalidad',pisteroPersonalidad); }catch(e){}
   _aplicarTemaActividad();
-  try{ await db.collection('users').doc(cu).set({nombre:nombre,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,piel:selectedPiel,ojos:selectedOjos,labios:selectedLabios,vello:selectedVello,peinado:selectedPeinado,panuelo:selectedPanuelo,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
+  /* km y darma se inicializan en 0 A PROPÓSITO: Firestore EXCLUYE del `orderBy` a los
+     documentos que no tienen el campo, así que un usuario creado sin `km` no aparecía al
+     final del ranking — simplemente NO EXISTÍA para él. El 2026-07-20, mirando los datos
+     reales, 16 de 29 usuarios estaban en esa situación. Naciendo con el campo en 0, nadie
+     vuelve a quedar invisible. */
+  try{ await db.collection('users').doc(cu).set({nombre:nombre,km:(us&&us.di)||0,darma:(us&&us.d)||0,helmet:selectedHelmet,lens:selectedLens,skin:selectedSkin,extras:selectedExtras,unlocked:_unlockedFinal,piel:selectedPiel,ojos:selectedOjos,labios:selectedLabios,vello:selectedVello,peinado:selectedPeinado,panuelo:selectedPanuelo,actividad:actividadTipo,personalidad:pisteroPersonalidad,createdAt:firebase.firestore.FieldValue.serverTimestamp(),visible:true,lat:null,lon:null,authUid:_authUid},{merge:true}); }catch(err){ console.error(err); }
   // El correo va APARTE, en un documento privado que solo el dueño (o el admin
   // real) puede leer — antes vivía en /users/{id}, que es de lectura pública a
   // propósito (Ranking mundial, "ver perfil de otro"), así que cualquiera podía
@@ -4937,7 +4943,35 @@ function mostrarLogros(){
   items.forEach(function(it){ const l=it.l; html+='<div style="display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;margin-bottom:6px;background:'+(it.done?'rgba(255,215,0,0.10)':'var(--gl)')+';border:1px solid '+(it.done?'var(--g)':'#242c3e')+';opacity:'+(it.done?'1':'0.78')+'"><div style="font-size:1.6rem;filter:'+(it.done?'none':'grayscale(1)')+'">'+l.e+'</div><div style="flex:1"><div style="font-weight:800;font-size:0.84rem;color:'+(it.done?'var(--g)':'#cfd8e6')+'">'+escapeHTML(l.t)+(it.done?' ✓':'')+'</div><div style="font-size:0.7rem;color:#8695aa">'+escapeHTML(l.d)+'</div>'+(it.done?'':'<div style="height:5px;background:#222b3d;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+it.pct+'%;background:var(--p)"></div></div><div style="font-size:0.62rem;color:#7d8ba0;margin-top:2px">'+(l.u==='km'?it.v.toFixed(1):Math.round(it.v))+' / '+l.meta+' '+l.u+'</div>')+'</div></div>'; });
   document.getElementById('modalTitle').innerText='🏆 Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
-async function sincronizarStats(){ if(!cu) return; const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null; try{ await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true}); }catch(e){} }
+/* Sube tus kilómetros y tu Darma a la nube.
+   OJO con el catch: antes se tragaba el error en silencio, así que si la escritura fallaba
+   (permisos, sesión a medio levantar, sin red) NADIE se enteraba — ni el usuario ni
+   nosotros. Ahora se reporta a Sentry: un fallo acá significa que a alguien se le están
+   quedando los kilómetros guardados solo en el teléfono, y eso hay que verlo. */
+async function sincronizarStats(){
+  if(!cu) return;
+  const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null;
+  try{
+    await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true});
+  }catch(e){
+    try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarStats'}}); }catch(_){}
+  }
+}
+/* Sincroniza UNA vez al entrar a la app.
+   Encontrado el 2026-07-20 mirando los datos REALES de producción: de 29 usuarios, 16 no
+   tenían el campo `km`. O sea el 55% era INVISIBLE en el ranking — y no "al final de la
+   lista": Firestore excluye del `orderBy` a los documentos que no tienen el campo, así
+   que directamente no existían para el ranking, pedalearan lo que pedalearan. Entre
+   ellos había gente real con nombre, no cuentas de prueba.
+   Causa: `sincronizarStats()` solo corría durante un viaje con GPS de más de 60 segundos
+   o al ganar Darma. Quien pedaleó sin que se diera ese momento exacto dejó sus
+   kilómetros guardados solo en su teléfono, para siempre.
+   Con esto cualquiera que abra la app sube lo que tenga y entra al ranking SOLO, sin que
+   nadie tenga que tocarle la cuenta ni correr una migración. */
+function sincronizarAlEntrar(){
+  if(!cu) return;
+  setTimeout(function(){ try{ sincronizarStats(); }catch(e){} }, 4000); // deja que la sesión termine de levantar
+}
 /* ===== EL IDIOMA DE LA RUTA =====
    Idea de Inty (2026-07-20). Nació hablando del cambio de luces: él lo planteó para
    avisar de controles y quedamos en algo mejor — enseñarlo como LENGUAJE DE PELIGRO.
