@@ -4,28 +4,40 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
-## 2026-07-20 — MUDANZA DE REPO (leer antes de hacer push)
+## 2026-07-20 — Acceso al repo restablecido (el proyecto SIGUE EN SU CASA)
 
-**El repo cambió de casa.** `git push` a `librepedal/librepedal.github.io` da **403**:
-la cuenta autenticada en este PC es `intyriveraa-lab` y no tiene permiso de
-escritura ahí. Se intentó conectar la cuenta `librepedal` y no prosperó, así que
-se tomó la ruta que no depende de ella.
+**Resuelto.** Durante horas el `git push` daba **403**: la cuenta autenticada en
+este PC es `intyriveraa-lab` y no tenía permiso de escritura en
+`librepedal/librepedal.github.io`. Inty entró con la cuenta dueña (`librepedal`,
+correo `joink920@gmail.com` — se identificó por los 9 commits firmados con ella en
+el historial) y agregó `intyriveraa-lab` como colaborador. Invitación aceptada por
+API: `push: true`. **No hubo mudanza: origin sigue siendo la casa del proyecto.**
 
-- **Nuevo remoto `lab`:** `github.com/intyriveraa-lab/librepedal` (privado).
-  Lleva los 326 commits completos y los 3 workflows. **Ahí se hace push ahora.**
-- **El viejo `origin` se deja tal cual**, por si algún día se recupera el acceso.
-- **La app ya no carga `librepedal.github.io`:** `capacitor.config.json` apunta a
-  **`https://librepedal.cl`**, que se despliega por wrangler desde este PC. Así el
-  APK deja de depender de una cuenta de GitHub ajena. `librepedal.github.io` se
-  dejó en `allowNavigation` por si quedan enlaces viejos dando vueltas.
+- **`origin`** = `librepedal/librepedal.github.io` — **la casa, intacta.** Acá se
+  hace push, como siempre.
+- **`lab`** = `intyriveraa-lab/librepedal` (privado) — **solo respaldo** del
+  historial, creado mientras no había acceso. No es la casa. Se puede borrar sin
+  consecuencias; se deja como copia de seguridad extra.
+- **Ojo con el upstream:** `git push -u lab main` había dejado `main` siguiendo a
+  `lab/main`. Ya se devolvió a `origin/main`. Si alguna sesión ve que `git push` se
+  va al lugar equivocado, revisar con `git rev-parse --abbrev-ref main@{upstream}`.
 
-**La web nunca dependió de esto** — se publica por wrangler (ver LEEME).
+**Cambio que SÍ se mantuvo:** `capacitor.config.json` ahora carga
+**`https://librepedal.cl`** en vez de `librepedal.github.io`. Es el dominio propio
+y se actualiza por wrangler desde este PC, así que la app deja de depender de una
+cuenta de GitHub ajena para recibir contenido nuevo. `librepedal.github.io` quedó
+en `allowNavigation` por si hay enlaces viejos. Revertirlo es una línea.
 
-⚠️ **Lo único que sigue necesitando a Inty:** el `.aab` firmado para Play Store.
-`build-aab-release.yml` usa 4 secretos de GitHub (`ANDROID_KEYSTORE_BASE64`,
-`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`) que **no
-viajan al repo nuevo**: son credenciales de firma y las carga él. El APK de prueba
-(`build-apk.yml`) no los necesita y corre solo en cada push.
+**Actions en `intyriveraa-lab` NO funcionan** (toda corrida muere en
+`startup_failure` sin generar jobs — restricción a nivel de cuenta, probablemente
+correo sin verificar). En `origin` sí funcionan (verde el 18-jul), y por eso el
+APK/AAB se construye acá.
+
+⚠️ **Pendiente que necesita a Inty:** el `.aab` firmado usa 4 secretos
+(`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
+`ANDROID_KEY_PASSWORD`). Si ya estaban cargados en `origin`, el build corre solo.
+El keystore (`librepedal-release.keystore`) existe **solo en este PC**: si se
+pierde, Play Store no acepta más actualizaciones. Respaldarlo fuera del computador.
 
 ---
 
