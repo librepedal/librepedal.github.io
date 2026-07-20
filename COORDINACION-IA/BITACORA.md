@@ -4,6 +4,43 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.10 — 2026-07-20 — Claude (convivencia en ciudad: educar a los DOS lados)
+
+Inty precisó el foco de «El idioma de la ruta»: *"lo importante es educar a los que no
+son ciclistas si usan la app... prevenir y educar la maniobra si lo va a adelantar y
+todas las conductas que mejoran la relación vial, sobre todo en la ciudad"*. Y acto
+seguido: *"también hay que educar al ciclista"*. **Las dos cosas, o la app queda coja.**
+
+**🏙️ Si vas manejando** — las cuatro que de verdad hieren en ciudad:
+- **La puerta**, con la **apertura holandesa**: abrir con la mano de más lejos (la derecha
+  si vas al volante). El cuerpo se gira solo y te obliga a mirar atrás. Es la técnica que
+  evita el golpe que más ciclistas manda al hospital en ciudad, y casi nadie la conoce en
+  Chile.
+- **Antes de doblar a la derecha**, espejo y punto ciego: el ciclista que viene derecho
+  por el costado va más rápido de lo que uno calcula.
+- **No adelantar justo antes de doblar en la esquina.**
+- **La ciclovía no es estacionamiento**: parar ahí obliga al ciclista a salirse al
+  tráfico, la maniobra más peligrosa que puede hacer.
+
+**🚴 Si vas pedaleando** — la otra mitad:
+- **Un metro de los autos estacionados**: es el ancho exacto de una puerta abriéndose.
+- **Nunca por la derecha de un bus o camión.**
+- **Ser previsible**: línea recta, sin zigzaguear, señalizar antes.
+- **Luces de noche** (además es ley).
+- **El rojo también es tuyo**: cada ciclista que se lo pasa le cobra la cuenta al resto.
+  La convivencia se gana pedaleando bien.
+
+**Verificación en navegador real:** 8 bloques con sus títulos, 2.889 caracteres.
+
+**Nota de proceso:** durante esta edición el servidor de vista previa se cayó y el
+navegador quedó sirviendo una versión vieja en caché, lo que hizo parecer que los cambios
+se habían perdido. El archivo estaba correcto. Se levantó el servidor de nuevo y se
+reverificó contra la versión servida. **Recordatorio para cualquier sesión: si el
+navegador muestra algo que no calza con el archivo, sospechar del caché/service worker
+ANTES de tocar el código.**
+
+---
+
 ## v7.09 — 2026-07-20 — Claude («El idioma de la ruta»: enseñar las señas que cuidan gente)
 
 **Idea de Inty.** Planteó que la app enseñara el **cambio de luces** para avisar de un
