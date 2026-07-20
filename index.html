@@ -1419,23 +1419,29 @@ let gpsPoints=[], lastGpsPoint=null, totalDistance=0, gpsWatchId=null, tripStart
 // (con "Terminar" o al llegar). true apenas finishTrip/finishTripAuto/guardarRutaNavegada
 // ya guardaron algo, para que endNavigation() no tenga que re-guardar por su cuenta.
 let navGuardado=false;
+/* Saludos SIN el nombre del usuario.
+   Reportado por Inty (2026-07-20): la app saludaba «Hola yo» — el nombre del perfil había
+   quedado guardado como "yo" y se lo metía tal cual a la frase. Pero el problema de fondo
+   no era ese dato: **decir el nombre no aporta nada**. Un amigo que te habla no te dice tu
+   nombre en cada saludo; suena a formulario, y con cualquier nombre raro o mal escrito
+   queda ridículo. Se sacó de todas las frases en vez de parchar el caso "yo". */
 const saludosBienvenida=[
-  "¡Qué alegría verte, NOMBRE! Te estaba esperando para pedalear.",
-  "¡NOMBRE! Justo pensaba en ti. ¿Listo para sumar kilómetros?",
-  "Bienvenido de vuelta, NOMBRE. Contigo el camino se hace más bonito.",
-  "¡Eh, NOMBRE! Agarra la bici, que hoy se ve un lindo día para rodar.",
-  "Me alegra que volvieras, NOMBRE. Vamos a hacer historia sobre dos ruedas.",
-  "¡NOMBRE, compadre! Aquí estoy, listo para acompañarte a donde sea.",
-  "Hola NOMBRE, qué bueno tenerte de nuevo. ¿Para dónde agarramos hoy?",
-  "¡Buenas, NOMBRE! Pistero reportándose, listo para la aventura.",
-  "Te echaba de menos, NOMBRE. No es lo mismo el camino sin ti.",
-  "¡Arriba, NOMBRE! Cada pedalada cuenta y hoy las vamos a disfrutar todas.",
-  "¡Qué gusto, NOMBRE! Respira hondo, que la ruta nos espera.",
-  "Hola de nuevo, NOMBRE. Recuerda: lo lindo no es la meta, es el viaje.",
-  "¡NOMBRE! Listo el casco, lista la sonrisa. Vamos a rodar tranquilos.",
-  "Bienvenido, NOMBRE. Hoy también voy a cuidar cada kilómetro contigo.",
-  "¡Hey, NOMBRE! Me encanta pedalear contigo. ¿A dónde nos lleva el corazón hoy?",
-  "Qué bonito verte, NOMBRE. Sea corto o largo el viaje, lo hacemos juntos."
+  "¡Qué alegría verte! Te estaba esperando para pedalear.",
+  "Justo pensaba en ti. ¿Listo para sumar kilómetros?",
+  "Bienvenido de vuelta. Contigo el camino se hace más bonito.",
+  "Agarra la bici, que hoy se ve un lindo día para rodar.",
+  "Me alegra que volvieras. Vamos a hacer historia sobre dos ruedas.",
+  "¡Compadre! Aquí estoy, listo para acompañarte a donde sea.",
+  "Qué bueno tenerte de nuevo. ¿Para dónde agarramos hoy?",
+  "¡Buenas! Pistero reportándose, listo para la aventura.",
+  "Te echaba de menos. No es lo mismo el camino sin ti.",
+  "¡Arriba! Cada pedalada cuenta y hoy las vamos a disfrutar todas.",
+  "¡Qué gusto! Respira hondo, que la ruta nos espera.",
+  "Hola de nuevo. Recuerda: lo lindo no es la meta, es el viaje.",
+  "Listo el casco, lista la sonrisa. Vamos a rodar tranquilos.",
+  "Bienvenido. Hoy también voy a cuidar cada kilómetro contigo.",
+  "Me encanta pedalear contigo. ¿A dónde nos lleva el corazón hoy?",
+  "Qué bonito verte. Sea corto o largo el viaje, lo hacemos juntos."
 ];
 function saludoBienvenida(nombre){
   const last=parseInt(localStorage.getItem('lp_saludo')||'-1',10);
@@ -2523,6 +2529,45 @@ function poolPais(cat){
    donde más se siente la personalidad). Si el arquetipo elegido no tiene banco para
    esa categoría, cae a las frases genéricas de siempre — 100% aditivo, sin riesgo. */
 const FRASES_ARQ={
+  bajada:{
+    compadre:["Bajada, compadre. Disfrútala pero con ojo.","A soltar las piernas, pero sin confiarse.","Esta es la parte que te ganaste subiendo.","Manos firmes y a gozar."],
+    entrenador:["Bajada: peso atrás, dedos en los frenos, mirada lejos.","Frena antes de la curva, nunca dentro.","Deja de pedalear y baja el centro de gravedad.","Usa los dos frenos parejo, más el trasero."],
+    roquero:["¡Bajada! Esta es la parte fuerte del tema.","Suéltate, pero no tanto que te quedes sin banda.","Puro descenso. Que suene el viento.","Acá se acelera. Con cabeza, pero se acelera."],
+    profe:["En bajada frenar toma el doble de distancia. Anticipa.","Dato: el freno delantero da el 70% de la potencia, pero úsalo con cabeza.","Baja el cuerpo: menos viento y más estabilidad.","Si la bajada es larga, suelta los frenos de a ratos para que no se recalienten."],
+    solitario:["Baja tranquilo.","Deja que el camino haga lo suyo.","Sin apuro, aunque sea cuesta abajo.","Esto no es una carrera."],
+    loco:["¡Bajada! La gravedad por fin trabaja para ti.","Cuesta abajo hasta yo me veo rápido.","Esto es lo más parecido a volar sin pagar pasaje.","Disfruta, que la de vuelta es subida."],
+    cicletero:["Bajada: si sientes vibración en el manubrio, para y revisa.","Ojo con recalentar los frenos en bajadas largas.","Si chirría al frenar, tienes las pastillas gastadas.","Antes de soltarte, comprueba que los frenos responden bien."],
+    sabio:["Las bajadas se disfrutan con calma. Las prisas cuestan caro acá.","He visto más caídas en bajada que en subida. Ojo.","Baja como si vinieras de vuelta de algo importante.","La bajada no se gana, se administra."],
+    relajado:["Bajada suave. Deja que el camino te lleve.","No hace falta correr. Disfruta el aire.","Suelta los hombros, respira, baja tranquilo.","Esto es lo lindo: nada que hacer más que estar."],
+    aventurero:["Bajada nueva. ¿Viste ese desvío a la izquierda?","Buena bajada. Después de esta hay algo que ver, seguro.","Baja atento: en las bajadas se descubren los mejores lugares.","¿Y si al final de esta bajada seguimos derecho?"],
+    maternal:["Con calma en la bajada, por favor.","Frena de a poco, no de golpe.","Si hace frío, cierra la chaqueta antes de bajar.","Baja tranquilo, que abajo te espero igual."],
+  },
+  parado:{
+    compadre:["Descansa nomás, compadre. Yo espero.","Buena pausa. Estírate un poco.","Tómate tu tiempo, no hay apuro.","Aprovecha y toma agua."],
+    entrenador:["Pausa activa: mueve las piernas, no te enfríes.","Aprovecha para hidratarte antes de arrancar.","Tres minutos y seguimos. No más, que se enfría el músculo.","Estira cuádriceps y gemelos mientras estás detenido."],
+    roquero:["Pausa entre canciones. Ya viene la siguiente.","Descanso técnico. Después subimos el volumen.","Un respiro y volvemos con todo.","Hasta las mejores giras tienen intermedio."],
+    profe:["En pausa el cuerpo absorbe mejor el agua. Buen momento.","Dato: dos minutos de pausa bajan el pulso más que aflojar el ritmo.","Si vas a parar más de diez minutos, abrígate: el cuerpo se enfría rápido.","Aprovecha de comer algo si llevas más de una hora andando."],
+    solitario:["Bien.","Descansa.","Sin apuro.","Aquí espero."],
+    loco:["¿Parada técnica o te dio flojera? Las dos valen.","Aprovecha de saludar a alguien. O no.","Estás detenido. Científicamente, eso es descansar.","Los postes también descansan. Nadie los juzga."],
+    cicletero:["Buen momento: revisa la presión de los neumáticos con el dedo.","Mira la cadena mientras descansas. ¿Está seca?","Aprovecha de revisar que no se soltó nada del portaequipaje.","Detenido es cuando se arreglan las cosas chicas. Ojo a los frenos."],
+    sabio:["Parar también es parte de andar. Nadie te está midiendo.","Los mejores viajes tienen más paradas de las que uno cuenta.","Aquí es donde se conocen los caminos: parado, mirando.","Descansa. La ruta lleva ahí mucho más que nosotros."],
+    relajado:["Perfecto. Respira, mira el paisaje.","Esta pausa es tan parte del viaje como pedalear.","No hay ningún apuro. Ninguno.","Quédate el rato que quieras."],
+    aventurero:["¿Paramos porque cansaste o porque viste algo interesante?","Buen lugar para parar. ¿Exploramos un poco a pie?","Desde acá se ve un camino que no estaba en el mapa.","Las mejores desviaciones empiezan en una parada."],
+    maternal:["Muy bien, descansa. ¿Comiste algo hoy?","Aprovecha de tomar agua aunque no tengas sed.","Si hace frío, ponte algo encima mientras estás quieto.","Tómate el tiempo que necesites, de verdad."],
+  },
+  normal:{
+    compadre:["Vamos bien, compadre. Este ritmo es el bueno.","Así da gusto: ni apurado ni lento, como debe ser.","Buen paso llevas. Yo te acompaño.","Tranquilo y parejo, que el camino es largo."],
+    entrenador:["Ritmo sostenible. Mantén la cadencia entre ochenta y noventa.","Este es tu paso de fondo: acá se construye la base.","Respira parejo, hombros sueltos, manos livianas.","Vas en zona cómoda. Perfecto para acumular kilómetros."],
+    roquero:["Este es el ritmo de crucero. Suena bien.","Vas en tempo, sin acelerar ni frenar. Puro groove.","Así se rueda: constante, como una batería bien tocada.","Ritmo parejo, volumen medio. Después subimos."],
+    profe:["A este ritmo el cuerpo usa grasa como combustible: es el paso más eficiente.","Dato: pedalear parejo cansa menos que alternar tirones y frenadas.","Este paso es el que más kilómetros te deja al final del día.","Buen momento para revisar la postura: espalda larga, codos flectados."],
+    solitario:["Así está bien.","Este ritmo deja pensar.","Nada que corregir.","El camino y tú, nada más."],
+    loco:["Vas a velocidad de persona normal. Qué raro en ti.","Este ritmo lo aprueban hasta los caracoles jubilados.","Vas tan parejo que pareces metrónomo con casco.","Ritmo perfecto para pensar tonteras. Aprovecha."],
+    cicletero:["Buen ritmo. Escucha la bici: a este paso se nota si algo suena raro.","Ritmo parejo, cadena contenta.","A este paso revisa si el asiento te queda cómodo. Es el momento.","Todo suena bien desde acá. Sigue así."],
+    sabio:["Este es el paso que sostiene una vida entera arriba de la bici.","Los que duran no son los rápidos: son los parejos.","Este ritmo lo aprendí a los cuarenta. Ojalá lo aprendas antes.","Así se anda cuando ya no tienes nada que demostrar."],
+    relajado:["Este ritmo está perfecto. No lo apures.","Vas fluyendo, y eso es lo que importa.","El cuerpo te está pidiendo justo esto.","Bonito paso. Mira alrededor un rato."],
+    aventurero:["Buen ritmo… ¿y si nos desviamos por ese camino de allá?","Vas cómodo. Perfecto para meterse en algo nuevo.","Con este paso llegamos a cualquier parte. Elige tú.","Ritmo de explorador. El bueno."],
+    maternal:["Vas muy bien. ¿Tomaste agua hace rato?","Ese es el paso justo, no te exijas de más.","Todo tranquilo por acá. Avísame si algo molesta.","Bien ahí. Cuídate las rodillas en las bajadas."],
+  },
   subida:{
     roquero:["Esta cuesta es el solo de guitarra: aguanta que ya viene el coro.","Sube con rabia, que la pendiente no perdona a los tibios.","Puro riff pesado esto. Dale que abajo suena mejor.","La cuesta es larga y tú tienes más volumen que ella.","Ponle actitud, que las piernas ya saben lo que hacen."],
     profe:["Cuesta a la vista. Dato: subir de pie gasta más oxígeno, siéntate y aguanta.","Esta pendiente se sube con cadencia alta y cabeza fría, no con fuerza.","Fíjate en la respiración: tres pedaladas inhalando, tres exhalando.","El truco de los escaladores es no mirar la cima, sino los diez metros siguientes.","Si el corazón se te dispara, baja un cambio antes de que te obligue el cuerpo."],
@@ -2711,9 +2756,9 @@ function abrirPistero(){
     _pisteroCargar();
     if(pisteroHistorial.length){
       pisteroHistorial.slice(-20).forEach(function(m){ _pisteroBurbuja(m.content, m.role==='user'?'yo':'pistero'); });
-      _pisteroBurbuja('¡Hola de nuevo'+(nombreUsuario?(' '+nombreUsuario):'')+'! ¿Seguimos donde quedamos? Pregúntame lo que quieras 🚴','pistero');
+      _pisteroBurbuja('¡Hola de nuevo! ¿Seguimos donde quedamos? Pregúntame lo que quieras 🚴','pistero');
     } else {
-      _pisteroBurbuja('¡Hola'+(nombreUsuario?(' '+nombreUsuario):'')+'! Soy Pistero 🚴. Pregúntame por rutas, arreglos de bici, dónde alojar o cómo planear tu viaje con gastos. ¿En qué te ayudo?','pistero');
+      _pisteroBurbuja('¡Hola! Soy Pistero 🚴. Pregúntame por rutas, arreglos de bici, dónde alojar o cómo planear tu viaje con gastos. ¿En qué te ayudo?','pistero');
     }
   }
   setTimeout(function(){ const i=document.getElementById('pisteroInput'); if(i) i.focus(); },250);
@@ -7688,7 +7733,7 @@ function enviarSOS(){
     html+=cs.map(function(x){ return '<a href="https://wa.me/'+x.fono+'?text='+encodeURIComponent(msg)+'" target="_blank" class="ab" style="display:block;text-align:center;text-decoration:none;background:#25D366;color:#03301a;border-color:#25D366;margin-bottom:6px">📲 Enviar a '+escapeHTML(x.nombre)+'</a>'; }).join('');
     html+='<button class="ab sec" onclick="gestionarContactosSOS()">Editar contactos</button>';
     document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
-    h('Alerta lista, '+(nombreUsuario||'')+'. Toca a quién quieres avisar.');
+    h('Alerta lista. Toca a quién quieres avisar.');
   }
   const loc = currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
   if(loc){ seguir(loc.lat,loc.lon); }
