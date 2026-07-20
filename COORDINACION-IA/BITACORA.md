@@ -4,6 +4,48 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.17 — 2026-07-20 — Claude (bugs reportados por Inty en uso real)
+
+Inty reportó una tanda de problemas usando la app de verdad. Los cinco arreglados:
+
+**1. «Hola yo».** El saludo insertaba el nombre del perfil, que estaba guardado como
+«yo». Se sacó el nombre de las 16 frases de bienvenida y de los 3 saludos de Pistero: no
+aporta nada, suena a formulario y con cualquier nombre raro o mal escrito queda ridículo.
+**Los mensajes de SOS sí lo conservan** — ahí van a los contactos de emergencia y el nombre
+es lo único que identifica a quien pide ayuda.
+
+**2. «Todos los arquetipos hablan igual» — tenía razón, y la causa era estructural.**
+La app pide frases en **8 situaciones** (subida, bajada, rápido, lento, normal, parado,
+ciudad, profunda) pero **solo 3 tenían banco por arquetipo**. En las otras 5 todos caían al
+mismo pozo genérico: **en 5 de cada 8 momentos el Roquero y el Solitario decían literalmente
+lo mismo**. Se escribieron **132 frases** cubriendo normal, parado y bajada para los 11
+arquetipos. Ahora, en la misma pausa, el Solitario dice «Bien.» y el Cicletero dice «revisa
+la presión de los neumáticos con el dedo». Quedan `ciudad` y `profunda`.
+
+**3. «El número de puesto no lleva a ningún lado».** Era un `<div>` sin acción: mostraba el
+dato y ahí quedaba. Si un número invita a tocarlo, tiene que llevar a alguna parte. Ahora el
+puesto abre el ranking de tu disciplina y los viajes abren el historial de rutas.
+
+**4. Botones del mapa.** La fila de filtros medía **511 px en una pantalla de 375**, así que
+«Puntos útiles» y «Miradores» quedaban fuera. Técnicamente se alcanzaban deslizando, pero la
+barra de desplazamiento está oculta y no había ninguna pista visual: **en la práctica, la
+mitad de los filtros del mapa no existía para el usuario**. Ahora se envuelven en dos filas
+y se ven los cuatro.
+
+**5. Tamaño táctil.** Cuatro elementos de la esfera estaban en 35-36 px y tres del mapa en
+44-46. Todos a **48 px**, el mínimo para tocar sin fallar. Medido después: **cero elementos
+bajo el mínimo** en esfera y mapa.
+
+**Verificado** en navegador a 375 px, elemento por elemento. Suite **8/8**.
+
+**Pendiente de la misma tanda:** «la esfera tiene accesos directos que deberían estar en
+otra parte» y «dale concordancia a todo, agrupa lo que tiene algo en común». Eso es
+reorganización de la arquitectura de información, no un fix: **se mandó a auditoría severa
+para tener la propuesta medida antes de mover nada**, porque Inty aprueba los cambios
+visuales antes de aplicarlos.
+
+---
+
 ## v7.15 — 2026-07-20 — Claude (auditoría de calidad: 6 defectos críticos, casi todos introducidos hoy)
 
 Inty pidió mandar el trabajo del día a **revisión con un equipo de control de calidad**.
