@@ -776,6 +776,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
   <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
   <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
+  <button class="ab sec" style="margin:0" onclick="mostrarIdiomaRuta()">🛣️ El idioma de la ruta</button>
 </div>
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🎙️ Manos libres</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Para cuando vas pedaleando o manejando y no puedes tocar el micrófono: Pistero queda escuchando todo el tiempo. No responde a cada cosa que digas — solo cuando lo llamas por su nombre ("Pistero, ¿cómo está el clima?"). Para callarlo, decir "cállate" funciona siempre, sin necesitar el nombre. <strong style="color:var(--g)">Necesita la pantalla encendida</strong> — si la apagas, deja de escuchar (a diferencia del GPS, que sí sigue con la pantalla apagada).</p>
@@ -1140,7 +1141,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.08'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.09'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4937,6 +4938,32 @@ function mostrarLogros(){
   document.getElementById('modalTitle').innerText='🏆 Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
 async function sincronizarStats(){ if(!cu) return; const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null; try{ await db.collection('users').doc(cu).set({km:us.di||0, darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true}); }catch(e){} }
+/* ===== EL IDIOMA DE LA RUTA =====
+   Idea de Inty (2026-07-20). Nació hablando del cambio de luces: él lo planteó para
+   avisar de controles y quedamos en algo mejor — enseñarlo como LENGUAJE DE PELIGRO.
+   Cubre lo mismo (frente a un control uno baja igual) sin que una app de ciclistas
+   termine enseñando a esquivar el control de alcoholemia, que es justo el que saca de la
+   carretera al conductor que más ciclistas mata.
+   Y la seña central va al revés de la costumbre: usar el cambio de luces para avisar que
+   hay CICLISTAS en una curva ciega. Eso todavía no es costumbre en Chile; que lo instale
+   una app de ciclistas es exactamente lo que no va a hacer nadie más. */
+function mostrarIdiomaRuta(){
+  _modalVolverA=null;
+  document.getElementById('modalTitle').innerText='🛣️ El idioma de la ruta';
+  const s='style="background:var(--gl);border:1px solid #242c3e;border-radius:12px;padding:12px 13px;margin-bottom:9px"';
+  const t='style="margin:0 0 5px;color:var(--p);font-size:0.9rem;font-weight:800">'; // el > va acá: sin él el navegador se come el título
+  const p='style="margin:0;font-size:0.82rem;color:#c7d3e4;line-height:1.5">';
+  const c=document.getElementById('modalContent');
+  c.innerHTML=
+    '<p style="font-size:0.84rem;color:#9fb3c8;margin:0 0 12px;line-height:1.5">En la carretera no se habla: se hacen señas. Estas son las que cuidan gente. Apréndelas y pásalas.</p>'
+    +'<div '+s+'><p '+t+'💡 Cambio de luces</p><p '+p+'Significa una sola cosa: <strong style="color:#dfe7ff">«algo adelante, baja la velocidad»</strong>. Sirve para un accidente, un animal suelto, un derrumbe, niebla o un control. El que la recibe no sabe qué es — sabe que tiene que bajar. Con eso basta.</p></div>'
+    +'<div style="background:rgba(252,76,2,0.1);border:1px solid var(--p);border-radius:12px;padding:12px 13px;margin-bottom:9px"><p '+t+'🚴 La seña que queremos instalar</p><p '+p+'<strong style="color:#dfe7ff">¿Ves ciclistas en una curva ciega? Haz cambio de luces al que viene de frente.</strong><br><br>En una curva ciega el que viene no los ve hasta que ya no alcanza a frenar. Dos segundos de anticipación son toda la diferencia. Esta seña todavía no es costumbre en Chile — que lo sea depende de nosotros.</p></div>'
+    +'<div '+s+'><p '+t+'🚗 Al adelantar a un ciclista</p><p '+p+'<strong style="color:#dfe7ff">Un metro y medio</strong>, y en Chile es ley (21.088), no cortesía. Si no cabe, espera: son diez segundos.<br><br>Y <strong style="color:#dfe7ff">no toques la bocina cerca de un ciclista</strong>. No lo alerta: lo asusta. Un susto a esa distancia lo puede tirar al suelo.</p></div>'
+    +'<div '+s+'><p '+t+'✋ Del ciclista al conductor</p><p '+p+'Brazo estirado al lado = <strong style="color:#dfe7ff">voy a doblar</strong>. Brazo abajo con la palma hacia atrás = <strong style="color:#dfe7ff">voy a frenar</strong>. Avisar con tiempo es lo que hace previsible al ciclista, y lo previsible es lo que no se atropella.</p></div>'
+    +'<div '+s+'><p '+t+'👥 Entre ciclistas, en grupo</p><p '+p+'Apuntar al suelo = <strong style="color:#dfe7ff">hoyo o piedra ahí</strong>. Mano en la espalda baja = <strong style="color:#dfe7ff">me corro, viene algo</strong>. El de adelante ve por todos: si no avisa, el de atrás se come el hoyo.</p></div>'
+    +'<p style="text-align:center;font-size:0.86rem;color:var(--g);margin:14px 0 4px;font-weight:700">La ruta es de todos.<br>El que avisa, cuida.</p>';
+  document.getElementById('userModal').classList.add('on');
+}
 async function mostrarRanking(){
   _modalVolverA='mostrarLogrosComunidad';
   document.getElementById('modalTitle').innerText='🥇 Top 100 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');

@@ -4,6 +4,51 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.09 — 2026-07-20 — Claude («El idioma de la ruta»: enseñar las señas que cuidan gente)
+
+**Idea de Inty.** Planteó que la app enseñara el **cambio de luces** para avisar de un
+control de carabineros: un gesto de cordialidad entre conductores.
+
+**Por qué no se hizo textual, y qué se hizo en cambio.** Se le planteó la tensión de
+frente: cuando el control es de alcoholemia, ese aviso le sirve al conductor que va
+curado para no ser detectado — y ese es exactamente **el que más ciclistas mata**. Una
+app hecha para ciclistas enseñando eso trabaja contra su propia gente, y frente a la
+élite del ciclismo chileno es un golpe de imagen difícil de explicar.
+
+Inty estuvo de acuerdo con la reformulación y pidió que la sabiduría quedara **explícita**
+en la app. Así que el cambio de luces se enseña como **lenguaje de peligro**:
+
+> **Cambio de luces = «algo adelante, baja la velocidad».**
+
+Cubre lo mismo (frente a un control uno baja igual) sin enseñar a evadir: sirve para un
+accidente, un animal, un derrumbe, niebla o un control. **El que la recibe no sabe qué es
+— sabe que tiene que bajar. Con eso basta.**
+
+**Y la seña central va al revés de la costumbre:**
+
+> **¿Ves ciclistas en una curva ciega? Haz cambio de luces al que viene de frente.**
+
+Eso **todavía no es costumbre en Chile**. Que lo instale una app de ciclistas es
+exactamente el tipo de cosa que no va a hacer nadie más, y encaja con el modo vehículo
+entendido como **auto de apoyo** (ver DOCTRINA 1).
+
+**Contenido:** cinco señas con su porqué — cambio de luces · ciclistas en curva ciega ·
+adelantar a 1,5 m (ley 21.088, no cortesía) y no tocar la bocina cerca · señas de brazo
+del ciclista · señas entre ciclistas en grupo. Cierra con *«La ruta es de todos. El que
+avisa, cuida.»*
+
+Entra desde **Ajustes → 🛣️ El idioma de la ruta**.
+
+**Verificación en navegador real:** el botón existe, el modal abre con el título correcto
+y los 5 bloques con sus títulos, cierre incluido (1.356 caracteres).
+
+**Bug propio encontrado y corregido en el camino:** las constantes de estilo se
+concatenaban sin el `>` que cierra la etiqueta (`<p style="..."TÍTULO`), así que el
+navegador se comía los títulos de cada sección. Se detectó justamente por verificar el
+texto renderizado en vez de dar el `innerHTML` por bueno.
+
+---
+
 ## v7.08 — 2026-07-20 — Claude (el clima ahora se vigila durante todo el viaje)
 
 **Pedido de Inty:** que la app siga analizando el clima y, si cambia respecto al
