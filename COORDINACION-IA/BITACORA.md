@@ -4,6 +4,56 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.14 — 2026-07-20 — Claude (los arquetipos de Pistero ahora son TIPOS DE CICLISTA)
+
+**Idea de Inty:** que los arquetipos dejen de ser rasgos abstractos («relajado»,
+«directo», «sensible») y pasen a ser **tipos de ciclista reconocibles**, para que cada
+persona se identifique con alguno. Fijos: **Compadre** y **Entrenador**, este último con
+su forma femenina para incluir a las mujeres.
+
+**El roster quedó así** (12, todos con versión femenina):
+Pistero · Compadre/Comadre · Entrenador/a · **Roquero/a** · **Profe** · **Solitario/a** ·
+**Loco/a** · **Cicletero/a** · **Veterano/a** · **Hippie** · **Malas Ideas** · **Tío/Tía**
+
+«Malas Ideas» es la broma que pidió Inty: el nombre confunde a propósito, **sus ideas
+siempre terminan siendo buenas** — es el que propone el desvío por el camino de tierra que
+termina siendo lo mejor del viaje.
+
+**Decisión técnica que vale la pena registrar:** varios ids se **conservaron** aunque
+cambiara la etiqueta — `sabio`→Veterano, `relajado`→Hippie, `aventurero`→Malas Ideas,
+`maternal`→Tío. Esos ids **ya tenían bancos de frases escritos**, y renombrarlos los habría
+tirado a la basura. La etiqueta es lo que ve el usuario; el id es cosa de la máquina. Los
+ids que salieron de la lista (humoristico, guia, sensible, directo, picaro, relator) siguen
+funcionando para quien los tenga elegidos: **sus frases no se borraron**.
+
+**Bancos nuevos escritos a mano:** roquero, profe, solitario, loco y cicletero, con 5
+frases en cada uno de los 3 momentos (subida, rápido, lento) = **75 frases nuevas**.
+
+Cada uno con su **voz propia**, no solo vocabulario distinto (DOCTRINA 2):
+- **Profe** enseña algo en cada frase: *«subir de pie gasta más oxígeno, siéntate»*.
+- **Cicletero** habla de la máquina: *«si escuchas la cadena rasparse, te pasaste de cambio»*.
+- **Solitario** es el más radical — su primera frase en una cuesta es literalmente **«Sube.»**
+  Punto. Ese es el personaje, y es el que ninguna app va a copiar porque nadie se atreve a
+  hacer una función que hable poco.
+
+**Sobre «Pistero gay», que Inty propuso:** se conversó y se acordó no hacerlo como
+arquetipo. Todos los demás son **una forma de acompañar** (el entrenador exige, el profe
+enseña, el solitario calla); la orientación no es una forma de hablar, y convertirla en una
+obligaría a apoyarse en estereotipos — caricaturizando justo a quien se quería incluir. La
+representación va donde el usuario **se dibuja a sí mismo**: casco y pañoleta con los
+colores del orgullo, y frases que nunca asuman el sexo de la pareja. Queda propuesto.
+
+**Verificación:** navegador real — 12 personalidades, etiquetas masculinas y femeninas
+correctas, y los 5 arquetipos nuevos con 5/5/5 frases en los tres momentos. Suite **8/8**.
+
+**Nota de proceso:** la inserción se hizo con script y no a mano (8.400 líneas, una llave
+mal puesta deja la app en blanco). El primer intento insertó solo 5 de 15 bancos porque el
+chequeo de «ya existe» miraba **todo el archivo** en vez de la categoría: tras insertar en
+`subida`, creyó que ya estaban en `rapido` y `lento`. Se detectó verificando por categoría
+en vez de confiar en el «5 insertados» que imprimió el script.
+
+---
+
 ## v7.13 — 2026-07-20 — Claude (ranking separado por disciplina: el auto ya no compite con la bici)
 
 **El problema.** El ranking era una sola consulta `orderBy('km','desc')` sobre un único

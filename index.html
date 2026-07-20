@@ -1141,7 +1141,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.13'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.14'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1680,20 +1680,32 @@ function _actualizarBtnCicloCargado(){
 _aplicarTemaActividad(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
 // ===== Personalidad de Pistero: el tono cambia, la identidad (Pistero, chileno,
 // experto) no. 'cercano' es el default — mismo tono que siempre tuvo la app.
+/* Los arquetipos dejaron de ser rasgos abstractos («relajado», «directo») y pasaron a ser
+   TIPOS DE CICLISTA, para que uno se reconozca en alguno (idea de Inty, 2026-07-20).
+   Varios ids se conservan aunque cambie la etiqueta —`sabio`→Veterano, `relajado`→Hippie,
+   `aventurero`→Malas Ideas, `maternal`→Tío— **a propósito**: esos ids ya tienen bancos de
+   frases escritos y cambiarlos los habría tirado a la basura. La etiqueta es lo que ve el
+   usuario; el id es cosa de la máquina.
+   Los ids que salieron de la lista (humoristico, guia, sensible, directo, picaro, relator)
+   siguen funcionando para quien los tenga elegidos: sus frases no se borraron.
+   «Malas Ideas» es la broma: sus ideas siempre terminan siendo buenas. */
+function _labelPersonalidad(p){
+  const fem=(typeof pisteroGenero!=='undefined' && pisteroGenero==='c');
+  return fem ? (p.labelF||p.label) : p.label;
+}
 const PERSONALIDADES=[
-  {id:'cercano', label:'😊 Cercano (el de siempre)'},
-  {id:'aventurero', label:'🏔️ Aventurero'},
-  {id:'entrenador', label:'💪 Entrenador'},
-  {id:'relajado', label:'🧘 Relajado'},
-  {id:'humoristico', label:'😄 Humorístico'},
-  {id:'guia', label:'📖 Guía turístico'},
-  {id:'sensible', label:'💗 Sensible (sin bromas)'},
-  {id:'directo', label:'🎯 Directo (al grano)'},
-  {id:'sabio', label:'🦉 Sabio del camino'},
-  {id:'relator', label:'🎙️ Relator deportivo'},
-  {id:'picaro', label:'😏 Pícaro (te pica)'},
-  {id:'maternal', label:'🫶 Protector'},
-  {id:'compadre', label:'🧉 El Compadre (chileno puro)'}
+  {id:'cercano',    label:'🚴 Pistero (el de siempre)', labelF:'🚴 Pistera (la de siempre)'},
+  {id:'compadre',   label:'🧉 Pistero Compadre',        labelF:'🧉 Pistera Comadre'},
+  {id:'entrenador', label:'💪 Pistero Entrenador',      labelF:'💪 Pistera Entrenadora'},
+  {id:'roquero',    label:'🎸 Pistero Roquero',         labelF:'🎸 Pistera Roquera'},
+  {id:'profe',      label:'🎓 Pistero Profe',           labelF:'🎓 Pistera Profe'},
+  {id:'solitario',  label:'🌄 Pistero Solitario',       labelF:'🌄 Pistera Solitaria'},
+  {id:'loco',       label:'🤪 Pistero Loco',            labelF:'🤪 Pistera Loca'},
+  {id:'cicletero',  label:'🔧 Pistero Cicletero',       labelF:'🔧 Pistera Cicletera'},
+  {id:'sabio',      label:'🎖️ Pistero Veterano',        labelF:'🎖️ Pistera Veterana'},
+  {id:'relajado',   label:'🌻 Pistero Hippie',          labelF:'🌻 Pistera Hippie'},
+  {id:'aventurero', label:'💡 Pistero Malas Ideas',     labelF:'💡 Pistera Malas Ideas'},
+  {id:'maternal',   label:'🧣 Pistero Tío',             labelF:'🧣 Pistera Tía'}
 ];
 let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
 // Variedad de voz por arquetipo: Azure es-CL solo tiene 2 voces (Catalina/Lorenzo), no hay
@@ -1720,7 +1732,7 @@ function elegirPersonalidad(id){
 }
 function renderPersonalidadGrid(){
   const c=document.getElementById('personalidadGrid'); if(!c) return;
-  c.innerHTML=PERSONALIDADES.map(function(p){ return '<div class="custom-option'+(p.id===pisteroPersonalidad?' selected':'')+'" onclick="elegirPersonalidad(\''+p.id+'\')" style="text-align:left;padding:9px 12px"><div class="check">OK</div><strong style="font-size:0.82rem">'+p.label+'</strong></div>'; }).join('');
+  c.innerHTML=PERSONALIDADES.map(function(p){ return '<div class="custom-option'+(p.id===pisteroPersonalidad?' selected':'')+'" onclick="elegirPersonalidad(\''+p.id+'\')" style="text-align:left;padding:9px 12px"><div class="check">OK</div><strong style="font-size:0.82rem">'+_labelPersonalidad(p)+'</strong></div>'; }).join('');
 }
 let navUserMarkers = [], maxSpeed = 0, speedReadings = [];
 // Umbrales de ritmo FIJOS (km/h), iguales en frases, ánimo del personaje y el
@@ -2500,6 +2512,11 @@ function poolPais(cat){
    esa categoría, cae a las frases genéricas de siempre — 100% aditivo, sin riesgo. */
 const FRASES_ARQ={
   subida:{
+    roquero:["Esta cuesta es el solo de guitarra: aguanta que ya viene el coro.","Sube con rabia, que la pendiente no perdona a los tibios.","Puro riff pesado esto. Dale que abajo suena mejor.","La cuesta es larga y tú tienes más volumen que ella.","Ponle actitud, que las piernas ya saben lo que hacen."],
+    profe:["Cuesta a la vista. Dato: subir de pie gasta más oxígeno, siéntate y aguanta.","Esta pendiente se sube con cadencia alta y cabeza fría, no con fuerza.","Fíjate en la respiración: tres pedaladas inhalando, tres exhalando.","El truco de los escaladores es no mirar la cima, sino los diez metros siguientes.","Si el corazón se te dispara, baja un cambio antes de que te obligue el cuerpo."],
+    solitario:["Sube.","Nadie te está mirando. Mejor.","Esta cuesta es tuya y de nadie más.","Silencio y pedal. Así se sube.","La montaña no compite contigo."],
+    loco:["¡Esta cuesta la puso alguien que te tiene mala!","Si llegas arriba te doy un aplauso imaginario, pero fuerte.","Dicen que las cuestas son planas si cierras un ojo. No es cierto, pero prueba.","Piensa en un completo italiano allá arriba. Ya, ahora sube.","La gravedad y yo apostamos. Yo aposté por ti."],
+    cicletero:["Cuesta arriba: cambia ANTES de que la cadena sufra, no cuando ya cruje.","Si escuchas la cadena rasparse, te pasaste de cambio. Corrige ahora.","Súbela sentado, que de pie desgastas plato y piñón el doble.","Cadencia pareja: la transmisión te lo agradece y las piernas también.","Ojo con el cambio bajo carga, ahí es donde se rompen las cadenas."],
     entrenador:["Cuesta a la vista: sube un cambio, cadencia constante, no revientes.","Esta subida es tu gimnasio. Aprieta parejo, respira por la nariz.","Aquí se construye el fondo: ritmo, no fuerza bruta.","La subida no se gana con las piernas, se gana con la cabeza. Vamos.","Si puedes hablar en la cuesta, puedes acelerar un poco. Dale."],
     picaro:["A que no subís esta sin bajarte, campeón 😏.","Uy, la cuestita… ¿o te la vas a caminar como el resto?","Esta subida separa a los que pedalean de los que posan. ¿Cuál eres?","Dale, que allá arriba te estoy esperando hace rato.","Apuesto a que aflojas antes de la mitad. Demuéstrame que no."],
     sabio:["La subida enseña lo que la bajada esconde: quién eres cuando duele.","Cada pedaleo cuesta arriba es una tranca mental que sueltas.","No pelees la cuesta; fluye con ella. La montaña siempre gana si la enfrentas con rabia.","El esfuerzo de ahora es la paz de la cima. Sube presente.","La cuesta no es un obstáculo, es el camino. Habítala."],
@@ -2512,6 +2529,11 @@ const FRASES_ARQ={
     compadre:["Ya po, apretá que esta cuesta es puro cuento. ¡Dale que podí!","No aflojís, compadre, que arriba está la raja de vista. Métele pata.","Esta subidita es na, pura finta. Le ganái con los ojos cerrados, cachái."]
   },
   rapido:{
+    roquero:["¡Así se anda! Puro volumen arriba.","Vas rápido y suena bien. No aflojes.","Ese ritmo es un temazo. Mantenlo.","Vas a toda máquina, cuidado con las curvas.","Rápido y con estilo, como debe ser."],
+    profe:["Buen ritmo. A esta velocidad el viento es el 80% de lo que te frena: agáchate un poco.","Vas rápido: mantén la mirada lejos, no en la rueda delantera.","A esta velocidad frenar toma el doble de distancia. Anticipa.","Dato: pedalear rápido con cadencia alta cansa menos que forzar el plato grande.","Vas bien. La postura baja te ahorra energía sin que lo notes."],
+    solitario:["Vas rápido. Disfrútalo.","Así, sin pensar.","El camino se abre solo cuando vas a este ritmo.","Nada que decir. Sigue.","Este es el momento por el que saliste."],
+    loco:["¡Vas tan rápido que los perros ya ni intentan!","A esta velocidad se te van a ordenar las ideas solas.","Si aceleras más vas a llegar antes de haber salido.","Voy a tener que hablar más rápido para alcanzarte.","Los postes te están mirando con envidia."],
+    cicletero:["Buen ritmo. Ojo con los hoyos: a esta velocidad se dobla una llanta fácil.","Vas rápido: revisa que no vaya suelto nada del portaequipaje.","A esta velocidad, frenos limpios valen más que piernas buenas.","Si sientes vibración en el manubrio, para y revisa la rueda.","Vas volando. La presión correcta de neumáticos es lo que te está ayudando."],
     entrenador:["Buen ritmo. Sostén esa cadencia sin trabar los hombros.","Vas fuerte. Controla la respiración, mantén la línea.","Velocidad sólida. Ojo con las curvas, no pierdas la técnica."],
     picaro:["¡Uy, se soltó el fierita! ¿Y esa velocidad de dónde salió? 😏","Ah, ahora sí te pusiste las pilas. A ver si aguantas.","Vas volando… no vaya a ser que te quedes sin pila a la mitad."],
     sabio:["La velocidad embriaga, pero el camino se disfruta mirando, no corriendo.","Vas rápido; recuerda que llegar no es la meta, es el pretexto.","Rápido está bien, pero no tanto que te pierdas el paisaje."],
@@ -2520,6 +2542,11 @@ const FRASES_ARQ={
     compadre:["¡Uuuh, andái enchufao hoy, volando bajito! ¡Así se hace po, la raja!","Cómo le picái, compadre, vai como bala. ¡No pares, crack!"]
   },
   lento:{
+    roquero:["Bajaste el volumen. Todo bien, después subimos.","Hasta las mejores bandas tienen baladas. Esta es la tuya.","Vas lento y no pasa nada. El disco igual suena.","Recupera y volvemos con todo.","Ritmo tranquilo, pero seguimos tocando."],
+    profe:["Ritmo suave. Es cuando el cuerpo aprende a usar mejor la grasa como combustible.","Ir lento no es perder: es entrenar el fondo.","Aprovecha para mirar alrededor, que a este ritmo sí se ve el paisaje.","Buen momento para tomar agua: a ritmo suave el cuerpo la absorbe mejor.","El pedaleo lento y parejo cuida las rodillas más que cualquier cosa."],
+    solitario:["Despacio también es andar.","No hay apuro.","Este ritmo deja pensar.","El camino no se va a ir.","Está bien ir lento."],
+    loco:["Vas lento, pero con una dignidad tremenda.","A este ritmo hasta las moscas te acompañan.","Lento y seguro, como el internet de antes.","Vas tan tranquilo que da sueño verte. Del bueno.","Ir lento es ir rápido, pero con más tiempo."],
+    cicletero:["Ritmo suave: buen momento para escuchar si algo suena raro en la bici.","Si vas lento y cuesta más de lo normal, revisa la presión de los neumáticos.","A este ritmo se nota si el freno va rozando. Fíjate.","Aprovecha y mira la cadena: si está seca, te está robando fuerza.","Buen momento para acomodar el asiento si algo te viene incomodando."],
     picaro:["¿Vas pedaleando o buscando monedas en el suelo? 😏","Mi abuelita ya llegó y te está esperando.","Dale color, que a este ritmo te pilla la noche."],
     sensible:["Tranquilo, tu ritmo es válido. Lo importante es que estás rodando.","No te compares con nadie. A tu paso está perfecto.","Cada pedalada cuenta, aunque sea suave. Vas bien."],
     relajado:["Rico ese ritmo tranqui, sin apuros. Disfruta.","Así, suavecito, que la vida no es una carrera.","Buen paso de paseo. Respira y mira alrededor."],
