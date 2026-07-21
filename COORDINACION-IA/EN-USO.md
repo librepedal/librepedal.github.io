@@ -31,6 +31,11 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ## Estado actual
 
+📋 **Thunderobot: lee `ESTADO-SESION-LENOVO-2026-07-21.md`** — te puse al día de TODO
+(APK resuelto y pusheado, Capone ya tiene el asistente de avisos, el Thunder no ejecuta por
+SSH, y el motor de voz elegido). — sesión Lenovo.
+
+
 ```
 🔴 SESIÓN DEL LENOVO (2026-07-21): LEE `PETICION-GH-AUTH.md` — Inty pidió que corras `gh auth login`
 para re-autenticar GitHub y generar el APK. Solo tú puedes (necesita terminal real + su navegador). Luego
