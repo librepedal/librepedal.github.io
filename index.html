@@ -601,6 +601,14 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="customization-section"><h3>Casco</h3><div class="helmet-grid" id="helmetGrid"></div></div>
 <div class="customization-section"><h3>Color del casco</h3><div class="skin-grid" id="skinGrid"></div></div>
 <div class="customization-section"><h3>Lentes</h3><div class="accessory-grid" id="accessoryGrid"></div></div>
+<div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
+  <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 9px">Síguenos y súmate a la comunidad</p>
+  <div style="display:flex;gap:18px;justify-content:center;margin-bottom:11px;font-size:1.5rem">
+    <a href="https://instagram.com/libre_pedal" target="_blank" rel="noopener" aria-label="Instagram" style="color:#e1306c"><i class="fab fa-instagram"></i></a>
+    <a href="https://www.facebook.com/share/18wTofCbr1/" target="_blank" rel="noopener" aria-label="Facebook" style="color:#1877f2"><i class="fab fa-facebook"></i></a>
+  </div>
+  <p style="font-size:0.7rem;color:#7d8ba0;margin:0"><a href="https://librepedal.cl" style="color:var(--p)">librepedal.cl</a> · <a href="bienvenida.html" style="color:var(--p)">Quiénes somos</a></p>
+</div>
 </div>
 </form>
 
@@ -1211,7 +1219,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.32'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.33'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
