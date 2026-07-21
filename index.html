@@ -1211,7 +1211,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.30'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.31'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1727,15 +1727,23 @@ function renderModoRegistro(){
 // usa seguido (quien anda a veces en bici y a veces en auto lo cambia bastante
 // más que una vez). Fila de íconos chica, debajo del título, sin invadir el
 // gesto de girar la esfera (el hueco entre chips no bloquea el toque).
+// v7.31 (SPEC 2a "el modo se repliega"): por defecto se muestra UN chip compacto
+// "Vas en X · Cambiar" (menos es más, y sigue descubrible porque dice Cambiar).
+// Al tocar Cambiar se despliegan los 4 modos; al elegir uno, vuelve a plegarse.
+var _modoEsferaAbierto=false;
+function _toggleModoEsfera(){ _modoEsferaAbierto=!_modoEsferaAbierto; renderModoRapidoEsfera(); }
+function _elegirModoEsfera(id){ _modoEsferaAbierto=false; elegirActividad(id); }
 function renderModoRapidoEsfera(){
   const c=document.getElementById('esModoRapido'); if(!c) return;
-  // Cada modo lleva SU propio color (el mismo que ya definía ACTIVIDADES para
-  // teñir la app entera) como anillo/relleno del chip — antes todos se veían
-  // igual (gris, solo el ícono cambiaba) y con 🚴 vs 🚵 a 38px eran casi
-  // indistinguibles. Con color propio + más tamaño se diferencian de un vistazo.
+  if(!_modoEsferaAbierto){
+    const a=_actividadActual();
+    c.innerHTML='<div class="es-modo-chip selected" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="_toggleModoEsfera()" title="Cambiar de modo"><div class="es-modo-ico" style="color:'+a.color.p+'">'+MODO_SVG[a.id]+'</div><div class="es-modo-txt">Vas en '+a.corto+' · Cambiar</div></div>';
+    return;
+  }
+  // Desplegado: los 4 modos, cada uno con su color propio. Al elegir, se repliega.
   c.innerHTML=ACTIVIDADES.map(function(a){
     const sel=a.id===actividadTipo;
-    return '<div class="es-modo-chip'+(sel?' selected':'')+'" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="elegirActividad(\''+a.id+'\')" title="'+a.label.replace(/"/g,'')+'"><div class="es-modo-ico" style="color:'+a.color.p+'">'+MODO_SVG[a.id]+'</div><div class="es-modo-txt">'+a.corto+'</div></div>';
+    return '<div class="es-modo-chip'+(sel?' selected':'')+'" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="_elegirModoEsfera(\''+a.id+'\')" title="'+a.label.replace(/"/g,'')+'"><div class="es-modo-ico" style="color:'+a.color.p+'">'+MODO_SVG[a.id]+'</div><div class="es-modo-txt">'+a.corto+'</div></div>';
   }).join('');
 }
 // Cicloviajero cargado (alforjas, bici de touring) vs rutero liviano: mismo
