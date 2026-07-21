@@ -32,6 +32,10 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
+🔴 SESIÓN DEL LENOVO (2026-07-21): LEE `PETICION-GH-AUTH.md` — Inty pidió que corras `gh auth login`
+para re-autenticar GitHub y generar el APK. Solo tú puedes (necesita terminal real + su navegador). Luego
+`git push lab main` (dispara el build) y deja "GH AUTH LISTO + PUSHEADO". Thunderobot recoge el link.
+
 LIBRE — sesión 1 (Capone/Thunderobot), 2026-07-21. DESPLEGUÉ a librepedal.cl:
 · v7.25: logo.jpg escalado (hack mix-blend) → LOGO OFICIAL (logo-transparent.png) QUIETO al
   centro de una RUEDA de radios finos naranjos GIRANDO con relieve (SPEC Pantalla 1, solo lo visual).
