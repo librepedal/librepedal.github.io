@@ -1204,7 +1204,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.26'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.27'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3481,16 +3481,14 @@ const lpBackgroundGeo = (function(){
     _p:function(){ return getBG(); }
   };
 })();
-// Pide GPS y micrófono de una vez al entrar (antes había que tocar un botón de GPS
-// manual; ahora el único control de privacidad es el modo fantasma). El GPS arranca
-// solo; el micrófono se "precalienta" para no sorprender la primera vez que se use.
+// v7.27 — queja real de Inty: la app NO debe grabar el viaje ni pedir el micrófono al ABRIR.
+// Antes esta función arrancaba el GPS solo (toggleGPS) y "precalentaba" el micrófono apenas
+// entrabas — se sentía que te grababa y espiaba desde el inicio. Ahora el GPS/grabación arranca
+// SOLO cuando tú lo decides (botón Iniciar GPS, o al pedir una ruta) y el micrófono se pide
+// recién cuando tocas el botón de voz. El modo fantasma sigue siendo el control de privacidad
+// de la posición publicada.
 function solicitarPermisosEsenciales(){
-  if(!ig) toggleGPS(true); // silencioso: recién se abrió la app, no es un viaje que el usuario decidió empezar
-  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-      stream.getTracks().forEach(function(t){ t.stop(); });
-    }).catch(function(){});
-  }
+  /* A propósito NO arranca el GPS ni pide el micrófono al abrir la app (ver comentario arriba). */
 }
 function _actualizarBtnGPS(){
   const btn=document.getElementById('btnGPSLibre'); if(!btn) return;
