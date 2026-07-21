@@ -529,6 +529,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .lp-logo-center{position:absolute;top:50%;left:50%;width:50%;height:50%;transform:translate(-50%,-50%);
   object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.45))}
 @media (prefers-reduced-motion:reduce){.lp-wheel{animation:none}}
+/* Iconos de modo a medida (bici/huellas/auto) — tamaño y color heredado del modo. */
+.modo-ico-svg{display:flex;justify-content:center;align-items:center;height:30px}
+.modo-ico-svg svg,.es-modo-ico svg{width:26px;height:26px;display:block}
 </style>
 <form id="auth" onsubmit="reg(event)">
 <div class="auth-box">
@@ -1201,7 +1204,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.25'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.26'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1662,6 +1665,15 @@ const ACTIVIDADES=[
   {id:'trekking', label:'🎒 Senderismo / Trekking', corto:'Trek', icono:'🎒', osrm:'foot', gentilicio:'caminante', verbo:'caminando', color:{p:'#b5651d',g:'#8fae6e'}},
   {id:'moto', label:'🏍️ Moto / Auto (motorizado)', corto:'Auto', icono:'🏍️', osrm:'driving', gentilicio:'motorizado', verbo:'conduciendo', color:{p:'#2563eb',g:'#f2b705'}}
 ];
+/* Iconos de modo A MEDIDA (pedido de Inty: "los emoji son genéricos"; bici estilo Lucide,
+   huellas para senderismo, AUTO para motorizado — la moto NO va). Van aparte de ACTIVIDADES
+   para no tocar esa estructura; usan currentColor y se tiñen con el color del modo. */
+const MODO_SVG={
+  ciclismo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.4"/><circle cx="18.5" cy="17.5" r="3.4"/><path d="M6 17.5l4-8.5h4"/><path d="M9.5 17.5l3-6.5h4l2 6.5"/><circle cx="15" cy="5.2" r="1.1" fill="currentColor" stroke="none"/></svg>',
+  mtb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.4"/><circle cx="18.5" cy="17.5" r="3.4"/><path d="M6 17.5l4-8.5h4"/><path d="M9.5 17.5l3-6.5h4l2 6.5"/><circle cx="15" cy="5.2" r="1.1" fill="currentColor" stroke="none"/></svg>',
+  trekking:'<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="8" cy="9.5" rx="2.3" ry="3.3"/><circle cx="6.3" cy="5" r="0.95"/><circle cx="8" cy="4.5" r="0.95"/><circle cx="9.7" cy="5" r="1"/><ellipse cx="15.5" cy="15" rx="2.3" ry="3.3"/><circle cx="13.8" cy="10.5" r="0.95"/><circle cx="15.5" cy="10" r="0.95"/><circle cx="17.2" cy="10.5" r="1"/></svg>',
+  moto:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 15.5l1.6-5h11.8l1.6 5"/><path d="M3 15.5h18v3.2H3z"/><circle cx="7.3" cy="18.7" r="1.4"/><circle cx="16.7" cy="18.7" r="1.4"/></svg>'
+};
 let actividadTipo=localStorage.getItem('lp_actividad')||'ciclismo';
 function _actividadActual(){ return ACTIVIDADES.find(function(a){return a.id===actividadTipo;})||ACTIVIDADES[0]; }
 function _osrmPerfil(){ return _actividadActual().osrm; }
@@ -1692,7 +1704,7 @@ function elegirActividad(id, silencioso){
 }
 function renderActividadGrid(){
   const c=document.getElementById('actividadGrid'); if(!c) return;
-  c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\')"><div class="check">OK</div><div style="font-size:1.4rem">'+a.icono+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
+  c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\')"><div class="check">OK</div><div class="modo-ico-svg" style="color:'+a.color.p+'">'+MODO_SVG[a.id]+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
 }
 // El mismo selector, pero en la primera pantalla (registro) — antes el modo
 // quedaba escondido dentro de Perfil → Preferencias, así que casi nadie lo
@@ -1701,7 +1713,7 @@ function renderActividadGrid(){
 // con el tono de ese modo — se puede cambiar cuando quieras desde Preferencias.
 function renderModoRegistro(){
   const c=document.getElementById('modoRegistroGrid'); if(!c) return;
-  c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\',true)"><div class="check">OK</div><div style="font-size:1.4rem">'+a.icono+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
+  c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\',true)"><div class="check">OK</div><div class="modo-ico-svg" style="color:'+a.color.p+'">'+MODO_SVG[a.id]+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
 }
 // Acceso directo al modo desde la primera pantalla (la esfera): antes había que
 // entrar a Perfil → Preferencias para cambiarlo, muy escondido para algo que se
@@ -1716,7 +1728,7 @@ function renderModoRapidoEsfera(){
   // indistinguibles. Con color propio + más tamaño se diferencian de un vistazo.
   c.innerHTML=ACTIVIDADES.map(function(a){
     const sel=a.id===actividadTipo;
-    return '<div class="es-modo-chip'+(sel?' selected':'')+'" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="elegirActividad(\''+a.id+'\')" title="'+a.label.replace(/"/g,'')+'"><div class="es-modo-ico">'+a.icono+'</div><div class="es-modo-txt">'+a.corto+'</div></div>';
+    return '<div class="es-modo-chip'+(sel?' selected':'')+'" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="elegirActividad(\''+a.id+'\')" title="'+a.label.replace(/"/g,'')+'"><div class="es-modo-ico" style="color:'+a.color.p+'">'+MODO_SVG[a.id]+'</div><div class="es-modo-txt">'+a.corto+'</div></div>';
   }).join('');
 }
 // Cicloviajero cargado (alforjas, bici de touring) vs rutero liviano: mismo
