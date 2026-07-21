@@ -532,6 +532,13 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* Iconos de modo a medida (bici/huellas/auto) — tamaño y color heredado del modo. */
 .modo-ico-svg{display:flex;justify-content:center;align-items:center;height:30px}
 .modo-ico-svg svg,.es-modo-ico svg{width:26px;height:26px;display:block}
+/* Abanico de reporte (v7.29): el botón Reportar del mapa despliega 4 opciones animadas. */
+#abanicoReporte{position:absolute;right:14px;bottom:170px;z-index:501;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+#abanicoReporte.on{pointer-events:auto}
+#abanicoReporte .abn-op{opacity:0;transform:translateY(14px) scale(.9);transition:opacity .2s ease,transform .22s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d);background:rgba(10,15,29,.95);color:#fff;border:2px solid #333;border-radius:22px;padding:9px 15px;font-weight:700;font-size:.82rem;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.55)}
+#abanicoReporte.on .abn-op{opacity:1;transform:translateY(0) scale(1)}
+#abanicoReporte .abn-op:active{transform:scale(.94)}
+#abanicoReporte .abn-e{font-size:1.15rem}
 </style>
 <form id="auth" onsubmit="reg(event)">
 <div class="auth-box">
@@ -944,7 +951,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div style="position:relative">
   <div id="map"></div>
   <button id="btnCapaMapa" class="map-estilo-btn" onclick="toggleCapaMapa()" title="Cambiar el estilo del mapa (calles / topográfico / satélite)">🏔️</button>
-  <button id="fabReportar" onclick="reportarEnRuta()" title="Reportar algo en el mapa">📍<span>REPORTAR</span></button>
+  <button id="fabReportar" onclick="abrirAbanicoReporte()" title="Reportar algo en el mapa">📍<span>REPORTAR</span></button>
   <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación">🎯</button>
 </div>
 <div id="reportes-comunidad"></div>
@@ -1204,7 +1211,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.28'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.29'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -9158,7 +9165,7 @@ const tutorialSteps=[
   {view:'musica', sel:'#lpPlayer', d:'Música: radios gratis o tu propia carpeta. Baja sola cuando hablo y sube cuando termino.'},
   {view:'ajustes', sel:'#vozBtn', d:'En Ajustes controlas la voz de Pistero, el ahorro de pantalla y de GPS.'},
   {view:'map', sel:'#btnCapaMapa', d:'Tu mapa, más limpio: calles o topográfico con un toque, y tu ruta se marca en dorado a medida que avanzas.'},
-  {view:'map', sel:'button[onclick="reportarEnRuta()"]', d:'Reporta a la comunidad: peligros, picadas o miradores. Ganas Darma.'},
+  {view:'map', sel:'#fabReportar', d:'Reporta a la comunidad: peligros, picadas o miradores. Ganas Darma.'},
   {view:'map', sel:'button[onclick="toggleRadarOnMap()"]', d:'Ciclistas: mira a otros pedaleros en el mapa, cada uno con su casco.'},
   {view:'chat', sel:'#v-chat .quick-links', d:'Social: tus amigos, solicitudes y chats privados.'},
   {view:'mac', sel:'#v-mac .section-info', d:'Taller MacGyver: trucos para reparar tu bici en plena ruta.'},
@@ -9468,6 +9475,43 @@ function verSobrevueloRuta(id){
   };
 })();
 /* =============== FIN SOBREVUELO DEL VIAJE =============== */
+/* ================= ABANICO DE REPORTE (v7.29) =================
+   ADITIVO: el botón "Reportar" del mapa (#fabReportar) despliega un abanico animado
+   con Peligro · Control · Servicio · Mirador (los 4 de la SPEC). Cada opción abre el
+   MODAL de reporte que YA existe (reportarEnRuta) con la categoría preseleccionada
+   (seleccionarCatReporte) — NO edita ni reemplaza el sistema de reportes maduro.
+   Se cierra solo si no se elige (timeout) o al volver a tocar el botón. */
+var _abnTimer=null;
+function _cerrarAbanico(){ var f=document.getElementById('abanicoReporte'); if(f) f.classList.remove('on'); if(_abnTimer){ clearTimeout(_abnTimer); _abnTimer=null; } }
+function _abanicoElegir(cat){
+  _cerrarAbanico();
+  try{ reportarEnRuta(); if(cat && typeof seleccionarCatReporte==='function') seleccionarCatReporte(cat); }
+  catch(e){ try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
+}
+function abrirAbanicoReporte(){
+  try{
+    var f=document.getElementById('abanicoReporte');
+    if(f && f.classList.contains('on')){ _cerrarAbanico(); return; }
+    if(!f){
+      var opts=[
+        {l:'Peligro', e:'⚠️', c:'#ef4444', cat:'critico'},
+        {l:'Control', e:'👮', c:'#3b82f6', cat:'policia'},
+        {l:'Servicio',e:'🏪', c:'#f59e0b', cat:'util'},
+        {l:'Mirador', e:'📸', c:'#3b82f6', cat:'mirador'}
+      ];
+      f=document.createElement('div'); f.id='abanicoReporte';
+      f.innerHTML=opts.map(function(o,i){ return '<button type="button" class="abn-op" style="--d:'+(i*45)+'ms;border-color:'+o.c+'" onclick="_abanicoElegir(\''+o.cat+'\')"><span class="abn-e">'+o.e+'</span>'+o.l+'</button>'; }).join('');
+      var fab=document.getElementById('fabReportar');
+      if(fab && fab.parentNode) fab.parentNode.appendChild(f); else document.body.appendChild(f);
+    }
+    // forzar reflow para que la transición corra aunque se acabe de crear
+    void f.offsetWidth;
+    f.classList.add('on');
+    if(_abnTimer) clearTimeout(_abnTimer);
+    _abnTimer=setTimeout(_cerrarAbanico, 6000);
+  }catch(e){ try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
+}
+/* =============== FIN ABANICO DE REPORTE =============== */
 </script>
 </body>
 </html>
