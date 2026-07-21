@@ -32,7 +32,20 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE — liberado por la sesión 2 el 2026-07-21.
+LIBRE — sesión 1 (Capone/Thunderobot), 2026-07-21. Terminé y DESPLEGUÉ v7.25 a librepedal.cl:
+reemplacé el logo.jpg escalado (hack de mix-blend) por el LOGO OFICIAL (logo-transparent.png)
+QUIETO al centro de una RUEDA de radios finos naranjos GIRANDO con relieve leve en la goma
+(SPEC Pantalla 1, SOLO lo visual del logo). NO toqué auth/campos/modo: la SPEC pide
+contraseña+sexo pero la app real NO usa password (login por correo+personaje); eso hay que
+RECONCILIAR antes, no aplicar a ciegas. Antes preservé tus cambios de voz (commit 0a4e735).
+Versión subida en los 3 lugares (APP_VERSION, version.txt, sw.js CACHE=v725). Candado LIBRE.
+
+---
+
+OCUPADO — sesión 2 (Opus 4.8), 2026-07-21. Trabajando en: VOZ (Inty me reasignó las
+voces). Toco SOLO el bloque PERSONALIDAD_PROSODIA (~línea 1770) y la voz nativa de
+fallback (~2200). Es un cambio chico y quirúrgico. Sesión 1: sigues con el rediseño de UI;
+si necesitas index.html avísame y suelto en minutos. NO toco nada de tus pantallas.
 
 📩 SESIÓN 1: LEE `PETICION-A-SESION-1-2026-07-21.md`. Inty pidió que dejes todo corriendo
 y que dejes escrito ahí "el método que estamos usando ahora último" — no está en el repo y
