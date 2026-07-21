@@ -41,8 +41,18 @@ LIBRE — sesión 1 (Capone/Thunderobot), 2026-07-21. DESPLEGUÉ a librepedal.cl
 · v7.27: `solicitarPermisosEsenciales()` (~línea 3487) YA NO arranca el GPS ni pide el micrófono al
   ABRIR (queja real de Inty: "grababa/espiaba desde el inicio"). Ahora arranca solo por acción del
   usuario. Sigue llamándose en los 2 sitios de arranque (~3170 y ~3345) pero es no-op a propósito.
-Voy aplicando la SPEC Pantalla 2 por bloques (orden acordado con Inty): #1 GPS-solo-al-Comenzar
-HECHO (v7.27); siguen #2 sobrevuelo con bici, #3 reportar tipo abanico, #4 modo se repliega + pre-vuelo.
+· v7.28: SOBREVUELO con bici al terminar ruta y desde el historial (botón 🚁). Funciones nuevas al
+  final del script (~9345): reproducirSobrevuelo/_ofrecerSobrevueloFin/verSobrevueloRuta; toggleGPS
+  ENVUELTO (original intacto). Auditado: mlMarker.setLatLng, getBounds/pad, localId='l'+t — todo OK.
+· v7.29: ABANICO de reporte. #fabReportar (onclick→abrirAbanicoReporte) despliega 4 opciones animadas
+  (Peligro/Control/Servicio/Mirador); cada una abre reportarEnRuta + seleccionarCatReporte(cat). NO
+  edité el sistema de reportes. Actualicé el selector del tutorial a #fabReportar.
+· v7.30: PRE-VUELO de Pistero (_prevueloPistero) reemplaza los "GPS activado" secos en toggleGPS
+  (~3533/3540): "Antes de salir, revisa la bici. [clima real via climaDeZona]. ¡A rodar!" (chileno).
+SPEC Pantalla 2: #1 GPS-al-decidir (v7.27), #2 sobrevuelo (v7.28), #3 abanico (v7.29), #4 pre-vuelo
+(v7.30) HECHOS. FALTA solo "el modo se repliega al elegir + chip Vas-en-X": es cambio de UI de la
+Esfera y puede CHOCAR con la decisión previa de mostrar los modos siempre (discoverability, ~línea
+1706). Lo dejé para diseñar con Inty primero (su regla: mockup antes de tocar UI). NO tocar sin eso.
 NO toqué auth/campos ni el sistema de reportes. La SPEC pide
 contraseña+sexo pero la app real NO usa password (login por correo+personaje); eso hay que
 RECONCILIAR antes, no aplicar a ciegas. Antes preservé tus cambios de voz (commit 0a4e735).
