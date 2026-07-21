@@ -61,6 +61,15 @@ TODO el SPEC aprobado quedó APLICADO Y DESPLEGADO (v7.25→v7.31).
   por ahora; el .apk real necesita re-auth de GitHub), contador de comunidad EN VIVO (Firebase). Preview
   aprobado por Inty ("vamos con la página"). NOTA: analíticas de admin YA EXISTÍAN (verAnaliticasAdmin,
   colección usage) — pendiente potenciarlas a dashboard visual.
+· v7.33: pie de comunidad con redes reales (Instagram @libre_pedal + Facebook share/18wTofCbr1) en el
+  ingreso (index.html, fin del form auth) Y en el footer de la landing. LANDING renovada (feedback Inty):
+  quité "usuarios falsos"/"seguridad"/"bicis para quien no tiene"/"gratis sin letra chica"; reencuadre
+  "5.000 suscritos → la comunidad decide qué hacer con los FONDOS"; causas ahora = sorteo de accesorios,
+  reforestar, apoyo a deportistas; sección PRECIOS (7 días gratis · primeros 300 con descuento 6 meses ·
+  luego $3.000 CLP/mes); sección AUSPICIADORES (Bodega Chumpeco Llifén, Libre Pedal Taller Linares,
+  Hospedaje Futrono, Refugio Oasis Llifén, La Ruca del Ciclista Hornopirén/Constitución/Talca) + bloque
+  "sé parte" (inversionistas/aportes → CTA a redes). PENDIENTE: APK descargable (necesita re-auth GitHub;
+  token vencido) y dashboard de admin visual.
 PENDIENTE (necesita decisión de Inty, NO aplicar a ciegas): (a) pie de comunidad en el ingreso
 (librepedal.cl/quiénes-somos/redes) — faltan los handles reales de IG/TikTok/YT/FB; (b) auth con
 contraseña+sexo que pide la SPEC — la app NO usa password (correo+personaje), hay que decidir antes.
