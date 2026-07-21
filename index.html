@@ -1767,14 +1767,26 @@ let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
 // más "voces" chilenas que pedir por nombre — así que la variedad viene de prosodia
 // (velocidad/tono) sobre esa misma voz, no de cambiar de voz. Números conservadores a
 // propósito (nunca se escuchó en vivo: mejor quedarse corto que sonar robótico o forzado).
+// 2026-07-21 (sesión 2, Inty me reasignó la voz): este mapa quedó DESINCRONIZADO cuando
+// los arquetipos pasaron a ser tipos de ciclista. Tenía claves viejas que ya no existen
+// (humoristico, guia, sensible, directo, relator, picaro) y 5 arquetipos actuales
+// (roquero, profe, solitario, loco, cicletero) SIN entrada -> caían al default -> "todos
+// suenan igual", que es justo lo que reclamó Inty. Ahora las 12 claves calzan 1:1 con los
+// ids de PERSONALIDADES y el rango se abrió (rate -18%..+22%, pitch -8%..+10%) para que se
+// distingan de verdad. Cubierto por tests/voz-prosodia.test.mjs para que no vuelva a driftar.
 const PERSONALIDAD_PROSODIA={
-  cercano:{rate:'+0%',pitch:'+0%'}, aventurero:{rate:'+8%',pitch:'+3%'},
-  entrenador:{rate:'+15%',pitch:'+5%'}, relajado:{rate:'-12%',pitch:'-3%'},
-  humoristico:{rate:'+10%',pitch:'+6%'}, guia:{rate:'-5%',pitch:'+0%'},
-  sensible:{rate:'-10%',pitch:'-4%'}, directo:{rate:'+12%',pitch:'-2%'},
-  sabio:{rate:'-15%',pitch:'-6%'}, relator:{rate:'+20%',pitch:'+8%'},
-  picaro:{rate:'+5%',pitch:'+7%'}, maternal:{rate:'-8%',pitch:'-2%'},
-  compadre:{rate:'+3%',pitch:'+0%'}
+  cercano:   {rate:'+0%',  pitch:'+0%'},   // el de siempre: neutro
+  compadre:  {rate:'-4%',  pitch:'-3%'},   // chileno cálido, tranquilo
+  entrenador:{rate:'+16%', pitch:'+3%'},   // firme y con pila
+  roquero:   {rate:'+2%',  pitch:'-8%'},   // grave, con actitud
+  profe:     {rate:'-8%',  pitch:'+2%'},   // pausado y claro
+  solitario: {rate:'-14%', pitch:'-5%'},   // parco, bajo, poca energía
+  loco:      {rate:'+22%', pitch:'+10%'},  // acelerado y agudo
+  cicletero: {rate:'+6%',  pitch:'-2%'},   // práctico, directo
+  sabio:     {rate:'-18%', pitch:'-8%'},   // veterano, lento y grave
+  relajado:  {rate:'-16%', pitch:'+0%'},   // hippie, mundo tranquilo
+  aventurero:{rate:'+12%', pitch:'+6%'},   // "malas ideas", ágil y pícaro
+  maternal:  {rate:'-9%',  pitch:'-1%'}    // tío/tía, suave
 };
 function elegirPersonalidad(id){
   if(!PERSONALIDADES.some(function(p){return p.id===id;})) return;
@@ -2197,7 +2209,14 @@ function _vozNativaOWeb(item, durEst){
   try{
     speechSynthesis.cancel(); // limpia estados zombis del motor (no hay nada nuestro sonando en este punto)
     const u = new SpeechSynthesisUtterance(item.limpio);
-    u.lang='es-ES'; u.rate=1.05; u.pitch=1.08;
+    u.lang='es-ES';
+    // La voz nativa (respaldo sin red) también respeta la personalidad: antes usaba un tono
+    // fijo para todos, así que sin red los 12 arquetipos sonaban idénticos. Se parte de la
+    // misma base (1.05/1.08) y se le suma la prosodia del arquetipo, con tope para que
+    // nunca suene roto. (2026-07-21, sesión 2)
+    const _pr=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
+    u.rate=Math.max(0.6,Math.min(1.6, 1.05 + (parseInt(_pr.rate,10)||0)/100));
+    u.pitch=Math.max(0.6,Math.min(1.6, 1.08 + (parseInt(_pr.pitch,10)||0)/100));
     if(vozPref) u.voice=vozPref;
     u.onend=u.onerror=function(){ clearTimeout(vozTimerFin); _vozSiguiente(); };
     speechSynthesis.speak(u);
