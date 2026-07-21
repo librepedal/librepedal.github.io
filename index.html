@@ -1211,7 +1211,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.31'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.32'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3359,8 +3359,8 @@ async function reg(e){
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
   _intentarReanudarNavegacion();
-  if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(startTutorial, 700); }
-  else { setTimeout(function(){ h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
+  if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(function(){ _pisteroIntroPrimeraVez(nombre); }, 500); setTimeout(startTutorial, 2600); }
+  else { setTimeout(function(){ if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
 }
 
 async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
@@ -9542,6 +9542,25 @@ function _prevueloPistero(bgCapable){
   h(base+' ¡A rodar!'+grabando);
 }
 /* =============== FIN PRE-VUELO DE PISTERO =============== */
+/* ================= INTRO DE PISTERO — PRIMERA VEZ (v7.32) =================
+   La PRIMERA vez que cada usuario entra, Pistero/Pistera se presenta usando el género
+   elegido (pisteroGenero: 'l'=Pistero/compañero, 'c'=Pistera/compañera) y ofrece ayuda.
+   Una SOLA vez por usuario (flag en localStorage + Firestore). Aditivo y en try/catch. */
+function _pisteroIntroPrimeraVez(nombre){
+  try{
+    if(typeof cu==='undefined' || !cu) return false;
+    if(localStorage.getItem('lp_intro_pistero_'+cu)) return false;
+    var esPistera = (typeof pisteroGenero!=='undefined' && pisteroGenero==='c');
+    var quien = esPistera ? 'Pistera, tu compañera' : 'Pistero, tu compañero';
+    var nom = nombre ? (', '+String(nombre).split(' ')[0]) : '';
+    var msg = 'Hola'+nom+'. Soy '+quien+' de ruta. Si tienes cualquier duda sobre la app, solo pregúntame y te enseño.';
+    if(typeof h==='function') h(msg);
+    localStorage.setItem('lp_intro_pistero_'+cu, '1');
+    try{ db.collection('users').doc(cu).set({introPistero:true},{merge:true}); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
+/* =============== FIN INTRO DE PISTERO =============== */
 </script>
 </body>
 </html>
