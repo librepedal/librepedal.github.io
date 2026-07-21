@@ -53,6 +53,14 @@ SPEC Pantalla 2 COMPLETA: #1 GPS-al-decidir (v7.27), #2 sobrevuelo (v7.28), #3 a
 #4 pre-vuelo (v7.30), + modo-se-repliega en la Esfera (v7.31, renderModoRapidoEsfera ~1706 con chip
 "Vas en X · Cambiar" + _modoEsferaAbierto). SPEC Pantalla 1: logo (v7.25) + iconos de modo (v7.26).
 TODO el SPEC aprobado quedó APLICADO Y DESPLEGADO (v7.25→v7.31).
+· v7.32: INTRO de Pistero/Pistera la 1ª vez por usuario (_pisteroIntroPrimeraVez, al final del script;
+  gancho en el flujo de reg ~3362; usa pisteroGenero l/c; flag lp_intro_pistero_<cu> + Firestore
+  introPistero; no se repite). + LANDING nueva bienvenida.html: enfocada en comunidad/visión (las 4
+  causas), PISTERO OCULTO a propósito (sorpresa en ruta; saqué el "copiloto/voz" y la tarjeta de
+  Pistero), menos explícita (4 pilares + teaser "hecha para descubrirse"), CTA de descarga (→index.html
+  por ahora; el .apk real necesita re-auth de GitHub), contador de comunidad EN VIVO (Firebase). Preview
+  aprobado por Inty ("vamos con la página"). NOTA: analíticas de admin YA EXISTÍAN (verAnaliticasAdmin,
+  colección usage) — pendiente potenciarlas a dashboard visual.
 PENDIENTE (necesita decisión de Inty, NO aplicar a ciegas): (a) pie de comunidad en el ingreso
 (librepedal.cl/quiénes-somos/redes) — faltan los handles reales de IG/TikTok/YT/FB; (b) auth con
 contraseña+sexo que pide la SPEC — la app NO usa password (correo+personaje), hay que decidir antes.
