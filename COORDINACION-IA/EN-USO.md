@@ -49,10 +49,13 @@ LIBRE — sesión 1 (Capone/Thunderobot), 2026-07-21. DESPLEGUÉ a librepedal.cl
   edité el sistema de reportes. Actualicé el selector del tutorial a #fabReportar.
 · v7.30: PRE-VUELO de Pistero (_prevueloPistero) reemplaza los "GPS activado" secos en toggleGPS
   (~3533/3540): "Antes de salir, revisa la bici. [clima real via climaDeZona]. ¡A rodar!" (chileno).
-SPEC Pantalla 2: #1 GPS-al-decidir (v7.27), #2 sobrevuelo (v7.28), #3 abanico (v7.29), #4 pre-vuelo
-(v7.30) HECHOS. FALTA solo "el modo se repliega al elegir + chip Vas-en-X": es cambio de UI de la
-Esfera y puede CHOCAR con la decisión previa de mostrar los modos siempre (discoverability, ~línea
-1706). Lo dejé para diseñar con Inty primero (su regla: mockup antes de tocar UI). NO tocar sin eso.
+SPEC Pantalla 2 COMPLETA: #1 GPS-al-decidir (v7.27), #2 sobrevuelo (v7.28), #3 abanico (v7.29),
+#4 pre-vuelo (v7.30), + modo-se-repliega en la Esfera (v7.31, renderModoRapidoEsfera ~1706 con chip
+"Vas en X · Cambiar" + _modoEsferaAbierto). SPEC Pantalla 1: logo (v7.25) + iconos de modo (v7.26).
+TODO el SPEC aprobado quedó APLICADO Y DESPLEGADO (v7.25→v7.31).
+PENDIENTE (necesita decisión de Inty, NO aplicar a ciegas): (a) pie de comunidad en el ingreso
+(librepedal.cl/quiénes-somos/redes) — faltan los handles reales de IG/TikTok/YT/FB; (b) auth con
+contraseña+sexo que pide la SPEC — la app NO usa password (correo+personaje), hay que decidir antes.
 NO toqué auth/campos ni el sistema de reportes. La SPEC pide
 contraseña+sexo pero la app real NO usa password (login por correo+personaje); eso hay que
 RECONCILIAR antes, no aplicar a ciegas. Antes preservé tus cambios de voz (commit 0a4e735).
