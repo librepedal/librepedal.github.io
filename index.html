@@ -1211,7 +1211,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.29'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.30'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3530,14 +3530,14 @@ function toggleGPS(silencioso){
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
-      if(!silencioso) h("GPS activado. Sigo grabando tu ruta aunque apagues la pantalla.");
+      if(!silencioso) _prevueloPistero(true);
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
       ig=true; if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
-      if(!silencioso) h("GPS activado. Estoy grabando tu ruta.");
+      if(!silencioso) _prevueloPistero(false);
     } else { lpAviso("Tu dispositivo no soporta GPS"); }
   } else {
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
@@ -9512,6 +9512,28 @@ function abrirAbanicoReporte(){
   }catch(e){ try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
 }
 /* =============== FIN ABANICO DE REPORTE =============== */
+/* ================= PRE-VUELO DE PISTERO (v7.30) =================
+   Al arrancar el viaje, en vez del seco "GPS activado", Pistero da un pre-vuelo:
+   "Antes de salir, revisa la bici. [clima real, ej. 12 grados nublado]. ¡A rodar!"
+   Reusa climaDeZona()+wmoTexto() que ya existen. Todo guardado: si no hay clima o
+   ubicación, dice el pre-vuelo sin el dato, nunca falla. Chileno (revisa, no revisá). */
+function _prevueloPistero(bgCapable){
+  var grabando = bgCapable ? ' Voy grabando tu ruta, aunque apagues la pantalla.' : ' Voy grabando tu ruta.';
+  var base = 'Antes de salir, revisa la bici.';
+  try{
+    var yo = (typeof currentUserLocation!=='undefined' && currentUserLocation) || (typeof us!=='undefined' && us.la!=null ? {lat:us.la,lon:us.lo} : null);
+    if(yo && typeof climaDeZona==='function' && typeof wmoTexto==='function'){
+      climaDeZona(yo.lat, yo.lon).then(function(w){
+        var extra='';
+        try{ if(w && w.current && w.current.temperature_2m!=null){ extra=' Hay '+Math.round(w.current.temperature_2m)+' grados y está '+wmoTexto(w.current.weather_code)+'.'; } }catch(e){}
+        h(base+extra+' ¡A rodar!'+grabando);
+      }).catch(function(){ h(base+' ¡A rodar!'+grabando); });
+      return;
+    }
+  }catch(e){}
+  h(base+' ¡A rodar!'+grabando);
+}
+/* =============== FIN PRE-VUELO DE PISTERO =============== */
 </script>
 </body>
 </html>
