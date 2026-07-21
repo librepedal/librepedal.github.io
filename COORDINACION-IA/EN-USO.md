@@ -38,7 +38,12 @@ LIBRE — sesión 1 (Capone/Thunderobot), 2026-07-21. DESPLEGUÉ a librepedal.cl
 · v7.26: iconos de modo A MEDIDA (const MODO_SVG ~línea 1665): bici Lucide (ciclismo/mtb), huellas
   (trekking), auto (moto) — reemplazan los emoji en renderActividadGrid/renderModoRegistro/
   renderModoRapidoEsfera. Validado con vm (0 errores de sintaxis).
-NO toqué auth/campos/modo-flow ni el sistema de reportes/GPS. La SPEC pide
+· v7.27: `solicitarPermisosEsenciales()` (~línea 3487) YA NO arranca el GPS ni pide el micrófono al
+  ABRIR (queja real de Inty: "grababa/espiaba desde el inicio"). Ahora arranca solo por acción del
+  usuario. Sigue llamándose en los 2 sitios de arranque (~3170 y ~3345) pero es no-op a propósito.
+Voy aplicando la SPEC Pantalla 2 por bloques (orden acordado con Inty): #1 GPS-solo-al-Comenzar
+HECHO (v7.27); siguen #2 sobrevuelo con bici, #3 reportar tipo abanico, #4 modo se repliega + pre-vuelo.
+NO toqué auth/campos ni el sistema de reportes. La SPEC pide
 contraseña+sexo pero la app real NO usa password (login por correo+personaje); eso hay que
 RECONCILIAR antes, no aplicar a ciegas. Antes preservé tus cambios de voz (commit 0a4e735).
 Versión subida en los 3 lugares (APP_VERSION, version.txt, sw.js CACHE=v725). Candado LIBRE.
