@@ -32,10 +32,13 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 ## Estado actual
 
 ```
-LIBRE — sesión 1 (Capone/Thunderobot), 2026-07-21. Terminé y DESPLEGUÉ v7.25 a librepedal.cl:
-reemplacé el logo.jpg escalado (hack de mix-blend) por el LOGO OFICIAL (logo-transparent.png)
-QUIETO al centro de una RUEDA de radios finos naranjos GIRANDO con relieve leve en la goma
-(SPEC Pantalla 1, SOLO lo visual del logo). NO toqué auth/campos/modo: la SPEC pide
+LIBRE — sesión 1 (Capone/Thunderobot), 2026-07-21. DESPLEGUÉ a librepedal.cl:
+· v7.25: logo.jpg escalado (hack mix-blend) → LOGO OFICIAL (logo-transparent.png) QUIETO al
+  centro de una RUEDA de radios finos naranjos GIRANDO con relieve (SPEC Pantalla 1, solo lo visual).
+· v7.26: iconos de modo A MEDIDA (const MODO_SVG ~línea 1665): bici Lucide (ciclismo/mtb), huellas
+  (trekking), auto (moto) — reemplazan los emoji en renderActividadGrid/renderModoRegistro/
+  renderModoRapidoEsfera. Validado con vm (0 errores de sintaxis).
+NO toqué auth/campos/modo-flow ni el sistema de reportes/GPS. La SPEC pide
 contraseña+sexo pero la app real NO usa password (login por correo+personaje); eso hay que
 RECONCILIAR antes, no aplicar a ciegas. Antes preservé tus cambios de voz (commit 0a4e735).
 Versión subida en los 3 lugares (APP_VERSION, version.txt, sw.js CACHE=v725). Candado LIBRE.
