@@ -496,15 +496,16 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* PRIMARIO único: naranja = acción. Sin degradado. */
 /* El primario se usa SIN .ab (class="bg" a secas), así que no heredaba el tamaño del sistema:
    quedaba en 40px mientras el secundario medía 44. Al revés de lo que corresponde. */
-.bg{background:#fc4c02!important;color:#fff!important;border-color:transparent!important;font-weight:600!important;min-height:44px;padding:12px 14px;border-radius:12px}
-.bg:hover{background:#ff5f1c!important}
+.bg{background:linear-gradient(135deg,#fc4c02,#ff7a3c)!important;color:#fff!important;border-color:transparent!important;font-weight:700!important;min-height:44px;padding:12px 14px;border-radius:13px;box-shadow:0 7px 20px -6px rgba(252,76,2,0.6)!important}
+.bg:hover{background:linear-gradient(135deg,#ff5f1c,#ff9558)!important}
 /* Restos del tema viejo: estos !important resucitaban los degradados dorado/rojo/morado y
    pisaban el sistema Nocturno Pro (por eso .btrip seguía saliendo morado). Ahora son
    variantes sobrias del MISMO sistema: superficie + color solo en el texto. */
 .bd{background:#1c2740!important;color:#ffd166!important;border-color:rgba(255,209,102,0.3)!important}
 .bpdf{background:#2a1418!important;color:#ff8a8a!important;border-color:rgba(255,90,90,0.3)!important}
 .btrip{background:#131c2f!important;color:#dfe7ff!important;border-color:rgba(255,255,255,0.10)!important}
-.bg,.bd,.bpdf,.btrip{border:1px solid rgba(255,255,255,0.13)!important;border-radius:12px!important;box-shadow:0 3px 12px rgba(0,0,0,0.42),inset 0 1px 0 rgba(255,255,255,0.13)!important;letter-spacing:.3px}
+.bd,.bpdf,.btrip{border:1px solid rgba(255,255,255,0.10)!important;border-radius:12px!important;box-shadow:0 4px 14px rgba(0,0,0,0.4)!important;letter-spacing:.3px}
+.bg{border:none!important;letter-spacing:.3px}
 /* Nav inferior sobria con indicador elegante del activo */
 .nb{position:relative;transition:color .2s,transform .12s}
 .nb:active{transform:scale(.88)}
@@ -1219,7 +1220,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.35'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.36'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
