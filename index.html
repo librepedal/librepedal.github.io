@@ -125,7 +125,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .auth-box h1{color:var(--p);margin:10px 0;font-size:1.3rem}
 .auth-box input{width:100%;padding:10px;margin-bottom:8px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:16px;outline:none}
 .auth-box button{width:100%;padding:12px;background:var(--p);color:#000;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:0.95rem}
-.character-preview-large{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--p);border-radius:15px;padding:12px;margin:10px 0;text-align:center}
+.character-preview-large{background:linear-gradient(160deg,#141f33,#0c1422);border:0.5px solid rgba(252,76,2,0.35);border-radius:18px;padding:16px;margin:10px 0;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.4)}
 .character-preview-large svg{width:110px;height:110px;filter:drop-shadow(0 0 15px rgba(252,76,2,0.5));animation:float 3s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 .character-name{font-size:1rem;font-weight:800;color:var(--g);margin-top:10px}
@@ -1221,7 +1221,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.41'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.42'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
