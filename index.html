@@ -91,8 +91,8 @@ button.es-dato{cursor:pointer}
 .gtt{background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.09)}
 .gtt.on{box-shadow:0 0 12px rgba(252,76,2,0.45)}
 /* FASE 3: los campos usan hairline neutro; el naranja aparece solo al enfocar (foco = acción). */
-input,select,textarea{background:#070b14!important;border:0.5px solid rgba(255,255,255,0.10)!important;border-radius:11px!important;padding:11px 12px!important}
-input:focus,select:focus,textarea:focus{border-color:rgba(252,76,2,0.75)!important;outline:none}
+input,select,textarea{background:#0a1120!important;border:0.5px solid rgba(255,255,255,0.12)!important;border-radius:13px!important;padding:12px 13px!important}
+input:focus,select:focus,textarea:focus{border-color:rgba(252,76,2,0.75)!important;outline:none;box-shadow:0 0 0 3px rgba(252,76,2,0.14)!important}
 header{background:linear-gradient(180deg,rgba(11,16,28,0.9),rgba(6,10,18,0.5))!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(252,76,2,0.28)}
 nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(252,76,2,0.24)}
 .speed-display,.performance-bar,.chart-container{border:1px solid rgba(252,76,2,0.28)!important;background:linear-gradient(160deg,rgba(16,24,40,0.6),rgba(8,12,22,0.68))!important}
@@ -1220,7 +1220,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.37'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.38'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
