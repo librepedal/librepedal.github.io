@@ -566,7 +566,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <img src="logo-transparent.png" alt="Libre Pedal" class="lp-logo-center">
 </div>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
-<p style="color:#888;font-size:0.8rem;margin-bottom:12px">Crea tu personaje ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
+<p style="color:#888;font-size:0.8rem;margin-bottom:12px">Únete a la comunidad ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
 <div style="margin-bottom:14px;text-align:left">
   <p style="color:var(--g);font-size:0.78rem;font-weight:800;margin:0 0 8px">¿Cómo te mueves? <span style="color:#7d8ba0;font-weight:400">— la app se acomoda a tu modo, y lo cambias cuando quieras</span></p>
   <div class="helmet-grid" id="modoRegistroGrid"></div>
@@ -594,7 +594,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </select>
 <button type="submit">Entrar</button>
 <p style="color:#7d8ba0;font-size:0.68rem;margin-top:8px;text-align:center">Al entrar aceptas los <a href="terminos.html" target="_blank" style="color:var(--p)">Términos</a> y la <a href="privacidad.html" target="_blank" style="color:var(--p)">Política de Privacidad</a>.</p>
-<p style="color:#888;font-size:0.72rem;margin:12px 0 4px">Personaliza tu casco (opcional)</p>
+<div style="display:none" aria-hidden="true">
 <div class="character-preview-large">
   <svg id="preview-svg" viewBox="0 0 200 200"></svg>
   <div class="character-name" id="characterNameDisplay">Tu Personaje</div>
@@ -602,6 +602,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <div class="customization-section"><h3>Casco</h3><div class="helmet-grid" id="helmetGrid"></div></div>
 <div class="customization-section"><h3>Color del casco</h3><div class="skin-grid" id="skinGrid"></div></div>
 <div class="customization-section"><h3>Lentes</h3><div class="accessory-grid" id="accessoryGrid"></div></div>
+</div>
 <div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);text-align:center">
   <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 9px">Síguenos y súmate a la comunidad</p>
   <div style="display:flex;gap:18px;justify-content:center;margin-bottom:11px;font-size:1.5rem">
@@ -1220,7 +1221,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.39'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.40'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
