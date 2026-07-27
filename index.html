@@ -849,16 +849,35 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-ajustes" class="view">
 <div class="section-info"><h4>⚙️ Ajustes</h4><p>Voz, pantalla, GPS y mantenimiento de la app.</p></div>
-<div class="quick-links">
-  <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
-  <button class="ab sec" style="margin:0" id="vozNeuralBtn" onclick="toggleVozNeural()"><i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: ON</button>
-  <button class="ab sec" style="margin:0" id="generoBtn" onclick="toggleGenero()"><i class="fas fa-person"></i> Guía: Pistero</button>
-  <button class="ab sec" style="margin:0" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
-  <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
-  <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
-  <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
-  <button class="ab sec" style="margin:0" onclick="mostrarIdiomaRuta()">🛣️ El idioma de la ruta</button>
-</div>
+<!-- REDISEÑO Pantalla 05: la config de la voz estaba dispersa; se junta en "Tu Pistero" y el resto se agrupa por lo que hace (Ley de Hick). Mismos botones/IDs, solo reordenados. -->
+<details class="soc-group" open>
+  <summary><span class="soc-ic">🎙️</span><span><b>Tu Pistero</b><small>Voz · voz mejorada · guía/personalidad · idioma de la ruta</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
+    <button class="ab sec" style="margin:0" id="vozNeuralBtn" onclick="toggleVozNeural()"><i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: ON</button>
+    <button class="ab sec" style="margin:0" id="generoBtn" onclick="toggleGenero()"><i class="fas fa-person"></i> Guía: Pistero</button>
+    <button class="ab sec" style="margin:0" onclick="mostrarIdiomaRuta()">🛣️ El idioma de la ruta</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic">🔋</span><span><b>Rendimiento</b><small>Ahorro de pantalla · ahorro de GPS</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
+    <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic">🔒</span><span><b>Privacidad</b><small>Compartir ubicación en vivo</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic">🎓</span><span><b>Ayuda</b><small>Ver el tutorial de la app</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
+  </div>
+</details>
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🎙️ Manos libres</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Para cuando vas pedaleando o manejando y no puedes tocar el micrófono: Pistero queda escuchando todo el tiempo. No responde a cada cosa que digas — solo cuando lo llamas por su nombre ("Pistero, ¿cómo está el clima?"). Para callarlo, decir "cállate" funciona siempre, sin necesitar el nombre. <strong style="color:var(--g)">Necesita la pantalla encendida</strong> — si la apagas, deja de escuchar (a diferencia del GPS, que sí sigue con la pantalla apagada).</p>
 <div class="quick-links">
@@ -1003,21 +1022,41 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </section>
 
 <section id="v-chat" class="view">
-<div class="section-info"><h4>Social</h4><p>Tus amigos, solicitudes y el chat global de la comunidad.</p></div>
-<button class="ab bg" style="margin-bottom:10px" onclick="invitarAmigos()">📤 Invita a un amigo a pedalear</button>
-<div class="quick-links">
-  <button class="btrip" style="margin:0" onclick="showFriendsList()">👥 Amigos y mensajes</button>
-  <button class="bd" style="margin:0" onclick="showFriendRequests()">📨 Solicitudes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
-</div>
-<div class="quick-links" style="margin-top:6px">
-  <button class="ab sec" style="margin:0" onclick="cv('rec')">💡 Recomendaciones</button>
-  <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()">🔍 Buscar ciclistas</button>
-  <button class="ab sec" style="margin:0;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981" onclick="abrirTeDoyAlojo()">🏡 Te doy alojo</button>
-  <button class="ab sec" style="margin:0" onclick="verRodadas()">🚵 Rodadas grupales</button>
-</div>
-<div class="quick-links" style="margin-top:6px">
-  <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')">📰 Novedades del ciclismo en Chile</button>
-</div>
+<div class="section-info"><h4>Social</h4><p>Amigos, comunidad y aportes — cada cosa en su grupo.</p></div>
+<!-- REDISEÑO Pantalla 03: 9 botones sueltos -> 3 grupos (Ley de Hick). Toca un grupo y se despliega. Nada se pierde: los mismos handlers, agrupados por afinidad. -->
+<style>
+.soc-group{background:#161b22;border:1px solid #2a3240;border-radius:14px;padding:11px 13px;margin-bottom:10px}
+.soc-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:11px}
+.soc-group>summary::-webkit-details-marker{display:none}
+.soc-group>summary .soc-ic{font-size:1.35rem;width:36px;height:36px;display:grid;place-items:center;background:#1f2734;border-radius:11px;flex:none}
+.soc-group>summary b{display:block;font-size:0.95rem;line-height:1.2}
+.soc-group>summary small{display:block;color:#8794a5;font-size:0.72rem;margin-top:2px}
+.soc-group>summary::after{content:'▸';margin-left:auto;color:#8794a5;transition:.2s}
+.soc-group[open]>summary::after{transform:rotate(90deg)}
+</style>
+<details class="soc-group" open>
+  <summary><span class="soc-ic">👥</span><span><b>Amigos</b><small>Tus amigos · solicitudes · buscar ciclistas · mensajes</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" onclick="showFriendsList()">👥 Amigos y mensajes</button>
+    <button class="ab sec" style="margin:0" onclick="showFriendRequests()">📨 Solicitudes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
+    <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()">🔍 Buscar ciclistas</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic">🌎</span><span><b>Comunidad</b><small>Chat global · rodadas grupales · novedades del ciclismo</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" onclick="verRodadas()">🚵 Rodadas grupales</button>
+    <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')">📰 Novedades del ciclismo</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic">🤝</span><span><b>Aportar</b><small>Invitar a pedalear · te doy alojo · recomendaciones</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" onclick="invitarAmigos()">📤 Invita a un amigo</button>
+    <button class="ab sec" style="margin:0;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981" onclick="abrirTeDoyAlojo()">🏡 Te doy alojo</button>
+    <button class="ab sec" style="margin:0" onclick="cv('rec')">💡 Recomendaciones</button>
+  </div>
+</details>
 <h4 style="margin:14px 0 4px;font-size:0.9rem;color:var(--p)">💬 Chat global de la comunidad</h4>
 <div class="cc">
 <div class="cm" id="chm"></div>
@@ -1096,13 +1135,66 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </section>
 
 <section id="v-mac" class="view">
-<div class="section-info"><h4>Taller MacGyver</h4><p>Arregla tu bici con lo que tengas.</p></div>
-<input type="text" id="bm" placeholder="Buscar reparación..." onkeyup="fm()">
-<div id="ml"></div>
-<h3 style="margin-top:15px;font-size:0.95rem">Comparte tu truco</h3>
-<button class="secret-btn" onclick="toggleSecretForm()">Compartir</button>
-<div class="secret-form" id="secretForm"><input type="text" id="repair-title" placeholder="Problema" maxlength="80"><textarea id="repair-desc" rows="2" placeholder="Solución..." maxlength="500"></textarea><button class="ab" onclick="addRepairTip()">Compartir</button></div>
-<div id="repair-tips" style="margin-top:12px"></div>
+<div class="section-info"><h4>🔧 Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
+<!-- REDISEÑO Pantalla 06 (prioridad máxima): fuera los tips improvisados ("arregla con lo que tengas"). Ahora TRIAGE: síntoma -> guía real nivel Park Tool O derivación. Frenos/dirección/horquilla SIEMPRE al mecánico (regla dura del Taller: paso a paso técnico real o nada). -->
+<div style="display:flex;gap:8px;margin:0 0 10px;font-size:0.72rem;color:#9fb3c8"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#35c46a;display:inline-block"></span>Puedes tú</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#ef4d5a;display:inline-block"></span>Al taller (seguridad)</span></div>
+
+<details class="soc-group" open>
+  <summary><span class="soc-ic">🛞</span><span><b>Rueda pinchada <span style="color:#35c46a;font-size:0.7rem">· puedes tú</span></b><small>Cámara/parche + torque de la rueda</small></span></summary>
+  <div style="margin-top:9px;font-size:0.83rem;line-height:1.5;color:#d6deea">
+    <b style="color:var(--p)">Herramientas:</b> 2 desmontables de cubierta, cámara nueva o kit de parches, inflador/bombín.
+    <ol style="margin:8px 0 0;padding-left:20px">
+      <li>Suelta y saca la rueda.</li>
+      <li>Con los desmontables, saca un lado de la cubierta.</li>
+      <li>Saca la cámara. Pasa el dedo por dentro de la cubierta y busca qué la pinchó (espina/vidrio); sácalo.</li>
+      <li>Pon la cámara nueva (o parcha: lija, pega, parche, espera 2 min).</li>
+      <li>Calza la cubierta con las manos, <b>sin pellizcar la cámara</b>, e infla a la presión que dice el flanco.</li>
+      <li>Monta la rueda. Si es eje pasante, aprieta al <b>torque del fabricante</b> (típico 12–15 Nm — mira tu manual).</li>
+    </ol>
+    <a href="https://www.parktool.com/es/blog/repair-help" target="_blank" style="display:inline-block;margin-top:8px;color:var(--p);font-size:0.78rem">📖 Guía completa Park Tool →</a>
+  </div>
+</details>
+
+<details class="soc-group">
+  <summary><span class="soc-ic">⛓️</span><span><b>Se salió la cadena <span style="color:#35c46a;font-size:0.7rem">· puedes tú</span></b><small>Sin herramientas, en 20 segundos</small></span></summary>
+  <div style="margin-top:9px;font-size:0.83rem;line-height:1.5;color:#d6deea">
+    Pon los cambios en el plato y piñón <b>chicos</b>. Apoya la cadena sobre el plato delantero y gira el pedal hacia atrás con la mano, guiándola, hasta que enganche.
+    <p style="margin:8px 0 0;color:#e7a33e">⚠️ Si se sale seguido, es desgaste o ajuste → al taller.</p>
+  </div>
+</details>
+
+<details class="soc-group">
+  <summary><span class="soc-ic">⚙️</span><span><b>Cambios que no entran finos <span style="color:#35c46a;font-size:0.7rem">· ajuste menor</span></b><small>Solo el barrilete — nada más</small></span></summary>
+  <div style="margin-top:9px;font-size:0.83rem;line-height:1.5;color:#d6deea">
+    Con la rueda girando: si cuesta <b>subir</b> de piñón, gira el <b>barrilete</b> (el tornillo por donde entra el cable al cambio) 1/4 de vuelta hacia afuera y prueba. 1/4 al revés si cuesta bajar.
+    <p style="margin:8px 0 0;color:#ef4d5a">🛑 Si salta bajo fuerza, la patilla está doblada, o no mejora → al taller. No fuerces los topes.</p>
+  </div>
+</details>
+
+<details class="soc-group">
+  <summary><span class="soc-ic">🛑</span><span><b>Frenos <span style="color:#ef4d5a;font-size:0.7rem">· al taller</span></b><small>Frenan poco, esponjosos, rozan, pastillas gastadas</small></span></summary>
+  <div style="margin-top:9px;font-size:0.83rem;line-height:1.5">
+    <div style="background:rgba(239,77,90,0.14);border:1px solid #ef4d5a;border-radius:10px;padding:10px 12px;color:#ffd9dd">
+      🛑 <b>Esto no es DIY.</b> Un freno mal armado es un accidente. No se improvisa (nada de nudos ni trucos). Te llevo al taller cercano.
+    </div>
+  </div>
+</details>
+
+<details class="soc-group">
+  <summary><span class="soc-ic">🚴</span><span><b>Dirección / horquilla <span style="color:#ef4d5a;font-size:0.7rem">· al taller</span></b><small>Holgura, ruido o juego al frenar</small></span></summary>
+  <div style="margin-top:9px;font-size:0.83rem;line-height:1.5">
+    <div style="background:rgba(239,77,90,0.14);border:1px solid #ef4d5a;border-radius:10px;padding:10px 12px;color:#ffd9dd">
+      🛑 <b>Siempre al mecánico.</b> Dirección, horquilla y potencia son lo que te sostiene. Cualquier juego o ruido ahí se revisa en taller.
+    </div>
+  </div>
+</details>
+
+<div class="quick-links" style="margin-top:14px">
+  <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank">📍 Buscar taller cercano</a>
+  <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.parktool.com/es/blog/repair-help" target="_blank">📖 Guías Park Tool (Calvin Jones)</a>
+</div>
+<!-- Elementos legacy OCULTOS: el arranque llama rm(MG) y loadRepairTips() y necesitan estos targets; sin ellos crashea el init. Quedan invisibles: ya no mostramos tips improvisados. -->
+<input type="text" id="bm" style="display:none"><div id="ml" style="display:none"></div><div id="repair-tips" style="display:none"></div>
 </section>
 
 <section id="v-gui" class="view">
@@ -1221,7 +1313,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.42'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.46'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -8583,17 +8675,15 @@ const esferaItems=[
  // en toda la app. Sin esto, había que salir con "☰ Menú clásico" para llegar a lo
  // más básico. Van primero, antes que Ajustes/Música/Novedades. Hallazgo real de
  // Inty, revisando la esfera con el mismo criterio del protocolo de excelencia.
+ // REDISEÑO Pantalla 01 (mockup "Rediseño propuesto"): la esfera pasa de 12 a 5 — solo lo
+ // que se toca PEDALEANDO. El 77% de los íconos medía <48px girando; con 5 se agrandan solos
+ // y se elimina la duplicación (4 de 12 ya estaban en header/Inicio). Lo que sale NO se pierde:
+ // sigue en "☰ Menú clásico" y en sus pestañas (Mis viajes/Bitácora/Stats/Logros, Guía, Novedades,
+ // Ajustes). Criterio: Ley de Hick + menos-es-más. Antes: 12 · Ahora: 5.
  {i:_ICO('<circle cx="12" cy="12" r="9"/><path d="M10 8.3l6.2 3.7-6.2 3.7z" fill="currentColor" stroke="none"/>'),t:'Viaje rápido',v:'dash'},
  {i:_ICO('<path d="M12 21s7-7.2 7-12.4A7 7 0 1 0 5 8.6C5 13.8 12 21 12 21z"/><circle cx="12" cy="8.5" r="2.2"/>'),t:'Mapa',v:'map'},
- {i:_ICO('<path d="M4 19.5c3.6 0 3-5.5 7-5.5s3.4-5.5 6.6-5.5"/><circle cx="18.6" cy="6.2" r="2.4"/><circle cx="4" cy="19.5" r="1.5" fill="currentColor" stroke="none"/>'),t:'Mis viajes',v:'trips'},
- {i:_ICO('<rect x="5" y="3" width="14" height="18" rx="2.2"/><path d="M9 3v18"/><path d="M12.2 8.5h4M12.2 12h4"/><path d="M6.6 6.5h.9M6.6 10h.9M6.6 13.5h.9"/>'),t:'Bitácora',v:'diario'},
  {i:_ICO('<path d="M15.4 3.6a4.2 4.2 0 0 0-5.5 5.5l-6 6a1.6 1.6 0 0 0 0 2.3l1.7 1.7a1.6 1.6 0 0 0 2.3 0l6-6a4.2 4.2 0 0 0 5.5-5.5l-2.9 2.9-2.6-2.6z"/>'),t:'Taller',v:'mac'},
- {i:_ICO('<path d="M3 6.6l6-2.4v13.2l-6 2.4z"/><path d="M9 4.2l6 2.4v13.2L9 17.4z"/><path d="M15 6.6l6-2.4v13.2l-6 2.4z"/>'),t:'Guía',v:'gui'},
- {i:_ICO('<path d="M4 20V13M9 20v-4M14 20v-8M19 20V8"/><path d="M4 9.5l5 2.5 5-4.5 5-3"/>'),t:'Stats',v:'stats'},
- {i:_ICO('<circle cx="12" cy="14.5" r="5.5"/><path d="M8.8 9.6L6.5 3.5h11l-2.3 6.1"/><path d="M12 12.4l.9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3z" fill="currentColor" stroke="none"/>'),t:'Logros',fn:'mostrarLogrosComunidad'},
  {i:_ICO('<circle cx="6.5" cy="17.5" r="2.6"/><circle cx="17" cy="15.4" r="2.6"/><path d="M9.1 17.5V6.6l10.5-2.1v10.9"/><path d="M9.1 10.2l10.5-2.1"/>'),t:'Música',v:'musica'},
- {i:_ICO('<path d="M4 10.2v3.6a1 1 0 0 0 1 1h2.4l6.6 3.8V5.4L7.4 9.2H5a1 1 0 0 0-1 1z"/><path d="M17.4 9.2a4.4 4.4 0 0 1 0 5.6"/><path d="M20.2 6.6a8 8 0 0 1 0 10.8"/>'),t:'Novedades',v:'novedades'},
- {i:_ICO('<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="2.3"/><path d="M12 9.7V5.4M14.9 13.6l3.6 2.4M9.1 13.6l-3.6 2.4"/><path d="M12 3.6v1.4M17.9 6.1l-1 1M20.4 12h-1.4M17.9 17.9l-1-1M12 20.4V19M6.1 17.9l1-1M3.6 12H5M6.1 6.1l1 1"/>'),t:'Ajustes',v:'ajustes'},
  {i:_ICO('<path d="M12 3.4L21 19.4H3z"/><path d="M12 9.4v4.2M12 17h.01"/>'),t:'SOS',fn:'enviarSOS'}
 ];
 let esEls=[], esRotX=-0.2, esRotY=0, esVelX=0, esVelY=0.004, esDrag=false, esLast=null, esMoved=0, esRAF=null, esBound=false, esCanvas=null, esPairs=[];
