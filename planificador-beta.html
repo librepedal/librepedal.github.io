@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Libre Pedal · Planificar ruta (beta)</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  :root{ --naranja:#fc4c02; --verde:#1f9d55; --tinta:#0f1720; --panel:rgba(255,255,255,.97); --linea:#e6e9ee; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--tinta)}
+  #map{position:absolute;inset:0}
+  /* Panel superior: Desde / Hasta */
+  .topbar{position:absolute;top:0;left:0;right:0;z-index:5;padding:10px;display:flex;flex-direction:column;gap:8px;
+    background:linear-gradient(180deg,rgba(0,0,0,.18),transparent);pointer-events:none}
+  .card{background:var(--panel);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.18);pointer-events:auto;overflow:hidden}
+  .campo{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--linea)}
+  .campo:last-child{border-bottom:0}
+  .punto{width:14px;height:14px;border-radius:50%;flex:none}
+  .punto.desde{background:var(--verde)} .punto.hasta{background:var(--naranja)}
+  .campo input{border:0;outline:0;font-size:1rem;width:100%;background:transparent;color:var(--tinta)}
+  .campo input::placeholder{color:#8a94a3}
+  .mini{font-size:.72rem;color:#8a94a3;padding:0 14px 8px}
+  .sug{background:#fff;max-height:180px;overflow-y:auto}
+  .sug div{padding:11px 14px;border-top:1px solid var(--linea);font-size:.9rem;cursor:pointer}
+  .sug div:active{background:#f3f5f8}
+  /* Botonera inferior */
+  .abajo{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:12px;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+  .resultado{background:var(--panel);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:12px 16px;
+    display:none;pointer-events:auto;align-items:center;justify-content:space-between;gap:12px}
+  .resultado .dato{font-weight:800;font-size:1.25rem}
+  .resultado .dato small{font-weight:600;font-size:.7rem;color:#8a94a3;display:block}
+  .btns{display:flex;gap:10px;pointer-events:auto}
+  button.acc{flex:1;border:0;border-radius:14px;padding:15px;font-size:1rem;font-weight:800;color:#fff;
+    background:var(--naranja);box-shadow:0 4px 14px rgba(252,76,2,.35);cursor:pointer}
+  button.acc:disabled{background:#c7ccd3;box-shadow:none}
+  button.ghost{flex:none;background:var(--panel);color:var(--tinta);box-shadow:0 4px 14px rgba(0,0,0,.14);padding:15px 18px}
+  .hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4;background:rgba(15,23,32,.86);
+    color:#fff;padding:10px 16px;border-radius:999px;font-size:.85rem;display:none;pointer-events:none}
+  .fabloc{position:absolute;right:14px;bottom:150px;z-index:5;width:48px;height:48px;border-radius:50%;border:0;
+    background:#fff;box-shadow:0 3px 12px rgba(0,0,0,.2);font-size:1.2rem;cursor:pointer;pointer-events:auto}
+  .beta{position:absolute;top:calc(env(safe-area-inset-top,0) + 4px);right:10px;z-index:6;background:var(--naranja);
+    color:#fff;font-size:.6rem;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.05em}
+  .volver{position:absolute;top:calc(env(safe-area-inset-top,0) + 4px);left:10px;z-index:6;background:var(--panel);
+    color:var(--tinta);font-size:.8rem;font-weight:700;padding:8px 12px;border-radius:999px;box-shadow:0 3px 12px rgba(0,0,0,.18);
+    text-decoration:none;pointer-events:auto}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<a class="volver" href="/">← App</a>
+<span class="beta">BETA</span>
+
+<div class="topbar">
+  <div class="card">
+    <div class="campo">
+      <span class="punto desde"></span>
+      <input id="fDesde" value="Mi ubicación" readonly>
+    </div>
+    <div class="campo">
+      <span class="punto hasta"></span>
+      <input id="fHasta" placeholder="¿A dónde vamos? Busca o toca el mapa" autocomplete="off">
+    </div>
+    <div class="sug" id="sug"></div>
+  </div>
+  <div class="mini" id="mini">Tu inicio es tu ubicación actual. Elige el destino: escríbelo o toca el mapa.</div>
+</div>
+
+<button class="fabloc" id="btnLoc" title="Centrar en mi ubicación">📍</button>
+<div class="hint" id="hint">Toca el mapa para poner el destino</div>
+
+<div class="abajo">
+  <div class="resultado" id="resultado">
+    <div class="dato" id="dKm">— <small>Distancia</small></div>
+    <div class="dato" id="dTiempo">— <small>Tiempo en bici</small></div>
+  </div>
+  <div class="btns">
+    <button class="acc" id="btnRuta" disabled>Trazar ruta</button>
+    <button class="acc ghost" id="btnLimpiar">Limpiar</button>
+  </div>
+</div>
+
+<script>
+const NARANJA='#fc4c02', VERDE='#1f9d55';
+const OSRM='https://router.project-osrm.org/route/v1/cycling/';   // mismo que usa la app
+const NOMINATIM='https://nominatim.openstreetmap.org/search';
+const ESTILO='https://tiles.openfreemap.org/styles/liberty';     // LP_ESTILO_CALLES
+
+let desde=null, hasta=null, mDesde=null, mHasta=null, tocarMapa=false;
+
+const map=new maplibregl.Map({container:'map', style:ESTILO, center:[-71.54,-35.43], zoom:5});
+map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
+
+// --- Ubicación de inicio (Desde = Mi ubicación por defecto) ---
+function irAMiUbicacion(centrar){
+  if(!navigator.geolocation){ return; }
+  navigator.geolocation.getCurrentPosition(function(p){
+    desde={lon:p.coords.longitude, lat:p.coords.latitude};
+    ponMarcador('desde', desde);
+    if(centrar) map.easeTo({center:[desde.lon,desde.lat], zoom:13});
+    revisarBoton();
+  }, function(){
+    // GPS negado/sin señal: que igual pueda planificar tocando el mapa
+    document.getElementById('fDesde').value='Toca el mapa para tu inicio';
+    document.getElementById('mini').textContent='No pudimos ubicarte. Toca el mapa para poner tu inicio (verde) y luego el destino (naranja).';
+  }, {enableHighAccuracy:true, timeout:8000});
+}
+map.on('load', function(){ irAMiUbicacion(true); });
+document.getElementById('btnLoc').onclick=function(){ irAMiUbicacion(true); };
+
+// --- Marcadores ---
+function ponMarcador(cual, c){
+  const color = cual==='desde'?VERDE:NARANJA;
+  let m = cual==='desde'?mDesde:mHasta;
+  if(m) m.setLngLat([c.lon,c.lat]);
+  else{
+    m=new maplibregl.Marker({color:color, draggable:true}).setLngLat([c.lon,c.lat]).addTo(map);
+    m.on('dragend', function(){ const l=m.getLngLat(); if(cual==='desde') desde={lon:l.lng,lat:l.lat}; else hasta={lon:l.lng,lat:l.lat}; revisarBoton(); });
+    if(cual==='desde') mDesde=m; else mHasta=m;
+  }
+}
+
+// --- Tocar el mapa pone el DESTINO (Hasta) ---
+document.getElementById('fHasta').addEventListener('focus', function(){
+  tocarMapa=true; mostrarHint(true);
+});
+map.on('click', function(e){
+  const c={lon:e.lngLat.lng, lat:e.lngLat.lat};
+  if(!desde){            // sin GPS: el primer toque es el INICIO
+    desde=c; ponMarcador('desde', desde);
+    document.getElementById('fDesde').value='Punto en el mapa';
+    document.getElementById('mini').textContent='Inicio puesto ✅. Ahora toca el destino en el mapa, o búscalo arriba.';
+  } else {              // ya hay inicio: el toque es el DESTINO
+    hasta=c; ponMarcador('hasta', hasta);
+    document.getElementById('fHasta').value='Punto en el mapa';
+    document.getElementById('fHasta').blur();
+  }
+  mostrarHint(false); cerrarSug(); revisarBoton();
+});
+function mostrarHint(v){ document.getElementById('hint').style.display=v?'block':'none'; }
+
+// --- Buscar destino (Nominatim) ---
+let tBusca=null;
+document.getElementById('fHasta').addEventListener('input', function(e){
+  const q=e.target.value.trim();
+  clearTimeout(tBusca);
+  if(q.length<3){ cerrarSug(); return; }
+  tBusca=setTimeout(function(){ buscar(q); }, 550);
+});
+async function buscar(q){
+  try{
+    const r=await fetch(NOMINATIM+'?format=json&limit=5&countrycodes=cl&q='+encodeURIComponent(q));
+    const d=await r.json();
+    const sug=document.getElementById('sug'); sug.innerHTML='';
+    d.forEach(function(x){
+      const el=document.createElement('div');
+      el.textContent=x.display_name;
+      el.onclick=function(){
+        hasta={lon:parseFloat(x.lon), lat:parseFloat(x.lat)};
+        ponMarcador('hasta', hasta);
+        document.getElementById('fHasta').value=x.display_name.split(',')[0];
+        map.easeTo({center:[hasta.lon,hasta.lat], zoom:13});
+        cerrarSug(); mostrarHint(false); revisarBoton();
+      };
+      sug.appendChild(el);
+    });
+  }catch(err){ /* geocode falló: el usuario puede tocar el mapa */ }
+}
+function cerrarSug(){ document.getElementById('sug').innerHTML=''; }
+
+// --- Trazar ruta (OSRM, perfil ciclista) ---
+function revisarBoton(){ document.getElementById('btnRuta').disabled = !(desde && hasta); }
+document.getElementById('btnRuta').onclick=async function(){
+  if(!(desde&&hasta)) return;
+  const b=this; b.disabled=true; b.textContent='Trazando…';
+  try{
+    const url=OSRM+desde.lon+','+desde.lat+';'+hasta.lon+','+hasta.lat+'?overview=full&geometries=geojson';
+    const r=await fetch(url); const d=await r.json();
+    if(!d.routes || !d.routes.length){ throw new Error('sin ruta'); }
+    const ruta=d.routes[0];
+    pintarRuta(ruta.geometry);
+    const km=(ruta.distance/1000);
+    const min=Math.round(ruta.duration/60);
+    document.getElementById('dKm').innerHTML=km.toFixed(1)+' km<small>Distancia</small>';
+    document.getElementById('dTiempo').innerHTML=(min>=60?(Math.floor(min/60)+'h '+(min%60)+'m'):(min+' min'))+'<small>Tiempo en bici</small>';
+    document.getElementById('resultado').style.display='flex';
+    // encuadrar la ruta
+    const cs=ruta.geometry.coordinates;
+    const bb=cs.reduce(function(a,c){ return [Math.min(a[0],c[0]),Math.min(a[1],c[1]),Math.max(a[2],c[0]),Math.max(a[3],c[1])]; },[180,90,-180,-90]);
+    map.fitBounds([[bb[0],bb[1]],[bb[2],bb[3]]],{padding:{top:150,bottom:170,left:40,right:40}});
+  }catch(err){
+    // Degradación con gracia: línea recta + distancia aproximada
+    lineaRecta(); const km=distancia(desde,hasta);
+    document.getElementById('dKm').innerHTML='~'+km.toFixed(1)+' km<small>en línea recta</small>';
+    document.getElementById('dTiempo').innerHTML='—<small>ruta no disponible</small>';
+    document.getElementById('resultado').style.display='flex';
+  }
+  b.textContent='Trazar ruta'; b.disabled=false;
+};
+function pintarRuta(geo){
+  if(map.getSource('ruta')){ map.getSource('ruta').setData({type:'Feature',geometry:geo}); return; }
+  map.addSource('ruta',{type:'geojson',data:{type:'Feature',geometry:geo}});
+  map.addLayer({id:'ruta-l',type:'line',source:'ruta',
+    layout:{'line-join':'round','line-cap':'round'},
+    paint:{'line-color':NARANJA,'line-width':6,'line-opacity':.9}},
+    map.getStyle().layers.find(function(l){return l.type==='symbol';})?.id);
+}
+function lineaRecta(){
+  const geo={type:'LineString',coordinates:[[desde.lon,desde.lat],[hasta.lon,hasta.lat]]};
+  pintarRuta(geo);
+}
+function distancia(a,b){ // Haversine km
+  const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLon=(b.lon-a.lon)*Math.PI/180;
+  const s=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
+}
+
+// --- Limpiar ---
+document.getElementById('btnLimpiar').onclick=function(){
+  hasta=null; if(mHasta){ mHasta.remove(); mHasta=null; }
+  if(map.getLayer('ruta-l')) map.removeLayer('ruta-l');
+  if(map.getSource('ruta')) map.removeSource('ruta');
+  document.getElementById('fHasta').value='';
+  document.getElementById('resultado').style.display='none';
+  cerrarSug(); revisarBoton();
+};
+</script>
+</body>
+</html>

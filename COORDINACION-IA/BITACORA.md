@@ -4,6 +4,23 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.51 — 2026-07-29 — Claude (sesión Thunderobot) · Planificador de rutas Desde→Hasta (beta integrada)
+
+Integrado el planificador (feature #8 del QC del mapa). Aplica la ley "lo mejor de lo mejor":
+copia el flujo de Komoot/Google (Desde→Hasta) y REUTILIZA lo que la app YA tiene (OSRM perfil
+ciclista, geocode Nominatim, estilo openfreemap liberty) — no reinventa nada.
+
+- Página `planificador-beta.html` (nueva, standalone): mapa maplibre; "Desde" = Mi ubicación (GPS)
+  por defecto; "Hasta" = tocar el mapa o buscar; "Trazar ruta" → OSRM cycling → dibuja ruta + km +
+  tiempo en bici. Pines arrastrables. Botón "← App" para volver. URL: /planificador-beta
+- Entrada en la app: chip "🧭 Trazar ruta" junto a "🗺️ Planifica mi viaje" (sugerencias de Pistero),
+  onclick → /planificador-beta. Cambio ADITIVO, no toca flujos existentes.
+- Robustez: si OSRM cae → línea recta + distancia aprox; si GPS negado → el 1er toque pone el inicio;
+  debounce 550ms en Nominatim.
+- VERIFICADO desde el Thunderobot (no en teléfono): OSRM cycling ruta real 6.6km/10min, Nominatim OK,
+  maplibre 4.7.1 + liberty 200, node --check OK, chip 1 coincidencia exacta, deploy 200 en /planificador-beta.
+  PENDIENTE: prueba en teléfono real de Inty (tacto/pines) antes de darlo por 100%.
+
 ## v7.50 — 2026-07-29 — Claude (sesión Lenovo) · Rediseño de la pantalla del Mapa (SPEC Thunderobot)
 
 Implementado el `SPEC-REDISENO-MAPA-2026-07-29.md` (QC de Inty, refs Google Maps/Waze/Strava/Komoot).

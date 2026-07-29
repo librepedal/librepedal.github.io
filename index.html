@@ -1097,7 +1097,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 <section id="v-pistero" class="view">
 <div class="section-info"><h4>🤖 Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
 <div id="pisteroChips">
-  <button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')">🗺️ Planifica mi viaje</button>
+  <button class="pchip" onclick="location.href='/planificador-beta'">🧭 Trazar ruta</button><button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')">🗺️ Planifica mi viaje</button>
   <button class="pchip" onclick="pisteroSugerencia('Se me soltó la cadena en plena ruta, ¿cómo la arreglo?')">🔧 Arregla mi bici</button>
   <button class="pchip" onclick="pisteroSugerencia('¿Dónde puedo alojar cerca de mi ruta?')">🏨 ¿Dónde alojo?</button>
   <button class="pchip" onclick="pisteroSugerencia('Recomiéndame una ruta bonita para pedalear hoy')">✨ Ruta de hoy</button>
@@ -1328,7 +1328,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.50'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.51'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
