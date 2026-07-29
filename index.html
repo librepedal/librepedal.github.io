@@ -211,10 +211,11 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
    navegador móvil al aparecer/desaparecer no deje ese vacío negro abajo. */
 #map-all-routes,#map-hostel-select{height:280px;width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222}
 #map{width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222;
-  height:calc(100dvh - 400px); min-height:240px; max-height:none; background:#1a1f2e}
-@supports not (height: 100dvh){ #map{ height:calc(100vh - 400px); } }
-/* Los 400px son medidos, no inventados: header + chips de capas (313px hasta el borde
-   superior del mapa) + barra inferior (69px) + respiro. Verificado a 375 y a 320 px. */
+  height:calc(100dvh - 350px); min-height:240px; max-height:none; background:#e9eef3}
+@supports not (height: 100dvh){ #map{ height:calc(100vh - 350px); } }
+/* Offset medido: header + section-info + barra de capas + barra inferior (69px) + respiro.
+   Rediseño 2026-07-29: las 4 capas pasaron a UN botón "Capas" (la barra ya no envuelve en
+   varias filas), así que la barra encoge ~50px y el mapa recupera ese alto (el mapa manda). */
 #map-hostel-select.show{display:block}
 .cd{background:#0f1728;padding:14px;border-radius:14px;margin-bottom:10px;border:0.5px solid rgba(255,255,255,0.07)}
 #sugerencias-dest{position:absolute;top:100%;left:0;right:0;z-index:1500;background:#0d1426;border:1px solid var(--p);border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;display:none;box-shadow:0 8px 18px rgba(0,0,0,0.5)}
@@ -349,7 +350,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
    que es el mínimo para tocar con el dedo sin fallar. */
 .mapcapas{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 8px}
 .capachip{flex:0 0 auto;min-height:48px;display:inline-flex;align-items:center;background:#131c2f;border:0.5px solid rgba(255,255,255,0.10);color:#8b97ad;border-radius:999px;padding:8px 13px;font-size:0.78rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
-.capachip.on{background:rgba(18,179,166,0.15);border-color:#12b3a6;color:#5fe0d3}
+/* Rediseño 2026-07-29: acento único naranja de marca (antes teal suelto). */
+.capachip.on{background:rgba(252,76,2,0.16);border-color:#fc4c02;color:#ff9d6b}
+/* Hoja compacta de capas detrás del botón "Capas" (despeja el mapa, estilo Google Maps · Layers). */
+.capas-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:600;flex-direction:column;gap:6px;background:rgba(13,18,32,0.98);border:0.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px;box-shadow:0 8px 26px rgba(0,0,0,0.5);min-width:210px}
+.capas-panel.show{display:flex}
 .capachip:active{transform:scale(.96)}
 /* Estilo del mapa (calles/topo/satélite): control flotante en el mapa, no un botón suelto
    que se confunde con las capas. Es un ajuste de VISTA, no una capa de datos. */
@@ -363,9 +368,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
    45x9 px, y elementFromPoint sobre la palabra devolvia .map-recenter-btn: o sea, TOCAR LA
    PALABRA REPORTAR RECENTRABA EL MAPA. Un ciclista que ve un peligro y toca el unico texto
    que dice reportar, no reporta nada. Se sube el boton para dejar aire real entre ambos. */
-#fabReportar{position:absolute;right:14px;bottom:104px;width:58px;height:58px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+/* Rediseño 2026-07-29: FAB uniforme 52px, ícono de línea (sin la etiqueta "REPORTAR" que
+   se dibujaba fuera del botón y pisaba el de recentrar). Reportar es el primario naranja y va
+   ABAJO de la columna (lo más alcanzable con el pulgar); recentrar va arriba. */
+#fabReportar{position:absolute;right:14px;bottom:20px;width:52px;height:52px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
 #fabReportar:active{transform:scale(0.94)}
-#fabReportar span{position:absolute;bottom:-17px;font-size:0.55rem;font-weight:700;color:#ffb089;letter-spacing:0.5px}
 #pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
 #pisteroPeek::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.24) 100%);pointer-events:none}
 #pisteroPeek.peek{right:12px}
@@ -441,7 +448,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-recenter-btn{position:absolute;right:14px;bottom:210px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:48px;height:48px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn{position:absolute;right:14px;bottom:266px;z-index:550;background:rgba(15,20,35,0.92);color:#7d8ba0;border:2px solid rgba(255,255,255,0.2);width:46px;height:46px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn.on{color:var(--p);border-color:var(--p);background:rgba(252,76,2,0.16)}
-.map-recenter-btn{position:absolute;right:14px;bottom:24px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:48px;height:48px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.map-recenter-btn{position:absolute;right:14px;bottom:80px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:52px;height:52px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-end-btn{width:100%;margin-top:8px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:10px 12px;border-radius:12px;font-size:0.85rem;font-weight:800;cursor:pointer}
 .nav-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(10,15,29,0.95);padding:12px;border-top:2px solid var(--p)}
 .nav-eta{display:flex;justify-content:space-around}
@@ -465,7 +472,11 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 #micBtn{bottom:80px;background:linear-gradient(135deg,#7c3aed,#9b59b6)}
 #micBtn.listening{background:linear-gradient(135deg,#ff3b30,#ff6600);animation:micPulse 1s infinite}
 @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.6)}50%{box-shadow:0 0 0 12px rgba(255,59,48,0)}}
-#pisteroBubble{position:fixed;bottom:148px;right:14px;max-width:230px;background:rgba(0,0,0,0.92);border:2px solid var(--p);color:#fff;padding:9px 12px;border-radius:14px 14px 2px 14px;font-size:0.82rem;font-weight:600;z-index:2100;opacity:0;transform:translateY(8px);transition:0.25s;pointer-events:none;line-height:1.25}
+/* Rediseño mapa 2026-07-29 (SPEC): antes era un GLOBO grande naranja arriba-derecha que
+   duplicaba lo que Pistero decía y tapaba el mapa. Ahora es una FRANJA FINA tipo subtítulo,
+   centrada abajo: transcripción en vivo + respuesta, sin ruido. pointer-events:none deja
+   tocar los FAB que quedan debajo. */
+#pisteroBubble{position:fixed;bottom:76px;left:12px;right:12px;max-width:560px;margin:0 auto;background:rgba(10,15,29,0.9);border:0.5px solid rgba(255,255,255,0.12);border-left:2px solid var(--p);color:#eaf1ff;padding:8px 13px;border-radius:10px;font-size:0.8rem;font-weight:600;z-index:2100;opacity:0;transform:translateY(6px);transition:0.22s;pointer-events:none;line-height:1.3;text-align:left;box-shadow:0 4px 16px rgba(0,0,0,0.42);backdrop-filter:blur(4px)}
 #pisteroBubble.show{opacity:1;transform:translateY(0)}
 #tutorialOverlay{position:fixed;inset:0;z-index:7000;display:none;pointer-events:none}
 #tutorialOverlay.on{display:block}
@@ -805,7 +816,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   <div class="pausa-badge" id="dashBlePower" style="display:none"></div>
   <div class="gps-signal-badge" id="segmentoBadge" style="display:none;background:rgba(255,215,0,0.14);color:var(--g);border-color:rgba(255,215,0,0.4);animation:none"></div>
 </div>
-<button class="ab" id="btnGPSLibre" style="margin-top:8px" onclick="toggleGPS()">📍 GPS</button>
+<button class="ab sec" id="btnGPSLibre" style="margin:8px auto 0;width:auto;min-height:38px;padding:8px 16px;font-size:0.78rem;display:block" onclick="toggleGPS()">📍 Grabar un paseo</button>
 <div class="stats-grid">
   <div class="stat-card"><div class="stat-value" id="dt">0.0</div><div class="stat-label">Km totales</div></div>
   <div class="stat-card"><div class="stat-value" id="cl">0</div><div class="stat-label">Calorías</div></div>
@@ -856,6 +867,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
     <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
     <button class="ab sec" style="margin:0" id="vozNeuralBtn" onclick="toggleVozNeural()"><i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: ON</button>
     <button class="ab sec" style="margin:0" id="generoBtn" onclick="toggleGenero()"><i class="fas fa-person"></i> Guía: Pistero</button>
+    <button class="ab sec" style="margin:0" id="btnCharla" onclick="toggleCharla()">🗣️ Pistero habla: Normal</button>
     <button class="ab sec" style="margin:0" onclick="mostrarIdiomaRuta()">🛣️ El idioma de la ruta</button>
   </div>
 </details>
@@ -971,17 +983,20 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-map" class="view">
 <div class="section-info"><h4>Mapa</h4><p>Tu mundo ciclista en un solo mapa: la comunidad y los reportes de la ruta. Toca una capa para mostrarla u ocultarla.</p></div>
-<div class="mapcapas">
-  <button class="capachip" id="capaCiclistas" onclick="toggleCapaCiclistas(this)">🚴 Ciclistas</button>
-  <button class="capachip on" id="capaPeligros" onclick="toggleCapaReportes('peligros',this)">⚠️ Peligros y controles</button>
-  <button class="capachip on" id="capaPuntos" onclick="toggleCapaReportes('puntos',this)">🏪 Servicios</button>
-  <button class="capachip on" id="capaMiradores" onclick="toggleCapaReportes('miradores',this)">📸 Miradores</button>
+<div class="mapcapas" style="position:relative">
+  <button class="capachip" id="btnCapasToggle" onclick="toggleCapasPanel()"><i class="fas fa-layer-group"></i> Capas</button>
+  <div id="capasPanel" class="capas-panel">
+    <button class="capachip" id="capaCiclistas" onclick="toggleCapaCiclistas(this)">🚴 Ciclistas</button>
+    <button class="capachip on" id="capaPeligros" onclick="toggleCapaReportes('peligros',this)">⚠️ Peligros y controles</button>
+    <button class="capachip on" id="capaPuntos" onclick="toggleCapaReportes('puntos',this)">🏪 Servicios</button>
+    <button class="capachip on" id="capaMiradores" onclick="toggleCapaReportes('miradores',this)">📸 Miradores</button>
+  </div>
 </div>
 <div style="position:relative">
   <div id="map"></div>
   <button id="btnCapaMapa" class="map-estilo-btn" onclick="toggleCapaMapa()" title="Cambiar el estilo del mapa (calles / topográfico / satélite)">🏔️</button>
-  <button id="fabReportar" onclick="abrirAbanicoReporte()" title="Reportar algo en el mapa">📍<span>REPORTAR</span></button>
-  <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación">🎯</button>
+  <button id="fabReportar" onclick="abrirAbanicoReporte()" title="Reportar algo en el mapa"><i class="fas fa-plus"></i></button>
+  <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación"><i class="fas fa-location-crosshairs"></i></button>
 </div>
 <div id="reportes-comunidad"></div>
 </section>
@@ -1313,7 +1328,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.46'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.50'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1623,6 +1638,20 @@ function saludoBienvenida(nombre){
   return saludosBienvenida[i].replace(/NOMBRE/g, nombre||'ciclista');
 }
 let frasesUsadas = {lento:[], normal:[], rapido:[], parado:[], motivacional:[], profunda:[], ciudad:[], subida:[], bajada:[]};
+// EL USUARIO ELIGE CUÁNTO HABLA PISTERO (feedback Inty). Escala TODAS las cadencias de charla.
+// callado = habla lo justo (cadencia x2.6) · normal = como siempre · hablador = más seguido (x0.55).
+// No afecta lo esencial (saludo, pre-vuelo, control/SOS): esos van igual.
+let pisteroCharla = (function(){ try{ return localStorage.getItem('lp_charla')||'normal'; }catch(e){ return 'normal'; } })();
+function _charlaMult(){ return pisteroCharla==='callado' ? 2.6 : pisteroCharla==='hablador' ? 0.55 : 1; }
+function _charlaLabel(){ return pisteroCharla==='callado'?'Callado':pisteroCharla==='hablador'?'Hablador':'Normal'; }
+function updateCharlaBtn(){ var b=document.getElementById('btnCharla'); if(b) b.innerHTML='🗣️ Pistero habla: '+_charlaLabel(); }
+function toggleCharla(){
+  pisteroCharla = pisteroCharla==='normal' ? 'hablador' : pisteroCharla==='hablador' ? 'callado' : 'normal';
+  try{ localStorage.setItem('lp_charla', pisteroCharla); }catch(e){}
+  updateCharlaBtn();
+  try{ if(typeof h==='function'){ h(pisteroCharla==='callado'?'Voy a hablar solo lo justo.' : pisteroCharla==='hablador'?'Buena, te acompaño más seguido.' : 'Listo, ritmo normal.'); } }catch(e){}
+}
+try{ if(document.readyState!=='loading'){ setTimeout(updateCharlaBtn,300); } else { document.addEventListener('DOMContentLoaded', function(){ setTimeout(updateCharlaBtn,300); }); } }catch(e){}
 let lastFraseTime = 0;
 // El diálogo de "parado" (revisar la bici, tomar agua...) necesita SU PROPIO reloj,
 // igual que ciudad/carretera lo tienen (tFraseCiudad/kmUltimaFrase). Antes reusaba
@@ -3609,8 +3638,10 @@ function solicitarPermisosEsenciales(){
 }
 function _actualizarBtnGPS(){
   const btn=document.getElementById('btnGPSLibre'); if(!btn) return;
-  if(ig){ btn.innerText='⏹️ Detener GPS'; btn.style.background='#dc2626'; btn.style.color='#fff'; }
-  else { btn.innerText='📍 Iniciar GPS'; btn.style.background='#10b981'; btn.style.color='#000'; }
+  /* Rediseño 2026-07-29: sin verde loud (compite con "Iniciar navegación" y rompe el acento único).
+     Reposo = secundario tonal; grabando = tinte rojo compacto (afordancia clara de "toca para parar"). */
+  if(ig){ btn.innerText='⏹️ Detener grabación'; btn.style.background='rgba(220,38,38,0.18)'; btn.style.borderColor='rgba(220,38,38,0.5)'; btn.style.color='#ff9d9d'; }
+  else { btn.innerText='📍 Grabar un paseo'; btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; }
 }
 // silencioso: cuando el GPS se prende SOLO (al iniciar sesión, para grabar sin que
 // tengas que acordarte de apretar un botón — ver solicitarPermisosEsenciales), no
@@ -3636,14 +3667,14 @@ function toggleGPS(silencioso){
     iniciarDeteccionCaidas();
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
-      if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
+      if(btn){ btn.innerText="⏹️ Detener grabación"; btn.style.background="rgba(220,38,38,0.18)"; btn.style.borderColor="rgba(220,38,38,0.5)"; btn.style.color="#ff9d9d"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
       if(!silencioso) _prevueloPistero(true);
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
-      ig=true; if(btn){ btn.innerText="⏹️ Detener GPS"; btn.style.background="#dc2626"; btn.style.color="#fff"; }
+      ig=true; if(btn){ btn.innerText="⏹️ Detener grabación"; btn.style.background="rgba(220,38,38,0.18)"; btn.style.borderColor="rgba(220,38,38,0.5)"; btn.style.color="#ff9d9d"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
@@ -3653,7 +3684,7 @@ function toggleGPS(silencioso){
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
     ig=false; lpWakeLock.disable(); detenerDeteccionCaidas(); _detenerCronometroDash();
     if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
-    if(btn){ btn.innerText="📍 Iniciar GPS"; btn.style.background="#10b981"; btn.style.color="#000"; }
+    if(btn){ btn.innerText="📍 Grabar un paseo"; btn.style.background=""; btn.style.borderColor=""; btn.style.color=""; }
     if(currentRoute.length>1){ autoGuardarRuta(false,false); }
     sincronizarStats();
     if(cu&&!ghostMode) db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true});
@@ -3683,12 +3714,13 @@ function toggleSaver(){
 function bromasDelCamino(sp){
   if(!vozActiva) return;
   if(vozOcupada()||vozCola.length) return;
+  const _cm=(typeof _charlaMult==='function')?_charlaMult():1; // "cuánto habla Pistero" (Ajustes): escala la cadencia
   if(sp===0){
-    if(Date.now()-lastFraseParadoTime>=1200000){ const _fr=obtenerFraseUnica('parado'); if(_fr){ h(_fr); lastFraseParadoTime=Date.now(); } } // parado: cada 20 min
+    if(Date.now()-lastFraseParadoTime>=1200000*_cm){ const _fr=obtenerFraseUnica('parado'); if(_fr){ h(_fr); lastFraseParadoTime=Date.now(); } } // parado
   } else if(zonaActual==='ciudad'){
-    if(Date.now()-tFraseCiudad>=240000){ const _fr=(Math.random()<0.25)?obtenerFraseUnica('profunda'):obtenerFraseUnica('ciudad'); if(_fr){ h(_fr); tFraseCiudad=Date.now(); } } // ciudad: cada 4 min
+    if(Date.now()-tFraseCiudad>=240000*_cm){ const _fr=(Math.random()<0.25)?obtenerFraseUnica('profunda'):obtenerFraseUnica('ciudad'); if(_fr){ h(_fr); tFraseCiudad=Date.now(); } } // ciudad
   } else {
-    if(us.di-kmUltimaFrase>=1.5){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera: cada 1.5 km
+    if(us.di-kmUltimaFrase>=1.5*_cm){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera
   }
   /* Auditoria 2026-07-20: el banco `motivacional` estaba escrito y traducido a 4 paises
      (cl/ar/mx/es/co) y NADIE lo pedia nunca -> frases que el usuario jamas iba a oir.
@@ -4454,7 +4486,11 @@ function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); documen
    igual de prolijo que las apps líderes del rubro. Se deja una capa de compatibilidad
    (mlMarker/mlPolyline + parches en mp.setView/fitBounds/removeLayer) para que el
    resto de las funciones seguidoras del mapa casi no cambien de forma. */
-const LP_ESTILO_CALLES='https://tiles.openfreemap.org/styles/dark';
+/* Rediseño mapa 2026-07-29 (SPEC): el default era `/styles/dark` — ninguna app de rutas
+   arranca en negro (Strava/Komoot/Google abren en claro). Se cambia a `liberty`, el estilo
+   de calles CLARO y legible de OpenFreeMap. El oscuro/satélite/topo quedan como alternadores
+   de `btnCapaMapa`, no como default. */
+const LP_ESTILO_CALLES='https://tiles.openfreemap.org/styles/liberty';
 const LP_ESTILO_TOPO={version:8,sources:{topo:{type:'raster',tiles:['https://a.tile.opentopomap.org/{z}/{x}/{y}.png','https://b.tile.opentopomap.org/{z}/{x}/{y}.png','https://c.tile.opentopomap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:17,attribution:'© OpenTopoMap'}},layers:[{id:'topo',type:'raster',source:'topo'}]};
 const LP_ESTILO_SAT={version:8,sources:{sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'© Esri, Maxar, Earthstar Geographics'}},layers:[{id:'sat',type:'raster',source:'sat'}]};
 function mlLatLngBounds(arr){
@@ -4577,6 +4613,24 @@ async function toggleAhorroGPS(){
     }
   }
   h(gpsAhorro?'Ahorro de GPS activado. Va a gastar menos batería, con un poco menos de precisión.':'Ahorro de GPS desactivado. Vuelvo a la máxima precisión.');
+}
+/* Rediseño 2026-07-29 (SPEC): las 4 capas viven detrás de UN botón "Capas" que abre una
+   hoja compacta. Despeja el mapa. Los toggles (toggleCapaCiclistas/toggleCapaReportes) no
+   cambian: solo se muestran/ocultan aquí. Se cierra al tocar fuera. */
+function toggleCapasPanel(){
+  var p=document.getElementById('capasPanel'); if(!p) return;
+  var abrir=!p.classList.contains('show');
+  p.classList.toggle('show', abrir);
+  var b=document.getElementById('btnCapasToggle'); if(b) b.classList.toggle('on', abrir);
+  if(abrir){
+    setTimeout(function(){
+      document.addEventListener('click', function cerrar(e){
+        if(!p.contains(e.target) && e.target.id!=='btnCapasToggle' && !(b&&b.contains(e.target))){
+          p.classList.remove('show'); if(b) b.classList.remove('on'); document.removeEventListener('click', cerrar);
+        }
+      });
+    }, 0);
+  }
 }
 function _estiloDeCapa(t){ return t==='topo'?LP_ESTILO_TOPO:t==='sat'?LP_ESTILO_SAT:LP_ESTILO_CALLES; }
 /* Control flotante: muestra el ícono del estilo AL QUE saltarás al tocarlo (calles→topo→sat→calles). */
@@ -8878,8 +8932,10 @@ function construirEsfera(){
   const wrap=document.getElementById('esferaWrap'); if(!wrap) return; wrap.innerHTML='';
   const n=esferaItems.length;
   esEls=esferaItems.map(function(it,i){
-    const y=1-(i/(n-1))*2, rad=Math.sqrt(Math.max(0,1-y*y)), theta=Math.PI*(3-Math.sqrt(5))*i;
-    const x=Math.cos(theta)*rad, z=Math.sin(theta)*rad;
+    // ANILLO (tras el rediseño 12->5): en círculo parejo (no esfera 3D dispersa), para que
+    // los pocos íconos se vean grandes, del mismo tamaño y alrededor del logo — nunca encima.
+    const ang=-Math.PI/2 + (i/n)*Math.PI*2;
+    const x=Math.cos(ang), y=Math.sin(ang), z=0;
     const el=document.createElement('div'); el.className='es-icon';
     el.innerHTML='<div class="es-ico">'+it.i+'</div><div class="es-lbl">'+it.t+'</div>';
     el.addEventListener('click',function(){ if(esMoved>12) return; cerrarEsfera(); if(it.v) cv(it.v); else if(it.fn && typeof window[it.fn]==='function') window[it.fn](); });
@@ -8925,14 +8981,24 @@ function esLoop(){
   const W=wrap.clientWidth,H=wrap.clientHeight, R=Math.min(W,H)*0.4*intro, cx=W/2, cy=H/2;
   if(!esDrag){ esRotY+=esVelY; esRotX+=esVelX; esVelX*=0.94; }
   const sY=Math.sin(esRotY),cY=Math.cos(esRotY),sX=Math.sin(esRotX),cX=Math.cos(esRotX);
-  const proj=[];
+  const proj=[]; const ring=esEls.length<=7; const RR=Math.min(W,H)*0.38*intro; const nR=esEls.length;
   esEls.forEach(function(p,i){
-    let x=p.x*cY - p.z*sY, z=p.x*sY + p.z*cY, y=p.y;
-    let y2=y*cX - z*sX, z2=y*sX + z*cX;
-    const sc=(z2+1.7)/2.7, sx=cx+x*R, sy=cy+y2*R;
-    proj[i]={sx:sx,sy:sy,sc:sc};
-    p.el.style.transform='translate(-50%,-50%) translate('+sx.toFixed(1)+'px,'+sy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
-    p.el.style.opacity=((0.3+sc*0.7)*Math.min(1,intro*1.4)).toFixed(2); p.el.style.zIndex=Math.round(sc*100);
+    let sx,sy,sc;
+    if(ring){
+      // Anillo parejo que gira suave con esRotY (o con el dedo). Todos del mismo tamaño, alrededor del logo.
+      const ang=-Math.PI/2 + (i/nR)*Math.PI*2 + esRotY;
+      sx=cx+Math.cos(ang)*RR; sy=cy+Math.sin(ang)*RR*0.92; sc=1;
+      proj[i]={sx:sx,sy:sy,sc:sc};
+      p.el.style.transform='translate(-50%,-50%) translate('+sx.toFixed(1)+'px,'+sy.toFixed(1)+'px) scale(1)';
+      p.el.style.opacity=Math.min(1,intro*1.4).toFixed(2); p.el.style.zIndex=60;
+    } else {
+      let x=p.x*cY - p.z*sY, z=p.x*sY + p.z*cY, y=p.y;
+      let y2=y*cX - z*sX, z2=y*sX + z*cX;
+      sc=(z2+1.7)/2.7; sx=cx+x*R; sy=cy+y2*R;
+      proj[i]={sx:sx,sy:sy,sc:sc};
+      p.el.style.transform='translate(-50%,-50%) translate('+sx.toFixed(1)+'px,'+sy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
+      p.el.style.opacity=((0.3+sc*0.7)*Math.min(1,intro*1.4)).toFixed(2); p.el.style.zIndex=Math.round(sc*100);
+    }
   });
   if(esCanvas){
     if(esCanvas.width!==W||esCanvas.height!==H){ esCanvas.width=W; esCanvas.height=H; }
@@ -9626,20 +9692,14 @@ function abrirAbanicoReporte(){
    Reusa climaDeZona()+wmoTexto() que ya existen. Todo guardado: si no hay clima o
    ubicación, dice el pre-vuelo sin el dato, nunca falla. Chileno (revisa, no revisá). */
 function _prevueloPistero(bgCapable){
+  // Pre-vuelo MÍNIMO (feedback Inty): al iniciar el viaje, solo lo justo y necesario, SEGÚN EL MODO.
+  // Nada de clima ni "¡a rodar!" (el clima queda a pedido). Bici -> revisa la bici; motorizado -> documentos.
   var grabando = bgCapable ? ' Voy grabando tu ruta, aunque apagues la pantalla.' : ' Voy grabando tu ruta.';
-  var base = 'Antes de salir, revisa la bici.';
-  try{
-    var yo = (typeof currentUserLocation!=='undefined' && currentUserLocation) || (typeof us!=='undefined' && us.la!=null ? {lat:us.la,lon:us.lo} : null);
-    if(yo && typeof climaDeZona==='function' && typeof wmoTexto==='function'){
-      climaDeZona(yo.lat, yo.lon).then(function(w){
-        var extra='';
-        try{ if(w && w.current && w.current.temperature_2m!=null){ extra=' Hay '+Math.round(w.current.temperature_2m)+' grados y está '+wmoTexto(w.current.weather_code)+'.'; } }catch(e){}
-        h(base+extra+' ¡A rodar!'+grabando);
-      }).catch(function(){ h(base+' ¡A rodar!'+grabando); });
-      return;
-    }
-  }catch(e){}
-  h(base+' ¡A rodar!'+grabando);
+  var m = (typeof actividadTipo!=='undefined') ? actividadTipo : 'ciclismo';
+  var base = (m==='moto')     ? '¿Llevas tus documentos? ¿No se te olvida nada?'
+           : (m==='trekking') ? 'Revisa tu mochila y tu calzado.'
+           :                    'Revisa tu bici.';
+  h(base + grabando);
 }
 /* =============== FIN PRE-VUELO DE PISTERO =============== */
 /* ================= INTRO DE PISTERO — PRIMERA VEZ (v7.32) =================

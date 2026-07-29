@@ -4,6 +4,57 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v7.50 — 2026-07-29 — Claude (sesión Lenovo) · Rediseño de la pantalla del Mapa (SPEC Thunderobot)
+
+Implementado el `SPEC-REDISENO-MAPA-2026-07-29.md` (QC de Inty, refs Google Maps/Waze/Strava/Komoot).
+Principio del SPEC: **un solo mapa, un solo acento naranja `#fc4c02`, controles chicos, el mapa manda.**
+Todo verificado en el navegador (estilos computados + estilo maplibre cargado; el pane no se podía
+capturar en pantalla, se validó por JS).
+
+**1. Mapa claro por defecto (P1 — la causa real del "mapa negro").** `LP_ESTILO_CALLES` apuntaba a
+`openfreemap/styles/dark`: el default arrancaba en NEGRO. Cambiado a `styles/liberty` (calles claras,
+legibles). Confirmado: capa `background` del estilo = `#f8f4f0`. El oscuro/topo/satélite quedan como
+alternadores de `btnCapaMapa`. Además el fondo del `#map` mientras cargan tiles pasó de `#1a1f2e` a
+`#e9eef3` (ya no parpadea negro).
+
+**2. Botón GPS degradado, no orfanado (P1).** `btnGPSLibre` es el ÚNICO control visible para iniciar
+Y **detener** el paseo libre (startQuickTrip exige destino; no hay otro stop en la UI). Ocultarlo con
+`display:none` habría dejado al ciclista sin cómo parar la grabación → regresión. Se leyó el SPEC como
+"ocultar como acción **grande**": se **degradó** de botón verde grande full-width a **secundario compacto**
+(tonal). Grabando = tinte rojo suave "⏹️ Detener grabación" (afordancia clara). Se quitó el verde loud
+en los 4 sitios que lo pintaban. La lógica `toggleGPS` intacta.
+
+**3. Acento único naranja (P2).** Chips de capa `.capachip.on`: de teal `#12b3a6` → naranja `#fc4c02`.
+GPS ya no verde. Los colores semánticos (peligro/servicio/mirador) quedan solo en las categorías de reporte.
+
+**4. FAB uniformes 52px, íconos de línea, columna ordenada (P2).** `#fabReportar` de 58px+etiqueta
+"REPORTAR" (que se dibujaba fuera y pisaba el recentrar) → 52px, ícono de línea `fa-plus`, sin etiqueta.
+`map-recenter-btn` → 52px, `fa-location-crosshairs`. Columna abajo-derecha: **recentrar arriba (80px),
+Reportar abajo (20px, naranja primario, lo más alcanzable con el pulgar)**. Verificado: recentrar por
+encima de reportar, ambos a `right:24px`.
+
+**5. Capas detrás de UN botón (P2).** Las 4 capas (Ciclistas/Peligros/Servicios/Miradores) ya no ocupan
+una barra que envolvía en varias filas: ahora viven en una **hoja compacta** que abre el botón `🗂️ Capas`
+(`toggleCapasPanel`, cierra al tocar fuera). Los toggles no cambiaron de lógica. La barra encoge ~50px y
+el mapa recupera ese alto (offset `100dvh - 400px` → `- 350px`): mapa +50px, hueco inferior 110→60px.
+
+**6. Voz sin globo (P3).** `#pisteroBubble` era un GLOBO grande naranja arriba-derecha que duplicaba el
+texto y tapaba el mapa. Ahora es una **franja fina tipo subtítulo** centrada abajo (`pointer-events:none`
+deja tocar los FAB por debajo). Solo CSS: cero riesgo en la lógica de voz/avisos.
+
+**7. Planificar Desde→Hasta (P3).** Ya satisfecho por diseño: la pantalla de Inicio lidera con
+**Desde (Origen automático) → Hasta (destino)** y deja "¿Vas a varias paradas?" como secundario — exactamente
+lo que pide el SPEC. No requirió cambio de código.
+
+**PENDIENTE (diferido a propósito, NO enviado sin verificar):**
+- **Reportar sobre el MISMO mapa (P2).** `reportarEnRuta` instancia un 2º mapa (`reporte-mapa-manual-inner`,
+  ~línea 5160). Reusar el mapa principal + pin arrastrable es cambio de **lógica GPS-dependiente**; el SPEC
+  mismo pide "verificar bien en navegador" y necesita prueba de **envío de reporte con GPS real en el
+  teléfono**. Se deja como siguiente paso para no shippear cirugía a medio verificar. Thunderobot puede
+  hacer QC del resto en librepedal.cl mientras tanto.
+
+---
+
 ## v7.17 — 2026-07-20 — Claude (bugs reportados por Inty en uso real)
 
 Inty reportó una tanda de problemas usando la app de verdad. Los cinco arreglados:
