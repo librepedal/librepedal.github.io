@@ -1,0 +1,39 @@
+name: Deploy a Cloudflare (librepedal.cl)
+
+# Publica librepedal.cl en cada push a main, SIN depender del Lenovo.
+# Reutiliza el deploy-seguro.sh del repo (carpeta limpia + guardián de secretos).
+# El token de Cloudflare (cuenta 024bc de LibrePedal) va como SECRETO del repo:
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+#     CLOUDFLARE_API_TOKEN = <token de la cuenta LibrePedal, permiso Pages:Edit>
+#     CLOUDFLARE_ACCOUNT_ID = 024bc85be759cbf54b131202a0a1d183   (opcional, ya es el default)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Publicar con deploy-seguro
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CF_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN no está configurado todavía."
+            echo "Agrégalo en Settings -> Secrets and variables -> Actions y vuelve a correr. Saltando el deploy."
+            exit 0
+          fi
+          # deploy-seguro.sh lee el token/cuenta desde MI-CLOUDFLARE.txt (no lo copia al deploy)
+          printf 'TOKEN = %s\nACCOUNT_ID = %s\n' "$CF_TOKEN" "$CF_ACCOUNT" > MI-CLOUDFLARE.txt
+          chmod +x deploy-seguro.sh || true
+          bash deploy-seguro.sh
+          rm -f MI-CLOUDFLARE.txt
