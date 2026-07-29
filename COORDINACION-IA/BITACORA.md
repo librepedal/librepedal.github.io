@@ -4,6 +4,15 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## INFRA — 2026-07-29 — Claude (sesión Windows/inty405) · CI de deploy en GitHub Actions + rotación del token Cloudflare
+
+No es cambio de app (sin bump de versión). Cambio de **infraestructura de despliegue** — leer si vas a publicar:
+
+- **Deploy ahora es automático.** `deploy-cloudflare.yml` publica librepedal.cl en cada `git push origin main` (corre `deploy-seguro.sh` en el runner). Ya no hace falta `wrangler pages deploy` a mano: **push → web en vivo en ~1 min**. Verificado con deploy real (`✨ Deployment complete`). Detalle completo en `LEEME.md` → "Cómo se publica".
+- **Se agregaron 2 secrets al repo:** `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` (024bc…). El ACCOUNT_ID es OBLIGATORIO pese a que el comentario del workflow diga "opcional" (si va vacío, `deploy-seguro.sh` con `set -euo pipefail` muere sin mensaje claro tras "✓ completo").
+- 🔴 **TOKEN CLOUDFLARE ROTADO.** El token viejo (`cfut_znlvtb…`, comprometido en la fuga del 2026-07-20) fue **REVOCADO**. Se generó uno nuevo desde la cuenta correcta (**Intyrivera@gmail.com**, dueña de 024bc; inty405@gmail.com NO tiene acceso a 024bc). Se actualizó el secret y el `MI-CLOUDFLARE.txt` **de la máquina Windows**. ⚠️ **La copia local de MI-CLOUDFLARE.txt en Thunderobot/Lenovo sigue con el token muerto** → deploy local fallará; usa `git push` (CI) o pídele a Inty el token nuevo. Nunca lo escribas aquí (repo público).
+- Se saldó el pendiente "rotar tokens comprometidos" del incidente 2026-07-20 (al menos el de Cloudflare). Quedó también eliminado un token mal-scopeado creado por error bajo inty405.
+
 ## v7.51 — 2026-07-29 — Claude (sesión Thunderobot) · Planificador de rutas Desde→Hasta (beta integrada)
 
 Integrado el planificador (feature #8 del QC del mapa). Aplica la ley "lo mejor de lo mejor":

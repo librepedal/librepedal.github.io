@@ -123,6 +123,14 @@ Tres lugares deben coincidir SIEMPRE:
 Sube el número en cada cambio (la app se auto-repara comparando con `version.txt`). Cada versión = un commit `vX.YZ: descripción`.
 
 ## 🚀 Cómo se publica (IMPORTANTE — la web NO es git-connected)
+
+> ⚡ **ACTUALIZACIÓN 2026-07-29 (sesión Windows/inty405): AHORA HAY CI AUTOMÁTICO.**
+> El workflow `.github/workflows/deploy-cloudflare.yml` **despliega librepedal.cl solo en cada `git push origin main`** (y `workflow_dispatch`), corriendo `deploy-seguro.sh` en el runner de GitHub. Ya **NO hace falta el `wrangler pages deploy` manual**: con hacer `git push` la web se actualiza sola en ~1 min. Verificado con deploy real. El wrangler manual (abajo) sigue sirviendo como respaldo si el CI falla.
+> - Requiere 2 secrets en el repo (ya configurados): `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`=024bc85be759cbf54b131202a0a1d183. **OJO:** el ACCOUNT_ID que el workflow marca "opcional" es en realidad OBLIGATORIO — sin él `deploy-seguro.sh` (`set -euo pipefail`) muere en seco al no encontrar el account.
+>
+> 🔴 **TOKEN DE CLOUDFLARE ROTADO — LEER SI DEPLOYAS LOCAL DESDE THUNDEROBOT/LENOVO.**
+> El token viejo (empezaba `cfut_znlvtb…`) fue **REVOCADO** el 2026-07-29 (estaba comprometido desde la fuga del 2026-07-20). Tu `MI-CLOUDFLARE.txt` local probablemente tiene el token muerto → **`wrangler`/`deploy-seguro.sh` local fallará con auth error**. Soluciones: (a) lo más simple, **solo `git push` y deja que el CI publique** (no depende de tu token local); o (b) pídele a Inty el token nuevo para actualizar tu `MI-CLOUDFLARE.txt`. **NUNCA escribas el token en COORDINACION-IA** — esta carpeta se sube al repo PÚBLICO.
+
 - **Web (librepedal.cl):** deploy DIRECTO por wrangler, NO por push:
   ```
   wrangler pages deploy <CARPETA_LIMPIA> --project-name=librepedal --branch=main
