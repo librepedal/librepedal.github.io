@@ -1,3 +1,5 @@
+> 📌 **NUEVO (2026-07-29, sesión Thunderobot):** ver `COORDINACION-IA/SPEC-REDISENO-MAPA-2026-07-29.md` — pase de control de calidad del MAPA (feedback real de Inty: mapa claro por defecto, quitar botón GPS, un solo sistema de botones, reportar sobre el mismo mapa, voz de Pistero sin globo, planificar Desde→Hasta). Listo para ejecutar+deployar.
+
 # ✅ Pendientes — Libre Pedal
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado **2026-07-20**,
