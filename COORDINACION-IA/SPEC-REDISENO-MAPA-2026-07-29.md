@@ -43,3 +43,18 @@ El mapa manda; los controles se hacen pequeños. No copiar apps — adoptar lo q
 
 ## Notas
 - No tocar control de acceso / `firestore.rules` (solo Inty). Probar de verdad en el Browser pane antes de cerrar cada punto. El artifact visual acompaña este spec como referencia de estética.
+
+---
+
+## 🔩 Anclas de código exactas (v7.46, `index.html`) — para implementar sin adivinar
+
+- **Acento real de la app = `#fc4c02`** (naranja Strava; ya usado en `#fabReportar`, ~línea 366). El rediseño se alinea a ESE naranja, no a otro. Cualquier "otro color" en botones de acción → normalizar a `#fc4c02`.
+- **Lo "genérico" es la clase `.ab`** (~línea 236: `background:#131c2f`, azul oscuro, `border-radius:12px`, full-width). La usan casi todos los botones → se ven todos iguales y genéricos. Definir jerarquía: **primario** (naranja `#fc4c02`), **secundario** (tonal), **texto** (sin fondo). No todo `.ab`.
+- **Botón GPS que sobra:** `#btnGPSLibre` (HTML ~línea 808) usa clase `.ab` (📍 GPS). Ocultar con `#btnGPSLibre{display:none}` — la lógica `toggleGPS` queda intacta (se llama en otros sitios, p.ej. sobrevuelo/pre-vuelo). Dejar solo `gpsSignalBadge` (insignia) + recentrar (`_mapaRecentrar`, 🎯).
+- **FAB estándar ya correcto:** `#fabReportar` (~línea 366): 58px, círculo, `#fc4c02`. Usarlo como patrón del FAB (si se ve grande, bajar a ~52px). Íconos de línea, no emoji.
+- **Mapa principal:** `L.map(...)` + `tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png')` (~línea 4379) = OSM estándar (CLARO). Si se percibe "negro": revisar (a) filtro CSS oscuro sobre `#map`, (b) el fondo del contenedor mientras cargan tiles. El default debe verse claro/legible; el oscuro solo como opción de `btnCapaMapa`.
+- **2º mapa al reportar:** `reportarEnRuta` (~línea 5108/9589) instancia mapas propios (`l.Map(` ~5144/5577/5603). Reusar el mapa principal (por defecto ubicación GPS; pin arrastrable para otro punto). No crear instancia nueva.
+- **Globo de voz:** `pisteroBubble` (~líneas 468/623/2046). Dejar solo texto en pantalla; suprimir/atenuar el globo, franja fina para la transcripción en vivo.
+- **Planificar:** `Planifica mi viaje` (~línea 1085) + `Origen → Destino` (~línea 3979). Modo directo Desde(=Mi ubicación)→Hasta(tocar mapa/buscar), sobre el mapa principal.
+
+**Sesión Thunderobot 2026-07-29:** yo (Thunderobot) NO edito `index.html` para no chocar con el candado; la implementación + deploy + prueba en dispositivo real la hace la sesión del Lenovo. Quedo disponible para QC del resultado en librepedal.cl.
