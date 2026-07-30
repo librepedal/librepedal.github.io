@@ -85,7 +85,12 @@ button.es-dato{cursor:pointer}
 .cd,.hostel-card,.rec-card,.route-history-item,.repair-tip,.global-comment,.gi,.chat-user-item,.nearby-user,.hostel-option,.added-dest-item{border:0.5px solid rgba(255,255,255,0.09)!important;background:linear-gradient(180deg,#111c30,#0c1422)!important;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,0.34)}
 .trip-card{border:1px solid rgba(252,76,2,0.4)!important;background:linear-gradient(160deg,rgba(18,26,44,0.62),rgba(9,13,24,0.7))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 /* FASE 3: el encabezado de cada pantalla deja de gritar naranja. Es contexto, no acción. */
-.section-info{background:linear-gradient(180deg,#111c30,#0c1422)!important;border:0.5px solid rgba(255,255,255,0.09)!important;border-left:3px solid var(--p)!important;border-radius:16px}
+.section-info{background:transparent!important;border:none!important;border-bottom:0.5px solid rgba(255,255,255,0.10)!important;border-radius:0!important;padding:9px 2px 10px!important;margin-bottom:12px}
+.section-info h4{display:flex;align-items:center;gap:8px;font-size:1rem}
+.section-info p{display:none;margin:8px 0 0;color:#9fb3c8}
+.section-info.open p{display:block}
+.section-info .vinfo{margin-left:auto;width:22px;height:22px;line-height:1;border-radius:50%;border:1px solid rgba(255,255,255,0.20);background:none;color:#8b97ad;font-size:0.72rem;font-style:italic;cursor:pointer;flex:0 0 auto;padding:0}
+.section-info.open .vinfo{border-color:var(--p);color:var(--p)}
 /* Nocturno Pro: los números se leen por jerarquía, no por glow de neón. */
 .stat-value,.speed-value{text-shadow:none}
 /* Chips: el borde naranja los hacía competir con la acción. Hairline neutro. */
@@ -1360,7 +1365,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.72'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.73'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -9805,6 +9810,7 @@ function _pisteroIntroPrimeraVez(nombre){
 /* =============== FIN INTRO DE PISTERO =============== */
 </script>
 <script>/* Fix teclado Pistero (v7.58): mantiene el input visible cuando sube el teclado */
+(function(){function slim(){document.querySelectorAll('.section-info').forEach(function(si){var h=si.querySelector('h4'),p=si.querySelector('p');if(!h||!p||si.querySelector('.vinfo'))return;var b=document.createElement('button');b.className='vinfo';b.type='button';b.setAttribute('aria-label','Ver descripción');b.textContent='i';b.addEventListener('click',function(e){e.stopPropagation();si.classList.toggle('open');});h.appendChild(b);});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',slim);else slim();})();
 (function(){var vp=window.visualViewport;if(!vp)return;function fix(){var v=document.getElementById("v-pistero");if(!v)return;var kb=(window.innerHeight-vp.height)>120;if(v.classList.contains("on")&&kb){v.style.height=vp.height+"px";v.style.overflow="hidden";var inp=document.getElementById("pisteroInput");if(inp)inp.scrollIntoView({block:"end"});}else{v.style.height="";v.style.overflow="";}}vp.addEventListener("resize",fix);document.addEventListener("focusin",function(e){if(e.target&&e.target.id==="pisteroInput")setTimeout(fix,300);});document.addEventListener("focusout",function(e){if(e.target&&e.target.id==="pisteroInput")setTimeout(function(){var v=document.getElementById("v-pistero");if(v){v.style.height="";v.style.overflow="";}},150);});})();</script>
 <script>/* Social v7.60: notificaciones en el header del desplegable Amigos */
 (function(){function go(){var src=document.getElementById("solicBadge"),hdr=document.getElementById("solicBadgeHdr");if(!src||!hdr)return;function sync(){hdr.textContent=src.textContent||"";hdr.style.display=src.style.display;}try{new MutationObserver(sync).observe(src,{attributes:true,childList:true,subtree:true,characterData:true});}catch(e){}sync();}if(document.readyState!=="loading")go();else document.addEventListener("DOMContentLoaded",go);})();</script>
