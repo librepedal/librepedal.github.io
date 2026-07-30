@@ -1342,7 +1342,7 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.66'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.67'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2184,8 +2184,8 @@ function _bocaIniciarCiclo(){
   })();
 }
 function _bocaDetener(){ clearTimeout(window._bocaTO); _bocaAplicar(0); }
-function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); _bocaIniciarCiclo(); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
-function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }
+function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); try{ if(typeof _pausarManosLibres==='function') _pausarManosLibres(); }catch(e){} _bocaIniciarCiclo(); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
+function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} try{ if(typeof _reanudarManosLibres==='function') _reanudarManosLibres(); }catch(e){} }
 
 /* ===== REPRODUCTOR LIBRE PEDAL: radios gratis + música propia, con auto-volumen cuando Pistero habla ===== */
 const lpMusic=(function(){
@@ -7235,7 +7235,7 @@ let _reconocimientoContinuo=null, _manosLibresPausado=false, _tocandoNativoConti
 // _flBuffer y solo cerramos la idea tras _FL_FIN_IDEA ms sin voz nueva. El reloj es
 // INDEPENDIENTE del micro: aunque se reinicie, la idea no se corta.
 let _flBuffer='', _flSilTimer=null;
-const _FL_FIN_IDEA=1500;
+const _FL_FIN_IDEA=3000;
 function _esSilencioCmd(t){ const n=normalizar(t); return /^(detente|para|ya)\.?$/.test(n) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(n); }
 function _flCerrarIdea(){ clearTimeout(_flSilTimer); _flSilTimer=null; const idea=_flBuffer.trim(); _flBuffer=''; if(idea) _procesarFraseManosLibres(idea); }
 // Auto-apagado: si en manos libres nadie le habla por un buen rato, el micrófono NO
