@@ -1342,7 +1342,7 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.67'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.68'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -7419,11 +7419,30 @@ function beepMic(){ try{ const ac=window._lpAC||(window._lpAC=new (window.AudioC
 function updateMicBtn(){ const on=(typeof micOn!=='undefined'&&micOn)||(typeof manosLibresOn!=='undefined'&&manosLibresOn); const b=document.getElementById('micBtn'); if(b) b.classList.toggle('listening',on); const e=document.getElementById('esMic'); if(e) e.classList.toggle('listening',micOn); }
 function contactosSOS(){ try{ return JSON.parse(localStorage.getItem('lp_sos_'+cu))||[]; }catch(e){ return []; } }
 function guardarContactosSOS(arr){ try{ localStorage.setItem('lp_sos_'+cu, JSON.stringify(arr)); }catch(e){} }
+function _telMarcar(num){ try{ const n=String(num).replace(/[^0-9+]/g,''); if(!n) return false; const tel=n.charAt(0)==='+'?n:('+'+n); window.location.href='tel:'+tel; return true; }catch(e){ return false; } }
+// Llama a un contacto por su nombre (o a un numero suelto / a emergencias).
+function pisteroLlamar(objetivo){
+  const orig=(objetivo||'').trim(); const q=normalizar(orig).replace(/^(a la|al|a|la|el)\s+/,'').trim();
+  if(!q){ h('¿A quien llamo? Dime el nombre de un contacto guardado.'); return; }
+  // Numero suelto: 'llama al 133', 'marca 912345678'
+  if(/^[0-9+][0-9+\s]{2,}$/.test(orig)){ h('Marcando '+orig+'. Confirma la llamada en el telefono.'); _telMarcar(orig); return; }
+  // Emergencias en Chile
+  const EMERG=[{re:/(emergencia|ambulancia|samu|urgencia)/,num:'131',nom:'emergencias (SAMU)'},{re:/(bombero|incendio)/,num:'132',nom:'bomberos'},{re:/(carabinero|policia|paco)/,num:'133',nom:'carabineros'}];
+  for(let i=0;i<EMERG.length;i++){ if(EMERG[i].re.test(q)){ h('Llamando a '+EMERG[i].nom+'. Confirma la llamada en el telefono.'); _telMarcar(EMERG[i].num); return; } }
+  const cs=contactosSOS();
+  if(!cs.length){ h('Todavia no tienes contactos guardados. Agregalos en Contactos de emergencia y podre llamarlos por voz.'); try{ gestionarContactosSOS(); }catch(e){} return; }
+  let c=cs.find(function(x){ return normalizar(x.nombre)===q; })
+      || cs.find(function(x){ return normalizar(x.nombre).split(/\s+/).some(function(p){ return p===q; }); })
+      || cs.find(function(x){ return normalizar(x.nombre).indexOf(q)>=0 || q.indexOf(normalizar(x.nombre))>=0; });
+  if(!c){ h('No tengo a "'+orig+'" en tus contactos. Revisa el nombre o agregalo en Contactos de emergencia.'); try{ gestionarContactosSOS(); }catch(e){} return; }
+  h('Llamando a '+c.nombre+'. Confirma la llamada en el telefono.'); _telMarcar(c.fono);
+}
+function llamarContactoSOS(i){ const c=contactosSOS()[i]; if(c){ h('Llamando a '+c.nombre+'. Confirma la llamada en el telefono.'); _telMarcar(c.fono); } }
 function gestionarContactosSOS(){
   document.getElementById('modalTitle').innerText='🆘 Contactos de emergencia';
   const cs=contactosSOS();
   let html='<p style="color:#9fb3c8;font-size:0.82rem;margin-top:0">A estos contactos les llega tu SOS con tu ubicación. Pon el número con código de país (ej: 56912345678).</p>';
-  html+=cs.map(function(x,i){ return '<div style="display:flex;gap:8px;align-items:center;background:var(--gl);padding:8px 10px;border-radius:10px;margin-bottom:6px"><div style="flex:1"><strong>'+escapeHTML(x.nombre)+'</strong><div style="font-size:0.75rem;color:#8aa">'+escapeHTML(x.fono)+'</div></div><button class="route-btn delete" onclick="borrarContactoSOS('+i+')">Quitar</button></div>'; }).join('');
+  html+=cs.map(function(x,i){ return '<div style="display:flex;gap:8px;align-items:center;background:var(--gl);padding:8px 10px;border-radius:10px;margin-bottom:6px"><div style="flex:1"><strong>'+escapeHTML(x.nombre)+'</strong><div style="font-size:0.75rem;color:#8aa">'+escapeHTML(x.fono)+'</div></div><button class="route-btn" style="background:#16a34a;color:#fff" onclick="llamarContactoSOS('+i+')">📞 Llamar</button><button class="route-btn delete" onclick="borrarContactoSOS('+i+')">Quitar</button></div>'; }).join('');
   html+='<div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin-top:8px"><input id="sosNombre" placeholder="Nombre del contacto"><input id="sosFono" placeholder="Teléfono con código país (569...)"><button class="ab" onclick="agregarContactoSOS()">➕ Agregar contacto</button></div>';
   document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
@@ -9235,6 +9254,8 @@ function handleVoiceCommand(raw){
   // taco, accidente): van directo al mapa comunitario, sin pasar por la IA
   // general ni por ningún formulario — para eso es "manos libres" de verdad.
   { const _catRep=_detectarReporteVoz(t); if(_catRep){ reportarPorVozRapido(_catRep).then(h); return; } }
+  // Llamar por voz: "Pistero, llama a mama" / "marcale a Juan" / "llama a emergencias".
+  { const _ll=t.match(/^(?:pistero[,:]?\s*)?(?:llama(?:me|le|r|los)?|marca(?:le|r)?|telefonea(?:le|r)?)\s+(?:a\s+la|al|a)\s+(.+)/); if(_ll && _ll[1]){ pisteroLlamar(_ll[1]); return; } }
   if(/esfera|men[uú]( principal)?|lanzador|aplicaciones|todas las apps/.test(t)){ abrirEsfera(); h('Aquí está la esfera de aplicaciones.'); return; }
   // (me)? y una ventana de hasta 20 caracteres (en vez de una lista fija de
   // artículos) para que "guárdame el viaje" y "guarda ESTA ruta" también calcen —
