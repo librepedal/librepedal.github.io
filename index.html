@@ -494,15 +494,30 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
    siempre (estilo Kimi). Morado=reposo, naranja=escuchando, azul=Pistero habla.
    Abajo-centro, chico, semitransparente en reposo: no pisa los FAB de la derecha.
    Se oculta al escribir (lp-typing) para no tapar inputs de chat/Pistero. */
-#micBtn{bottom:78px;left:50%;right:auto;transform:translateX(-50%);width:52px;height:52px;background:#141d33;border:2px solid rgba(255,255,255,.12);opacity:.9;padding:0;overflow:visible}
+/* Orbe Pistero v7.75 (Opcion C premium): anillo multicolor girando (conic) + halo que
+   respira + ecualizador que aparece al escuchar. Naranja=escuchando, azul=Pistero habla. */
+#micBtn{bottom:78px;left:50%;right:auto;transform:translateX(-50%);width:54px;height:54px;background:radial-gradient(circle at 50% 42%,#1b2740,#0d1422);border:none;opacity:.95;padding:0;overflow:visible;box-shadow:0 6px 18px rgba(0,0,0,.5)}
 #micBtn i{display:none}
-#micBtn svg{width:34px;height:29px;display:block}
-#micBtn::before{content:'';position:absolute;left:50%;top:50%;width:66px;height:66px;transform:translate(-50%,-50%);border-radius:50%;border:2px solid transparent;border-top-color:#9b6dff;border-right-color:#9b6dff;animation:orbSpin 3.4s linear infinite;pointer-events:none}
-#micBtn.listening{opacity:1;border-color:rgba(252,76,2,.5)}
-#micBtn.listening::before{border-top-color:#fc4c02;border-right-color:#fc4c02;animation-duration:1.15s}
-body.pistero-hablando #micBtn::before{border-top-color:#2fb0ff;border-right-color:#2fb0ff;animation-duration:1.5s}
+#micBtn::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#fc4c02,#9b6dff,#2fb0ff,#fc4c02);animation:orbSpin 3.6s linear infinite;-webkit-mask:radial-gradient(farthest-side,#0000 calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,#0000 calc(100% - 3px),#000 calc(100% - 3px));pointer-events:none}
+#micBtn::after{content:'';position:absolute;inset:0;border-radius:50%;animation:orbHalo 3s ease-in-out infinite;pointer-events:none}
+@keyframes orbSpin{to{transform:rotate(360deg)}}
+@keyframes orbHalo{0%,100%{box-shadow:0 0 10px 1px rgba(124,58,237,.28)}50%{box-shadow:0 0 17px 3px rgba(124,58,237,.10)}}
+#micBtn .orb-emblem{position:relative;z-index:3;display:flex;align-items:center;justify-content:center;transition:transform .2s}
+#micBtn .orb-emblem svg{width:30px;height:25px;display:block}
+#micBtn .orb-eq{position:absolute;left:0;right:0;bottom:8px;z-index:4;display:none;justify-content:center;align-items:flex-end;gap:2px;height:12px}
+#micBtn .orb-eq i{display:block;width:2.5px;border-radius:2px;background:#ffe0cc;height:3px;animation:orbEq .8s ease-in-out infinite}
+#micBtn .orb-eq i:nth-child(2){animation-delay:.15s}#micBtn .orb-eq i:nth-child(3){animation-delay:.3s}#micBtn .orb-eq i:nth-child(4){animation-delay:.45s}
+@keyframes orbEq{0%,100%{height:3px}50%{height:11px}}
+#micBtn.listening{opacity:1}
+#micBtn.listening::before{animation-duration:1.3s}
+#micBtn.listening::after{animation:orbHaloOn 1.3s ease-in-out infinite}
+@keyframes orbHaloOn{0%,100%{box-shadow:0 0 12px 2px rgba(252,76,2,.45)}50%{box-shadow:0 0 20px 5px rgba(252,76,2,.15)}}
+#micBtn.listening .orb-emblem{transform:translateY(-3px) scale(.82)}
+#micBtn.listening .orb-eq{display:flex}
+body.pistero-hablando #micBtn::after{animation:orbHaloBlue 1.6s ease-in-out infinite}
+body.pistero-hablando #micBtn::before{animation-duration:2.2s}
+@keyframes orbHaloBlue{0%,100%{box-shadow:0 0 14px 2px rgba(47,176,255,.5)}50%{box-shadow:0 0 22px 5px rgba(47,176,255,.15)}}
 body.lp-typing #micBtn{opacity:0;pointer-events:none}
-@keyframes orbSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 .nav-manoslibres-btn{display:none!important}
 body[data-vista="pistero"] #micBtn{display:none}
 /* Rediseño mapa 2026-07-29 (SPEC): antes era un GLOBO grande naranja arriba-derecha que
@@ -658,7 +673,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 </div>
 </form>
 
-<button class="fab" id="micBtn" onclick="toggleManosLibres()" title="Pistero — escucha manos libres" aria-label="Pistero, asistente de voz"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></button>
+<button class="fab" id="micBtn" onclick="toggleManosLibres()" title="Pistero — escucha manos libres" aria-label="Pistero, asistente de voz"><span class="orb-emblem"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></span><span class="orb-eq"><i></i><i></i><i></i><i></i></span></button>
 <div id="saver" onclick="toggleSaver()">
   <div class="saver-spd"><span id="saverSpd">0</span><small>km/h</small></div>
   <div class="saver-km"><span id="saverKm">0.00</span> km</div>
@@ -1365,7 +1380,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.74'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.75'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
