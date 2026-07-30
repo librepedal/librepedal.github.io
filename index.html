@@ -985,6 +985,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 
 <section id="v-map" class="view">
 <div class="section-info"><h4>Mapa</h4><p>Tu mundo ciclista en un solo mapa: dónde estás, la comunidad y los reportes de la ruta.</p></div>
+<div style="display:flex;gap:8px;margin-bottom:8px"><button class="ab" style="flex:1;margin:0;background:#fc4c02;color:#fff;border:none;font-weight:700" onclick="cv('dash')">▶️ Iniciar un viaje</button><button class="ab sec" style="flex:0 0 auto;margin:0" onclick="toggleCapaCiclistas(this)" title="Ver otros ciclistas en el mapa">🚴 Buscar ciclistas</button></div>
 <div class="mapcapas" style="position:relative;display:none">
   <button class="capachip" id="btnCapasToggle" onclick="toggleCapasPanel()"><i class="fas fa-layer-group"></i> Capas</button>
   <div id="capasPanel" class="capas-panel">
@@ -1330,7 +1331,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.61'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.62'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
