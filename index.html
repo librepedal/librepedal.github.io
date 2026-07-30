@@ -673,7 +673,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 </div>
 </form>
 
-<button class="fab" id="micBtn" onclick="toggleManosLibres()" title="Pistero — escucha manos libres" aria-label="Pistero, asistente de voz"><span class="orb-emblem"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></span><span class="orb-eq"><i></i><i></i><i></i><i></i></span></button>
+<button class="fab" id="micBtn" onclick="toggleMic()" title="Pistero — toca y habla" aria-label="Pistero, asistente de voz"><span class="orb-emblem"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></span><span class="orb-eq"><i></i><i></i><i></i><i></i></span></button>
 <div id="saver" onclick="toggleSaver()">
   <div class="saver-spd"><span id="saverSpd">0</span><small>km/h</small></div>
   <div class="saver-km"><span id="saverKm">0.00</span> km</div>
@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.75'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.76'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -7261,7 +7261,7 @@ function initVoz(){
 // no interrumpe una charla normal con quien vaya pedaleando al lado. La única
 // excepción es "cállate/silencio": esa funciona SIEMPRE, sin decir "Pistero"
 // antes, porque es la orden más urgente y no puede tener fricción.
-let manosLibresOn=(function(){ try{ return localStorage.getItem('lp_manos_libres')!=='0'; }catch(e){ return true; } })();
+let manosLibresOn=(function(){ try{ return localStorage.getItem('lp_manos_libres')==='1'; }catch(e){ return false; } })();
 // El navegador exige un gesto del usuario para abrir el micrófono: arrancamos la
 // escucha continua en el primer toque real (que ocurre de inmediato al usar la app).
 document.addEventListener('pointerdown', function _lpArrancaOrbe(){ document.removeEventListener('pointerdown',_lpArrancaOrbe); try{ if(manosLibresOn && !_reconocimientoContinuo && !_tocandoNativoContinuo){ _iniciarEscuchaContinua(); } if(manosLibresOn && typeof lpWakeLock==='object') lpWakeLock.enable(true,true); }catch(e){} if(typeof updateMicBtn==='function') updateMicBtn(); }, false);
