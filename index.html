@@ -448,7 +448,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-recenter-btn{position:absolute;right:14px;bottom:210px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:48px;height:48px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn{position:absolute;right:14px;bottom:266px;z-index:550;background:rgba(15,20,35,0.92);color:#7d8ba0;border:2px solid rgba(255,255,255,0.2);width:46px;height:46px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn.on{color:var(--p);border-color:var(--p);background:rgba(252,76,2,0.16)}
-.maplibregl-ctrl-geolocate{display:none !important}
+.maplibregl-ctrl-top-right{display:none !important}
 .map-recenter-btn{position:absolute;right:14px;bottom:80px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:52px;height:52px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-end-btn{width:100%;margin-top:8px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:10px 12px;border-radius:12px;font-size:0.85rem;font-weight:800;cursor:pointer}
 .nav-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(10,15,29,0.95);padding:12px;border-top:2px solid var(--p)}
@@ -1329,7 +1329,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.56'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.57'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
