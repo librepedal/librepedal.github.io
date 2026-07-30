@@ -471,9 +471,20 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .helmet-pin.mine{filter:drop-shadow(0 0 8px var(--p));animation:helmBob 1.1s ease-in-out infinite}
 @keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 .fab{position:fixed;right:14px;width:56px;height:56px;border-radius:50%;border:none;color:#fff;font-size:1.3rem;cursor:pointer;z-index:2200;box-shadow:0 4px 14px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center}
-#micBtn{bottom:80px;background:linear-gradient(135deg,#7c3aed,#9b59b6)}
-#micBtn.listening{background:linear-gradient(135deg,#ff3b30,#ff6600);animation:micPulse 1s infinite}
-@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.6)}50%{box-shadow:0 0 0 12px rgba(255,59,48,0)}}
+/* Orbe Pistero (v7.65): un solo control de voz = cara con casco + anillo que gira
+   siempre (estilo Kimi). Morado=reposo, naranja=escuchando, azul=Pistero habla.
+   Abajo-centro, chico, semitransparente en reposo: no pisa los FAB de la derecha.
+   Se oculta al escribir (lp-typing) para no tapar inputs de chat/Pistero. */
+#micBtn{bottom:78px;left:50%;right:auto;transform:translateX(-50%);width:52px;height:52px;background:#141d33;border:2px solid rgba(255,255,255,.12);opacity:.9;padding:0;overflow:visible}
+#micBtn i{display:none}
+#micBtn svg{width:34px;height:29px;display:block}
+#micBtn::before{content:'';position:absolute;left:50%;top:50%;width:66px;height:66px;transform:translate(-50%,-50%);border-radius:50%;border:2px solid transparent;border-top-color:#9b6dff;border-right-color:#9b6dff;animation:orbSpin 3.4s linear infinite;pointer-events:none}
+#micBtn.listening{opacity:1;border-color:rgba(252,76,2,.5)}
+#micBtn.listening::before{border-top-color:#fc4c02;border-right-color:#fc4c02;animation-duration:1.15s}
+body.pistero-hablando #micBtn::before{border-top-color:#2fb0ff;border-right-color:#2fb0ff;animation-duration:1.5s}
+body.lp-typing #micBtn{opacity:0;pointer-events:none}
+@keyframes orbSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.nav-manoslibres-btn{display:none!important}
 /* Rediseño mapa 2026-07-29 (SPEC): antes era un GLOBO grande naranja arriba-derecha que
    duplicaba lo que Pistero decía y tapaba el mapa. Ahora es una FRANJA FINA tipo subtítulo,
    centrada abajo: transcripción en vivo + respuesta, sin ruido. pointer-events:none deja
@@ -627,7 +638,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 </div>
 </form>
 
-<button class="fab" id="micBtn" onclick="toggleMic()" title="Comando de voz"><i class="fas fa-microphone"></i></button>
+<button class="fab" id="micBtn" onclick="toggleManosLibres()" title="Pistero — escucha manos libres" aria-label="Pistero, asistente de voz"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></button>
 <div id="saver" onclick="toggleSaver()">
   <div class="saver-spd"><span id="saverSpd">0</span><small>km/h</small></div>
   <div class="saver-km"><span id="saverKm">0.00</span> km</div>
@@ -1331,7 +1342,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.64'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.65'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -7211,7 +7222,13 @@ function initVoz(){
 // no interrumpe una charla normal con quien vaya pedaleando al lado. La única
 // excepción es "cállate/silencio": esa funciona SIEMPRE, sin decir "Pistero"
 // antes, porque es la orden más urgente y no puede tener fricción.
-let manosLibresOn=(function(){ try{ return localStorage.getItem('lp_manos_libres')==='1'; }catch(e){ return false; } })();
+let manosLibresOn=(function(){ try{ return localStorage.getItem('lp_manos_libres')!=='0'; }catch(e){ return true; } })();
+// El navegador exige un gesto del usuario para abrir el micrófono: arrancamos la
+// escucha continua en el primer toque real (que ocurre de inmediato al usar la app).
+document.addEventListener('pointerdown', function _lpArrancaOrbe(){ document.removeEventListener('pointerdown',_lpArrancaOrbe); try{ if(manosLibresOn && !_reconocimientoContinuo && !_tocandoNativoContinuo) _iniciarEscuchaContinua(); }catch(e){} if(typeof updateMicBtn==='function') updateMicBtn(); }, false);
+// El orbe se esconde mientras se escribe, para no tapar inputs de chat/Pistero.
+document.addEventListener('focusin', function(e){ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) document.body.classList.add('lp-typing'); });
+document.addEventListener('focusout', function(e){ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) document.body.classList.remove('lp-typing'); });
 let _reconocimientoContinuo=null, _manosLibresPausado=false, _tocandoNativoContinuo=false;
 // Auto-apagado: si en manos libres nadie le habla por un buen rato, el micrófono NO
 // tiene por qué seguir encendido gastando batería. Se apaga solo tras 12 min de silencio.
@@ -7233,6 +7250,7 @@ function _autoApagarManosLibres(){
 function _actualizarBtnManosLibres(){
   const b=document.getElementById('btnManosLibres'); if(b) b.innerText=manosLibresOn?'🎙️ Manos libres: ON':'🎙️ Manos libres: OFF';
   const nb=document.getElementById('btnNavManosLibres'); if(nb) nb.classList.toggle('on', manosLibresOn);
+  if(typeof updateMicBtn==='function') updateMicBtn();
 }
 function toggleManosLibres(){
   manosLibresOn=!manosLibresOn;
@@ -7381,7 +7399,7 @@ async function toggleMic(){
   catch(e){ micOn=false; updateMicBtn(); _reanudarManosLibres(); h("Espera un segundo y vuelve a tocar el micrófono."); }
 }
 function beepMic(){ try{ const ac=window._lpAC||(window._lpAC=new (window.AudioContext||window.webkitAudioContext)()); if(ac.state==='suspended') ac.resume(); const o=ac.createOscillator(), g=ac.createGain(); o.connect(g); g.connect(ac.destination); o.type='sine'; o.frequency.setValueAtTime(660,ac.currentTime); o.frequency.setValueAtTime(990,ac.currentTime+0.09); g.gain.setValueAtTime(0.0001,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.18,ac.currentTime+0.03); g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.22); o.start(ac.currentTime); o.stop(ac.currentTime+0.25); }catch(e){} }
-function updateMicBtn(){ const b=document.getElementById('micBtn'); if(b) b.classList.toggle('listening',micOn); const e=document.getElementById('esMic'); if(e) e.classList.toggle('listening',micOn); }
+function updateMicBtn(){ const on=(typeof micOn!=='undefined'&&micOn)||(typeof manosLibresOn!=='undefined'&&manosLibresOn); const b=document.getElementById('micBtn'); if(b) b.classList.toggle('listening',on); const e=document.getElementById('esMic'); if(e) e.classList.toggle('listening',micOn); }
 function contactosSOS(){ try{ return JSON.parse(localStorage.getItem('lp_sos_'+cu))||[]; }catch(e){ return []; } }
 function guardarContactosSOS(arr){ try{ localStorage.setItem('lp_sos_'+cu, JSON.stringify(arr)); }catch(e){} }
 function gestionarContactosSOS(){
