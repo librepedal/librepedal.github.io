@@ -3,7 +3,7 @@
 <head>
 <script src="https://js.sentry-cdn.com/272523a5a16fb86e04be24dbe29a405f.min.js" crossorigin="anonymous"></script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Libre Pedal</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0f1d">
@@ -73,6 +73,7 @@ button.es-dato{cursor:pointer}
 .es-badge[data-n]:not([data-n="0"])::after{content:attr(data-n);position:absolute;top:-4px;right:2px;background:#ff2d6b;color:#fff;font-size:0.55rem;font-weight:800;min-width:14px;height:14px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
 .es-mic{width:62px;height:62px;border-radius:50%;border:2px solid rgba(252,76,2,0.7);background:radial-gradient(circle at 50% 40%,rgba(252,76,2,0.35),rgba(120,0,255,0.15));color:#eaffff;font-size:1.35rem;cursor:pointer;box-shadow:0 0 22px rgba(252,76,2,0.5),inset 0 0 14px rgba(252,76,2,0.3);animation:esAura 2s ease-in-out infinite}
 .es-mic.listening{background:radial-gradient(circle at 50% 40%,rgba(255,45,107,0.5),rgba(180,0,255,0.2));border-color:#ff2d6b;box-shadow:0 0 26px rgba(255,45,107,0.6)}
+.es-mic svg{width:34px;height:29px;display:block}
 /* ===== Look premium unificado (glass + neón) en toda la app ===== */
 .bg,.bd,.btrip,.bpdf{border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.2);letter-spacing:0.3px}
 /* Nocturno Pro: .stat-card SALE de esta lista — los tiles de dato ya no llevan
@@ -293,7 +294,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* La vista de chat se acota a la pantalla (menos barra superior ~51 + barra inferior 60
    + respiro). Así .cc (flex:1) llena el resto y la fila de entrada queda SIEMPRE visible
    sobre la barra, sin scroll de página. dvh corrige la barra dinámica del navegador móvil. */
-#v-pistero.view.on,#v-chat.view.on{display:flex;flex-direction:column;height:calc(100vh - 130px);height:calc(100dvh - 130px)}
+#v-pistero.view.on,#v-chat.view.on{display:flex;flex-direction:column;height:calc(100vh - 130px);height:calc(100dvh - 130px);padding-bottom:8px}
 .cm{flex:1;overflow-y:auto;padding:8px;background:#0b1120;border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:6px}
 .ms{margin-bottom:8px;max-width:85%}.ms.sf{margin-left:auto;text-align:right}
 .mb{display:inline-block;padding:6px 10px;border-radius:12px;line-height:1.2;font-size:0.85rem}
@@ -765,7 +766,7 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
        para liberar un espacio en la fila, que ahora usa "Mi puesto" (rango real en
        el ranking, antes solo visible adentro de Estadísticas). -->
   <button class="es-ind es-badge" id="esAvisos" data-n="0" onclick="cerrarEsfera();cv('chat')"><span class="es-ind-v">🔔</span><span class="es-ind-l">Avisos</span></button>
-  <button class="es-mic" id="esMic" onclick="toggleMic()"><i class="fas fa-microphone"></i></button>
+  <button class="es-mic" id="esMic" onclick="toggleMic()" title="Pistero — dime un destino" aria-label="Pistero"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></button>
   <!-- Reportado por Inty (2026-07-20): "el número de puesto no te lleva a ningún lado".
        Era un <div> sin acción: mostraba el dato y ahí quedaba. Si un número invita a
        tocarlo, tiene que llevar a alguna parte. Ahora el puesto abre el ranking de tu
@@ -1109,7 +1110,7 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 .pacc:active{transform:scale(.97)}
 </style>
 <section id="v-pistero" class="view">
-<div class="section-info"><h4>🤖 Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
+<div class="section-info"><h4><svg viewBox="0 0 100 84" width="18" height="15" style="display:inline-block;vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
 <div id="pisteroChips">
   <button class="pchip" onclick="location.href='/planificador-beta'">🧭 Trazar ruta</button><button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')">🗺️ Planifica mi viaje</button>
   <button class="pchip" onclick="pisteroSugerencia('Se me soltó la cadena en plena ruta, ¿cómo la arreglo?')">🔧 Arregla mi bici</button>
@@ -1317,7 +1318,7 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 <nav>
 <button class="nb on" onclick="cv('dash');abrirEsfera()"><i class="fas fa-house"></i><span>Inicio</span></button>
 <button class="nb" onclick="cv('map')"><i class="fas fa-map-location-dot"></i><span>Mapa</span></button>
-<button class="nb" onclick="abrirPistero()"><i class="fas fa-robot"></i><span>Pistero</span></button>
+<button class="nb" onclick="abrirPistero()"><svg viewBox="0 0 100 84" width="22" height="19" style="display:block;margin:0 auto 1px" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg><span>Pistero</span></button>
 <button class="nb" onclick="cv('chat')"><i class="fas fa-comments"></i><span>Social</span></button>
 <button class="nb" onclick="cv('customize')"><i class="fas fa-user"></i><span>Perfil</span></button>
 </nav>
@@ -1342,7 +1343,7 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.68'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.69'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
