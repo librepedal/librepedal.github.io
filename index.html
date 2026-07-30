@@ -1329,7 +1329,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.57'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.58'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -9723,5 +9723,7 @@ function _pisteroIntroPrimeraVez(nombre){
 }
 /* =============== FIN INTRO DE PISTERO =============== */
 </script>
+<script>/* Fix teclado Pistero (v7.58): mantiene el input visible cuando sube el teclado */
+(function(){var vp=window.visualViewport;if(!vp)return;function fix(){var v=document.getElementById("v-pistero");if(!v)return;var kb=(window.innerHeight-vp.height)>120;if(v.classList.contains("on")&&kb){v.style.height=vp.height+"px";v.style.overflow="hidden";var inp=document.getElementById("pisteroInput");if(inp)inp.scrollIntoView({block:"end"});}else{v.style.height="";v.style.overflow="";}}vp.addEventListener("resize",fix);document.addEventListener("focusin",function(e){if(e.target&&e.target.id==="pisteroInput")setTimeout(fix,300);});document.addEventListener("focusout",function(e){if(e.target&&e.target.id==="pisteroInput")setTimeout(function(){var v=document.getElementById("v-pistero");if(v){v.style.height="";v.style.overflow="";}},150);});})();</script>
 </body>
 </html>
