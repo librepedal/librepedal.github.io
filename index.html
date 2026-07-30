@@ -1328,7 +1328,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.54'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.55'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2072,7 +2072,7 @@ function limpiarParaVoz(t){
 }
 function cargarVoces(){ try{ const vs=speechSynthesis.getVoices(); vozPref = vs.find(function(v){return /es(-|_)(CL|419|MX)/i.test(v.lang);}) || vs.find(function(v){return (v.lang||'').toLowerCase().indexOf('es')===0;}) || null; }catch(e){} }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
-function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
+function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const _av=document.querySelector('.view.on'); if(_av && _av.id!=='v-pistero' && _av.id!=='v-map'){ return; } const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
 /* Obtiene un plugin nativo de Capacitor. CLAVE: con la web en vivo (server.url) el
    puente inyectado NO tiene registerPlugin; los plugins viven en Capacitor.Plugins. */
 function lpPlugin(nombre){
