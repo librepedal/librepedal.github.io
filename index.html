@@ -139,6 +139,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .tabs-personalizar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%)}
 .tabs-personalizar::-webkit-scrollbar{display:none}
 /* Pestañas de Perfil: eran 32px de alto. Suben a 38 para el dedo (van en tira scrolleable). */
+#tabsPersonalizar{flex-wrap:wrap !important;overflow-x:visible !important}
 .tab-pill{flex:0 0 auto;min-height:48px;padding:9px 14px;border-radius:20px;background:var(--gl);border:0.5px solid rgba(255,255,255,0.09);color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
 .tab-pill.active{background:linear-gradient(135deg,var(--p),#ff7a3c);color:#03121a;border-color:transparent;box-shadow:0 4px 12px -4px rgba(252,76,2,0.5)}
 .tab-panel{display:none}
@@ -1329,7 +1330,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.58'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.59'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
