@@ -1342,7 +1342,7 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.65'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.66'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -7230,6 +7230,14 @@ document.addEventListener('pointerdown', function _lpArrancaOrbe(){ document.rem
 document.addEventListener('focusin', function(e){ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) document.body.classList.add('lp-typing'); });
 document.addEventListener('focusout', function(e){ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) document.body.classList.remove('lp-typing'); });
 let _reconocimientoContinuo=null, _manosLibresPausado=false, _tocandoNativoContinuo=false;
+// v7.66: fin-de-idea por silencio. El micro continuo se corta y reinicia solo
+// (limite del navegador); antes eso PARTIA la frase. Ahora acumulamos lo dicho en
+// _flBuffer y solo cerramos la idea tras _FL_FIN_IDEA ms sin voz nueva. El reloj es
+// INDEPENDIENTE del micro: aunque se reinicie, la idea no se corta.
+let _flBuffer='', _flSilTimer=null;
+const _FL_FIN_IDEA=1500;
+function _esSilencioCmd(t){ const n=normalizar(t); return /^(detente|para|ya)\.?$/.test(n) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(n); }
+function _flCerrarIdea(){ clearTimeout(_flSilTimer); _flSilTimer=null; const idea=_flBuffer.trim(); _flBuffer=''; if(idea) _procesarFraseManosLibres(idea); }
 // Auto-apagado: si en manos libres nadie le habla por un buen rato, el micrófono NO
 // tiene por qué seguir encendido gastando batería. Se apaga solo tras 12 min de silencio.
 let _manosLibresUltimoUso=Date.now();
@@ -7294,13 +7302,21 @@ function _iniciarEscuchaContinua(){
   if(!SR) return;
   if(_reconocimientoContinuo){ try{ _reconocimientoContinuo.onend=null; _reconocimientoContinuo.stop(); }catch(e){} }
   const r=new SR();
-  r.lang='es-CL'; r.continuous=true; r.interimResults=false; r.maxAlternatives=1;
+  r.lang='es-CL'; r.continuous=true; r.interimResults=true; r.maxAlternatives=1;
   r.onresult=function(e){
+    let huboVoz=false;
     for(let i=e.resultIndex;i<e.results.length;i++){
-      if(!e.results[i].isFinal) continue;
-      const t=quitarEcoPistero(e.results[i][0].transcript)||e.results[i][0].transcript;
-      _procesarFraseManosLibres(t);
+      const seg=e.results[i][0].transcript;
+      if(!seg) continue;
+      huboVoz=true;
+      if(e.results[i].isFinal){
+        const t=quitarEcoPistero(seg)||seg;
+        if(!t) continue;
+        if(_esSilencioCmd(t)){ clearTimeout(_flSilTimer); _flSilTimer=null; _flBuffer=''; _manosLibresUltimoUso=Date.now(); handleVoiceCommand(t); continue; }
+        _flBuffer=(_flBuffer+' '+t).trim();
+      }
     }
+    if(huboVoz){ clearTimeout(_flSilTimer); _flSilTimer=setTimeout(_flCerrarIdea, _FL_FIN_IDEA); }
   };
   // no-speech es lo NORMAL en modo continuo (silencio ambiental mientras pedaleas
   // sin hablar) — no es un error real, el navegador lo corta y este mismo onend
@@ -7313,6 +7329,7 @@ function _iniciarEscuchaContinua(){
 function _detenerEscuchaContinua(){
   if(_reconocimientoContinuo){ try{ _reconocimientoContinuo.onend=null; _reconocimientoContinuo.stop(); }catch(e){} _reconocimientoContinuo=null; }
   _tocandoNativoContinuo=false;
+  clearTimeout(_flSilTimer); _flSilTimer=null; _flBuffer='';
 }
 // App instalada (plugin nativo): no soporta "continuous" real, así que se simula
 // reiniciando la captura de a una vez apenas termina la anterior — hay una pausa
