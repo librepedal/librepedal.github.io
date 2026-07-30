@@ -1052,7 +1052,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .soc-group[open]>summary::after{transform:rotate(90deg)}
 </style>
 <details class="soc-group" open>
-  <summary><span class="soc-ic">👥</span><span><b>Amigos</b><small>Tus amigos · solicitudes · buscar ciclistas · mensajes</small></span></summary>
+  <summary><span class="soc-ic">👥</span><span><b>Amigos</b><small>Tus amigos · solicitudes · buscar ciclistas · mensajes</small></span><span id="solicBadgeHdr" style="display:none;margin-left:8px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem;font-weight:800"></span></summary>
   <div class="quick-links" style="margin-top:9px">
     <button class="ab sec" style="margin:0" onclick="showFriendsList()">👥 Amigos y mensajes</button>
     <button class="ab sec" style="margin:0" onclick="showFriendRequests()">📨 Solicitudes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
@@ -1330,7 +1330,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.59'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.60'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -9726,5 +9726,7 @@ function _pisteroIntroPrimeraVez(nombre){
 </script>
 <script>/* Fix teclado Pistero (v7.58): mantiene el input visible cuando sube el teclado */
 (function(){var vp=window.visualViewport;if(!vp)return;function fix(){var v=document.getElementById("v-pistero");if(!v)return;var kb=(window.innerHeight-vp.height)>120;if(v.classList.contains("on")&&kb){v.style.height=vp.height+"px";v.style.overflow="hidden";var inp=document.getElementById("pisteroInput");if(inp)inp.scrollIntoView({block:"end"});}else{v.style.height="";v.style.overflow="";}}vp.addEventListener("resize",fix);document.addEventListener("focusin",function(e){if(e.target&&e.target.id==="pisteroInput")setTimeout(fix,300);});document.addEventListener("focusout",function(e){if(e.target&&e.target.id==="pisteroInput")setTimeout(function(){var v=document.getElementById("v-pistero");if(v){v.style.height="";v.style.overflow="";}},150);});})();</script>
+<script>/* Social v7.60: notificaciones en el header del desplegable Amigos */
+(function(){function go(){var src=document.getElementById("solicBadge"),hdr=document.getElementById("solicBadgeHdr");if(!src||!hdr)return;function sync(){hdr.textContent=src.textContent||"";hdr.style.display=src.style.display;}try{new MutationObserver(sync).observe(src,{attributes:true,childList:true,subtree:true,characterData:true});}catch(e){}sync();}if(document.readyState!=="loading")go();else document.addEventListener("DOMContentLoaded",go);})();</script>
 </body>
 </html>
