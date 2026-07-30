@@ -1343,7 +1343,7 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.69'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.70'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3697,7 +3697,7 @@ function toggleGPS(silencioso){
     } else { lpAviso("Tu dispositivo no soporta GPS"); }
   } else {
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
-    ig=false; lpWakeLock.disable(); detenerDeteccionCaidas(); _detenerCronometroDash();
+    ig=false; _lpWLoff(); detenerDeteccionCaidas(); _detenerCronometroDash();
     if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
     if(btn){ btn.innerText="📍 Grabar un paseo"; btn.style.background=""; btn.style.borderColor=""; btn.style.color=""; }
     if(currentRoute.length>1){ autoGuardarRuta(false,false); }
@@ -3721,7 +3721,7 @@ function toggleSaver(){
     // la navegación SÍ siguen activos, no se toca: son ellos quienes lo necesitan
     // y lo sueltan cuando corresponda (ver toggleGPS / endNavigation).
     const navActivo = document.getElementById('nav-screen') && document.getElementById('nav-screen').classList.contains('active');
-    if(typeof lpWakeLock==='object' && !ig && !navActivo) lpWakeLock.disable();
+    _lpWLoff();
   }
 }
 // Bromas/comentarios del camino. Se llama en AMBOS modos: GPS libre (ug) y navegación a destino (_navPosUpdate).
@@ -6817,7 +6817,7 @@ function endNavigation(){
   // cerrar, sin depender del sync periódico de 60s (un viaje corto podría cerrar
   // antes de que ese primer sync se dispare).
   if(typeof sincronizarStats==='function') sincronizarStats();
-  lpWakeLock.disable(); detenerDeteccionCaidas();
+  _lpWLoff(); detenerDeteccionCaidas();
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
   if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; rutaPerfil=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
@@ -7226,7 +7226,7 @@ function initVoz(){
 let manosLibresOn=(function(){ try{ return localStorage.getItem('lp_manos_libres')!=='0'; }catch(e){ return true; } })();
 // El navegador exige un gesto del usuario para abrir el micrófono: arrancamos la
 // escucha continua en el primer toque real (que ocurre de inmediato al usar la app).
-document.addEventListener('pointerdown', function _lpArrancaOrbe(){ document.removeEventListener('pointerdown',_lpArrancaOrbe); try{ if(manosLibresOn && !_reconocimientoContinuo && !_tocandoNativoContinuo) _iniciarEscuchaContinua(); }catch(e){} if(typeof updateMicBtn==='function') updateMicBtn(); }, false);
+document.addEventListener('pointerdown', function _lpArrancaOrbe(){ document.removeEventListener('pointerdown',_lpArrancaOrbe); try{ if(manosLibresOn && !_reconocimientoContinuo && !_tocandoNativoContinuo){ _iniciarEscuchaContinua(); } if(manosLibresOn && typeof lpWakeLock==='object') lpWakeLock.enable(true,true); }catch(e){} if(typeof updateMicBtn==='function') updateMicBtn(); }, false);
 // El orbe se esconde mientras se escribe, para no tapar inputs de chat/Pistero.
 document.addEventListener('focusin', function(e){ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) document.body.classList.add('lp-typing'); });
 document.addEventListener('focusout', function(e){ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) document.body.classList.remove('lp-typing'); });
@@ -7246,7 +7246,7 @@ const _MANOS_LIBRES_MAX_INACTIVO=12*60*1000;
 function _manosLibresInactivoDemasiado(){ return (Date.now()-_manosLibresUltimoUso) > _MANOS_LIBRES_MAX_INACTIVO; }
 function _autoApagarManosLibres(){
   manosLibresOn=false; try{ localStorage.setItem('lp_manos_libres','0'); }catch(e){}
-  _detenerEscuchaContinua(); _actualizarBtnManosLibres();
+  _detenerEscuchaContinua(); _lpWLoff(); _actualizarBtnManosLibres();
   h('Apagué el micrófono de manos libres porque llevabas rato sin usarlo, para cuidarte la batería. Actívalo de nuevo cuando quieras.');
 }
 // Reporte real: Inty quería activar manos libres A MITAD DE UNA NAVEGACIÓN
@@ -7274,12 +7274,14 @@ function toggleManosLibres(){
     // pantalla apagada), la escucha de voz vive en la app misma — si apagas la
     // pantalla a mano, deja de escuchar. Mejor decirlo de entrada que dejar que
     // alguien crea que le está fallando el micrófono.
-    h('Manos libres activado. Dime "Pistero" y lo que necesites, sin tocar nada. Para callarme en cualquier momento, solo di "cállate". Eso sí: mantén la pantalla encendida, si la apagas dejo de escucharte.');
+    h('Manos libres activado. Dime "Pistero" y lo que necesites, sin tocar nada. Para callarme, di "cállate". Mantengo la pantalla encendida mientras te escucho; si la apagas a mano, dejo de oírte. Se apaga solo tras 12 min sin hablarme.');
     _manosLibresUltimoUso=Date.now();
+    try{ if(typeof lpWakeLock==='object') lpWakeLock.enable(true,true); }catch(e){}
     _iniciarEscuchaContinua();
   } else {
     h('Manos libres desactivado.');
     _detenerEscuchaContinua();
+    _lpWLoff();
   }
 }
 function _procesarFraseManosLibres(t){
@@ -9532,10 +9534,12 @@ const lpWakeLock = (function(){
     if(wanted && document.visibilityState==='visible' && !lock) request();
   });
   return {
-    enable: function(silencioso){ wanted=true; request(); lpSalud.start(silencioso); },
+    enable: function(silencioso, sinSalud){ wanted=true; request(); if(!sinSalud) lpSalud.start(silencioso); },
     disable: function(){ wanted=false; if(lock){ lock.release().catch(function(){}); lock=null; } lpSalud.stop(); }
   };
 })();
+function _navActivoAhora(){ const n=document.getElementById('nav-screen'); return !!(n && n.classList.contains('active')); }
+function _lpWLoff(){ try{ if(typeof lpWakeLock==='object' && !(typeof ig!=='undefined'&&ig) && !_navActivoAhora() && !(typeof manosLibresOn!=='undefined'&&manosLibresOn)) lpWakeLock.disable(); }catch(e){} }
 
 /* ===== Recordatorios inteligentes de salud y seguridad (mientras pedaleas) =====
    Solo se activan durante un pedaleo real (GPS/navegación) y se pueden apagar
