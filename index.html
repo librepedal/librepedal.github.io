@@ -143,6 +143,19 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 #tabsPersonalizar{flex-wrap:wrap !important;overflow-x:visible !important}
 .tab-pill{flex:0 0 auto;min-height:48px;padding:9px 14px;border-radius:20px;background:var(--gl);border:0.5px solid rgba(255,255,255,0.09);color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
 .tab-pill.active{background:linear-gradient(135deg,var(--p),#ff7a3c);color:#03121a;border-color:transparent;box-shadow:0 4px 12px -4px rgba(252,76,2,0.5)}
+.pgrupo{background:var(--gl);border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.pgrupo>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:15px;cursor:pointer}
+.pgrupo>summary::-webkit-details-marker{display:none}
+.pgrupo>summary::marker{content:''}
+.pgrupo>summary .pg-ic{width:22px;text-align:center;color:var(--p);font-size:1.05rem;flex:0 0 auto}
+.pgrupo>summary .pg-tt{flex:1;color:#e7ecf5;font-size:0.98rem;font-weight:700}
+.pgrupo>summary .pg-sub{color:#7d8ba0;font-size:0.7rem;font-weight:400;margin-right:8px;max-width:42%;text-align:right}
+.pgrupo>summary .pg-chev{color:#7d8ba0;font-size:0.8rem;flex:0 0 auto;transition:transform .2s}
+.pgrupo[open]>summary .pg-chev{transform:rotate(180deg)}
+.pgrupo[open]>summary{border-bottom:0.5px solid rgba(255,255,255,0.06)}
+.pgrupo .pg-body{padding:4px 15px 16px}
+.pg-sublabel{color:var(--g);font-size:0.82rem;font-weight:700;margin:16px 0 9px}
+.pg-sublabel:first-child{margin-top:6px}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
 .skin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
@@ -1262,37 +1275,41 @@ body[data-vista="pistero"] #micBtn{display:none}
      un segundo menú; Logros y Estadísticas se sacan de acá — para eso está la Esfera. -->
 <div class="darma-badge">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
-<div class="tabs-personalizar" id="tabsPersonalizar">
-  <button class="tab-pill active" data-tab="casco" onclick="_tabPersonalizar('casco')">🪖 Casco</button>
-  <button class="tab-pill" data-tab="prefs" onclick="_tabPersonalizar('prefs')">⚙️ Preferencias</button>
-  <button class="tab-pill" data-tab="color" onclick="_tabPersonalizar('color')">🎨 Color</button>
-  <button class="tab-pill" data-tab="piel" onclick="_tabPersonalizar('piel')">🧑 Piel</button>
-  <button class="tab-pill" data-tab="peinado" onclick="_tabPersonalizar('peinado')">💇 Peinado</button>
-  <button class="tab-pill" data-tab="ojos" onclick="_tabPersonalizar('ojos')">👁️ Ojos</button>
-  <button class="tab-pill" data-tab="labios" onclick="_tabPersonalizar('labios')">💋 Labios</button>
-  <button class="tab-pill" data-tab="vello" onclick="_tabPersonalizar('vello')">🧔 Vello facial</button>
-  <button class="tab-pill" data-tab="lentes" onclick="_tabPersonalizar('lentes')">🕶️ Lentes</button>
-  <button class="tab-pill" data-tab="panuelo" onclick="_tabPersonalizar('panuelo')">🧣 Pañuelo</button>
-  <button class="tab-pill" data-tab="accesorios" onclick="_tabPersonalizar('accesorios')">✨ Accesorios</button>
+<details class="pgrupo" open ontoggle="if(this.open)_perfilAcordeon(this)">
+  <summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco y equipo</span><i class="fas fa-chevron-down pg-chev"></i></summary>
+  <div class="pg-body"><div class="helmet-grid" id="customizeHelmetGrid"></div></div>
+</details>
+<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)">
+  <summary><i class="fas fa-face-smile pg-ic"></i><span class="pg-tt">Rostro</span><span class="pg-sub">piel · peinado · ojos · labios · vello</span><i class="fas fa-chevron-down pg-chev"></i></summary>
+  <div class="pg-body">
+    <div class="pg-sublabel">Piel</div><div class="skin-grid" id="customizePielGrid"></div>
+    <div class="pg-sublabel">Peinado</div><div class="accessory-grid" id="customizePeinadoGrid"></div>
+    <div class="pg-sublabel">Ojos</div><div class="skin-grid" id="customizeOjosGrid"></div>
+    <div class="pg-sublabel">Labios</div><div class="skin-grid" id="customizeLabiosGrid"></div>
+    <div class="pg-sublabel">Vello facial</div><div class="accessory-grid" id="customizeVelloGrid"></div>
+  </div>
+</details>
+<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)">
+  <summary><i class="fas fa-shirt pg-ic"></i><span class="pg-tt">Estilo y ropa</span><span class="pg-sub">color · lentes · pañuelo · accesorios</span><i class="fas fa-chevron-down pg-chev"></i></summary>
+  <div class="pg-body">
+    <div class="pg-sublabel">Color de tricota</div><div class="skin-grid" id="customizeSkinGrid"></div>
+    <div class="pg-sublabel">Lentes</div><div class="accessory-grid" id="customizeAccessoryGrid"></div>
+    <div class="pg-sublabel">Pañuelo</div><div class="accessory-grid" id="customizePanueloGrid"></div>
+    <div class="pg-sublabel">Accesorios</div><div class="accessory-grid" id="customizeExtrasGrid"></div>
+  </div>
+</details>
+<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)">
+  <summary><i class="fas fa-sliders pg-ic"></i><span class="pg-tt">Preferencias</span><span class="pg-sub">esfera · actividad · tipo de Pistero</span><i class="fas fa-chevron-down pg-chev"></i></summary>
+  <div class="pg-body">
+
+  <div class="customization-section" style="margin-top:0"><h3><i class="fas fa-bolt" style="color:var(--p);margin-right:6px"></i>Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
+  <div class="customization-section"><h3><i class="fas fa-image" style="color:var(--p);margin-right:6px"></i>Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
+  <div class="customization-section"><h3><i class="fas fa-person-biking" style="color:var(--p);margin-right:6px"></i>Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
+  <div class="customization-section" id="cicloCargadoBox" style="display:none"><h3><i class="fas fa-suitcase-rolling" style="color:var(--p);margin-right:6px"></i>¿Cómo andas en bici?</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Un cicloviajero con alforjas anda a otro ritmo que un rutero liviano — esto ajusta a qué pendiente y velocidad te aviso.</p><div style="display:flex;gap:8px"><button class="ab sec" id="btnRutero" style="flex:1;margin:0" onclick="setCicloCargado(false)"><i class="fas fa-flag-checkered"></i> Rutero (liviano)</button><button class="ab sec" id="btnCicloviajero" style="flex:1;margin:0" onclick="setCicloCargado(true)"><i class="fas fa-suitcase-rolling"></i> Cicloviajero (cargado)</button></div></div>
+  <div class="customization-section"><h3><i class="fas fa-masks-theater" style="color:var(--p);margin-right:6px"></i>Tipos de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Es el mismo Pistero: cambia el tono con el que te habla.</p><div id="personalidadGrid" class="personalidad-grid"></div></div>
 </div>
-<div class="tab-panel active" data-panel="casco"><div class="customization-section" style="margin-top:0"><div class="helmet-grid" id="customizeHelmetGrid"></div></div></div>
-<div class="tab-panel" data-panel="color"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizeSkinGrid"></div></div></div>
-<div class="tab-panel" data-panel="piel"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizePielGrid"></div></div></div>
-<div class="tab-panel" data-panel="peinado"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizePeinadoGrid"></div></div></div>
-<div class="tab-panel" data-panel="ojos"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizeOjosGrid"></div></div></div>
-<div class="tab-panel" data-panel="labios"><div class="customization-section" style="margin-top:0"><div class="skin-grid" id="customizeLabiosGrid"></div></div></div>
-<div class="tab-panel" data-panel="vello"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizeVelloGrid"></div></div></div>
-<div class="tab-panel" data-panel="lentes"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizeAccessoryGrid"></div></div></div>
-<div class="tab-panel" data-panel="panuelo"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizePanueloGrid"></div></div></div>
-<div class="tab-panel" data-panel="accesorios"><div class="customization-section" style="margin-top:0"><div class="accessory-grid" id="customizeExtrasGrid"></div></div></div>
-<div class="tab-panel" data-panel="prefs">
-  <div class="customization-section" style="margin-top:0"><h3>⚡ Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
-  <div class="customization-section"><h3>🌌 Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
-  <div class="customization-section"><h3>🧭 Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
-  <div class="customization-section" id="cicloCargadoBox" style="display:none"><h3>🎒 ¿Cómo andas en bici?</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Un cicloviajero con alforjas anda a otro ritmo que un rutero liviano — esto ajusta a qué pendiente y velocidad te aviso.</p><div style="display:flex;gap:8px"><button class="ab sec" id="btnRutero" style="flex:1;margin:0" onclick="setCicloCargado(false)">🏁 Rutero (liviano)</button><button class="ab sec" id="btnCicloviajero" style="flex:1;margin:0" onclick="setCicloCargado(true)">🎒 Cicloviajero (cargado)</button></div></div>
-  <div class="customization-section"><h3>🎭 Tipos de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Es el mismo Pistero: cambia el tono con el que te habla.</p><div id="personalidadGrid" class="personalidad-grid"></div></div>
-</div>
-<button class="bg" onclick="saveCustomization()">💾 Guardar personaje</button>
+</details>
+<button class="bg" onclick="saveCustomization()"><i class="fas fa-floppy-disk"></i> Guardar personaje</button>
 </section>
 
 <section id="v-stats" class="view">
@@ -1343,7 +1360,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.71'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.72'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2729,6 +2746,7 @@ function selectHelmet(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; }
 function selectSkin(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedSkin=id; initCustomization(); }
 function toggleLens(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedLens = (selectedLens===id) ? 'none' : id; initCustomization(); }
 function toggleExtra(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } const i=selectedExtras.indexOf(id); if(i===-1) selectedExtras.push(id); else selectedExtras.splice(i,1); initCustomization(); }
+function _perfilAcordeon(el){ document.querySelectorAll('#v-customize .pgrupo').forEach(function(d){ if(d!==el && d.open) d.open=false; }); setTimeout(function(){ try{ el.scrollIntoView({block:'nearest'}); }catch(e){} }, 60); }
 function _tabPersonalizar(tab){
   document.querySelectorAll('#tabsPersonalizar .tab-pill').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===tab); });
   document.querySelectorAll('#v-customize .tab-panel').forEach(function(p){ p.classList.toggle('active', p.dataset.panel===tab); });
