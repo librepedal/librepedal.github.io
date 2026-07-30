@@ -618,7 +618,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 <input type="text" id="nombre-input" placeholder="Tu nombre" required maxlength="60" style="border:2px solid var(--g)">
 <input type="email" id="em" placeholder="correo@ejemplo.com" required maxlength="100">
 <select id="pais-input" title="Tu país (adapta las frases a tu jerga)">
-<option value="auto">🌎 Detectar mi país automáticamente</option>
+<option value="auto"><i class="fas fa-earth-americas"></i> Detectar mi país automáticamente</option>
 <option value="cl">🇨🇱 Chile</option>
 <option value="ar">🇦🇷 Argentina</option>
 <option value="mx">🇲🇽 México</option>
@@ -634,7 +634,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 <option value="gt">🇬🇹 Guatemala</option>
 <option value="do">🇩🇴 R. Dominicana</option>
 <option value="pr">🇵🇷 Puerto Rico</option>
-<option value="us">🌐 Otro / Internacional</option>
+<option value="us"><i class="fas fa-globe"></i> Otro / Internacional</option>
 </select>
 <button type="submit">Entrar</button>
 <p style="color:#7d8ba0;font-size:0.68rem;margin-top:8px;text-align:center">Al entrar aceptas los <a href="terminos.html" target="_blank" style="color:var(--p)">Términos</a> y la <a href="privacidad.html" target="_blank" style="color:var(--p)">Política de Privacidad</a>.</p>
@@ -662,7 +662,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 <div id="saver" onclick="toggleSaver()">
   <div class="saver-spd"><span id="saverSpd">0</span><small>km/h</small></div>
   <div class="saver-km"><span id="saverKm">0.00</span> km</div>
-  <div class="saver-hint">🔋 Modo ahorro · GPS y voz siguen activos<br>Toca la pantalla para volver</div>
+  <div class="saver-hint"><i class="fas fa-battery-half"></i> Modo ahorro · GPS y voz siguen activos<br>Toca la pantalla para volver</div>
 </div>
 <div id="pisteroBubble"></div>
 <button id="pwaInstall" onclick="instalarPWA()" style="display:none;position:fixed;left:14px;bottom:80px;z-index:2100;align-items:center;gap:7px;background:var(--p);color:#03121a;border:none;padding:10px 14px;border-radius:24px;font-weight:800;font-size:0.82rem;box-shadow:0 4px 14px rgba(252,76,2,0.35);cursor:pointer"><i class="fas fa-download"></i> Instalar app</button>
@@ -697,7 +697,7 @@ body[data-vista="pistero"] #micBtn{display:none}
   <div class="tut-dim" id="tutDimL"></div>
   <div class="tut-dim" id="tutDimR"></div>
   <div id="tutRing"></div>
-  <div class="tut-banner" id="tutBanner">🎓 Tutorial — sube el volumen 🔊 del teléfono para escuchar a Pistero. El brillo te muestra de qué te hablo.</div>
+  <div class="tut-banner" id="tutBanner"><i class="fas fa-graduation-cap"></i> Tutorial — sube el volumen 🔊 del teléfono para escuchar a Pistero. El brillo te muestra de qué te hablo.</div>
   <div class="tut-bar">
     <button id="tutPrev" onclick="tutPrev()">◀</button>
     <span id="tutProgress">1 / 1</span>
@@ -710,12 +710,12 @@ body[data-vista="pistero"] #micBtn{display:none}
   <div id="nav-map"></div>
   <div class="speech-bubble" id="speechBubble">¡Hola!</div>
   <div class="nav-alert" id="navAlert"></div>
-  <button class="nav-close" onclick="endNavigation()">✕</button>
-  <button class="nav-recenter-btn" id="btnNavRecenter" onclick="_navRecentrar()" title="Volver a mi ubicación">🎯</button>
-  <button class="nav-manoslibres-btn" id="btnNavManosLibres" onclick="toggleManosLibres()" title="Manos libres">🎙️</button>
+  <button class="nav-close" onclick="endNavigation()"><i class="fas fa-xmark"></i> </button>
+  <button class="nav-recenter-btn" id="btnNavRecenter" onclick="_navRecentrar()" title="Volver a mi ubicación"><i class="fas fa-bullseye"></i> </button>
+  <button class="nav-manoslibres-btn" id="btnNavManosLibres" onclick="toggleManosLibres()" title="Manos libres"><i class="fas fa-microphone-lines"></i> </button>
   <div class="nav-top">
-    <div class="gps-signal-badge" id="navGpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
-    <div class="pausa-badge" id="navPausaBadge" style="display:none">⏸️ En pausa</div>
+    <div class="gps-signal-badge" id="navGpsSignalBadge" style="display:none"><i class="fas fa-satellite"></i> Buscando señal GPS...</div>
+    <div class="pausa-badge" id="navPausaBadge" style="display:none"><i class="fas fa-pause"></i> En pausa</div>
     <div class="pausa-badge" id="navBleHR" style="display:none"></div>
     <div class="pausa-badge" id="navBlePower" style="display:none"></div>
     <div class="gps-signal-badge" id="navSegmentoBadge" style="display:none;background:rgba(255,215,0,0.14);color:var(--g);border-color:rgba(255,215,0,0.4);animation:none"></div>
@@ -739,15 +739,15 @@ body[data-vista="pistero"] #micBtn{display:none}
       <div class="nav-eta-item"><div class="val" id="etaDuration">0 min</div><div class="lbl">Duración</div></div>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="nav-end-btn" id="btnPausaViaje" onclick="togglePausaViaje()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706)">⏸️ Pausar</button>
-      <button class="nav-end-btn" onclick="finishTrip()" style="flex:1">✅ Terminar</button>
+      <button class="nav-end-btn" id="btnPausaViaje" onclick="togglePausaViaje()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-pause"></i> Pausar</button>
+      <button class="nav-end-btn" onclick="finishTrip()" style="flex:1"><i class="fas fa-circle-check"></i> Terminar</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="marcarVuelta()">🏁 Vuelta</button>
-      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="verVueltas()">📋 Ver vueltas</button>
-      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="reiniciarCronometro()">🔄 Reiniciar</button>
+      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="marcarVuelta()"><i class="fas fa-flag-checkered"></i> Vuelta</button>
+      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="verVueltas()"><i class="fas fa-clipboard"></i> Ver vueltas</button>
+      <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="reiniciarCronometro()"><i class="fas fa-arrows-rotate"></i> Reiniciar</button>
     </div>
-    <button class="ab sec" id="btnDescargarMapa" style="margin-top:8px" onclick="descargarMapaRuta()">📥 Descargar mapa de la ruta (para andar sin señal)</button>
+    <button class="ab sec" id="btnDescargarMapa" style="margin-top:8px" onclick="descargarMapaRuta()"><i class="fas fa-download"></i> Descargar mapa de la ruta (para andar sin señal)</button>
   </div>
 </div>
 
@@ -755,16 +755,16 @@ body[data-vista="pistero"] #micBtn{display:none}
   <div id="video-map"></div>
   <canvas id="video-canvas-out"></canvas>
   <div class="video-top-bar">
-    <button class="video-close" onclick="cerrarVideoRuta()">✕</button>
-    <div style="color:#fff;font-weight:800;font-size:0.9rem">🎬 Video de tu ruta</div>
+    <button class="video-close" onclick="cerrarVideoRuta()"><i class="fas fa-xmark"></i> </button>
+    <div style="color:#fff;font-weight:800;font-size:0.9rem"><i class="fas fa-clapperboard"></i> Video de tu ruta</div>
     <div style="width:38px"></div>
   </div>
   <div class="video-bottom-bar">
     <div id="video-status">Preparando el vuelo 3D...</div>
     <div class="video-progress"><div class="video-progress-fill" id="videoProgressFill"></div></div>
     <div style="display:flex;gap:10px">
-      <button class="ab sec" id="btnReplayVideo" style="margin:0;width:auto;padding:9px 16px;display:none" onclick="iniciarVueloRuta()">🔁 Repetir</button>
-      <button class="ab" id="btnGrabarVideo" style="margin:0;width:auto;padding:9px 16px" onclick="grabarVideoRuta()">⏺️ Grabar y descargar</button>
+      <button class="ab sec" id="btnReplayVideo" style="margin:0;width:auto;padding:9px 16px;display:none" onclick="iniciarVueloRuta()"><i class="fas fa-repeat"></i> Repetir</button>
+      <button class="ab" id="btnGrabarVideo" style="margin:0;width:auto;padding:9px 16px" onclick="grabarVideoRuta()"><i class="fas fa-circle"></i> Grabar y descargar</button>
     </div>
   </div>
 </div>
@@ -777,14 +777,14 @@ body[data-vista="pistero"] #micBtn{display:none}
 <div class="es-hint">Gira con el dedo · toca un ícono para entrar</div>
 <div class="es-modo-rapido" id="esModoRapido"></div>
 <div id="esferaWrap"></div>
-<button class="es-classic" onclick="cerrarEsfera()">☰ Menú clásico</button>
+<button class="es-classic" onclick="cerrarEsfera()"><i class="fas fa-bars"></i> Menú clásico</button>
 <div class="es-bottom">
   <div class="es-ind es-dato"><span class="es-ind-v" id="esKm">0</span><span class="es-ind-l">km</span></div>
   <!-- Antes "Avisos" y "Mensajes" eran DOS botones que llevaban al mismo lugar en el
        fondo (Social ya tiene amigos+solicitudes+chat juntos) — se fusionan en uno
        para liberar un espacio en la fila, que ahora usa "Mi puesto" (rango real en
        el ranking, antes solo visible adentro de Estadísticas). -->
-  <button class="es-ind es-badge" id="esAvisos" data-n="0" onclick="cerrarEsfera();cv('chat')"><span class="es-ind-v">🔔</span><span class="es-ind-l">Avisos</span></button>
+  <button class="es-ind es-badge" id="esAvisos" data-n="0" onclick="cerrarEsfera();cv('chat')"><span class="es-ind-v"><i class="fas fa-bell"></i> </span><span class="es-ind-l">Avisos</span></button>
   <button class="es-mic" id="esMic" onclick="toggleMic()" title="Pistero — dime un destino" aria-label="Pistero"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></button>
   <!-- Reportado por Inty (2026-07-20): "el número de puesto no te lleva a ningún lado".
        Era un <div> sin acción: mostraba el dato y ahí quedaba. Si un número invita a
@@ -797,15 +797,15 @@ body[data-vista="pistero"] #micBtn{display:none}
 <header>
 <div style="display:flex;align-items:center;gap:4px">
 <button class="es-globe" id="btnAtras" onclick="volverAtras()" title="Atrás" style="display:none"><i class="fas fa-arrow-left"></i></button>
-<h2 style="margin:0">🚲 Libre Pedal</h2>
+<h2 style="margin:0"><i class="fas fa-bicycle"></i> Libre Pedal</h2>
 </div>
 <div class="hdr-right">
-<button class="es-globe" id="btnEsferaHeader" onclick="abrirEsfera()" title="Esfera de apps">🌐</button>
-<button class="es-globe" onclick="cv('ajustes')" title="Ajustes">⚙️</button>
+<button class="es-globe" id="btnEsferaHeader" onclick="abrirEsfera()" title="Esfera de apps"><i class="fas fa-globe"></i> </button>
+<button class="es-globe" onclick="cv('ajustes')" title="Ajustes"><i class="fas fa-gear"></i> </button>
 <div class="uchip-wrap">
 <button class="uchip" onclick="toggleUserMenu(event)" aria-label="Menú de usuario"><span class="uchip-av"><i class="fas fa-bicycle"></i></span><span class="uchip-lvl" id="nv">Novato</span><i class="fas fa-chevron-down uchip-caret"></i></button>
 <div class="umenu" id="uMenu">
-<button id="ghostBtn" onclick="toggleGhost();cerrarUserMenu()">👻 Modo fantasma: OFF</button>
+<button id="ghostBtn" onclick="toggleGhost();cerrarUserMenu()"><i class="fas fa-ghost"></i> Modo fantasma: OFF</button>
 <button id="logoutBtn" class="umenu-danger" onclick="cerrarSesion()"><i class="fas fa-right-from-bracket"></i> Salir</button>
 </div>
 </div>
@@ -824,32 +824,32 @@ body[data-vista="pistero"] #micBtn{display:none}
   <div id="sugerencias-dest"></div>
 </div>
 <button class="bg" style="margin-top:6px" onclick="startQuickTrip()">▶️ Iniciar navegación</button>
-<button class="ab sec" type="button" style="margin-top:6px" onclick="showNewTripForm()">🗺️ ¿Vas a varias paradas? Planifica el viaje</button>
-<button class="ab sec" type="button" style="margin-top:6px" id="btnPuntoMapaViaje" onclick="togglePuntoMapaViaje()">📍 No lo encuentro: elegir en el mapa</button>
+<button class="ab sec" type="button" style="margin-top:6px" onclick="showNewTripForm()"><i class="fas fa-map"></i> ¿Vas a varias paradas? Planifica el viaje</button>
+<button class="ab sec" type="button" style="margin-top:6px" id="btnPuntoMapaViaje" onclick="togglePuntoMapaViaje()"><i class="fas fa-location-dot"></i> No lo encuentro: elegir en el mapa</button>
 <div id="punto-mapa-viaje" style="display:none;margin-top:8px">
   <div id="punto-mapa-viaje-inner" style="height:220px;border-radius:10px;overflow:hidden"></div>
   <p id="puntoMapaViajeEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto. Te llevo por el camino real más cerca de ahí; si no hay camino marcado hasta el punto, el último tramo puede que lo tengas que hacer a pie.</p>
-  <button class="bg" style="margin-top:6px;display:none" id="btnNavegarPuntoMapa" onclick="navegarAPuntoMapaElegido()">🧭 Navegar hasta este punto</button>
+  <button class="bg" style="margin-top:6px;display:none" id="btnNavegarPuntoMapa" onclick="navegarAPuntoMapaElegido()"><i class="fas fa-compass"></i> Navegar hasta este punto</button>
 </div>
 </div>
 <div class="speed-display">
   <div class="speed-value" id="spd">0</div>
   <div class="speed-label">km/h</div>
   <div class="speed-status" id="speedStatus">Detenido</div>
-  <div id="dashCrono" style="display:none;font-size:1.15rem;font-weight:800;color:#fff;margin-top:6px;letter-spacing:0.5px;font-variant-numeric:tabular-nums">⏱️ 0:00</div>
+  <div id="dashCrono" style="display:none;font-size:1.15rem;font-weight:800;color:#fff;margin-top:6px;letter-spacing:0.5px;font-variant-numeric:tabular-nums"><i class="fas fa-stopwatch"></i> 0:00</div>
   <div id="dashCronoControles" style="display:none;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px">
-    <button class="ab sec" id="btnPausaDash" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="togglePausaViaje()">⏸️ Pausar</button>
-    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="marcarVuelta()">🏁 Vuelta</button>
-    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="verVueltas()">📋 Vueltas</button>
-    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="reiniciarCronometro()">🔄 Reiniciar</button>
+    <button class="ab sec" id="btnPausaDash" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="togglePausaViaje()"><i class="fas fa-pause"></i> Pausar</button>
+    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="marcarVuelta()"><i class="fas fa-flag-checkered"></i> Vuelta</button>
+    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="verVueltas()"><i class="fas fa-clipboard"></i> Vueltas</button>
+    <button class="ab sec" style="margin:0;padding:6px 10px;font-size:0.72rem;width:auto" onclick="reiniciarCronometro()"><i class="fas fa-arrows-rotate"></i> Reiniciar</button>
   </div>
-  <div class="gps-signal-badge" id="gpsSignalBadge" style="display:none">🛰️ Buscando señal GPS...</div>
-  <div class="pausa-badge" id="dashPausaBadge" style="display:none">⏸️ En pausa (no cuenta para tu ritmo)</div>
+  <div class="gps-signal-badge" id="gpsSignalBadge" style="display:none"><i class="fas fa-satellite"></i> Buscando señal GPS...</div>
+  <div class="pausa-badge" id="dashPausaBadge" style="display:none"><i class="fas fa-pause"></i> En pausa (no cuenta para tu ritmo)</div>
   <div class="pausa-badge" id="dashBleHR" style="display:none"></div>
   <div class="pausa-badge" id="dashBlePower" style="display:none"></div>
   <div class="gps-signal-badge" id="segmentoBadge" style="display:none;background:rgba(255,215,0,0.14);color:var(--g);border-color:rgba(255,215,0,0.4);animation:none"></div>
 </div>
-<button class="ab sec" id="btnGPSLibre" style="margin:8px auto 0;width:auto;min-height:38px;padding:8px 16px;font-size:0.78rem;display:block" onclick="toggleGPS()">📍 Grabar un paseo</button>
+<button class="ab sec" id="btnGPSLibre" style="margin:8px auto 0;width:auto;min-height:38px;padding:8px 16px;font-size:0.78rem;display:block" onclick="toggleGPS()"><i class="fas fa-location-dot"></i> Grabar un paseo</button>
 <div class="stats-grid">
   <div class="stat-card"><div class="stat-value" id="dt">0.0</div><div class="stat-label">Km totales</div></div>
   <div class="stat-card"><div class="stat-value" id="cl">0</div><div class="stat-label">Calorías</div></div>
@@ -858,24 +858,24 @@ body[data-vista="pistero"] #micBtn{display:none}
 </div>
 <div class="section-info"><h4>Desempeño</h4><div class="performance-bar"><div class="performance-fill" id="performanceFill" style="width:0%">0%</div></div></div>
 <div class="quick-links">
-  <button class="btrip" onclick="cv('trips')">🗺️ Mis viajes</button>
+  <button class="btrip" onclick="cv('trips')"><i class="fas fa-map"></i> Mis viajes</button>
 </div>
-<button class="ab" style="margin-top:6px;background:#dc2626;color:#fff;font-weight:800" onclick="enviarSOS()">🆘 Enviar SOS a mis contactos</button>
+<button class="ab" style="margin-top:6px;background:#dc2626;color:#fff;font-weight:800" onclick="enviarSOS()"><i class="fas fa-kit-medical"></i> Enviar SOS a mis contactos</button>
 </section>
 
 <section id="v-musica" class="view">
-<div class="section-info"><h4>🎵 Música</h4><p>Radios gratis, tu propia música, o abre tu app favorita.</p></div>
+<div class="section-info"><h4><i class="fas fa-music"></i> Música</h4><p>Radios gratis, tu propia música, o abre tu app favorita.</p></div>
 <div class="lp-player" id="lpPlayer">
   <div class="lp-player-top">
     <span class="lp-player-eq" id="lpEq"><i></i><i></i><i></i></span>
     <span id="lpTrackName">Radio Libre Pedal · toca ▶ para sonar</span>
-    <span id="lpDuckBadge">🔉 Pistero hablando…</span>
+    <span id="lpDuckBadge"><i class="fas fa-volume-low"></i> Pistero hablando…</span>
   </div>
   <div class="lp-player-controls">
-    <button onclick="lpMusic.prev()" title="Anterior">⏮</button>
+    <button onclick="lpMusic.prev()" title="Anterior"><i class="fas fa-backward-step"></i> </button>
     <button id="lpPlayBtn" class="lp-play" onclick="lpMusic.toggle()" title="Reproducir / pausar">▶</button>
-    <button onclick="lpMusic.next()" title="Siguiente">⏭</button>
-    <label class="lp-file-btn" title="Cargar tu propia música (MP3)">📁<input type="file" id="lpMusicFiles" accept="audio/*" multiple onchange="lpMusic.cargarArchivos(this.files)" style="display:none"></label>
+    <button onclick="lpMusic.next()" title="Siguiente"><i class="fas fa-forward-step"></i> </button>
+    <label class="lp-file-btn" title="Cargar tu propia música (MP3)"><i class="fas fa-folder"></i> <input type="file" id="lpMusicFiles" accept="audio/*" multiple onchange="lpMusic.cargarArchivos(this.files)" style="display:none"></label>
   </div>
   <div class="lp-player-note">La música <strong>baja sola</strong> cuando Pistero habla y vuelve al terminar. Radios gratis o tu propia música (📁). Con apps externas el navegador no puede controlar el volumen.</div>
 </div>
@@ -888,80 +888,80 @@ body[data-vista="pistero"] #micBtn{display:none}
 <a href="https://soundcloud.com/search?q=cycling%20music" target="_blank" class="music-btn music-soundcloud" title="SoundCloud"><i class="fab fa-soundcloud"></i></a>
 </div>
 <div class="lp-player-note" style="margin-top:6px">Al tocar un ícono se abre esa app (si la tienes instalada) o su web. El navegador no puede controlar el volumen de otra app — baja el volumen de Pistero desde ella si se superponen.</div>
-<button class="ab sec" style="margin-top:14px" onclick="volverAtras()">← Volver</button>
+<button class="ab sec" style="margin-top:14px" onclick="volverAtras()"><i class="fas fa-arrow-left"></i> Volver</button>
 </section>
 
 <section id="v-ajustes" class="view">
-<div class="section-info"><h4>⚙️ Ajustes</h4><p>Voz, pantalla, GPS y mantenimiento de la app.</p></div>
+<div class="section-info"><h4><i class="fas fa-gear"></i> Ajustes</h4><p>Voz, pantalla, GPS y mantenimiento de la app.</p></div>
 <!-- REDISEÑO Pantalla 05: la config de la voz estaba dispersa; se junta en "Tu Pistero" y el resto se agrupa por lo que hace (Ley de Hick). Mismos botones/IDs, solo reordenados. -->
 <details class="soc-group" open>
-  <summary><span class="soc-ic">🎙️</span><span><b>Tu Pistero</b><small>Voz · voz mejorada · guía/personalidad · idioma de la ruta</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-microphone-lines"></i> </span><span><b>Tu Pistero</b><small>Voz · voz mejorada · guía/personalidad · idioma de la ruta</small></span></summary>
   <div class="quick-links" style="margin-top:9px">
     <button class="ab sec" style="margin:0" id="vozBtn" onclick="toggleVoz()"><i class="fas fa-volume-high"></i> Voz: ON</button>
     <button class="ab sec" style="margin:0" id="vozNeuralBtn" onclick="toggleVozNeural()"><i class="fas fa-wand-magic-sparkles"></i> Voz mejorada: ON</button>
     <button class="ab sec" style="margin:0" id="generoBtn" onclick="toggleGenero()"><i class="fas fa-person"></i> Guía: Pistero</button>
-    <button class="ab sec" style="margin:0" id="btnCharla" onclick="toggleCharla()">🗣️ Pistero habla: Normal</button>
-    <button class="ab sec" style="margin:0" onclick="mostrarIdiomaRuta()">🛣️ El idioma de la ruta</button>
+    <button class="ab sec" style="margin:0" id="btnCharla" onclick="toggleCharla()"><i class="fas fa-comment-dots"></i> Pistero habla: Normal</button>
+    <button class="ab sec" style="margin:0" onclick="mostrarIdiomaRuta()"><i class="fas fa-road"></i> El idioma de la ruta</button>
   </div>
 </details>
 <details class="soc-group">
-  <summary><span class="soc-ic">🔋</span><span><b>Rendimiento</b><small>Ahorro de pantalla · ahorro de GPS</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-battery-half"></i> </span><span><b>Rendimiento</b><small>Ahorro de pantalla · ahorro de GPS</small></span></summary>
   <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" onclick="toggleSaver()">🔋 Ahorro pantalla</button>
-    <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()">🔋 Ahorro GPS: OFF</button>
+    <button class="ab sec" style="margin:0" onclick="toggleSaver()"><i class="fas fa-battery-half"></i> Ahorro pantalla</button>
+    <button class="ab sec" style="margin:0" id="btnAhorroGPS" onclick="toggleAhorroGPS()"><i class="fas fa-battery-half"></i> Ahorro GPS: OFF</button>
   </div>
 </details>
 <details class="soc-group">
-  <summary><span class="soc-ic">🔒</span><span><b>Privacidad</b><small>Compartir ubicación en vivo</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-lock"></i> </span><span><b>Privacidad</b><small>Compartir ubicación en vivo</small></span></summary>
   <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()">📡 Compartir ubicación en vivo</button>
+    <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()"><i class="fas fa-satellite-dish"></i> Compartir ubicación en vivo</button>
   </div>
 </details>
 <details class="soc-group">
-  <summary><span class="soc-ic">🎓</span><span><b>Ayuda</b><small>Ver el tutorial de la app</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-graduation-cap"></i> </span><span><b>Ayuda</b><small>Ver el tutorial de la app</small></span></summary>
   <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" onclick="startTutorial()">🎓 Ver tutorial</button>
+    <button class="ab sec" style="margin:0" onclick="startTutorial()"><i class="fas fa-graduation-cap"></i> Ver tutorial</button>
   </div>
 </details>
-<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🎙️ Manos libres</h4>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-microphone-lines"></i> Manos libres</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Para cuando vas pedaleando o manejando y no puedes tocar el micrófono: Pistero queda escuchando todo el tiempo. No responde a cada cosa que digas — solo cuando lo llamas por su nombre ("Pistero, ¿cómo está el clima?"). Para callarlo, decir "cállate" funciona siempre, sin necesitar el nombre. <strong style="color:var(--g)">Necesita la pantalla encendida</strong> — si la apagas, deja de escuchar (a diferencia del GPS, que sí sigue con la pantalla apagada).</p>
 <div class="quick-links">
-  <button class="ab sec" style="margin:0" id="btnManosLibres" onclick="toggleManosLibres()">🎙️ Manos libres: OFF</button>
+  <button class="ab sec" style="margin:0" id="btnManosLibres" onclick="toggleManosLibres()"><i class="fas fa-microphone-lines"></i> Manos libres: OFF</button>
 </div>
-<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🎒 Bitácora de viajes</h4>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-bag-shopping"></i> Bitácora de viajes</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">No todos llevan diario de sus viajes — esto es solo para quien quiera. Si lo activas, la app te ofrece llevar registro (dónde te hospedaste, tus notas del día) cuando termines una ruta. Puedes decir "guarda mi bitácora" en cualquier momento aunque esto esté apagado.</p>
 <div class="quick-links">
-  <button class="ab sec" style="margin:0" id="btnBitacoraViajes" onclick="toggleBitacoraViajes()">🎒 Bitácora de viajes: OFF</button>
+  <button class="ab sec" style="margin:0" id="btnBitacoraViajes" onclick="toggleBitacoraViajes()"><i class="fas fa-bag-shopping"></i> Bitácora de viajes: OFF</button>
 </div>
-<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">🚨 Detección de caídas</h4>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-tower-broadcast"></i> Detección de caídas</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Detecta un golpe fuerte seguido de quietud y prepara el aviso a tus contactos de emergencia. Corre solo mientras el GPS está activo.</p>
 <div class="quick-links">
-  <button class="ab sec" style="margin:0" id="btnCrashToggle" onclick="toggleDeteccionCaidas()">🚨 Detección de caídas: ON</button>
-  <button class="ab sec" style="margin:0" onclick="mostrarAlertaCaida()">🧪 Probar alerta</button>
+  <button class="ab sec" style="margin:0" id="btnCrashToggle" onclick="toggleDeteccionCaidas()"><i class="fas fa-tower-broadcast"></i> Detección de caídas: ON</button>
+  <button class="ab sec" style="margin:0" onclick="mostrarAlertaCaida()"><i class="fas fa-flask"></i> Probar alerta</button>
 </div>
-<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem">📶 Sensores Bluetooth</h4>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-signal"></i> Sensores Bluetooth</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Conecta un pulsómetro o potenciómetro estándar BLE para ver tus datos en vivo mientras pedaleas.</p>
 <div class="quick-links">
-  <button class="ab sec" style="margin:0" onclick="conectarPulsometro()">❤️ Conectar pulsómetro</button>
-  <button class="ab sec" style="margin:0" onclick="conectarPotenciometro()">⚡ Conectar potenciómetro</button>
-  <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()">🔌 Desconectar</button>
+  <button class="ab sec" style="margin:0" onclick="conectarPulsometro()"><i class="fas fa-heart"></i> Conectar pulsómetro</button>
+  <button class="ab sec" style="margin:0" onclick="conectarPotenciometro()"><i class="fas fa-bolt"></i> Conectar potenciómetro</button>
+  <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()"><i class="fas fa-plug"></i> Desconectar</button>
 </div>
 <div class="quick-links" style="margin-top:16px">
-  <a href="terminos.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">📄 Términos y Condiciones</a>
-  <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none">🔒 Política de Privacidad</a>
+  <a href="terminos.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fas fa-file-lines"></i> Términos y Condiciones</a>
+  <a href="privacidad.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fas fa-lock"></i> Política de Privacidad</a>
 </div>
 <div style="text-align:center;margin-top:16px">
-<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px">🔄 Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px">🔊 Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px">📡 Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.59</span></div>
+<button onclick="forzarActualizacion()" style="background:rgba(252,76,2,0.12);color:var(--p);border:1px solid var(--p);border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px"><i class="fas fa-arrows-rotate"></i> Actualizar app</button><button onclick="diagnosticoVoz()" style="background:rgba(255,215,0,0.12);color:var(--g);border:1px solid var(--g);border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px"><i class="fas fa-volume-high"></i> Probar voz</button><button onclick="diagnosticoGPS()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid #10b981;border-radius:20px;min-height:40px;padding:10px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;margin:3px"><i class="fas fa-satellite-dish"></i> Probar GPS</button><div style="color:#3a4a5a;font-size:0.62rem;margin-top:6px">Libre Pedal · v<span id="lpVerMostrada">6.59</span></div>
 </div>
 <div id="admin-panel" style="display:none;margin-top:16px">
   <div class="cd">
-    <h4 style="margin-top:0;font-size:0.85rem;color:var(--g)">⚙️ Panel Admin</h4>
+    <h4 style="margin-top:0;font-size:0.85rem;color:var(--g)"><i class="fas fa-gear"></i> Panel Admin</h4>
     <p style="font-size:0.73rem;color:#9fb3c8;margin:4px 0 8px">Solo visible para ti como administrador.</p>
     <div id="adminNuevosBadge" style="display:none;background:rgba(255,215,0,0.12);border:1px solid var(--g);color:var(--g);border-radius:8px;padding:8px 10px;font-size:0.78rem;font-weight:700;margin-bottom:8px"></div>
-    <button class="ab" onclick="exportarUsuariosAdmin()">⬇️ Exportar lista de usuarios (.csv)</button>
-    <button class="ab sec" onclick="mostrarTodosRegistrados()">👥 Ver todos los registrados</button>
-    <button class="ab" style="background:#6366f1;color:#fff" onclick="verAnaliticasAdmin()">📊 Analíticas de uso</button>
-    <h4 style="margin-top:14px;font-size:0.82rem;color:var(--g)">🎯 Crear reto</h4>
+    <button class="ab" onclick="exportarUsuariosAdmin()"><i class="fas fa-arrow-down"></i> Exportar lista de usuarios (.csv)</button>
+    <button class="ab sec" onclick="mostrarTodosRegistrados()"><i class="fas fa-users"></i> Ver todos los registrados</button>
+    <button class="ab" style="background:#6366f1;color:#fff" onclick="verAnaliticasAdmin()"><i class="fas fa-chart-column"></i> Analíticas de uso</button>
+    <h4 style="margin-top:14px;font-size:0.82rem;color:var(--g)"><i class="fas fa-bullseye"></i> Crear reto</h4>
     <input type="text" id="retoTitulo" placeholder="Título (ej: 500km en julio)" maxlength="80">
     <input type="text" id="retoDesc" placeholder="Descripción breve (opcional)" maxlength="200">
     <input type="number" id="retoMeta" placeholder="Meta en km" min="1">
@@ -969,21 +969,21 @@ body[data-vista="pistero"] #micBtn{display:none}
     <button class="ab" style="margin-top:6px" onclick="crearReto()">Publicar reto</button>
   </div>
 </div>
-<button class="ab sec" style="margin-top:12px" onclick="volverAtras()">← Volver</button>
+<button class="ab sec" style="margin-top:12px" onclick="volverAtras()"><i class="fas fa-arrow-left"></i> Volver</button>
 </section>
 
 <section id="v-trips" class="view">
-<div class="section-info"><h4>🗺️ Mis viajes</h4><p>Tus recorridos grabados, viajes planificados y bitácora, todo en un solo lugar.</p></div>
-<button class="ab" onclick="showNewTripForm()">➕ Planificar viaje multi-destino</button>
-<button class="btrip" style="margin-top:6px" onclick="openDiario()">📓 Ciclo Bitácora</button>
-<button class="btrip" style="margin-top:6px" onclick="cv('gui')">🧭 CicloGuía · hospedajes y panoramas</button>
-<h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">🛣️ Tus rutas grabadas</h4>
+<div class="section-info"><h4><i class="fas fa-map"></i> Mis viajes</h4><p>Tus recorridos grabados, viajes planificados y bitácora, todo en un solo lugar.</p></div>
+<button class="ab" onclick="showNewTripForm()"><i class="fas fa-plus"></i> Planificar viaje multi-destino</button>
+<button class="btrip" style="margin-top:6px" onclick="openDiario()"><i class="fas fa-book"></i> Ciclo Bitácora</button>
+<button class="btrip" style="margin-top:6px" onclick="cv('gui')"><i class="fas fa-compass"></i> CicloGuía · hospedajes y panoramas</button>
+<h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem"><i class="fas fa-road"></i> Tus rutas grabadas</h4>
 <div id="trips-rutas-list" class="js-rutas-list"></div>
 <input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
-<button class="ab" style="margin-top:6px" onclick="document.getElementById('gpxFileInput').click()">📥Importar ruta (GPX de Strava, Wikiloc o Komoot)</button>
-<button class="ab sec" style="margin-top:6px" onclick="showAllRoutesOnMap()">🗺️ Ver todas en el mapa</button>
+<button class="ab" style="margin-top:6px" onclick="document.getElementById('gpxFileInput').click()"><i class="fas fa-download"></i> Importar ruta (GPX de Strava, Wikiloc o Komoot)</button>
+<button class="ab sec" style="margin-top:6px" onclick="showAllRoutesOnMap()"><i class="fas fa-map"></i> Ver todas en el mapa</button>
 <div id="map-routes-all" style="margin-top:12px;display:none"><div id="map-all-routes"></div></div>
-<h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem">📋 Viajes planificados</h4>
+<h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem"><i class="fas fa-clipboard"></i> Viajes planificados</h4>
 <div id="trips-list"></div>
 </section>
 
@@ -998,11 +998,11 @@ body[data-vista="pistero"] #micBtn{display:none}
 <input type="text" id="custom-dest-name" placeholder="Nombre" maxlength="80"><input type="text" id="custom-dest-addr" placeholder="Dirección" maxlength="150">
 <button class="ab" onclick="addCustomDest()">Agregar</button></div></div>
 <div style="margin-top:12px"><h4 style="color:var(--g);font-size:0.9rem">Orden</h4><div id="added-dests"></div></div>
-<button class="ab" style="margin-top:12px" onclick="reporteDeViaje()">📋 Ver reporte + clima</button>
-<button class="ab sec" style="margin-top:6px" onclick="toggleGastosPanel()">💰 Calcular gastos del viaje</button>
-<button class="ab sec" style="margin-top:6px" onclick="mostrarPlanificadorPresupuesto()">🎒 Planificador por presupuesto</button>
+<button class="ab" style="margin-top:12px" onclick="reporteDeViaje()"><i class="fas fa-clipboard"></i> Ver reporte + clima</button>
+<button class="ab sec" style="margin-top:6px" onclick="toggleGastosPanel()"><i class="fas fa-coins"></i> Calcular gastos del viaje</button>
+<button class="ab sec" style="margin-top:6px" onclick="mostrarPlanificadorPresupuesto()"><i class="fas fa-bag-shopping"></i> Planificador por presupuesto</button>
 <div id="gastos-panel" style="display:none;background:rgba(0,0,0,0.3);border:1px solid rgba(252,76,2,0.25);padding:12px;border-radius:10px;margin-top:6px">
-  <h4 style="color:var(--p);margin:0 0 8px 0;font-size:0.85rem">💰 Presupuesto cicloviajero</h4>
+  <h4 style="color:var(--p);margin:0 0 8px 0;font-size:0.85rem"><i class="fas fa-coins"></i> Presupuesto cicloviajero</h4>
   <input type="number" id="gasto-km" placeholder="Kilómetros del viaje (ej: 250)" min="1">
   <input type="number" id="gasto-dias" placeholder="Días de viaje (ej: 3)" min="1">
   <input type="number" id="gasto-comida" placeholder="Comida por día (tu moneda, ej: 8000)" min="0">
@@ -1010,25 +1010,25 @@ body[data-vista="pistero"] #micBtn{display:none}
   <button class="bg" style="margin-top:6px" onclick="calcularGastos()">Calcular</button>
   <div id="gastos-resultado" style="margin-top:8px;font-size:0.8rem;line-height:1.6"></div>
 </div>
-<button class="bg" style="margin-top:8px" onclick="saveAndStartTrip()">💾 Guardar</button>
+<button class="bg" style="margin-top:8px" onclick="saveAndStartTrip()"><i class="fas fa-floppy-disk"></i> Guardar</button>
 <button class="ab sec" onclick="cv('trips')">Cancelar</button>
 </section>
 
 <section id="v-map" class="view">
 <div class="section-info"><h4>Mapa</h4><p>Tu mundo ciclista en un solo mapa: dónde estás, la comunidad y los reportes de la ruta.</p></div>
-<div style="display:flex;gap:8px;margin-bottom:8px"><button class="ab" style="flex:1;margin:0;background:#fc4c02;color:#fff;border:none;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center" onclick="cv('dash')">▶️ Iniciar viaje</button><button class="ab sec" style="flex:1;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center" onclick="toggleCapaCiclistas(this)" title="Ver otros ciclistas en el mapa">🚴 Ciclistas</button></div>
+<div style="display:flex;gap:8px;margin-bottom:8px"><button class="ab" style="flex:1;margin:0;background:#fc4c02;color:#fff;border:none;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center" onclick="cv('dash')">▶️ Iniciar viaje</button><button class="ab sec" style="flex:1;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center" onclick="toggleCapaCiclistas(this)" title="Ver otros ciclistas en el mapa"><i class="fas fa-person-biking"></i> Ciclistas</button></div>
 <div class="mapcapas" style="position:relative;display:none">
   <button class="capachip" id="btnCapasToggle" onclick="toggleCapasPanel()"><i class="fas fa-layer-group"></i> Capas</button>
   <div id="capasPanel" class="capas-panel">
-    <button class="capachip" id="capaCiclistas" onclick="toggleCapaCiclistas(this)">🚴 Ciclistas</button>
+    <button class="capachip" id="capaCiclistas" onclick="toggleCapaCiclistas(this)"><i class="fas fa-person-biking"></i> Ciclistas</button>
     <button class="capachip on" id="capaPeligros" onclick="toggleCapaReportes('peligros',this)">⚠️ Peligros y controles</button>
-    <button class="capachip on" id="capaPuntos" onclick="toggleCapaReportes('puntos',this)">🏪 Servicios</button>
-    <button class="capachip on" id="capaMiradores" onclick="toggleCapaReportes('miradores',this)">📸 Miradores</button>
+    <button class="capachip on" id="capaPuntos" onclick="toggleCapaReportes('puntos',this)"><i class="fas fa-store"></i> Servicios</button>
+    <button class="capachip on" id="capaMiradores" onclick="toggleCapaReportes('miradores',this)"><i class="fas fa-camera"></i> Miradores</button>
   </div>
 </div>
 <div style="position:relative">
   <div id="map"></div>
-  <button id="btnCapaMapa" class="map-estilo-btn" onclick="toggleCapaMapa()" title="Cambiar el estilo del mapa (calles / topográfico / satélite)">🏔️</button>
+  <button id="btnCapaMapa" class="map-estilo-btn" onclick="toggleCapaMapa()" title="Cambiar el estilo del mapa (calles / topográfico / satélite)"><i class="fas fa-mountain"></i> </button>
   <button id="fabReportar" onclick="abrirAbanicoReporte()" title="Reportar algo en el mapa"><i class="fas fa-plus"></i></button>
   <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación"><i class="fas fa-location-crosshairs"></i></button>
 </div>
@@ -1036,37 +1036,37 @@ body[data-vista="pistero"] #micBtn{display:none}
 </section>
 
 <section id="v-diario" class="view">
-<div class="section-info"><h4>📓 Ciclo Bitácora</h4><p>Tu bitácora del viaje. Lo privado queda en tu teléfono y se respalda en tu cuenta.</p></div>
+<div class="section-info"><h4><i class="fas fa-book"></i> Ciclo Bitácora</h4><p>Tu bitácora del viaje. Lo privado queda en tu teléfono y se respalda en tu cuenta.</p></div>
 <div class="cd">
-  <h4 style="margin-top:0;font-size:0.9rem">🌅 Inicio del día</h4>
+  <h4 style="margin-top:0;font-size:0.9rem"><i class="fas fa-mountain-sun"></i> Inicio del día</h4>
   <p style="font-size:0.78rem;color:#9fb3c8;margin:4px 0 6px">¿Cómo amaneciste hoy?</p>
   <div id="diarioEstado" style="display:flex;gap:6px;flex-wrap:wrap"></div>
   <input type="text" id="diarioMeta" placeholder="🎯 Meta del día: ¿a dónde vas?" maxlength="150" style="margin-top:10px">
 </div>
 <div class="cd">
-  <h4 style="margin-top:0;font-size:0.9rem">⛺ Cierre del día</h4>
+  <h4 style="margin-top:0;font-size:0.9rem"><i class="fas fa-tent"></i> Cierre del día</h4>
   <p style="font-size:0.78rem;color:#9fb3c8;margin:4px 0">Hoy pedaleaste <strong id="diarioKm" style="color:var(--p)">0.00</strong> km.</p>
   <textarea id="diarioComplejo" rows="2" placeholder="Lo más complejo del tramo... (privado)" maxlength="500"></textarea>
   <textarea id="diarioReflexion" rows="3" placeholder="El viaje interno: tu reflexión del día... (privado)" maxlength="800" style="margin-top:6px"></textarea>
 </div>
-<button class="ab" onclick="guardarDiario()">💾 Guardar mi día</button>
+<button class="ab" onclick="guardarDiario()"><i class="fas fa-floppy-disk"></i> Guardar mi día</button>
 <div class="cd" style="margin-top:10px">
-  <h4 style="margin-top:0;font-size:0.9rem">📍 Comparte un Punto de Interés</h4>
+  <h4 style="margin-top:0;font-size:0.9rem"><i class="fas fa-location-dot"></i> Comparte un Punto de Interés</h4>
   <p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Busca un lugar (agua, comida, mirador, taller, alojamiento…) y compártelo. Queda en el mapa para toda la comunidad y ganas Darma. 🤝</p>
   <input type="text" id="poi-buscar" placeholder="🔎 Busca el lugar o dirección..." maxlength="150">
-  <button class="ab sec" type="button" style="margin:6px 0" id="btnPoiMapaManual" onclick="togglePoiMapaManual()">📍 No lo encuentra: márcalo directo en el mapa</button>
+  <button class="ab sec" type="button" style="margin:6px 0" id="btnPoiMapaManual" onclick="togglePoiMapaManual()"><i class="fas fa-location-dot"></i> No lo encuentra: márcalo directo en el mapa</button>
   <div id="poi-mapa-manual" style="display:none;margin-bottom:8px">
     <div id="poi-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div>
     <p id="poiMapaManualEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto.</p>
   </div>
   <div id="poi-cats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0"></div>
   <textarea id="poi-desc" rows="2" placeholder="Cuéntalo con detalle (ej: agua gratis en la bencinera, o mirador con vista al lago)..." maxlength="500"></textarea>
-  <button class="ab" style="margin-top:6px" onclick="agregarPOI()">📍 Compartir con la comunidad (+15 Darma)</button>
+  <button class="ab" style="margin-top:6px" onclick="agregarPOI()"><i class="fas fa-location-dot"></i> Compartir con la comunidad (+15 Darma)</button>
 </div>
-<div class="cd" style="margin-top:8px"><h4 style="margin-top:0;font-size:0.85rem">☁️ Respaldo de tus datos</h4><p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Tu diario se respalda en tu cuenta. También puedes descargar una copia a un archivo y restaurarla.</p>
-<button class="ab sec" style="margin:0 0 6px" onclick="exportarMisDatos()">⬇️ Exportar mis datos (rutas, diario y perfil)</button>
-<label class="ab sec" style="display:block;margin:0;cursor:pointer;text-align:center">⬆️ Restaurar desde archivo<input type="file" accept="application/json,.json" onchange="importarMisDatos(this)" style="display:none"></label></div>
-<button class="ab sec" onclick="volverAtras()">← Volver</button>
+<div class="cd" style="margin-top:8px"><h4 style="margin-top:0;font-size:0.85rem"><i class="fas fa-cloud"></i> Respaldo de tus datos</h4><p style="font-size:0.74rem;color:#9fb3c8;margin:4px 0 8px">Tu diario se respalda en tu cuenta. También puedes descargar una copia a un archivo y restaurarla.</p>
+<button class="ab sec" style="margin:0 0 6px" onclick="exportarMisDatos()"><i class="fas fa-arrow-down"></i> Exportar mis datos (rutas, diario y perfil)</button>
+<label class="ab sec" style="display:block;margin:0;cursor:pointer;text-align:center"><i class="fas fa-arrow-up"></i> Restaurar desde archivo<input type="file" accept="application/json,.json" onchange="importarMisDatos(this)" style="display:none"></label></div>
+<button class="ab sec" onclick="volverAtras()"><i class="fas fa-arrow-left"></i> Volver</button>
 <div id="diarioHistorial" style="margin-top:14px"></div>
 </section>
 
@@ -1084,29 +1084,29 @@ body[data-vista="pistero"] #micBtn{display:none}
 .soc-group[open]>summary::after{transform:rotate(90deg)}
 </style>
 <details class="soc-group">
-  <summary><span class="soc-ic">👥</span><span><b>Amigos</b><small>Tus amigos · solicitudes · buscar ciclistas · mensajes</small></span><span id="solicBadgeHdr" style="display:none;margin-left:8px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem;font-weight:800"></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-users"></i> </span><span><b>Amigos</b><small>Tus amigos · solicitudes · buscar ciclistas · mensajes</small></span><span id="solicBadgeHdr" style="display:none;margin-left:8px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem;font-weight:800"></span></summary>
   <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" onclick="showFriendsList()">👥 Amigos y mensajes</button>
+    <button class="ab sec" style="margin:0" onclick="showFriendsList()"><i class="fas fa-users"></i> Amigos y mensajes</button>
     <button class="ab sec" style="margin:0" onclick="showFriendRequests()">📨 Solicitudes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
-    <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()">🔍 Buscar ciclistas</button>
+    <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()"><i class="fas fa-magnifying-glass"></i> Buscar ciclistas</button>
   </div>
 </details>
 <details class="soc-group">
-  <summary><span class="soc-ic">🌎</span><span><b>Comunidad</b><small>Chat global · rodadas grupales · novedades del ciclismo</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-earth-americas"></i> </span><span><b>Comunidad</b><small>Chat global · rodadas grupales · novedades del ciclismo</small></span></summary>
   <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" onclick="verRodadas()">🚵 Rodadas grupales</button>
-    <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')">📰 Novedades del ciclismo</button>
+    <button class="ab sec" style="margin:0" onclick="verRodadas()"><i class="fas fa-person-biking"></i> Rodadas grupales</button>
+    <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')"><i class="fas fa-newspaper"></i> Novedades del ciclismo</button>
   </div>
 </details>
 <details class="soc-group">
-  <summary><span class="soc-ic">🤝</span><span><b>Aportar</b><small>Invitar a pedalear · te doy alojo · recomendaciones</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-handshake"></i> </span><span><b>Aportar</b><small>Invitar a pedalear · te doy alojo · recomendaciones</small></span></summary>
   <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" onclick="invitarAmigos()">📤 Invita a un amigo</button>
-    <button class="ab sec" style="margin:0;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981" onclick="abrirTeDoyAlojo()">🏡 Te doy alojo</button>
-    <button class="ab sec" style="margin:0" onclick="cv('rec')">💡 Recomendaciones</button>
+    <button class="ab sec" style="margin:0" onclick="invitarAmigos()"><i class="fas fa-share-from-square"></i> Invita a un amigo</button>
+    <button class="ab sec" style="margin:0;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981" onclick="abrirTeDoyAlojo()"><i class="fas fa-house"></i> Te doy alojo</button>
+    <button class="ab sec" style="margin:0" onclick="cv('rec')"><i class="fas fa-lightbulb"></i> Recomendaciones</button>
   </div>
 </details>
-<h4 style="margin:14px 0 4px;font-size:0.9rem;color:var(--p)">💬 Chat global de la comunidad</h4>
+<h4 style="margin:14px 0 4px;font-size:0.9rem;color:var(--p)"><i class="fas fa-comment"></i> Chat global de la comunidad</h4>
 <div class="cc">
 <div class="cm" id="chm"></div>
 <div class="cia"><input type="text" id="chi" placeholder="Escribe a la comunidad..." onkeypress="if(event.key==='Enter')em()"><button class="ab" onclick="em()"><i class="fas fa-paper-plane"></i></button></div>
@@ -1131,10 +1131,10 @@ body[data-vista="pistero"] #micBtn{display:none}
 <section id="v-pistero" class="view">
 <div class="section-info"><h4><svg viewBox="0 0 100 84" width="18" height="15" style="display:inline-block;vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
 <div id="pisteroChips">
-  <button class="pchip" onclick="location.href='/planificador-beta'">🧭 Trazar ruta</button><button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')">🗺️ Planifica mi viaje</button>
-  <button class="pchip" onclick="pisteroSugerencia('Se me soltó la cadena en plena ruta, ¿cómo la arreglo?')">🔧 Arregla mi bici</button>
-  <button class="pchip" onclick="pisteroSugerencia('¿Dónde puedo alojar cerca de mi ruta?')">🏨 ¿Dónde alojo?</button>
-  <button class="pchip" onclick="pisteroSugerencia('Recomiéndame una ruta bonita para pedalear hoy')">✨ Ruta de hoy</button>
+  <button class="pchip" onclick="location.href='/planificador-beta'"><i class="fas fa-compass"></i> Trazar ruta</button><button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')"><i class="fas fa-map"></i> Planifica mi viaje</button>
+  <button class="pchip" onclick="pisteroSugerencia('Se me soltó la cadena en plena ruta, ¿cómo la arreglo?')"><i class="fas fa-wrench"></i> Arregla mi bici</button>
+  <button class="pchip" onclick="pisteroSugerencia('¿Dónde puedo alojar cerca de mi ruta?')"><i class="fas fa-hotel"></i> ¿Dónde alojo?</button>
+  <button class="pchip" onclick="pisteroSugerencia('Recomiéndame una ruta bonita para pedalear hoy')"><i class="fas fa-wand-magic-sparkles"></i> Ruta de hoy</button>
 </div>
 <div class="cc">
   <div class="cm" id="pisteroMsgs"></div>
@@ -1152,38 +1152,38 @@ body[data-vista="pistero"] #micBtn{display:none}
 <input type="text" id="rec-title" placeholder="Título" maxlength="80">
 <select id="rec-cat"><option value="agua">Agua</option><option value="comida">Comida</option><option value="vista">Vista</option><option value="seguridad">Seguridad</option><option value="otro">Otro</option></select>
 <textarea id="rec-desc" rows="2" placeholder="Descripción..." maxlength="500"></textarea>
-<label for="rec-foto" style="display:inline-flex;align-items:center;gap:6px;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.4);color:var(--p);border-radius:10px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;margin:4px 0">📷 Agregar foto</label>
+<label for="rec-foto" style="display:inline-flex;align-items:center;gap:6px;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.4);color:var(--p);border-radius:10px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;margin:4px 0"><i class="fas fa-camera"></i> Agregar foto</label>
 <input type="file" id="rec-foto" accept="image/*" style="display:none" onchange="previewFoto(this,'rec')">
 <img id="rec-foto-prev" style="display:none;width:100%;border-radius:10px;margin:4px 0;max-height:160px;object-fit:cover" alt="">
 <button class="ab" onclick="addRecommendation()">Publicar</button></div>
 <div id="rec-list"></div>
-<button class="ab sec" onclick="volverAtras()">← Volver</button>
+<button class="ab sec" onclick="volverAtras()"><i class="fas fa-arrow-left"></i> Volver</button>
 </section>
 
 <section id="v-novedades" class="view">
-<div class="section-info"><h4>📰 Novedades del ciclismo en Chile</h4><p>Competencias, rodadas y cicloturismo — todo lo que se mueve en el país.</p></div>
+<div class="section-info"><h4><i class="fas fa-newspaper"></i> Novedades del ciclismo en Chile</h4><p>Competencias, rodadas y cicloturismo — todo lo que se mueve en el país.</p></div>
 <div class="gt" id="novedadesTabs">
   <div class="gtt on" onclick="filtrarNovedades('todos',this)">Todos</div>
-  <div class="gtt" onclick="filtrarNovedades('competencia',this)">🏁 Competencias</div>
-  <div class="gtt" onclick="filtrarNovedades('rodada',this)">🚴 Rodadas y encuentros</div>
-  <div class="gtt" onclick="filtrarNovedades('cicloturismo',this)">🌎 Cicloturismo</div>
-  <div class="gtt" onclick="filtrarNovedades('oficial',this)">🏛️ Oficial</div>
+  <div class="gtt" onclick="filtrarNovedades('competencia',this)"><i class="fas fa-flag-checkered"></i> Competencias</div>
+  <div class="gtt" onclick="filtrarNovedades('rodada',this)"><i class="fas fa-person-biking"></i> Rodadas y encuentros</div>
+  <div class="gtt" onclick="filtrarNovedades('cicloturismo',this)"><i class="fas fa-earth-americas"></i> Cicloturismo</div>
+  <div class="gtt" onclick="filtrarNovedades('oficial',this)"><i class="fas fa-landmark"></i> Oficial</div>
 </div>
 <div id="novedades-list"><p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">Cargando novedades...</p></div>
 <div id="novedades-admin" style="display:none;background:rgba(0,0,0,0.3);padding:12px;border-radius:10px;margin-top:16px">
-  <h4 style="margin:0 0 8px;font-size:0.85rem;color:var(--g)">⚙️ Publicar novedad (admin)</h4>
+  <h4 style="margin:0 0 8px;font-size:0.85rem;color:var(--g)"><i class="fas fa-gear"></i> Publicar novedad (admin)</h4>
   <input type="text" id="nov-titulo" placeholder="Título (ej: Gran Fondo Puchuncaví 2026)">
-  <select id="nov-categoria"><option value="competencia">🏁 Competencia</option><option value="rodada">🚴 Rodada / encuentro</option><option value="cicloturismo">🌎 Cicloturismo</option><option value="oficial">🏛️ Oficial</option></select>
+  <select id="nov-categoria"><option value="competencia"><i class="fas fa-flag-checkered"></i> Competencia</option><option value="rodada"><i class="fas fa-person-biking"></i> Rodada / encuentro</option><option value="cicloturismo"><i class="fas fa-earth-americas"></i> Cicloturismo</option><option value="oficial"><i class="fas fa-landmark"></i> Oficial</option></select>
   <input type="text" id="nov-fecha" placeholder="Fecha (ej: 11 de abril, 2026)">
   <textarea id="nov-desc" rows="2" placeholder="Descripción breve..."></textarea>
   <input type="text" id="nov-link" placeholder="Link (https://...)">
   <button class="ab" onclick="publicarNovedad()">Publicar</button>
 </div>
-<button class="ab sec" onclick="volverAtras()">← Volver</button>
+<button class="ab sec" onclick="volverAtras()"><i class="fas fa-arrow-left"></i> Volver</button>
 </section>
 
 <section id="v-mac" class="view">
-<div class="section-info"><h4>🔧 Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
+<div class="section-info"><h4><i class="fas fa-wrench"></i> Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
 <!-- REDISEÑO Pantalla 06 (prioridad máxima): fuera los tips improvisados ("arregla con lo que tengas"). Ahora TRIAGE: síntoma -> guía real nivel Park Tool O derivación. Frenos/dirección/horquilla SIEMPRE al mecánico (regla dura del Taller: paso a paso técnico real o nada). -->
 <div style="display:flex;gap:8px;margin:0 0 10px;font-size:0.72rem;color:#9fb3c8"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#35c46a;display:inline-block"></span>Puedes tú</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#ef4d5a;display:inline-block"></span>Al taller (seguridad)</span></div>
 
@@ -1199,12 +1199,12 @@ body[data-vista="pistero"] #micBtn{display:none}
       <li>Calza la cubierta con las manos, <b>sin pellizcar la cámara</b>, e infla a la presión que dice el flanco.</li>
       <li>Monta la rueda. Si es eje pasante, aprieta al <b>torque del fabricante</b> (típico 12–15 Nm — mira tu manual).</li>
     </ol>
-    <a href="https://www.parktool.com/es/blog/repair-help" target="_blank" style="display:inline-block;margin-top:8px;color:var(--p);font-size:0.78rem">📖 Guía completa Park Tool →</a>
+    <a href="https://www.parktool.com/es/blog/repair-help" target="_blank" style="display:inline-block;margin-top:8px;color:var(--p);font-size:0.78rem"><i class="fas fa-book-open"></i> Guía completa Park Tool →</a>
   </div>
 </details>
 
 <details class="soc-group">
-  <summary><span class="soc-ic">⛓️</span><span><b>Se salió la cadena <span style="color:#35c46a;font-size:0.7rem">· puedes tú</span></b><small>Sin herramientas, en 20 segundos</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-link"></i> </span><span><b>Se salió la cadena <span style="color:#35c46a;font-size:0.7rem">· puedes tú</span></b><small>Sin herramientas, en 20 segundos</small></span></summary>
   <div style="margin-top:9px;font-size:0.83rem;line-height:1.5;color:#d6deea">
     Pon los cambios en el plato y piñón <b>chicos</b>. Apoya la cadena sobre el plato delantero y gira el pedal hacia atrás con la mano, guiándola, hasta que enganche.
     <p style="margin:8px 0 0;color:#e7a33e">⚠️ Si se sale seguido, es desgaste o ajuste → al taller.</p>
@@ -1212,15 +1212,15 @@ body[data-vista="pistero"] #micBtn{display:none}
 </details>
 
 <details class="soc-group">
-  <summary><span class="soc-ic">⚙️</span><span><b>Cambios que no entran finos <span style="color:#35c46a;font-size:0.7rem">· ajuste menor</span></b><small>Solo el barrilete — nada más</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-gear"></i> </span><span><b>Cambios que no entran finos <span style="color:#35c46a;font-size:0.7rem">· ajuste menor</span></b><small>Solo el barrilete — nada más</small></span></summary>
   <div style="margin-top:9px;font-size:0.83rem;line-height:1.5;color:#d6deea">
     Con la rueda girando: si cuesta <b>subir</b> de piñón, gira el <b>barrilete</b> (el tornillo por donde entra el cable al cambio) 1/4 de vuelta hacia afuera y prueba. 1/4 al revés si cuesta bajar.
-    <p style="margin:8px 0 0;color:#ef4d5a">🛑 Si salta bajo fuerza, la patilla está doblada, o no mejora → al taller. No fuerces los topes.</p>
+    <p style="margin:8px 0 0;color:#ef4d5a"><i class="fas fa-hand"></i> Si salta bajo fuerza, la patilla está doblada, o no mejora → al taller. No fuerces los topes.</p>
   </div>
 </details>
 
 <details class="soc-group">
-  <summary><span class="soc-ic">🛑</span><span><b>Frenos <span style="color:#ef4d5a;font-size:0.7rem">· al taller</span></b><small>Frenan poco, esponjosos, rozan, pastillas gastadas</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-hand"></i> </span><span><b>Frenos <span style="color:#ef4d5a;font-size:0.7rem">· al taller</span></b><small>Frenan poco, esponjosos, rozan, pastillas gastadas</small></span></summary>
   <div style="margin-top:9px;font-size:0.83rem;line-height:1.5">
     <div style="background:rgba(239,77,90,0.14);border:1px solid #ef4d5a;border-radius:10px;padding:10px 12px;color:#ffd9dd">
       🛑 <b>Esto no es DIY.</b> Un freno mal armado es un accidente. No se improvisa (nada de nudos ni trucos). Te llevo al taller cercano.
@@ -1229,7 +1229,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 </details>
 
 <details class="soc-group">
-  <summary><span class="soc-ic">🚴</span><span><b>Dirección / horquilla <span style="color:#ef4d5a;font-size:0.7rem">· al taller</span></b><small>Holgura, ruido o juego al frenar</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-person-biking"></i> </span><span><b>Dirección / horquilla <span style="color:#ef4d5a;font-size:0.7rem">· al taller</span></b><small>Holgura, ruido o juego al frenar</small></span></summary>
   <div style="margin-top:9px;font-size:0.83rem;line-height:1.5">
     <div style="background:rgba(239,77,90,0.14);border:1px solid #ef4d5a;border-radius:10px;padding:10px 12px;color:#ffd9dd">
       🛑 <b>Siempre al mecánico.</b> Dirección, horquilla y potencia son lo que te sostiene. Cualquier juego o ruido ahí se revisa en taller.
@@ -1238,8 +1238,8 @@ body[data-vista="pistero"] #micBtn{display:none}
 </details>
 
 <div class="quick-links" style="margin-top:14px">
-  <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank">📍 Buscar taller cercano</a>
-  <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.parktool.com/es/blog/repair-help" target="_blank">📖 Guías Park Tool (Calvin Jones)</a>
+  <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Buscar taller cercano</a>
+  <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.parktool.com/es/blog/repair-help" target="_blank"><i class="fas fa-book-open"></i> Guías Park Tool (Calvin Jones)</a>
 </div>
 <!-- Elementos legacy OCULTOS: el arranque llama rm(MG) y loadRepairTips() y necesitan estos targets; sin ellos crashea el init. Quedan invisibles: ya no mostramos tips improvisados. -->
 <input type="text" id="bm" style="display:none"><div id="ml" style="display:none"></div><div id="repair-tips" style="display:none"></div>
@@ -1260,14 +1260,14 @@ body[data-vista="pistero"] #micBtn{display:none}
 <select id="hostel-type"><option value="hostel">Hostel</option><option value="camping">Camping</option><option value="casa">Casa</option></select>
 <input type="text" id="hostel-location" placeholder="Dirección" maxlength="150">
 <textarea id="hostel-desc" rows="2" placeholder="Descripción..." maxlength="500"></textarea>
-<label for="hostel-foto" style="display:inline-flex;align-items:center;gap:6px;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.4);color:var(--p);border-radius:10px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;margin:4px 0">📷 Agregar foto</label>
+<label for="hostel-foto" style="display:inline-flex;align-items:center;gap:6px;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.4);color:var(--p);border-radius:10px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;margin:4px 0"><i class="fas fa-camera"></i> Agregar foto</label>
 <input type="file" id="hostel-foto" accept="image/*" style="display:none" onchange="previewFoto(this,'hostel')">
 <img id="hostel-foto-prev" style="display:none;width:100%;border-radius:10px;margin:4px 0;max-height:160px;object-fit:cover" alt="">
 <button class="gps-btn" onclick="toggleHostelMap()">Marcar con GPS</button>
 <div class="gps-status" id="gpsStatus">Esperando...</div>
 <div id="map-hostel-select"></div>
 <button class="ab" onclick="addHostel()" style="margin-top:8px">Publicar</button>
-<button class="ab sec" onclick="volverAtras()">← Volver</button>
+<button class="ab sec" onclick="volverAtras()"><i class="fas fa-arrow-left"></i> Volver</button>
 </section>
 
 <section id="v-customize" class="view">
@@ -1278,7 +1278,7 @@ body[data-vista="pistero"] #micBtn{display:none}
      al contenido de esta pantalla. Mismo criterio que ya validó la otra sesión con
      el es-bottom: el Darma queda como DATO de un vistazo (sin onclick), no como
      un segundo menú; Logros y Estadísticas se sacan de acá — para eso está la Esfera. -->
-<div class="darma-badge">✨ <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
+<div class="darma-badge"><i class="fas fa-wand-magic-sparkles"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
 <details class="pgrupo" open ontoggle="if(this.open)_perfilAcordeon(this)">
   <summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco y equipo</span><i class="fas fa-chevron-down pg-chev"></i></summary>
@@ -1333,7 +1333,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 <div class="chart-container"><h4 style="margin:0 0 8px 0;color:var(--g);font-size:0.9rem">Duración por viaje (min)</h4><div class="chart-bar" id="chartDuration"></div></div>
 <div class="chart-container"><h4 style="margin:0 0 8px 0;color:var(--r);font-size:0.9rem">Calorías por viaje</h4><div class="chart-bar" id="chartCal"></div></div>
 <button class="ab" style="background:#3b82f6;color:#fff" onclick="exportarDatosGPX()">Exportar GPX</button>
-<button class="ab sec" onclick="volverAtras()">← Volver</button>
+<button class="ab sec" onclick="volverAtras()"><i class="fas fa-arrow-left"></i> Volver</button>
 </section>
 </main>
 
@@ -1346,7 +1346,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 </nav>
 
 <div class="user-list-modal" id="userModal">
-<div class="modal-header"><h2 id="modalTitle">Lista</h2><button class="close-modal" onclick="closeModal()">✕</button></div>
+<div class="modal-header"><h2 id="modalTitle">Lista</h2><button class="close-modal" onclick="closeModal()"><i class="fas fa-xmark"></i> </button></div>
 <div id="modalContent"></div>
 </div>
 
@@ -1365,7 +1365,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.73'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.74'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2647,9 +2647,9 @@ const PRECIOS = {
   panueloRoja:20, panueloAzul:20, panueloNegra:20, panueloLunares:30, panueloBuff:35
 };
 function seleccionarEstilo(n){ const id='estilo'+n; if(n>1 && !estaDesbloqueado(id)){ comprarItem(id); if(!estaDesbloqueado(id)) return; } esEstilo=n; try{ localStorage.setItem('lp_estilo',n); }catch(e){} h('Estilo de energía activado.'); renderEstilos(); }
-function renderEstilos(){ const c=document.getElementById('estilosGrid'); if(!c) return; const nombres=['Arcos neón','Tesla azul','Plasma']; let html=''; for(let n=1;n<=3;n++){ const id='estilo'+n; const lock=(n>1 && !estaDesbloqueado(id)); const sel=(esEstilo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarEstilo('+n+')">'+(lock?'<div class="lock-badge">🔒 '+PRECIOS[id]+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4">⚡</div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
+function renderEstilos(){ const c=document.getElementById('estilosGrid'); if(!c) return; const nombres=['Arcos neón','Tesla azul','Plasma']; let html=''; for(let n=1;n<=3;n++){ const id='estilo'+n; const lock=(n>1 && !estaDesbloqueado(id)); const sel=(esEstilo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarEstilo('+n+')">'+(lock?'<div class="lock-badge"><i class="fas fa-lock"></i> '+PRECIOS[id]+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4"><i class="fas fa-bolt"></i> </div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
 function seleccionarFondoEsfera(n){ if(n===2 && !estaDesbloqueado('fondoespacial')){ comprarItem('fondoespacial'); if(!estaDesbloqueado('fondoespacial')) return; } esFondoModo=n; try{ localStorage.setItem('lp_fondo_esfera',n); }catch(e){} h('Fondo de la esfera actualizado.'); renderFondosEsfera(); }
-function renderFondosEsfera(){ const c=document.getElementById('fondosEsferaGrid'); if(!c) return; const nombres=['Postales de Chile','Espacial'], emojis=['🏞️','🌌']; let html=''; for(let n=1;n<=2;n++){ const lock=(n===2 && !estaDesbloqueado('fondoespacial')); const sel=(esFondoModo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarFondoEsfera('+n+')">'+(lock?'<div class="lock-badge">🔒 '+PRECIOS.fondoespacial+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4">'+emojis[n-1]+'</div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
+function renderFondosEsfera(){ const c=document.getElementById('fondosEsferaGrid'); if(!c) return; const nombres=['Postales de Chile','Espacial'], emojis=['🏞️','🌌']; let html=''; for(let n=1;n<=2;n++){ const lock=(n===2 && !estaDesbloqueado('fondoespacial')); const sel=(esFondoModo===n); html+='<div class="custom-option'+(sel?' selected':'')+(lock?' locked':'')+'" onclick="seleccionarFondoEsfera('+n+')">'+(lock?'<div class="lock-badge"><i class="fas fa-lock"></i> '+PRECIOS.fondoespacial+'✨</div>':'')+'<div class="check">OK</div><div style="font-size:1.7rem;line-height:1.4">'+emojis[n-1]+'</div><div class="label">'+nombres[n-1]+'</div></div>'; } c.innerHTML=html; }
 function getDesbloqueados(){ try{ return JSON.parse(localStorage.getItem('lp_unlocked_'+(cu||'anon'))||'[]'); }catch(e){ return []; } }
 function estaDesbloqueado(id){ return !(id in PRECIOS) || getDesbloqueados().indexOf(id)!==-1; }
 function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ lpAviso('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){}
@@ -2666,10 +2666,10 @@ function mostrarTienda(desdeLogros){
   document.getElementById('modalTitle').innerText='✨ Tienda de Darma';
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.84rem;margin-top:0">Tienes <strong style="color:var(--g)">'+us.d+' de Darma ✨</strong>. Gánala aportando a la comunidad y desbloquea skins, lentes, accesorios y cascos.</p>';
   const grupos=[['🎨 Colores premium',skinOptions],['🕶️ Lentes',lensOptions],['✨ Accesorios del casco',extrasOptions],['🪖 Cascos premium',helmetDesigns],['👁️ Ojos',ojosOptions],['💋 Labios',labiosOptions],['💇 Peinado',peinadoOptions],['🧔 Vello facial',velloFacialOptions],['🧣 Pañoleta',panueloOptions]];
-  grupos.forEach(function(gp){ const items=gp[1].filter(function(it){return it.id in PRECIOS;}); if(!items.length) return; html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 6px">'+gp[0]+'</h4>'; items.forEach(function(it){ const unlocked=estaDesbloqueado(it.id); const costo=PRECIOS[it.id]; const puede=us.d>=costo; html+='<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;margin-bottom:5px;background:var(--gl);border:1px solid '+(unlocked?'var(--g)':'#242c3e')+'"><div style="flex:1"><div style="font-weight:700;font-size:0.84rem;color:#dfe7ff">'+escapeHTML((it.brand?it.brand+' ':'')+it.name)+'</div><div style="font-size:0.68rem;color:'+(unlocked?'var(--g)':'#7d8ba0')+'">'+(unlocked?'Desbloqueado ✓':(costo+' ✨ Darma'))+'</div></div>'+(unlocked?'<span style="color:var(--g);font-weight:800;font-size:1.1rem">✓</span>':'<button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.76rem;'+(puede?'':'opacity:0.45')+'" onclick="comprarItem(\''+it.id+'\')">Desbloquear</button>')+'</div>'; }); });
+  grupos.forEach(function(gp){ const items=gp[1].filter(function(it){return it.id in PRECIOS;}); if(!items.length) return; html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 6px">'+gp[0]+'</h4>'; items.forEach(function(it){ const unlocked=estaDesbloqueado(it.id); const costo=PRECIOS[it.id]; const puede=us.d>=costo; html+='<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;margin-bottom:5px;background:var(--gl);border:1px solid '+(unlocked?'var(--g)':'#242c3e')+'"><div style="flex:1"><div style="font-weight:700;font-size:0.84rem;color:#dfe7ff">'+escapeHTML((it.brand?it.brand+' ':'')+it.name)+'</div><div style="font-size:0.68rem;color:'+(unlocked?'var(--g)':'#7d8ba0')+'">'+(unlocked?'Desbloqueado ✓':(costo+' ✨ Darma'))+'</div></div>'+(unlocked?'<span style="color:var(--g);font-weight:800;font-size:1.1rem"><i class="fas fa-check"></i> </span>':'<button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.76rem;'+(puede?'':'opacity:0.45')+'" onclick="comprarItem(\''+it.id+'\')">Desbloquear</button>')+'</div>'; }); });
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(252,76,2,0.08));border:1px solid var(--g)">'+
-    '<h4 style="color:var(--g);font-size:0.9rem;margin:0 0 6px">🚴 Libre Pedal Pro <span style="font-size:0.62rem;background:#333;color:#aaa;padding:2px 7px;border-radius:8px;vertical-align:middle">Muy pronto</span></h4>'+
-    '<div style="font-size:0.76rem;color:#cfe8ff;line-height:1.7">✓ Mapas offline sin conexión<br>✓ Colección completa de cascos y voces<br>✓ Estadísticas y respaldo avanzado del historial<br>✓ Insignia de apoyo a la comunidad</div>'+
+    '<h4 style="color:var(--g);font-size:0.9rem;margin:0 0 6px"><i class="fas fa-person-biking"></i> Libre Pedal Pro <span style="font-size:0.62rem;background:#333;color:#aaa;padding:2px 7px;border-radius:8px;vertical-align:middle">Muy pronto</span></h4>'+
+    '<div style="font-size:0.76rem;color:#cfe8ff;line-height:1.7"><i class="fas fa-check"></i> Mapas offline sin conexión<br><i class="fas fa-check"></i> Colección completa de cascos y voces<br><i class="fas fa-check"></i> Estadísticas y respaldo avanzado del historial<br><i class="fas fa-check"></i> Insignia de apoyo a la comunidad</div>'+
     '<button class="ab sec" style="margin-top:10px" disabled onclick="return false">Disponible próximamente</button>'+
     '</div>';
   document.getElementById('modalContent').innerHTML=html;
@@ -2682,7 +2682,7 @@ function gridHTML(items, selectedId, onclickName, multi){
     if(it.c){ inner='<div class="skin-swatch" style="background:'+it.c+'"></div>'; }
     else { inner='<svg viewBox="0 0 200 130">'+(it.svg||'<text x="100" y="80" text-anchor="middle" font-size="26" fill="#888">--</text>')+'</svg>'; }
     const locked = !estaDesbloqueado(it.id);
-    return '<div class="custom-option'+(sel?' selected':'')+(locked?' locked':'')+'" onclick="'+onclickName+'(\''+it.id+'\')">'+(locked?'<div class="lock-badge">🔒 '+PRECIOS[it.id]+'✨</div>':'')+'<div class="check">OK</div>'+inner+'<div class="label">'+(it.brand?it.brand+' ':'')+it.name+'</div></div>';
+    return '<div class="custom-option'+(sel?' selected':'')+(locked?' locked':'')+'" onclick="'+onclickName+'(\''+it.id+'\')">'+(locked?'<div class="lock-badge"><i class="fas fa-lock"></i> '+PRECIOS[it.id]+'✨</div>':'')+'<div class="check">OK</div>'+inner+'<div class="label">'+(it.brand?it.brand+' ':'')+it.name+'</div></div>';
   }).join('');
 }
 function initCustomization(){
@@ -2741,7 +2741,7 @@ async function mostrarTodosRegistrados(){
     snap.forEach(function(doc){
       const d=doc.data();
       const fecha=d.createdAt?new Date(d.createdAt.seconds*1000).toLocaleDateString():'—';
-      const compartiendo=(d.lat&&d.lon)?'<span style="color:var(--g)">📍 comparte ubicación</span>':'<span style="color:#888">sin ubicación compartida</span>';
+      const compartiendo=(d.lat&&d.lon)?'<span style="color:var(--g)"><i class="fas fa-location-dot"></i> comparte ubicación</span>':'<span style="color:#888">sin ubicación compartida</span>';
       html+='<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.nombre||'(sin nombre)')+'</strong><div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(emails[doc.id]||'')+'</div><div style="font-size:0.68rem;color:#7d8ba0;margin-top:2px">'+fecha+' · '+compartiendo+'</div></div>';
     });
     c.innerHTML=html;
@@ -3598,7 +3598,7 @@ function renderNovedadesList(){
       +'<div class="novedad-top"><span class="novedad-badge">'+(NOVEDADES_CAT_LABEL[n.categoria]||n.categoria||'')+'</span>'+(n.fecha?'<span class="novedad-fecha">'+escapeHTML(n.fecha)+'</span>':'')+'</div>'
       +'<h4>'+escapeHTML(n.titulo||'')+'</h4>'
       +(n.desc?'<p>'+escapeHTML(n.desc)+'</p>':'')
-      +'<div class="novedad-bottom">'+(_linkSeguro(n.link)?'<a href="'+encodeURI(n.link)+'" target="_blank" rel="noopener">Ver más →</a>':'<span></span>')+(esAdmin?'<button class="novedad-del" onclick="eliminarNovedad(\''+n.id+'\')">🗑️</button>':'')+'</div>'
+      +'<div class="novedad-bottom">'+(_linkSeguro(n.link)?'<a href="'+encodeURI(n.link)+'" target="_blank" rel="noopener">Ver más →</a>':'<span></span>')+(esAdmin?'<button class="novedad-del" onclick="eliminarNovedad(\''+n.id+'\')"><i class="fas fa-trash-can"></i> </button>':'')+'</div>'
       +'</div>';
   }).join('');
 }
@@ -4088,7 +4088,7 @@ function renderRutas(){
   if(arr.length===0){ html='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; }
   else{
     html='';
-    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8">🏠 '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic">📓 '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item" onclick="showSingleRoute(\''+d.localId+'\')"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions" onclick="event.stopPropagation()"><button class="route-icon-btn" title="Perfil de elevación" onclick="verPerfilElevacion(\''+d.localId+'\')">📈</button><button class="route-icon-btn" title="Video 3D" onclick="abrirVideoRuta(\''+d.localId+'\')">🎬</button><button class="route-icon-btn" title="Crear segmento" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')">🏁</button><button class="route-icon-btn" title="Ver el sobrevuelo del viaje" onclick="verSobrevueloRuta(\''+d.localId+'\')">🚁</button><button class="route-icon-btn" title="Compartir este viaje" onclick="compartirViaje(\''+d.localId+'\')">💬</button><button class="route-icon-btn" title="Exportar GPX" onclick="exportarRutaGPX(\''+d.localId+'\')">📤</button><button class="route-icon-btn delete" title="Borrar ruta" onclick="deleteRoute(\''+d.localId+'\')">🗑️</button></div></div>'; });
+    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'☁️ en la nube':'📱 en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8"><i class="fas fa-house"></i> '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic"><i class="fas fa-book"></i> '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item" onclick="showSingleRoute(\''+d.localId+'\')"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions" onclick="event.stopPropagation()"><button class="route-icon-btn" title="Perfil de elevación" onclick="verPerfilElevacion(\''+d.localId+'\')"><i class="fas fa-chart-line"></i> </button><button class="route-icon-btn" title="Video 3D" onclick="abrirVideoRuta(\''+d.localId+'\')"><i class="fas fa-clapperboard"></i> </button><button class="route-icon-btn" title="Crear segmento" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')"><i class="fas fa-flag-checkered"></i> </button><button class="route-icon-btn" title="Ver el sobrevuelo del viaje" onclick="verSobrevueloRuta(\''+d.localId+'\')"><i class="fas fa-helicopter"></i> </button><button class="route-icon-btn" title="Compartir este viaje" onclick="compartirViaje(\''+d.localId+'\')"><i class="fas fa-comment"></i> </button><button class="route-icon-btn" title="Exportar GPX" onclick="exportarRutaGPX(\''+d.localId+'\')"><i class="fas fa-share-from-square"></i> </button><button class="route-icon-btn delete" title="Borrar ruta" onclick="deleteRoute(\''+d.localId+'\')"><i class="fas fa-trash-can"></i> </button></div></div>'; });
   }
   targets.forEach(function(c){ c.innerHTML=html; });
 }
@@ -4198,7 +4198,7 @@ function verPerfilElevacion(id){
       +'<div class="stat-card"><div class="stat-value">'+d.altMax+'m</div><div class="stat-label">Altura máx.</div></div>'
       +'<div class="stat-card"><div class="stat-value">'+d.altMin+'m</div><div class="stat-label">Altura mín.</div></div>'
       +'</div>'
-      +(refinando ? '<p id="elevRefinando" style="color:#7c93a8;font-size:0.68rem;text-align:center;margin:8px 0 0">📡 Afinando con datos topográficos reales…</p>' : '');
+      +(refinando ? '<p id="elevRefinando" style="color:#7c93a8;font-size:0.68rem;text-align:center;margin:8px 0 0"><i class="fas fa-satellite-dish"></i> Afinando con datos topográficos reales…</p>' : '');
     document.getElementById('userModal').classList.add('on');
   }
   function pintarCargando(){
@@ -4713,7 +4713,7 @@ async function im(){
     // azul que se mueve solo mientras te desplazas (control nativo de MapLibre).
     mp.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true,showAccuracyCircle:true}),'top-right');
     // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
-    mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222">📍 Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer">🧭 Navegar aquí</button>').addTo(mp); }catch(_){} });
+    mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222"><i class="fas fa-location-dot"></i> Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer"><i class="fas fa-compass"></i> Navegar aquí</button>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
     mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); });
   }catch(err){
@@ -4784,7 +4784,7 @@ function _renderizarPuntosVisibles(){
   const pintar=function(d){
     const ic=iconos[d.cat]||'📍';
     const m=mlMarker([d.lat,d.lon],{icon:{html:lpBadgeHTML(ic)}}).addTo(mp);
-    m.bindPopup('<b>'+escapeHTML(d.title||'Punto')+'</b><br><small>'+escapeHTML(d.desc||'')+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+d.lat+','+d.lon+');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>');
+    m.bindPopup('<b>'+escapeHTML(d.title||'Punto')+'</b><br><small>'+escapeHTML(d.desc||'')+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+d.lat+','+d.lon+');return false" style="color:#fc4c02;font-weight:700"><i class="fas fa-compass"></i> Ir aquí</a>');
     mp._pts.push(m);
   };
   comunidad.forEach(pintar);
@@ -4889,7 +4889,7 @@ async function abrirChatAmigo(friendId){
   const c=document.getElementById('modalContent');
   c.innerHTML='<div id="dmMsgs" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 2px"><p style="color:#888;font-size:0.8rem">Cargando conversación...</p></div>'
     +'<div style="display:flex;gap:6px;margin-top:8px"><input id="dmInput" type="text" placeholder="Mensaje para '+escapeHTML(nombre)+'..." style="flex:1" onkeypress="if(event.key===\'Enter\')enviarDM()"><button class="ab" style="width:auto;padding:10px 14px;margin:0" onclick="enviarDM()">Enviar</button></div>'
-    +'<button class="ab sec" style="margin-top:8px" onclick="cerrarChatAmigo()">← Volver a amigos</button>';
+    +'<button class="ab sec" style="margin-top:8px" onclick="cerrarChatAmigo()"><i class="fas fa-arrow-left"></i> Volver a amigos</button>';
   document.getElementById('userModal').classList.add('on');
   dmConvId=convIdDe(cu,friendId);
   if(dmUnsub){ dmUnsub(); dmUnsub=null; }
@@ -4906,7 +4906,7 @@ function enviarDM(){
   inp.value='';
 }
 function cerrarChatAmigo(){ if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; showFriendsList(); }
-async function showFriendsList(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Amigos'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); try{ const res=await Promise.all([ db.collection('friendRequests').where('from','==',cu).get(), db.collection('friendRequests').where('to','==',cu).get() ]); const ids={}; res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; }); res[1].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; }); const friendIds=Object.keys(ids); if(friendIds.length===0){ c.innerHTML='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; return; } let html=''; for(const friendId of friendIds){ const nombre=await getNombreUsuario(friendId); html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1;cursor:pointer" onclick="verPerfilUsuario(\''+friendId+'\',\'showFriendsList\')"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa;text-decoration:underline">Ver perfil</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')">💬 Chat</button></div>'; } c.innerHTML=html+'<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>'; }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los amigos. Intenta de nuevo.</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; } }
+async function showFriendsList(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Amigos'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); try{ const res=await Promise.all([ db.collection('friendRequests').where('from','==',cu).get(), db.collection('friendRequests').where('to','==',cu).get() ]); const ids={}; res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; }); res[1].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; }); const friendIds=Object.keys(ids); if(friendIds.length===0){ c.innerHTML='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; return; } let html=''; for(const friendId of friendIds){ const nombre=await getNombreUsuario(friendId); html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1;cursor:pointer" onclick="verPerfilUsuario(\''+friendId+'\',\'showFriendsList\')"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa;text-decoration:underline">Ver perfil</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')"><i class="fas fa-comment"></i> Chat</button></div>'; } c.innerHTML=html+'<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>'; }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los amigos. Intenta de nuevo.</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; } }
 async function showFriendRequests(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Solicitudes'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); const snapshot=await db.collection('friendRequests').where('to','==',cu).get(); const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}); if(pend.length===0){ c.innerHTML='<p style="color:#888">Sin solicitudes</p>'; return; } let html=''; for(const doc of pend){ const data=doc.data(); const nombre=await getNombreUsuario(data.from); html+='<div class="friend-request"><span><strong>'+escapeHTML(nombre)+'</strong></span><div><button class="ab" style="width:auto;padding:6px 10px;margin:2px;font-size:0.75rem" onclick="acceptFriendRequest(\''+doc.id+'\',\''+data.from+'\')">Aceptar</button><button class="ab" style="width:auto;padding:6px 10px;margin:2px;background:#dc2626;font-size:0.75rem" onclick="rejectFriendRequest(\''+doc.id+'\')">Rechazar</button></div></div>'; } c.innerHTML=html; }
 function acceptFriendRequest(reqId,fromUser){ db.collection('friendRequests').doc(reqId).update({status:'accepted'}).then(function(){ h("¡Nuevo amigo agregado!"); showFriendsList(); }).catch(function(){ h("No se pudo aceptar, intenta de nuevo."); }); }
 function rejectFriendRequest(reqId){ db.collection('friendRequests').doc(reqId).update({status:'rejected'}); h("Solicitud rechazada."); showFriendRequests(); }
@@ -4980,7 +4980,7 @@ function closeModal(){ document.getElementById('userModal').classList.remove('on
 // _btnVolverModal(). null cuando no aplica (ej. Tienda abierta desde Personalizar,
 // no desde Logros — ahí la "✕" ya vuelve al lugar correcto).
 let _modalVolverA=null;
-function _btnVolverModal(){ return _modalVolverA ? '<button class="ab sec" style="margin:0 0 10px;width:auto;padding:8px 14px" onclick="'+_modalVolverA+'()">← Volver</button>' : ''; }
+function _btnVolverModal(){ return _modalVolverA ? '<button class="ab sec" style="margin:0 0 10px;width:auto;padding:8px 14px" onclick="'+_modalVolverA+'()"><i class="fas fa-arrow-left"></i> Volver</button>' : ''; }
 
 /* ===== MAPA COMUNITARIO: "Reportar en Ruta" (público, agrupado por zona) ===== */
 /* 2026-07-20 — Inty: "para dejar un local o negocio aparece un pan, muy genérico como
@@ -5212,9 +5212,9 @@ function reportarEnRuta(){
     html+='<div style="margin:10px 0 4px;font-size:0.82rem;font-weight:700;color:#e2e8f0">'+g.l+'</div>';
     hijos.forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+k+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.8rem">'+c.e+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; }); });
   html+='</div><div id="repSuperficieExtra" style="display:none;margin-top:10px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." maxlength="500" style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea>'
-    +'<button class="ab sec" type="button" style="margin-top:8px" id="btnReporteMapa" onclick="toggleReporteMapa()">📍 No estoy ahí: marcar el punto en el mapa</button>'
+    +'<button class="ab sec" type="button" style="margin-top:8px" id="btnReporteMapa" onclick="toggleReporteMapa()"><i class="fas fa-location-dot"></i> No estoy ahí: marcar el punto en el mapa</button>'
     +'<div id="reporte-mapa-manual" style="display:none;margin-top:8px"><div id="reporte-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div><p id="reporteMapaEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto — no tiene que ser donde estás parado tú ahora.</p></div>'
-    +'<button class="ab" style="margin-top:8px" onclick="enviarReporte()">📍 Publicar en mi zona (+15 Darma)</button>';
+    +'<button class="ab" style="margin-top:8px" onclick="enviarReporte()"><i class="fas fa-location-dot"></i> Publicar en mi zona (+15 Darma)</button>';
   document.getElementById('modalTitle').innerText='🚴 Reportar en Ruta';
   document.getElementById('modalContent').innerHTML=html;
   document.getElementById('userModal').classList.add('on');
@@ -5285,8 +5285,8 @@ function tiempoTranscurrido(ts){ if(!ts||!ts.seconds) return 'recién'; const s=
 function _confirmBtnsHTML(id){
   if(!id) return '';
   return '<div style="margin-top:7px;display:flex;gap:6px">'
-    +'<button onclick="confirmarReporte(\''+id+'\',true)" style="flex:1;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer">👍 Sigue ahí</button>'
-    +'<button onclick="confirmarReporte(\''+id+'\',false)" style="flex:1;background:rgba(255,90,90,0.14);border:1px solid #ff5a5a;color:#ff8a8a;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer">🚫 Ya no está</button>'
+    +'<button onclick="confirmarReporte(\''+id+'\',true)" style="flex:1;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer"><i class="fas fa-thumbs-up"></i> Sigue ahí</button>'
+    +'<button onclick="confirmarReporte(\''+id+'\',false)" style="flex:1;background:rgba(255,90,90,0.14);border:1px solid #ff5a5a;color:#ff8a8a;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer"><i class="fas fa-ban"></i> Ya no está</button>'
     +'</div>';
 }
 function _confirmCountsHTML(r){
@@ -5339,7 +5339,7 @@ function renderReporteMarkers(){
     const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util;
     const badge=lpBadgeHTML(c.e, r.cat==='critico'?c.c:null);
     const extra=(r.superficie||r.dificultad)?('<br>'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')):'';
-    const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</small>'+_confirmCountsHTML(r)+'<br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700">🧭 Ir aquí</a>'+_confirmBtnsHTML(r.id));
+    const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+c.e+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</small>'+_confirmCountsHTML(r)+'<br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700"><i class="fas fa-compass"></i> Ir aquí</a>'+_confirmBtnsHTML(r.id));
     reporteMarkers.push(mk);
   });
 }
@@ -5365,7 +5365,7 @@ function renderColaboradores(){
   COLABORADORES.forEach(function(c){
     const mk=mlMarker([c.lat,c.lon],{icon:{html:lpBadgeHTML(c.e,'#fc4c02')}}).addTo(mp)
       .bindPopup('<b>'+c.e+' '+escapeHTML(c.n)+'</b><br>'+escapeHTML(c.d)+
-                 '<br><small style="color:#fc4c02">★ Colabora con Libre Pedal · '+escapeHTML(c.tipo)+'</small>');
+                 '<br><small style="color:#fc4c02"><i class="fas fa-star"></i> Colabora con Libre Pedal · '+escapeHTML(c.tipo)+'</small>');
     colaboradorMarkers.push(mk);
   });
 }
@@ -5389,9 +5389,9 @@ function subscribeToReportes(){
 }
 function renderReportesComunidad(docs){
   const cont=document.getElementById('reportes-comunidad'); if(!cont) return;
-  if(!docs.length){ cont.innerHTML='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">📍 Mapa Comunitario</h4><p style="color:#888;font-size:0.8rem;margin:0">Aún no hay reportes. ¡Sé el primero en aportar un dato de tu zona con "Reportar en Ruta"!</p></div>'; return; }
+  if(!docs.length){ cont.innerHTML='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem"><i class="fas fa-location-dot"></i> Mapa Comunitario</h4><p style="color:#888;font-size:0.8rem;margin:0">Aún no hay reportes. ¡Sé el primero en aportar un dato de tu zona con "Reportar en Ruta"!</p></div>'; return; }
   const byZona={}; docs.forEach(function(r){ const z=r.comuna||'Mi zona'; (byZona[z]=byZona[z]||[]).push(r); });
-  let html='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem">📍 Mapa Comunitario · datos de la ruta</h4>';
+  let html='<div class="cd"><h4 style="margin-top:0;font-size:0.9rem"><i class="fas fa-location-dot"></i> Mapa Comunitario · datos de la ruta</h4>';
   Object.keys(byZona).forEach(function(z){ html+='<div style="margin-top:10px"><div style="font-weight:800;color:var(--p);font-size:0.82rem;border-bottom:1px solid #223;padding-bottom:4px;margin-bottom:6px">📌 '+escapeHTML(z)+'</div>'; byZona[z].forEach(function(r){ const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util; const extra=(r.superficie||r.dificultad)?('<div style="font-size:0.68rem;color:#a78bfa;margin-top:2px">'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')+'</div>'):''; html+='<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #15202e"><div style="font-size:1.1rem">'+c.e+'</div><div style="flex:1"><div style="font-size:0.8rem;color:#dfe7ff;line-height:1.3">'+escapeHTML(r.text)+'</div>'+extra+'<div style="font-size:0.65rem;color:#7d8ba0;margin-top:2px">'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</div>'+_confirmCountsHTML(r)+_confirmBtnsHTML(r.id)+'</div></div>'; }); html+='</div>'; });
   html+='</div>'; cont.innerHTML=html;
 }
@@ -5439,14 +5439,14 @@ function mostrarLogrosComunidad(){
   _modalVolverA=null; // es el menú raíz de este grupo: la "✕" ya vuelve al lugar correcto
   document.getElementById('modalTitle').innerText='🏆 Logros y comunidad';
   document.getElementById('modalContent').innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'
-    +'<button class="ab" style="margin:0" onclick="mostrarLogros()">🏆 Mis logros</button>'
-    +'<button class="ab sec" style="margin:0" onclick="mostrarRanking(null,&quot;mostrarLogrosComunidad&quot;)">🥇 Ranking mundial</button>'
-    +'<button class="ab sec" style="margin:0" onclick="verSegmentos()">🏁 Segmentos y tabla de líderes</button>'
-    +'<button class="ab sec" style="margin:0" onclick="verRetos()">🎯 Retos y temporadas</button>'
-    +'<button class="ab sec" style="margin:0" onclick="mostrarResumenAnual()">📊 Mi año en Libre Pedal</button>'
-    +'<button class="ab sec" style="margin:0" onclick="verRecomendacionRutas()">🧭 Rutas para ti</button>'
-    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda(true)">✨ Tienda de Darma</button>'
-    +'<button class="ab sec" style="margin:0" onclick="mostrarComunidad()">🤝 Meta de la comunidad (vota)</button>'
+    +'<button class="ab" style="margin:0" onclick="mostrarLogros()"><i class="fas fa-trophy"></i> Mis logros</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarRanking(null,&quot;mostrarLogrosComunidad&quot;)"><i class="fas fa-medal"></i> Ranking mundial</button>'
+    +'<button class="ab sec" style="margin:0" onclick="verSegmentos()"><i class="fas fa-flag-checkered"></i> Segmentos y tabla de líderes</button>'
+    +'<button class="ab sec" style="margin:0" onclick="verRetos()"><i class="fas fa-bullseye"></i> Retos y temporadas</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarResumenAnual()"><i class="fas fa-chart-column"></i> Mi año en Libre Pedal</button>'
+    +'<button class="ab sec" style="margin:0" onclick="verRecomendacionRutas()"><i class="fas fa-compass"></i> Rutas para ti</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda(true)"><i class="fas fa-wand-magic-sparkles"></i> Tienda de Darma</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarComunidad()"><i class="fas fa-handshake"></i> Meta de la comunidad (vota)</button>'
     +'</div>';
   document.getElementById('userModal').classList.add('on');
 }
@@ -5631,8 +5631,8 @@ async function verPerfilUsuario(userId, volverA){
     let html=_btnVolverModal()+'<div style="text-align:center"><div style="width:110px;height:110px;margin:0 auto">'+avatar+'</div><h3 style="margin:6px 0;color:var(--p)">'+escapeHTML(nombre)+'</h3><div style="color:var(--g);font-weight:800;font-size:0.85rem">'+escapeHTML(nivel)+'</div></div>';
     html+='<div class="stats-grid" style="margin:12px 0"><div class="stat-card"><div class="stat-value">'+km.toFixed(0)+'</div><div class="stat-label">Km totales</div></div><div class="stat-card"><div class="stat-value">'+darma+'</div><div class="stat-label">Darma</div></div><div class="stat-card"><div class="stat-value">'+logrosPub+'</div><div class="stat-label">Logros</div></div><div class="stat-card"><div class="stat-value">'+rutas.length+'</div><div class="stat-label">Rutas</div></div></div>';
     html+='<p style="font-size:0.8rem;color:#9fb3c8;text-align:center">Ha recorrido y grabado <strong style="color:var(--p)">'+totalKm.toFixed(1)+' km</strong> en '+rutas.length+' ruta'+(rutas.length===1?'':'s')+'.</p>';
-    if(rutas.length){ html+='<button class="ab" onclick="mostrarRutasDe(\''+userId+'\',\''+encodeURIComponent(nombre)+'\')">🗺️ Ver por dónde ha pedaleado</button>'; }
-    if(userId!==cu){ html+='<button class="ab sec" style="margin-top:6px" onclick="abrirChatAmigo(\''+userId+'\')">💬 Enviar mensaje</button>'; }
+    if(rutas.length){ html+='<button class="ab" onclick="mostrarRutasDe(\''+userId+'\',\''+encodeURIComponent(nombre)+'\')"><i class="fas fa-map"></i> Ver por dónde ha pedaleado</button>'; }
+    if(userId!==cu){ html+='<button class="ab sec" style="margin-top:6px" onclick="abrirChatAmigo(\''+userId+'\')"><i class="fas fa-comment"></i> Enviar mensaje</button>'; }
     c.innerHTML=html;
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudo cargar el perfil.</p>'; }
 }
@@ -5849,9 +5849,9 @@ async function verAnaliticasAdmin(){
     const tiempoMin={}; Object.keys(tiempo).forEach(function(k){ tiempoMin[k]=Math.round(tiempo[k]/60); });
     let html='<p style="font-size:0.9rem"><b>'+total+'</b> usuarios con actividad · <b style="color:var(--g)">'+activos7d+'</b> activos (últimos 7 días)</p>';
     html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px">📱 Pantallas más vistas</h4>'+top(pantalla);
-    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px">⏱️ Dónde pasan más tiempo</h4>'+top(tiempoMin,' min');
-    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px">⚡ Funciones más usadas</h4>'+top(funcion);
-    if(Object.keys(voz).length) html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px">🎙️ Voz/arquetipo</h4>'+top(voz);
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px"><i class="fas fa-stopwatch"></i> Dónde pasan más tiempo</h4>'+top(tiempoMin,' min');
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px"><i class="fas fa-bolt"></i> Funciones más usadas</h4>'+top(funcion);
+    if(Object.keys(voz).length) html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px"><i class="fas fa-microphone-lines"></i> Voz/arquetipo</h4>'+top(voz);
     document.getElementById('modalTitle').innerText='📊 Analíticas de uso';
     document.getElementById('modalContent').innerHTML=html;
     document.getElementById('userModal').classList.add('on');
@@ -5889,19 +5889,19 @@ async function abrirTeDoyAlojo(){
   const meses=mesesDesdeRegistro();
   if(!requiere6Meses()){
     const faltan=6-meses;
-    c.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:3rem">🔒</div><h3 style="color:var(--p)">Función exclusiva</h3><p style="color:#9fb3c8;font-size:0.85rem">Esta opción se desbloquea cuando llevas <strong>6 meses</strong> en la comunidad de Libre Pedal.<br>Te faltan <strong style="color:var(--g)">'+faltan+' mes'+(faltan!==1?'es':'')+'</strong> para acceder.</p><p style="color:#7d8ba0;font-size:0.76rem">Es para garantizar que solo ciclistas comprometidos participen. Sigue pedaleando y aportando a la comunidad. 🚴</p></div>';
+    c.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:3rem"><i class="fas fa-lock"></i> </div><h3 style="color:var(--p)">Función exclusiva</h3><p style="color:#9fb3c8;font-size:0.85rem">Esta opción se desbloquea cuando llevas <strong>6 meses</strong> en la comunidad de Libre Pedal.<br>Te faltan <strong style="color:var(--g)">'+faltan+' mes'+(faltan!==1?'es':'')+'</strong> para acceder.</p><p style="color:#7d8ba0;font-size:0.76rem">Es para garantizar que solo ciclistas comprometidos participen. Sigue pedaleando y aportando a la comunidad. 🚴</p></div>';
     return;
   }
   // Usuario habilitado: ver ofertas y publicar la propia
   try{
     const snap=await db.collection('alojo').orderBy('ts','desc').limit(50).get();
-    let html='<p style="font-size:0.8rem;color:#9fb3c8;margin-top:0">🤝 Intercambio de techo, comida y ayuda entre ciclistas de confianza. Comunidad verificada.</p>';
+    let html='<p style="font-size:0.8rem;color:#9fb3c8;margin-top:0"><i class="fas fa-handshake"></i> Intercambio de techo, comida y ayuda entre ciclistas de confianza. Comunidad verificada.</p>';
     if(!snap.empty){
       html+='<h4 style="font-size:0.85rem;color:var(--p)">Ofertas disponibles</h4>';
-      snap.forEach(function(doc){ const d=doc.data(); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.86rem;color:var(--p)">'+escapeHTML(d.nombre||'Ciclista')+'</div><div style="font-size:0.76rem;color:#9fb3c8">📍 '+escapeHTML(d.zona||'Zona no indicada')+'</div><div style="font-size:0.82rem;color:#dfe7ff;margin-top:4px">'+escapeHTML(d.desc||'')+'</div><button class="ab sec" style="width:auto;padding:6px 12px;margin-top:6px;font-size:0.75rem" onclick="abrirChatAmigo(\''+doc.data().user+'\')">💬 Contactar</button></div>'; });
+      snap.forEach(function(doc){ const d=doc.data(); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.86rem;color:var(--p)">'+escapeHTML(d.nombre||'Ciclista')+'</div><div style="font-size:0.76rem;color:#9fb3c8"><i class="fas fa-location-dot"></i> '+escapeHTML(d.zona||'Zona no indicada')+'</div><div style="font-size:0.82rem;color:#dfe7ff;margin-top:4px">'+escapeHTML(d.desc||'')+'</div><button class="ab sec" style="width:auto;padding:6px 12px;margin-top:6px;font-size:0.75rem" onclick="abrirChatAmigo(\''+doc.data().user+'\')"><i class="fas fa-comment"></i> Contactar</button></div>'; });
     } else { html+='<p style="color:#888;font-size:0.8rem">Aún no hay ofertas. ¡Sé el primero en compartir alojo!</p>'; }
     html+='<h4 style="font-size:0.85rem;color:var(--g);margin-top:14px">Publicar mi oferta</h4>';
-    html+='<input id="alojoZona" type="text" placeholder="Tu ciudad / zona" maxlength="80" style="margin-bottom:6px"><textarea id="alojoDesc" rows="3" placeholder="Qué ofreces: tipo de alojo, comida, cómo contactar..." maxlength="500"></textarea><button class="ab" style="margin-top:6px" onclick="publicarAlojo()">🏡 Publicar mi oferta (+20 Darma)</button>';
+    html+='<input id="alojoZona" type="text" placeholder="Tu ciudad / zona" maxlength="80" style="margin-bottom:6px"><textarea id="alojoDesc" rows="3" placeholder="Qué ofreces: tipo de alojo, comida, cómo contactar..." maxlength="500"></textarea><button class="ab" style="margin-top:6px" onclick="publicarAlojo()"><i class="fas fa-house"></i> Publicar mi oferta (+20 Darma)</button>';
     c.innerHTML=html;
   }catch(e){ c.innerHTML='<p style="color:#888">No se pudo cargar.</p>'; }
 }
@@ -5920,7 +5920,7 @@ async function publicarAlojo(){
   }catch(e){ lpAviso('No se pudo publicar: '+(e.message||e)); }
   finally{ _publicandoAlojo=false; }
 }
-function renderDiarioHistorial(){ const c=document.getElementById('diarioHistorial'); if(!c) return; const pre='lp_diario_'+(cu||'anon')+'_'; const keys=Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().reverse().filter(function(k){return k!==diarioHoyKey();}); if(!keys.length){ c.innerHTML=''; return; } let html='<h4 style="font-size:0.85rem;color:var(--p)">Días anteriores</h4>'; keys.slice(0,12).forEach(function(k){ let d={}; try{d=JSON.parse(localStorage.getItem(k));}catch(e){return;} const est=DIARIO_ESTADOS.find(function(s){return s.l===d.estado;}); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.76rem;color:#9fb3c8">'+escapeHTML(d.fecha||'')+' · '+(est?est.e+' '+est.l:'')+' · '+(d.km?(+d.km).toFixed(1):0)+' km</div>'+(d.meta?'<div style="font-size:0.78rem;margin-top:3px">🎯 '+escapeHTML(d.meta)+'</div>':'')+(d.complejo?'<div style="font-size:0.75rem;color:#cdd;margin-top:3px">💪 '+escapeHTML(d.complejo)+'</div>':'')+(d.reflexion?'<div style="font-size:0.75rem;color:#9fb3c8;font-style:italic;margin-top:3px">🧘 '+escapeHTML(d.reflexion)+'</div>':'')+'</div>'; }); c.innerHTML=html; }
+function renderDiarioHistorial(){ const c=document.getElementById('diarioHistorial'); if(!c) return; const pre='lp_diario_'+(cu||'anon')+'_'; const keys=Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().reverse().filter(function(k){return k!==diarioHoyKey();}); if(!keys.length){ c.innerHTML=''; return; } let html='<h4 style="font-size:0.85rem;color:var(--p)">Días anteriores</h4>'; keys.slice(0,12).forEach(function(k){ let d={}; try{d=JSON.parse(localStorage.getItem(k));}catch(e){return;} const est=DIARIO_ESTADOS.find(function(s){return s.l===d.estado;}); html+='<div class="cd" style="margin-bottom:8px"><div style="font-weight:800;font-size:0.76rem;color:#9fb3c8">'+escapeHTML(d.fecha||'')+' · '+(est?est.e+' '+est.l:'')+' · '+(d.km?(+d.km).toFixed(1):0)+' km</div>'+(d.meta?'<div style="font-size:0.78rem;margin-top:3px"><i class="fas fa-bullseye"></i> '+escapeHTML(d.meta)+'</div>':'')+(d.complejo?'<div style="font-size:0.75rem;color:#cdd;margin-top:3px"><i class="fas fa-dumbbell"></i> '+escapeHTML(d.complejo)+'</div>':'')+(d.reflexion?'<div style="font-size:0.75rem;color:#9fb3c8;font-style:italic;margin-top:3px">🧘 '+escapeHTML(d.reflexion)+'</div>':'')+'</div>'; }); c.innerHTML=html; }
 function rm(l){ document.getElementById('ml').innerHTML=l.map(function(i){ return '<div class="cd" onclick="h(\''+i.t+'. '+i.s.replace(/'/g,"\\'")+'\')"><b style="color:var(--p);font-size:0.85rem">'+i.t+'</b><p style="margin:6px 0;font-size:0.8rem">'+i.s+'</p><small style="color:#888;font-size:0.7rem">Fuente: '+i.f+'</small></div>'; }).join(''); }
 function fm(){ const v=document.getElementById('bm').value.toLowerCase(); rm(MG.filter(function(i){ return i.t.toLowerCase().indexOf(v)!==-1||i.s.toLowerCase().indexOf(v)!==-1; })); }
 function toggleSecretForm(){ document.getElementById('secretForm').classList.toggle('show'); }
@@ -5974,7 +5974,7 @@ function estrellasHTML(col,id,data){
     mio=(data.ratedBy||{})[claveVoto()]||0;
   }
   let s='<div style="margin-top:6px">';
-  for(let i=1;i<=5;i++){ s+='<span onclick="valorar(\''+col+'\',\''+id+'\','+i+')" style="cursor:pointer;font-size:1.1rem;color:'+(i<=Math.round(mio||avg)?'var(--g)':'#3a4a5a')+'">★</span>'; }
+  for(let i=1;i<=5;i++){ s+='<span onclick="valorar(\''+col+'\',\''+id+'\','+i+')" style="cursor:pointer;font-size:1.1rem;color:'+(i<=Math.round(mio||avg)?'var(--g)':'#3a4a5a')+'"><i class="fas fa-star"></i> </span>'; }
   s+=' <span style="color:#8aa;font-size:0.68rem">'+(votes?(avg.toFixed(1)+' · '+votes+(votes===1?' voto':' votos')+(mio?' · el tuyo: '+mio+'★':'')):'sé el primero en valorar')+'</span></div>';
   return s;
 }
@@ -6015,12 +6015,12 @@ async function valorar(col,id,n){
 function filtrarHostels(tipo,btn){ hostelTipoActual=tipo; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); renderHostelsLista(); }
 async function addHostel(){ const name=document.getElementById('hostel-name').value.trim(); const tipo=document.getElementById('hostel-type').value; const location=document.getElementById('hostel-location').value.trim(); const desc=document.getElementById('hostel-desc').value.trim(); if(!name||!location) return lpAviso("Completa nombre y dirección"); if(_agregandoHostel) return; _agregandoHostel=true; try{ const d={user:cu,nombre:nombreUsuario,tipo:tipo,name:name,location:location,desc:desc,ratingSum:0,votes:0,ratedBy:{},authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}; if(hostelCoords){ d.lat=hostelCoords.lat; d.lon=hostelCoords.lon; } if(fotosPendientes.hostel){ d.foto=fotosPendientes.hostel; } await db.collection('hostels').add(d); document.getElementById('hostel-name').value=''; document.getElementById('hostel-location').value=''; document.getElementById('hostel-desc').value=''; limpiarFoto('hostel'); hostelCoords=null; document.getElementById('map-hostel-select').classList.remove('show'); document.getElementById('gpsStatus').classList.remove('show'); h("Alojamiento publicado. ¡Gracias por aportar a la comunidad!"); }catch(e){ lpAviso('No pude publicar el alojamiento ahora. ¿Tienes señal? Inténtalo otra vez.'); } finally{ _agregandoHostel=false; } }
 function loadHostels(){ if(!loadHostels._votos){ loadHostels._votos=true; initVotosHostels(); } db.collection('hostels').orderBy('ts','desc').limit(50).onSnapshot(function(snapshot){ allHostels=[]; snapshot.forEach(function(doc){ const d=doc.data(); if(/^TEST-/.test(d.name||'')) return; allHostels.push(Object.assign({id:doc.id},d)); }); renderHostelsLista(); }, function(){ const c=document.getElementById('hostel-list'); if(c) c.innerHTML='<p style="color:#7d8ba0;font-size:0.8rem;text-align:center;padding:20px 0">No se pudieron cargar los alojamientos. Revisa tu conexión.</p>'; }); }
-function renderHostelsLista(){ const c=document.getElementById('hostel-list'); if(!c) return; if(allHostels.length===0){ c.innerHTML='<p style="color:#888">Sin alojamientos</p>'; return; } let html='', count=0; for(const data of allHostels){ if(hostelTipoActual!=='todos'&&data.tipo!==hostelTipoActual) continue; const nombre=data.nombre||data.user; const coords=data.lat&&data.lon?'<div style="font-size:0.7rem;color:#aaa;margin-top:3px">GPS: '+data.lat.toFixed(5)+', '+data.lon.toFixed(5)+'</div>':''; const irBtn=(data.lat&&data.lon)?'<button class="ab" style="margin-top:6px;padding:7px;font-size:0.78rem" onclick="irAlPuntoYNavegar('+data.lat+','+data.lon+')">🧭 Ir / Navegar</button>':''; const foto=data.foto?'<img src="'+escapeHTML(data.foto)+'" loading="lazy" alt="" style="width:100%;border-radius:10px;margin:6px 0;max-height:170px;object-fit:cover">':''; html+='<div class="hostel-card"><h4>'+escapeHTML(data.name)+'</h4>'+foto+'<p style="font-size:0.8rem">'+escapeHTML(data.location||'')+'</p><p style="font-size:0.8rem">'+escapeHTML(data.desc||'')+'</p>'+coords+estrellasHTML('hostels',data.id,data)+'<small style="color:#888;font-size:0.7rem">Por: '+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small>'+irBtn+'</div>'; count++; } c.innerHTML = count===0 ? '<p style="color:#888">Sin alojamientos de ese tipo</p>' : html; }
+function renderHostelsLista(){ const c=document.getElementById('hostel-list'); if(!c) return; if(allHostels.length===0){ c.innerHTML='<p style="color:#888">Sin alojamientos</p>'; return; } let html='', count=0; for(const data of allHostels){ if(hostelTipoActual!=='todos'&&data.tipo!==hostelTipoActual) continue; const nombre=data.nombre||data.user; const coords=data.lat&&data.lon?'<div style="font-size:0.7rem;color:#aaa;margin-top:3px">GPS: '+data.lat.toFixed(5)+', '+data.lon.toFixed(5)+'</div>':''; const irBtn=(data.lat&&data.lon)?'<button class="ab" style="margin-top:6px;padding:7px;font-size:0.78rem" onclick="irAlPuntoYNavegar('+data.lat+','+data.lon+')"><i class="fas fa-compass"></i> Ir / Navegar</button>':''; const foto=data.foto?'<img src="'+escapeHTML(data.foto)+'" loading="lazy" alt="" style="width:100%;border-radius:10px;margin:6px 0;max-height:170px;object-fit:cover">':''; html+='<div class="hostel-card"><h4>'+escapeHTML(data.name)+'</h4>'+foto+'<p style="font-size:0.8rem">'+escapeHTML(data.location||'')+'</p><p style="font-size:0.8rem">'+escapeHTML(data.desc||'')+'</p>'+coords+estrellasHTML('hostels',data.id,data)+'<small style="color:#888;font-size:0.7rem">Por: '+escapeHTML(nombre)+' - '+escapeHTML(data.h)+'</small>'+irBtn+'</div>'; count++; } c.innerHTML = count===0 ? '<p style="color:#888">Sin alojamientos de ese tipo</p>' : html; }
 function toggleHostelMap(){ const mapDiv=document.getElementById('map-hostel-select'); const st=document.getElementById('gpsStatus'); if(mapDiv.classList.contains('show')){ mapDiv.classList.remove('show'); st.classList.remove('show'); return; } mapDiv.classList.add('show'); st.classList.add('show'); st.innerText='Obteniendo ubicación...'; if(!mapHostelSelect){ mapHostelSelect=L.map('map-hostel-select').setView([-34.6037,-58.3816],13); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapHostelSelect); } if(!navigator.geolocation){ st.innerText='GPS no disponible'; return; } navigator.geolocation.getCurrentPosition(function(pos){ const lat=pos.coords.latitude, lon=pos.coords.longitude; hostelCoords={lat:lat,lon:lon}; mapHostelSelect.setView([lat,lon],16); if(mapHostelSelect._um) mapHostelSelect.removeLayer(mapHostelSelect._um); mapHostelSelect._um=L.marker([lat,lon]).addTo(mapHostelSelect); st.innerText='Ubicación: '+lat.toFixed(5)+', '+lon.toFixed(5); mapHostelSelect.on('click',function(e){ hostelCoords={lat:e.latlng.lat,lon:e.latlng.lng}; if(mapHostelSelect._um) mapHostelSelect.removeLayer(mapHostelSelect._um); mapHostelSelect._um=L.marker([e.latlng.lat,e.latlng.lng]).addTo(mapHostelSelect); st.innerText='Punto: '+e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5); }); setTimeout(function(){ mapHostelSelect.invalidateSize(); },300); }, function(err){ st.innerText='Error: '+err.message; }, {enableHighAccuracy:true,timeout:10000}); }
 let _agregandoComentarioGuia=false;
 async function addComment(){ const input=document.getElementById('comment-input'); const text=input.value.trim(); if(!text) return; if(_agregandoComentarioGuia) return; _agregandoComentarioGuia=true; const hora=new Date().toLocaleTimeString(); try{ await db.collection('guiComments').add({user:cu,nombre:nombreUsuario,text:text,authUid:window.lpUID||null,h:hora,ts:firebase.firestore.FieldValue.serverTimestamp()}); input.value=''; h("Comentario publicado."); }catch(e){ lpAviso('No se pudo publicar el comentario.'); } finally{ _agregandoComentarioGuia=false; } }
 function addRecommendation(){ const title=document.getElementById('rec-title').value.trim(); const cat=document.getElementById('rec-cat').value; const desc=document.getElementById('rec-desc').value.trim(); if(!title||!desc) return lpAviso("Completa los campos"); const rd={user:cu,nombre:nombreUsuario,title:title,cat:cat,desc:desc,likes:0,likedBy:[],ratingSum:0,votes:0,ratedBy:{},authUid:window.lpUID||null,h:new Date().toLocaleString(),ts:firebase.firestore.FieldValue.serverTimestamp()}; if(fotosPendientes.rec){ rd.foto=fotosPendientes.rec; } db.collection('recommendations').add(rd); document.getElementById('rec-title').value=''; document.getElementById('rec-desc').value=''; limpiarFoto('rec'); h("Recomendación publicada."); }
-function loadRecommendations(){ db.collection('recommendations').orderBy('ts','desc').limit(50).onSnapshot(function(snapshot){ const c=document.getElementById('rec-list'); if(!c) return; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero</p>'; return; } const html=snapshot.docs.filter(function(doc){ return !/^TEST-/.test(doc.data().title||''); }).map(function(doc){ const data=doc.data(); const nombre=data.nombre||data.user; const liked=data.likedBy&&data.likedBy.indexOf(cu)!==-1; return '<div class="rec-card"><h4>'+escapeHTML(data.title)+'</h4>'+(data.foto?'<img src="'+escapeHTML(data.foto)+'" loading="lazy" alt="" style="width:100%;border-radius:10px;margin:6px 0;max-height:170px;object-fit:cover">':'')+'<div class="meta" style="font-size:0.75rem;color:#888">Por <strong>'+escapeHTML(nombre)+'</strong> · '+escapeHTML(data.h)+'</div><div style="font-size:0.85rem">'+escapeHTML(data.desc)+'</div>'+estrellasHTML('recommendations',doc.id,data)+'<div class="rec-actions"><button class="rec-btn '+(liked?'active':'')+'" onclick="likeRecommendation(\''+doc.id+'\')">Me gusta ('+(data.likes||0)+')</button>'+((data.lat&&data.lon)?'<button class="rec-btn" onclick="irAlPuntoYNavegar('+data.lat+','+data.lon+')">🧭 Ir</button>':'')+'</div></div>'; }).join(''); c.innerHTML=html; }); }
+function loadRecommendations(){ db.collection('recommendations').orderBy('ts','desc').limit(50).onSnapshot(function(snapshot){ const c=document.getElementById('rec-list'); if(!c) return; if(snapshot.empty){ c.innerHTML='<p style="color:#888">Sé el primero</p>'; return; } const html=snapshot.docs.filter(function(doc){ return !/^TEST-/.test(doc.data().title||''); }).map(function(doc){ const data=doc.data(); const nombre=data.nombre||data.user; const liked=data.likedBy&&data.likedBy.indexOf(cu)!==-1; return '<div class="rec-card"><h4>'+escapeHTML(data.title)+'</h4>'+(data.foto?'<img src="'+escapeHTML(data.foto)+'" loading="lazy" alt="" style="width:100%;border-radius:10px;margin:6px 0;max-height:170px;object-fit:cover">':'')+'<div class="meta" style="font-size:0.75rem;color:#888">Por <strong>'+escapeHTML(nombre)+'</strong> · '+escapeHTML(data.h)+'</div><div style="font-size:0.85rem">'+escapeHTML(data.desc)+'</div>'+estrellasHTML('recommendations',doc.id,data)+'<div class="rec-actions"><button class="rec-btn '+(liked?'active':'')+'" onclick="likeRecommendation(\''+doc.id+'\')">Me gusta ('+(data.likes||0)+')</button>'+((data.lat&&data.lon)?'<button class="rec-btn" onclick="irAlPuntoYNavegar('+data.lat+','+data.lon+')"><i class="fas fa-compass"></i> Ir</button>':'')+'</div></div>'; }).join(''); c.innerHTML=html; }); }
 // arrayUnion/arrayRemove + increment(): la version anterior leia likes/likedBy
 // completos y los reescribia enteros - dos "me gusta" casi simultaneos se
 // pisaban entre si (mismo problema que "asistentes" en rodadas). Asi, cada
@@ -7468,8 +7468,8 @@ function gestionarContactosSOS(){
   document.getElementById('modalTitle').innerText='🆘 Contactos de emergencia';
   const cs=contactosSOS();
   let html='<p style="color:#9fb3c8;font-size:0.82rem;margin-top:0">A estos contactos les llega tu SOS con tu ubicación. Pon el número con código de país (ej: 56912345678).</p>';
-  html+=cs.map(function(x,i){ return '<div style="display:flex;gap:8px;align-items:center;background:var(--gl);padding:8px 10px;border-radius:10px;margin-bottom:6px"><div style="flex:1"><strong>'+escapeHTML(x.nombre)+'</strong><div style="font-size:0.75rem;color:#8aa">'+escapeHTML(x.fono)+'</div></div><button class="route-btn" style="background:#16a34a;color:#fff" onclick="llamarContactoSOS('+i+')">📞 Llamar</button><button class="route-btn delete" onclick="borrarContactoSOS('+i+')">Quitar</button></div>'; }).join('');
-  html+='<div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin-top:8px"><input id="sosNombre" placeholder="Nombre del contacto"><input id="sosFono" placeholder="Teléfono con código país (569...)"><button class="ab" onclick="agregarContactoSOS()">➕ Agregar contacto</button></div>';
+  html+=cs.map(function(x,i){ return '<div style="display:flex;gap:8px;align-items:center;background:var(--gl);padding:8px 10px;border-radius:10px;margin-bottom:6px"><div style="flex:1"><strong>'+escapeHTML(x.nombre)+'</strong><div style="font-size:0.75rem;color:#8aa">'+escapeHTML(x.fono)+'</div></div><button class="route-btn" style="background:#16a34a;color:#fff" onclick="llamarContactoSOS('+i+')"><i class="fas fa-phone"></i> Llamar</button><button class="route-btn delete" onclick="borrarContactoSOS('+i+')">Quitar</button></div>'; }).join('');
+  html+='<div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:10px;margin-top:8px"><input id="sosNombre" placeholder="Nombre del contacto"><input id="sosFono" placeholder="Teléfono con código país (569...)"><button class="ab" onclick="agregarContactoSOS()"><i class="fas fa-plus"></i> Agregar contacto</button></div>';
   document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
 function agregarContactoSOS(){ const n=(document.getElementById('sosNombre').value||'').trim(); const f=(document.getElementById('sosFono').value||'').replace(/[^0-9]/g,''); if(!n||f.length<8) return lpAviso('Pon un nombre y un teléfono válido con código de país (ej: 56912345678)'); const cs=contactosSOS(); if(cs.some(function(x){ return x.fono===f; })){ lpAviso('Ese teléfono ya está en tus contactos de emergencia.'); return; } cs.push({nombre:n,fono:f}); guardarContactosSOS(cs); const en=document.getElementById('sosNombre'); if(en) en.value=''; const ef=document.getElementById('sosFono'); if(ef) ef.value=''; h('Contacto de emergencia guardado.'); gestionarContactosSOS(); }
@@ -7632,7 +7632,7 @@ function mostrarAlertaCaida(){
   const overlay=document.createElement('div');
   overlay.id='crashAlertOverlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(180,0,0,0.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:#fff';
-  overlay.innerHTML='<div style="font-size:3rem">🚨</div><h2 style="margin:10px 0">¿Estás bien?</h2><p style="font-size:0.95rem;max-width:320px">Detectamos un golpe fuerte. Si no respondes, dejamos listo el SOS para tus contactos en <strong id="crashCountdown">30</strong>s.</p><button id="crashCancelBtn" style="margin-top:20px;background:#fff;color:#b91c1c;border:none;border-radius:30px;padding:16px 32px;font-size:1.1rem;font-weight:800;cursor:pointer">✅ Estoy bien</button>';
+  overlay.innerHTML='<div style="font-size:3rem"><i class="fas fa-tower-broadcast"></i> </div><h2 style="margin:10px 0">¿Estás bien?</h2><p style="font-size:0.95rem;max-width:320px">Detectamos un golpe fuerte. Si no respondes, dejamos listo el SOS para tus contactos en <strong id="crashCountdown">30</strong>s.</p><button id="crashCancelBtn" style="margin-top:20px;background:#fff;color:#b91c1c;border:none;border-radius:30px;padding:16px 32px;font-size:1.1rem;font-weight:800;cursor:pointer"><i class="fas fa-circle-check"></i> Estoy bien</button>';
   document.body.appendChild(overlay);
   document.getElementById('crashCancelBtn').onclick=cancelarAlertaCaida;
   try{ if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]); }catch(e){}
@@ -7744,8 +7744,8 @@ function mostrarLinkSeguimientoVivo(url){
   document.getElementById('modalTitle').innerText='📡 Ubicación en vivo';
   document.getElementById('modalContent').innerHTML='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Comparte este link con quien quieras que vea tu posición en tiempo real. No necesita cuenta ni tener la app instalada.</p>'
     +'<input type="text" readonly value="'+url+'" style="margin-bottom:8px" onclick="this.select()">'
-    +'<button class="ab" onclick="navigator.clipboard.writeText(\''+url+'\').then(function(){h(\'Link copiado.\');})">📋 Copiar link</button>'
-    +(navigator.share?'<button class="ab sec" onclick="navigator.share({title:\'Sígueme en vivo por Libre Pedal\',url:\''+url+'\'})">📤 Compartir</button>':'')
+    +'<button class="ab" onclick="navigator.clipboard.writeText(\''+url+'\').then(function(){h(\'Link copiado.\');})"><i class="fas fa-clipboard"></i> Copiar link</button>'
+    +(navigator.share?'<button class="ab sec" onclick="navigator.share({title:\'Sígueme en vivo por Libre Pedal\',url:\''+url+'\'})"><i class="fas fa-share-from-square"></i> Compartir</button>':'')
     +'<p style="font-size:0.7rem;color:#7d8ba0;margin-top:10px">Se actualiza mientras estés con el GPS activo. Toca "Compartir ubicación en vivo" de nuevo para detenerlo.</p>';
   document.getElementById('userModal').classList.add('on');
 }
@@ -7932,7 +7932,7 @@ async function verSegmentos(){
   try{
     const snap=await db.collection('segmentos').orderBy('ts','desc').limit(50).get();
     if(snap.empty){ c.innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem">Aún no hay segmentos. Crea uno desde Historial de rutas → elige una ruta → 🏁 Crear segmento.</p>'; return; }
-    c.innerHTML=_btnVolverModal()+snap.docs.map(function(d){ const s=d.data(); const nom=escapeHTML(s.nombre||'').replace(/'/g,"\\'"); return '<div class="novedad-card"><h4>'+escapeHTML(s.nombre||'')+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" onclick="verTablaLideresSegmento(\''+d.id+'\',\''+nom+'\')">🏆 Ver tabla de líderes</button></div>'; }).join('');
+    c.innerHTML=_btnVolverModal()+snap.docs.map(function(d){ const s=d.data(); const nom=escapeHTML(s.nombre||'').replace(/'/g,"\\'"); return '<div class="novedad-card"><h4>'+escapeHTML(s.nombre||'')+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" onclick="verTablaLideresSegmento(\''+d.id+'\',\''+nom+'\')"><i class="fas fa-trophy"></i> Ver tabla de líderes</button></div>'; }).join('');
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar los segmentos.</p>'; }
 }
 async function verTablaLideresSegmento(segmentoId, nombre){
@@ -8099,7 +8099,7 @@ function mostrarResumenAnual(){
   overlay.appendChild(canvas);
   const botones=document.createElement('div');
   botones.style.cssText='display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center';
-  botones.innerHTML='<button id="wrappedDescargar" class="ab" style="width:auto;padding:12px 20px">📥 Descargar</button>'+(navigator.share?'<button id="wrappedCompartir" class="ab sec" style="width:auto;padding:12px 20px">📤 Compartir</button>':'')+'<button id="wrappedCerrar" class="ab sec" style="width:auto;padding:12px 20px;background:none;border:1px solid #555">✕ Cerrar</button>';
+  botones.innerHTML='<button id="wrappedDescargar" class="ab" style="width:auto;padding:12px 20px"><i class="fas fa-download"></i> Descargar</button>'+(navigator.share?'<button id="wrappedCompartir" class="ab sec" style="width:auto;padding:12px 20px"><i class="fas fa-share-from-square"></i> Compartir</button>':'')+'<button id="wrappedCerrar" class="ab sec" style="width:auto;padding:12px 20px;background:none;border:1px solid #555"><i class="fas fa-xmark"></i> Cerrar</button>';
   overlay.appendChild(botones);
   document.body.appendChild(overlay);
   document.getElementById('wrappedCerrar').onclick=function(){ overlay.remove(); };
@@ -8169,7 +8169,7 @@ async function verRodadas(){
       const asistentes=r.asistentes||[];
       const voy=asistentes.indexOf(cu)!==-1;
       const fecha=new Date(r.fecha).toLocaleString('es-CL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-      const rutaHTML=r.ruta ? ('<p style="color:var(--g)">🛣️ '+escapeHTML(r.ruta.nombreRuta)+' · '+r.ruta.distance.toFixed(1)+' km'+(r.ruta.subida?(' · ↗'+r.ruta.subida+'m'):'')+'</p>') : '';
+      const rutaHTML=r.ruta ? ('<p style="color:var(--g)"><i class="fas fa-road"></i> '+escapeHTML(r.ruta.nombreRuta)+' · '+r.ruta.distance.toFixed(1)+' km'+(r.ruta.subida?(' · ↗'+r.ruta.subida+'m'):'')+'</p>') : '';
       return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4><p>📅 '+fecha+' · 📍 '+escapeHTML(r.puntoEncuentro||'')+'</p>'+rutaHTML+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')+'<p style="color:#7d8ba0;font-size:0.72rem">Organiza: '+escapeHTML(r.nombreCreador||'Ciclista')+' · '+asistentes.length+' confirmados</p><button class="ab '+(voy?'sec':'')+'" style="margin:0" onclick="toggleAsistenciaRodada(\''+r.id+'\')">'+(voy?'✅ Vas · toca para cancelar':'🚴 Confirmar asistencia')+'</button></div>';
     }).join('');
   }catch(e){ document.getElementById('rodadasList').innerHTML='<p style="color:#888">No se pudieron cargar las rodadas.</p>'; }
@@ -8332,7 +8332,7 @@ async function verRecomendacionRutas(){
       .slice(0,8);
     let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu promedio es <strong style="color:var(--g)">'+perfil.avgKm.toFixed(1)+' km</strong> en '+perfil.totalViajes+' viajes. Estas rutas de otros ciclistas cerca tuyo te ayudan a subir el nivel de a poco:</p>';
     if(!candidatas.length){ html+='<p style="color:#7d8ba0;font-size:0.82rem">Todavía no hay rutas de otros ciclistas en ese rango de distancia cerca tuyo. Vuelve más adelante.</p>'; }
-    else { html+=candidatas.map(function(r){ const distCerca=(calculateDistance(yo.lat,yo.lon,r.points[0].lat,r.points[0].lon)/1000).toFixed(0); return '<div class="novedad-card"><h4>'+(r.distance||0).toFixed(1)+' km</h4><p>De '+escapeHTML(r.nombre||'un ciclista')+' · a '+distCerca+' km de ti</p><button class="ab sec" style="margin:0" onclick="closeModal();showSingleRoute(\''+r.id+'\')">👀 Ver en el mapa</button></div>'; }).join(''); }
+    else { html+=candidatas.map(function(r){ const distCerca=(calculateDistance(yo.lat,yo.lon,r.points[0].lat,r.points[0].lon)/1000).toFixed(0); return '<div class="novedad-card"><h4>'+(r.distance||0).toFixed(1)+' km</h4><p>De '+escapeHTML(r.nombre||'un ciclista')+' · a '+distCerca+' km de ti</p><button class="ab sec" style="margin:0" onclick="closeModal();showSingleRoute(\''+r.id+'\')"><i class="fas fa-eye"></i> Ver en el mapa</button></div>'; }).join(''); }
     c.innerHTML=html;
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar recomendaciones.</p>'; }
 }
@@ -8590,14 +8590,14 @@ async function buscarPlanPresupuesto(){
   const porNoche=dNoches>0?Math.round(presupAloj/dNoches):0, porDiaComida=Math.round(presupComida/dias);
   let html='<div style="background:var(--gl);padding:10px;border-radius:10px;margin-bottom:10px">'+
     '<div style="font-size:0.8rem;color:#9fb3c8">Referencia con tu presupuesto:</div>'+
-    '<div style="font-weight:800;color:var(--p)">🍜 ~'+porDiaComida.toLocaleString('es')+' /día en comida · 🏕️ ~'+porNoche.toLocaleString('es')+' /noche en alojamiento</div></div>';
+    '<div style="font-weight:800;color:var(--p)"><i class="fas fa-bowl-food"></i> ~'+porDiaComida.toLocaleString('es')+' /día en comida · 🏕️ ~'+porNoche.toLocaleString('es')+' /noche en alojamiento</div></div>';
   try{
     const snap=await db.collection('hostels').limit(60).get();
     let items=[];
     snap.forEach(function(doc){ const d=doc.data(); if(/^TEST-/.test(d.name||'')) return; if(pref!=='todos' && d.tipo!==pref) return; let dist=null; if(lat&&lon&&d.lat&&d.lon) dist=calculateDistance(lat,lon,d.lat,d.lon)/1000; items.push({data:d,dist:dist}); });
     items.sort(function(a,b){ if(a.dist==null) return 1; if(b.dist==null) return -1; return a.dist-b.dist; });
     items=items.slice(0,5);
-    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:10px 0 6px">🏕️ Opciones de alojamiento cerca (de la comunidad)</h4>';
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:10px 0 6px"><i class="fas fa-campground"></i> Opciones de alojamiento cerca (de la comunidad)</h4>';
     html += items.length ? items.map(function(it){ const d=it.data; return '<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.name)+'</strong><span style="color:#8aa;font-size:0.7rem"> · '+escapeHTML(d.tipo||'')+'</span>'+(it.dist!=null?' <span style="color:var(--p);font-size:0.7rem">'+it.dist.toFixed(1)+' km</span>':'')+'<div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(d.location||'')+'</div></div>'; }).join('') : '<p style="color:#888;font-size:0.8rem">Aún no hay opciones cargadas por la comunidad en esa zona. ¡Sé el primero en aportar en CicloGuía!</p>';
   }catch(e){ html+='<p style="color:#888;font-size:0.8rem">No pude cargar alojamientos ahora.</p>'; }
   try{
@@ -8607,7 +8607,7 @@ async function buscarPlanPresupuesto(){
     items=items.filter(function(it){ return it.dist==null || it.dist<80; });
     items.sort(function(a,b){ if(a.dist==null) return 1; if(b.dist==null) return -1; return a.dist-b.dist; });
     items=items.slice(0,5);
-    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:10px 0 6px">📸 Panoramas y actividades cerca</h4>';
+    html+='<h4 style="color:var(--p);font-size:0.85rem;margin:10px 0 6px"><i class="fas fa-camera"></i> Panoramas y actividades cerca</h4>';
     html += items.length ? items.map(function(it){ const d=it.data; return '<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+escapeHTML(d.title)+'</strong>'+(it.dist!=null?' <span style="color:var(--p);font-size:0.7rem">'+it.dist.toFixed(1)+' km</span>':'')+'<div style="font-size:0.75rem;color:#9fb3c8">'+escapeHTML(d.desc||'')+'</div></div>'; }).join('') : '<p style="color:#888;font-size:0.8rem">Aún no hay recomendaciones cargadas en esa zona. ¡Comparte una desde Comparte un Punto de Interés en tu Bitácora!</p>';
   }catch(e){ html+='<p style="color:#888;font-size:0.8rem">No pude cargar recomendaciones ahora.</p>'; }
   res.innerHTML=html;
@@ -8668,22 +8668,22 @@ async function mostrarComunidad(){
   });
   // Sorteo: se desbloquea recien al llegar a la meta, para que sea justo y transparente con toda la comunidad.
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(252,76,2,0.08));border:1px solid '+(total>=META?'var(--g)':'#333')+'">'+
-    '<h4 style="color:var(--g);font-size:0.9rem;margin:0 0 6px">🎁 Sorteo de la comunidad</h4>';
+    '<h4 style="color:var(--g);font-size:0.9rem;margin:0 0 6px"><i class="fas fa-gift"></i> Sorteo de la comunidad</h4>';
   if(total<META){
     html+='<p style="font-size:0.78rem;color:#9fb3c8;margin:0">Se desbloquea cuando lleguemos a <strong style="color:#dfe7ff">5.000</strong> usuarios suscritos. Vamos en <strong style="color:var(--p)">'+pct+'%</strong>. Una vez desbloqueado, el sorteo se repite <strong style="color:#dfe7ff">2 veces al año</strong>.</p>'+
-      '<button class="ab sec" style="margin-top:10px" disabled onclick="return false">🔒 Bloqueado ('+total+' / '+META+')</button>';
+      '<button class="ab sec" style="margin-top:10px" disabled onclick="return false"><i class="fas fa-lock"></i> Bloqueado ('+total+' / '+META+')</button>';
   } else {
     html+='<p style="font-size:0.78rem;color:#9fb3c8;margin:0 0 8px">¡Llegamos a 5.000 usuarios suscritos! Este beneficio se ofrece <strong style="color:#dfe7ff">2 veces al año</strong>. Para que sea justo y transparente con todos: una participación por persona, la lista de participantes queda pública (cualquiera puede revisarla), y el premio y la fecha del sorteo se anuncian a toda la comunidad con anticipación antes de sortear.</p>'+
       '<div style="font-size:0.75rem;color:#7dd;margin-bottom:8px">'+sorteoTotal+' ciclistas ya participan</div>'+
       (yaParticipo
-        ? '<button class="ab sec" disabled onclick="return false">✅ Ya estás participando</button>'
-        : '<button class="ab" onclick="participarSorteo()">🎉 Anotarme al sorteo</button>');
+        ? '<button class="ab sec" disabled onclick="return false"><i class="fas fa-circle-check"></i> Ya estás participando</button>'
+        : '<button class="ab" onclick="participarSorteo()"><i class="fas fa-champagne-glasses"></i> Anotarme al sorteo</button>');
   }
   html+='</div>';
   // Frases de la comunidad: cada ciclista puede aportar su frase para que Pistero la
   // diga en la app. Queda en revisión hasta que el admin la aprueba (no sale de inmediato).
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:var(--gl)">'+
-    '<h4 style="color:var(--p);font-size:0.9rem;margin:0 0 6px">✍️ Agrega tus mejores frases</h4>'+
+    '<h4 style="color:var(--p);font-size:0.9rem;margin:0 0 6px"><i class="fas fa-pen"></i> Agrega tus mejores frases</h4>'+
     '<p style="font-size:0.75rem;color:#9fb3c8;margin:0 0 8px">Escribe una frase para que Pistero la diga en la app. Queda en revisión antes de salir para todos.</p>'+
     '<textarea id="fraseComunidadInput" rows="2" maxlength="140" placeholder="Ej: A este paso llegamos antes que el bus..."></textarea>'+
     '<button class="ab" style="margin-top:6px" onclick="enviarFraseComunidad()">Enviar frase</button>'+
@@ -8692,7 +8692,7 @@ async function mostrarComunidad(){
   if(cu===ADMIN_ID){
     let pendientes=0;
     try{ const psnap=await db.collection('frasesComunidad').where('aprobada','==',false).get(); pendientes=psnap.size; }catch(e){}
-    html+='<button class="ab sec" style="margin-top:10px" onclick="mostrarRevisionFrases()">🔍 Revisar frases pendientes ('+pendientes+')</button>';
+    html+='<button class="ab sec" style="margin-top:10px" onclick="mostrarRevisionFrases()"><i class="fas fa-magnifying-glass"></i> Revisar frases pendientes ('+pendientes+')</button>';
   }
   c.innerHTML=html;
   renderMisFrasesComunidad();
@@ -8731,11 +8731,11 @@ async function mostrarRevisionFrases(){
   try{
     const snap=await db.collection('frasesComunidad').where('aprobada','==',false).get();
     const arr=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());}).sort(function(a,b){ return ((a.ts&&a.ts.seconds)||0)-((b.ts&&b.ts.seconds)||0); });
-    if(arr.length===0){ c.innerHTML='<p style="color:#888">No hay frases pendientes.</p><button class="ab sec" style="margin-top:10px" onclick="mostrarComunidad()">← Volver</button>'; return; }
+    if(arr.length===0){ c.innerHTML='<p style="color:#888">No hay frases pendientes.</p><button class="ab sec" style="margin-top:10px" onclick="mostrarComunidad()"><i class="fas fa-arrow-left"></i> Volver</button>'; return; }
     let html=arr.map(function(f){
-      return '<div style="background:var(--gl);border-radius:10px;padding:10px;margin-bottom:8px"><div style="font-size:0.85rem">"'+escapeHTML(f.texto)+'"</div><div style="color:#8aa;font-size:0.68rem;margin:4px 0 8px">de '+escapeHTML(f.nombre||'Ciclista')+'</div><div style="display:flex;gap:6px"><button class="ab" style="margin:0;width:auto;padding:6px 12px;font-size:0.75rem" onclick="aprobarFrase(\''+f.id+'\')">✅ Aprobar</button><button class="ab sec" style="margin:0;width:auto;padding:6px 12px;font-size:0.75rem;background:#dc2626;color:#fff" onclick="rechazarFrase(\''+f.id+'\')">✖ Rechazar</button></div></div>';
+      return '<div style="background:var(--gl);border-radius:10px;padding:10px;margin-bottom:8px"><div style="font-size:0.85rem">"'+escapeHTML(f.texto)+'"</div><div style="color:#8aa;font-size:0.68rem;margin:4px 0 8px">de '+escapeHTML(f.nombre||'Ciclista')+'</div><div style="display:flex;gap:6px"><button class="ab" style="margin:0;width:auto;padding:6px 12px;font-size:0.75rem" onclick="aprobarFrase(\''+f.id+'\')"><i class="fas fa-circle-check"></i> Aprobar</button><button class="ab sec" style="margin:0;width:auto;padding:6px 12px;font-size:0.75rem;background:#dc2626;color:#fff" onclick="rechazarFrase(\''+f.id+'\')"><i class="fas fa-xmark"></i> Rechazar</button></div></div>';
     }).join('');
-    html+='<button class="ab sec" style="margin-top:6px" onclick="mostrarComunidad()">← Volver</button>';
+    html+='<button class="ab sec" style="margin-top:6px" onclick="mostrarComunidad()"><i class="fas fa-arrow-left"></i> Volver</button>';
     c.innerHTML=html;
   }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar las frases pendientes.</p>'; }
 }
@@ -8773,7 +8773,7 @@ async function reporteDeViaje(){
   if(!addedDests || addedDests.length===0){ lpAviso('Agrega al menos un destino primero'); return; }
   document.getElementById('modalTitle').innerText='🗺️ Reporte del viaje';
   const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Preparando el reporte y el clima de cada parada...</p>'; document.getElementById('userModal').classList.add('on');
-  let html='<div style="background:var(--gl);padding:10px;border-radius:10px;margin-bottom:10px"><strong style="color:var(--p)">📍 Paradas ('+addedDests.length+')</strong>';
+  let html='<div style="background:var(--gl);padding:10px;border-radius:10px;margin-bottom:10px"><strong style="color:var(--p)"><i class="fas fa-location-dot"></i> Paradas ('+addedDests.length+')</strong>';
   addedDests.forEach(function(d,i){ html+='<div style="font-size:0.85rem;padding:3px 0;border-bottom:1px solid #222">'+(i+1)+'. '+escapeHTML(d.name)+(d.addr?(' — '+escapeHTML(d.addr)):'')+'</div>'; });
   html+='</div>';
   let vozResumen='';
@@ -8785,10 +8785,10 @@ async function reporteDeViaje(){
     if(!lat||!lon){ html+='<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+(i+1)+'. '+escapeHTML(d.name)+'</strong><div style="color:#888;font-size:0.78rem">No pude ubicar esta parada para el clima.</div></div>'; continue; }
     const w=await climaDeZona(lat,lon);
     if(w && w.current){
-      html+='<div style="background:rgba(252,76,2,0.08);border:1px solid var(--p);padding:10px;border-radius:10px;margin-bottom:8px"><strong style="color:var(--p);font-size:0.85rem">🌤️ '+(i+1)+'. '+escapeHTML(d.name)+'</strong>';
+      html+='<div style="background:rgba(252,76,2,0.08);border:1px solid var(--p);padding:10px;border-radius:10px;margin-bottom:8px"><strong style="color:var(--p);font-size:0.85rem"><i class="fas fa-cloud-sun"></i> '+(i+1)+'. '+escapeHTML(d.name)+'</strong>';
       html+='<div style="font-size:1.3rem;font-weight:800;margin:4px 0">'+Math.round(w.current.temperature_2m)+'° · '+wmoTexto(w.current.weather_code)+'</div>';
       html+='<div style="font-size:0.78rem;color:#9fb3c8">Viento '+Math.round(w.current.wind_speed_10m)+' km/h</div>';
-      if(w.daily && w.daily.time){ const dias=['Hoy','Mañana','Pasado']; html+='<div style="margin-top:8px;display:flex;gap:6px">'; for(let k=0;k<3&&k<w.daily.time.length;k++){ html+='<div style="flex:1;background:var(--gl);border-radius:8px;padding:6px;text-align:center"><div style="font-size:0.7rem;color:#8aa">'+dias[k]+'</div><div style="font-weight:700;font-size:0.8rem">'+Math.round(w.daily.temperature_2m_max[k])+'° / '+Math.round(w.daily.temperature_2m_min[k])+'°</div><div style="font-size:0.62rem;color:#7dd">'+wmoTexto(w.daily.weather_code[k])+'</div><div style="font-size:0.62rem;color:#6ad">☔ '+(w.daily.precipitation_probability_max[k]||0)+'%</div></div>'; } html+='</div>'; }
+      if(w.daily && w.daily.time){ const dias=['Hoy','Mañana','Pasado']; html+='<div style="margin-top:8px;display:flex;gap:6px">'; for(let k=0;k<3&&k<w.daily.time.length;k++){ html+='<div style="flex:1;background:var(--gl);border-radius:8px;padding:6px;text-align:center"><div style="font-size:0.7rem;color:#8aa">'+dias[k]+'</div><div style="font-weight:700;font-size:0.8rem">'+Math.round(w.daily.temperature_2m_max[k])+'° / '+Math.round(w.daily.temperature_2m_min[k])+'°</div><div style="font-size:0.62rem;color:#7dd">'+wmoTexto(w.daily.weather_code[k])+'</div><div style="font-size:0.62rem;color:#6ad"><i class="fas fa-umbrella"></i> '+(w.daily.precipitation_probability_max[k]||0)+'%</div></div>'; } html+='</div>'; }
       html+='<div style="font-size:0.6rem;color:#556;margin-top:6px">Datos en vivo · Open-Meteo</div></div>';
       if(i===addedDests.length-1){ const lluvia=(w.daily&&w.daily.precipitation_probability_max&&w.daily.precipitation_probability_max[0])||0; vozResumen='En '+(d.name||'tu destino')+' hay '+Math.round(w.current.temperature_2m)+' grados, '+wmoTexto(w.current.weather_code)+(lluvia>50?'. Ojo, alta probabilidad de lluvia, lleva capa.':'.'); }
     } else { html+='<div style="background:var(--gl);padding:8px;border-radius:8px;margin-bottom:6px"><strong style="font-size:0.85rem">'+(i+1)+'. '+escapeHTML(d.name)+'</strong><div style="color:#888;font-size:0.78rem">No pude traer el clima de esta parada ahora.</div></div>'; }
