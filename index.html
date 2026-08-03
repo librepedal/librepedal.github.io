@@ -828,7 +828,6 @@ body[data-vista="pistero"] #micBtn{display:none}
 <div class="hero-viaje">
 <svg class="hero-ruta" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,44 40,38 70,42 110,21 150,28 190,10 230,17 270,6 300,11" fill="none" stroke="#fc4c02" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="270" cy="6" r="4" fill="#fc4c02"/></svg>
 <h4 class="hero-t">¿A dónde pedaleamos hoy?</h4>
-<input type="text" id="quick-start" placeholder="Origen (automático)" readonly>
 <div style="position:relative">
   <input type="text" id="quick-dest" placeholder="¿A dónde vamos?" autocomplete="off" oninput="sugerirDestino(this.value)">
   <div id="sugerencias-dest"></div>
@@ -1375,7 +1374,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.77'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.78'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
