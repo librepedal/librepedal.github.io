@@ -1374,7 +1374,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.79'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.80'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2415,6 +2415,10 @@ function _reproducirVoz(item){
      Además `navigator.onLine` miente seguido (dice que no hay red cuando sí, y al revés),
      así que mientras menos cosas cuelguen de él, mejor. */
   if(vozMejorada){
+    // v7.80: voz por ARQUETIPO (clips SLR71 chilenos en voces/<arq>/<id>.mp3).
+    const _arqV=(typeof pisteroPersonalidad!=='undefined')?pisteroPersonalidad:'cercano';
+    const _aid = VOCES_MANIFEST && VOCES_MANIFEST.arq && VOCES_MANIFEST.arq[_arqV] && VOCES_MANIFEST.arq[_arqV][item.t];
+    if(_aid){ vozTimerFin=setTimeout(_vozSiguiente, 12000); _vozArchivoArq(item, durEst, _arqV, _aid, miGen); return; }
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
     if(_id){
       vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso; se recalibra con la duración real del audio
@@ -2462,6 +2466,20 @@ function _vozArchivo(item, durEst, id, miGen){
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: comprometidos con este audio, no dispares un segundo (evita voz duplicada)
+    a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
+    a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
+    const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
+  }catch(e){ fallback(); }
+}
+function _vozArchivoArq(item, durEst, arq, id, miGen){
+  // Frase fija en la voz chilena del arquetipo (SLR71): voces/{arq}/{id}.mp3.
+  let cayo=false;
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  try{
+    const a=new Audio('voces/'+arq+'/'+id+'.mp3');
+    _vozNeuralAudio=a;
+    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onplaying=function(){ cayo=true; };
     a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
     a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
