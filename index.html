@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.99'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.00'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4619,6 +4619,8 @@ async function _cargarEstadoFundador(){ try{ if(!cu||typeof db==='undefined') re
 function _ganarDarma(n){ var mult=_esFundador?2:1; us.d+=Math.round((n||0)*mult); if(typeof au==='function') au(); if(typeof sincronizarStats==='function') sincronizarStats(); }
 // km de BICICLETA para confianza (ciclismo+cicloviaje+mtb; NO auto ni trekking) — pedido de Inty
 function _kmBiciConfianza(){ var m=(us&&us.dm)||{}; return (Number(m.ciclismo)||0)+(Number(m.cicloviaje)||0)+(Number(m.mtb)||0); }
+var LP_KM_CONFIANZA=10; // km de bici reales para acciones sensibles (anti cuentas falsas)
+function _esCiclistaConfiable(){ return _kmBiciConfianza()>=LP_KM_CONFIANZA; }
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di)); const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
@@ -5414,6 +5416,7 @@ function _confirmCountsHTML(r){
 // arrayUnion evita que el mismo usuario cuente dos veces (mismo patrón que las rodadas).
 async function confirmarReporte(id, sigue){
   if(!id || typeof db==='undefined' || !db) return;
+  if(typeof _esCiclistaConfiable==='function' && !_esCiclistaConfiable()){ lpAviso('Para validar reportes de seguridad necesitas haber pedaleado al menos '+LP_KM_CONFIANZA+' km con la app. Así el mapa se protege de cuentas falsas. ¡Sigue sumando km en bici!'); return; }
   const uid=window.lpUID||cu||'anon';
   const doc=reportesData.find(function(x){ return x.id===id; });
   const yaVoto=doc && (((doc.confirmadoPor||[]).indexOf(uid)>=0) || ((doc.desmentidoPor||[]).indexOf(uid)>=0));
@@ -8753,7 +8756,7 @@ async function mostrarFundadores(){
   let html=_btnVolverModal();
   if(cu && miNum){
     if(soyFundador){
-      html+='<div style="background:linear-gradient(135deg,#3a2f00,#1a1500);border:1px solid var(--g);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px"><div style="font-size:2rem;color:var(--g)"><i class="fas fa-medal"></i></div><div style="font-weight:800;color:var(--g);font-size:1rem;margin-top:4px">Socio Fundador N° '+miNum+'</div><div style="font-size:0.74rem;color:#cdd6e6;margin-top:4px">Eres de los primeros '+LP_FUNDADORES_CUPO+'. Tu lugar es tuyo para siempre.</div></div>';
+      html+='<div style="background:linear-gradient(135deg,#3a2f00,#1a1500);border:1px solid var(--g);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px"><div style="margin-bottom:2px"><svg viewBox="0 0 64 64" width="52" height="52" xmlns="http://www.w3.org/2000/svg"><path d="M32 6 l2.3 4.7 5.2 .7 -3.8 3.6 .9 5.1 -4.6-2.4 -4.6 2.4 .9-5.1 -3.8-3.6 5.2-.7z" fill="#ffd700"/><path d="M13 37 Q11 27 18 22" stroke="#ffd700" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M51 37 Q53 27 46 22" stroke="#ffd700" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="32" cy="37" r="17" fill="#241c00" stroke="#ffd700" stroke-width="2.5"/><circle cx="32" cy="37" r="12.5" fill="none" stroke="#fc4c02" stroke-width="1.4" opacity="0.75"/><path d="M22 39 Q22 30 32 30 Q42 30 42 39 Z" fill="#fc4c02"/><path d="M21.5 39.5 Q32 43.5 42.5 39.5 L42.5 37.8 Q32 41.5 21.5 37.8 Z" fill="rgba(0,0,0,0.35)"/><path d="M32 24 L32 30" stroke="#ffd700" stroke-width="2.4" stroke-linecap="round"/><circle cx="27.5" cy="40" r="2.4" fill="#fff"/><circle cx="36.5" cy="40" r="2.4" fill="#fff"/></svg></div><div style="font-weight:800;color:var(--g);font-size:1rem;margin-top:4px">Socio Fundador N° '+miNum+'</div><div style="font-size:0.74rem;color:#cdd6e6;margin-top:4px">Eres de los primeros '+LP_FUNDADORES_CUPO+'. Tu lugar es tuyo para siempre.</div></div>';
     } else {
       html+='<div style="background:var(--gl);border:1px solid #2a3240;border-radius:12px;padding:14px;text-align:center;margin-bottom:12px"><div style="font-weight:800;color:var(--p);font-size:0.95rem">Eres el N° '+miNum+' de la comunidad</div><div style="font-size:0.74rem;color:#9fb3c8;margin-top:4px">El cupo de Fundador (primeros '+LP_FUNDADORES_CUPO+') ya se llenó, pero tu lugar en la historia queda.</div></div>';
     }
