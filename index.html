@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.97'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.98'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5553,6 +5553,7 @@ function mostrarLogrosComunidad(){
     +'<button class="ab sec" style="margin:0" onclick="verRecomendacionRutas()"><i class="fas fa-compass"></i> Rutas para ti</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarTienda(true)"><i class="fas fa-wand-magic-sparkles"></i> Tienda de Darma</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarComunidad()"><i class="fas fa-handshake"></i> Meta de la comunidad (vota)</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarFundadores()"><i class="fas fa-medal"></i> Socios Fundadores</button>'
     +'</div>';
   document.getElementById('userModal').classList.add('on');
 }
@@ -8729,6 +8730,36 @@ async function buscarPlanPresupuesto(){
 // reg() solo cuando el usuario es realmente nuevo (no en cada login).
 async function _totalUsuariosSuscritos(){
   try{ const doc=await db.collection('meta').doc('contadores').get(); return (doc.exists && doc.data().totalUsuarios) || 0; }catch(e){ return 0; }
+}
+var LP_FUNDADORES_CUPO=1000;
+async function mostrarFundadores(){
+  _modalVolverA='mostrarLogrosComunidad';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-medal"></i> Socios Fundadores';
+  const c=document.getElementById('modalContent');
+  c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
+  document.getElementById('userModal').classList.add('on');
+  let miNum=null, total=0, primeros=[];
+  try{ const t=await db.collection('users').count().get(); total=t.data().count||0; }catch(e){}
+  try{ if(cu){ const me=await db.collection('users').doc(cu).get(); const myTs=me.exists?me.data().createdAt:null; if(myTs){ const agg=await db.collection('users').where('createdAt','<',myTs).count().get(); miNum=(agg.data().count||0)+1; } } }catch(e){}
+  try{ const snap=await db.collection('users').orderBy('createdAt','asc').limit(60).get(); snap.forEach(function(doc){ const d=doc.data(); primeros.push({id:doc.id, nombre:d.nombre||'Ciclista'}); }); }catch(e){}
+  const cupoUsado=Math.min(total,LP_FUNDADORES_CUPO);
+  const quedan=Math.max(0,LP_FUNDADORES_CUPO-total);
+  const soyFundador=miNum && miNum<=LP_FUNDADORES_CUPO;
+  let html=_btnVolverModal();
+  if(cu && miNum){
+    if(soyFundador){
+      html+='<div style="background:linear-gradient(135deg,#3a2f00,#1a1500);border:1px solid var(--g);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px"><div style="font-size:2rem;color:var(--g)"><i class="fas fa-medal"></i></div><div style="font-weight:800;color:var(--g);font-size:1rem;margin-top:4px">Socio Fundador N° '+miNum+'</div><div style="font-size:0.74rem;color:#cdd6e6;margin-top:4px">Eres de los primeros '+LP_FUNDADORES_CUPO+'. Tu lugar es tuyo para siempre.</div></div>';
+    } else {
+      html+='<div style="background:var(--gl);border:1px solid #2a3240;border-radius:12px;padding:14px;text-align:center;margin-bottom:12px"><div style="font-weight:800;color:var(--p);font-size:0.95rem">Eres el N° '+miNum+' de la comunidad</div><div style="font-size:0.74rem;color:#9fb3c8;margin-top:4px">El cupo de Fundador (primeros '+LP_FUNDADORES_CUPO+') ya se llenó, pero tu lugar en la historia queda.</div></div>';
+    }
+  }
+  const pctF=Math.round((cupoUsado/LP_FUNDADORES_CUPO)*100);
+  html+='<div style="background:var(--gl);padding:12px;border-radius:10px;margin-bottom:12px"><div style="font-size:0.8rem;color:#9fb3c8"><strong style="color:var(--p)">'+cupoUsado+'</strong> / '+LP_FUNDADORES_CUPO+' cupos de Fundador'+(quedan>0?(' · quedan <strong style="color:var(--g)">'+quedan+'</strong>'):' · ¡cupo lleno!')+'</div><div style="background:#111;border-radius:8px;height:8px;margin-top:6px;overflow:hidden"><div style="background:var(--g);height:100%;width:'+pctF+'%"></div></div></div>';
+  html+='<h4 style="color:var(--p);font-size:0.85rem;margin:0 0 6px">Beneficios de por vida</h4><ul style="font-size:0.76rem;color:#cdd6e6;line-height:1.6;margin:0 0 12px;padding-left:18px"><li>Insignia y número de socio únicos (no se vuelven a dar)</li><li>Más Darma por cada acción</li><li>Acceso anticipado a lo nuevo</li><li>Entradas extra y prioridad en los sorteos de premios reales</li></ul>';
+  html+='<h4 style="color:var(--p);font-size:0.85rem;margin:0 0 6px"><i class="fas fa-trophy"></i> Muro de Fundadores</h4>';
+  primeros.forEach(function(f,i){ const medal=i<3?['#ffd700','#c0c0c0','#cd7f32'][i]:null; html+='<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-bottom:1px solid #15202e"><div style="width:26px;text-align:center;font-weight:800;color:'+(medal||'#7d8ba0')+'">'+(medal?'<i class=\'fas fa-medal\'></i>':(i+1))+'</div><div style="flex:1;font-size:0.82rem;color:#dfe7ff">'+escapeHTML(f.nombre)+(f.id===cu?' <span style="color:var(--g)">(tú)</span>':'')+'</div><div style="font-size:0.7rem;color:#7d8ba0">N° '+(i+1)+'</div></div>'; });
+  if(!cu) html+='<p style="color:#888;font-size:0.8rem;margin-top:10px">Inicia sesión para ver tu número de fundador.</p>';
+  c.innerHTML=html;
 }
 async function mostrarComunidad(){
   _modalVolverA='mostrarLogrosComunidad';
