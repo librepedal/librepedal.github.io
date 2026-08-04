@@ -1032,7 +1032,7 @@ body[data-vista="pistero"] #micBtn{display:none}
   <button class="capachip" id="btnCapasToggle" onclick="toggleCapasPanel()"><i class="fas fa-layer-group"></i> Capas</button>
   <div id="capasPanel" class="capas-panel">
     <button class="capachip" id="capaCiclistas" onclick="toggleCapaCiclistas(this)"><i class="fas fa-person-biking"></i> Ciclistas</button>
-    <button class="capachip on" id="capaPeligros" onclick="toggleCapaReportes('peligros',this)">⚠️ Peligros y controles</button>
+    <button class="capachip on" id="capaPeligros" onclick="toggleCapaReportes('peligros',this)"><i class="fas fa-triangle-exclamation"></i> Peligros y controles</button>
     <button class="capachip on" id="capaPuntos" onclick="toggleCapaReportes('puntos',this)"><i class="fas fa-store"></i> Servicios</button>
     <button class="capachip on" id="capaMiradores" onclick="toggleCapaReportes('miradores',this)"><i class="fas fa-camera"></i> Miradores</button>
   </div>
@@ -1376,7 +1376,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.94'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.95'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3105,10 +3105,10 @@ function _pisteroResolverVista(arg){
   if(PISTERO_VISTAS_OK[norm]) return norm;
   return PISTERO_ALIAS[norm]||null;
 }
-function _pisteroBotonAccion(txt, fn){
+function _pisteroBotonAccion(txt, fn, icon){
   const cont=document.getElementById('pisteroMsgs'); if(!cont) return;
   const wrap=document.createElement('div'); wrap.className='pmsg-acciones';
-  const b=document.createElement('button'); b.className='pacc'; b.textContent=txt; b.onclick=fn;
+  const b=document.createElement('button'); b.className='pacc'; if(icon){ b.innerHTML='<i class="fas '+icon+'"></i> '+escapeHTML(txt); } else { b.textContent=txt; } b.onclick=fn;
   wrap.appendChild(b); cont.appendChild(wrap); cont.scrollTop=cont.scrollHeight;
 }
 function _pisteroObedecer(acciones, pedido){
@@ -3127,20 +3127,20 @@ function _pisteroObedecer(acciones, pedido){
   acciones.slice(0,2).forEach(function(a){
     if(a.tipo==='navegar' && a.arg){
       if(pidioIr){ pisteroNavegar(a.arg); }
-      else _pisteroBotonAccion('🧭 Iniciar navegación a '+a.arg, function(){ pisteroNavegar(a.arg); });
+      else _pisteroBotonAccion('Iniciar navegación a '+a.arg, function(){ pisteroNavegar(a.arg); }, 'fa-compass');
     } else if(a.tipo==='abrir'){
       const destino=_pisteroResolverVista(a.arg);
       if(!destino) return;
       if(pidioAbrir||pidioIr){ cv(destino); }
-      else _pisteroBotonAccion('👉 Abrir '+(PISTERO_NOMBRES[destino]||destino), function(){ cv(destino); });
+      else _pisteroBotonAccion('Abrir '+(PISTERO_NOMBRES[destino]||destino), function(){ cv(destino); }, 'fa-arrow-right');
     } else if(a.tipo==='gps'){
       if(pidioGps){ toggleGPS(); }
-      else _pisteroBotonAccion('📍 GPS: grabar mi ruta', function(){ toggleGPS(); });
+      else _pisteroBotonAccion('GPS: grabar mi ruta', function(){ toggleGPS(); }, 'fa-location-dot');
     } else if(a.tipo==='mostrar'){
       const idx=TUTORIAL_TEMAS[normalizar(a.arg||'')];
       if(idx==null) return;
       if(pidioEnsenar||pidioAbrir||pidioIr){ mostrarPasoTutorial(idx); }
-      else _pisteroBotonAccion('👉 Muéstramelo en la app', function(){ mostrarPasoTutorial(idx); });
+      else _pisteroBotonAccion('Muéstramelo en la app', function(){ mostrarPasoTutorial(idx); }, 'fa-hand-pointer');
     }
   });
 }
@@ -3149,12 +3149,12 @@ function _pisteroPintarAcciones(msg){
   const cont=document.getElementById('pisteroMsgs'); if(!cont||!msg) return;
   const acts=[];
   const nav=msg.match(/(?:ll[eé]va(?:me|nos)|vamos|navega|nav[eé]game|ir|ruta|and[aá] )\s+(?:a|hacia|hasta|para)\s+([^.?!\n]{3,40})/i);
-  if(nav){ const lugar=nav[1].replace(/\s+(porfa|por favor|plis|ahora)\b.*/i,'').trim(); if(lugar) acts.push({t:'🧭 Iniciar navegación a '+lugar, f:function(){ pisteroNavegar(lugar); }}); }
-  if(/(hospedaj|alojar|aloj[oa]\b|d[oó]nde\s+(duermo|dormir|alojo)|hostal|camping)/i.test(msg)) acts.push({t:'🏨 Ver hospedajes de la comunidad', f:function(){ cv('gui'); }});
-  if(/(planific|plan[eé]a|itinerario|viaje de\s+\d|\d+\s*d[ií]as)/i.test(msg)) acts.push({t:'🗺️ Abrir planificador de viaje', f:function(){ cv('trips'); }});
+  if(nav){ const lugar=nav[1].replace(/\s+(porfa|por favor|plis|ahora)\b.*/i,'').trim(); if(lugar) acts.push({t:'Iniciar navegación a '+lugar, i:'fa-compass', f:function(){ pisteroNavegar(lugar); }}); }
+  if(/(hospedaj|alojar|aloj[oa]\b|d[oó]nde\s+(duermo|dormir|alojo)|hostal|camping)/i.test(msg)) acts.push({t:'Ver hospedajes de la comunidad', i:'fa-bed', f:function(){ cv('gui'); }});
+  if(/(planific|plan[eé]a|itinerario|viaje de\s+\d|\d+\s*d[ií]as)/i.test(msg)) acts.push({t:'Abrir planificador de viaje', i:'fa-map-location-dot', f:function(){ cv('trips'); }});
   if(!acts.length) return;
   const wrap=document.createElement('div'); wrap.className='pmsg-acciones';
-  acts.forEach(function(a){ const b=document.createElement('button'); b.className='pacc'; b.textContent=a.t; b.onclick=a.f; wrap.appendChild(b); });
+  acts.forEach(function(a){ const b=document.createElement('button'); b.className='pacc'; if(a.i){ b.innerHTML='<i class="fas '+a.i+'"></i> '+escapeHTML(a.t); } else { b.textContent=a.t; } b.onclick=a.f; wrap.appendChild(b); });
   cont.appendChild(wrap); cont.scrollTop=cont.scrollHeight;
 }
 function abrirPistero(){
