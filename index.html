@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.98'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.99'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3414,7 +3414,7 @@ window.onload = async function(){
   // antes de activar GPS/voz de arranque — si se recarga, esta instancia nunca sigue.
   try{ await Promise.race([window.__lpListoParaArrancar, new Promise(function(r){ setTimeout(r,1500); })]); }catch(e){}
   if(sesion){
-    cu=sesion;
+    cu=sesion; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador();
     _actualizarAuthConTokenPersonalizado(cu); // no bloquea el resto del arranque
     nombreUsuario=localStorage.getItem('lp_nombre_'+cu)||'Ciclista';
     selectedHelmet=localStorage.getItem('lp_helmet_'+cu)||'giro';
@@ -3545,7 +3545,7 @@ async function reg(e){
   const e_val=document.getElementById('em').value.trim();
   if(!nombre) return lpAviso("Ingresa tu nombre");
   if(!e_val||!e_val.includes('@')) return lpAviso("El correo es obligatorio");
-  cu=e_val.replace(/[^a-zA-Z0-9]/g,'_');
+  cu=e_val.replace(/[^a-zA-Z0-9]/g,'_'); if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador();
   await _actualizarAuthConTokenPersonalizado(cu);
   nombreUsuario=nombre;
   const paisSel=(document.getElementById('pais-input')||{}).value||'auto';
@@ -4614,6 +4614,11 @@ var CO2_KG_POR_ARBOL_ANIO=21; // un arbol joven absorbe ~21 kg CO2 al anio
 function _co2Evitado(km){ return (km||0)*CO2_KG_POR_KM; }
 function _arbolesEq(kg){ return Math.max(0,(kg||0)/CO2_KG_POR_ARBOL_ANIO); }
 function _fmtCo2(kg){ return (kg>=1000)?((kg/1000).toFixed(2)+' t'):(Math.round(kg)+' kg'); }
+var _esFundador=false, _miNumFundador=null;
+async function _cargarEstadoFundador(){ try{ if(!cu||typeof db==='undefined') return; const me=await db.collection('users').doc(cu).get(); const ts=me.exists?me.data().createdAt:null; if(!ts) return; const agg=await db.collection('users').where('createdAt','<',ts).count().get(); _miNumFundador=(agg.data().count||0)+1; _esFundador=_miNumFundador<=(typeof LP_FUNDADORES_CUPO!=='undefined'?LP_FUNDADORES_CUPO:1000); }catch(e){} }
+function _ganarDarma(n){ var mult=_esFundador?2:1; us.d+=Math.round((n||0)*mult); if(typeof au==='function') au(); if(typeof sincronizarStats==='function') sincronizarStats(); }
+// km de BICICLETA para confianza (ciclismo+cicloviaje+mtb; NO auto ni trekking) — pedido de Inty
+function _kmBiciConfianza(){ var m=(us&&us.dm)||{}; return (Number(m.ciclismo)||0)+(Number(m.cicloviaje)||0)+(Number(m.mtb)||0); }
 function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di)); const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
@@ -5158,7 +5163,7 @@ async function reportarPorVozRapido(cat){
     let comuna='Mi zona';
     try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+loc.lat+'&lon='+loc.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
     await db.collection('reportes').add({cat:cat, text:voz.texto, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
-    us.d+=15; au(); if(typeof sincronizarStats==='function') sincronizarStats();
+    _ganarDarma(15); au(); if(typeof sincronizarStats==='function') sincronizarStats();
     return voz.confirma;
   }catch(err){ return 'No se pudo enviar el aviso, inténtalo de nuevo en un rato.'; }
 }
@@ -5379,7 +5384,7 @@ async function enviarReporte(){
       if(difEl && difEl.value) data.dificultad=difEl.value;
     }
     await db.collection('reportes').add(data);
-    us.d+=15; au(); sincronizarStats();
+    _ganarDarma(15); au(); sincronizarStats();
     reporteMapaCoords=null; reporteMapaMarker=null; // el modal se cierra igual; se limpia por prolijidad
     closeModal();
     try{ _pisteroMood='contento'; }catch(e){} h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
@@ -5421,7 +5426,7 @@ async function confirmarReporte(id, sigue){
       await ref.update({ desmentidoPor: firebase.firestore.FieldValue.arrayUnion(uid) });
       h('Anotado: ya no está. Gracias por avisar, colega — el resto te lo agradece.');
     }
-    if(!yaVoto){ us.d+=2; au(); if(typeof sincronizarStats==='function') sincronizarStats(); } // +2 Darma solo la 1ª vez, sin farmear
+    if(!yaVoto){ _ganarDarma(2); au(); if(typeof sincronizarStats==='function') sincronizarStats(); } // +2 Darma solo la 1ª vez, sin farmear
   }catch(e){ lpAviso('No se pudo registrar tu confirmación, intenta de nuevo en un rato.'); }
   try{ if(mp) mp.closePopup(); }catch(e){}
 }
@@ -5851,7 +5856,7 @@ async function agregarPOI(){
     let comuna='Mi zona';
     try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+dest.lat+'&lon='+dest.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
     await db.collection('reportes').add({cat:poiCatSel, text:desc, lugar:q||'Marcado en el mapa', user:cu, nombre:nombreUsuario, lat:dest.lat, lon:dest.lon, comuna:comuna, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
-    us.d+=15; au(); if(typeof sincronizarStats==='function') sincronizarStats();
+    _ganarDarma(15); au(); if(typeof sincronizarStats==='function') sincronizarStats();
     document.getElementById('poi-buscar').value=''; document.getElementById('poi-desc').value=''; poiCatSel=null; renderPoiCats();
     poiManualCoords=null; if(poiManualMarker){ poiManualMarker.remove(); poiManualMarker=null; }
     document.getElementById('poi-mapa-manual').style.display='none';
@@ -6021,7 +6026,7 @@ async function publicarAlojo(){
   _publicandoAlojo=true;
   try{
     await db.collection('alojo').add({user:cu, nombre:nombreUsuario, zona:zona, desc:desc, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
-    us.d+=20; au(); sincronizarStats();
+    _ganarDarma(20); au(); sincronizarStats();
     try{ _pisteroMood='contento'; }catch(e){} h('¡Oferta publicada! Otros ciclistas ya pueden contactarte. Veinte de Darma para ti. 🏡');
     closeModal();
   }catch(e){ lpAviso('No se pudo publicar: '+(e.message||e)); }
@@ -8014,8 +8019,8 @@ async function _guardarTiempoSegmento(segmento, tiempoMs){
     }catch(e){}
     await db.collection('segmentoTiempos').add({segmentoId:segmento.id, user:cu, nombre:nombreUsuario||'Ciclista', tiempoMs:tiempoMs, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
     const tiempoTxt=_fmtSegmentoTiempo(tiempoMs);
-    if(esRecord && mejoraSeg){ h('¡Nuevo récord personal en '+segmento.nombre+'! '+tiempoTxt+', '+mejoraSeg+' segundos más rápido que tu mejor marca. +10 Darma por la marca nueva.'); us.d+=10; au(); sincronizarStats(); }
-    else if(esRecord){ h('¡Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'! Primera vez que lo corres, esa es tu marca a superar. +10 Darma.'); us.d+=10; au(); sincronizarStats(); }
+    if(esRecord && mejoraSeg){ h('¡Nuevo récord personal en '+segmento.nombre+'! '+tiempoTxt+', '+mejoraSeg+' segundos más rápido que tu mejor marca. +10 Darma por la marca nueva.'); _ganarDarma(10); au(); sincronizarStats(); }
+    else if(esRecord){ h('¡Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'! Primera vez que lo corres, esa es tu marca a superar. +10 Darma.'); _ganarDarma(10); au(); sincronizarStats(); }
     else { h('Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'. No superaste tu mejor marca, así que esta vuelta no suma Darma — pero sigue quedando en tu historial.'); }
     _actualizarBadgeSegmento();
   }catch(e){}
@@ -8086,7 +8091,7 @@ async function revisarRetosCumplidos(){
       if(km>=(r.metaKm||Infinity)){
         yaAvisados.push(doc.id);
         h('¡Cumpliste el reto "'+r.titulo+'"! Sumaste '+km.toFixed(0)+' de '+r.metaKm+' km. +30 Darma extra por lograrlo.');
-        us.d+=30; au(); sincronizarStats();
+        _ganarDarma(30); au(); sincronizarStats();
       }
     }
     try{ localStorage.setItem('lp_retos_cumplidos_'+cu, JSON.stringify(yaAvisados)); }catch(e){}
