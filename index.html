@@ -1376,7 +1376,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.87'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.88'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2606,12 +2606,20 @@ function _pisteroExprSVG(expr){
   function eO(x,blink){ return '<g class="lp-eye'+(blink?' lp-parpadeo':'')+'"><ellipse cx="'+x+'" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="'+(x-2.2)+'" cy="60" r="2.5" fill="#fff"/><circle cx="'+(x+2)+'" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g>'; }
   function eH(x){ return '<path d="M'+(x-6)+' 64 Q'+x+' 57 '+(x+6)+' 64" stroke="#16203a" stroke-width="2.8" fill="none" stroke-linecap="round"/>'; }
   function eW(x){ return '<g class="lp-eye"><ellipse cx="'+x+'" cy="62.5" rx="7" ry="8.8" fill="#16203a"/><g class="lp-iris"><circle cx="'+(x-2.5)+'" cy="59" r="2.9" fill="#fff"/><circle cx="'+(x+2.4)+'" cy="66" r="1.4" fill="#fff" opacity=".85"/></g></g>'; }
+  function eU(x){ return '<ellipse cx="'+x+'" cy="61" rx="6" ry="7.4" fill="#16203a"/><circle cx="'+(x-1)+'" cy="56.5" r="2.6" fill="#fff"/>'; }
+  function eHf(x){ return '<path d="M'+(x-6.5)+' 62 Q'+x+' 66 '+(x+6.5)+' 62" stroke="#16203a" stroke-width="3.4" fill="none" stroke-linecap="round"/>'; }
+  function eC(x){ return '<path d="M'+(x-6)+' 62 L'+(x+6)+' 62" stroke="#16203a" stroke-width="2.8" stroke-linecap="round"/>'; }
   var eyes, mouth;
   if(expr==='hablando'){ eyes=eO(40)+eO(60); mouth='<ellipse class="lp-boca" cx="50" cy="74" rx="4" ry="4.8" fill="#5a2f1a"/><path d="M47 76 Q50 79 53 76" fill="#ff7a90"/>'; }
   else if(expr==='escuchando'||expr==='emocionado'){ eyes=eO(40)+eO(60); mouth='<path d="M44 72 Q50 80 56 72 Z" fill="#5a2f1a"/><path d="M47.5 75 Q50 79 52.5 75" fill="#ff7a90"/>'; }
   else if(expr==='contento'){ eyes=eH(40)+eH(60); mouth=SMILE; }
   else if(expr==='guino'){ eyes=eH(40)+eO(60,true); mouth=SMILE; }
   else if(expr==='sorprendido'){ eyes=eW(40)+eW(60); mouth='<ellipse cx="50" cy="74.5" rx="2.6" ry="3.3" fill="#5a2f1a"/>'; }
+  else if(expr==='pensando'){ eyes='<path d="M33 53 Q40 50 46 53" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+eU(40)+eU(60); mouth='<path d="M44 74 L54 74" stroke="#7a4a2a" stroke-width="2.4" stroke-linecap="round"/><circle cx="72" cy="70" r="1.4" fill="#7a4a2a"/><circle cx="77" cy="68" r="1.1" fill="#7a4a2a"/>'; }
+  else if(expr==='enojado'){ eyes='<path d="M32 52 L44 56" stroke="#16203a" stroke-width="2.6" stroke-linecap="round"/><path d="M68 52 L56 56" stroke="#16203a" stroke-width="2.6" stroke-linecap="round"/>'+eO(40)+eO(60); mouth='<path d="M43 77 Q50 71 57 77" stroke="#7a4a2a" stroke-width="2.6" fill="none" stroke-linecap="round"/>'; }
+  else if(expr==='cansado'){ eyes=eHf(40)+eHf(60); mouth='<path d="M45 74 L55 74" stroke="#7a4a2a" stroke-width="2.4" stroke-linecap="round"/><path d="M76 58 Q79 63 76 66 Q73 63 76 58 Z" fill="#7fd0ff"/>'; }
+  else if(expr==='preocupado'){ eyes='<path d="M33 55 Q40 52 45 55" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M55 55 Q60 52 67 55" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+eO(40)+eO(60); mouth='<path d="M44 75 Q47 72 50 75 Q53 78 56 75" stroke="#7a4a2a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'; }
+  else if(expr==='dormido'){ eyes=eC(40)+eC(60); mouth='<ellipse cx="50" cy="75" rx="2.4" ry="3" fill="#5a2f1a"/><text x="72" y="46" font-size="11" fill="#7fd0ff" font-family="sans-serif">z</text><text x="79" y="40" font-size="8" fill="#7fd0ff" font-family="sans-serif">z</text>'; }
   else { eyes=eO(40,true)+eO(60,true); mouth=SMILE; }
   return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'+base+eyes+cheeks+mouth+'</svg>';
 }
@@ -2635,9 +2643,12 @@ function _pisteroMira(px,py){
   _miradaX=dx/d*m; _miradaY=dy/d*m;
   if(!_miradaRAF) _miradaRAF=requestAnimationFrame(function(){ _miradaRAF=0; _aplicarMirada(); });
 }
-document.addEventListener('pointermove', function(e){ _pisteroMira(e.clientX,e.clientY); }, {passive:true});
-document.addEventListener('touchmove', function(e){ if(e.touches&&e.touches[0]) _pisteroMira(e.touches[0].clientX,e.touches[0].clientY); }, {passive:true});
-(function(){ function ini(){ try{ _setExprPistero(_pisteroExprActual); }catch(e){} } if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ini); else setTimeout(ini,60); })();
+var _idleTOP=null;
+function _resetIdlePistero(){ if(_idleTOP) clearTimeout(_idleTOP); if(_pisteroExprActual==='dormido') _setExprPistero('feliz'); _idleTOP=setTimeout(function(){ if(_pisteroExprActual==='feliz' && !document.body.classList.contains('pistero-hablando') && !(typeof micOn!=='undefined'&&micOn) && document.visibilityState==='visible') _setExprPistero('dormido'); }, 150000); }
+document.addEventListener('pointermove', function(e){ _pisteroMira(e.clientX,e.clientY); _resetIdlePistero(); }, {passive:true});
+document.addEventListener('touchmove', function(e){ if(e.touches&&e.touches[0]) _pisteroMira(e.touches[0].clientX,e.touches[0].clientY); _resetIdlePistero(); }, {passive:true});
+document.addEventListener('pointerdown', function(){ _resetIdlePistero(); }, {passive:true});
+(function(){ function ini(){ try{ _setExprPistero(_pisteroExprActual); _resetIdlePistero(); }catch(e){} } if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ini); else setTimeout(ini,60); })();
 
 
 function generateCharacterSVG(helmetId, lensId, skinId, extras, look){
@@ -3471,8 +3482,8 @@ function _mapaRecentrar(){
   if(currentUserLocation){ if(mp) mp.flyTo({center:[currentUserLocation.lon,currentUserLocation.lat], zoom:15, duration:1200}); return; }
   getCurrentLocation().then(function(loc){ if(loc && mp) mp.flyTo({center:[loc.lon,loc.lat], zoom:15, duration:1200}); });
 }
-function showLoading(t){ document.getElementById('loadingText').innerText=t; const ov=document.getElementById('loadingOverlay'); ov.classList.add('show'); ov.onclick=hideLoading; /* escape de emergencia: un toque la cierra si algo queda pegado */ cadenaIniciar(0.5); }
-function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); cadenaDetener(); }
+function showLoading(t){ try{ if(typeof _setExprPistero==='function') _setExprPistero('pensando'); }catch(e){} document.getElementById('loadingText').innerText=t; const ov=document.getElementById('loadingOverlay'); ov.classList.add('show'); ov.onclick=hideLoading; /* escape de emergencia: un toque la cierra si algo queda pegado */ cadenaIniciar(0.5); }
+function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); cadenaDetener(); try{ if(typeof _setExprPistero==='function' && _pisteroExprActual==='pensando') _setExprPistero(document.body.classList.contains('pistero-hablando')?'hablando':((typeof micOn!=='undefined'&&micOn)?'escuchando':'feliz')); }catch(e){} }
 
 /* ===== SONIDO DE CADENA EN EL PIÑÓN (trinquete metálico realista, alta calidad) =====
    Un piñón libre = tren de clics metálicos que aceleran/frenan con la velocidad.
