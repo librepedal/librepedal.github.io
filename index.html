@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.02'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.03'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4653,7 +4653,7 @@ function _co2Evitado(km){ return (km||0)*CO2_KG_POR_KM; }
 function _arbolesEq(kg){ return Math.max(0,(kg||0)/CO2_KG_POR_ARBOL_ANIO); }
 function _fmtCo2(kg){ return (kg>=1000)?((kg/1000).toFixed(2)+' t'):(Math.round(kg)+' kg'); }
 var _esFundador=false, _miNumFundador=null;
-async function _cargarEstadoFundador(){ try{ if(!cu||typeof db==='undefined') return; const me=await db.collection('users').doc(cu).get(); const ts=me.exists?me.data().createdAt:null; if(!ts) return; const agg=await db.collection('users').where('createdAt','<',ts).count().get(); _miNumFundador=(agg.data().count||0)+1; _esFundador=_miNumFundador<=(typeof LP_FUNDADORES_CUPO!=='undefined'?LP_FUNDADORES_CUPO:1000); }catch(e){} }
+async function _cargarEstadoFundador(){ try{ if(!cu||typeof db==='undefined') return; try{ var _cf=JSON.parse(localStorage.getItem('lp_fundador_'+cu)||'null'); if(_cf){ _miNumFundador=_cf.no; _esFundador=!!_cf.es; } }catch(e){} const me=await db.collection('users').doc(cu).get(); const ts=me.exists?me.data().createdAt:null; if(!ts) return; const agg=await db.collection('users').where('createdAt','<',ts).count().get(); _miNumFundador=(agg.data().count||0)+1; _esFundador=_miNumFundador<=(typeof LP_FUNDADORES_CUPO!=='undefined'?LP_FUNDADORES_CUPO:1000); try{ localStorage.setItem('lp_fundador_'+cu, JSON.stringify({no:_miNumFundador,es:_esFundador})); }catch(e){} }catch(e){} }
 function _ganarDarma(n){ var mult=_esFundador?2:1; us.d+=Math.round((n||0)*mult); if(typeof au==='function') au(); if(typeof sincronizarStats==='function') sincronizarStats(); }
 // km de BICICLETA para confianza (ciclismo+cicloviaje+mtb; NO auto ni trekking) — pedido de Inty
 function _kmBiciConfianza(){ var m=(us&&us.dm)||{}; var bike=(Number(m.ciclismo)||0)+(Number(m.cicloviaje)||0)+(Number(m.mtb)||0); if(bike<=0){ var modo=(typeof actividadTipo!=="undefined"&&actividadTipo)?actividadTipo:"ciclismo"; if(modo==="ciclismo"||modo==="cicloviaje"||modo==="mtb") return (us&&us.di)||0; } return bike; }
