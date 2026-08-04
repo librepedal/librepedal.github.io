@@ -1376,7 +1376,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.88'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.89'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2222,8 +2222,8 @@ function _bocaIniciarCiclo(){
   })();
 }
 function _bocaDetener(){ clearTimeout(window._bocaTO); _bocaAplicar(0); }
-function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); try{ if(typeof _setExprPistero==='function') _setExprPistero('hablando'); }catch(e){} try{ if(typeof _pausarManosLibres==='function') _pausarManosLibres(); }catch(e){} _bocaIniciarCiclo(); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
-function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} try{ if(typeof _reanudarManosLibres==='function') _reanudarManosLibres(); }catch(e){} try{ if(typeof _setExprPistero==='function') _setExprPistero((typeof micOn!=='undefined'&&micOn)?'escuchando':'feliz'); }catch(e){} }
+function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); try{ if(typeof _setExprPistero==='function'){ var _mm=(typeof _pisteroMood==='string'&&_pisteroMood)?('hablando_'+_pisteroMood):'hablando'; _setExprPistero(_mm); } }catch(e){} try{ if(typeof _pausarManosLibres==='function') _pausarManosLibres(); }catch(e){} _bocaIniciarCiclo(); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
+function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} try{ if(typeof _reanudarManosLibres==='function') _reanudarManosLibres(); }catch(e){} try{ _pisteroMood=null; }catch(e){} try{ if(typeof _setExprPistero==='function') _setExprPistero((typeof micOn!=='undefined'&&micOn)?'escuchando':'feliz'); }catch(e){} }
 
 /* ===== REPRODUCTOR LIBRE PEDAL: radios gratis + música propia, con auto-volumen cuando Pistero habla ===== */
 const lpMusic=(function(){
@@ -2396,7 +2396,7 @@ function h(t, prio){
 }
 function hAmbiente(t){ if(typeof micOn!=='undefined'&&micOn) return; h(t, PRIO_VOZ.AMBIENTE); } // broma/anécdota: calla si te está escuchando; nunca pisa nada
 function hCorta(t){ h(t, PRIO_VOZ.NAV); }        // navegación/tutorial: corta lo menos importante, pero NO pisa seguridad ni otro giro
-function hUrgente(t){ h(t, PRIO_VOZ.SEGURIDAD); } // caída/SOS: manda sobre todo
+function hUrgente(t){ try{ _pisteroMood='enojado'; }catch(e){} h(t, PRIO_VOZ.SEGURIDAD); } // caída/SOS: manda sobre todo
 function _durEstVoz(txt){ return Math.min(55000, Math.max(1800, txt.length*75)); }
 function _reproducirVoz(item){
   const miGen=++vozGen; // turno de esta frase — ver nota junto a "let vozGen" más arriba
@@ -2611,6 +2611,10 @@ function _pisteroExprSVG(expr){
   function eC(x){ return '<path d="M'+(x-6)+' 62 L'+(x+6)+' 62" stroke="#16203a" stroke-width="2.8" stroke-linecap="round"/>'; }
   var eyes, mouth;
   if(expr==='hablando'){ eyes=eO(40)+eO(60); mouth='<ellipse class="lp-boca" cx="50" cy="74" rx="4" ry="4.8" fill="#5a2f1a"/><path d="M47 76 Q50 79 53 76" fill="#ff7a90"/>'; }
+  else if(expr==='hablando_enojado'){ eyes='<path d="M32 52 L44 56" stroke="#16203a" stroke-width="2.6" stroke-linecap="round"/><path d="M68 52 L56 56" stroke="#16203a" stroke-width="2.6" stroke-linecap="round"/>'+eO(40)+eO(60); mouth='<ellipse class=\"lp-boca\" cx=\"50\" cy=\"74\" rx=\"4\" ry=\"4.8\" fill=\"#5a2f1a\"/><path d=\"M47 76 Q50 79 53 76\" fill=\"#ff7a90\"/>'; }
+  else if(expr==='hablando_preocupado'){ eyes='<path d="M33 55 Q40 52 45 55" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M55 55 Q60 52 67 55" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+eO(40)+eO(60); mouth='<ellipse class=\"lp-boca\" cx=\"50\" cy=\"74\" rx=\"4\" ry=\"4.8\" fill=\"#5a2f1a\"/><path d=\"M47 76 Q50 79 53 76\" fill=\"#ff7a90\"/>'; }
+  else if(expr==='hablando_contento'){ eyes=eH(40)+eH(60); mouth='<ellipse class=\"lp-boca\" cx=\"50\" cy=\"74\" rx=\"4\" ry=\"4.8\" fill=\"#5a2f1a\"/><path d=\"M47 76 Q50 79 53 76\" fill=\"#ff7a90\"/>'; }
+  else if(expr==='hablando_cansado'){ eyes=eHf(40)+eHf(60); mouth='<ellipse class=\"lp-boca\" cx=\"50\" cy=\"74\" rx=\"4\" ry=\"4.8\" fill=\"#5a2f1a\"/><path d=\"M47 76 Q50 79 53 76\" fill=\"#ff7a90\"/><path d="M76 58 Q79 63 76 66 Q73 63 76 58 Z" fill="#7fd0ff"/>'; }
   else if(expr==='escuchando'||expr==='emocionado'){ eyes=eO(40)+eO(60); mouth='<path d="M44 72 Q50 80 56 72 Z" fill="#5a2f1a"/><path d="M47.5 75 Q50 79 52.5 75" fill="#ff7a90"/>'; }
   else if(expr==='contento'){ eyes=eH(40)+eH(60); mouth=SMILE; }
   else if(expr==='guino'){ eyes=eH(40)+eO(60,true); mouth=SMILE; }
@@ -2624,6 +2628,7 @@ function _pisteroExprSVG(expr){
   return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'+base+eyes+cheeks+mouth+'</svg>';
 }
 var _pisteroExprActual='feliz';
+var _pisteroMood=null;
 function _setExprPistero(expr){
   if(!expr) expr='feliz';
   _pisteroExprActual=expr;
@@ -8635,7 +8640,7 @@ function _verificarFatiga(duracionActivaMs, speedActual){
     const pisoAbsoluto=(typeof actividadTipo!=='undefined' && actividadTipo==='trekking')?2.5:10;
     if(caidaPct>=0.25 && velActual<=pisoAbsoluto){
       _avisoFatigaHecho=true;
-      if(!vozOcupada() && !vozCola.length) h('Se nota que bajaste harto el ritmo respecto a como arrancaste. Si puedes, date un respiro corto, toma agua y sigue con calma.');
+      if(!vozOcupada() && !vozCola.length){ try{ _pisteroMood='cansado'; }catch(e){} h('Se nota que bajaste harto el ritmo respecto a como arrancaste. Si puedes, date un respiro corto, toma agua y sigue con calma.'); }
     }
   }catch(e){}
 }
