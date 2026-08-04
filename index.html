@@ -1376,7 +1376,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.93'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.94'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5507,30 +5507,30 @@ function diarioHoyKey(){ return 'lp_diario_'+(cu||'anon')+'_'+_fechaLocalYMD(); 
 function statViajesCompletados(){ return (typeof trips!=='undefined'&&trips)?trips.filter(function(t){return t&&t.status==='completed';}).length:0; }
 function statBitacora(){ const pre='lp_diario_'+(cu||'anon')+'_'; return Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).length; }
 const LOGROS=[
-  {e:'🎉',t:'Bienvenido',d:'Te uniste a la comunidad',val:function(){return 1;},meta:1,u:''},
-  {e:'🚲',t:'Primer pedaleo',d:'Tu primer kilómetro',val:function(){return us.di;},meta:1,u:'km'},
-  {e:'🚲',t:'¡Mira mamá, sin rueditas!',d:'Tus primeros 10 km',val:function(){return us.di;},meta:10,u:'km'},
-  {e:'🏞️',t:'Explorador',d:'50 km recorridos',val:function(){return us.di;},meta:50,u:'km'},
-  {e:'💯',t:'Centenario',d:'100 km recorridos',val:function(){return us.di;},meta:100,u:'km'},
-  {e:'🔥',t:'Fondista',d:'250 km recorridos',val:function(){return us.di;},meta:250,u:'km'},
-  {e:'🏔️',t:'Rutero',d:'500 km recorridos',val:function(){return us.di;},meta:500,u:'km'},
-  {e:'🏅',t:'Cicloviajero',d:'1000 km — ¡elegible a premios!',val:function(){return us.di;},meta:1000,u:'km'},
-  {e:'🌎',t:'Trotamundos',d:'2500 km recorridos',val:function(){return us.di;},meta:2500,u:'km'},
-  {e:'🏆',t:'Leyenda del pedal',d:'5000 km recorridos',val:function(){return us.di;},meta:5000,u:'km'},
-  {e:'🤝',t:'Primer aporte',d:'Gana 10 de Darma aportando',val:function(){return us.d;},meta:10,u:''},
-  {e:'🌱',t:'Colaborador',d:'50 de Darma',val:function(){return us.d;},meta:50,u:''},
-  {e:'⭐',t:'Pilar de la comunidad',d:'150 de Darma',val:function(){return us.d;},meta:150,u:''},
-  {e:'💎',t:'Guardián',d:'500 de Darma',val:function(){return us.d;},meta:500,u:''},
-  {e:'👑',t:'Embajador',d:'1000 de Darma',val:function(){return us.d;},meta:1000,u:''},
-  {e:'🧭',t:'Primer viaje',d:'Completa 1 viaje',val:statViajesCompletados,meta:1,u:''},
-  {e:'🗺️',t:'Viajero',d:'5 viajes completados',val:statViajesCompletados,meta:5,u:''},
-  {e:'🎒',t:'Aventurero',d:'10 viajes completados',val:statViajesCompletados,meta:10,u:''},
-  {e:'🌟',t:'Nómada',d:'25 viajes completados',val:statViajesCompletados,meta:25,u:''},
-  {e:'🔋',t:'Con energía',d:'Quema 1000 calorías',val:function(){return us.c;},meta:1000,u:'cal'},
-  {e:'⚡',t:'Máquina',d:'5000 calorías quemadas',val:function(){return us.c;},meta:5000,u:'cal'},
-  {e:'💪',t:'Imparable',d:'15000 calorías',val:function(){return us.c;},meta:15000,u:'cal'},
-  {e:'📓',t:'Cronista',d:'Escribe en tu Ciclo Bitácora',val:statBitacora,meta:1,u:''},
-  {e:'📖',t:'Memorias',d:'7 días de bitácora',val:statBitacora,meta:7,u:''}
+  {e:'<i class="fas fa-hands-clapping"></i>',t:'Bienvenido',d:'Te uniste a la comunidad',val:function(){return 1;},meta:1,u:''},
+  {e:'<i class="fas fa-bicycle"></i>',t:'Primer pedaleo',d:'Tu primer kilómetro',val:function(){return us.di;},meta:1,u:'km'},
+  {e:'<i class="fas fa-person-biking"></i>',t:'¡Mira mamá, sin rueditas!',d:'Tus primeros 10 km',val:function(){return us.di;},meta:10,u:'km'},
+  {e:'<i class="fas fa-binoculars"></i>',t:'Explorador',d:'50 km recorridos',val:function(){return us.di;},meta:50,u:'km'},
+  {e:'<i class="fas fa-gauge-high"></i>',t:'Centenario',d:'100 km recorridos',val:function(){return us.di;},meta:100,u:'km'},
+  {e:'<i class="fas fa-fire"></i>',t:'Fondista',d:'250 km recorridos',val:function(){return us.di;},meta:250,u:'km'},
+  {e:'<i class="fas fa-mountain"></i>',t:'Rutero',d:'500 km recorridos',val:function(){return us.di;},meta:500,u:'km'},
+  {e:'<i class="fas fa-medal"></i>',t:'Cicloviajero',d:'1000 km — ¡elegible a premios!',val:function(){return us.di;},meta:1000,u:'km'},
+  {e:'<i class="fas fa-earth-americas"></i>',t:'Trotamundos',d:'2500 km recorridos',val:function(){return us.di;},meta:2500,u:'km'},
+  {e:'<i class="fas fa-trophy"></i>',t:'Leyenda del pedal',d:'5000 km recorridos',val:function(){return us.di;},meta:5000,u:'km'},
+  {e:'<i class="fas fa-handshake"></i>',t:'Primer aporte',d:'Gana 10 de Darma aportando',val:function(){return us.d;},meta:10,u:''},
+  {e:'<i class="fas fa-seedling"></i>',t:'Colaborador',d:'50 de Darma',val:function(){return us.d;},meta:50,u:''},
+  {e:'<i class="fas fa-star"></i>',t:'Pilar de la comunidad',d:'150 de Darma',val:function(){return us.d;},meta:150,u:''},
+  {e:'<i class="fas fa-gem"></i>',t:'Guardián',d:'500 de Darma',val:function(){return us.d;},meta:500,u:''},
+  {e:'<i class="fas fa-crown"></i>',t:'Embajador',d:'1000 de Darma',val:function(){return us.d;},meta:1000,u:''},
+  {e:'<i class="fas fa-compass"></i>',t:'Primer viaje',d:'Completa 1 viaje',val:statViajesCompletados,meta:1,u:''},
+  {e:'<i class="fas fa-map-location-dot"></i>',t:'Viajero',d:'5 viajes completados',val:statViajesCompletados,meta:5,u:''},
+  {e:'<i class="fas fa-suitcase"></i>',t:'Aventurero',d:'10 viajes completados',val:statViajesCompletados,meta:10,u:''},
+  {e:'<i class="fas fa-tent"></i>',t:'Nómada',d:'25 viajes completados',val:statViajesCompletados,meta:25,u:''},
+  {e:'<i class="fas fa-battery-half"></i>',t:'Con energía',d:'Quema 1000 calorías',val:function(){return us.c;},meta:1000,u:'cal'},
+  {e:'<i class="fas fa-bolt"></i>',t:'Máquina',d:'5000 calorías quemadas',val:function(){return us.c;},meta:5000,u:'cal'},
+  {e:'<i class="fas fa-hand-fist"></i>',t:'Imparable',d:'15000 calorías',val:function(){return us.c;},meta:15000,u:'cal'},
+  {e:'<i class="fas fa-book"></i>',t:'Cronista',d:'Escribe en tu Ciclo Bitácora',val:statBitacora,meta:1,u:''},
+  {e:'<i class="fas fa-book-open"></i>',t:'Memorias',d:'7 días de bitácora',val:statBitacora,meta:7,u:''}
 ];
 function mostrarLogrosComunidad(){
   _modalVolverA=null; // es el menú raíz de este grupo: la "✕" ya vuelve al lugar correcto
@@ -5551,7 +5551,7 @@ function mostrarLogros(){
   _modalVolverA='mostrarLogrosComunidad';
   let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
-  items.forEach(function(it){ const l=it.l; html+='<div style="display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;margin-bottom:6px;background:'+(it.done?'rgba(255,215,0,0.10)':'var(--gl)')+';border:1px solid '+(it.done?'var(--g)':'#242c3e')+';opacity:'+(it.done?'1':'0.78')+'"><div style="font-size:1.6rem;filter:'+(it.done?'none':'grayscale(1)')+'">'+l.e+'</div><div style="flex:1"><div style="font-weight:800;font-size:0.84rem;color:'+(it.done?'var(--g)':'#cfd8e6')+'">'+escapeHTML(l.t)+(it.done?' ✓':'')+'</div><div style="font-size:0.7rem;color:#8695aa">'+escapeHTML(l.d)+'</div>'+(it.done?'':'<div style="height:5px;background:#222b3d;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+it.pct+'%;background:var(--p)"></div></div><div style="font-size:0.62rem;color:#7d8ba0;margin-top:2px">'+(l.u==='km'?it.v.toFixed(1):Math.round(it.v))+' / '+l.meta+' '+l.u+'</div>')+'</div></div>'; });
+  items.forEach(function(it){ const l=it.l; html+='<div style="display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;margin-bottom:6px;background:'+(it.done?'rgba(255,215,0,0.10)':'var(--gl)')+';border:1px solid '+(it.done?'var(--g)':'#242c3e')+';opacity:'+(it.done?'1':'0.78')+'"><div style="font-size:1.6rem;color:'+(it.done?'var(--g)':'#5a6478')+'">'+l.e+'</div><div style="flex:1"><div style="font-weight:800;font-size:0.84rem;color:'+(it.done?'var(--g)':'#cfd8e6')+'">'+escapeHTML(l.t)+(it.done?' ✓':'')+'</div><div style="font-size:0.7rem;color:#8695aa">'+escapeHTML(l.d)+'</div>'+(it.done?'':'<div style="height:5px;background:#222b3d;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+it.pct+'%;background:var(--p)"></div></div><div style="font-size:0.62rem;color:#7d8ba0;margin-top:2px">'+(l.u==='km'?it.v.toFixed(1):Math.round(it.v))+' / '+l.meta+' '+l.u+'</div>')+'</div></div>'; });
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-trophy"></i> Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
 /* Sube tus kilómetros y tu Darma a la nube.
