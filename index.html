@@ -582,7 +582,8 @@ body[data-vista="pistero"] #micBtn{display:none}
 
 <style>
 /* Logo oficial quieto al centro + rueda de radios finos girando en naranjo (relieve leve en la goma). */
-.lp-logo-wrap{position:relative;width:210px;height:210px;margin:12px auto 6px}
+.lp-logo-wrap{position:relative;width:210px;height:210px;margin:12px auto 6px;animation:lpReveal 1.2s cubic-bezier(.5,0,.3,1) both}
+@keyframes lpReveal{0%{clip-path:circle(0% at 50% 50%);opacity:0;transform:scale(.92)}60%{opacity:1}100%{clip-path:circle(100% at 50% 50%);opacity:1;transform:scale(1)}}
 .lp-wheel{position:absolute;inset:0;width:100%;height:100%;animation:lpSpin 7s linear infinite;will-change:transform}
 @keyframes lpSpin{to{transform:rotate(360deg)}}
 .lp-logo-center{position:absolute;top:50%;left:50%;width:50%;height:50%;transform:translate(-50%,-50%);
@@ -1378,7 +1379,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.82'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.83'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
