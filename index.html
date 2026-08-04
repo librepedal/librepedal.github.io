@@ -1376,7 +1376,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.89'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.90'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5373,7 +5373,7 @@ async function enviarReporte(){
     us.d+=15; au(); sincronizarStats();
     reporteMapaCoords=null; reporteMapaMarker=null; // el modal se cierra igual; se limpia por prolijidad
     closeModal();
-    h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
+    try{ _pisteroMood='contento'; }catch(e){} h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
   }catch(err){ lpAviso('No se pudo enviar: '+err.message); }
   finally{ _enviandoReporte=false; }
 }
@@ -5846,7 +5846,7 @@ async function agregarPOI(){
     poiManualCoords=null; if(poiManualMarker){ poiManualMarker.remove(); poiManualMarker=null; }
     document.getElementById('poi-mapa-manual').style.display='none';
     document.getElementById('btnPoiMapaManual').innerText='📍 No lo encuentra: márcalo directo en el mapa';
-    h('¡Punto compartido en '+comuna+'! Ya está en el mapa para toda la comunidad. Quince de Darma para ti. 🙌');
+    try{ _pisteroMood='contento'; }catch(e){} h('¡Punto compartido en '+comuna+'! Ya está en el mapa para toda la comunidad. Quince de Darma para ti. 🙌');
   }catch(err){ lpAviso('No se pudo compartir: '+(err.code||err.message)); }
   finally{ _agregandoPOI=false; }
 }
@@ -6012,7 +6012,7 @@ async function publicarAlojo(){
   try{
     await db.collection('alojo').add({user:cu, nombre:nombreUsuario, zona:zona, desc:desc, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
     us.d+=20; au(); sincronizarStats();
-    h('¡Oferta publicada! Otros ciclistas ya pueden contactarte. Veinte de Darma para ti. 🏡');
+    try{ _pisteroMood='contento'; }catch(e){} h('¡Oferta publicada! Otros ciclistas ya pueden contactarte. Veinte de Darma para ti. 🏡');
     closeModal();
   }catch(e){ lpAviso('No se pudo publicar: '+(e.message||e)); }
   finally{ _publicandoAlojo=false; }
@@ -6837,7 +6837,7 @@ function checkNavigationSteps(lat,lon,speed){
 function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSteps[i]; document.getElementById('navIcon').innerText=getStepIcon(step.maneuver.type,step.maneuver.modifier); document.getElementById('navText').innerText=step.instruction; document.getElementById('navDist').innerText=formatDistance(step.distance); showAlert(step.instruction); hCorta(step.instruction); }
 function getStepIcon(type,modifier){ switch(type){ case 'depart':return '🚴'; case 'arrive':return '🏁'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return '⬅️'; if(modifier&&modifier.indexOf('right')!==-1) return '➡️'; return '🔄'; case 'roundabout': case 'rotary': return '🔁'; case 'fork': return '🔱'; case 'continue': return '⬆️'; default: return '➡️'; } }
 function showAlert(text){ const a=document.getElementById('navAlert'); a.innerText=text; a.classList.add('show'); setTimeout(function(){ a.classList.remove('show'); },3000); }
-function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada(); setTimeout(endNavigation,2500); }
+function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); try{ _pisteroMood='contento'; }catch(e){} h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada(); setTimeout(endNavigation,2500); }
 async function guardarRutaNavegada(){
   if(!cu||gpsPoints.length<2) return;
   navGuardado=true;
