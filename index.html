@@ -508,7 +508,7 @@ body.pistero-hablando #micBtn::after{animation:orbHaloBlue 1.6s ease-in-out infi
 @keyframes orbHaloBlue{0%,100%{box-shadow:0 0 18px 3px rgba(47,176,255,.45)}50%{box-shadow:0 0 24px 6px rgba(47,176,255,.14)}}
 body.lp-typing #micBtn{opacity:0;pointer-events:none}
 .nav-manoslibres-btn{display:none!important}
-body[data-vista="pistero"] #micBtn{display:none}
+body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
 /* Animaciones de la cara (compartidas mapa+esfera) */
 .lp-eye{transform-box:fill-box;transform-origin:center}
 .lp-parpadeo{animation:lpParp 4.4s ease-in-out infinite}
@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.04'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.05'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
