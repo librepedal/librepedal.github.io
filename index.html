@@ -1376,7 +1376,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.86'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.87'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2459,6 +2459,7 @@ function _vozNativaOWeb(item, durEst){ try{ if(_vozNeuralAudio){ _vozNeuralAudio
 function _vozArchivo(item, durEst, id, miGen){
   // Reproduce la frase fija ya grabada en voz chilena (Azure): voces/{genero}{id}.mp3.
   // Si el archivo no carga (404, red), cae a la voz chilena EN VIVO (no a la gringa).
+  try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onplaying=_vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=null; _vozNeuralAudio=null; } }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} 
   let cayo=false;
   // miGen!==vozGen: esta frase ya no es la vigente (se cortó o ya empezó la
   // siguiente) — no caer a la voz de respaldo por algo que ya nadie está esperando.
@@ -2475,6 +2476,7 @@ function _vozArchivo(item, durEst, id, miGen){
 }
 function _vozArchivoArq(item, durEst, arq, id, miGen){
   // Frase fija en la voz chilena del arquetipo (SLR71): voces/{arq}/{id}.mp3.
+  try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onplaying=_vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=null; _vozNeuralAudio=null; } }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} 
   let cayo=false;
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
   try{
