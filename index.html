@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.00'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.01'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4047,10 +4047,48 @@ function ug(p){
   // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
   if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _sumarKmModo(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
+  if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
   if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ const plat=Math.round(la*100)/100, plon=Math.round(lo*100)/100; /* precisión ~1 km: privacidad, no revela tu ubicación exacta */ db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); lastPos={lat:la,lon:lo}; } }
   /* (las bromas por velocidad ahora se disparan mas arriba, para todas las velocidades) */
+}
+// ===== ZONAS ROJAS: sectores marcados como inseguros para ciclistas (multi-ciudad).
+// Referenciales (fuentes: CIPER "puntos de violencia", prensa) + se afinan con reportes
+// de la comunidad. Pistero avisa al acercarse, prioridad INFO (no pisa giros ni seguridad).
+var ZONAS_ROJAS=[
+  {n:'Barrio Meiggs', lat:-33.4515, lon:-70.6790, r:0.7, ciudad:'Santiago'},
+  {n:'Estación Central', lat:-33.4525, lon:-70.6790, r:0.6, ciudad:'Santiago'},
+  {n:'Plaza de Armas', lat:-33.4378, lon:-70.6504, r:0.5, ciudad:'Santiago'},
+  {n:'Patronato y La Vega', lat:-33.4295, lon:-70.6480, r:0.5, ciudad:'Santiago'},
+  {n:'Plaza Baquedano', lat:-33.4373, lon:-70.6345, r:0.5, ciudad:'Santiago'},
+  {n:'el centro de Valparaíso', lat:-33.0458, lon:-71.6197, r:0.7, ciudad:'Valparaíso'},
+  {n:'Avenida Argentina, Valparaíso', lat:-33.0472, lon:-71.6021, r:0.5, ciudad:'Valparaíso'},
+  {n:'el centro de Viña del Mar', lat:-33.0245, lon:-71.5518, r:0.4, ciudad:'Viña del Mar'},
+  {n:'el centro de Concepción', lat:-36.8270, lon:-73.0503, r:0.5, ciudad:'Concepción'},
+  {n:'el centro de Antofagasta', lat:-23.6509, lon:-70.3975, r:0.5, ciudad:'Antofagasta'},
+  {n:'el centro de Coquimbo', lat:-29.9533, lon:-71.3436, r:0.4, ciudad:'Coquimbo'},
+  {n:'el centro de Temuco', lat:-38.7359, lon:-72.5904, r:0.4, ciudad:'Temuco'},
+  {n:'el centro de Iquique', lat:-20.2140, lon:-70.1520, r:0.4, ciudad:'Iquique'},
+  {n:'el centro de Rancagua', lat:-34.1708, lon:-70.7444, r:0.4, ciudad:'Rancagua'}
+];
+var _zrAviso={};
+function _chequearZonaRoja(la,lo){
+  if(!(la&&lo)||typeof gd2!=='function'||typeof ZONAS_ROJAS==='undefined') return;
+  try{
+    for(var i=0;i<ZONAS_ROJAS.length;i++){
+      var z=ZONAS_ROJAS[i];
+      if(gd2(la,lo,z.lat,z.lon)<=z.r){
+        var now=Date.now();
+        if(!_zrAviso[z.n] || (now-_zrAviso[z.n])>600000){
+          _zrAviso[z.n]=now;
+          try{ _pisteroMood='preocupado'; }catch(e){}
+          h('Ojo: estás entrando a '+z.n+', un sector marcado como inseguro para ciclistas. Mantente atento, no te detengas si no hace falta y evalúa una ruta alternativa.', PRIO_VOZ.INFO);
+        }
+        return; // uno a la vez, no encadena avisos
+      }
+    }
+  }catch(e){}
 }
 function updateSpeedStatus(speed){
   const el=document.getElementById('speedStatus'); if(!el) return;
