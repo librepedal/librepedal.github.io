@@ -3,7 +3,7 @@
    El cache de mosaicos (TILES_CACHE) es aparte y NUNCA se borra al actualizar:
    si un ciclista descargó el mapa de su ruta para andar sin señal, una
    actualización de la app no le debe borrar ese trabajo. */
-const CACHE = 'librepedal-v795';
+const CACHE = 'librepedal-v796';
 const TILES_CACHE = 'librepedal-tiles';
 
 // Núcleo que se precachea al instalar (lo propio de la app).
