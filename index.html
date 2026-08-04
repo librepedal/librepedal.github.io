@@ -1376,7 +1376,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.91'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.92'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1824,7 +1824,7 @@ function verVueltas(){
     html+='<div style="display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid #15202e"><span style="color:#9fb3c8">Vuelta '+v.numero+'</span><span style="font-weight:800;font-variant-numeric:tabular-nums">'+_formatoCrono(v.parcialMs)+'</span><span style="color:#7d8ba0;font-variant-numeric:tabular-nums">total '+_formatoCrono(v.totalMs)+'</span></div>';
   });
   html+='</div>';
-  document.getElementById('modalTitle').innerText='🏁 Vueltas de este viaje';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-flag-checkered"></i> Vueltas de este viaje';
   document.getElementById('modalContent').innerHTML=html;
   document.getElementById('userModal').classList.add('on');
 }
@@ -2760,7 +2760,7 @@ function mostrarTienda(desdeLogros){
   // "✕" ya te deja de vuelta en Personalizar correctamente, un "Volver a Logros"
   // sería confuso porque nunca estuviste ahí).
   _modalVolverA=desdeLogros?'mostrarLogrosComunidad':null;
-  document.getElementById('modalTitle').innerText='✨ Tienda de Darma';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-store"></i> Tienda de Darma';
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.84rem;margin-top:0">Tienes <strong style="color:var(--g)">'+us.d+' de Darma ✨</strong>. Gánala aportando a la comunidad y desbloquea skins, lentes, accesorios y cascos.</p>';
   const grupos=[['🎨 Colores premium',skinOptions],['🕶️ Lentes',lensOptions],['✨ Accesorios del casco',extrasOptions],['🪖 Cascos premium',helmetDesigns],['👁️ Ojos',ojosOptions],['💋 Labios',labiosOptions],['💇 Peinado',peinadoOptions],['🧔 Vello facial',velloFacialOptions],['🧣 Pañoleta',panueloOptions]];
   grupos.forEach(function(gp){ const items=gp[1].filter(function(it){return it.id in PRECIOS;}); if(!items.length) return; html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 6px">'+gp[0]+'</h4>'; items.forEach(function(it){ const unlocked=estaDesbloqueado(it.id); const costo=PRECIOS[it.id]; const puede=us.d>=costo; html+='<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;margin-bottom:5px;background:var(--gl);border:1px solid '+(unlocked?'var(--g)':'#242c3e')+'"><div style="flex:1"><div style="font-weight:700;font-size:0.84rem;color:#dfe7ff">'+escapeHTML((it.brand?it.brand+' ':'')+it.name)+'</div><div style="font-size:0.68rem;color:'+(unlocked?'var(--g)':'#7d8ba0')+'">'+(unlocked?'Desbloqueado ✓':(costo+' ✨ Darma'))+'</div></div>'+(unlocked?'<span style="color:var(--g);font-weight:800;font-size:1.1rem"><i class="fas fa-check"></i> </span>':'<button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.76rem;'+(puede?'':'opacity:0.45')+'" onclick="comprarItem(\''+it.id+'\')">Desbloquear</button>')+'</div>'; }); });
@@ -2827,7 +2827,7 @@ async function _mapaEmailsPrivados(){
 }
 async function mostrarTodosRegistrados(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede ver esta lista.'); return; }
-  document.getElementById('modalTitle').innerText='👥 Todos los registrados';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-users"></i> Todos los registrados';
   const c=document.getElementById('modalContent');
   c.innerHTML='<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
@@ -4285,7 +4285,7 @@ function _svgPerfilElevacion(d){
 }
 function verPerfilElevacion(id){
   function pintar(d, refinando){
-    document.getElementById('modalTitle').innerText='📈 Perfil de elevación';
+    document.getElementById('modalTitle').innerHTML='<i class="fas fa-chart-line"></i> Perfil de elevación';
     const c=document.getElementById('modalContent');
     if(!d){ c.innerHTML='<p style="color:#888;text-align:center;padding:20px 0">Esta ruta no tiene datos de altitud (se grabó antes de esta función, tu celular no reporta altitud, y no hay conexión para buscarla en un mapa topográfico).</p>'; document.getElementById('userModal').classList.add('on'); return; }
     c.innerHTML=_svgPerfilElevacion(d)
@@ -4299,7 +4299,7 @@ function verPerfilElevacion(id){
     document.getElementById('userModal').classList.add('on');
   }
   function pintarCargando(){
-    document.getElementById('modalTitle').innerText='📈 Perfil de elevación';
+    document.getElementById('modalTitle').innerHTML='<i class="fas fa-chart-line"></i> Perfil de elevación';
     document.getElementById('modalContent').innerHTML='<p style="color:#888;text-align:center;padding:20px 0">Buscando la altitud real de esta ruta…</p>';
     document.getElementById('userModal').classList.add('on');
   }
@@ -4982,7 +4982,7 @@ let dmUnsub=null, dmConvId=null;
 function convIdDe(a,b){ return [a,b].sort().join('__'); }
 async function abrirChatAmigo(friendId){
   const nombre=await getNombreUsuario(friendId);
-  document.getElementById('modalTitle').innerText='💬 '+nombre;
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-comment-dots"></i> '+escapeHTML(nombre);
   const c=document.getElementById('modalContent');
   c.innerHTML='<div id="dmMsgs" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 2px"><p style="color:#888;font-size:0.8rem">Cargando conversación...</p></div>'
     +'<div style="display:flex;gap:6px;margin-top:8px"><input id="dmInput" type="text" placeholder="Mensaje para '+escapeHTML(nombre)+'..." style="flex:1" onkeypress="if(event.key===\'Enter\')enviarDM()"><button class="ab" style="width:auto;padding:10px 14px;margin:0" onclick="enviarDM()">Enviar</button></div>'
@@ -5312,7 +5312,7 @@ function reportarEnRuta(){
     +'<button class="ab sec" type="button" style="margin-top:8px" id="btnReporteMapa" onclick="toggleReporteMapa()"><i class="fas fa-location-dot"></i> No estoy ahí: marcar el punto en el mapa</button>'
     +'<div id="reporte-mapa-manual" style="display:none;margin-top:8px"><div id="reporte-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div><p id="reporteMapaEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto — no tiene que ser donde estás parado tú ahora.</p></div>'
     +'<button class="ab" style="margin-top:8px" onclick="enviarReporte()"><i class="fas fa-location-dot"></i> Publicar en mi zona (+15 Darma)</button>';
-  document.getElementById('modalTitle').innerText='🚴 Reportar en Ruta';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-triangle-exclamation"></i> Reportar en Ruta';
   document.getElementById('modalContent').innerHTML=html;
   document.getElementById('userModal').classList.add('on');
 }
@@ -5534,7 +5534,7 @@ const LOGROS=[
 ];
 function mostrarLogrosComunidad(){
   _modalVolverA=null; // es el menú raíz de este grupo: la "✕" ya vuelve al lugar correcto
-  document.getElementById('modalTitle').innerText='🏆 Logros y comunidad';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-trophy"></i> Logros y comunidad';
   document.getElementById('modalContent').innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'
     +'<button class="ab" style="margin:0" onclick="mostrarLogros()"><i class="fas fa-trophy"></i> Mis logros</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarRanking(null,&quot;mostrarLogrosComunidad&quot;)"><i class="fas fa-medal"></i> Ranking mundial</button>'
@@ -5552,7 +5552,7 @@ function mostrarLogros(){
   let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
   items.forEach(function(it){ const l=it.l; html+='<div style="display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;margin-bottom:6px;background:'+(it.done?'rgba(255,215,0,0.10)':'var(--gl)')+';border:1px solid '+(it.done?'var(--g)':'#242c3e')+';opacity:'+(it.done?'1':'0.78')+'"><div style="font-size:1.6rem;filter:'+(it.done?'none':'grayscale(1)')+'">'+l.e+'</div><div style="flex:1"><div style="font-weight:800;font-size:0.84rem;color:'+(it.done?'var(--g)':'#cfd8e6')+'">'+escapeHTML(l.t)+(it.done?' ✓':'')+'</div><div style="font-size:0.7rem;color:#8695aa">'+escapeHTML(l.d)+'</div>'+(it.done?'':'<div style="height:5px;background:#222b3d;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+it.pct+'%;background:var(--p)"></div></div><div style="font-size:0.62rem;color:#7d8ba0;margin-top:2px">'+(l.u==='km'?it.v.toFixed(1):Math.round(it.v))+' / '+l.meta+' '+l.u+'</div>')+'</div></div>'; });
-  document.getElementById('modalTitle').innerText='🏆 Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-trophy"></i> Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
 /* Sube tus kilómetros y tu Darma a la nube.
    OJO con el catch: antes se tragaba el error en silencio, así que si la escritura fallaba
@@ -5627,7 +5627,7 @@ function sincronizarAlEntrar(){
    una app de ciclistas es exactamente lo que no va a hacer nadie más. */
 function mostrarIdiomaRuta(){
   _modalVolverA=null;
-  document.getElementById('modalTitle').innerText='🛣️ El idioma de la ruta';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-road"></i> El idioma de la ruta';
   const s='style="background:var(--gl);border:1px solid #242c3e;border-radius:12px;padding:12px 13px;margin-bottom:9px"';
   const t='style="margin:0 0 5px;color:var(--p);font-size:0.9rem;font-weight:800">'; // el > va acá: sin él el navegador se come el título
   const p='style="margin:0;font-size:0.82rem;color:#c7d3e4;line-height:1.5">';
@@ -5659,7 +5659,7 @@ async function mostrarRanking(modo, volverA){
      dice nada, no hay a donde volver: simplemente se cierra. */
   if(volverA!==undefined) _modalVolverA=volverA;
   else if(!modo) _modalVolverA=null;
-  document.getElementById('modalTitle').innerText='🥇 Top 100 · '+(MODOS_QUE_COMPITEN[actual]||'Ruta');
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-ranking-star"></i> Top 100 · '+(MODOS_QUE_COMPITEN[actual]||'Ruta');
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando ranking...</p>';
   document.getElementById('userModal').classList.add('on');
@@ -5697,7 +5697,7 @@ async function mostrarRanking(modo, volverA){
 }
 async function _mostrarRankingGlobalViejo(){
   _modalVolverA='mostrarLogrosComunidad';
-  document.getElementById('modalTitle').innerText='🥇 Top 100 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-ranking-star"></i> Top 100 kilómetros'; const c=document.getElementById('modalContent'); c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando ranking mundial...</p>'; document.getElementById('userModal').classList.add('on');
   await sincronizarStats();
   try{ const snap=await db.collection('users').orderBy('km','desc').limit(100).get();
     if(snap.empty){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">Aún no hay datos. ¡Activa el GPS y suma kilómetros para entrar al ranking!</p>'; return; }
@@ -5714,7 +5714,7 @@ async function verPerfilUsuario(userId, volverA){
   // "pantalla padre" del modal a la que volver (la "✕" ya deja en el mapa
   // correctamente), así que esos 2 casos no pasan el parámetro.
   _modalVolverA=volverA||null;
-  document.getElementById('modalTitle').innerText='🚴 Perfil de ciclista';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-person-biking"></i> Perfil de ciclista';
   const c=document.getElementById('modalContent'); c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando perfil...</p>'; document.getElementById('userModal').classList.add('on');
   try{
     const doc=await db.collection('users').doc(userId).get(); const d=doc.exists?doc.data():{};
@@ -5949,7 +5949,7 @@ async function verAnaliticasAdmin(){
     html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px"><i class="fas fa-stopwatch"></i> Dónde pasan más tiempo</h4>'+top(tiempoMin,' min');
     html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px"><i class="fas fa-bolt"></i> Funciones más usadas</h4>'+top(funcion);
     if(Object.keys(voz).length) html+='<h4 style="color:var(--p);font-size:0.85rem;margin:12px 0 4px"><i class="fas fa-microphone-lines"></i> Voz/arquetipo</h4>'+top(voz);
-    document.getElementById('modalTitle').innerText='📊 Analíticas de uso';
+    document.getElementById('modalTitle').innerHTML='<i class="fas fa-chart-column"></i> Analíticas de uso';
     document.getElementById('modalContent').innerHTML=html;
     document.getElementById('userModal').classList.add('on');
   }catch(e){ lpAviso('No pude cargar las analíticas: '+(e.message||e)); }
@@ -5981,7 +5981,7 @@ function mesesDesdeRegistro(){
 }
 function requiere6Meses(){ return mesesDesdeRegistro()>=6; }
 async function abrirTeDoyAlojo(){
-  document.getElementById('modalTitle').innerText='🏡 Te doy alojo';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-house"></i> Te doy alojo';
   const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on');
   const meses=mesesDesdeRegistro();
   if(!requiere6Meses()){
@@ -6606,7 +6606,7 @@ function _elegirRutaAlternativa(routes){
       const avisoSuperficie=superficie ? ('<div style="font-size:0.72rem;color:#8b5cf6;margin-top:3px">'+SUPERFICIE_TIPOS[superficie]+' reportado en el camino</div>') : '';
       html+='<div class="rep-cat" style="border:2px solid #2a3147;border-radius:12px;padding:14px;cursor:pointer;text-align:left;margin-bottom:10px" onclick="_elegirRutaAlternativaConfirmar('+i+')"><div style="font-weight:800;color:'+(i===0?'var(--p)':'#e2e8f0')+'">'+(i===0?'🚀 Ruta más rápida':'🔀 Ruta alternativa '+i)+'</div><div style="font-size:0.8rem;color:#9fb3c8;margin-top:4px">'+km+' km · '+min+' min <span id="rutaDesnivel'+i+'" style="color:#5c7690">· calculando desnivel...</span></div>'+avisoSuperficie+avisoReportes+'</div>';
     });
-    document.getElementById('modalTitle').innerText='🗺️ Elige tu ruta';
+    document.getElementById('modalTitle').innerHTML='<i class="fas fa-map-location-dot"></i> Elige tu ruta';
     document.getElementById('modalContent').innerHTML=html;
     document.getElementById('userModal').classList.add('on');
     const resumenVoz=routes.map(function(r,i){ return (i===0?'la más rápida':'la alternativa'+(routes.length>2?' '+i:''))+', '+(r.distance/1000).toFixed(1)+' kilómetros'; }).join('; ');
@@ -7834,12 +7834,12 @@ function invitarAmigos(){
   _mostrarInvitacionManual(msg);
 }
 function _mostrarInvitacionManual(msg){
-  document.getElementById('modalTitle').innerText='📤 Invita a un amigo';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-user-plus"></i> Invita a un amigo';
   document.getElementById('modalContent').innerHTML='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Copia este mensaje y compártelo donde quieras:</p><textarea readonly rows="4" style="width:100%" onclick="this.select()">'+escapeHTML(msg)+'</textarea>';
   document.getElementById('userModal').classList.add('on');
 }
 function mostrarLinkSeguimientoVivo(url){
-  document.getElementById('modalTitle').innerText='📡 Ubicación en vivo';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-satellite-dish"></i> Ubicación en vivo';
   document.getElementById('modalContent').innerHTML='<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Comparte este link con quien quieras que vea tu posición en tiempo real. No necesita cuenta ni tener la app instalada.</p>'
     +'<input type="text" readonly value="'+url+'" style="margin-bottom:8px" onclick="this.select()">'
     +'<button class="ab" onclick="navigator.clipboard.writeText(\''+url+'\').then(function(){h(\'Link copiado.\');})"><i class="fas fa-clipboard"></i> Copiar link</button>'
@@ -8023,7 +8023,7 @@ async function crearSegmentoDesdeRuta(localId){
 }
 async function verSegmentos(){
   _modalVolverA='mostrarLogrosComunidad';
-  document.getElementById('modalTitle').innerText='🏁 Segmentos';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-flag-checkered"></i> Segmentos';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando segmentos...</p>';
   document.getElementById('userModal').classList.add('on');
@@ -8035,7 +8035,7 @@ async function verSegmentos(){
 }
 async function verTablaLideresSegmento(segmentoId, nombre){
   _modalVolverA='verSegmentos';
-  document.getElementById('modalTitle').innerText='🏆 '+nombre;
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-trophy"></i> '+escapeHTML(nombre);
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando tabla de líderes...</p>';
   document.getElementById('userModal').classList.add('on');
@@ -8084,7 +8084,7 @@ async function revisarRetosCumplidos(){
 }
 async function verRetos(){
   _modalVolverA='mostrarLogrosComunidad';
-  document.getElementById('modalTitle').innerText='🎯 Retos y temporadas';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-bullseye"></i> Retos y temporadas';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando retos...</p>';
   document.getElementById('userModal').classList.add('on');
@@ -8181,7 +8181,7 @@ function mostrarResumenAnual(){
   const r=calcularResumenAnual(anio);
   if(r.viajes===0){
     _modalVolverA='mostrarLogrosComunidad';
-    document.getElementById('modalTitle').innerText='📊 Mi año en Libre Pedal';
+    document.getElementById('modalTitle').innerHTML='<i class="fas fa-chart-simple"></i> Mi año en Libre Pedal';
     document.getElementById('modalContent').innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;text-align:center;padding:20px 0">Todavía no tienes viajes registrados este '+anio+'. ¡Sal a pedalear y vuelve más adelante!</p>';
     document.getElementById('userModal').classList.add('on');
     return;
@@ -8251,7 +8251,7 @@ async function crearRodada(){
   finally{ _creandoRodada=false; }
 }
 async function verRodadas(){
-  document.getElementById('modalTitle').innerText='🚵 Rodadas grupales';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-people-group"></i> Rodadas grupales';
   const c=document.getElementById('modalContent');
   const rutasOpts=rutasLocales().filter(function(r){return r.nombreRuta && r.distance;}).map(function(r,i){ return '<option value="'+i+'">'+escapeHTML(r.nombreRuta)+' · '+r.distance.toFixed(1)+' km</option>'; }).join('');
   const selectorRuta=rutasOpts ? ('<select id="rodadaRutaSel"><option value="">Sin ruta (solo punto de encuentro)</option>'+rutasOpts+'</select>') : '';
@@ -8405,7 +8405,7 @@ function _perfilCiclista(){
 }
 async function verRecomendacionRutas(){
   _modalVolverA='mostrarLogrosComunidad';
-  document.getElementById('modalTitle').innerText='🧭 Rutas para ti';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-compass"></i> Rutas para ti';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Analizando tu historial...</p>';
   document.getElementById('userModal').classList.add('on');
@@ -8658,7 +8658,7 @@ async function anunciarClimaRuta(lat,lon,intro){
   }catch(e){}
 }
 async function mostrarPlanificadorPresupuesto(){
-  document.getElementById('modalTitle').innerText='🎒 Planificador por presupuesto';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-wallet"></i> Planificador por presupuesto';
   const c=document.getElementById('modalContent');
   c.innerHTML='<p style="font-size:0.85rem;color:#9fb3c8;margin-bottom:8px">Te ayudo a armar el viaje según lo que quieras gastar, buscando opciones reales de la comunidad cerca de tu destino.</p>'+
     '<input type="number" id="plan-presupuesto" placeholder="Presupuesto total (tu moneda, ej: 40000)" min="0">'+
@@ -8723,7 +8723,7 @@ async function _totalUsuariosSuscritos(){
 }
 async function mostrarComunidad(){
   _modalVolverA='mostrarLogrosComunidad';
-  document.getElementById('modalTitle').innerText='🤝 Comunidad Libre Pedal';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-handshake"></i> Comunidad Libre Pedal';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
@@ -8823,7 +8823,7 @@ async function renderMisFrasesComunidad(){
 }
 async function mostrarRevisionFrases(){
   if(cu!==ADMIN_ID) return;
-  document.getElementById('modalTitle').innerText='🔍 Revisar frases de la comunidad';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-magnifying-glass"></i> Revisar frases de la comunidad';
   const c=document.getElementById('modalContent');
   c.innerHTML='<p style="color:#888">Cargando...</p>';
   try{
@@ -8869,7 +8869,7 @@ async function participarSorteo(){
 }
 async function reporteDeViaje(){
   if(!addedDests || addedDests.length===0){ lpAviso('Agrega al menos un destino primero'); return; }
-  document.getElementById('modalTitle').innerText='🗺️ Reporte del viaje';
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-map-location-dot"></i> Reporte del viaje';
   const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Preparando el reporte y el clima de cada parada...</p>'; document.getElementById('userModal').classList.add('on');
   let html='<div style="background:var(--gl);padding:10px;border-radius:10px;margin-bottom:10px"><strong style="color:var(--p)"><i class="fas fa-location-dot"></i> Paradas ('+addedDests.length+')</strong>';
   addedDests.forEach(function(d,i){ html+='<div style="font-size:0.85rem;padding:3px 0;border-bottom:1px solid #222">'+(i+1)+'. '+escapeHTML(d.name)+(d.addr?(' — '+escapeHTML(d.addr)):'')+'</div>'; });
