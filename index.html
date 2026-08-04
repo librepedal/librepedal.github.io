@@ -1376,7 +1376,7 @@ body[data-vista="pistero"] #micBtn{display:none}
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='7.90'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='7.91'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6486,6 +6486,7 @@ async function recalcularRuta(lat,lon){
   navRecalcIntentos++;
   if(navRecalcIntentos<=NAV_RECALC_MAX_SEGUIDOS){
     showSpeechBubble('Recalculando ruta...');
+    try{ _pisteroMood='preocupado'; }catch(e){}
     h('Te desviaste del camino, dame un segundo que te recalculo.');
   } else {
     // varios recálculos seguidos y sigues fuera de ruta: probablemente estás en un
