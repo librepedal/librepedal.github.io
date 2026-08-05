@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.08'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.09'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -8531,18 +8531,19 @@ async function verRecomendacionRutas(){
 function enviarSOS(){
   const cs=contactosSOS();
   function seguir(lat,lon){
+    var emerg='<div style="display:flex;gap:6px;margin-bottom:10px"><a href="tel:133" class="ab" style="flex:1;margin:0;text-align:center;text-decoration:none;background:#dc2626;color:#fff;border-color:#dc2626;font-size:0.78rem;line-height:1.15"><i class="fas fa-phone"></i> 133<br><small>Carabineros</small></a><a href="tel:131" class="ab" style="flex:1;margin:0;text-align:center;text-decoration:none;background:#dc2626;color:#fff;border-color:#dc2626;font-size:0.78rem;line-height:1.15"><i class="fas fa-truck-medical"></i> 131<br><small>SAMU</small></a><a href="tel:132" class="ab" style="flex:1;margin:0;text-align:center;text-decoration:none;background:#dc2626;color:#fff;border-color:#dc2626;font-size:0.78rem;line-height:1.15"><i class="fas fa-fire"></i> 132<br><small>Bomberos</small></a></div>';
     const url=(lat!=null)?('https://www.google.com/maps?q='+lat+','+lon):'';
     const msg='SOS. Soy '+(nombreUsuario||'un ciclista')+' y necesito ayuda.'+(url?(' Mi ubicación: '+url):'');
     if(cs.length===0){
       if(navigator.share){ navigator.share({title:'SOS Libre Pedal', text:msg}).catch(function(){}); }
       else { try{ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); }catch(e){ lpAviso(msg); } }
       document.getElementById('modalTitle').innerText='🆘 SOS';
-      document.getElementById('modalContent').innerHTML='<p style="color:#ffd0d0">Aún no tienes contactos de emergencia guardados.</p><button class="ab" onclick="gestionarContactosSOS()">Agregar contactos de emergencia</button>';
+      document.getElementById('modalContent').innerHTML=emerg+'<p style="color:#ffd0d0;font-size:0.82rem">Llama a emergencias arriba, o guarda contactos para avisarles rápido.</p><button class="ab" onclick="gestionarContactosSOS()">Agregar contactos de emergencia</button>';
       document.getElementById('userModal').classList.add('on');
       return;
     }
     document.getElementById('modalTitle').innerText='🆘 Enviar SOS';
-    let html='<p style="color:#ffd0d0;font-size:0.85rem;margin-top:0">Toca cada contacto para enviarle tu SOS por WhatsApp (el mensaje y tu ubicación ya van escritos).</p>';
+    let html=emerg+'<p style="color:#ffd0d0;font-size:0.85rem;margin-top:0">O toca un contacto para enviarle tu SOS por WhatsApp (el mensaje y tu ubicación ya van escritos).</p>';
     html+=cs.map(function(x){ return '<a href="https://wa.me/'+x.fono+'?text='+encodeURIComponent(msg)+'" target="_blank" class="ab" style="display:block;text-align:center;text-decoration:none;background:#25D366;color:#03301a;border-color:#25D366;margin-bottom:6px">📲 Enviar a '+escapeHTML(x.nombre)+'</a>'; }).join('');
     html+='<button class="ab sec" onclick="gestionarContactosSOS()">Editar contactos</button>';
     document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
