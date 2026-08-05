@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.18'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.19'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2596,7 +2596,7 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine){ return '<div class="helmet-pin'+(mine?' mine':'')+'">'+miniHelmetSVG(helmetId, accent||'#fc4c02')+'</div>'; }
+function riderMarkerHTML(helmetId, accent, mine){ var _hc=((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'; return '<div class="helmet-pin'+(mine?' mine':'')+'">'+_pisteroExprSVG('feliz', _hc, accent||'#f4c9a0')+'</div>'; }
 
 // ===== Cara expresiva de Pistero (casco + ojos kawaii + expresiones + mirada) =====
 function _pisteroExprSVG(expr, helmetCol, skinCol){
