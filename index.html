@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.10'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.11'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4904,7 +4904,7 @@ async function im(){
     // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
     mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222"><i class="fas fa-location-dot"></i> Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer"><i class="fas fa-compass"></i> Navegar aquí</button>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
-    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); });
+    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); });
   }catch(err){
     mp=null;
     _mapaFalloVisible('No se pudo iniciar el mapa: '+(err&&err.message?err.message:'error desconocido'));
@@ -8531,6 +8531,32 @@ async function verRecomendacionRutas(){
 // ===== SOS COMUNITARIO (PASO 1: envio). Escribe una alerta ANONIMA y GRUESA (~5km):
 // NO lleva identidad ni ubicacion exacta -> los desconocidos no pueden localizarte.
 // La ubicacion exacta sigue yendo SOLO a tus contactos (WhatsApp) y al 133.
+// ===== SOS COMUNITARIO (PASO 2: recibir). Solo ciclistas de CONFIANZA (km de bici) reciben,
+// y solo una alerta de BAJA PRECISION (zona ~5-10km, sin identidad ni ubicacion exacta).
+var _sosListener=null, _sosVistos={};
+function _iniciarEscuchaSOS(){
+  try{
+    if(_sosListener) return;
+    if(typeof db==='undefined' || !db) return;
+    if(typeof _esCiclistaConfiable==='function' && !_esCiclistaConfiable()) return; // cuentas sin km reales NO reciben (anti-abuso)
+    _sosListener = db.collection('sosAlertas').orderBy('ts','desc').limit(15).onSnapshot(function(snap){
+      var now=Date.now();
+      snap.docChanges().forEach(function(ch){
+        if(ch.type!=='added') return;
+        var d=ch.doc.data()||{}, id=ch.doc.id;
+        if(_sosVistos[id] || (window._misSOS && window._misSOS[id])) return;
+        _sosVistos[id]=1;
+        var ts=(d.ts&&d.ts.seconds)?d.ts.seconds*1000:0;
+        if(ts && (now-ts)>1200000) return; // ignora alertas de mas de 20 min
+        var mla=(typeof us!=='undefined')?us.la:null, mlo=(typeof us!=='undefined')?us.lo:null;
+        if(mla!=null && d.clat!=null && typeof gd2==='function'){ if(gd2(mla,mlo,d.clat,d.clon)>10) return; } // solo si esta a ~10km
+        try{ _pisteroMood='preocupado'; }catch(e){}
+        if(typeof h==='function') h('Atencion: un ciclista pidio ayuda cerca de tu zona. Mantente atento y, si puedes, llama a Carabineros al 133. Por seguridad no tenemos su ubicacion exacta.', (typeof PRIO_VOZ!=='undefined')?PRIO_VOZ.INFO:2);
+        if(typeof lpAviso==='function') lpAviso('Un ciclista pidio ayuda cerca de tu zona. Considera llamar al 133.');
+      });
+    }, function(err){ /* si las reglas bloquean la lectura, degrada en silencio */ });
+  }catch(e){}
+}
 async function _broadcastSOS(lat,lon){
   try{
     if(typeof db==='undefined' || !db || !cu){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad (sin conexion). Usa el 133 y tus contactos.'); return; }
@@ -8539,7 +8565,8 @@ async function _broadcastSOS(lat,lon){
     if(lat==null||lon==null){ if(typeof lpAviso==='function') lpAviso('No tengo tu zona para avisar. Activa la ubicacion.'); return; }
     var clat=Math.round(lat/0.05)*0.05, clon=Math.round(lon/0.05)*0.05; // gruesa ~5km
     window._ultimoSOSbc=now;
-    await db.collection('sosAlertas').add({ clat:clat, clon:clon, ts:firebase.firestore.FieldValue.serverTimestamp() });
+    var _ref=await db.collection('sosAlertas').add({ clat:clat, clon:clon, ts:firebase.firestore.FieldValue.serverTimestamp() });
+    try{ window._misSOS=window._misSOS||{}; if(_ref&&_ref.id) window._misSOS[_ref.id]=1; }catch(e){}
     if(typeof h==='function') h('Listo: avisamos a los ciclistas de tu zona, sin tu ubicacion exacta ni tu nombre. Si estas en peligro, llama tambien al 133.');
   }catch(e){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad ahora. Usa la llamada al 133 y tus contactos.'); }
 }
