@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.09'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.10'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -8528,9 +8528,25 @@ async function verRecomendacionRutas(){
     c.innerHTML=html;
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar recomendaciones.</p>'; }
 }
+// ===== SOS COMUNITARIO (PASO 1: envio). Escribe una alerta ANONIMA y GRUESA (~5km):
+// NO lleva identidad ni ubicacion exacta -> los desconocidos no pueden localizarte.
+// La ubicacion exacta sigue yendo SOLO a tus contactos (WhatsApp) y al 133.
+async function _broadcastSOS(lat,lon){
+  try{
+    if(typeof db==='undefined' || !db || !cu){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad (sin conexion). Usa el 133 y tus contactos.'); return; }
+    var now=Date.now();
+    if(now-(window._ultimoSOSbc||0) < 120000){ if(typeof h==='function') h('Ya avisaste a la comunidad hace poco. Si sigues en peligro, llama al 133.'); return; }
+    if(lat==null||lon==null){ if(typeof lpAviso==='function') lpAviso('No tengo tu zona para avisar. Activa la ubicacion.'); return; }
+    var clat=Math.round(lat/0.05)*0.05, clon=Math.round(lon/0.05)*0.05; // gruesa ~5km
+    window._ultimoSOSbc=now;
+    await db.collection('sosAlertas').add({ clat:clat, clon:clon, ts:firebase.firestore.FieldValue.serverTimestamp() });
+    if(typeof h==='function') h('Listo: avisamos a los ciclistas de tu zona, sin tu ubicacion exacta ni tu nombre. Si estas en peligro, llama tambien al 133.');
+  }catch(e){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad ahora. Usa la llamada al 133 y tus contactos.'); }
+}
 function enviarSOS(){
   const cs=contactosSOS();
   function seguir(lat,lon){
+    window._sosLoc={lat:lat,lon:lon};
     var emerg='<div style="display:flex;gap:6px;margin-bottom:10px"><a href="tel:133" class="ab" style="flex:1;margin:0;text-align:center;text-decoration:none;background:#dc2626;color:#fff;border-color:#dc2626;font-size:0.78rem;line-height:1.15"><i class="fas fa-phone"></i> 133<br><small>Carabineros</small></a><a href="tel:131" class="ab" style="flex:1;margin:0;text-align:center;text-decoration:none;background:#dc2626;color:#fff;border-color:#dc2626;font-size:0.78rem;line-height:1.15"><i class="fas fa-truck-medical"></i> 131<br><small>SAMU</small></a><a href="tel:132" class="ab" style="flex:1;margin:0;text-align:center;text-decoration:none;background:#dc2626;color:#fff;border-color:#dc2626;font-size:0.78rem;line-height:1.15"><i class="fas fa-fire"></i> 132<br><small>Bomberos</small></a></div>';
     const url=(lat!=null)?('https://www.google.com/maps?q='+lat+','+lon):'';
     const msg='SOS. Soy '+(nombreUsuario||'un ciclista')+' y necesito ayuda.'+(url?(' Mi ubicación: '+url):'');
@@ -8545,6 +8561,7 @@ function enviarSOS(){
     document.getElementById('modalTitle').innerText='🆘 Enviar SOS';
     let html=emerg+'<p style="color:#ffd0d0;font-size:0.85rem;margin-top:0">O toca un contacto para enviarle tu SOS por WhatsApp (el mensaje y tu ubicación ya van escritos).</p>';
     html+=cs.map(function(x){ return '<a href="https://wa.me/'+x.fono+'?text='+encodeURIComponent(msg)+'" target="_blank" class="ab" style="display:block;text-align:center;text-decoration:none;background:#25D366;color:#03301a;border-color:#25D366;margin-bottom:6px">📲 Enviar a '+escapeHTML(x.nombre)+'</a>'; }).join('');
+    html+='<button class="ab" style="background:#7c3aed;border-color:#7c3aed;color:#fff;margin-bottom:6px" onclick="_broadcastSOS((window._sosLoc||{}).lat,(window._sosLoc||{}).lon)"><i class="fas fa-bullhorn"></i> Avisar a ciclistas cerca (anonimo)</button>';
     html+='<button class="ab sec" onclick="gestionarContactosSOS()">Editar contactos</button>';
     document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
     h('Alerta lista. Toca a quién quieres avisar.');
