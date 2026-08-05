@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.16'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.17'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -9956,11 +9956,9 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     var cum=[0],total=0,i;
     for(i=1;i<coords.length;i++){ total+=_sbvHaversine(coords[i-1],coords[i]); cum.push(total); }
     if(total<=0){ if(typeof h==='function') h('El recorrido es demasiado corto para animarlo.'); detenerSobrevuelo(); if(onEnd)onEnd(); return; }
-    // El marcador del sobrevuelo debe ser una FIGURA EN MOVIMIENTO (ciclista/caminante/auto),
-    // nunca el icono de modo (MTB=montana, que no se mueve). person-biking cubre las 3 disciplinas de bici.
-    var _sbvKey=(modo==='trekking')?'trekking':(modo==='moto')?'moto':'cicloviaje';
-    var svg=(MODO_SVG[_sbvKey]||MODO_SVG.cicloviaje).replace('<svg ','<svg width="26" height="26" ');
-    var iconHtml='<div style="width:42px;height:42px;border-radius:50%;background:rgba(10,15,29,.92);border:2.5px solid '+accent+';display:flex;align-items:center;justify-content:center;color:'+accent+';box-shadow:0 3px 12px rgba(0,0,0,.55)">'+svg+'</div>';
+    // La carita de Pistero (nuevo, expresivo) se mueve por la ruta, sonriendo. Sin circulo; sombra fina para contraste.
+    var svg=_pisteroExprSVG('feliz').replace('<svg ','<svg width="44" height="37" ');
+    var iconHtml='<div style="width:44px;height:37px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))">'+svg+'</div>';
     _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:iconHtml}}).addTo(mp);
     try{ mp.fitBounds(_sbvLine.getBounds().pad(0.18)); }catch(e){}
     var dur=Math.min(20000,Math.max(7000,coords.length*80)),start=null,seg=1;
