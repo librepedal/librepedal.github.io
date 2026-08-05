@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.11'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.12'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1760,10 +1760,10 @@ function _formatoCrono(ms){
 }
 function _iniciarCronometroDash(){
   const el=document.getElementById('dashCrono'); if(!el) return;
-  el.style.display='block'; el.innerText='⏱️ 0:00';
+  el.style.display='block'; el.innerHTML='<i class="fas fa-stopwatch"></i> 0:00';
   const c=document.getElementById('dashCronoControles'); if(c) c.style.display='flex';
   clearInterval(dashCronoInterval);
-  dashCronoInterval=setInterval(function(){ el.innerText='⏱️ '+_formatoCrono(tiempoActivoMs()); },1000);
+  dashCronoInterval=setInterval(function(){ el.innerHTML='<i class="fas fa-stopwatch"></i> '+_formatoCrono(tiempoActivoMs()); },1000);
 }
 function _detenerCronometroDash(){
   clearInterval(dashCronoInterval); dashCronoInterval=null;
@@ -1793,16 +1793,16 @@ function togglePausaViaje(){
     if(!viajePausedDesde) viajePausedDesde=Date.now();   // congela el tiempo activo
     lastGpsPoint=null;                                    // al reanudar no cuenta el tramo de la pausa
     _gpsBadgeToggle('navPausaBadge', true); _gpsBadgeToggle('dashPausaBadge', true);
-    if(btnNav){ btnNav.innerText='▶️ Reanudar'; btnNav.style.background='linear-gradient(135deg,#10b981,#059669)'; }
-    if(btnDash){ btnDash.innerText='▶️ Reanudar'; btnDash.style.color='#10b981'; btnDash.style.borderColor='#10b981'; }
+    if(btnNav){ btnNav.innerHTML='<i class="fas fa-play"></i> Reanudar'; btnNav.style.background='linear-gradient(135deg,#10b981,#059669)'; }
+    if(btnDash){ btnDash.innerHTML='<i class="fas fa-play"></i> Reanudar'; btnDash.style.color='#10b981'; btnDash.style.borderColor='#10b981'; }
     try{ showSpeechBubble('Viaje en pausa'); }catch(e){}
     h('Viaje en pausa. Cuando quieras seguir, toca Reanudar.');
   } else {
     if(viajePausedDesde){ viajePausedMs+=(Date.now()-viajePausedDesde); viajePausedDesde=null; }
     lastGpsPoint=null;
     _gpsBadgeToggle('navPausaBadge', false); _gpsBadgeToggle('dashPausaBadge', false);
-    if(btnNav){ btnNav.innerText='⏸️ Pausar'; btnNav.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; }
-    if(btnDash){ btnDash.innerText='⏸️ Pausar'; btnDash.style.color=''; btnDash.style.borderColor=''; }
+    if(btnNav){ btnNav.innerHTML='<i class="fas fa-pause"></i> Pausar'; btnNav.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; }
+    if(btnDash){ btnDash.innerHTML='<i class="fas fa-pause"></i> Pausar'; btnDash.style.color=''; btnDash.style.borderColor=''; }
     try{ showSpeechBubble('¡Seguimos!'); }catch(e){}
     h('Seguimos pedaleando.');
   }
@@ -3779,8 +3779,8 @@ function _actualizarBtnGPS(){
   const btn=document.getElementById('btnGPSLibre'); if(!btn) return;
   /* Rediseño 2026-07-29: sin verde loud (compite con "Iniciar navegación" y rompe el acento único).
      Reposo = secundario tonal; grabando = tinte rojo compacto (afordancia clara de "toca para parar"). */
-  if(ig){ btn.innerText='⏹️ Detener grabación'; btn.style.background='rgba(220,38,38,0.18)'; btn.style.borderColor='rgba(220,38,38,0.5)'; btn.style.color='#ff9d9d'; }
-  else { btn.innerText='📍 Grabar un paseo'; btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; }
+  if(ig){ btn.innerHTML='<i class="fas fa-stop"></i> Detener grabación'; btn.style.background='rgba(220,38,38,0.18)'; btn.style.borderColor='rgba(220,38,38,0.5)'; btn.style.color='#ff9d9d'; }
+  else { btn.innerHTML='<i class="fas fa-location-dot"></i> Grabar un paseo'; btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; }
 }
 // silencioso: cuando el GPS se prende SOLO (al iniciar sesión, para grabar sin que
 // tengas que acordarte de apretar un botón — ver solicitarPermisosEsenciales), no
@@ -3806,14 +3806,14 @@ function toggleGPS(silencioso){
     iniciarDeteccionCaidas();
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
-      if(btn){ btn.innerText="⏹️ Detener grabación"; btn.style.background="rgba(220,38,38,0.18)"; btn.style.borderColor="rgba(220,38,38,0.5)"; btn.style.color="#ff9d9d"; }
+      if(btn){ btn.innerHTML="<i class='fas fa-stop'></i> Detener grabación"; btn.style.background="rgba(220,38,38,0.18)"; btn.style.borderColor="rgba(220,38,38,0.5)"; btn.style.color="#ff9d9d"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
       if(!silencioso) _prevueloPistero(true);
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
-      ig=true; if(btn){ btn.innerText="⏹️ Detener grabación"; btn.style.background="rgba(220,38,38,0.18)"; btn.style.borderColor="rgba(220,38,38,0.5)"; btn.style.color="#ff9d9d"; }
+      ig=true; if(btn){ btn.innerHTML="<i class='fas fa-stop'></i> Detener grabación"; btn.style.background="rgba(220,38,38,0.18)"; btn.style.borderColor="rgba(220,38,38,0.5)"; btn.style.color="#ff9d9d"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
@@ -3823,7 +3823,7 @@ function toggleGPS(silencioso){
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
     ig=false; _lpWLoff(); detenerDeteccionCaidas(); _detenerCronometroDash();
     if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
-    if(btn){ btn.innerText="📍 Grabar un paseo"; btn.style.background=""; btn.style.borderColor=""; btn.style.color=""; }
+    if(btn){ btn.innerHTML="<i class='fas fa-location-dot'></i> Grabar un paseo"; btn.style.background=""; btn.style.borderColor=""; btn.style.color=""; }
     if(currentRoute.length>1){ autoGuardarRuta(false,false); }
     sincronizarStats();
     if(cu&&!ghostMode) db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true});
@@ -4427,7 +4427,7 @@ function abrirVideoRuta(id){
     document.getElementById('video-status').innerText='Preparando el vuelo 3D...';
     document.getElementById('videoProgressFill').style.width='0%';
     document.getElementById('btnReplayVideo').style.display='none';
-    document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar';
+    document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar y descargar';
     setTimeout(initVideoMap,50);
   }
   if(r&&r.points&&r.points.length){ conPuntos(r.points, r); return; }
@@ -4605,15 +4605,15 @@ function grabarVideoRuta(){
       const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.'+extension; document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(function(){ URL.revokeObjectURL(url); },4000);
       document.getElementById('video-status').innerText='¡Video descargado! Ya lo puedes compartir.';
-      document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar';
+      document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar y descargar';
       if(videoStream){ videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream=null; }
     };
-    document.getElementById('btnGrabarVideo').disabled=true; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabando...';
+    document.getElementById('btnGrabarVideo').disabled=true; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabando...';
     document.getElementById('btnReplayVideo').style.display='none';
     recorder.start();
     iniciarVueloRuta();
     videoStopTimeoutId=setTimeout(function(){ if(recorder.state==='recording') recorder.stop(); videoStopTimeoutId=null; },videoVueloMs+600);
-  }catch(e){ lpAviso('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerText='⏺️ Grabar y descargar'; }
+  }catch(e){ lpAviso('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar y descargar'; }
 }
 function cerrarVideoRuta(){
   if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
@@ -6771,7 +6771,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   puntosAvisados=new Set(); reportesAvisados=new Set();
   _avisoLluviaHecho=false; _ultimoChequeoLluvia=0; _fatigaBuffer=[]; _avisoFatigaHecho=false; _velPromInicioFatiga=null;
   navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; vueltasRegistradas=[]; _gpsBadgeToggle('navPausaBadge', false); kmUltimoRitmoComentado=0;
-  (function(){ const b=document.getElementById('btnPausaViaje'); if(b){ b.innerText='⏸️ Pausar'; b.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; } })();
+  (function(){ const b=document.getElementById('btnPausaViaje'); if(b){ b.innerHTML='<i class="fas fa-pause"></i> Pausar'; b.style.background='linear-gradient(135deg,#f59e0b,#d97706)'; } })();
   navPendienteHistory=[]; zonaPendienteActual='plano'; tFraseSubida=0; tFraseBajada=0;
   iniciarDeteccionCaidas();
   iniciarSeguimientoSegmentos(startLat,startLon);
