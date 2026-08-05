@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.05'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.06'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2422,9 +2422,9 @@ function _reproducirVoz(item){
      así que mientras menos cosas cuelguen de él, mejor. */
   if(vozMejorada){
     // v7.80: voz por ARQUETIPO (clips SLR71 chilenos en voces/<arq>/<id>.mp3).
-    const _arqV=(typeof pisteroPersonalidad!=='undefined')?pisteroPersonalidad:'cercano';
-    const _aid = VOCES_MANIFEST && VOCES_MANIFEST.arq && VOCES_MANIFEST.arq[_arqV] && VOCES_MANIFEST.arq[_arqV][item.t];
-    if(_aid){ vozTimerFin=setTimeout(_vozSiguiente, 12000); _vozArchivoArq(item, durEst, _arqV, _aid, miGen); return; }
+    // v8.06: DESACTIVADA la capa de voces por arquetipo (SLR71) — se colaban voces distintas por frase.
+    // Por ahora usamos SOLO Azure (Lorenzo/Catalina, consistente). Las voces por arquetipo (premium)
+    // vuelven al llegar a 1000 usuarios. (Decision de Inty)
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
     if(_id){
       vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso; se recalibra con la duración real del audio
