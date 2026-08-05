@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.20'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.21'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2596,7 +2596,7 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine){ var _hc=((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'; return '<div class="helmet-pin'+(mine?' mine':'')+'">'+_pisteroExprSVG('feliz', _hc, accent||'#f4c9a0')+'</div>'; }
+function riderMarkerHTML(helmetId, accent, mine){ var _hc=((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'; return '<div class="helmet-pin'+(mine?' mine':'')+'">'+_pisteroExprSVG('feliz', _hc, '#f4c9a0')+'</div>'; }
 
 // ===== Cara expresiva de Pistero (casco + ojos kawaii + expresiones + mirada) =====
 function _pisteroExprSVG(expr, helmetCol, skinCol){
@@ -2863,8 +2863,8 @@ function selectLabios(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; }
 function selectVello(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedVello=id; initCustomization(); }
 function selectPeinado(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPeinado=id; initCustomization(); }
 function selectPanuelo(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPanuelo=id; initCustomization(); }
-function updatePreview(){ const p=document.getElementById('preview-svg'); if(p) p.innerHTML=_pisteroExprSVG('feliz', ((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===selectedHelmet;}))||{}).color||'#00aaff', (typeof skinColor==='function'?skinColor(selectedSkin):'#f4c9a0')); const n=document.getElementById('characterNameDisplay'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
-function updateCustomizePreview(){ const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=_pisteroExprSVG('feliz', ((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===selectedHelmet;}))||{}).color||'#00aaff', (typeof skinColor==='function'?skinColor(selectedSkin):'#f4c9a0')); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
+function updatePreview(){ const p=document.getElementById('preview-svg'); if(p) p.innerHTML=_pisteroExprSVG('feliz', ((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===selectedHelmet;}))||{}).color||'#00aaff', '#f4c9a0'); const n=document.getElementById('characterNameDisplay'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
+function updateCustomizePreview(){ const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=_pisteroExprSVG('feliz', ((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===selectedHelmet;}))||{}).color||'#00aaff', '#f4c9a0'); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
 function saveCustomization(){
   localStorage.setItem('lp_helmet_'+cu, selectedHelmet);
   localStorage.setItem('lp_lens_'+cu, selectedLens);
