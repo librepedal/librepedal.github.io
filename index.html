@@ -8,6 +8,17 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0f1d">
 <meta name="description" content="Tu copiloto en cada pedaleo: navegación tipo Waze, rutas y Pistero, tu compañero ciclista.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Libre Pedal">
+<meta property="og:title" content="Libre Pedal — La app del ciclismo chileno">
+<meta property="og:description" content="Navega tipo Waze, graba tus rutas y súmate a la comunidad ciclista. Pistero, tu copiloto por voz. Hecho en Chile.">
+<meta property="og:url" content="https://librepedal.cl">
+<meta property="og:image" content="https://librepedal.cl/icon-512.png">
+<meta property="og:locale" content="es_CL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Libre Pedal — La app del ciclismo chileno">
+<meta name="twitter:description" content="Navega, graba tus rutas y súmate a la comunidad ciclista. Hecho en Chile.">
+<meta name="twitter:image" content="https://librepedal.cl/icon-512.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1385,7 +1396,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.24'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.25'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
