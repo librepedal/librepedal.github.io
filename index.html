@@ -1396,7 +1396,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.26'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.27'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2140,7 +2140,7 @@ const MG=[{t:"Cadena rota",s:"Usa un clavo o piedra para empujar el pasador. Dej
 const CG=[{cat:'hospedaje',t:'Hostal La Bicicleta',d:'Desayuno temprano y guardabicis. Cerca de quince dólares.',tg:['#CicloAmigable']},{cat:'panorama',t:'Mirador del Cóndor',d:'Vista de 360 grados, ideal al atardecer.',tg:['#Vistas']},{cat:'tips',t:'Agua en las bencineras',d:'Suelen llenar los bidones gratis.',tg:['#AguaGratis']},{cat:'economia',t:'Feria de los jueves',d:'Frutas hasta 40 por ciento más baratas.',tg:['#Ahorro']},{cat:'hospedaje',t:'Camping Río Azul',d:'Seguro, con baños y enchufes.',tg:['#Seguro']},{cat:'tips',t:'Taller comunitario',d:'Sábados de 9 a 12, ayuda gratis.',tg:['#Comunidad']},{cat:'economia',t:'Menú del ciclista',d:'Menú con bebida por unos cinco dólares.',tg:['#Económico']}];
 
 function limpiarParaVoz(t){
-  return String(t).replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}\u{200D}]/gu,'').replace(/\s{2,}/g,' ').trim();
+  return String(t).replace(/SOS/g,'ese o ese').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}\u{200D}]/gu,'').replace(/\s{2,}/g,' ').trim();
 }
 function cargarVoces(){ try{ const vs=speechSynthesis.getVoices(); vozPref = vs.find(function(v){return /es(-|_)(CL|419|MX)/i.test(v.lang);}) || vs.find(function(v){return (v.lang||'').toLowerCase().indexOf('es')===0;}) || null; }catch(e){} }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
@@ -8622,7 +8622,7 @@ async function _broadcastSOS(lat,lon){
     if(typeof db==='undefined' || !db || !cu){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad (sin conexion). Usa el 133 y tus contactos.'); return; }
     var now=Date.now();
     if(now-(window._ultimoSOSbc||0) < 120000){ if(typeof h==='function') h('Ya avisaste a la comunidad hace poco. Si sigues en peligro, llama al 133.'); return; }
-    if(lat==null||lon==null){ if(navigator.geolocation){ if(typeof h==='function') h('Ubicando tu zona para avisar a la comunidad...'); navigator.geolocation.getCurrentPosition(function(p){ _broadcastSOS(p.coords.latitude,p.coords.longitude); }, function(){ if(typeof lpAviso==='function') lpAviso('No pude obtener tu zona (permiso de ubicacion). No se avisó a la comunidad; usa el 133 y tus contactos.'); }, {enableHighAccuracy:true,timeout:8000,maximumAge:10000}); } else { if(typeof lpAviso==='function') lpAviso('Tu telefono no entrega ubicacion.'); } return; }
+    if(lat==null||lon==null){ if(navigator.geolocation){ if(typeof h==='function') h('Ubicando tu zona para avisar a la comunidad...'); navigator.geolocation.getCurrentPosition(function(p){ _broadcastSOS(p.coords.latitude,p.coords.longitude); }, function(){ if(typeof lpAviso==='function') lpAviso('No pude obtener tu zona (permiso de ubicacion). No se avisó a la comunidad; usa el 133 y tus contactos.'); }, {enableHighAccuracy:true,timeout:8000,maximumAge:0}); } else { if(typeof lpAviso==='function') lpAviso('Tu telefono no entrega ubicacion.'); } return; }
     var clat=Math.round(lat/0.05)*0.05, clon=Math.round(lon/0.05)*0.05; // gruesa ~5km
     window._ultimoSOSbc=now;
     var _ref=await db.collection('sosAlertas').add({ clat:clat, clon:clon, ts:firebase.firestore.FieldValue.serverTimestamp() });
@@ -8662,7 +8662,7 @@ function enviarSOS(){
   var _sosT=setTimeout(function(){ if(_sosDone) return; _sosDone=true; if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('No alcance a fijar tu ubicacion. El SOS va sin ella — activa el permiso de ubicacion para tu seguridad.'); } }, 9000);
   navigator.geolocation.getCurrentPosition(function(p){ if(_sosDone) return; _sosDone=true; clearTimeout(_sosT); seguir(p.coords.latitude,p.coords.longitude); },
     function(){ if(_sosDone) return; _sosDone=true; clearTimeout(_sosT); if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('No pude obtener tu ubicacion (permiso denegado). Activa la ubicacion para que el SOS la incluya.'); } },
-    {enableHighAccuracy:true, timeout:8000, maximumAge:10000});
+    {enableHighAccuracy:true, timeout:8000, maximumAge:0});
 }
 function wmoTexto(c){ const m={0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'neblina',48:'neblina',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',66:'lluvia helada',67:'lluvia helada',71:'nieve ligera',73:'nieve',75:'nieve intensa',77:'nieve',80:'chubascos',81:'chubascos',82:'chubascos fuertes',85:'nevadas',86:'nevadas',95:'tormenta',96:'tormenta con granizo',99:'tormenta con granizo'}; return m[c]||'clima variable'; }
 async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weather_code,wind_speed_10m&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=3'); return await r.json(); }catch(e){ return null; } }
