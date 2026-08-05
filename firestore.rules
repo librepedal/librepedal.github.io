@@ -286,6 +286,15 @@ service cloud.firestore {
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
+    // Alertas SOS de la comunidad: ANONIMAS y de ubicacion GRUESA (~5km, sin identidad ni
+    // ubicacion exacta). Cualquiera autenticado puede pedir ayuda (create) y recibir (read);
+    // el dato ya es seguro por diseno. Inmutable: sin update/delete.
+    match /sosAlertas/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && strOk("comuna", 80);
+      allow update, delete: if false;
+    }
+
     // Todo lo demás: denegado por defecto
     match /{document=**} {
       allow read, write: if false;
