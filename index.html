@@ -1385,7 +1385,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.22'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.23'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3566,7 +3566,7 @@ async function reg(e){
   const e_val=document.getElementById('em').value.trim();
   if(!nombre) return lpAviso("Ingresa tu nombre");
   if(!e_val||!e_val.includes('@')) return lpAviso("El correo es obligatorio");
-  cu=e_val.replace(/[^a-zA-Z0-9]/g,'_'); if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador();
+  cu=e_val.replace(/[^a-zA-Z0-9]/g,'_'); if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador(); if(typeof _mostrarBienvenidaFundador==='function') setTimeout(_mostrarBienvenidaFundador,900);
   await _actualizarAuthConTokenPersonalizado(cu);
   nombreUsuario=nombre;
   const paisSel=(document.getElementById('pais-input')||{}).value||'auto';
@@ -4712,6 +4712,34 @@ function _co2Evitado(km){ return (km||0)*CO2_KG_POR_KM; }
 function _arbolesEq(kg){ return Math.max(0,(kg||0)/CO2_KG_POR_ARBOL_ANIO); }
 function _fmtCo2(kg){ return (kg>=1000)?((kg/1000).toFixed(2)+' t'):(Math.round(kg)+' kg'); }
 var _esFundador=false, _miNumFundador=null;
+function _cerrarBienvenida(){ try{ document.getElementById('userModal').classList.remove('on'); }catch(e){} }
+async function _mostrarBienvenidaFundador(){
+  try{
+    if(!cu || localStorage.getItem('lp_onboard_'+cu)) return;
+    localStorage.setItem('lp_onboard_'+cu,'1');
+    var CUPO=(typeof LP_FUNDADORES_CUPO!=='undefined'?LP_FUNDADORES_CUPO:1000);
+    var num=(typeof _miNumFundador!=='undefined'&&_miNumFundador)?_miNumFundador:null;
+    var es=(typeof _esFundador!=='undefined')?_esFundador:false;
+    if(num==null){ try{ var me=await db.collection('users').doc(cu).get(); var ts=me.exists?me.data().createdAt:null; if(ts){ var agg=await db.collection('users').where('createdAt','<',ts).count().get(); num=(agg.data().count||0)+1; es=num<=CUPO; } }catch(e){} }
+    var mt=document.getElementById('modalTitle'), mc=document.getElementById('modalContent'), um=document.getElementById('userModal');
+    if(!mt||!mc||!um) return;
+    var pist=(typeof _pistoNuevo==='function')?_pistoNuevo('contento').replace('<svg ','<svg width="78" height="65" '):'';
+    var titulo, sub, benef='';
+    if(es && num){ mt.innerHTML='<i class="fas fa-medal" style="color:#ffd700"></i> \u00a1Eres Socio Fundador!'; titulo='Socio Fundador N\u00b0 '+num; sub='Eres de los primeros '+CUPO+'. Tu lugar es tuyo para siempre.'; benef='<ul style="font-size:0.8rem;color:#cdd6e6;line-height:1.7;margin:10px 0;padding-left:18px"><li>Insignia y n\u00famero de socio \u00fanicos</li><li><b>Doble Darma</b> por cada acci\u00f3n</li><li>Prioridad y entradas extra en los sorteos</li><li>Acceso anticipado a lo nuevo</li></ul>'; }
+    else { mt.innerHTML='<i class="fas fa-hands-clapping"></i> \u00a1Bienvenido!'; titulo='Ya eres parte de la comunidad'; sub='Bienvenido a Libre Pedal, el movimiento ciclista.'; }
+    mc.innerHTML='<div style="text-align:center;margin-bottom:4px">'+pist+'</div>'+
+      '<div style="text-align:center;font-weight:800;color:var(--g);font-size:1.05rem">'+titulo+'</div>'+
+      '<div style="text-align:center;font-size:0.8rem;color:#9fb3c8;margin-top:4px">'+sub+'</div>'+benef+
+      '<div style="border-top:1px solid #223;margin:12px 0 8px;padding-top:10px;font-size:0.78rem;color:#9fb3c8;line-height:1.9">'+
+        '<div><i class="fas fa-location-dot" style="color:var(--p);width:22px"></i> Graba tus rutas sin apretar nada</div>'+
+        '<div><i class="fas fa-comment-dots" style="color:var(--p);width:22px"></i> Pistero te acompa\u00f1a por voz</div>'+
+        '<div><i class="fas fa-users" style="color:var(--p);width:22px"></i> Comunidad que se cuida (SOS y zonas rojas)</div>'+
+        '<div><i class="fas fa-face-smile" style="color:var(--p);width:22px"></i> Personaliza tu Pistero en Perfil</div>'+
+      '</div>'+
+      '<button class="bg" onclick="_cerrarBienvenida()"><i class="fas fa-bicycle"></i> \u00a1A pedalear!</button>';
+    um.classList.add('on');
+  }catch(e){}
+}
 async function _cargarEstadoFundador(){ try{ if(!cu||typeof db==='undefined') return; try{ var _cf=JSON.parse(localStorage.getItem('lp_fundador_'+cu)||'null'); if(_cf){ _miNumFundador=_cf.no; _esFundador=!!_cf.es; } }catch(e){} const me=await db.collection('users').doc(cu).get(); const ts=me.exists?me.data().createdAt:null; if(!ts) return; const agg=await db.collection('users').where('createdAt','<',ts).count().get(); _miNumFundador=(agg.data().count||0)+1; _esFundador=_miNumFundador<=(typeof LP_FUNDADORES_CUPO!=='undefined'?LP_FUNDADORES_CUPO:1000); try{ localStorage.setItem('lp_fundador_'+cu, JSON.stringify({no:_miNumFundador,es:_esFundador})); }catch(e){} }catch(e){} }
 function _ganarDarma(n){ var mult=_esFundador?2:1; us.d+=Math.round((n||0)*mult); if(typeof au==='function') au(); if(typeof sincronizarStats==='function') sincronizarStats(); }
 // km de BICICLETA para confianza (ciclismo+cicloviaje+mtb; NO auto ni trekking) — pedido de Inty
