@@ -1305,15 +1305,15 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 <div class="darma-badge"><i class="fas fa-wand-magic-sparkles"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
 <style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:12px;padding:6px 4px 5px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:42px;height:35px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.62rem;color:#cdd6e6;margin-top:3px;line-height:1.1}</style>
-<details class="pgrupo" open ontoggle="if(this.open)_perfilAcordeon(this)"><summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistCascoGrid"></div></div></details>
-<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)"><summary><i class="fas fa-face-smile pg-ic"></i><span class="pg-tt">Piel</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPielGrid"></div></div></details>
-<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)"><summary><i class="fas fa-glasses pg-ic"></i><span class="pg-tt">Lentes</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistLentesGrid"></div></div></details>
+<details class="pgrupo" open ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistCascoGrid"></div></div></details>
+<details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-face-smile pg-ic"></i><span class="pg-tt">Piel</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPielGrid"></div></div></details>
+<details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-glasses pg-ic"></i><span class="pg-tt">Lentes</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistLentesGrid"></div></div></details>
 
-<details class="pgrupo" style="display:none" ontoggle="if(this.open)_perfilAcordeon(this)">
+<details class="pgrupo" style="display:none" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)">
   <summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco y equipo</span><i class="fas fa-chevron-down pg-chev"></i></summary>
   <div class="pg-body"><div class="helmet-grid" id="customizeHelmetGrid"></div></div>
 </details>
-<details class="pgrupo" style="display:none" ontoggle="if(this.open)_perfilAcordeon(this)">
+<details class="pgrupo" style="display:none" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)">
   <summary><i class="fas fa-face-smile pg-ic"></i><span class="pg-tt">Rostro</span><span class="pg-sub">piel · peinado · ojos · labios · vello</span><i class="fas fa-chevron-down pg-chev"></i></summary>
   <div class="pg-body">
     <div class="pg-sublabel">Piel</div><div class="skin-grid" id="customizePielGrid"></div>
@@ -1323,7 +1323,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
     <div class="pg-sublabel">Vello facial</div><div class="accessory-grid" id="customizeVelloGrid"></div>
   </div>
 </details>
-<details class="pgrupo" style="display:none" ontoggle="if(this.open)_perfilAcordeon(this)">
+<details class="pgrupo" style="display:none" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)">
   <summary><i class="fas fa-shirt pg-ic"></i><span class="pg-tt">Estilo y ropa</span><span class="pg-sub">color · lentes · pañuelo · accesorios</span><i class="fas fa-chevron-down pg-chev"></i></summary>
   <div class="pg-body">
     <div class="pg-sublabel">Color de tricota</div><div class="skin-grid" id="customizeSkinGrid"></div>
@@ -1332,7 +1332,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
     <div class="pg-sublabel">Accesorios</div><div class="accessory-grid" id="customizeExtrasGrid"></div>
   </div>
 </details>
-<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)">
+<details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)">
   <summary><i class="fas fa-sliders pg-ic"></i><span class="pg-tt">Preferencias</span><span class="pg-sub">esfera · actividad · tipo de Pistero</span><i class="fas fa-chevron-down pg-chev"></i></summary>
   <div class="pg-body">
 
@@ -1396,7 +1396,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.25'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.26'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
