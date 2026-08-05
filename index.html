@@ -1293,11 +1293,16 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
      un segundo menú; Logros y Estadísticas se sacan de acá — para eso está la Esfera. -->
 <div class="darma-badge"><i class="fas fa-wand-magic-sparkles"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
-<details class="pgrupo" open ontoggle="if(this.open)_perfilAcordeon(this)">
+<style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:12px;padding:6px 4px 5px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:42px;height:35px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.62rem;color:#cdd6e6;margin-top:3px;line-height:1.1}</style>
+<details class="pgrupo" open ontoggle="if(this.open)_perfilAcordeon(this)"><summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistCascoGrid"></div></div></details>
+<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)"><summary><i class="fas fa-face-smile pg-ic"></i><span class="pg-tt">Piel</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPielGrid"></div></div></details>
+<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)"><summary><i class="fas fa-glasses pg-ic"></i><span class="pg-tt">Lentes</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistLentesGrid"></div></div></details>
+
+<details class="pgrupo" style="display:none" ontoggle="if(this.open)_perfilAcordeon(this)">
   <summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco y equipo</span><i class="fas fa-chevron-down pg-chev"></i></summary>
   <div class="pg-body"><div class="helmet-grid" id="customizeHelmetGrid"></div></div>
 </details>
-<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)">
+<details class="pgrupo" style="display:none" ontoggle="if(this.open)_perfilAcordeon(this)">
   <summary><i class="fas fa-face-smile pg-ic"></i><span class="pg-tt">Rostro</span><span class="pg-sub">piel · peinado · ojos · labios · vello</span><i class="fas fa-chevron-down pg-chev"></i></summary>
   <div class="pg-body">
     <div class="pg-sublabel">Piel</div><div class="skin-grid" id="customizePielGrid"></div>
@@ -1307,7 +1312,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
     <div class="pg-sublabel">Vello facial</div><div class="accessory-grid" id="customizeVelloGrid"></div>
   </div>
 </details>
-<details class="pgrupo" ontoggle="if(this.open)_perfilAcordeon(this)">
+<details class="pgrupo" style="display:none" ontoggle="if(this.open)_perfilAcordeon(this)">
   <summary><i class="fas fa-shirt pg-ic"></i><span class="pg-tt">Estilo y ropa</span><span class="pg-sub">color · lentes · pañuelo · accesorios</span><i class="fas fa-chevron-down pg-chev"></i></summary>
   <div class="pg-body">
     <div class="pg-sublabel">Color de tricota</div><div class="skin-grid" id="customizeSkinGrid"></div>
@@ -1380,7 +1385,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.21'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.22'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2596,10 +2601,11 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine){ var _hc=((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'; return '<div class="helmet-pin'+(mine?' mine':'')+'">'+_pisteroExprSVG('feliz', _hc, '#f4c9a0')+'</div>'; }
+function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; return '<div class="helmet-pin'+(mine?' mine':'')+'">'+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes)+'</div>'; }
 
 // ===== Cara expresiva de Pistero (casco + ojos kawaii + expresiones + mirada) =====
-function _pisteroExprSVG(expr, helmetCol, skinCol){
+function _lentesSVG(id){ if(id==='deportivas') return '<path d="M27 58 Q50 52 73 58 L71 67 Q50 63 29 67 Z" fill="#16203a" opacity=".92"/><path d="M27 58 Q50 52 73 58" stroke="#fc4c02" stroke-width="1.7" fill="none"/>'; if(id==='redondas') return '<g fill="none" stroke="#2a2a3a" stroke-width="2"><circle cx="40" cy="63" r="8.5"/><circle cx="60" cy="63" r="8.5"/><path d="M48.5 63 L51.5 63"/><path d="M31.5 61 L26 58"/><path d="M68.5 61 L74 58"/></g>'; if(id==='aviador') return '<g fill="#16203a" opacity=".85" stroke="#c9a227" stroke-width="1.2"><path d="M31 58 Q40 58 49 61 Q48 70 39 70 Q31 69 31 60 Z"/><path d="M69 58 Q60 58 51 61 Q52 70 61 70 Q69 69 69 60 Z"/><path d="M49 61 L51 61"/></g>'; return ''; }
+function _pisteroExprSVG(expr, helmetCol, skinCol, lentes){
   var col=(helmetCol||'#00aaff'), accent='#fc4c02', skin=(skinCol||'#f4c9a0');
   var base='<path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="'+skin+'"/>'
     +'<path d="M12 54 A38 36 0 0 1 88 54 Z" fill="'+col+'"/>'
@@ -2629,14 +2635,14 @@ function _pisteroExprSVG(expr, helmetCol, skinCol){
   else if(expr==='preocupado'){ eyes='<path d="M33 55 Q40 52 45 55" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M55 55 Q60 52 67 55" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+eO(40)+eO(60); mouth='<path d="M44 75 Q47 72 50 75 Q53 78 56 75" stroke="#7a4a2a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'; }
   else if(expr==='dormido'){ eyes=eC(40)+eC(60); mouth='<ellipse cx="50" cy="75" rx="2.4" ry="3" fill="#5a2f1a"/><text x="72" y="46" font-size="11" fill="#7fd0ff" font-family="sans-serif">z</text><text x="79" y="40" font-size="8" fill="#7fd0ff" font-family="sans-serif">z</text>'; }
   else { eyes=eO(40,true)+eO(60,true); mouth=SMILE; }
-  return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'+base+eyes+cheeks+mouth+'</svg>';
+  return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'+base+eyes+(lentes?_lentesSVG(lentes):'')+cheeks+mouth+'</svg>';
 }
 var _pisteroExprActual='feliz';
 var _pisteroMood=null;
 function _setExprPistero(expr){
   if(!expr) expr='feliz';
   _pisteroExprActual=expr;
-  var svg=_pisteroExprSVG(expr);
+  var svg=(typeof _pistOpts==='function')?_pisteroExprSVG(expr, _pistCascoCol(), _pistPielCol(), _pistOpts().lentes):_pisteroExprSVG(expr);
   var ids=['micBtn','esMic'];
   for(var i=0;i<ids.length;i++){ var b=document.getElementById(ids[i]); if(!b) continue; var c=b.querySelector('.orb-cara'); if(c) c.innerHTML=svg; }
   _aplicarMirada();
@@ -2786,7 +2792,22 @@ function gridHTML(items, selectedId, onclickName, multi){
     return '<div class="custom-option'+(sel?' selected':'')+(locked?' locked':'')+'" onclick="'+onclickName+'(\''+it.id+'\')">'+(locked?'<div class="lock-badge"><i class="fas fa-lock"></i> '+PRECIOS[it.id]+'✨</div>':'')+'<div class="check">OK</div>'+inner+'<div class="label">'+(it.brand?it.brand+' ':'')+it.name+'</div></div>';
   }).join('');
 }
-function initCustomization(){
+// ===== PERSONALIZACION DE PISTERO (v8.22): compone sobre la cara de frente. Reemplaza el personaje viejo.
+var PIST_CASCO=[{id:'azul',c:'#00aaff',n:'Azul'},{id:'naranja',c:'#fc4c02',n:'Naranja'},{id:'verde',c:'#5c8a3a',n:'Verde'},{id:'morado',c:'#7c3aed',n:'Morado'},{id:'rojo',c:'#e11d48',n:'Rojo'},{id:'negro',c:'#20242e',n:'Negro'},{id:'celeste',c:'#38bdf8',n:'Celeste'},{id:'dorado',c:'#d4a017',n:'Dorado'}];
+var PIST_PIEL=[{id:'claro',c:'#f4c9a0',n:'Claro'},{id:'medio',c:'#e8b48a',n:'Medio'},{id:'trigueno',c:'#d9a06b',n:'Trigueño'},{id:'moreno',c:'#c68642',n:'Moreno'},{id:'oscuro',c:'#8d5524',n:'Oscuro'}];
+var PIST_LENTES=[{id:'',n:'Sin lentes'},{id:'deportivas',n:'Deportivas'},{id:'redondas',n:'Redondas'},{id:'aviador',n:'Aviador'}];
+function _pistOpts(){ try{ return Object.assign({casco:'azul',piel:'claro',lentes:''}, JSON.parse(localStorage.getItem('lp_pist_'+(cu||'anon'))||'{}')); }catch(e){ return {casco:'azul',piel:'claro',lentes:''}; } }
+function _pistSet(k,v){ try{ var o=_pistOpts(); o[k]=v; localStorage.setItem('lp_pist_'+(cu||'anon'), JSON.stringify(o)); }catch(e){} if(cu){ try{ db.collection('users').doc(cu).set({pistCasco:_pistOpts().casco,pistPiel:_pistOpts().piel,pistLentes:_pistOpts().lentes},{merge:true}); }catch(e){} } renderPistCustom(); if(typeof updateCustomizePreview==='function') updateCustomizePreview(); if(typeof _setExprPistero==='function') _setExprPistero(_pisteroExprActual||'feliz'); if(typeof subscribeToUsers==='function' && !ghostMode){ try{ if(_miMarker&&mp){} }catch(e){} } }
+function _pistCascoCol(){ var o=_pistOpts(); var h=PIST_CASCO.find(function(x){return x.id===o.casco;}); return h?h.c:'#00aaff'; }
+function _pistPielCol(){ var o=_pistOpts(); var p=PIST_PIEL.find(function(x){return x.id===o.piel;}); return p?p.c:'#f4c9a0'; }
+function _pistoNuevo(expr){ var o=_pistOpts(); return _pisteroExprSVG(expr||'feliz', _pistCascoCol(), _pistPielCol(), o.lentes); }
+function _pistSwatch(inner,sel,onclick,label){ return '<div class="pist-sw'+(sel?' sel':'')+'" onclick="'+onclick+'" title="'+label+'"><div class="pist-sw-ico">'+inner+'</div><div class="pist-sw-lbl">'+label+'</div></div>'; }
+function renderPistCustom(){ var o=_pistOpts();
+  var gc=document.getElementById('pistCascoGrid'); if(gc) gc.innerHTML=PIST_CASCO.map(function(h){ return _pistSwatch(_pisteroExprSVG('feliz',h.c,_pistPielCol(),o.lentes),o.casco===h.id,"_pistSet('casco','"+h.id+"')",h.n); }).join('');
+  var gp=document.getElementById('pistPielGrid'); if(gp) gp.innerHTML=PIST_PIEL.map(function(p){ return _pistSwatch(_pisteroExprSVG('feliz',_pistCascoCol(),p.c,o.lentes),o.piel===p.id,"_pistSet('piel','"+p.id+"')",p.n); }).join('');
+  var gl=document.getElementById('pistLentesGrid'); if(gl) gl.innerHTML=PIST_LENTES.map(function(l){ return _pistSwatch(_pisteroExprSVG('feliz',_pistCascoCol(),_pistPielCol(),l.id),o.lentes===l.id,"_pistSet('lentes','"+l.id+"')",l.n); }).join('');
+}
+function initCustomization(){ try{ renderPistCustom(); }catch(e){}
   const map = [['helmetGrid',helmetDesigns,selectedHelmet,'selectHelmet',false],
                ['skinGrid',skinOptions,selectedSkin,'selectSkin',false],
                ['accessoryGrid',lensOptions,selectedLens,'toggleLens',false],
@@ -2863,8 +2884,8 @@ function selectLabios(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; }
 function selectVello(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedVello=id; initCustomization(); }
 function selectPeinado(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPeinado=id; initCustomization(); }
 function selectPanuelo(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPanuelo=id; initCustomization(); }
-function updatePreview(){ const p=document.getElementById('preview-svg'); if(p) p.innerHTML=_pisteroExprSVG('feliz', ((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===selectedHelmet;}))||{}).color||'#00aaff', '#f4c9a0'); const n=document.getElementById('characterNameDisplay'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
-function updateCustomizePreview(){ const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=_pisteroExprSVG('feliz', ((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===selectedHelmet;}))||{}).color||'#00aaff', '#f4c9a0'); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
+function updatePreview(){ const p=document.getElementById('preview-svg'); if(p) p.innerHTML=_pistoNuevo('feliz'); const n=document.getElementById('characterNameDisplay'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
+function updateCustomizePreview(){ const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=_pistoNuevo('feliz'); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
 function saveCustomization(){
   localStorage.setItem('lp_helmet_'+cu, selectedHelmet);
   localStorage.setItem('lp_lens_'+cu, selectedLens);
@@ -9957,7 +9978,7 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     for(i=1;i<coords.length;i++){ total+=_sbvHaversine(coords[i-1],coords[i]); cum.push(total); }
     if(total<=0){ if(typeof h==='function') h('El recorrido es demasiado corto para animarlo.'); detenerSobrevuelo(); if(onEnd)onEnd(); return; }
     // La carita de Pistero (nuevo, expresivo) se mueve por la ruta, sonriendo. Sin circulo; sombra fina para contraste.
-    var svg=_pisteroExprSVG('feliz').replace('<svg ','<svg width="44" height="37" ');
+    var svg=((typeof _pistoNuevo==='function')?_pistoNuevo('feliz'):_pisteroExprSVG('feliz')).replace('<svg ','<svg width="44" height="37" ');
     var iconHtml='<div style="width:44px;height:37px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))">'+svg+'</div>';
     _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:iconHtml}}).addTo(mp);
     try{ mp.fitBounds(_sbvLine.getBounds().pad(0.18)); }catch(e){}
