@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.07'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.08'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4048,6 +4048,7 @@ function ug(p){
   if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _sumarKmModo(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
+  if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);
   currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
   if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ const plat=Math.round(la*100)/100, plon=Math.round(lo*100)/100; /* precisión ~1 km: privacidad, no revela tu ubicación exacta */ db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); lastPos={lat:la,lon:lo}; } }
@@ -4103,6 +4104,29 @@ function _dibujarZonasRojas(){
       }catch(e){}
     });
   }catch(e){}
+}
+// ===== COFRES OCULTOS: premios sorpresa en tramos aleatorios y poco recorridos.
+// DORMIDO hasta LP_COFRES_ACTIVAR usuarios. Los cofres se definen por hash de la celda
+// del mapa (aleatorio pero consistente, impredecible). 1 de cada LP_COFRE_RAREZA celdas.
+// Cada cofre se reclama UNA vez por usuario -> repetir tu ruta no sirve, explorar si.
+var LP_COFRES_ACTIVAR=3000, LP_COFRE_CELDA=0.0045, LP_COFRE_RAREZA=400;
+var _cofresActivos=false, _cofreCheckTs=0;
+async function _cargarEstadoCofres(){ try{ if(typeof _totalUsuariosSuscritos!=='function') return; var t=await _totalUsuariosSuscritos(); _cofresActivos=(t>=LP_COFRES_ACTIVAR); }catch(e){} }
+function _hashCelda(str){ var h=5381; for(var i=0;i<str.length;i++){ h=((h<<5)+h+str.charCodeAt(i))>>>0; } return h; }
+function _cofreEnCelda(la,lo){ var gy=Math.round(la/LP_COFRE_CELDA), gx=Math.round(lo/LP_COFRE_CELDA); var id='c:'+gy+':'+gx; var hh=_hashCelda(id+'|librepedal-cofre-v1'); if(hh % LP_COFRE_RAREZA !== 0) return null; return { id:id, lat:gy*LP_COFRE_CELDA, lon:gx*LP_COFRE_CELDA, premio: 20 + (hh % 9)*10 }; }
+function _cofresReclamados(){ try{ return JSON.parse(localStorage.getItem('lp_cofres_'+(cu||'anon'))||'[]'); }catch(e){ return []; } }
+function _reclamarCofre(id){ try{ var a=_cofresReclamados(); if(a.indexOf(id)<0){ a.push(id); localStorage.setItem('lp_cofres_'+(cu||'anon'), JSON.stringify(a.slice(-500))); } }catch(e){} }
+function _chequearCofre(la,lo,sp){
+  if(!_cofresActivos || !(la&&lo)) return;
+  if(!(sp>4 && sp<50)) return; // velocidad de bici plausible: no parado, no auto
+  var now=Date.now(); if(now-_cofreCheckTs<4000) return; _cofreCheckTs=now;
+  var cof=_cofreEnCelda(la,lo); if(!cof) return;
+  if(typeof gd2==='function' && gd2(la,lo,cof.lat,cof.lon)>0.25) return; // dentro de ~250m del centro
+  if(_cofresReclamados().indexOf(cof.id)>=0) return;
+  _reclamarCofre(cof.id);
+  try{ _pisteroMood='contento'; }catch(e){}
+  try{ _ganarDarma(cof.premio); }catch(e){}
+  if(typeof h==='function') h('¡Sorpresa! Encontraste un cofre oculto en un rincón poco pedaleado. Te ganaste '+cof.premio+' de Darma. Sigue explorando, hay más escondidos por ahí.', (typeof PRIO_VOZ!=='undefined')?PRIO_VOZ.INFO:2);
 }
 function updateSpeedStatus(speed){
   const el=document.getElementById('speedStatus'); if(!el) return;
@@ -4880,7 +4904,7 @@ async function im(){
     // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
     mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222"><i class="fas fa-location-dot"></i> Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer"><i class="fas fa-compass"></i> Navegar aquí</button>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
-    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); });
+    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); });
   }catch(err){
     mp=null;
     _mapaFalloVisible('No se pudo iniciar el mapa: '+(err&&err.message?err.message:'error desconocido'));
