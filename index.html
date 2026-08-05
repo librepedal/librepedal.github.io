@@ -1380,7 +1380,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.06'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.07'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4090,6 +4090,20 @@ function _chequearZonaRoja(la,lo){
     }
   }catch(e){}
 }
+var _zrMarkers=[];
+function _dibujarZonasRojas(){
+  if(!mp || typeof ZONAS_ROJAS==='undefined' || typeof mlMarker!=='function') return;
+  try{
+    _zrMarkers.forEach(function(m){ try{ mp.removeLayer(m); }catch(e){} }); _zrMarkers=[];
+    ZONAS_ROJAS.forEach(function(z){
+      try{
+        var mk=mlMarker([z.lat,z.lon],{icon:{html:lpBadgeHTML('<i class="fas fa-triangle-exclamation" style="color:#ff6b6b"></i>','#ff3b3b')}}).addTo(mp)
+          .bindPopup('<b style="color:#ff5a5a"><i class="fas fa-triangle-exclamation"></i> Zona de riesgo</b><br>'+escapeHTML(z.n)+'<br><small style="color:#888">Sector marcado como inseguro para ciclistas. Mantente atento y evita detenerte.</small>');
+        _zrMarkers.push(mk);
+      }catch(e){}
+    });
+  }catch(e){}
+}
 function updateSpeedStatus(speed){
   const el=document.getElementById('speedStatus'); if(!el) return;
   const _u=_ritmoUmbrales();
@@ -4866,7 +4880,7 @@ async function im(){
     // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
     mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222"><i class="fas fa-location-dot"></i> Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer"><i class="fas fa-compass"></i> Navegar aquí</button>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
-    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); });
+    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); });
   }catch(err){
     mp=null;
     _mapaFalloVisible('No se pudo iniciar el mapa: '+(err&&err.message?err.message:'error desconocido'));
