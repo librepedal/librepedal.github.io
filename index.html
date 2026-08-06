@@ -1495,8 +1495,8 @@ async function _enviarLinkMagico(email){
 // Canjea la sesión Firebase YA verificada (por el link) por un token uid==cu del Worker.
 async function _canjearIdTokenPorSesion(){
   const u=firebase.auth().currentUser; if(!u) throw new Error('sin sesión Firebase');
-  const idToken=await u.getIdToken(true);
-  const r=await fetch(AUTH_TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:idToken})});
+  const idJwt=await u.getIdToken(true);
+  const r=await fetch(AUTH_TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:idJwt})});
   const data=await r.json().catch(function(){return null;});
   if(!r.ok||!data||!data.token) throw new Error((data&&data.error)||'no se pudo verificar el correo');
   await firebase.auth().signInWithCustomToken(data.token);
