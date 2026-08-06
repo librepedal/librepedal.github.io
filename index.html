@@ -36,6 +36,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -634,7 +635,8 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 </div>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Únete a la comunidad ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
-<button type="button" onclick="_entrarConGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">
+<div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
+<button type="button" id="gbtnFallback" onclick="_entrarConGoogle()" style="display:none;width:100%;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.5 26.9 35.5 24 35.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.6 5.6C41.9 36.6 44 30.9 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
   Entrar con Google
 </button>
@@ -1410,7 +1412,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.33'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.34'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1556,6 +1558,37 @@ async function _completarDesdeGoogle(user){
     var a=document.getElementById('auth'); if(a) a.style.display='flex'; rm(MG); fg('todos'); initCustomization();
   }
 }
+
+// GOOGLE MODERNO (GIS): obtiene el credential directo, sin popup/redirect que rebote
+// en dominio propio + app instalada. Entra con signInWithCredential (llamada directa).
+var _GIS_CLIENT_ID='857811917976-cqqkdjr9sk5te2mb1hb4lk0ri7iufsc8.apps.googleusercontent.com';
+async function _gisCallback(resp){
+  try{
+    if(!resp || !resp.credential) return;
+    if(typeof showLoading==='function') showLoading('Entrando con Google...');
+    var cred=firebase.auth.GoogleAuthProvider.credential(resp.credential);
+    var res=await firebase.auth().signInWithCredential(cred);
+    if(res && res.user){ await _completarDesdeGoogle(res.user); }
+    else if(typeof hideLoading==='function'){ hideLoading(); }
+  }catch(err){
+    if(typeof hideLoading==='function') hideLoading();
+    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+  }
+}
+function _initGIS(n){
+  n=n||0;
+  try{
+    if(window.google && google.accounts && google.accounts.id){
+      google.accounts.id.initialize({ client_id:_GIS_CLIENT_ID, callback:_gisCallback, auto_select:false, cancel_on_tap_outside:true });
+      var cont=document.getElementById('gbtn');
+      if(cont){ cont.innerHTML=''; google.accounts.id.renderButton(cont, { type:'standard', theme:'filled_blue', size:'large', text:'continue_with', shape:'pill', logo_alignment:'center', width:280 }); }
+      return;
+    }
+  }catch(e){}
+  if(n<50){ setTimeout(function(){ _initGIS(n+1); }, 150); }
+  else { var fb=document.getElementById('gbtnFallback'); if(fb) fb.style.display='flex'; } // GIS no cargó: botón de respaldo
+}
+try{ _initGIS(0); }catch(e){}
 
 // Arranque de auth: NO pisar con login anónimo una sesión verificada persistida.
 (function(){
