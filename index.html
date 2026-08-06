@@ -1398,7 +1398,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.28'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.29'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6034,7 +6034,7 @@ async function sincronizarDiarioNube(){
     });
   }catch(e){}
 }
-function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null, extras:typeof selectedExtras!=='undefined'?selectedExtras:[], piel:typeof selectedPiel!=='undefined'?selectedPiel:null, ojos:typeof selectedOjos!=='undefined'?selectedOjos:null, labios:typeof selectedLabios!=='undefined'?selectedLabios:null, vello:typeof selectedVello!=='undefined'?selectedVello:null, peinado:typeof selectedPeinado!=='undefined'?selectedPeinado:null, panuelo:typeof selectedPanuelo!=='undefined'?selectedPanuelo:null, unlocked:(typeof getDesbloqueados==='function'?getDesbloqueados():[])}, stats:us, rutas:(typeof rutasLocales==='function'?rutasLocales():[]), diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){} }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h('Respaldo descargado: tus rutas, diario, perfil y estadísticas. Guárdalo a salvo.'); }
+function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null, extras:typeof selectedExtras!=='undefined'?selectedExtras:[], piel:typeof selectedPiel!=='undefined'?selectedPiel:null, ojos:typeof selectedOjos!=='undefined'?selectedOjos:null, labios:typeof selectedLabios!=='undefined'?selectedLabios:null, vello:typeof selectedVello!=='undefined'?selectedVello:null, peinado:typeof selectedPeinado!=='undefined'?selectedPeinado:null, panuelo:typeof selectedPanuelo!=='undefined'?selectedPanuelo:null, unlocked:(typeof getDesbloqueados==='function'?getDesbloqueados():[])}, stats:us, pistOpts:(function(){try{return JSON.parse(localStorage.getItem('lp_pist_'+(cu||'anon'))||'null');}catch(e){return null;}})(), rutas:(typeof rutasLocales==='function'?rutasLocales():[]), diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){} }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h('Respaldo descargado: tus rutas, diario, perfil y estadísticas. Guárdalo a salvo.'); }
 function importarMisDatos(input){
   const f=input.files&&input.files[0]; if(!f) return;
   const r=new FileReader();
@@ -6042,6 +6042,7 @@ function importarMisDatos(input){
     try{
       const data=JSON.parse(r.result);
       if(!data || (data.app && data.app!=='Libre Pedal')){ lpAviso('Ese archivo no es un respaldo de Libre Pedal.'); input.value=''; return; }
+      if(data.pistOpts){ try{ localStorage.setItem('lp_pist_'+(cu||'anon'), JSON.stringify(data.pistOpts)); if(typeof renderPistCustom==='function') renderPistCustom(); if(typeof updateCustomizePreview==='function') updateCustomizePreview(); }catch(e){} }
       let nR=0, nD=0;
       // RUTAS: se suman a las que ya tienes (sin duplicar por localId) — no pierdes nada.
       if(Array.isArray(data.rutas) && data.rutas.length && typeof rutasLocales==='function'){
