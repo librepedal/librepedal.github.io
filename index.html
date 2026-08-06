@@ -608,7 +608,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 #abanicoReporte .abn-op:active{transform:scale(.94)}
 #abanicoReporte .abn-e{font-size:1.15rem}
 </style>
-<form id="auth" onsubmit="reg(event)">
+<form id="auth" onsubmit="enviarLinkMagico(event)">
 <div class="auth-box">
 <div class="lp-logo-wrap">
   <svg class="lp-wheel" viewBox="0 0 100 100" aria-hidden="true">
@@ -659,8 +659,9 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 <option value="pr">🇵🇷 Puerto Rico</option>
 <option value="us"><i class="fas fa-globe"></i> Otro / Internacional</option>
 </select>
-<button type="submit">Entrar</button>
-<p style="color:#7d8ba0;font-size:0.68rem;margin-top:8px;text-align:center">Al entrar aceptas los <a href="terminos.html" target="_blank" style="color:var(--p)">Términos</a> y la <a href="privacidad.html" target="_blank" style="color:var(--p)">Política de Privacidad</a>.</p>
+<button type="submit"><i class="fas fa-paper-plane"></i> Enviarme el enlace</button>
+<p style="color:#7d8ba0;font-size:0.72rem;margin-top:8px;text-align:center">Te llega un enlace al correo para entrar seguro (sin contraseña).</p>
+<p style="color:#7d8ba0;font-size:0.68rem;margin-top:6px;text-align:center">Al entrar aceptas los <a href="terminos.html" target="_blank" style="color:var(--p)">Términos</a> y la <a href="privacidad.html" target="_blank" style="color:var(--p)">Política de Privacidad</a>.</p>
 <div style="display:none" aria-hidden="true">
 <div class="character-preview-large">
   <svg id="preview-svg" viewBox="0 0 200 200"></svg>
@@ -1402,7 +1403,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.30'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.31'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1478,20 +1479,53 @@ window.lpUID = null;
 // ya se guarda en cada documento desde siempre) sin tener que re-escribir nada.
 // Si falla (sin señal, Worker caído) la sesión anónima ya activa sigue funcionando
 // exactamente igual que hasta ahora — no bloquea ni rompe el login.
-const AUTH_TOKEN_URL='https://librepedal-auth.librepedal.workers.dev';
+// En local (pruebas) apunta al Worker de staging; en producción, al de siempre.
+const AUTH_TOKEN_URL = (location.hostname==='localhost'||location.hostname==='127.0.0.1')
+  ? 'https://librepedal-auth-staging.librepedal.workers.dev'
+  : 'https://librepedal-auth.librepedal.workers.dev';
+const _EMAIL_LINK_KEY='lp_pending_email';
+function _actionCodeSettings(){ return { url: location.origin + location.pathname, handleCodeInApp: true }; }
+
+// Paso 1 del login: manda el enlace mágico al correo (Firebase entrega el correo).
+async function _enviarLinkMagico(email){
+  await firebase.auth().sendSignInLinkToEmail(email, _actionCodeSettings());
+  try{ localStorage.setItem(_EMAIL_LINK_KEY, email); }catch(e){}
+}
+
+// Canjea la sesión Firebase YA verificada (por el link) por un token uid==cu del Worker.
+async function _canjearIdTokenPorSesion(){
+  const u=firebase.auth().currentUser; if(!u) throw new Error('sin sesión Firebase');
+  const idToken=await u.getIdToken(true);
+  const r=await fetch(AUTH_TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:idToken})});
+  const data=await r.json().catch(function(){return null;});
+  if(!r.ok||!data||!data.token) throw new Error((data&&data.error)||'no se pudo verificar el correo');
+  await firebase.auth().signInWithCustomToken(data.token);
+  return data.cu;
+}
+
+// Compat con el onload de sesión existente: si Firebase ya tiene una sesión verificada
+// (con correo, no anónima), la canjea a uid==cu; si no, no hace nada — el usuario
+// verificará con el link cuando corresponda. Ya NO manda {cu} sin verificar (eso era el hueco).
 async function _actualizarAuthConTokenPersonalizado(cuVal){
-  if(!cuVal) return;
   try{
-    const r=await fetch(AUTH_TOKEN_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cu:cuVal})});
-    const data=await r.json();
-    if(data && data.token){ await firebase.auth().signInWithCustomToken(data.token); }
+    const u=firebase.auth().currentUser;
+    if(u && !u.isAnonymous && u.uid===cuVal) return;              // ya verificado y estable
+    if(u && u.email && !u.isAnonymous){ await _canjearIdTokenPorSesion(); }
   }catch(e){}
 }
+
+// Arranque de auth: NO pisar con login anónimo una sesión verificada persistida.
 (function(){
   try{
     if(firebase.auth){
-      firebase.auth().onAuthStateChanged(function(u){ window.lpUID = u ? u.uid : null; });
-      firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth anónimo no disponible aún:', e && e.code); });
+      var _primera=true;
+      firebase.auth().onAuthStateChanged(function(u){
+        window.lpUID = u ? u.uid : null;
+        if(_primera){
+          _primera=false;
+          if(!u){ firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth anónimo no disponible aún:', e && e.code); }); }
+        }
+      });
     }
   }catch(e){}
 })();
@@ -3463,6 +3497,29 @@ async function actualizarZona(lat,lon){
   }catch(e){}
 }
 
+// Vuelta del correo: verifica el link, canjea el idToken por el token uid==cu y arma la sesión.
+async function _completarDesdeLinkMagico(){
+  var authEl=document.getElementById('auth');
+  var email='';
+  try{ email=localStorage.getItem(_EMAIL_LINK_KEY)||''; }catch(e){}
+  if(!email){ try{ email=(window.prompt('Confirma tu correo para completar el ingreso:')||'').trim(); }catch(e){} }
+  if(!email){ if(authEl) authEl.style.display='flex'; rm(MG); fg('todos'); initCustomization(); return; }
+  try{
+    if(typeof showLoading==='function') showLoading('Verificando tu correo...');
+    await firebase.auth().signInWithEmailLink(email, location.href);
+    var cuVal=await _canjearIdTokenPorSesion();
+    var nombre=localStorage.getItem('lp_pending_nombre')||localStorage.getItem('lp_nombre_'+cuVal)||'Ciclista';
+    try{ history.replaceState(null,'',location.origin+location.pathname); }catch(e){}
+    try{ localStorage.removeItem(_EMAIL_LINK_KEY); }catch(e){}
+    if(typeof hideLoading==='function') hideLoading();
+    await _completarLoginVerificado(cuVal, nombre, email);
+  }catch(err){
+    if(typeof hideLoading==='function') hideLoading();
+    lpAviso('No se pudo completar el ingreso: '+((err&&err.message)||err)+'. Pide el enlace de nuevo.');
+    if(authEl) authEl.style.display='flex'; rm(MG); fg('todos'); initCustomization();
+  }
+}
+
 window.onload = async function(){
   const sesion = localStorage.getItem('lp_session');
   initVoz();
@@ -3475,6 +3532,11 @@ window.onload = async function(){
   // Espera a saber si la app se va a recargar sola por una actualización (máx. 1.5s)
   // antes de activar GPS/voz de arranque — si se recarga, esta instancia nunca sigue.
   try{ await Promise.race([window.__lpListoParaArrancar, new Promise(function(r){ setTimeout(r,1500); })]); }catch(e){}
+  // Login por link mágico: si el usuario volvió del correo, completar el ingreso y salir.
+  if(typeof firebase!=='undefined' && firebase.auth && firebase.auth().isSignInWithEmailLink && firebase.auth().isSignInWithEmailLink(location.href)){
+    await _completarDesdeLinkMagico();
+    return;
+  }
   if(sesion){
     cu=sesion; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador();
     _actualizarAuthConTokenPersonalizado(cu); // no bloquea el resto del arranque
@@ -3601,16 +3663,39 @@ function cadenaCoast(){ _cad.coast=true; } // soltaste: la cadena desacelera y s
 function sonidoCadenaIniciar(){ cadenaIniciar(0.4); }
 function sonidoCadenaDetener(){ cadenaCoast(); }
 
-async function reg(e){
+// Paso 1: el formulario ya no entra directo — manda el enlace mágico al correo.
+async function enviarLinkMagico(e){
   e.preventDefault();
   const nombre=document.getElementById('nombre-input').value.trim();
   const e_val=document.getElementById('em').value.trim();
   if(!nombre) return lpAviso("Ingresa tu nombre");
   if(!e_val||!e_val.includes('@')) return lpAviso("El correo es obligatorio");
-  cu=e_val.replace(/[^a-zA-Z0-9]/g,'_'); if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador(); if(typeof _mostrarBienvenidaFundador==='function') setTimeout(_mostrarBienvenidaFundador,900);
-  await _actualizarAuthConTokenPersonalizado(cu);
-  nombreUsuario=nombre;
   const paisSel=(document.getElementById('pais-input')||{}).value||'auto';
+  try{ localStorage.setItem('lp_pending_nombre',nombre); localStorage.setItem('lp_pending_pais',paisSel); }catch(_e){}
+  const btn=e.target.querySelector('button[type=submit]');
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
+  try{
+    await _enviarLinkMagico(e_val);
+    _mostrarPantallaRevisaCorreo(e_val);
+  }catch(err){
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane"></i> Enviarme el enlace'; }
+    lpAviso('No se pudo enviar el enlace: '+((err&&err.message)||err));
+  }
+}
+function _mostrarPantallaRevisaCorreo(email){
+  var box=document.querySelector('#auth .auth-box'); if(!box){ lpAviso('Enlace enviado a '+email); return; }
+  box.innerHTML='<div style="text-align:center;padding:14px 6px">'
+    +'<div style="font-size:2.6rem;color:var(--p);margin-bottom:10px"><i class="fas fa-envelope-circle-check"></i></div>'
+    +'<h2 style="font-size:1.1rem;margin:0 0 8px;color:#e7edf6">Revisa tu correo</h2>'
+    +'<p style="font-size:0.88rem;color:#9fb3c8;line-height:1.55">Te enviamos un enlace a <b style="color:#dfe7ff">'+escapeHTML(email)+'</b>.<br>Ábrelo desde este teléfono para entrar. Puede tardar un par de minutos — revisa también spam.</p>'
+    +'<p style="font-size:0.76rem;color:#7d8ba0;margin-top:14px">¿No llegó? <a href="#" onclick="location.reload();return false" style="color:var(--p);font-weight:700">Reintentar</a></p>'
+    +'</div>';
+}
+// Paso 2: se llama al volver del correo, con la sesión YA verificada y el token uid==cu listo.
+async function _completarLoginVerificado(cuVal, nombre, e_val){
+  cu=cuVal; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador(); if(typeof _mostrarBienvenidaFundador==='function') setTimeout(_mostrarBienvenidaFundador,900);
+  nombreUsuario=nombre;
+  const paisSel=localStorage.getItem('lp_pending_pais')||'auto';
   if(paisSel!=='auto'){ paisUsuario=paisSel; } else { paisUsuario=null; }
   try{ localStorage.setItem('lp_pais',paisUsuario||''); }catch(e){}
   localStorage.setItem('lp_session',cu);
