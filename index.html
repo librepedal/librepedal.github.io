@@ -634,6 +634,11 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 </div>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Únete a la comunidad ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
+<button type="button" onclick="_entrarConGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">
+  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.5 26.9 35.5 24 35.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.6 5.6C41.9 36.6 44 30.9 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
+  Entrar con Google
+</button>
+<div style="display:flex;align-items:center;gap:10px;margin:14px 0 8px;color:#7d8ba0;font-size:0.72rem"><span style="flex:1;height:1px;background:rgba(255,255,255,.12)"></span>o con tu correo<span style="flex:1;height:1px;background:rgba(255,255,255,.12)"></span></div>
 <div style="margin-bottom:14px;text-align:left">
   <p style="color:var(--g);font-size:0.78rem;font-weight:800;margin:0 0 8px">¿Cómo te mueves? <span style="color:#7d8ba0;font-weight:400">— la app se acomoda a tu modo, y lo cambias cuando quieras</span></p>
   <div class="helmet-grid" id="modoRegistroGrid"></div>
@@ -1403,7 +1408,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.31'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.32'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1512,6 +1517,32 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
     if(u && !u.isAnonymous && u.uid===cuVal) return;              // ya verificado y estable
     if(u && u.email && !u.isAnonymous){ await _canjearIdTokenPorSesion(); }
   }catch(e){}
+}
+
+// ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
+async function _entrarConGoogle(){
+  try{
+    var provider=new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt:'select_account' });
+    if(typeof showLoading==='function') showLoading('Abriendo Google...');
+    await firebase.auth().signInWithRedirect(provider); // navega fuera; vuelve solo
+  }catch(err){ if(typeof hideLoading==='function') hideLoading(); lpAviso('No se pudo abrir Google: '+((err&&err.message)||err)); }
+}
+// Vuelta de Google: canjea el idToken verificado por el token uid==cu y arma la sesión.
+async function _completarDesdeGoogle(user){
+  try{
+    if(typeof showLoading==='function') showLoading('Entrando con Google...');
+    var cuVal=await _canjearIdTokenPorSesion();
+    var email=(user&&user.email)||'';
+    var nombre=(user&&user.displayName)||localStorage.getItem('lp_nombre_'+cuVal)||'Ciclista';
+    try{ history.replaceState(null,'',location.origin+location.pathname); }catch(e){}
+    if(typeof hideLoading==='function') hideLoading();
+    await _completarLoginVerificado(cuVal, nombre, email);
+  }catch(err){
+    if(typeof hideLoading==='function') hideLoading();
+    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+    var a=document.getElementById('auth'); if(a) a.style.display='flex'; rm(MG); fg('todos'); initCustomization();
+  }
 }
 
 // Arranque de auth: NO pisar con login anónimo una sesión verificada persistida.
@@ -3532,7 +3563,14 @@ window.onload = async function(){
   // Espera a saber si la app se va a recargar sola por una actualización (máx. 1.5s)
   // antes de activar GPS/voz de arranque — si se recarga, esta instancia nunca sigue.
   try{ await Promise.race([window.__lpListoParaArrancar, new Promise(function(r){ setTimeout(r,1500); })]); }catch(e){}
-  // Login por link mágico: si el usuario volvió del correo, completar el ingreso y salir.
+  // Vuelta de Google (redirect): si el usuario entró con Google, completar y salir.
+  try{
+    if(typeof firebase!=='undefined' && firebase.auth){
+      var _gr=await firebase.auth().getRedirectResult();
+      if(_gr && _gr.user){ await _completarDesdeGoogle(_gr.user); return; }
+    }
+  }catch(_eg){ console.warn('getRedirectResult', _eg && _eg.code); }
+  // Login por link mágico (respaldo): si el usuario volvió del correo, completar y salir.
   if(typeof firebase!=='undefined' && firebase.auth && firebase.auth().isSignInWithEmailLink && firebase.auth().isSignInWithEmailLink(location.href)){
     await _completarDesdeLinkMagico();
     return;
