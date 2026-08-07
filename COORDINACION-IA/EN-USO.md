@@ -31,6 +31,24 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ## Estado actual
 
+LIBRE — sesión Thunderobot (Kpone), 2026-08-07. Sincronicé `index.html`/`sw.js`/`version.txt`
+con lo que YA estaba corriendo en producción (v8.36) — este repo estaba pegado en v7.50 desde
+el 29-jul, sin commits del trabajo directo a Cloudflare de las sesiones siguientes (login con
+Google, rediseño de mapa v7.50→v8.x, etc. — todo eso ya estaba en producción, solo faltaba en
+git). Además apliqué 2 fixes reales encima, ya probados y desplegados:
+· El botón "Entrar con Google" usaba el widget nuevo de Google (GIS/FedCM) → daba
+  `origin_mismatch` sin importar la config de Cloud Console/Firebase (ambas estaban bien).
+  Desactivado: ahora usa directo el botón blanco de respaldo (`_entrarConGoogle`, ya existía).
+· `_entrarConGoogle` intentaba `signInWithPopup` primero → se colgaba para siempre en Chrome
+  (Cross-Origin-Opener-Policy de accounts.google.com bloquea el postMessage de vuelta sin
+  rechazar la promesa, así que nunca caía al catch/fallback). Cambiado a `signInWithRedirect`
+  directo, sin popup — probado end-to-end, entra bien.
+Motivo de este push: Inty pidió que los celulares con la app YA INSTALADA (apk viejo, no
+recibe estos cambios por la web) también reciban el arreglo — necesita que este commit
+dispare `build-apk.yml` para tener un .apk nuevo para reinstalar. NO toqué nada de Android
+nativo/capacitor.config, ni el keystore (sigue pendiente, ver PENDIENTES.md), ni ningún otro
+archivo. Si tocas `index.html` de nuevo, ya deberías partir de v8.36, no de v7.50.
+
 📋 **Thunderobot: lee `ESTADO-SESION-LENOVO-2026-07-21.md`** — te puse al día de TODO
 (APK resuelto y pusheado, Capone ya tiene el asistente de avisos, el Thunder no ejecuta por
 SSH, y el motor de voz elegido). — sesión Lenovo.
