@@ -1412,7 +1412,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.36'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.43'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1427,6 +1427,10 @@ function _fetchT(url, ms, opts){ let c=null,t=null; try{ c=new AbortController()
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
 // se sentía cada vez que la app se actualizaba sola en pleno arranque.
 window.__lpListoParaArrancar = new Promise(function(resolve){ window.__lpResolverArranque = resolve; });
+// Se resuelve cuando terminó de chequearse getRedirectResult() (vuelta de Google) en
+// window.onload, haya encontrado usuario o no. El auto-login anónimo de más abajo
+// espera esto antes de decidir, para no pisar una sesión real que recién se confirmó.
+window.__lpRedirectListo = new Promise(function(resolve){ window.__lpResolverRedirect = resolve; });
 // Hay OTRO mecanismo de auto-actualización totalmente aparte (el controllerchange
 // del Service Worker, más abajo) que también puede disparar su propio reload. Cada
 // uno por separado ya evita su propio loop infinito, pero no se coordinaban entre
@@ -1465,7 +1469,7 @@ async function forzarActualizacion(){
 }
 const firebaseConfig = {
   apiKey: "AIzaSyBIhhvyhRR0ekVmOXmVDx7C_J-TBfVGCbQ",
-  authDomain: "librepedal-cb983.firebaseapp.com",
+  authDomain: "librepedal.cl",
   projectId: "librepedal-cb983",
   storageBucket: "librepedal-cb983.firebasestorage.app",
   messagingSenderId: "857811917976",
@@ -1502,13 +1506,24 @@ async function _enviarLinkMagico(email){
 }
 
 // Canjea la sesión Firebase YA verificada (por el link) por un token uid==cu del Worker.
+function _lpDbg(ev,extra){
+  try{
+    var arr=JSON.parse(localStorage.getItem('lpFullTrace')||'[]');
+    arr.push(Object.assign({t:Date.now(),ev:ev},extra||{}));
+    localStorage.setItem('lpFullTrace', JSON.stringify(arr));
+  }catch(e){}
+}
 async function _canjearIdTokenPorSesion(){
-  const u=firebase.auth().currentUser; if(!u) throw new Error('sin sesión Firebase');
+  _lpDbg('canjear:start');
+  const u=firebase.auth().currentUser; if(!u){ _lpDbg('canjear:sin-user'); throw new Error('sin sesión Firebase'); }
   const idJwt=await u.getIdToken(true);
+  _lpDbg('canjear:tengo-idJwt', {len: idJwt ? idJwt.length : 0});
   const r=await fetch(AUTH_TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:idJwt})});
   const data=await r.json().catch(function(){return null;});
+  _lpDbg('canjear:respuesta', {status:r.status, ok:r.ok, data: data});
   if(!r.ok||!data||!data.token) throw new Error((data&&data.error)||'no se pudo verificar el correo');
   await firebase.auth().signInWithCustomToken(data.token);
+  _lpDbg('canjear:signInWithCustomToken-OK');
   return data.cu;
 }
 
@@ -1525,21 +1540,59 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
 
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
 async function _entrarConGoogle(){
-  // Redirect directo (sin popup): signInWithPopup quedaba colgado en Chrome por el
-  // Cross-Origin-Opener-Policy que accounts.google.com aplica a la ventana emergente
-  // (bloquea el postMessage de vuelta sin rechazar la promesa, así que nunca caía al
-  // catch ni al fallback). El redirect no depende de postMessage entre ventanas.
+  // HISTORIAL de este botón (para quien lo toque después, que no repita el mismo camino):
+  // 1) signInWithPopup solo: se colgaba en Chrome por Cross-Origin-Opener-Policy de
+  //    accounts.google.com (bloquea el postMessage de vuelta sin rechazar la promesa).
+  // 2) signInWithRedirect directo (reemplazo del punto 1): PROBADO EN VIVO varias veces
+  //    con getRedirectResult() instrumentado — vuelve SIEMPRE {credential:null,user:null},
+  //    incluso justo después de un login real completo en Google. El auth state nunca
+  //    llega a tener el usuario real ni un instante (confirmado con onAuthStateChanged
+  //    logueado paso a paso). No es un problema de timing ni de nuestro código de arranque:
+  //    Firebase nunca recibe de vuelta la sesión por este camino, en este navegador/entorno.
+  // 3) ESTE (actual): no dependemos de que NINGUNA promesa se resuelva con el usuario.
+  //    Escuchamos onAuthStateChanged directamente — sea cual sea el mecanismo interno que
+  //    termine poniendo un usuario real (no-anónimo, con email) en Firebase, lo agarramos
+  //    ahí. signInWithPopup sigue siendo el disparador (si cuelga por COOP, dejamos el
+  //    listener vivo de todos modos por si el estado sí cambió por dentro); si la promesa
+  //    truena por popup bloqueado, caemos a signInWithRedirect como último recurso.
   var provider=new firebase.auth.GoogleAuthProvider();
+  if(typeof showLoading==='function') showLoading('Entrando con Google...');
+  var yaCompletado=false;
+  var unsub=firebase.auth().onAuthStateChanged(function(u){
+    if(!yaCompletado && u && !u.isAnonymous && u.email){
+      yaCompletado=true;
+      try{ unsub(); }catch(e){}
+      _completarDesdeGoogle(u);
+    }
+  });
+  setTimeout(function(){ if(!yaCompletado && typeof hideLoading==='function') hideLoading(); }, 15000);
   try{
-    if(typeof showLoading==='function') showLoading('Entrando con Google...');
-    await firebase.auth().signInWithRedirect(provider);
+    var res=await firebase.auth().signInWithPopup(provider);
+    if(res && res.user && !yaCompletado){
+      yaCompletado=true;
+      try{ unsub(); }catch(e){}
+      await _completarDesdeGoogle(res.user);
+    }
   }catch(err){
-    if(typeof hideLoading==='function') hideLoading();
-    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+    var code=(err&&err.code)||'';
+    if(code==='auth/popup-closed-by-user'||code==='auth/cancelled-popup-request'){
+      try{ unsub(); }catch(e){}
+      if(typeof hideLoading==='function') hideLoading();
+      return;
+    }
+    if(code.indexOf('popup')>-1||code==='auth/operation-not-supported-in-this-environment'){
+      try{ await firebase.auth().signInWithRedirect(provider); }
+      catch(e2){ try{ unsub(); }catch(e){} if(typeof hideLoading==='function') hideLoading(); lpAviso('No se pudo abrir Google: '+((e2&&e2.message)||e2)); }
+      return; // el listener sigue vivo por si igual completa; window.onload también revisa el retorno
+    }
+    // Cualquier otro código (incluido lo que deja colgado el COOP): NO apagamos el listener,
+    // puede que el auth state sí haya cambiado por dentro pese al error de la promesa.
+    console.warn('signInWithPopup no concluyó limpio, el listener de auth state sigue activo:', code);
   }
 }
 // Vuelta de Google: canjea el idToken verificado por el token uid==cu y arma la sesión.
 async function _completarDesdeGoogle(user){
+  _lpDbg('completarDesdeGoogle:start', {email: user && user.email});
   try{
     if(typeof showLoading==='function') showLoading('Entrando con Google...');
     var cuVal=await _canjearIdTokenPorSesion();
@@ -1547,8 +1600,11 @@ async function _completarDesdeGoogle(user){
     var nombre=(user&&user.displayName)||localStorage.getItem('lp_nombre_'+cuVal)||'Ciclista';
     try{ history.replaceState(null,'',location.origin+location.pathname); }catch(e){}
     if(typeof hideLoading==='function') hideLoading();
+    _lpDbg('completarDesdeGoogle:antes-de-completarLoginVerificado', {cuVal:cuVal});
     await _completarLoginVerificado(cuVal, nombre, email);
+    _lpDbg('completarDesdeGoogle:OK-FINAL', {hasSession: !!localStorage.getItem('lp_session')});
   }catch(err){
+    _lpDbg('completarDesdeGoogle:CATCH', {msg: err && err.message, stack: err && err.stack && err.stack.substring(0,300)});
     if(typeof hideLoading==='function') hideLoading();
     lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
     var a=document.getElementById('auth'); if(a) a.style.display='flex'; rm(MG); fg('todos'); initCustomization();
@@ -1591,11 +1647,23 @@ try{ var fb=document.getElementById('gbtnFallback'); if(fb) fb.style.display='fl
   try{
     if(firebase.auth){
       var _primera=true;
-      firebase.auth().onAuthStateChanged(function(u){
+      firebase.auth().onAuthStateChanged(async function(u){
         window.lpUID = u ? u.uid : null;
+        if(typeof _lpDbg==='function') _lpDbg('onAuthStateChanged', {primera:_primera, hasU:!!u, anon: u?u.isAnonymous:null, uidLen: u?String(u.uid).length:null});
         if(_primera){
           _primera=false;
-          if(!u){ firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth anónimo no disponible aún:', e && e.code); }); }
+          if(!u){
+            if(typeof _lpDbg==='function') _lpDbg('anonBlock:esperando-redirect');
+            // Antes de firmar como anónimo, esperamos a que termine de revisarse
+            // getRedirectResult() (vuelta de Google) — si no, esta carrera podía pisar
+            // una sesión real recién confirmada con una anónima nueva, silenciosamente.
+            try{ await Promise.race([window.__lpRedirectListo, new Promise(function(r){ setTimeout(r,4000); })]); }catch(e){}
+            if(typeof _lpDbg==='function') _lpDbg('anonBlock:despues-de-esperar', {currentUserAhora: !!firebase.auth().currentUser});
+            if(!firebase.auth().currentUser){
+              if(typeof _lpDbg==='function') _lpDbg('anonBlock:LLAMANDO-signInAnonymously');
+              firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth anónimo no disponible aún:', e && e.code); });
+            }
+          }
         }
       });
     }
@@ -3586,6 +3654,7 @@ async function _completarDesdeLinkMagico(){
     if(typeof hideLoading==='function') hideLoading();
     await _completarLoginVerificado(cuVal, nombre, email);
   }catch(err){
+    if(typeof _lpDbg==='function') _lpDbg('completarDesdeLinkMagico:CATCH', {msg: err&&err.message, name: err&&err.name, stack: err&&err.stack&&err.stack.substring(0,600)});
     if(typeof hideLoading==='function') hideLoading();
     lpAviso('No se pudo completar el ingreso: '+((err&&err.message)||err)+'. Pide el enlace de nuevo.');
     if(authEl) authEl.style.display='flex'; rm(MG); fg('todos'); initCustomization();
@@ -3594,6 +3663,7 @@ async function _completarDesdeLinkMagico(){
 
 window.onload = async function(){
   const sesion = localStorage.getItem('lp_session');
+  _lpDbg('onload:start', {hasSesionLS: !!sesion, href: location.href});
   initVoz();
   const _elVer=document.getElementById('lpVerMostrada'); if(_elVer) _elVer.innerText=APP_VERSION;
   _actualizarBtnAhorroGPS();
@@ -3608,9 +3678,13 @@ window.onload = async function(){
   try{
     if(typeof firebase!=='undefined' && firebase.auth){
       var _gr=await firebase.auth().getRedirectResult();
+      var _grDump='NOPE';
+      try{ _grDump = JSON.stringify(_gr, function(k,v){ return v===undefined?'__undef__':v; }); }catch(_e1){ _grDump='STRINGIFY-FAIL:'+_e1.message; }
+      _lpDbg('onload:getRedirectResult', {resultShape: _grDump.substring(0,900), opType: (_gr&&('opType_is_'+_gr.operationType)), credVal: (_gr&&('credVal_is_'+(_gr.credential===null?'NULL':(_gr.credential===undefined?'UNDEF':'SOMETHING')))), userVal: (_gr&&('userVal_is_'+(_gr.user===null?'NULL':(_gr.user===undefined?'UNDEF':'SOMETHING')))), url: location.href});
+      if(typeof window.__lpResolverRedirect==='function') window.__lpResolverRedirect();
       if(_gr && _gr.user){ await _completarDesdeGoogle(_gr.user); return; }
-    }
-  }catch(_eg){ console.warn('getRedirectResult', _eg && _eg.code); }
+    } else if(typeof window.__lpResolverRedirect==='function') window.__lpResolverRedirect();
+  }catch(_eg){ _lpDbg('onload:getRedirectResult-CATCH', {code:_eg&&_eg.code, msg:_eg&&_eg.message}); console.warn('getRedirectResult', _eg && _eg.code); if(typeof window.__lpResolverRedirect==='function') window.__lpResolverRedirect(); }
   // Login por link mágico (respaldo): si el usuario volvió del correo, completar y salir.
   if(typeof firebase!=='undefined' && firebase.auth && firebase.auth().isSignInWithEmailLink && firebase.auth().isSignInWithEmailLink(location.href)){
     await _completarDesdeLinkMagico();
@@ -3652,7 +3726,7 @@ window.onload = async function(){
     // si se abre con Pistero todavía hablando, el mic capta su propia voz.
     if(manosLibresOn) setTimeout(function(){ _iniciarEscuchaContinua(); },3000);
     if(!ghostMode) subscribeToUsers();
-    subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
+    subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
@@ -3771,7 +3845,7 @@ function _mostrarPantallaRevisaCorreo(email){
     +'</div>';
 }
 // Paso 2: se llama al volver del correo, con la sesión YA verificada y el token uid==cu listo.
-async function _completarLoginVerificado(cuVal, nombre, e_val){
+async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   cu=cuVal; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador(); if(typeof _mostrarBienvenidaFundador==='function') setTimeout(_mostrarBienvenidaFundador,900);
   nombreUsuario=nombre;
   const paisSel=localStorage.getItem('lp_pending_pais')||'auto';
@@ -3850,7 +3924,7 @@ async function _completarLoginVerificado(cuVal, nombre, e_val){
   await im(); au(); rm(MG); fg('todos');
   loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
   if(!ghostMode) subscribeToUsers();
-  subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
+  subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
   getCurrentLocation();
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
@@ -3859,6 +3933,16 @@ async function _completarLoginVerificado(cuVal, nombre, e_val){
   else { setTimeout(function(){ if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
 }
 
+async function _completarLoginVerificado(cuVal, nombre, e_val){
+  if(typeof _lpDbg==='function') _lpDbg('completarLoginVerificado:ENTRA', {cuVal:cuVal});
+  try{
+    await _completarLoginVerificadoOriginal(cuVal, nombre, e_val);
+    if(typeof _lpDbg==='function') _lpDbg('completarLoginVerificado:TERMINO-OK');
+  }catch(err){
+    if(typeof _lpDbg==='function') _lpDbg('completarLoginVerificado:THREW', {msg: err&&err.message, name: err&&err.name, stack: err&&err.stack&&err.stack.substring(0,600)});
+    throw err;
+  }
+}
 async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
 function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
 // Ahora vive dentro del menú de la ficha de usuario: sin fondo de píldora, el estado
