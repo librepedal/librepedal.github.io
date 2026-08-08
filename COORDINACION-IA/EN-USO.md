@@ -63,10 +63,15 @@ función misma) que ignora llamadas mientras ya hay una en curso; se limpia en u
 también lo liberan bien). Validé sintaxis de todos los `<script>` con `node -e` antes de
 desplegar — sin errores.
 
-PENDIENTE: Inty pidió también "actualizar el tutorial" (in-app) relacionado con este
-bug — no lo toqué todavía, no quedó claro qué parte exacta del tutorial hay que cambiar
-(puede ser sobre cómo usar el chat de Pistero). Preguntarle o esperar más detalle antes
-de tocarlo a ciegas.
+v8.47 (commit 5c3cc6a), en producción: "actualizar el tutorial" resuelto. Le pregunté a
+Inty (con AskUserQuestion) para no adivinar — confirmó: el tutorial GUIADO in-app (los
+17 pasos con spotlight), y específicamente que el paso de Pistero (índice 4) muestre el
+chat real en vez de solo apuntar al botón de abajo. Cambios en `tutorialSteps` (~10033):
+el paso 4 ahora es `{view:'pistero', sel:'#pisteroInput', d:'...'}` en vez de apuntar a
+`nav .nb:nth-child(3)`. Y en `renderTutorial()` (~10105) agregué un caso especial: si
+`s.view==='pistero'` llama `abrirPistero()` en vez de `cv(s.view)` — así el chat queda
+con su saludo real inicializado (no la sección en blanco sin historial), igual que
+cuando el usuario lo abre por su cuenta desde el nav.
 
 ---
 LIBRE — sesión Thunderobot (Kpone), 2026-08-07. Sincronicé `index.html`/`sw.js`/`version.txt`
