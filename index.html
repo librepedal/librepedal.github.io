@@ -1412,7 +1412,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.45'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.46'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3412,70 +3412,81 @@ function abrirPistero(){
   setTimeout(function(){ const i=document.getElementById('pisteroInput'); if(i) i.focus(); },250);
 }
 async function preguntarPistero(){
+  // Candado contra doble envío (pedido de Inty 2026-08-08, "sale otro globo a la
+  // derecha"): en Android el botón "enviar" del teclado a veces dispara el keypress
+  // dos veces (bug conocido de WebView con Gboard), o el dedo alcanza a tocar también
+  // el ✈️ mientras el Enter ya mandó el mensaje — sin este candado, el mismo texto se
+  // enviaba dos veces y aparecían dos globos naranjos (del usuario) seguidos.
+  if(preguntarPistero._enCurso) return;
   const inp=document.getElementById('pisteroInput'); if(!inp) return;
   const msg=inp.value.trim(); if(!msg) return;
-  trackEvent('funcion','chat_pistero');
-  inp.value='';
-  _pisteroBurbuja(msg,'yo');
-  const _msgNorm=normalizar(msg);
-  // Consulta escrita sobre peligros en una ruta ("¿hay policías en mi ruta a
-  // X?"): mismo criterio que por voz — solo cuenta como consulta con destino
-  // explícito o pregunta clara, si no, es un reporte normal.
-  {
-    const _catConsultaMsg=_detectarReporteVoz(_msgNorm);
-    if(_catConsultaMsg){
-      const _destinoConsultaMsg=_extraerDestinoConsulta(_msgNorm);
-      if(_destinoConsultaMsg || CONSULTA_RUTA_OPENER_RE.test(_msgNorm)){
-        const _respConsulta=await consultarPeligrosEnRuta(_catConsultaMsg, _destinoConsultaMsg);
-        _pisteroBurbuja(_respConsulta,'pistero'); try{ h(_respConsulta); }catch(e){}
-        return;
+  preguntarPistero._enCurso=true;
+  try{
+    trackEvent('funcion','chat_pistero');
+    inp.value='';
+    _pisteroBurbuja(msg,'yo');
+    const _msgNorm=normalizar(msg);
+    // Consulta escrita sobre peligros en una ruta ("¿hay policías en mi ruta a
+    // X?"): mismo criterio que por voz — solo cuenta como consulta con destino
+    // explícito o pregunta clara, si no, es un reporte normal.
+    {
+      const _catConsultaMsg=_detectarReporteVoz(_msgNorm);
+      if(_catConsultaMsg){
+        const _destinoConsultaMsg=_extraerDestinoConsulta(_msgNorm);
+        if(_destinoConsultaMsg || CONSULTA_RUTA_OPENER_RE.test(_msgNorm)){
+          const _respConsulta=await consultarPeligrosEnRuta(_catConsultaMsg, _destinoConsultaMsg);
+          _pisteroBurbuja(_respConsulta,'pistero'); try{ h(_respConsulta); }catch(e){}
+          return;
+        }
       }
     }
-  }
-  // Reportes de peligro escritos (pacos, animal atropellado, objeto en la vía,
-  // taco, accidente): se resuelven aquí mismo, sin gastar una llamada a la IA —
-  // son datos concretos para el mapa, no una conversación.
-  const _catReporte=_detectarReporteVoz(_msgNorm);
-  if(_catReporte){ const _conf=await reportarPorVozRapido(_catReporte); _pisteroBurbuja(_conf,'pistero'); try{ h(_conf); }catch(e){} return; }
-  const pensando=_pisteroBurbuja('Pistero está pensando…','pistero',true);
-  const hosp=(typeof allHostels!=='undefined'&&allHostels?allHostels:[]).slice(0,12).map(function(hh){
-    return {name:hh.name, tipo:hh.tipo, location:hh.location, desc:(hh.desc||'').toString().slice(0,120)};
-  });
-  const gustos=(typeof selectedHelmet!=='undefined'&&selectedHelmet)?('estilo/casco '+selectedHelmet):'';
-  const payload={
-    mensaje:msg,
-    usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos, personalidad:pisteroPersonalidad, actividad:actividadTipo },
-    contexto:_pisteroContexto(),
-    hospedajes:hosp,
-    historial:pisteroHistorial.slice(-12)
-  };
-  try{
-    // Con fetch() plano y sin timeout, si el Worker se cuelga (no cae, solo no
-    // contesta) la burbuja "Pistero está pensando…" quedaba pegada PARA SIEMPRE —
-    // el catch de abajo nunca se disparaba porque la promesa nunca se rechazaba.
-    const r=await _fetchT(IA_URL, 25000, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-    const data=await r.json();
-    let resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
-    // Separa las etiquetas de acción del texto: no se muestran ni se leen en voz.
-    const acciones=[];
-    resp=resp.replace(/\[ACCION:([a-z]+)(?:\|([^\]]+))?\]/gi, function(_m,tipo,arg){ acciones.push({tipo:tipo.toLowerCase(), arg:(arg||'').trim()}); return ''; })
-      // Red de seguridad: si por lo que sea el Worker deja pasar una etiqueta de
-      // herramienta [BUSCAR:...]/[CLIMA:...] sin resolver, nunca debe leerse ni
-      // mostrarse tal cual (se ve como "código" en vez de una respuesta normal).
-      .replace(/\[(BUSCAR|CLIMA):[^\]]*\]/gi, '')
-      .replace(/\s{2,}/g,' ').trim();
-    if(!resp && acciones.length) resp='¡Hecho!';
-    if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML(resp); }
-    else _pisteroBurbuja(resp,'pistero');
-    const cont=document.getElementById('pisteroMsgs'); if(cont) cont.scrollTop=cont.scrollHeight;
-    pisteroHistorial.push({role:'user',content:msg}); pisteroHistorial.push({role:'pistero',content:resp});
-    if(pisteroHistorial.length>40) pisteroHistorial=pisteroHistorial.slice(-40);
-    _pisteroGuardar();
-    try{ h(resp); }catch(e){}
-    _pisteroObedecer(acciones, msg);
-    if(!acciones.length) _pisteroPintarAcciones(msg);
-  }catch(e){
-    if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML('Se me cortó la señal. Inténtalo de nuevo en un ratito.'); }
+    // Reportes de peligro escritos (pacos, animal atropellado, objeto en la vía,
+    // taco, accidente): se resuelven aquí mismo, sin gastar una llamada a la IA —
+    // son datos concretos para el mapa, no una conversación.
+    const _catReporte=_detectarReporteVoz(_msgNorm);
+    if(_catReporte){ const _conf=await reportarPorVozRapido(_catReporte); _pisteroBurbuja(_conf,'pistero'); try{ h(_conf); }catch(e){} return; }
+    const pensando=_pisteroBurbuja('Pistero está pensando…','pistero',true);
+    const hosp=(typeof allHostels!=='undefined'&&allHostels?allHostels:[]).slice(0,12).map(function(hh){
+      return {name:hh.name, tipo:hh.tipo, location:hh.location, desc:(hh.desc||'').toString().slice(0,120)};
+    });
+    const gustos=(typeof selectedHelmet!=='undefined'&&selectedHelmet)?('estilo/casco '+selectedHelmet):'';
+    const payload={
+      mensaje:msg,
+      usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos, personalidad:pisteroPersonalidad, actividad:actividadTipo },
+      contexto:_pisteroContexto(),
+      hospedajes:hosp,
+      historial:pisteroHistorial.slice(-12)
+    };
+    try{
+      // Con fetch() plano y sin timeout, si el Worker se cuelga (no cae, solo no
+      // contesta) la burbuja "Pistero está pensando…" quedaba pegada PARA SIEMPRE —
+      // el catch de abajo nunca se disparaba porque la promesa nunca se rechazaba.
+      const r=await _fetchT(IA_URL, 25000, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      const data=await r.json();
+      let resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
+      // Separa las etiquetas de acción del texto: no se muestran ni se leen en voz.
+      const acciones=[];
+      resp=resp.replace(/\[ACCION:([a-z]+)(?:\|([^\]]+))?\]/gi, function(_m,tipo,arg){ acciones.push({tipo:tipo.toLowerCase(), arg:(arg||'').trim()}); return ''; })
+        // Red de seguridad: si por lo que sea el Worker deja pasar una etiqueta de
+        // herramienta [BUSCAR:...]/[CLIMA:...] sin resolver, nunca debe leerse ni
+        // mostrarse tal cual (se ve como "código" en vez de una respuesta normal).
+        .replace(/\[(BUSCAR|CLIMA):[^\]]*\]/gi, '')
+        .replace(/\s{2,}/g,' ').trim();
+      if(!resp && acciones.length) resp='¡Hecho!';
+      if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML(resp); }
+      else _pisteroBurbuja(resp,'pistero');
+      const cont=document.getElementById('pisteroMsgs'); if(cont) cont.scrollTop=cont.scrollHeight;
+      pisteroHistorial.push({role:'user',content:msg}); pisteroHistorial.push({role:'pistero',content:resp});
+      if(pisteroHistorial.length>40) pisteroHistorial=pisteroHistorial.slice(-40);
+      _pisteroGuardar();
+      try{ h(resp); }catch(e){}
+      _pisteroObedecer(acciones, msg);
+      if(!acciones.length) _pisteroPintarAcciones(msg);
+    }catch(e){
+      if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML('Se me cortó la señal. Inténtalo de nuevo en un ratito.'); }
+    }
+  } finally {
+    preguntarPistero._enCurso=false;
   }
 }
 let pisteroRec=null;
