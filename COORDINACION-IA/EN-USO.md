@@ -31,6 +31,35 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ## Estado actual
 
+LIBRE — sesión Thunderobot, 2026-08-08. v8.45 commiteada y pusheada (00c36a7), ya en
+producción (librepedal.cl confirmado sirviendo v8.45). Pedido de Inty tras publicar en
+Play Store (testing cerrado) y probar la app real:
+· Aviso de Pistero al partir, ahora por MODO de actividad (antes era el mismo texto
+  siempre — "revisa presión de neumáticos, frenos, cadena y luces"). Busca el setTimeout
+  de 6500ms dentro del IIFE de arranque (`start:function(silencioso){...}`, cerca de
+  donde estaba `subscribeToRouteAlerts` antes de que lo sacáramos):
+  - ciclismo/mtb/cicloviaje (default): "Antes de salir: revisa tu bici."
+  - trekking: "Recuerda llevar fuego, ese fuego que llevas dentro."
+  - moto: "¿Hace cuánto que no revisas los niveles de agua y aceite?" — PERO NO cada
+    viaje (Inty: "se siente spam"). Es aleatorio (25% por viaje) forzado a salir al
+    menos 1 vez cada 30 días vía localStorage `lp_aviso_niveles_<cu>`.
+· Sección "Barba y bigote" del selector de personaje SACADA de la UI ("no quedan bien" —
+  Inty). Dejé `_bigoteSVG()` y los datos de bigotes intactos (no borrados) por si algún
+  personaje ya guardado tenía uno elegido — no rompe nada, solo no se puede elegir uno
+  nuevo.
+· Icono de Darma cambiado de `fa-wand-magic-sparkles` (genérico) a `fa-dharmachakra`
+  (rueda del dharma real) — en el badge de perfil (~línea 1315) y en el botón "Tienda de
+  Darma" (~línea 5984).
+
+PENDIENTE (siguiente sesión que tome el candado, YA me pasó Inty el video): bug real de
+Pistero — cuando ya hay un texto en el chat de Pistero, aparece OTRO globo de texto A LA
+DERECHA (duplicado). Inty mandó un video (`WhatsApp Video 2026-08-08 at 10.26.32.mp4`)
+mostrándolo. También pidió actualizar el tutorial in-app relacionado. NO diagnosticado
+todavía a fondo — revisar el render de los globos de chat de Pistero (buscar dónde se
+inyecta el bubble del lado derecho/usuario vs el de Pistero, probable duplicación de
+listener o de contenedor).
+
+---
 LIBRE — sesión Thunderobot (Kpone), 2026-08-07. Sincronicé `index.html`/`sw.js`/`version.txt`
 con lo que YA estaba corriendo en producción (v8.36) — este repo estaba pegado en v7.50 desde
 el 29-jul, sin commits del trabajo directo a Cloudflare de las sesiones siguientes (login con
