@@ -35,6 +35,12 @@ jobs:
       - name: Agregar plataforma Android
         run: npx cap add android
 
+      - name: Subir a API 35 (Google Play exige apuntar al menos a API 35)
+        run: |
+          sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 35/" android/variables.gradle
+          sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 35/" android/variables.gradle
+          cat android/variables.gradle
+
       - name: Generar ícono y splash desde resources/ (logo real de Libre Pedal)
         run: npx @capacitor/assets generate --android
 
