@@ -1312,7 +1312,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
      al contenido de esta pantalla. Mismo criterio que ya validó la otra sesión con
      el es-bottom: el Darma queda como DATO de un vistazo (sin onclick), no como
      un segundo menú; Logros y Estadísticas se sacan de acá — para eso está la Esfera. -->
-<div class="darma-badge"><i class="fas fa-wand-magic-sparkles"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
+<div class="darma-badge"><i class="fas fa-dharmachakra"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
 <style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:12px;padding:6px 4px 5px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:42px;height:35px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.62rem;color:#cdd6e6;margin-top:3px;line-height:1.1}</style>
 <details class="pgrupo" open ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistCascoGrid"></div></div></details>
@@ -1322,7 +1322,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-eye pg-ic"></i><span class="pg-tt">Pestañas</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPestGrid"></div></div></details>
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-gem pg-ic"></i><span class="pg-tt">Aros</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistAroGrid"></div></div></details>
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-ribbon pg-ic"></i><span class="pg-tt">Pañoleta</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPanoGrid"></div></div></details>
-<details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-mustache pg-ic"></i><span class="pg-tt">Barba y bigote</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistBigoteGrid"></div></div></details>
+<!-- Barba y bigote: sacado del selector a pedido de Inty (2026-08-08, "no quedan bien"). Se deja _bigoteSVG() y los datos intactos por si algún personaje ya guardado tenía uno elegido. -->
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-star pg-ic"></i><span class="pg-tt">Accesorio de casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistAccGrid"></div></div></details>
 
 <details class="pgrupo" style="display:none" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)">
@@ -1412,7 +1412,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.44'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.45'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5981,7 +5981,7 @@ function mostrarLogrosComunidad(){
     +'<button class="ab sec" style="margin:0" onclick="verRetos()"><i class="fas fa-bullseye"></i> Retos y temporadas</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarResumenAnual()"><i class="fas fa-chart-column"></i> Mi año en Libre Pedal</button>'
     +'<button class="ab sec" style="margin:0" onclick="verRecomendacionRutas()"><i class="fas fa-compass"></i> Rutas para ti</button>'
-    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda(true)"><i class="fas fa-wand-magic-sparkles"></i> Tienda de Darma</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda(true)"><i class="fas fa-dharmachakra"></i> Tienda de Darma</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarComunidad()"><i class="fas fa-handshake"></i> Meta de la comunidad (vota)</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarFundadores()"><i class="fas fa-medal"></i> Socios Fundadores</button>'
     +'</div>';
@@ -10254,7 +10254,25 @@ const lpSalud = (function(){
       // reales de Inty, sonaba como si ya hubieras salido a pedalear sin haberlo
       // decidido. Los recordatorios recurrentes (hidratación, etc.) sí siguen
       // corriendo igual — esos ya tardan varios minutos en aparecer.
-      if(!silencioso) setTimeout(function(){ if(activo() && typeof h==='function') h("Antes de salir: revisa presión de neumáticos, frenos, cadena y luces. ¡Buen viaje!"); }, 6500);
+      // Aviso al partir, distinto por modo de actividad (pedido de Inty 2026-08-08):
+      // ciclismo/MTB/cicloviaje = chequeo mecánico de la bici; trekking = frase motivadora;
+      // motorizado = niveles de agua/aceite, pero NO cada viaje (se sentía spam) — aleatorio,
+      // forzado al menos una vez al mes por si el azar nunca lo saca.
+      if(!silencioso) setTimeout(function(){
+        if(!activo() || typeof h!=='function') return;
+        if(actividadTipo==='trekking'){
+          h("Recuerda llevar fuego, ese fuego que llevas dentro. ¡Buen viaje!");
+        } else if(actividadTipo==='moto'){
+          var _kNiveles='lp_aviso_niveles_'+(cu||'x');
+          var _diasNiveles=(Date.now()-parseInt(localStorage.getItem(_kNiveles)||'0',10))/86400000;
+          if(_diasNiveles>=30 || Math.random()<0.25){
+            h("¿Hace cuánto que no revisas los niveles de agua y aceite? ¡Buen viaje!");
+            localStorage.setItem(_kNiveles, String(Date.now()));
+          }
+        } else {
+          h("Antes de salir: revisa tu bici. ¡Buen viaje!");
+        }
+      }, 6500);
       timer=setInterval(tick, 60000);
     },
     stop:function(){ if(timer){ clearInterval(timer); timer=null; } mins=0; }
