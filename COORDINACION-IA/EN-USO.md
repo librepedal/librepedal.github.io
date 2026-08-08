@@ -51,13 +51,22 @@ Play Store (testing cerrado) y probar la app real:
   (rueda del dharma real) — en el badge de perfil (~línea 1315) y en el botón "Tienda de
   Darma" (~línea 5984).
 
-PENDIENTE (siguiente sesión que tome el candado, YA me pasó Inty el video): bug real de
-Pistero — cuando ya hay un texto en el chat de Pistero, aparece OTRO globo de texto A LA
-DERECHA (duplicado). Inty mandó un video (`WhatsApp Video 2026-08-08 at 10.26.32.mp4`)
-mostrándolo. También pidió actualizar el tutorial in-app relacionado. NO diagnosticado
-todavía a fondo — revisar el render de los globos de chat de Pistero (buscar dónde se
-inyecta el bubble del lado derecho/usuario vs el de Pistero, probable duplicación de
-listener o de contenedor).
+v8.46 (commit e866e6e), en producción: fix del bug del globo duplicado. Analicé el video
+con ffmpeg (extraje frames, no hay screenshot tool disponible) — la causa real es
+`preguntarPistero()` (~línea 3414) sin candado contra doble envío: en Android el botón
+"enviar" del teclado a veces dispara el keypress dos veces (bug conocido de WebView +
+Gboard) o el dedo toca el ✈️ justo cuando el Enter ya mandó el mensaje, y como no había
+ningún guard, el mismo texto se mandaba dos veces → dos globos naranjos (usuario)
+seguidos = "otro globo a la derecha". Agregué `preguntarPistero._enCurso` (flag en la
+función misma) que ignora llamadas mientras ya hay una en curso; se limpia en un
+`finally` que envuelve TODO el cuerpo (los `return` tempranos por consulta/reporte
+también lo liberan bien). Validé sintaxis de todos los `<script>` con `node -e` antes de
+desplegar — sin errores.
+
+PENDIENTE: Inty pidió también "actualizar el tutorial" (in-app) relacionado con este
+bug — no lo toqué todavía, no quedó claro qué parte exacta del tutorial hay que cambiar
+(puede ser sobre cómo usar el chat de Pistero). Preguntarle o esperar más detalle antes
+de tocarlo a ciegas.
 
 ---
 LIBRE — sesión Thunderobot (Kpone), 2026-08-07. Sincronicé `index.html`/`sw.js`/`version.txt`
