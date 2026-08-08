@@ -1412,7 +1412,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.46'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.47'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -10035,7 +10035,7 @@ const tutorialSteps=[
   {sel:'#btnEsferaHeader', d:'Tu Esfera: los accesos flotando. Gírala y toca un ícono. Este botón la reabre.'},
   {view:'dash', sel:'#quick-dest', d:'Escribe o dicta un destino del mundo y te guío paso a paso, aquí mismo en Inicio.'},
   {sel:'#micBtn', d:'O toca el micrófono y dime un destino de viva voz: te guío como Waze.'},
-  {sel:'nav .nb:nth-child(3)', d:'Y aquí abajo vivo yo: Pistero con IA. Pregúntame por rutas, arreglos o dónde alojar, desde cualquier pantalla.'},
+  {view:'pistero', sel:'#pisteroInput', d:'Este es mi chat. Escríbeme aquí cualquier pregunta —rutas, arreglos de bici, dónde alojar— y te respondo. Vivo en este botón de abajo, en cualquier pantalla.'},
   {view:'dash', sel:'.speed-display', d:'Tu velocidad en vivo. El GPS graba tu ruta solo: se guarda al detenerte, no prendas nada.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'SOS: guarda tus contactos y les mando tu ubicación por WhatsApp al toque.'},
   {view:'customize', sel:'.darma-badge', d:'Tu Darma: premio por aportar. Desbloquea cascos, skins y estilos.'},
@@ -10102,7 +10102,9 @@ function renderTutorial(){
   document.getElementById('tutProgress').innerText=(tutorialIdx+1)+' / '+tutorialSteps.length;
   document.getElementById('tutPrev').style.visibility=tutorialIdx===0?'hidden':'visible';
   document.getElementById('tutNext').innerText=tutorialIdx===tutorialSteps.length-1?'¡A pedalear!':'Siguiente ▶';
-  if(s.view) cv(s.view);
+  // El paso de Pistero necesita abrirPistero() (no solo cv()): así deja el chat
+  // inicializado con su saludo real, no la sección en blanco sin historial.
+  if(s.view==='pistero') abrirPistero(); else if(s.view) cv(s.view);
   pararVoz(); // corta la narración anterior al toque, sin esperar (nunca se encima con la del paso nuevo)
   // pequeño retardo para que la vista cambie y el elemento exista/posicione
   setTimeout(function(){
