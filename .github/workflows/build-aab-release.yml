@@ -38,10 +38,17 @@ jobs:
       - name: Instalar plataforma Android 16 (API 36) en el SDK del runner
         # Android 16/API 36 es muy reciente: el SDK preinstalado en el runner de
         # GitHub puede no traerla todavía. La instalamos a mano antes de compilar
-        # para no depender de que la imagen del runner ya la incluya.
+        # para no depender de que la imagen del runner ya la incluya. "sdkmanager"
+        # no está directo en el PATH (falló con "command not found" la primera
+        # vez) — lo buscamos dentro del SDK en vez de asumir una ruta fija.
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "SDK_ROOT=$SDK_ROOT"
+          SDKMANAGER=$(find "$SDK_ROOT" -maxdepth 5 -name sdkmanager -type f 2>/dev/null | head -1)
+          echo "sdkmanager encontrado en: $SDKMANAGER"
+          if [ -z "$SDKMANAGER" ]; then echo "No se encontró sdkmanager en $SDK_ROOT"; exit 1; fi
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Subir a API 36 (Google Play exige apuntar al menos a API 36 antes del 30-ago-2026)
         run: |
