@@ -165,6 +165,32 @@ export default {
       }
     }
 
+    // ===== VOZ ELEVENLABS (premium, multilingüe) para probar acentos regionales de Sudamérica.
+    // Proxy seguro: la llave vive en el secreto ELEVENLABS_API_KEY, NUNCA en la app ni en el repo.
+    // Uso: ?eltts=<texto>&voz=<voiceId>  (voz opcional si defines ELEVENLABS_VOICE_DEFAULT). Devuelve MP3. =====
+    const elText = url.searchParams.get("eltts") || (body && body.eltts);
+    if (elText) {
+      const key = env.ELEVENLABS_API_KEY;
+      if (!key) return new Response(JSON.stringify({ error: "sin_llave_elevenlabs" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      const vParam = url.searchParams.get("voz") || (body && body.voz);
+      const voiceId = (vParam && /^[A-Za-z0-9]{16,40}$/.test(vParam)) ? vParam : (env.ELEVENLABS_VOICE_DEFAULT || "");
+      if (!voiceId) return new Response(JSON.stringify({ error: "sin_voz", ayuda: "pasa ?voz=<voiceId> o define ELEVENLABS_VOICE_DEFAULT" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+      const t = String(elText).slice(0, 480);
+      const modelo = env.ELEVENLABS_MODEL || "eleven_multilingual_v2";
+      try {
+        const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
+          method: "POST",
+          headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" },
+          body: JSON.stringify({ text: t, model_id: modelo, voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
+        });
+        if (!r.ok) return new Response(JSON.stringify({ error: "eltts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        const buf = await r.arrayBuffer();
+        return new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "eltts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    }
+
     // ===== VOZ NEURONAL (TTS): una voz más humana que la robótica del sistema, GRATIS por
     // Workers AI. La app la usa cuando hay señal (con fallback a la voz nativa offline). =====
     const ttsText = url.searchParams.get("tts") || (body && body.tts);
