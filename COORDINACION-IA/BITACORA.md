@@ -4704,3 +4704,52 @@ mantiene.
 - El cuarto enlace que mandó Inty es una coordenada suelta **sin nombre**
   (−35.498631, −72.5226191, cerca de Constitución, Maule). **No se cargó**: no sé qué es.
 - Canal de Rodada Fase 2 (dictado a Pistero) y Fase 3 (panel del escolta).
+
+## v7.52 — 2026-08-13 · Voz: el bug de "se cuela la vieja" tenía dos causas, arreglada una — la otra requiere plata
+
+Inty reportó que la voz seguía sonando rara/genérica en momentos random, pese al fix del
+2026-07-20. Auditoría completa:
+
+**1) Causa A, arreglada — `navigator.onLine` seguía gateando las frases dinámicas.**
+El fix del 20-jul sacó esa dependencia para las frases FIJAS (`voces/*.mp3`), pero se quedó
+sin sacar en `_reproducirVoz()` para las frases DINÁMICAS (nombre, chat): si
+`navigator.onLine` mentía diciendo "sin red" (documentado que pasa seguido), saltaba
+directo a `_vozNativaOWeb()` sin intentar `_vozAzureRuntime()`. Ahora siempre intenta la
+voz real primero; si de verdad falla, su propio `onerror`/`catch` cae a la nativa.
+
+**2) Causa B, la grande, NO arreglada — el backend de voz en vivo está muerto.**
+Prueba directa: `curl "https://librepedal-ia.workers.dev/?aztts=prueba&g=l"` →
+`{"error":"aztts","code":401}`. Confirmé también que la key local en `MI-AZURE.txt`
+(la que generó los 388 mp3 de `voces/`) da el mismo 401 llamando directo a Microsoft.
+Ambas keys muertas — coincide con lo que quedó anotado el 14-jul: "cuenta Azure gratis
+SOLO para pre-generar voces una vez, borrar la suscripción después". Se borró (o expiró
+sola, si era cuenta de prueba de 30 días) y nadie la reemplazó. Resultado real: **el
+saludo con tu nombre y el chat de Pistero suenan con voz nativa el 100% de las veces**,
+no ocasionalmente — es la causa de fondo de la queja de Inty, más que el bug de arriba.
+
+**3) Pantalla inicial — la esfera tardaba hasta 2.4s en aparecer.**
+`#esferaScreen` es `display:none` hasta que JS le agrega `.on`, y eso pasaba recién
+después de esperar (hasta 1.5s) el chequeo de actualización + 950ms más. En ese hueco se
+veía el mapa de fondo. Arreglado poniendo `class="on"` directo en el HTML — verificado con
+`getComputedStyle` que `#auth` (z-index 5000) sigue tapando la esfera (z-index 4500)
+cuando no hay sesión, o sea el login de gente nueva no se rompió.
+
+**4) Decisión con Inty: ElevenLabs, no reactivar Azure.**
+Evaluamos costos reales (fuentes oficiales, no de memoria): plan Starter ElevenLabs
+USD 6/mes = 30.000 créditos = 60.000 caracteres Multilingual ó 120.000 Flash. Con eso
+alcanza sobrado para regenerar las 194 frases fijas UNA vez. El gasto recurrente lo va a
+pagar solo la voz dinámica de usuarios PREMIUM (gating a construir, ver `PENDIENTES.md`).
+Modelo completo con las 4 fuentes de precio citadas:
+https://claude.ai/code/artifact/8febd4a4-80aa-4209-a8ef-4466312ce184
+
+**5) De paso, encontré por qué la primera muestra sonaba "apurada".**
+`scripts/gen-voces.py` le da a cada arquetipo un `rate` distinto en el SSML —
+`entrenador` tiene `+13%`, el más rápido de la tabla — a propósito, para que sonara
+enérgico, pero puede haberse pasado. Anotado para revisar al regenerar con ElevenLabs.
+
+### Pendiente (detalle completo y en orden en `PENDIENTES.md`)
+Cuenta ElevenLabs (la paga Inty) → regenerar 194 frases fijas → conectar
+`worker-ia/worker.js` → gating premium en Firestore → migrar mapas de OSM directo a
+MapTiler (riesgo real de bloqueo, no solo costo). **v7.52 sigue commiteado LOCAL, sin
+pushear ni desplegar** — coordinar con Inty antes, LibrePedal todavía no tiene la prueba
+cerrada de Play Store activa pero cualquier cambio debe esperar su validación.

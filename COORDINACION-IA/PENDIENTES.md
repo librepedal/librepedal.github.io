@@ -1,6 +1,59 @@
-> 📌 **NUEVO (2026-07-29, sesión Thunderobot):** ver `COORDINACION-IA/SPEC-REDISENO-MAPA-2026-07-29.md` — pase de control de calidad del MAPA (feedback real de Inty: mapa claro por defecto, quitar botón GPS, un solo sistema de botones, reportar sobre el mismo mapa, voz de Pistero sin globo, planificar Desde→Hasta). Listo para ejecutar+deployar.
+> 📌 **NUEVO (2026-08-13, sesión Lenovo):** cuenta de Azure que alimenta la voz EN VIVO
+> está **muerta** (401 en el key local y en el Worker de producción) — el 100% de las
+> frases dinámicas caen a la voz nativa ahora mismo. Decisión tomada con Inty: migrar a
+> **ElevenLabs** (él va a pagar la cuenta). Ver sección `## 📌 ESTADO AL 2026-08-13` más
+> abajo antes de tocar cualquier cosa de voz.
+
+> 📌 (2026-07-29, sesión Thunderobot): ver `COORDINACION-IA/SPEC-REDISENO-MAPA-2026-07-29.md` — pase de control de calidad del MAPA (feedback real de Inty: mapa claro por defecto, quitar botón GPS, un solo sistema de botones, reportar sobre el mismo mapa, voz de Pistero sin globo, planificar Desde→Hasta). Listo para ejecutar+deployar.
 
 # ✅ Pendientes — Libre Pedal
+
+## 📌 ESTADO AL 2026-08-13 (sesión Lenovo) — leer antes de tocar voz o mapas
+
+**Versión: v7.52** (commiteado LOCAL, `git log` en la carpeta local — **NO pusheado, NO
+desplegado todavía**, a propósito: LibrePedal no está en prueba cerrada activa de Play
+Store aún — Inty no ha cargado todos los testers — pero cualquier push/deploy debe
+coordinarse con él antes, para no chocar con la validación del próximo `.aab`).
+
+**Resuelto hoy (no volver a tomarlo):**
+- Bug de voz reportado por Inty el 2026-07-20 ("se cuela la voz vieja") — la mitad SIN
+  arreglar: para frases DINÁMICAS (nombres, chat), el código dependía de
+  `navigator.onLine` (miente seguido) y saltaba a la voz nativa sin ni intentar Azure/lo
+  que corresponda. Arreglado: ahora siempre intenta la voz real primero.
+- Pantalla inicial: `#esferaScreen` empezaba oculta por CSS, tardaba hasta 2.4s en
+  aparecer — en ese hueco se veía el mapa de fondo. Ahora la esfera es lo primero visible
+  (verificado: no rompe el login, `#auth` sigue tapándola con z-index más alto cuando no
+  hay sesión).
+
+**Hallazgo grave, bloqueante, NO resuelto — leer antes de prometerle voz a Inty:**
+La cuenta de Azure Speech que alimenta TODO lo dinámico (saludo con nombre, chat de
+Pistero) está muerta — probé la key local (`MI-AZURE.txt`) y el secreto real del Worker
+de producción (`https://librepedal-ia.workers.dev/?aztts=...`), **los dos devuelven 401**.
+Mientras esto no se resuelva, el saludo y el chat de Pistero suenan con voz nativa
+genérica, siempre, no a veces.
+
+**Decisión de Inty (2026-08-13): migrar a ElevenLabs, no reactivar Azure.**
+Pasos en orden para quien siga:
+1. Esperar que Inty cree la cuenta ElevenLabs (plan Starter, USD 6/mes) y entregue la key
+   — **nunca pedirla pegada en el chat**, que la ponga en un archivo local
+   (`MI-ELEVENLABS.txt` o similar, gitignored) y avise.
+2. Regenerar las 194 frases fijas (`voces/*.mp3`) con ElevenLabs, modelo Multilingual v2/v3
+   (mejor calidad/emoción) — mismo patrón que `scripts/gen-voces.py` /
+   `scripts/gen-generales.py`, adaptado al API de ElevenLabs (no es SSML, es JSON + voice_id).
+3. Actualizar `worker-ia/worker.js` (hoy llama a `tts.speech.microsoft.com` en el bloque
+   `aztts`) para que use ElevenLabs, y cambiar el secreto en Cloudflare Pages.
+4. De paso, bajar el `rate` de los arquetipos más rápidos de `gen-voces.py` —
+   `entrenador` tiene `+13%`, el más extremo de la tabla, sonaba apurado/raro en las
+   pruebas de hoy. Revisar todos, no solo ese.
+5. Construir el gating premium (no existe todavía): campo `premium:true/false` por
+   usuario en Firestore, la voz dinámica (ElevenLabs) solo se dispara si es premium — así
+   el costo variable lo pagan solo los usuarios pagados, no todos.
+6. Arreglar el riesgo de los mapas (no es de plata, es de que se puede caer sola): hoy
+   pega directo a `tile.openstreetmap.org`, cuya política dice que puede bloquear sin
+   aviso con uso pesado. Migrar a MapTiler (100k tiles gratis/mes, después ~USD 25/mes).
+7. Modelo completo de costos e ingresos armado hoy (precios sugeridos: Gratis / Media
+   $2.500 CLP / Premium $5.000 CLP, con el razonamiento completo):
+   https://claude.ai/code/artifact/8febd4a4-80aa-4209-a8ef-4466312ce184
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado **2026-07-20**,
 versión actual del proyecto: **v7.14** (en vivo en librepedal.cl).
