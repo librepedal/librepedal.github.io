@@ -736,7 +736,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
   </div>
 </div>
 
-<div id="esferaScreen">
+<div id="esferaScreen" class="on">
 <canvas id="esStars"></canvas>
 <div id="esPostales"><div class="es-post-layer" id="esPostA"></div><div class="es-post-layer" id="esPostB"></div></div>
 <div id="esFlash"></div>
@@ -2371,11 +2371,15 @@ function _reproducirVoz(item){
       _vozArchivo(item, durEst, _id, miGen);
       return;
     }
-    if(navigator.onLine){ // frase nueva (nombres, calles, números): esa sí se genera en vivo
-      vozTimerFin=setTimeout(_vozSiguiente, 12000);
-      _vozAzureRuntime(item, durEst, miGen);
-      return;
-    }
+    // frase nueva (nombres, calles, números): esa sí se genera en vivo. Antes esto estaba
+    // detrás de `navigator.onLine` — la MISMA trampa que ya se sacó arriba para los mp3
+    // fijos, pero se había quedado acá: si `navigator.onLine` mentía diciendo que no hay
+    // red (pasa seguido), saltaba directo a la voz nativa sin ni intentar la buena. Ahora
+    // se intenta siempre; si de verdad no hay red, `_vozAzureRuntime` ya cae sola a la
+    // nativa por su propio onerror/catch (2026-08-13).
+    vozTimerFin=setTimeout(_vozSiguiente, 12000);
+    _vozAzureRuntime(item, durEst, miGen);
+    return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
   _vozNativaOWeb(item, durEst);
