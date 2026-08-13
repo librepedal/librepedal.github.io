@@ -1,3 +1,11 @@
+> 📌 **DIRECTIVA DE ARQUITECTURA (2026-08-13, Inty) — NO EJECUTAR TODAVÍA, solo guardar:**
+> cada función nueva debe vivir en su propio archivo/módulo con una sola responsabilidad
+> (ej. la integración de voz de ElevenLabs en `voz-elevenlabs.js` propio, no metida dentro
+> de `index.html`). Confirma y refuerza lo que ya dice `PROTOCOLO-DE-TRABAJO-INTY.md` sobre
+> "nunca un monolito". Inty fue explícito: **no tocar ni sacar código ya existente de
+> `index.html` todavía** — esto aplica recién a partir de trabajo NUEVO (empezando por
+> ElevenLabs), no es luz verde para refactorizar lo de atrás.
+
 > 📌 **NUEVO (2026-08-13, sesión Lenovo):** cuenta de Azure que alimenta la voz EN VIVO
 > está **muerta** (401 en el key local y en el Worker de producción) — el 100% de las
 > frases dinámicas caen a la voz nativa ahora mismo. Decisión tomada con Inty: migrar a
@@ -54,6 +62,59 @@ Pasos en orden para quien siga:
 7. Modelo completo de costos e ingresos armado hoy (precios sugeridos: Gratis / Media
    $2.500 CLP / Premium $5.000 CLP, con el razonamiento completo):
    https://claude.ai/code/artifact/8febd4a4-80aa-4209-a8ef-4466312ce184
+
+**Actualización (misma sesión, más tarde): cuenta ElevenLabs ya pagada y conectada.**
+Clave guardada en `MI-ELEVENLABS.txt` (gitignored). Se probó real: genera audio real (200
+OK). Se exploró la biblioteca completa (6.866 voces en español) con datos reales de uso, no
+descripciones de marketing.
+
+**Decisión de voces tomada con Inty — CADA ARQUETIPO CON VOZ DISTINTA** (upgrade real sobre
+Azure, que usaba las mismas 2 voces con prosodia distinta): Pistero base = **Abel** (voz
+"reflexivo", id `452WrNT9o8dphaYW5YGU`). Los 12 arquetipos existentes en `TONOS` de
+`worker-ia/worker.js` cada uno con su propia voz:
+| Arquetipo | Voz elegida | voice_id |
+|---|---|---|
+| sabio | El Faraón (abuelo cálido/narrador) | `9TcPbUAhHnAV8mzFDAWU` |
+| entrenador | David (energético, mexicano) | `qRUgOhnxGASxirG4fKjv` |
+| relajado | Diego Cárdenas (apacible, peruano) | `dF1Qg3iMRirscWEMtEKb` |
+| sensible | Mauricio (calmado, conversacional) | `94zOad0g7T7K4oa7zhDq` |
+| maternal | Rodrigo (cálido, chileno) | `yytxkT3pNVMWDHn3KXrY` |
+| directo | Dipemo (neutro, colombiano) | `j7XQZUnVCfhpa94EsaJS` |
+| relator | JC (narrador deportivo) | `4XUsiqPDK4UACIM2BILe` |
+| pícaro | Mario (animado, latino) | `tomkxGQGz4b1kE0EM722` |
+| aventurero | Mat Oyarzo (motivador, mexicano) | `kKcRoM4gR6HLJt6Zupbs` |
+| compadre | Alejandro (casual, chileno) | `0cheeVA5B3Cv6DGq65cT` |
+| humorístico | Mark (divertido) — **⚠️ acento NO confirmado latino, revisar antes de dar por definitivo** | `DUnzBkwtjRWXPr6wRbmL` |
+| guía | Horacio (cálido, colombiano) | `57D8YIbQSuE3REDPO6Vm` |
+
+**Pistera (femenina) — mismo proceso, YA COMPLETO.** Base = **Tatiana Martin** (id
+`2rigMbVWLdqtBSCahJFX`, "wise-speaking, calm", paralelo a Abel). Los 12 arquetipos:
+| Arquetipo | Voz elegida | voice_id |
+|---|---|---|
+| sabio | Regina (meditativa) | `eBthAb30UYbt2nojGXeA` |
+| entrenador | Sandra (energética) | `rEVYTKPqwSMhytFPayIb` |
+| relajado | Jhenny (suave, calmada) | `2Lb1en5ujrODDIqmp7F3` |
+| sensible | Verónica (cálida) | `9EU0h6CVtEDS6vriwwq5` |
+| maternal | Daniela (cálida, protectora) | `ajOR9IDAaubDK5qtLUqQ` |
+| directo | Lumina (neutra, colombiana) | `x5IDPSl4ZUbhosMmVFTk` |
+| relator | Maya (narradora dinámica) | `nbcvT3C2tyOd2OsRAtUf` |
+| pícaro | Kate (brillante, juguetona) | `qWWAqFomnJ99VwQLREfT` |
+| aventurero | Valeria (alegre, argentina) | `9oPKasc15pfAbMr7N6Gs` |
+| compadre | Victoria (chilena) | `Fd38GRHtJllY0CuguAy9` |
+| humorístico | Gaby (vibrante, peruana) | `5vkxOzoz40FrElmLP4P7` |
+| guía | Marcela (colombiana) | `86V9x9hrQds83qf7zaGn` |
+
+**PENDIENTE de confirmación final de Inty** (mandadas 25 muestras reales en total —12
+masculinas + 13 femeninas—, esperando su OK o cambios puntuales) antes de:
+1. Regenerar los 194 `voces/*.mp3` — la lógica cambia respecto a Azure: cada frase debe
+   generarse con la voz del arquetipo que le corresponde según a qué categoría pertenece
+   en el `CAT` de `scripts/gen-voces.py` (esa info YA existe, hay que mapearla a las voces
+   nuevas de arriba en vez de a las 2 voces fijas de antes), en vez de 2 voces fijas.
+2. Frases GENERALES/sistema (GPS, voz activada, etc. — `scripts/frases-generales.json`)
+   usan la voz BASE de cada uno (Abel / Tatiana Martin), no un arquetipo específico.
+3. Actualizar `worker-ia/worker.js` para que la voz EN VIVO (dinámica) también use el
+   voice_id correcto según el arquetipo activo del usuario (`pisteroPersonalidad`), no una
+   sola voz fija — mismo mapeo de arriba.
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado **2026-07-20**,
 versión actual del proyecto: **v7.14** (en vivo en librepedal.cl).
