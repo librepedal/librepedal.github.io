@@ -16,7 +16,7 @@ trap 'rm -rf "$OUT"' EXIT
 
 echo "→ armando carpeta limpia..."
 cd "$SRC"
-for f in *.html sw.js voz-elevenlabs.js manifest.json version.txt _headers _redirects robots.txt favicon.ico; do
+for f in *.html sw.js voz-elevenlabs.js perfil-comunidad.js manifest.json version.txt _headers _redirects robots.txt favicon.ico; do
   [ -f "$f" ] && cp "$f" "$OUT/"
 done
 # `voces` lleva las voces pregeneradas y la detectó el control de completitud de más abajo
