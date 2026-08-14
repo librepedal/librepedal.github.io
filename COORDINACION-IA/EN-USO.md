@@ -196,3 +196,21 @@ nueva de animacion de logo (oro cepillado, "pulso de ruta") a ANIMACIONES-LOGO.m
 logo-transparent-gold.png (asset nuevo, recolor a oro del logo real). NO toque
 index.html - mismo motivo que el clima, no arriesgar nada antes del lanzamiento de
 manana. Detalle completo en BITACORA.md.
+
+---
+
+**LIBRE** - sesion Claude Code (cuenta de hoy), 2026-08-14, cierre de coordinacion.
+Inty pidio "coordina con la otra cuenta y procedan sin errores". Encontre y arregle
+2 cosas reales (no cosmeticas) al sincronizar:
+1. `CLAUDE.md` nuevo de Thunderobot dejaba a `TAREA-LANZAMIENTO-2026-08-15.md` con
+   instrucciones rotas ("corre deploy-seguro.sh a mano" -> ahora bloqueado a proposito).
+   Verificado en vivo que v8.51 YA esta en produccion (la tarea estaba resuelta en la
+   practica, solo el doc no lo decia) -> tarea cerrada con evidencia.
+2. `node tests/run.mjs` daba 12/13 (1 fallo real: conteo de arquetipos hardcodeado en
+   12, quedo atras cuando se agregaron seductor/otaku a 14). Ademas ese archivo de test
+   nunca habia sido commiteado (estaba `??` sin trackear) - Thunderobot nunca lo vio.
+   Arreglado y commiteado. Ahora 13/13 verde.
+
+Ambos cambios se hicieron en rama propia (`infra/cerrar-tarea-lanzamiento-8.51` y
+`fix/test-conteo-arquetipos`) y se mergearon a `main`, siguiendo el `CLAUDE.md` nuevo -
+primeras ramas bajo esa regla. Candado **LIBRE**.
