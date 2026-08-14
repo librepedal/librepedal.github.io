@@ -1508,7 +1508,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.59'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.60'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3186,6 +3186,17 @@ function _pistSet(k,v){ try{ var o=_pistOpts(); o[k]=v; localStorage.setItem('lp
 function _pistCascoCol(){ var o=_pistOpts(); var h=PIST_CASCO.find(function(x){return x.id===o.casco;}); return h?h.c:'#00aaff'; }
 function _pistPielCol(){ var o=_pistOpts(); var p=PIST_PIEL.find(function(x){return x.id===o.piel;}); return p?p.c:'#f4c9a0'; }
 function _pistoNuevo(expr){ var o=_pistOpts(); return _pisteroExprSVG(expr||'feliz', _pistCascoCol(), _pistPielCol(), o.lentes, o.bigote, o.acc, o); }
+// Mismo Pistero de _pistoNuevo() pero para un `pistOpts` ARBITRARIO (de Firestore,
+// no de localStorage) -- _pistOpts()/_pistoNuevo() estan atados al usuario logueado
+// (leen 'lp_pist_'+cu del dispositivo), asi que no sirven para dibujar el personaje
+// de OTRO usuario. Usado en verPerfilUsuario() para que el perfil de comunidad
+// muestre el Pistero real de quien sea, no siempre el mismo por defecto.
+function _pistoDe(opts, expr){
+  var o=Object.assign({casco:'azul',piel:'claro',lentes:'',lentesCol:'#16203a',bigote:'',acc:'',pelo:'',peloCol:'#4a3222',pest:'',aro:'',pano:''}, opts||{});
+  var h=PIST_CASCO.find(function(x){return x.id===o.casco;});
+  var p=PIST_PIEL.find(function(x){return x.id===o.piel;});
+  return _pisteroExprSVG(expr||'feliz', h?h.c:'#00aaff', p?p.c:'#f4c9a0', o.lentes, o.bigote, o.acc, o);
+}
 function _pistSwatch(inner,sel,onclick,label){ return '<div class="pist-sw'+(sel?' sel':'')+'" onclick="'+onclick+'" title="'+label+'"><div class="pist-sw-ico">'+inner+'</div><div class="pist-sw-lbl">'+label+'</div></div>'; }
 function renderPistCustom(){ var o=_pistOpts();
   function _mix(extra){ return Object.assign({},o,extra||{}); }
@@ -6400,8 +6411,10 @@ async function verPerfilUsuario(userId, volverA){
     const logrosPub=kmMetas.filter(function(m){return km>=m;}).length + darmaMetas.filter(function(m){return darma>=m;}).length;
     // rutas del ciclista
     let rutas=[], totalKm=0; try{ const rs=await db.collection('routes').where('user','==',userId).limit(50).get(); rs.forEach(function(r){ const x=r.data(); rutas.push(x); totalKm+=(x.distance||0); }); }catch(e){}
-    const avatar=(typeof generateCharacterSVG==='function')?generateCharacterSVG(d.helmet||'giro','none',d.skin||'cyan',[],{piel:d.piel,ojos:d.ojos,labios:d.labios,vello:d.vello,peinado:d.peinado,panuelo:d.panuelo}):'';
-    let html=_btnVolverModal()+'<div style="text-align:center"><div style="width:110px;height:110px;margin:0 auto">'+avatar+'</div><h3 style="margin:6px 0;color:var(--p)">'+escapeHTML(nombre)+'</h3><div style="color:var(--g);font-weight:800;font-size:0.85rem">'+escapeHTML(nivel)+'</div></div>';
+    // _pistSet() guarda campos PLANOS pist* en el doc (no un objeto anidado) — armar
+    // el shape que espera _pistoDe() a partir de esos mismos campos.
+    const avatar=(typeof _pistoDe==='function')?_pistoDe({casco:d.pistCasco,piel:d.pistPiel,lentes:d.pistLentes,lentesCol:d.pistLentesCol,bigote:d.pistBigote,acc:d.pistAcc,pelo:d.pistPelo,peloCol:d.pistPeloCol,pest:d.pistPest,aro:d.pistAro,pano:d.pistPano},'feliz'):'';
+    let html=_btnVolverModal()+'<div style="text-align:center"><div style="width:110px;height:110px;margin:0 auto"><svg viewBox="0 0 200 200" style="width:100%;height:100%">'+avatar+'</svg></div><h3 style="margin:6px 0;color:var(--p)">'+escapeHTML(nombre)+'</h3><div style="color:var(--g);font-weight:800;font-size:0.85rem">'+escapeHTML(nivel)+'</div></div>';
     html+='<div class="stats-grid" style="margin:12px 0"><div class="stat-card"><div class="stat-value">'+km.toFixed(0)+'</div><div class="stat-label">Km totales</div></div><div class="stat-card"><div class="stat-value">'+darma+'</div><div class="stat-label">Darma</div></div><div class="stat-card"><div class="stat-value">'+logrosPub+'</div><div class="stat-label">Logros</div></div><div class="stat-card"><div class="stat-value">'+rutas.length+'</div><div class="stat-label">Rutas</div></div></div>';
     html+='<p style="font-size:0.8rem;color:#9fb3c8;text-align:center">Ha recorrido y grabado <strong style="color:var(--p)">'+totalKm.toFixed(1)+' km</strong> en '+rutas.length+' ruta'+(rutas.length===1?'':'s')+'.</p>';
     if(rutas.length){ html+='<button class="ab" onclick="mostrarRutasDe(\''+userId+'\',\''+encodeURIComponent(nombre)+'\')"><i class="fas fa-map"></i> Ver por dónde ha pedaleado</button>'; }
