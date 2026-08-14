@@ -256,6 +256,22 @@ Candado **LIBRE**.
 
 ---
 
+**OCUPADO** - sesion lenovo, 2026-08-14 ~21:00. Editando `index.html` en rama
+`fix/consistencia-noche-mapas-iconos-clima` (forkeada de `origin/main`, NO toca
+`fix/voz-elevenlabs-arquetipo` ni `wip/rueda-oro-necesita-simplificarse`, ver abajo).
+Inty pidio auditar consistencia de tema/mapas/iconos/clima en toda la app y aplicar
+lo seguro. Alcance de esta pasada: (1) fix real de regresion visual en boton GPS
+libre (linea ~7206 volvia al verde viejo pre-rediseno v8.51), (2) extender el tema
+Cristal (ya en produccion, ver SPEC-TEMAS-APP-WIDE) a la pantalla de login `#auth`
+(unico hueco real encontrado ahi), (3) integrar `COORDINACION-IA/clima-fx-prototipo.js`
+a `index.html` de verdad (estaba listo pero fuera, ver SPEC-CLIMA-FX). **Inty pidio
+explicitamente ver el resultado antes de que se suba como actualizacion** - esta
+rama queda pusheada para revision, NO se mergea a main ni se deploya sola.
+Migracion completa de iconos a Lucide y consolidacion del mapa de navegacion a
+MapTiler quedan FUERA de esta pasada (la 2da necesita una API key que no tengo).
+
+---
+
 **DELEGO ESTO** - sesion lenovo se queda sin credito, Inty pidio delegar en vez de
 seguir yo. Rama `wip/rueda-oro-necesita-simplificarse` (pusheada, NO mergeada,
 NO tocar main con esto sin que Inty vea el resultado primero):
