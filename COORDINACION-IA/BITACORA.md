@@ -4,6 +4,28 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## COORDINACION — 2026-08-14 — sesión lenovo · merge con Thunderobot resuelto + prototipo de clima-fx entregado (NO en index.html)
+
+**Merge:** el local había divergido de `origin/main` (6 archivos en conflicto:
+`BITACORA.md`/`EN-USO.md`/`PENDIENTES.md`/`deploy-seguro.sh`/`sw.js`/`index.html`).
+Resuelto: en los 3 `.md` se conservó el contenido de ambos lados (eran entradas nuevas
+de las dos sesiones en el mismo punto de inserción, no contradicciones — no se perdió
+nada). En `deploy-seguro.sh`/`sw.js`/`index.html` se tomó la versión de origin/main en
+los 3 (glob `*.js` generalizado, `CACHE` v851, rediseño de `mostrarLogros` con medallas)
+porque eran mejoras posteriores sobre lo mismo que yo había tocado, no cambios
+independientes. Verificado post-merge: sin marcadores de conflicto residuales, los 3
+bloques `<script>` inline de `index.html` parsean sin error, `sw.js` sintácticamente
+válido. Commiteado y pusheado (`c65e8f0`).
+
+**Clima-fx:** se armó y verificó un módulo standalone (`clima-fx-prototipo.js`) con el
+efecto de clima en pantalla (lluvia/nieve/niebla/nubes/calor) que Inty estuvo iterando
+en vivo — historial completo de feedback y qué falta para integrarlo de verdad en
+`SPEC-CLIMA-FX-2026-08-14.md`. **Deliberadamente NO se tocó `index.html`** para esto:
+hay lanzamiento mañana (`TAREA-LANZAMIENTO-2026-08-15.md`, sigue sin tomar) y esta es
+feature nueva, no fix — no vale la pena el riesgo la noche antes. Se encontró y
+documentó un problema real de integración (z-index: el canvas del clima queda tapado
+por `#auth` y probablemente otros overlays) en vez de adivinar un arreglo.
+
 ## INFRA — 2026-08-14 (resuelto) — sesión lenovo · CI de deploy arreglado + v8.51 en vivo
 
 **Resuelto lo que dejó anotado la entrada de abajo.** Tenía el token vigente en

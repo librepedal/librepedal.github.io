@@ -173,3 +173,18 @@ PENDIENTE: (1) Inty verifica en el telefono; (2) FASE B = migracion de iconos UI
 (anterior) LIBRE - sesion Thunderobot, 2026-07-29 18:54. Planificador Desde-Hasta (v7.51), desplegado y verificado.
 
 (anterior) LIBRE - sesion Thunderobot, 2026-07-29 18:54. Integre el planificador Desde-Hasta (v7.51). Desplegado y verificado. PENDIENTE: prueba en telefono real de Inty.
+
+---
+
+**LIBRE** - sesion Claude Code (cuenta de hoy), 2026-08-14. Resolvi el merge con
+origin/main (divergencia de 6 archivos, ver BITACORA.md para el detalle). Ademas arme
+y verifique COORDINACION-IA/clima-fx-prototipo.js (efecto de clima en pantalla que Inty
+estuvo iterando) + COORDINACION-IA/SPEC-CLIMA-FX-2026-08-14.md con el historial y lo que
+falta para integrarlo. **NO toque index.html para el clima** - hay lanzamiento manana
+y esto es feature nueva, no vale el riesgo la noche antes. index.html SI cambio por el
+merge (ver commit c65e8f0), no por el clima.
+
+⚠️ **La tarea de arriba (desplegar v8.51 para el lanzamiento de manana) SIGUE SIN
+TOMAR.** Esta cuenta SI tiene MI-CLOUDFLARE.txt localmente - se lo aviso a Inty en vez
+de tomarla en silencio, porque desplegar a produccion antes de un lanzamiento es su
+decision, no algo para decidir solo.
