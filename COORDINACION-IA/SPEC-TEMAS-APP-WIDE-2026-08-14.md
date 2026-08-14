@@ -11,6 +11,12 @@ en orden se arma el **AAB final** para la prueba cerrada de Google Play.
 
 ---
 
+## 0-bis. Estado de `main` al momento del handoff (2026-08-14 ~09:15)
+La otra cuenta mergeó su trabajo local a `main` → `origin/main` = `c65e8f0` (~33 commits
+nuevos, NINGUNO toca `index.html`; main sigue en `APP_VERSION 8.51`). **Mi rama forkeó de
+`4830804` y NO tiene conflicto** con eso (index.html idéntico en ambos lados). Al retomar:
+`git fetch && git rebase origin/main` sobre `feature/temas-app-wide` → limpio. Luego seguir.
+
 ## 0. Regla de oro de esta feature
 - **NO pushear a `main` hasta que esté completa y validada** (push a main = deploy a
   librepedal.cl, que ya está en v8.51 estable). Trabajar y pushear en
