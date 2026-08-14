@@ -1,0 +1,594 @@
+<title>Pulido Fino LibrePedal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-wheel" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1a11 11 0 100 22 11 11 0 000-22zm0 2.2a8.8 8.8 0 018.74 7.7h-3.3a5.5 5.5 0 00-3.34-3.86l1.02-3.5A8.7 8.7 0 0112 3.2zm-1.86.62l1 3.44a5.5 5.5 0 00-3.9 4.02H3.94a8.8 8.8 0 016.2-7.46zM12 9.2a2.8 2.8 0 110 5.6 2.8 2.8 0 010-5.6zM4.1 13.5h3.35a5.5 5.5 0 003.02 3.66l-1.2 3.3A8.8 8.8 0 014.1 13.5zm11.2 4.03a5.5 5.5 0 002.9-3.03h2.62a8.8 8.8 0 01-6.6 6.36l-.02-.03z"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path fill="currentColor" d="M6 3h12v1.5h3.2c.4 0 .8.4.8.9 0 2.6-1 5-3.2 5.9-.7 1.9-2.3 3.3-4.3 3.8V19h2.5c.5 0 .9.4.9.9V21H6v-1.1c0-.5.4-.9.9-.9H9.5v-3.9c-2-.5-3.6-1.9-4.3-3.8C3 10.4 2 8 2 5.4c0-.5.4-.9.8-.9H6V3zM4.4 6.4c.2 1.5.8 2.8 1.9 3.5-.2-1-.3-2.1-.3-3.5H4.4zm15.2 0h-1.6c0 1.4-.1 2.5-.3 3.5 1.1-.7 1.7-2 1.9-3.5z"/></symbol>
+    <symbol id="i-medal" viewBox="0 0 24 24"><path fill="currentColor" d="M8.3 2h3.1L9 7.2 6 5.4 8.3 2zm7.4 0L18 5.4 15 7.2 12.6 2h3.1zM12 8.2a6.9 6.9 0 100 13.8 6.9 6.9 0 000-13.8zm0 2.4l1.28 2.6 2.87.42-2.08 2.02.49 2.86L12 19.2l-2.56 1.3.49-2.86-2.08-2.02 2.87-.42L12 10.6z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a4.6 4.6 0 00-4.6 4.6V9H6.4c-.9 0-1.6.7-1.6 1.6v8.8c0 .9.7 1.6 1.6 1.6h11.2c.9 0 1.6-.7 1.6-1.6v-8.8c0-.9-.7-1.6-1.6-1.6h-1V6.6A4.6 4.6 0 0012 2zm0 2.1a2.5 2.5 0 012.5 2.5V9h-5V6.6A2.5 2.5 0 0112 4.1zm0 9a1.8 1.8 0 011 3.3v1.7a1 1 0 01-2 0v-1.7a1.8 1.8 0 011-3.3z"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 2L4 13.2h6l-1.5 8.8L20 10.6h-6L13.5 2z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5l2.9 5.9 6.5.95-4.7 4.58 1.1 6.47L12 17.4l-5.8 3.05 1.1-6.47L2.6 9.35l6.5-.95L12 2.5z"/></symbol>
+    <symbol id="i-gem" viewBox="0 0 24 24"><path fill="currentColor" d="M6.2 3h11.6l3.2 5.1-9 12.6-9-12.6L6.2 3zm.9 2L5 8h4l1.4-3H7.1zm5.9 0l1.4 3H19l-2.1-3h-3.9zm-1 .3L9.7 8h4.6l-1.3-2.7zM8.9 10l2.1 6.3L7 10H8.9zm6.2 0H17l-4 6.3L15.1 10z"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path fill="currentColor" d="M3 8.2l3.6 2.6L12 4l5.4 6.8L21 8.2l-1.7 10H4.7L3 8.2zm2 11.3h14V21H5v-1.5z"/></symbol>
+    <symbol id="i-mountain" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4l5 8-2.2-.6L12 8.6 8.5 14l3.5 1 3.2-1 4 6H4.8L12 4z"/></symbol>
+    <symbol id="i-fire" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 3-1.3 4.5-2.8 6C7.5 9.7 6 11.5 6 14.2A6 6 0 0018 14c0-2-.8-3.7-2-5.2-.4 1-1.2 1.6-2 1.8.8-2.6-.2-6.4-2-8.6zm0 12.2a2 2 0 011.4 3.4A2 2 0 0110.5 15c.4.2.9.3 1.5.3z"/></symbol>
+    <symbol id="i-seedling" viewBox="0 0 24 24"><path fill="currentColor" d="M11 21v-6.1C7.5 14.7 5 12 5 8.5 8.6 8.5 11 10.7 11 14V13c0-3 2.5-5.5 6-5.5C17 11 14.5 13 11.5 13H13v8h-2z"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20zm3.7 6.3l-2 5-5 2 2-5 5-2zM12 11a1 1 0 100 2 1 1 0 000-2z"/></symbol>
+    <symbol id="i-bike" viewBox="0 0 24 24"><path fill="currentColor" d="M5.5 14a3.5 3.5 0 100 7 3.5 3.5 0 000-7zm0 1.8a1.7 1.7 0 110 3.4 1.7 1.7 0 010-3.4zM18.5 14a3.5 3.5 0 100 7 3.5 3.5 0 000-7zm0 1.8a1.7 1.7 0 110 3.4 1.7 1.7 0 010-3.4zM14.5 5a1.3 1.3 0 100 2.6A1.3 1.3 0 0014.5 5zM9 8l2.4 3H14l1.6 3.2.9-.5L14.7 10h-2.3L11 8h2.5V6.7H8.5c-.8 0-1.1.9-.5 1.4L9 8.9V8z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill="currentColor" d="M9.6 16.2L5.4 12l-1.4 1.4 5.6 5.6 12-12-1.4-1.4z"/></symbol>
+    <symbol id="i-hands" viewBox="0 0 24 24"><path fill="currentColor" d="M11 2.5l1.4 3.9 3.9-2.6-1.4 4.1 4.1.2-3.3 2.6 3.3 2.6-4.1.2 1.4 4.1-3.9-2.6L11 19.5l-1.4-4-3.9 2.6L7.1 14 3 13.8l3.3-2.6L3 8.6l4.1-.2L5.7 4.3l3.9 2.6L11 2.5z"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path fill="currentColor" d="M5 3v18H3V3h2zm2 1h13l-2.5 4L20 12H7V4z"/></symbol>
+    <symbol id="i-dharma" viewBox="0 0 100 100">
+      <g fill="none" stroke="currentColor" stroke-linecap="round">
+        <circle cx="50" cy="50" r="47" stroke-width="2.4" opacity="0.5"/>
+        <circle cx="50" cy="50" r="41.5" stroke-width="5"/>
+        <g stroke-width="4.6">
+          <line x1="13.5" y1="50" x2="86.5" y2="50"/>
+          <line x1="50" y1="13.5" x2="50" y2="86.5"/>
+          <line x1="24.2" y1="24.2" x2="75.8" y2="75.8"/>
+          <line x1="75.8" y1="24.2" x2="24.2" y2="75.8"/>
+        </g>
+      </g>
+      <circle cx="50" cy="50" r="11.5" fill="currentColor"/>
+      <circle cx="50" cy="50" r="4.2" fill="#f7cf5a"/>
+    </symbol>
+    <!-- set de LÍNEA (propuesta elegante) -->
+    <symbol id="i-ln-route" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M6 8.4v3.1a4 4 0 004 4h1.4"/><path d="M18 15.6v-3.1a4 4 0 00-4-4h-1.4"/></g></symbol>
+    <symbol id="i-ln-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.1"/><path d="M3.6 18.6a5.4 5.4 0 0110.8 0"/><path d="M16 5.4a3.1 3.1 0 010 6M18 18.6a5.4 5.4 0 00-3-4.85"/></g></symbol>
+    <symbol id="i-ln-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l6.8 2.9v4.6c0 4.4-2.9 7.4-6.8 8.9-3.9-1.5-6.8-4.5-6.8-8.9V6.1z"/><path d="M9.2 12l2 2 3.6-3.8"/></g></symbol>
+    <symbol id="i-ln-trophy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.2h10v3.6a5 5 0 01-10 0z"/><path d="M7 5.2H4.2v.9a3 3 0 002.9 3M17 5.2h2.8v.9a3 3 0 01-2.9 3"/><path d="M12 12.8v3.2M9.2 20h5.6M10.2 20l.4-4h2.8l.4 4"/></g></symbol>
+    <symbol id="i-ln-bell" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 10.2a5.8 5.8 0 0111.6 0c0 4.6 2 5.8 2 5.8H4.2s2-1.2 2-5.8z"/><path d="M10.2 19a1.9 1.9 0 003.6 0"/></g></symbol>
+    <symbol id="i-ln-gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 4.5V2.6M12 21.4v-1.9M17.3 6.7l1.3-1.3M5.4 18.6l1.3-1.3M19.4 12h1.9M2.7 12h1.9M17.3 17.3l1.3 1.3M5.4 5.4l1.3 1.3"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="page">
+
+  <header class="masthead">
+    <div class="brand">
+      <span class="brand__mark"><svg class="ic"><use href="#i-wheel"/></svg></span>
+      <span class="brand__name">Libre&nbsp;Pedal</span>
+    </div>
+    <p class="eyebrow">Pre-diseño · para aprobar antes de tocar código</p>
+    <h1 class="title">Pulido fino de la interfaz</h1>
+    <p class="lede">Botones más reposados, insignias que se sienten un premio de verdad, y logros con presencia de medalla. Misma paleta, misma alma — solo mejor terminación. Toca los elementos: reaccionan como en la app.</p>
+    <div class="chip-row">
+      <span class="tag tag--was">ANTES</span> lo de hoy
+      <span class="sep">·</span>
+      <span class="tag tag--now">DESPUÉS</span> la propuesta
+    </div>
+  </header>
+
+  <!-- ============ BOTONES ============ -->
+  <section class="chapter">
+    <div class="chapter__head">
+      <span class="chapter__num">01</span>
+      <h2 class="chapter__title">Botones</h2>
+      <p class="chapter__sub">El sistema <code>.ab</code> / <code>.bg</code> ya es sólido. El ruido está en la terminación plana. Le agregamos profundidad sutil, un realce arriba y presión táctil real.</p>
+    </div>
+
+    <div class="stage">
+      <div class="lane">
+        <span class="lane__tag tag tag--was">ANTES</span>
+        <div class="demo demo--flat">
+          <button class="oldbtn oldbtn--pri">Grabar mi ruta</button>
+          <button class="oldbtn">Ver mis logros</button>
+          <button class="oldbtn">Ranking mundial</button>
+        </div>
+      </div>
+
+      <div class="lane">
+        <span class="lane__tag tag tag--now">DESPUÉS</span>
+        <div class="demo">
+          <button class="btn btn--pri"><svg class="ic"><use href="#i-flag"/></svg>Grabar mi ruta<span class="btn__sheen"></span></button>
+          <button class="btn"><svg class="ic"><use href="#i-trophy"/></svg>Ver mis logros</button>
+          <button class="btn"><svg class="ic"><use href="#i-medal"/></svg>Ranking mundial</button>
+          <button class="btn btn--ghost"><svg class="ic"><use href="#i-compass"/></svg>Rutas para ti</button>
+          <button class="btn btn--danger"><svg class="ic"><use href="#i-fire"/></svg>Terminar y borrar</button>
+        </div>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><b>Profundidad, no color nuevo.</b> Un realce de 1px arriba y una sombra baja dan volumen sin cambiar la paleta.</li>
+      <li><b>Presión de verdad.</b> Al tocar, el botón se hunde (escala + sombra interior). Fitts intacto: ≥44px.</li>
+      <li><b>Primario con brillo controlado.</b> El naranja lleva un barrido de luz al tocarlo — presente, no chillón.</li>
+      <li><b>Jerarquía clara.</b> Primario lleno · secundario con relieve · fantasma solo contorno · peligro en rojo sobrio.</li>
+    </ul>
+  </section>
+
+  <!-- ============ INSIGNIAS ============ -->
+  <section class="chapter">
+    <div class="chapter__head">
+      <span class="chapter__num">02</span>
+      <h2 class="chapter__title">Insignias y recompensas</h2>
+      <p class="chapter__sub">La Darma es el premio por aportar: que se vea como metal, no como un rótulo amarillo. Y los candados de la tienda, finos.</p>
+    </div>
+
+    <div class="stage">
+      <div class="lane">
+        <span class="lane__tag tag tag--was">ANTES</span>
+        <div class="oldbadge">
+          <span class="oldbadge__ic">◎</span>
+          <b>0</b> Darma <small>tu premio por aportar a la comunidad</small>
+        </div>
+        <div class="oldlock">🔒 120✨</div>
+      </div>
+
+      <div class="lane">
+        <span class="lane__tag tag tag--now">DESPUÉS</span>
+        <div class="darma">
+          <span class="darma__coin"><svg class="ic darma__dh"><use href="#i-dharma"/></svg></span>
+          <span class="darma__val" id="darmaVal">248</span>
+          <span class="darma__meta"><b>Darma</b><small>tu premio por aportar</small></span>
+          <span class="darma__shine"></span>
+        </div>
+
+        <div class="tiers">
+          <div class="tier tier--bronze"><span class="tier__disc"><svg class="ic"><use href="#i-seedling"/></svg></span><span class="tier__lbl">Colaborador</span></div>
+          <div class="tier tier--silver"><span class="tier__disc"><svg class="ic"><use href="#i-star"/></svg></span><span class="tier__lbl">Pilar</span></div>
+          <div class="tier tier--gold"><span class="tier__disc"><svg class="ic"><use href="#i-crown"/></svg></span><span class="tier__lbl">Embajador</span></div>
+        </div>
+
+        <div class="locks">
+          <span class="lockpill"><svg class="ic"><use href="#i-lock"/></svg>120<i>Darma</i></span>
+          <span class="lockpill lockpill--open"><svg class="ic"><use href="#i-bolt"/></svg>Desbloqueado</span>
+        </div>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><b>Darma como moneda de metal.</b> Degradado de oro cepillado, número grande y tabular, moneda en un disco hundido. Un brillo cruza lento y se detiene.</li>
+      <li><b>Rangos con jerarquía real.</b> Bronce → plata → oro: mismo lenguaje de medalla, el nivel se lee de un vistazo.</li>
+      <li><b>Candados sobrios.</b> Píldora oscura con filo de oro; al desbloquear, cambia a naranja. Nada de emoji.</li>
+    </ul>
+  </section>
+
+  <!-- ============ LOGROS ============ -->
+  <section class="chapter">
+    <div class="chapter__head">
+      <span class="chapter__num">03</span>
+      <h2 class="chapter__title">Logros</h2>
+      <p class="chapter__sub">Hoy son filas planas con una barrita. Los subimos a <b>medalla</b>: un medallón circular, anillo metálico, y el progreso como un arco elegante. Toca el que está casi listo.</p>
+    </div>
+
+    <div class="ach-head">
+      <div class="ach-ring" id="ringWrap">
+        <svg viewBox="0 0 44 44" class="ach-ring__svg"><circle cx="22" cy="22" r="19" class="ach-ring__bg"/><circle cx="22" cy="22" r="19" class="ach-ring__fg" id="ringFg"/></svg>
+        <span class="ach-ring__num"><b id="ringNum">14</b>/24</span>
+      </div>
+      <div>
+        <div class="ach-head__t">Has desbloqueado <b id="desbCount">14</b> de 24 logros</div>
+        <div class="ach-head__s">Son gratis y muestran tu avance en la comunidad.</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="lane">
+        <span class="lane__tag tag tag--was">ANTES</span>
+        <div class="oldach oldach--done"><span class="oldach__e">🏆</span><div><b>Leyenda del pedal ✓</b><small>5000 km recorridos</small></div></div>
+        <div class="oldach"><span class="oldach__e" style="color:#5a6478">⛰️</span><div><b style="color:#cfd8e6">Rutero</b><small>500 km recorridos</small><div class="oldbar"><i style="width:64%"></i></div><small class="oldnum">320 / 500 km</small></div></div>
+      </div>
+
+      <div class="lane">
+        <span class="lane__tag tag tag--now">DESPUÉS</span>
+
+        <div class="ach ach--done">
+          <span class="ach__medal"><svg class="ic"><use href="#i-trophy"/></svg><span class="ach__glow"></span></span>
+          <div class="ach__body">
+            <div class="ach__title">Leyenda del pedal <span class="ach__check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+            <div class="ach__desc">5000 km recorridos</div>
+          </div>
+        </div>
+
+        <div class="ach ach--near" id="achNear" tabindex="0" role="button" aria-label="Logro Rutero, casi completo, toca para ver el desbloqueo">
+          <span class="ach__medal">
+            <svg viewBox="0 0 48 48" class="ach__prog"><circle cx="24" cy="24" r="21" class="ach__prog-bg"/><circle cx="24" cy="24" r="21" class="ach__prog-fg" id="nearFg"/></svg>
+            <svg class="ic ach__ic"><use href="#i-mountain"/></svg>
+            <span class="ach__glow"></span>
+          </span>
+          <div class="ach__body">
+            <div class="ach__title">Rutero</div>
+            <div class="ach__desc">500 km recorridos</div>
+            <div class="ach__meta"><span id="nearNum">480</span> / 500 km · <span class="ach__hint" id="nearHint">toca para completar</span></div>
+          </div>
+        </div>
+
+        <div class="ach">
+          <span class="ach__medal ach__medal--locked">
+            <svg viewBox="0 0 48 48" class="ach__prog"><circle cx="24" cy="24" r="21" class="ach__prog-bg"/><circle cx="24" cy="24" r="21" class="ach__prog-fg" style="stroke-dashoffset:98"/></svg>
+            <svg class="ic ach__ic"><use href="#i-gem"/></svg>
+          </span>
+          <div class="ach__body">
+            <div class="ach__title">Guardián</div>
+            <div class="ach__desc">500 de Darma</div>
+            <div class="ach__meta">248 / 500 · <span class="ach__hint">a mitad de camino</span></div>
+          </div>
+        </div>
+
+        <div class="ach">
+          <span class="ach__medal ach__medal--locked">
+            <svg viewBox="0 0 48 48" class="ach__prog"><circle cx="24" cy="24" r="21" class="ach__prog-bg"/><circle cx="24" cy="24" r="21" class="ach__prog-fg" style="stroke-dashoffset:120"/></svg>
+            <svg class="ic ach__ic"><use href="#i-bolt"/></svg>
+          </span>
+          <div class="ach__body">
+            <div class="ach__title">Máquina</div>
+            <div class="ach__desc">5000 calorías quemadas</div>
+            <div class="ach__meta">1 850 / 5 000 cal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><b>De fila a medalla.</b> El medallón circular con anillo da peso; el logro deja de ser una lista y pasa a ser una colección.</li>
+      <li><b>Progreso como arco.</b> El anillo naranja rodea el medallón: se ve cuánto falta sin una barra extra.</li>
+      <li><b>Desbloqueo con recompensa.</b> Al completarse, el anillo se cierra, el medallón se enciende en oro y late una vez. (Tócalo arriba.)</li>
+      <li><b>Bloqueado, digno.</b> Gris azulado y apagado — presente pero sin gritar; el ícono se mantiene, no un candado genérico.</li>
+    </ul>
+  </section>
+
+  <!-- ============ LENGUAJE DE ÍCONOS ============ -->
+  <section class="chapter">
+    <div class="chapter__head">
+      <span class="chapter__num">04</span>
+      <h2 class="chapter__title">Lenguaje de íconos</h2>
+      <p class="chapter__sub">Tu pedido: que <b>cada ícono</b> pase por el mismo filtro — sutileza y elegancia. Hoy son sólidos de peso alto. La propuesta: un set de <b>línea fina, trazo redondeado y aire</b> (estilo Lucide, libre), aplicado parejo a toda la app.</p>
+    </div>
+
+    <div class="stage">
+      <div class="lane">
+        <span class="lane__tag tag tag--was">HOY · sólido, peso alto</span>
+        <div class="icongrid icongrid--solid">
+          <span class="icell"><svg class="ic"><use href="#i-flag"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-hands"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-medal"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-trophy"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-bolt"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-compass"/></svg></span>
+        </div>
+      </div>
+
+      <div class="lane">
+        <span class="lane__tag tag tag--now">PROPUESTA · línea fina</span>
+        <div class="icongrid icongrid--line">
+          <span class="icell"><svg class="ic"><use href="#i-ln-route"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-ln-users"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-ln-shield"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-ln-trophy"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-ln-bell"/></svg></span>
+          <span class="icell"><svg class="ic"><use href="#i-ln-gear"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dharma-hero">
+      <div class="dharma-hero__disc"><svg class="ic"><use href="#i-dharma"/></svg></div>
+      <div class="dharma-hero__txt">
+        <div class="dharma-hero__k">El símbolo de Darma, de verdad</div>
+        <p>Es el <b>Dharmachakra</b> — la Rueda del Dharma. Sus <b>8 rayos</b> son el Camino Óctuple; el <b>cubo</b> central, la disciplina; el <b>aro</b>, la concentración. Dibujado como vector: simétrico y nítido a cualquier tamaño (mejor que una imagen generada para una moneda).</p>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><b>Un solo trazo para toda la app.</b> Mismo grosor óptico, mismas esquinas redondeadas, mismo tamaño por contexto. Deja de verse “armado con piezas sueltas”.</li>
+      <li><b>Color con intención.</b> Ícono en tono apagado por defecto; naranja solo cuando está activo o es la acción principal. La atención se guía sola.</li>
+      <li><b>Aire = elegancia.</b> La línea fina respira; el sólido pesado llena. Para “sutil y elegante”, la línea gana.</li>
+      <li><b>Se aplica como pasada.</b> Son cientos de usos: se hace en un barrido con verificación por código, igual que la migración a FA anterior — pero primero fijamos <b>este</b> lenguaje.</li>
+    </ul>
+  </section>
+
+  <!-- ============ LOTE 1: NAVEGACIÓN ============ -->
+  <section class="chapter">
+    <div class="chapter__head">
+      <span class="chapter__num">05</span>
+      <h2 class="chapter__title">Lote 1 · Barra de navegación</h2>
+      <p class="chapter__sub">Primer lote de la migración a línea, con los <b>SVG reales de Lucide</b> (no dibujos de referencia). Así se vería la barra inferior. Apruébalo y lo aplico a <code>index.html</code>; luego seguimos con el siguiente lote.</p>
+    </div>
+
+    <div class="navprev" role="img" aria-label="Barra de navegación propuesta con íconos de línea">
+      <button class="navprev__item is-active">
+        <svg class="navprev__ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>Inicio</span>
+      </button>
+      <button class="navprev__item">
+        <svg class="navprev__ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8c0 3.613-3.869 7.429-5.393 8.795a1 1 0 0 1-1.214 0C9.87 15.429 6 11.613 6 8a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.714 14h-3.71a1 1 0 0 0-.948.683l-2.004 6A1 1 0 0 0 3 22h18a1 1 0 0 0 .948-1.316l-2-6a1 1 0 0 0-.949-.684h-3.712"/></svg>
+        <span>Mapa</span>
+      </button>
+      <button class="navprev__item">
+        <svg class="navprev__ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></svg>
+        <span>Pistero</span>
+      </button>
+      <button class="navprev__item">
+        <svg class="navprev__ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg>
+        <span>Social</span>
+      </button>
+      <button class="navprev__item">
+        <svg class="navprev__ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Perfil</span>
+      </button>
+    </div>
+
+    <ul class="notes">
+      <li><b>Íconos reales de Lucide.</b> Estos son los SVG del set, no aproximaciones — es exactamente lo que iría en la app (incrustados, sin depender de CDN en runtime).</li>
+      <li><b>Mapeo del lote:</b> casa · mapa con pin · burbuja con puntos (Pistero) · burbujas (Social) · persona (Perfil). Trazo 2, esquinas redondeadas, activo en naranja.</li>
+      <li><b>Verificable de a poco.</b> Este es el Lote 1. Al darle el ✓, lo aplico y sigo con menús, esfera, y el resto — cada uno con su preview.</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    <p><b>¿Cómo se ve?</b> Dame el “dale” o dime qué ajustar (colores, tamaño, cuánto brillo). Con tu ✓ escribo el SPEC y lo aplico a <code>index.html</code> en una sola pasada, subo versión en los 3 lugares y valido antes de desplegar.</p>
+    <p class="foot__fine">Mockup fiel a la paleta real · iconos = Font&nbsp;Awesome 6.4 (aquí dibujados como referencia) · una sola pantalla, un solo tema (la app es oscura).</p>
+  </footer>
+
+</div>
+
+<style>
+  :root{
+    --p:#fc4c02; --p-hi:#ff7a3c;
+    --gold:#ffd700; --gold-hi:#fff3c4; --gold-lo:#e88b00;
+    --d:#0a0f1d; --panel:#0e1526; --card:#131c2f; --card-hi:#182444;
+    --ink:#eaf0ff; --mut:#9fb3c8; --faint:#63708a; --dim:#41506a;
+    --line:rgba(255,255,255,0.10); --line-soft:rgba(255,255,255,0.06);
+    --bronze:#cd8a4e; --silver:#cdd8e8;
+    --r:14px;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--d);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.5}
+  .page{max-width:460px;margin:0 auto;padding:26px 18px 60px;
+    background:
+      radial-gradient(120% 55% at 50% -8%, rgba(252,76,2,0.10), transparent 60%),
+      radial-gradient(90% 40% at 90% 8%, rgba(255,215,0,0.05), transparent 55%);
+  }
+  .ic{width:1em;height:1em;display:inline-block;vertical-align:-0.125em;fill:currentColor;flex:0 0 auto}
+
+  /* ---- masthead ---- */
+  .masthead{text-align:left;margin-bottom:30px}
+  .brand{display:flex;align-items:center;gap:9px;margin-bottom:20px}
+  .brand__mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:20px;color:#fff;
+    background:linear-gradient(140deg,var(--p),var(--p-hi));box-shadow:0 6px 16px -6px rgba(252,76,2,.7), inset 0 1px 0 rgba(255,255,255,.35)}
+  .brand__name{font-weight:800;letter-spacing:.3px;font-size:1.02rem}
+  .eyebrow{margin:0 0 6px;font-size:.66rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--p-hi)}
+  .title{margin:0 0 10px;font-size:1.9rem;line-height:1.12;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+  .lede{margin:0;color:var(--mut);font-size:.92rem;max-width:40ch}
+  .chip-row{margin-top:16px;font-size:.74rem;color:var(--faint);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .chip-row .sep{opacity:.4;margin:0 2px}
+  .tag{display:inline-block;font-size:.6rem;font-weight:800;letter-spacing:.1em;padding:3px 7px;border-radius:6px}
+  .tag--was{background:rgba(255,255,255,.06);color:var(--faint);border:1px solid var(--line-soft)}
+  .tag--now{background:rgba(252,76,2,.16);color:var(--p-hi);border:1px solid rgba(252,76,2,.4)}
+
+  /* ---- chapters ---- */
+  .chapter{margin-top:34px;padding-top:26px;border-top:1px solid var(--line-soft)}
+  .chapter__head{margin-bottom:18px}
+  .chapter__num{font-size:.7rem;font-weight:800;letter-spacing:.1em;color:var(--p);font-variant-numeric:tabular-nums}
+  .chapter__title{margin:2px 0 8px;font-size:1.32rem;font-weight:800;letter-spacing:-.01em}
+  .chapter__sub{margin:0;color:var(--mut);font-size:.86rem}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82em;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:5px;color:#cfe0ff}
+
+  .stage{display:flex;flex-direction:column;gap:16px}
+  .lane{position:relative;background:var(--panel);border:1px solid var(--line-soft);border-radius:16px;padding:18px 15px 16px}
+  .lane__tag{position:absolute;top:-9px;left:14px}
+  .demo{display:flex;flex-direction:column;gap:10px}
+
+  /* ---- OLD buttons ---- */
+  .oldbtn{width:100%;min-height:44px;padding:12px 14px;background:#131c2f;color:#dfe7ff;border:.5px solid rgba(255,255,255,.10);border-radius:12px;font-weight:600;font-size:.85rem;cursor:pointer;font-family:inherit}
+  .oldbtn--pri{background:#fc4c02;color:#fff;border-color:transparent}
+  .oldbtn:active{transform:scale(.98)}
+
+  /* ---- NEW buttons ---- */
+  .btn{position:relative;width:100%;min-height:46px;padding:12px 15px;border-radius:13px;border:1px solid var(--line);
+    background:linear-gradient(180deg,var(--card-hi),var(--card));color:var(--ink);
+    font-family:inherit;font-weight:650;font-size:.88rem;letter-spacing:.1px;cursor:pointer;overflow:hidden;
+    display:flex;align-items:center;gap:11px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 2px 8px rgba(0,0,0,.34);
+    transition:transform .13s cubic-bezier(.34,1.4,.6,1), box-shadow .2s, border-color .2s, background .2s}
+  .btn .ic{font-size:1.02rem;color:var(--p-hi);transition:color .2s}
+  .btn:hover{border-color:rgba(255,255,255,.2);background:linear-gradient(180deg,#1c2a50,#16203a);box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 8px 22px rgba(0,0,0,.5)}
+  .btn:active{transform:scale(.965);box-shadow:inset 0 2px 6px rgba(0,0,0,.5)}
+  .btn:focus-visible{outline:2px solid var(--p-hi);outline-offset:2px}
+
+  .btn--pri{border-color:transparent;color:#fff;font-weight:750;
+    background:linear-gradient(165deg,#ff7a3c,var(--p) 62%,#e23f00);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 9px 24px -8px rgba(252,76,2,.72)}
+  .btn--pri .ic{color:#fff}
+  .btn--pri:hover{background:linear-gradient(165deg,#ff8a4f,#ff5514 62%,#e23f00);box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 12px 30px -8px rgba(252,76,2,.8)}
+  .btn__sheen{position:absolute;top:0;left:-60%;width:45%;height:100%;transform:skewX(-20deg);
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none;opacity:0}
+  .btn--pri:active .btn__sheen{animation:sweep .55s ease}
+  @keyframes sweep{from{left:-60%;opacity:1}to{left:120%;opacity:0}}
+
+  .btn--ghost{background:transparent;border-color:var(--line);box-shadow:none}
+  .btn--ghost:hover{background:rgba(255,255,255,.04);box-shadow:none}
+  .btn--ghost .ic{color:var(--mut)}
+  .btn--danger{background:linear-gradient(180deg,#2a1618,#201012);border-color:rgba(255,80,80,.28);color:#ffb3b3}
+  .btn--danger .ic{color:#ff6b6b}
+  .btn--danger:hover{border-color:rgba(255,80,80,.5);background:linear-gradient(180deg,#331a1c,#241214)}
+
+  /* ---- OLD badges ---- */
+  .oldbadge{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#ffd700,#ffaa00);color:#000;font-weight:800;padding:10px 12px;border-radius:12px;font-size:.95rem;margin-bottom:10px}
+  .oldbadge__ic{font-size:1.1rem}
+  .oldbadge small{font-weight:700;opacity:.75;font-size:.62rem}
+  .oldlock{display:inline-block;background:rgba(0,0,0,.8);color:#ffd700;font-size:.62rem;font-weight:800;padding:3px 7px;border-radius:8px;border:1px solid #ffd700}
+
+  /* ---- NEW Darma ---- */
+  .darma{position:relative;display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:15px;margin-bottom:15px;overflow:hidden;
+    background:linear-gradient(150deg,#ffe793,#f6c445 42%,#e88b00);
+    box-shadow:0 8px 22px -8px rgba(255,180,0,.5), inset 0 1px 0 rgba(255,255,255,.65), inset 0 -2px 6px rgba(150,80,0,.35)}
+  .darma__coin{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;color:#3a2400;font-size:22px;
+    background:radial-gradient(circle at 35% 30%,#fff6d5,#e0980e 70%,#b56b00);
+    box-shadow:inset 0 2px 4px rgba(255,255,255,.7), inset 0 -3px 5px rgba(120,60,0,.5), 0 2px 4px rgba(0,0,0,.25)}
+  .darma__val{font-size:1.9rem;font-weight:800;color:#2c1a00;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 1px 0 rgba(255,255,255,.4)}
+  .darma__meta{display:flex;flex-direction:column;line-height:1.15}
+  .darma__meta b{color:#3a2400;font-size:.9rem;font-weight:800;letter-spacing:.3px}
+  .darma__meta small{color:#6a4600;font-size:.64rem;font-weight:700}
+  .darma__shine{position:absolute;top:0;left:-40%;width:35%;height:100%;transform:skewX(-18deg);
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
+    animation:darmaShine 5.5s ease-in-out 1s infinite}
+  @keyframes darmaShine{0%,72%{left:-40%}86%,100%{left:130%}}
+
+  .tiers{display:flex;gap:9px;margin-bottom:14px}
+  .tier{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 6px;border-radius:13px;background:var(--card);border:1px solid var(--line-soft)}
+  .tier__disc{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:20px;color:#fff;position:relative}
+  .tier__disc::after{content:"";position:absolute;inset:3px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35)}
+  .tier--bronze .tier__disc{background:radial-gradient(circle at 35% 30%,#f0b884,var(--bronze) 70%,#8a5324);box-shadow:0 4px 10px -3px rgba(205,138,78,.6)}
+  .tier--silver .tier__disc{background:radial-gradient(circle at 35% 30%,#fff,var(--silver) 70%,#8896ad);box-shadow:0 4px 10px -3px rgba(205,216,232,.5)}
+  .tier--gold .tier__disc{background:radial-gradient(circle at 35% 30%,var(--gold-hi),var(--gold) 65%,var(--gold-lo));box-shadow:0 4px 14px -3px rgba(255,215,0,.65)}
+  .tier--gold .tier__disc{color:#4a3000}
+  .tier--silver .tier__disc{color:#3a4459}
+  .tier--bronze .tier__disc{color:#4a2c12}
+  .tier__lbl{font-size:.66rem;font-weight:700;color:var(--mut);letter-spacing:.02em}
+
+  .locks{display:flex;gap:9px;flex-wrap:wrap}
+  .lockpill{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;font-size:.72rem;font-weight:700;
+    background:rgba(10,15,29,.7);border:1px solid rgba(255,215,0,.4);color:var(--gold)}
+  .lockpill .ic{font-size:.8rem}
+  .lockpill i{font-style:normal;font-weight:600;opacity:.7;font-size:.66rem}
+  .lockpill--open{border-color:rgba(252,76,2,.5);color:var(--p-hi);background:rgba(252,76,2,.1)}
+
+  /* ---- achievements header ---- */
+  .ach-head{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:14px;border-radius:15px;background:var(--panel);border:1px solid var(--line-soft)}
+  .ach-ring{position:relative;width:52px;height:52px;flex:0 0 auto;display:grid;place-items:center}
+  .ach-ring__svg{width:52px;height:52px;transform:rotate(-90deg)}
+  .ach-ring__bg{fill:none;stroke:rgba(255,255,255,.09);stroke-width:4}
+  .ach-ring__fg{fill:none;stroke:url(#goldgrad);stroke:var(--gold);stroke-width:4;stroke-linecap:round;stroke-dasharray:119.4;stroke-dashoffset:119.4;transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1)}
+  .ach-ring__num{position:absolute;font-size:.6rem;color:var(--mut);font-variant-numeric:tabular-nums}
+  .ach-ring__num b{color:var(--gold);font-size:.82rem}
+  .ach-head__t{font-size:.9rem;font-weight:600}
+  .ach-head__t b{color:var(--gold)}
+  .ach-head__s{font-size:.74rem;color:var(--faint);margin-top:2px}
+
+  /* ---- OLD achievements ---- */
+  .oldach{display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.05);border:1px solid #242c3e;opacity:.85}
+  .oldach--done{background:rgba(255,215,0,.10);border-color:#ffd700;opacity:1}
+  .oldach__e{font-size:1.6rem;color:#ffd700}
+  .oldach b{font-size:.82rem;display:block}
+  .oldach small{font-size:.68rem;color:#8695aa;display:block}
+  .oldbar{height:5px;background:#222b3d;border-radius:3px;margin-top:5px;overflow:hidden}
+  .oldbar i{display:block;height:100%;background:#fc4c02}
+  .oldnum{margin-top:2px;font-size:.6rem;color:#7d8ba0}
+
+  /* ---- NEW achievements ---- */
+  .ach{display:flex;gap:13px;align-items:center;padding:12px;border-radius:15px;margin-bottom:10px;
+    background:linear-gradient(180deg,var(--card),#0f1830);border:1px solid var(--line-soft);
+    transition:transform .16s ease, border-color .2s, background .3s}
+  .ach--near{cursor:pointer}
+  .ach--near:hover{transform:translateY(-1px);border-color:rgba(252,76,2,.35)}
+  .ach--near:focus-visible{outline:2px solid var(--p-hi);outline-offset:2px}
+  .ach__medal{position:relative;width:52px;height:52px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center}
+  .ach__ic,.ach__medal>.ic{font-size:22px;position:relative;z-index:2}
+  .ach__prog{position:absolute;inset:0;width:52px;height:52px;transform:rotate(-90deg)}
+  .ach__prog-bg{fill:rgba(255,255,255,.04);stroke:rgba(255,255,255,.10);stroke-width:3}
+  .ach__prog-fg{fill:none;stroke:var(--p);stroke-width:3;stroke-linecap:round;stroke-dasharray:131.9;stroke-dashoffset:13;transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)}
+  .ach__medal .ic{color:var(--p-hi)}
+
+  .ach__medal--locked .ic{color:var(--dim)}
+  .ach__medal--locked .ach__prog-bg{fill:rgba(255,255,255,.02)}
+
+  .ach--done .ach__medal{color:#4a3000;
+    background:radial-gradient(circle at 36% 30%,var(--gold-hi),var(--gold) 62%,var(--gold-lo));
+    box-shadow:0 6px 18px -5px rgba(255,215,0,.6), inset 0 2px 4px rgba(255,255,255,.6), inset 0 -3px 6px rgba(150,90,0,.4)}
+  .ach--done .ach__medal>.ic{color:#5a3c00}
+  .ach--done{background:linear-gradient(180deg,rgba(255,215,0,.10),rgba(255,215,0,.02));border-color:rgba(255,215,0,.32)}
+  .ach__glow{position:absolute;inset:-6px;border-radius:50%;pointer-events:none}
+  .ach--done .ach__glow{box-shadow:0 0 22px 2px rgba(255,215,0,.3)}
+
+  .ach__body{flex:1;min-width:0}
+  .ach__title{font-weight:750;font-size:.9rem;display:flex;align-items:center;gap:7px}
+  .ach--done .ach__title{color:var(--gold-hi)}
+  .ach__check{width:18px;height:18px;border-radius:50%;background:var(--gold);color:#4a3000;display:grid;place-items:center;font-size:.6rem;box-shadow:0 2px 6px rgba(255,215,0,.5)}
+  .ach__desc{font-size:.74rem;color:var(--mut);margin-top:1px}
+  .ach__meta{font-size:.66rem;color:var(--faint);margin-top:5px;font-variant-numeric:tabular-nums}
+  .ach__hint{color:var(--p-hi);font-weight:600}
+
+  /* unlock flash */
+  .ach--justwon{animation:pop .6s cubic-bezier(.3,1.5,.5,1)}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+  .burst{position:absolute;inset:0;border-radius:50%;border:2px solid var(--gold);opacity:0;pointer-events:none}
+  .burst.go{animation:burst .7s ease-out}
+  @keyframes burst{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.9)}}
+
+  /* ---- notes & foot ---- */
+  .notes{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+  .notes li{position:relative;padding:11px 13px 11px 34px;background:var(--panel);border:1px solid var(--line-soft);border-radius:12px;font-size:.8rem;color:var(--mut)}
+  .notes li::before{content:"";position:absolute;left:14px;top:16px;width:7px;height:7px;border-radius:50%;background:var(--p);box-shadow:0 0 8px rgba(252,76,2,.7)}
+  .notes b{color:var(--ink);font-weight:700}
+
+  .foot{margin-top:34px;padding-top:22px;border-top:1px solid var(--line-soft)}
+  .foot p{margin:0 0 10px;font-size:.84rem;color:var(--mut)}
+  .foot b{color:var(--ink)}
+  .foot__fine{font-size:.68rem !important;color:var(--dim) !important}
+
+  /* ---- icon language ---- */
+  .darma__dh{font-size:26px}
+  .icongrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .icell{aspect-ratio:1;display:grid;place-items:center;border-radius:12px;background:var(--card);border:1px solid var(--line-soft)}
+  .icongrid--solid .icell .ic{font-size:1.35rem;color:var(--mut)}
+  .icongrid--line .icell{background:linear-gradient(180deg,var(--card),#0f1830)}
+  .icongrid--line .icell .ic{font-size:1.5rem;color:#cfe0ff}
+  .icongrid--line .icell:nth-child(1) .ic,.icongrid--line .icell:nth-child(4) .ic{color:var(--p-hi)}
+
+  .dharma-hero{display:flex;align-items:center;gap:16px;margin-top:16px;padding:16px;border-radius:16px;
+    background:radial-gradient(120% 120% at 15% 20%, rgba(255,215,0,.10), transparent 60%), var(--panel);
+    border:1px solid rgba(255,215,0,.18)}
+  .dharma-hero__disc{width:76px;height:76px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;color:#5a3c00;
+    background:radial-gradient(circle at 36% 30%,var(--gold-hi),var(--gold) 62%,var(--gold-lo));
+    box-shadow:0 8px 22px -6px rgba(255,215,0,.5), inset 0 2px 4px rgba(255,255,255,.6), inset 0 -3px 7px rgba(150,90,0,.45)}
+  .dharma-hero__disc .ic{font-size:50px}
+  .dharma-hero__k{font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+  .dharma-hero__txt p{margin:0;font-size:.8rem;color:var(--mut)}
+
+  /* ---- nav preview (lote 1) ---- */
+  .navprev{display:flex;gap:2px;background:linear-gradient(180deg,#0e1526,#0a0f1d);border:1px solid var(--line-soft);border-radius:16px;padding:8px 4px}
+  .navprev__item{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 2px;background:none;border:0;cursor:pointer;color:var(--faint);font-family:inherit;font-size:.62rem;font-weight:600;letter-spacing:.02em;transition:color .2s,transform .12s}
+  .navprev__ic{width:23px;height:23px}
+  .navprev__item.is-active{color:var(--p-hi)}
+  .navprev__item:not(.is-active):hover{color:var(--mut)}
+  .navprev__item:active{transform:scale(.92)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; transition:none !important}
+  }
+</style>
+
+<script>
+  (function(){
+    // overall ring fill on load
+    var ringFg=document.getElementById('ringFg');
+    var C=2*Math.PI*19;
+    ringFg.style.strokeDasharray=C;
+    ringFg.style.strokeDashoffset=C;
+    // near-complete ring (480/500 = 96%)
+    var nearFg=document.getElementById('nearFg');
+    var C2=2*Math.PI*21;
+    nearFg.style.strokeDasharray=C2;
+    nearFg.style.strokeDashoffset=C2*(1-0.96);
+    setTimeout(function(){ ringFg.style.strokeDashoffset=C*(1-14/24); },220);
+
+    var won=false;
+    var near=document.getElementById('achNear');
+    function win(){
+      if(won) return; won=true;
+      // fill ring to full
+      nearFg.style.strokeDashoffset=0;
+      var medal=near.querySelector('.ach__medal');
+      var burst=document.createElement('span'); burst.className='burst'; medal.appendChild(burst);
+      setTimeout(function(){
+        near.classList.remove('ach--near'); near.classList.add('ach--done','ach--justwon');
+        burst.classList.add('go');
+        // swap progress ring visual for gold medal (handled by .ach--done styles)
+        var meta=near.querySelector('.ach__meta'); if(meta) meta.innerHTML='500 / 500 km · <span class="ach__hint">¡completado!</span>';
+        var title=near.querySelector('.ach__title');
+        if(title && !title.querySelector('.ach__check')){ var c=document.createElement('span'); c.className='ach__check'; c.innerHTML='<svg class="ic"><use href="#i-check"/></svg>'; title.appendChild(c); }
+        // bump counters
+        var n=document.getElementById('desbCount'), rn=document.getElementById('ringNum');
+        n.textContent='15'; rn.textContent='15';
+        ringFg.style.strokeDashoffset=C*(1-15/24);
+        setTimeout(function(){ near.classList.remove('ach--justwon'); },650);
+      },520);
+    }
+    near.addEventListener('click',win);
+    near.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); win(); }});
+  })();
+</script>
