@@ -45,7 +45,7 @@ done
 for d in icons img images assets fonts sonidos audio functions voces voces-el demo-voces resources; do
   [ -d "$d" ] && cp -r "$d" "$OUT/"
 done
-cp *.png *.jpg *.jpeg *.svg *.webp *.mp3 *.ogg "$OUT/" 2>/dev/null || true
+cp *.png *.jpg *.jpeg *.svg *.webp *.mp3 *.ogg *.mp4 "$OUT/" 2>/dev/null || true
 
 echo "→ control de secretos..."
 if find "$OUT" \( -iname "MI-*" -o -iname "*.rules" -o -iname "*.keystore" -o -iname "*.jks" -o -iname ".env*" \) | grep -q .; then
@@ -58,7 +58,7 @@ echo "  ✓ limpio ($(find "$OUT" -type f | wc -l) archivos)"
 
 echo "→ control de completitud (que no falte nada que el sitio use)..."
 cat "$SRC"/index.html "$SRC"/sw.js "$SRC"/manifest.json 2>/dev/null \
- | grep -oE "[A-Za-z0-9_./-]+\.(png|jpg|jpeg|svg|webp|mp3|ogg|js|css|json|html)" \
+ | grep -oE "[A-Za-z0-9_./-]+\.(png|jpg|jpeg|svg|webp|mp3|ogg|mp4|js|css|json|html)" \
  | grep -v "^http" | sed 's|^\./||;s|^/||' | sort -u | while read -r r; do
     [ -z "$r" ] && continue
     if [ ! -e "$OUT/$r" ] && [ -e "$SRC/$r" ]; then echo "✗ ABORTADO: falta $r"; exit 1; fi

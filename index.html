@@ -687,14 +687,16 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='cristal')?'cristal':'solido'));}catch(e){document.body.classList.add('tema-solido');}</script>
 
 <style>
-/* Logo oficial quieto al centro + rueda de radios finos girando en naranjo (relieve leve en la goma). */
-.lp-logo-wrap{position:relative;width:210px;height:210px;margin:12px auto 6px;animation:lpReveal 1.2s cubic-bezier(.5,0,.3,1) both}
-@keyframes lpReveal{0%{clip-path:circle(0% at 50% 50%);opacity:0;transform:scale(.92)}60%{opacity:1}100%{clip-path:circle(100% at 50% 50%);opacity:1;transform:scale(1)}}
-.lp-wheel{position:absolute;inset:0;width:100%;height:100%;animation:lpSpin 7s linear infinite;will-change:transform}
-@keyframes lpSpin{to{transform:rotate(360deg)}}
-.lp-logo-center{position:absolute;top:50%;left:50%;width:50%;height:50%;transform:translate(-50%,-50%);
-  object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.45))}
-@media (prefers-reduced-motion:reduce){.lp-wheel{animation:none}}
+/* Presentación de logo en video (reemplaza la rueda animada en CSS — Inty la dio por
+   mala a tamaño real, ver COORDINACION-IA/EN-USO.md "DELEGO ESTO" 2026-08-14). El
+   video (logo-presentacion.mp4) es el original de Inty recortado a solo el reveal del
+   logo, cortado justo antes de que entre la maqueta con botones — ver commit de esta
+   sesión. autoplay+muted+playsinline: única combinación que autorreproduce en
+   Android/iOS sin gesto del usuario; loop porque el login puede quedarse un rato
+   abierto. poster=logo-transparent.png: se ve de inmediato mientras el video carga,
+   y es el fallback si el navegador no puede reproducir mp4. */
+.lp-logo-wrap{width:100%;max-width:280px;margin:10px auto 6px}
+.lp-logo-video{width:100%;height:auto;display:block;border-radius:10px;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.5))}
 /* Iconos de modo a medida (bici/huellas/auto) — tamaño y color heredado del modo. */
 .modo-ico-svg{display:flex;justify-content:center;align-items:center;height:30px}
 .modo-ico-svg svg,.es-modo-ico svg{width:26px;height:26px;display:block}
@@ -709,27 +711,20 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <form id="auth" onsubmit="enviarLinkMagico(event)">
 <div class="auth-box">
 <div class="lp-logo-wrap">
-  <svg class="lp-wheel" viewBox="0 0 100 100" aria-hidden="true">
-    <circle cx="50" cy="50" r="40" fill="none" stroke="#241612" stroke-width="6"/>
-    <circle cx="50" cy="50" r="40" fill="none" stroke="#0d0906" stroke-width="6" stroke-dasharray="1.6 2.4" opacity="0.5"/>
-    <circle cx="50" cy="50" r="34.5" fill="none" stroke="#e08a4a" stroke-width="1.3" opacity="0.85"/>
-    <g stroke="#e08a4a" stroke-width="1" stroke-linecap="round" opacity="0.9">
-      <line x1="74" y1="50" x2="83" y2="50"/>
-      <line x1="70.8" y1="62" x2="78.6" y2="66.5"/>
-      <line x1="62" y1="70.8" x2="66.5" y2="78.6"/>
-      <line x1="50" y1="74" x2="50" y2="83"/>
-      <line x1="38" y1="70.8" x2="33.5" y2="78.6"/>
-      <line x1="29.2" y1="62" x2="21.4" y2="66.5"/>
-      <line x1="26" y1="50" x2="17" y2="50"/>
-      <line x1="29.2" y1="38" x2="21.4" y2="33.5"/>
-      <line x1="38" y1="29.2" x2="33.5" y2="21.4"/>
-      <line x1="50" y1="26" x2="50" y2="17"/>
-      <line x1="62" y1="29.2" x2="66.5" y2="21.4"/>
-      <line x1="70.8" y1="38" x2="78.6" y2="33.5"/>
-    </g>
-  </svg>
-  <img src="logo-transparent.png" alt="Libre Pedal" class="lp-logo-center">
+  <video class="lp-logo-video" autoplay muted loop playsinline disablepictureinpicture poster="logo-transparent.png" aria-label="Libre Pedal">
+    <source src="logo-presentacion.mp4" type="video/mp4">
+  </video>
 </div>
+<script>
+// Respeta prefers-reduced-motion: si lo pide, no autorreproduce — se queda en el
+// poster (logo quieto), mismo criterio que clima-fx.js.
+(function(){
+  var v=document.querySelector('.lp-logo-video');
+  if(v && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    v.removeAttribute('autoplay'); v.removeAttribute('loop'); v.pause();
+  }
+})();
+</script>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Únete a la comunidad ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
 <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
@@ -1513,7 +1508,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.57'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.58'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
