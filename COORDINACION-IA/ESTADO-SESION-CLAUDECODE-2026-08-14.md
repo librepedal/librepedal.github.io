@@ -1,3 +1,10 @@
+# ⚠️ SUPERADO — ver COORDINACION-IA/BITACORA.md "RECONCILIACIÓN 2026-08-14/15" y
+# COORDINACION-IA/EN-USO.md (última entrada). La causa raíz de todo este vaivén de
+# rescates ya se encontró y se resolvió: `main` de este repo (origin) y `main` de
+# `intyriveraa-lab/librepedal` (la otra cuenta) son AHORA EL MISMO COMMIT (de19050,
+# v8.62). No sigas las instrucciones de abajo (son de antes del arreglo) — léelas
+# solo como historia.
+
 # Estado — sesión Claude Code (con Inty), 2026-08-14 (tarde/noche)
 
 ## ⚠️ PARA LA OTRA CUENTA — LEE ESTO ANTES DE SEGUIR (evita re-divergir)

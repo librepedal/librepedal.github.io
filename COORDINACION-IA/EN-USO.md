@@ -256,6 +256,45 @@ Candado **LIBRE**.
 
 ---
 
+## 🚨 CAUSA RAÍZ ENCONTRADA Y RESUELTA (2026-08-15 madrugada) — LEER ANTES DE TOCAR NADA
+
+**Por qué "todo lo que Inty intentó para que coordináramos parecía en vano":** no era un
+problema de disciplina de las sesiones — eran **DOS REPOS DE GITHUB DISTINTOS**, cada uno
+con su PROPIO pipeline completo (Tests + Deploy Cloudflare + Build APK), **desplegando los
+dos al MISMO proyecto de Cloudflare Pages (`librepedal.cl`)**:
+- `intyriveraa-lab/librepedal` (remoto `lab` en este checkout) — lo usaba esta cuenta.
+- `librepedal/librepedal.github.io` (remoto `origin` en este checkout) — lo usaba la otra
+  cuenta (Opus/Thunderobot).
+
+Cada sesión veía `git log`/`git status` de SU repo y pensaba que estaba al día — pero
+literalmente no podía ver los commits de la otra, porque vivían en un repo diferente. El
+que desplegaba último pisaba en silencio el trabajo del otro en producción, sin ningún
+error ni aviso (los dos CI decían "success" porque cada uno desplegó bien SU versión,
+incompleta). Así se "perdieron" mapas videojuego, logros ocultos, etc. — no se perdieron
+de verdad, seguían en el otro repo, solo tapados.
+
+**Resuelto:** fusionados los dos historiales (mapas videojuego/logros ocultos/voz de
+`origin` + tema Cristal/clima/video del login/perfil Pistero/fix de seguridad de `lab`),
+commit `de19050`, **pusheado a AMBOS remotos** — ahora `intyriveraa-lab/librepedal:main`
+y `librepedal/librepedal.github.io:main` son EL MISMO COMMIT. v8.62, verificado en vivo
+(`librepedal.cl` sirve v8.62, las dos features confirmadas presentes a la vez). Tests
+13/13 en ambos repos, deploy+APK verde en ambos.
+
+**⚠️ Para que esto no vuelva a pasar — decisión pendiente de Inty:** mientras existan los
+dos repos apuntando al mismo Cloudflare Pages, CUALQUIER sesión que pushee a solo uno de
+los dos vuelve a divergir. Dos salidas reales (Inty decide, ninguna IA debería elegir
+sola): **(a)** declarar UNO de los dos "el repo real" y el otro solo lectura/archivo, o
+**(b)** seguir con los dos pero la regla dura pasa a ser "todo push va a los DOS remotos,
+sin excepción, siempre" (frágil — un solo olvido reabre el problema). Recomendación: (a).
+
+**AAB firmado v8.62** (con TODO reconciliado, no la versión vieja/incompleta v8.61 de
+`origin`): compilado fresco después de la fusión, descargado en
+`Downloads/AAB-listo-play-store/LibrePedal-AAB-release/app-release.aab` (4.5MB), listo
+para que Inty lo suba a Play Console cuando quiera. El run anterior (v8.61, solo con lo
+de `origin`) queda obsoleto, no usarlo.
+
+---
+
 **LIBRE** - sesion lenovo, 2026-08-14 ~21:20, cierre. `index.html` en rama
 `fix/consistencia-noche-mapas-iconos-clima` (forkeada de `origin/main`, NO toca
 `fix/voz-elevenlabs-arquetipo` ni `wip/rueda-oro-necesita-simplificarse`), commit
