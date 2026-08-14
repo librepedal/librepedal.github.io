@@ -61,8 +61,39 @@ service cloud.firestore {
     // skin) con solo saber su `cu`.
     match /users/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30);
-      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && isOwnerOrLegacy();
+      allow create: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300);
+      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && isOwnerOrLegacy();
+      allow delete: if false;
+    }
+
+    // Amistades confirmadas (2026-08-14): espejo de friendRequests con id
+    // DETERMINISTA (uidMenor_uidMayor) para poder chequear "son amigos" desde otra
+    // regla con exists(), sin poder hacer queries dentro de una regla. Se crea SOLO
+    // al aceptar una solicitud (acceptFriendRequest en index.html). Nadie la lee
+    // directo -- solo la usa sonAmigos() desde perfilPrivado.
+    function sonAmigos(otroId) {
+      let par = request.auth.uid < otroId ? request.auth.uid + '_' + otroId : otroId + '_' + request.auth.uid;
+      return exists(/databases/$(database)/documents/amistades/$(par));
+    }
+    match /amistades/{id} {
+      allow read: if false;
+      allow create: if signedIn()
+        && (request.auth.uid == request.resource.data.a || request.auth.uid == request.resource.data.b)
+        && request.resource.data.a < request.resource.data.b
+        && id == request.resource.data.a + '_' + request.resource.data.b;
+      allow update, delete: if false;
+    }
+
+    // Perfil de comunidad PRIVADO (fotos + relatos, 2026-08-14): a diferencia de
+    // /users (publico a proposito), esto solo lo ve el dueno o sus amigos
+    // aceptados -- pedido explicito de Inty ("solo los amigos pueden ver cosas
+    // privadas"). Limites de tamano para que no se pueda inflar el documento con
+    // fotos infinitas (Firestore tiene tope de 1MB por documento).
+    match /perfilPrivado/{id} {
+      allow read: if signedIn() && (request.auth.uid == id || isAdmin() || sonAmigos(id));
+      allow create, update: if signedIn() && request.auth.uid == id
+        && (!('fotos' in request.resource.data) || (request.resource.data.fotos is list && request.resource.data.fotos.size() <= 9))
+        && (!('relatos' in request.resource.data) || (request.resource.data.relatos is list && request.resource.data.relatos.size() <= 30));
       allow delete: if false;
     }
 

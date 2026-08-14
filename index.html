@@ -7,6 +7,7 @@
 <title>Libre Pedal</title>
 <link rel="manifest" href="manifest.json">
 <script src="voz-elevenlabs.js"></script>
+<script src="perfil-comunidad.js"></script>
 <meta name="theme-color" content="#0a0f1d">
 <meta name="description" content="Tu copiloto en cada pedaleo: navegación tipo Waze, rutas y Pistero, tu compañero ciclista.">
 <meta property="og:type" content="website">
@@ -1314,6 +1315,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
      el es-bottom: el Darma queda como DATO de un vistazo (sin onclick), no como
      un segundo menú; Logros y Estadísticas se sacan de acá — para eso está la Esfera. -->
 <div class="darma-badge"><i class="fas fa-dharmachakra"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
+<button class="ab sec" style="margin-bottom:10px" onclick="if(typeof cu!=='undefined'&&cu) verPerfilUsuario(cu,'customize')"><i class="fas fa-id-card"></i> Ver mi perfil de comunidad</button>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
 <style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:12px;padding:6px 4px 5px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:42px;height:35px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.62rem;color:#cdd6e6;margin-top:3px;line-height:1.1}</style>
 <details class="pgrupo" open ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistCascoGrid"></div></div></details>
@@ -1413,7 +1415,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.49'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.50'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5521,7 +5523,15 @@ function enviarDM(){
 function cerrarChatAmigo(){ if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; showFriendsList(); }
 async function showFriendsList(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Amigos'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); try{ const res=await Promise.all([ db.collection('friendRequests').where('from','==',cu).get(), db.collection('friendRequests').where('to','==',cu).get() ]); const ids={}; res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; }); res[1].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; }); const friendIds=Object.keys(ids); if(friendIds.length===0){ c.innerHTML='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; return; } let html=''; for(const friendId of friendIds){ const nombre=await getNombreUsuario(friendId); html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1;cursor:pointer" onclick="verPerfilUsuario(\''+friendId+'\',\'showFriendsList\')"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa;text-decoration:underline">Ver perfil</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')"><i class="fas fa-comment"></i> Chat</button></div>'; } c.innerHTML=html+'<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>'; }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los amigos. Intenta de nuevo.</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; } }
 async function showFriendRequests(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Solicitudes'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); const snapshot=await db.collection('friendRequests').where('to','==',cu).get(); const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}); if(pend.length===0){ c.innerHTML='<p style="color:#888">Sin solicitudes</p>'; return; } let html=''; for(const doc of pend){ const data=doc.data(); const nombre=await getNombreUsuario(data.from); html+='<div class="friend-request"><span><strong>'+escapeHTML(nombre)+'</strong></span><div><button class="ab" style="width:auto;padding:6px 10px;margin:2px;font-size:0.75rem" onclick="acceptFriendRequest(\''+doc.id+'\',\''+data.from+'\')">Aceptar</button><button class="ab" style="width:auto;padding:6px 10px;margin:2px;background:#dc2626;font-size:0.75rem" onclick="rejectFriendRequest(\''+doc.id+'\')">Rechazar</button></div></div>'; } c.innerHTML=html; }
-function acceptFriendRequest(reqId,fromUser){ db.collection('friendRequests').doc(reqId).update({status:'accepted'}).then(function(){ h("¡Nuevo amigo agregado!"); showFriendsList(); }).catch(function(){ h("No se pudo aceptar, intenta de nuevo."); }); }
+function acceptFriendRequest(reqId,fromUser){
+  db.collection('friendRequests').doc(reqId).update({status:'accepted'}).then(function(){
+    // Espejo con id determinista (uid menor + '_' + uid mayor) para que la regla de
+    // Firestore del perfil privado (fotos/relatos) pueda chequear "son amigos" con
+    // un exists() simple, sin necesitar una query — ver perfil-comunidad.js.
+    try{ const a=cu<fromUser?cu:fromUser, b=cu<fromUser?fromUser:cu; db.collection('amistades').doc(a+'_'+b).set({a:a,b:b}); }catch(e){}
+    h("¡Nuevo amigo agregado!"); showFriendsList();
+  }).catch(function(){ h("No se pudo aceptar, intenta de nuevo."); });
+}
 function rejectFriendRequest(reqId){ db.collection('friendRequests').doc(reqId).update({status:'rejected'}); h("Solicitud rechazada."); showFriendRequests(); }
 async function showUserListForFriendRequest(){
   _modalVolverA='showFriendsList';
@@ -6248,7 +6258,9 @@ async function verPerfilUsuario(userId, volverA){
     html+='<p style="font-size:0.8rem;color:#9fb3c8;text-align:center">Ha recorrido y grabado <strong style="color:var(--p)">'+totalKm.toFixed(1)+' km</strong> en '+rutas.length+' ruta'+(rutas.length===1?'':'s')+'.</p>';
     if(rutas.length){ html+='<button class="ab" onclick="mostrarRutasDe(\''+userId+'\',\''+encodeURIComponent(nombre)+'\')"><i class="fas fa-map"></i> Ver por dónde ha pedaleado</button>'; }
     if(userId!==cu){ html+='<button class="ab sec" style="margin-top:6px" onclick="abrirChatAmigo(\''+userId+'\')"><i class="fas fa-comment"></i> Enviar mensaje</button>'; }
+    html+='<div id="perfilComunidadSlot"></div>';
     c.innerHTML=html;
+    if(typeof renderPerfilComunidad==='function') renderPerfilComunidad(userId, userId===cu);
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudo cargar el perfil.</p>'; }
 }
 async function mostrarRutasDe(userId,nombreEnc){
