@@ -93,6 +93,19 @@ body.tema-cristal .umenu{
 body.tema-cristal .user-list-modal{
   background:rgba(10,15,26,.80);
   -webkit-backdrop-filter:blur(20px) saturate(1.2);backdrop-filter:blur(20px) saturate(1.2)}
+/* Cristal — lote 2: botones y Darma en vidrio (texto claro para conservar legibilidad). */
+body.tema-cristal .ab{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#eef3ff;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 14px rgba(0,0,0,.26)}
+body.tema-cristal .ab:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.22);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 22px rgba(0,0,0,.4)}
+body.tema-cristal .darma-badge{
+  background:linear-gradient(150deg,rgba(255,231,147,.22),rgba(232,139,0,.15));
+  border:1px solid rgba(255,215,0,.36);color:#ffe9a8;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 8px 22px -10px rgba(255,180,0,.4)}
+body.tema-cristal .darma-badge strong{text-shadow:none}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);color:#fff;overflow-x:hidden;padding-bottom:70px;min-height:100vh;display:flex;flex-direction:column}
 /* Los popups del mapa (MapLibre y Leaflet, se usan ambos según la pantalla) traen
@@ -1491,7 +1504,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.54'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.55'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
