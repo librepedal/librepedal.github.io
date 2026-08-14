@@ -28,10 +28,10 @@ fondo en `AUDITORIA-CEO-2026-08-14.md`.
 | T11 | Código | P2 | Triar y cerrar/registrar los 137 TODO/FIXME | index.html | LIBRE |
 | T12 | Código | P2 | Seguir modularizando el monolito (extraer más .js) | index.html | LIBRE |
 | T13 | Seg | P1 | Auditar colecciones Firestore con `read:if true` por fuga de PII | firestore.rules | LIBRE |
-| T14 | Seg | P0 | Resolver hold de firestore.rules + publicar una sola vez | firestore.rules, PAUSA-* | LIBRE (otra cuenta) |
-| T15 | UI | P1 | Migrar emojis→Font Awesome (194 emojis/667 usos) | index.html | LIBRE (otra cuenta) |
+| T14 | Seg | P0 | Resolver hold de firestore.rules + publicar una sola vez | firestore.rules, PAUSA-* | PAUSADO Lenovo — Inty confirmó en vivo "no estoy seguro, déjalo en pausa" (¿Sudamérica mismo proyecto Firebase?) |
+| T15 | UI | P1 | Migrar emojis→Font Awesome (194 emojis/667 usos) | index.html | EN-CURSO Lenovo rama feature/iconos-botones — lote 1: 21 migrados, ~307 restantes (mayoría no-UI a propósito), ver ESTADO-LENOVO-2026-08-14-NOCHE.md |
 | T16 | UI | P1 | Tema Sólido/Cristal: superficies no-botón (tarjetas/modales/chips/nav) | index.html | EN-CURSO Opus rama feature/temas-app-wide |
-| T17 | Launch | P0 | **AAB listo** para prueba cerrada Play (mañana 18:00) | build-aab-release.yml | LIBRE (otra cuenta) |
+| T17 | Launch | P0 | **AAB listo** para prueba cerrada Play (mañana 18:00) | build-aab-release.yml | VERIFICADO Lenovo — pipeline/scripts OK, versionCode automático de version.txt. Bloqueado SOLO en Inty: faltan 4 secrets ANDROID_* en GitHub + respaldar el keystore fuera de esta máquina. Nada más que hacer sin eso. |
 | T18 | Launch | P0 | Sanidad de versión en 3 lugares cada release | index.html, version.txt, sw.js | recurrente |
 | T19 | PWA | P2 | Verificar estrategia de caché offline end-to-end | sw.js | LIBRE |
 | T20 | Obs | P2 | Verificar que Sentry capture errores reales en prod | index.html | LIBRE |
