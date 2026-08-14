@@ -19,7 +19,7 @@ fondo en `AUDITORIA-CEO-2026-08-14.md`.
 | T02 | Perf | P1 | Lazy-load MapLibre/Leaflet solo al abrir el mapa | index.html | LIBRE |
 | T03 | Perf | P1 | Minificar index.html en el deploy (paso en deploy-seguro.sh, CI) | deploy-seguro.sh | LIBRE |
 | T04 | PWA | P1 | Precachear/self-host libs CDN para que la app funcione offline | sw.js, index.html | LIBRE |
-| T05 | Voz | P1 | **Perfeccionar fidelidad del clon** (barrido params + score locutor) | lp-voz-clon/ | EN-CURSO Opus |
+| T05 | Voz | P1 | **Perfeccionar fidelidad del clon** — HECHO: 0.89 vs techo real 0.78 = indistinguible; params default óptimos. Ver VOZ-CLON-LOCAL-2026-08-14.md | lp-voz-clon/ | HECHO (Opus) |
 | T06 | Voz | P1 | Generar banco ampliado (números 0–100, calles, 24 logros, saludos) mp3 | lp-voz-clon/, voces-el/ | LIBRE (tras T05) |
 | T07 | Voz | P1 | Router de voz en la app (banco/premium/genérico) + prosodia | index.html, voz-elevenlabs.js | LIBRE (otra cuenta) |
 | T08 | A11y | P2 | `role`/`aria` en nav, modales, chips, controles (hoy 12 aria, 0 role) | index.html | LIBRE |
