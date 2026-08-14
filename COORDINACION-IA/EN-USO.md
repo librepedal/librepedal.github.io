@@ -31,4 +31,47 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ## Estado actual
 
-**LIBRE** - sesion Thunderobot, 2026-07-29 18:54. Integre el planificador Desde-Hasta (v7.51): chip "Trazar ruta" en la app + pagina /planificador-beta. Desplegado y verificado desde el Thunderobot. PENDIENTE: prueba en telefono real de Inty.
+**OCUPADO** - sesión lenovo, 2026-08-14 ~02:30. Catálogo de voces ElevenLabs por
+arquetipo: módulo nuevo `voz-elevenlabs.js` + carpeta `voces-el/` (338 frases x 2
+géneros, regenerado desde `FRASES_ARQ` real de `index.html`, no desde el mapeo viejo
+de `PENDIENTES.md` que estaba desincronizado con los 12 arquetipos vivos). Toqué
+`index.html` solo con 2 ediciones chicas y aditivas: `<script src="voz-elevenlabs.js">`
+en el `<head>` y un hook de ~6 líneas en `_reproducirVoz()` que prefiere ElevenLabs y
+cae al catálogo Azure viejo si no encuentra la frase. También reescribí el texto de
+`_pisteroIntroPrimeraVez()` (mensaje de bienvenida). Nada de esto está commiteado
+todavía. Ver `COORDINACION-IA/ACUSE-LENOVO-SUDAMERICA-2026-08-14.md` para el detalle
+completo y la respuesta a la sesión lenovo-sudamerica (clon aparte, i18n países).
+Ver ANTES de tocar `index.html`, `FRASES_ARQ`, `PERSONALIDADES` o `voces-el/`.
+
+**Actualización 02:35** — deploy a producción (librepedal.cl) hecho y verificado, v7.53
+(catálogo ElevenLabs + mensaje de bienvenida en vivo). De paso arreglé `version.txt`
+pegado en 7.51 (no se regeneraba en el deploy) y agregué `voz-elevenlabs.js`/`voces-el/`
+a `deploy-seguro.sh` (antes no los copiaba). Aviso completo para Thunderobot en
+`AVISO-A-THUNDEROBOT-2026-08-14.md`.
+
+**Actualización 03:31** — agregué 2 arquetipos nuevos (Seductor/Seductora con voces
+Luis/Clara, Otaku con voces Cesar Rodriguez/Blackie) a `PERSONALIDADES`,
+`PERSONALIDAD_PROSODIA` y `FRASES_ARQ` (26 frases cada uno, las 8 categorías). Agregué
+también un botón 🔊 en `renderPersonalidadGrid()` para escuchar cada voz antes de elegir
+(pidió Inty un "probador de voces"), función nueva `previsualizarPersonalidad()`.
+**Bug real encontrado y arreglado en `scripts/gen-voces-elevenlabs.js`:** los ids del
+catálogo eran secuenciales por orden de aparición — agregar un arquetipo en medio de
+`FRASES_ARQ` corría los ids de todo lo que venía después, y archivos viejos quedaban
+sirviendo el audio de OTRA frase bajo el nombre nuevo. Cambiado a id estable por hash del
+texto (nunca más se corre). Tuve que borrar los 778 mp3 viejos (ids secuenciales) y
+regenerar todo limpio — no llegó a alcanzar a producción (el deploy fue ANTES de este
+cambio), así que no hubo audio incorrecto en vivo. Regenerando ahora, ~20 min. Sigo
+OCUPADO hasta que termine y verifique.
+
+**Actualización 03:50 — CUOTA DE ELEVENLABS AGOTADA (40.000 caracteres/mes).** La
+regeneración se cortó a mitad de camino: 560/778 archivos, repartido en TODOS los
+arquetipos (no solo los nuevos). Además Inty pidió que CADA voz cubra TODAS las
+situaciones sin caer nunca a otra voz distinta — encontré que "cercano" (el arquetipo
+por defecto de usuarios nuevos) no tenía NINGUNA frase propia en `FRASES_ARQ` (caía
+100% a voz nativa) y que sabio/relajado/aventurero tenían huecos en 1-2 categorías.
+Ya está arreglado en el código (14/14 arquetipos completos en las 8 categorías, 425
+frases), pero **no se puede generar audio nuevo hasta que la cuota de ElevenLabs se
+resetee (mensual) o Inty suba el plan** — bloqueador externo, no de código. Nada de
+esto se subió a producción todavía (v7.53 en vivo sigue con el catálogo anterior,
+completo y correcto). Sigo OCUPADO hasta que haya cuota y pueda cerrar el catálogo
+completo + verificar + deployar.
