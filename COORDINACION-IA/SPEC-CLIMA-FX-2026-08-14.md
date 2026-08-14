@@ -129,3 +129,13 @@ ciegas es la forma de "arreglar" esto rompiendo otra cosa. **Quien integre esto 
 ## Qué NO se tocó
 `index.html` no fue modificado por esta tarea — el módulo vive standalone en
 `COORDINACION-IA/` a propósito, para no arriesgar nada antes del lanzamiento de mañana.
+
+## Alcance de pantallas (agregado 2026-08-14, pedido explícito de Inty)
+El overlay de clima tiene que cubrir **también la pantalla de login/`#auth`** (la
+primera pantalla que ve el usuario), no solo las pantallas internas de la app ya
+logueada. El módulo en sí ya lo hace por diseño (se monta sobre `document.body`, fijo,
+independiente de qué vista esté activa) — pero justo el bug de z-index documentado
+arriba (el canvas queda tapado por `#auth`, z-index 5000) es lo que hoy lo estaría
+ocultando específicamente en esa pantalla. O sea: este punto queda resuelto en cuanto se
+arregle el problema de z-index de más arriba — no es un trabajo aparte, pero hay que
+verificarlo explícitamente en login antes de dar la integración por terminada.
