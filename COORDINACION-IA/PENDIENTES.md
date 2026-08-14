@@ -132,6 +132,50 @@ masculinas + 13 femeninas—, esperando su OK o cambios puntuales) antes de:
 
 Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado **2026-07-20**,
 versión actual del proyecto: **v7.14** (en vivo en librepedal.cl).
+Marca con `[x]` lo hecho y anótalo en `BITACORA.md`. Actualizado **2026-08-13**,
+versión actual del proyecto: **v8.34** (en vivo en librepedal.cl, verificado).
+
+---
+
+## 📌 ESTADO AL 2026-08-13 — sesión Thunderobot — leer antes de tomar cualquier tarea
+
+**Este archivo y `BITACORA.md` estaban parados en v7.51/v7.14 mientras el código ya iba en
+v8.34** (93 commits sin documentar, ver entrada CATCH-UP al principio de `BITACORA.md` para
+el resumen completo de qué se hizo: rediseño visual PRO sin emojis, Pistero expresivo
+rediseñado varias veces, SOS comunitario + llamada directa a emergencias, zonas rojas,
+cofres ocultos, Socios Fundadores, y login reescrito 3 veces hasta llegar a Google GIS).
+
+**Hallazgo real de hoy: v8.34 llevaba 7 días sin desplegar de verdad.** Los 3 checks de CI
+(Tests, Deploy Cloudflare, Build APK) fallaron el 2026-08-06 por un problema de
+infraestructura de GitHub (`"job was not acquired by Runner"`, cola de runners — no un bug
+de código) y nadie los reintentó. `librepedal.cl` seguía sirviendo v8.33. **Corregido hoy:**
+se relanzaron los 3 (`gh run rerun`), los 3 pasaron limpio, y se verificó en vivo —
+`librepedal.cl/version.txt` → `8.34`, HTTP 200. **Lección para ambas sesiones:** después de
+cada push, revisar `gh run list` una vez — un CI en rojo por infraestructura no se arregla
+solo, hay que relanzarlo.
+
+**Pendiente real que queda de este hallazgo:** el login nuevo (v8.32-v8.34, Google GIS) nunca
+se probó a mano en producción por ninguna sesión — el CI corre `node --check`/tests, no un
+login real con una cuenta Google. Antes de darlo por bueno, alguien con navegador real
+(Inty, o una sesión con teléfono/Chrome) debería entrar una vez con Google y confirmar que
+no hay rebote/loop.
+
+### 🤝 Reparto de tareas propuesto (Thunderobot ↔ Lenovo) — no hay canal en vivo entre cuentas
+No existe forma de coordinar en tiempo real entre esta cuenta y la de Lenovo (son cuentas
+Claude distintas, confirmado 2026-08-13: `list_sessions` no ve nada del otro lado). La
+coordinación sigue siendo 100% por este archivo + `EN-USO.md` + `BITACORA.md`, como ya
+establece el acuerdo permanente más abajo. Con eso en mente, propuesta de foco para no
+pisarse (ajustar libremente, esto es solo punto de partida):
+- **Thunderobot (esta sesión):** infra/CI (ya resuelto hoy el gap de v8.34), y lo que
+  necesite iterar rápido con verificación en navegador — no tiene teléfono a mano, igual que
+  antes.
+- **Lenovo:** lo que necesite estar cerca de Inty/su teléfono/su cuenta Google real —
+  primero la verificación manual del login GIS de arriba (es la más urgente y nadie más
+  puede hacerla sin un dispositivo), después seguir con lo de "LO MÁS URGENTE" más abajo que
+  siga sin marcar `[x]`.
+- Antes de tomar algo de la lista de abajo, cualquiera de las dos: revisar si ya se hizo en
+  el tramo v7.52-v8.34 (ver CATCH-UP en `BITACORA.md`) — varios ítems de la lista vieja
+  probablemente ya están resueltos y no se desmarcaron.
 
 ---
 

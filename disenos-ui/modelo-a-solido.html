@@ -1,0 +1,99 @@
+<title>Fase A aplicada</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="d" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="50" cy="50" r="47" stroke-width="2.4" opacity="0.5"/><circle cx="50" cy="50" r="41.5" stroke-width="5"/><g stroke-width="4.6"><line x1="13.5" y1="50" x2="86.5" y2="50"/><line x1="50" y1="13.5" x2="50" y2="86.5"/><line x1="24.2" y1="24.2" x2="75.8" y2="75.8"/><line x1="75.8" y1="24.2" x2="24.2" y2="75.8"/></g></g><circle cx="50" cy="50" r="11.5" fill="currentColor"/><circle cx="50" cy="50" r="4.2" fill="#f7cf5a"/></symbol>
+  <symbol id="flag" viewBox="0 0 24 24"><path fill="currentColor" d="M5 3v18H3V3h2zm2 1h13l-2.5 4L20 12H7V4z"/></symbol>
+  <symbol id="trophy" viewBox="0 0 24 24"><path fill="currentColor" d="M6 3h12v1.5h3.2c.4 0 .8.4.8.9 0 2.6-1 5-3.2 5.9-.7 1.9-2.3 3.3-4.3 3.8V19h2.5c.5 0 .9.4.9.9V21H6v-1.1c0-.5.4-.9.9-.9H9.5v-3.9c-2-.5-3.6-1.9-4.3-3.8C3 10.4 2 8 2 5.4c0-.5.4-.9.8-.9H6V3zM4.4 6.4c.2 1.5.8 2.8 1.9 3.5-.2-1-.3-2.1-.3-3.5H4.4zm15.2 0h-1.6c0 1.4-.1 2.5-.3 3.5 1.1-.7 1.7-2 1.9-3.5z"/></symbol>
+  <symbol id="medal" viewBox="0 0 24 24"><path fill="currentColor" d="M8.3 2h3.1L9 7.2 6 5.4 8.3 2zm7.4 0L18 5.4 15 7.2 12.6 2h3.1zM12 8.2a6.9 6.9 0 100 13.8 6.9 6.9 0 000-13.8zm0 2.4l1.28 2.6 2.87.42-2.08 2.02.49 2.86L12 19.2l-2.56 1.3.49-2.86-2.08-2.02 2.87-.42L12 10.6z"/></symbol>
+  <symbol id="mountain" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4l5 8-2.2-.6L12 8.6 8.5 14l3.5 1 3.2-1 4 6H4.8L12 4z"/></symbol>
+  <symbol id="gem" viewBox="0 0 24 24"><path fill="currentColor" d="M6.2 3h11.6l3.2 5.1-9 12.6-9-12.6L6.2 3zm.9 2L5 8h4l1.4-3H7.1zm5.9 0l1.4 3H19l-2.1-3h-3.9zm-1 .3L9.7 8h4.6l-1.3-2.7zM8.9 10l2.1 6.3L7 10H8.9zm6.2 0H17l-4 6.3L15.1 10z"/></symbol>
+  <symbol id="bolt" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 2L4 13.2h6l-1.5 8.8L20 10.6h-6L13.5 2z"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path fill="currentColor" d="M9.6 16.2L5.4 12l-1.4 1.4 5.6 5.6 12-12-1.4-1.4z"/></symbol>
+  <symbol id="compass" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20zm3.7 6.3l-2 5-5 2 2-5 5-2zM12 11a1 1 0 100 2 1 1 0 000-2z"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+  <p class="top">Fase A · CSS EXACTO ya aplicado en <code>index.html</code> (v8.51)</p>
+
+  <h3 class="h">Botones</h3>
+  <button class="bg"><svg class="fa"><use href="#flag"/></svg> Grabar mi ruta</button>
+  <button class="ab"><svg class="fa"><use href="#trophy"/></svg> Ver mis logros</button>
+  <button class="ab sec"><svg class="fa"><use href="#medal"/></svg> Ranking mundial</button>
+  <button class="ab"><svg class="fa"><use href="#compass"/></svg> Rutas para ti</button>
+  <p class="hint">Tócalos: se hunden. El primario lleva el brillo interior; los secundarios, relieve sutil.</p>
+
+  <h3 class="h">Insignia de Darma</h3>
+  <div class="darma-badge"><i><svg class="fa2"><use href="#d"/></svg></i> <strong>248</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
+
+  <h3 class="h">Logros</h3>
+  <div id="logros"></div>
+
+  <p class="foot">Este es el resultado real del código commiteado (16c0351), no un mockup. En la app los íconos son Font Awesome; aquí van como SVG equivalentes. La verificación final es en tu teléfono tras desplegar.</p>
+</div>
+
+<style>
+  :root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0f1d;color:#dfe7ff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:440px;margin:0 auto;padding:20px 16px 50px}
+  .top{font-size:.7rem;color:#63708a;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:0 0 18px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.8em;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:5px;color:#cfe0ff}
+  .h{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:#9fb3c8;margin:26px 0 10px;font-weight:800}
+  .hint,.foot{font-size:.74rem;color:#8695aa;margin-top:10px}
+  .foot{margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);color:#63708a}
+  .fa{width:1.02rem;height:1.02rem;vertical-align:-0.15em;fill:currentColor;margin-right:2px}
+  .bg .fa{fill:#fff}
+
+  /* ==== CSS EXACTO copiado de index.html (Fase A) ==== */
+  .ab{width:100%;min-height:44px;padding:12px 14px;background:linear-gradient(180deg,#182444,#131c2f);color:#dfe7ff;border:1px solid rgba(255,255,255,0.10);border-radius:13px;font-weight:650;cursor:pointer;margin-top:8px;font-size:0.85rem;letter-spacing:0.2px;transition:background .18s ease,border-color .18s ease,box-shadow .2s ease,transform .13s cubic-bezier(.34,1.4,.6,1);position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 2px 8px rgba(0,0,0,0.34)}
+  .ab:hover{background:linear-gradient(180deg,#1c2a50,#16203a);border-color:rgba(255,255,255,0.20);box-shadow:inset 0 1px 0 rgba(255,255,255,0.09),0 8px 22px rgba(0,0,0,0.5)}
+  .ab:active{transform:scale(0.965);box-shadow:inset 0 2px 6px rgba(0,0,0,0.5)}
+  .ab.sec{background:linear-gradient(180deg,#1a2438,#151d30);color:#dfe7ff;border-color:rgba(255,255,255,0.08)}
+  .bg{width:100%;font-size:0.85rem;font-weight:750;cursor:pointer;position:relative;overflow:hidden;color:#fff;min-height:44px;padding:12px 14px;border:none;border-radius:13px;background:linear-gradient(165deg,#ff7a3c,#fc4c02 62%,#e23f00);box-shadow:inset 0 1px 0 rgba(255,255,255,0.4),0 9px 24px -8px rgba(252,76,2,0.72);margin-top:8px}
+  .bg::before{content:'';position:absolute;inset:0;border-radius:13px;background:linear-gradient(180deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.06) 40%,rgba(0,0,0,0.16) 100%);pointer-events:none}
+  .bg:active{transform:scale(0.95)}
+
+  .darma-badge{display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(150deg,#ffe793,#f6c445 42%,#e88b00);color:#2c1a00;font-weight:800;padding:11px 14px;border-radius:14px;margin-bottom:10px;cursor:default;font-size:0.95rem;box-shadow:0 8px 22px -8px rgba(255,180,0,0.5),inset 0 1px 0 rgba(255,255,255,0.62),inset 0 -2px 6px rgba(150,80,0,0.32);position:relative;overflow:hidden}
+  .darma-badge i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 35% 30%,#fff6d5,#e0980e 70%,#b56b00);color:#3a2400;font-size:0.95rem;box-shadow:inset 0 1px 2px rgba(255,255,255,0.7),inset 0 -2px 3px rgba(120,60,0,0.5),0 1px 3px rgba(0,0,0,0.2)}
+  .darma-badge strong{font-size:1.15rem;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 1px 0 rgba(255,255,255,0.35)}
+  .darma-badge small{font-weight:700;opacity:0.72;font-size:0.62rem}
+  .fa2{width:17px;height:17px;fill:currentColor}
+
+  .lg-item{display:flex;gap:13px;align-items:center;padding:12px;border-radius:15px;margin-bottom:10px;background:linear-gradient(180deg,#131c2f,#0f1830);border:1px solid rgba(255,255,255,0.06)}
+  .lg-done{background:linear-gradient(180deg,rgba(255,215,0,0.10),rgba(255,215,0,0.02));border-color:rgba(255,215,0,0.32)}
+  .lg-medal{position:relative;width:50px;height:50px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,0.03)}
+  .lg-ic{position:relative;z-index:2;font-size:1.35rem;color:#5a6478;display:grid;place-items:center;line-height:1}
+  .lg-prog{position:absolute;inset:0;width:50px;height:50px;transform:rotate(-90deg)}
+  .lg-prog-bg{fill:none;stroke:rgba(255,255,255,0.10);stroke-width:3}
+  .lg-prog-fg{fill:none;stroke:var(--p);stroke-width:3;stroke-linecap:round;stroke-dasharray:125.66;transition:stroke-dashoffset .8s ease}
+  .lg-done .lg-medal{background:radial-gradient(circle at 36% 30%,#fff3c4,var(--g) 62%,#e88b00);box-shadow:0 6px 18px -5px rgba(255,215,0,0.55),inset 0 2px 4px rgba(255,255,255,0.6),inset 0 -3px 6px rgba(150,90,0,0.4)}
+  .lg-done .lg-ic{color:#5a3c00}
+  .lg-glow{position:absolute;inset:-6px;border-radius:50%;box-shadow:0 0 20px 2px rgba(255,215,0,0.28);pointer-events:none}
+  .lg-body{flex:1;min-width:0}
+  .lg-title{font-weight:800;font-size:0.86rem;color:#cfd8e6;display:flex;align-items:center;gap:7px}
+  .lg-done .lg-title{color:#fff3c4}
+  .lg-check{width:18px;height:18px;border-radius:50%;background:var(--g);color:#5a3c00;display:grid;place-items:center;font-size:0.55rem;flex:0 0 auto}
+  .lg-check svg{width:11px;height:11px;fill:currentColor}
+  .lg-ic svg{width:1.35rem;height:1.35rem;fill:currentColor}
+  .lg-desc{font-size:0.7rem;color:#8695aa;margin-top:1px}
+  .lg-meta{font-size:0.63rem;color:#7d8ba0;margin-top:5px;font-variant-numeric:tabular-nums}
+</style>
+
+<script>
+  // Reproduce el render real de mostrarLogros() con la clase .lg-*
+  var LOGROS=[
+    {e:'trophy',t:'Leyenda del pedal',d:'5000 km recorridos',v:5200,meta:5000,u:'km'},
+    {e:'medal',t:'Cicloviajero',d:'1000 km — ¡elegible a premios!',v:1000,meta:1000,u:'km'},
+    {e:'mountain',t:'Rutero',d:'500 km recorridos',v:480,meta:500,u:'km'},
+    {e:'gem',t:'Guardián',d:'500 de Darma',v:248,meta:500,u:''},
+    {e:'bolt',t:'Máquina',d:'5000 calorías quemadas',v:1850,meta:5000,u:'cal'}
+  ];
+  var html='';
+  LOGROS.forEach(function(l){
+    var done=l.v>=l.meta; var pct=Math.min(100,Math.round(l.v/l.meta*100)); var off=(125.66*(1-pct/100)).toFixed(1);
+    var ic='<span class="lg-ic"><svg><use href="#'+l.e+'"/></svg></span>';
+    html+='<div class="lg-item'+(done?' lg-done':'')+'"><span class="lg-medal">'+(done?'<span class="lg-glow"></span>':'<svg class="lg-prog" viewBox="0 0 46 46"><circle class="lg-prog-bg" cx="23" cy="23" r="20"></circle><circle class="lg-prog-fg" cx="23" cy="23" r="20" style="stroke-dashoffset:'+off+'"></circle></svg>')+ic+'</span><div class="lg-body"><div class="lg-title">'+l.t+(done?'<span class="lg-check"><svg><use href="#check"/></svg></span>':'')+'</div><div class="lg-desc">'+l.d+'</div>'+(done?'':'<div class="lg-meta">'+(l.u==='km'?l.v.toFixed(1):Math.round(l.v))+' / '+l.meta+(l.u?' '+l.u:'')+'</div>')+'</div></div>';
+  });
+  document.getElementById('logros').innerHTML=html;
+</script>

@@ -91,6 +91,54 @@ validar esto antes de pushear — quedando anotado acá como pide la regla, en v
 paso en silencio. Si alguien prueba esto en la app real (terminar una ruta o historial → 🚁) y
 encuentra algo raro, revertir es seguro: el cambio es autocontenido a `reproducirSobrevuelo`/
 `detenerSobrevuelo`, no toca otra función.
+## CATCH-UP — 2026-08-13 — Claude (sesión Thunderobot) · Reconstrucción de bitácora v7.52→v8.34 (93 commits sin documentar)
+
+⚠️ **Esta entrada es una reconstrucción retroactiva a partir de `git log`, no un registro en vivo.** Entre v7.51 (2026-07-29) y v8.34 (2026-08-06) hubo 93 commits de al menos dos sesiones (Lenovo/Thunderobot, sin identificar cuál en cada uno porque no quedó en el mensaje) que **no actualizaron `BITACORA.md` ni `PENDIENTES.md`**, rompiendo la regla obligatoria del protocolo. Reconstruido leyendo mensajes de commit reales — no hay evidencia de pruebas/verificación más allá de lo que dice cada mensaje. Si alguna sesión tiene el detalle real de verificación de estos cambios, por favor amplíar esta entrada.
+
+**Hallazgo operativo al reconstruir esto (2026-08-13):** el HEAD real (v8.34) llevaba **7 días con sus 3 GitHub Actions en rojo** (Tests, Deploy Cloudflare, Build APK) — no por un bug, sino por `"job was not acquired by Runner"` (falla de infraestructura de GitHub, cola de runners). Es decir: `librepedal.cl` probablemente seguía sirviendo v8.33, no v8.34, desde hace una semana sin que nadie lo notara. Se relanzaron los 3 runs (`gh run rerun`) — resultado abajo/en la próxima entrada.
+
+### Rediseño visual "PRO" (fuera emojis, entra Font Awesome) — v7.72 a v8.12 (múltiples versiones)
+Migración sistemática de emoji-como-sistema-visual a iconos SVG Font Awesome coherentes, sección por sección: Perfil (v7.72), botones/títulos genéricos (v7.74, 236 emojis fuera), cabeceras de modal (v7.92), logros (v7.94), chips de Pistero/peligros (v7.95), modos de viaje (v7.93), botones toggle de crono/grabación (v8.12). Alineado con la regla dura "nunca emoji ni íconos genéricos" de `PROTOCOLO-DE-TRABAJO-INTY.md`.
+
+### Orbe/Pistero — rediseño completo del avatar y su expresividad — v7.65 a v8.30 (arco largo, múltiples versiones)
+- **Orbe de voz** (v7.65 → v7.77): pasó de robot/casco viejo a un orbe con cara real generada en RTX (arte del Thunderobot), ojos reactivos, toque-para-hablar (one-shot, escucha continua OFF por defecto), anillo multicolor + ecualizador. Reemplazó el ícono viejo en esfera y mapa (v7.69, v7.82).
+- **Voces por arquetipo** (v7.80-v7.81): voces chilenas SLR71 por arquetipo de Pistero, 337→1044 frases grabadas (Fase 1 y 2).
+- **Ánimo/expresiones** (v7.84-v7.91): set completo de expresiones (enojado, cansado, pensando, preocupado, dormido, contento, preocupado al desviarse) reaccionando en vivo mientras habla.
+- **Personalización de cara** (v8.17-v8.30, rediseño mayor en v8.22): Perfil/mapa/orbe/sobrevuelo unificados a un solo "Pistero expresivo" (se sacaron peinado/labios/vello viejos); casco+piel+lentes componen de frente; luego +pestañas, mono con cola, aros, pañoleta (v8.30); barba/bigote y accesorios de casco (cámara/luz/cresta/antena) en v8.28; bug de color de piel/camiseta corregido (v8.21); export/import de respaldo actualizado para no perder la personalización nueva al migrar (v8.29).
+- **Sobrevuelo/video de ruta** (v8.16-v8.17, fix en v8.30): el marcador que recorre la ruta pasó de ícono de modo (mostraba una montaña en MTB) a un ciclista, y luego a la carita de Pistero; fix de posición por DPR y sin inclinación.
+
+### SOS y seguridad — v8.00 a v8.27
+- **Antifraude**: reportes exigen km de bici reales para evitar cuentas falsas (v8.00), con fallback para ciclistas antiguos sin desglose por modo (v8.02).
+- **SOS directo**: botón de llamada directa a emergencias (133/131/132, v8.09) además de avisar contactos.
+- **SOS comunitario** (v8.10-v8.11): alerta anónima y gruesa (~5km, sin identidad/ubicación exacta) a ciclistas de confianza cerca; regla Firestore `sosAlertas` (read/create autenticado, dato inmutable).
+- **GPS fresco en SOS** (v8.13, v8.14, v8.27): forzar `maximumAge:0` para no usar posición cacheada vieja al pedir ayuda — corregido también en "avisar a ciclistas cerca". Pistero deletrea "S-O-S" en vez de decir la palabra (v8.27).
+
+### Zonas rojas y cofres ocultos — v8.01, v8.07, v8.08
+Capa de zonas rojas multi-ciudad con aviso por voz de Pistero al acercarse (v8.01), luego marcador visible + popup en el mapa (v8.07). Mecánica nueva de "cofres ocultos" (premios sorpresa por tramos poco recorridos, hash de celda, dormido hasta 3000 usuarios, anti-trampa por velocidad y 1 reclamo por usuario) en v8.08.
+
+### Socios Fundadores (monetización/growth) — v7.98 a v8.24
+Programa de "Socios Fundadores" (primeros 1000, número de socio inmutable por `createdAt`) con Muro de Fundadores (v7.98), multiplicador 2x de Darma (v7.99) cacheado en el dispositivo para que aplique al instante (v8.03), insignia propia en SVG (v8.00). Luego se **ocultó el conteo de usuarios** (comunidad, fundadores, landing) y se gateó la votación a 1000 sin revelar cuántos son (v8.04, ddba630), se sacó el número de socio visible de la insignia (solo queda como insignia, v8.24) y se agregó onboarding de bienvenida al Socio Fundador nuevo con sus beneficios (v8.23). Meta declarada: no revelar tamaño real de la comunidad mientras crece.
+
+### Login — reescrito 3 veces en 4 días (v8.31 → v8.34, arco corto y con reversiones de enfoque)
+1. v8.31: link mágico por email (Firebase Email Link).
+2. v8.32-v8.33: se cambió a "Entrar con Google" (popup, sin salir de la app) como login principal.
+3. v8.34 (HEAD actual): "login Google moderno (GIS)" — Google Identity Services, un toque, sin rebotes, en dominio propio + app instalada.
+**Sin verificación de CI real** (ver hallazgo operativo arriba — los 3 checks de v8.34 nunca corrieron por falla de runner, recién relanzados 2026-08-13). Confirmar manualmente que el login funciona en producción antes de darlo por bueno.
+
+### Rendimiento, UX y limpieza — resto de versiones
+- **Performance** (v8.15): MapLibre/Leaflet/jsPDF con `defer`, Sentry en `async` — no bloquean el primer render; Firebase se mantiene síncrono a propósito.
+- **CO2** (v7.96): registro de CO2 evitado por los km reales + equivalencia en árboles.
+- **Modos de viaje** (v7.79): 5 modos (Ruta, Cicloviaje, MTB, Trekking, Motorizado).
+- **Auditoría UX de "Tandas"** (v7.53-v7.57, siguiendo `AUDITORIA-UX-2026-07-29.md`): espacio para que el mic flotante no tape contenido, burbuja de Pistero contenida a su pantalla, controles de mapa sin duplicados (zoom/fullscreen/ubicar nativos de MapLibre ocultos, quedan los propios), categorías de Perfil sin scroll horizontal, grupo Amigos colapsado con badge de notificaciones en el header.
+- **Arreglos puntuales**: doble voz en carrera con datos móviles (v7.63), hub "Iniciar viaje" aplastado (v7.64), teclado tapando el input de Pistero (v7.58, v7.71), fin-de-idea por silencio en escucha continua/endpointing (v7.66, v7.67), llamadas a contactos por voz (v7.68), `ReferenceError` de `_perfilAcordeon` en consola (v8.26), voces por arquetipo (SLR71) que se colaban — desactivadas, solo Azure hasta los 1000 usuarios (v8.06), un solo Pistero visible en Perfil, no dos (v8.05).
+- **Marketing/compartir**: Open Graph/Twitter Card para que el link de librepedal.cl muestre imagen+título al compartirse (v8.25).
+- **Hub de comunidad**: se restauró el acceso (estaba huérfano, sin botón) a Logros/Comunidad/Votación desde Social y Estadísticas (v7.97).
+- **Gamificación**: se liberó TODO lo que estaba bloqueado por Darma (skins, estilos de esfera, fondos, personalidades) — Darma queda solo para ranking/premios, no como muro de acceso (v8.20).
+
+### Pendiente real detectado al reconstruir esto (agregar a PENDIENTES.md)
+- **Verificar que v8.34 realmente esté en producción** tras relanzar el CI (ver hallazgo operativo arriba).
+- **Nada de esto se probó en un teléfono real** por lo que dicen los mensajes de commit — el patrón de "pendiente confirmar en dispositivo real" del resto del proyecto aplica igual a todo este tramo (login Google, voz nativa, personalización de Pistero, SOS).
+- El login pasó por 3 enfoques distintos en 4 días (link mágico → popup Google → GIS) sin que quede registrado *por qué* se descartaron los dos primeros — si vuelve a fallar el login, revisar si fue una decisión técnica (algo no funcionaba) o solo preferencia de UX, para no repetir el mismo descarte sin necesidad.
 
 ## INFRA — 2026-07-29 — Claude (sesión Windows/inty405) · CI de deploy en GitHub Actions + rotación del token Cloudflare
 

@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Libre Pedal — la comunidad ciclista que hacemos todos</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Libre Pedal">
+<meta property="og:title" content="Libre Pedal — la comunidad ciclista que hacemos todos">
+<meta property="og:description" content="Graba tus rutas, conéctate con ciclistas de verdad y decidan juntos hacia dónde vamos. Hecho en Chile, para toda Latinoamérica.">
+<meta property="og:url" content="https://librepedal.cl/bienvenida">
+<meta property="og:image" content="https://librepedal.cl/icon-512.png">
+<meta property="og:locale" content="es_CL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Libre Pedal — la comunidad ciclista que hacemos todos">
+<meta name="twitter:description" content="Graba tus rutas y conéctate con ciclistas de verdad. Hecho en Chile.">
+<meta name="twitter:image" content="https://librepedal.cl/icon-512.png">
 <meta name="description" content="Libre Pedal es el movimiento ciclista que se construye entre todos. Graba tus rutas, conéctate con ciclistas de verdad, y decidan juntos hacia dónde vamos. Prueba 7 días gratis. Hecho en Chile, para toda Latinoamérica.">
 <link rel="icon" href="icon-192.png" type="image/png">
 <style>
@@ -206,11 +217,9 @@ footer a:hover{color:var(--muted)}
   </div>
   <div class="alive-panel reveal">
     <div class="ap-top">
-      <span>Somos <span class="big" id="apUsers">—</span> pedaleando juntos</span>
-      <span class="ap-goal">meta: 5.000 para activar la votación y el sorteo comunitario</span>
+      <span>Un movimiento ciclista que crece cada día 🚴</span>
     </div>
-    <div class="ap-bar"><div class="ap-fill" id="apFill"></div></div>
-    <div class="ap-msg" id="apMsg">Cargando datos en vivo…</div>
+    <div class="ap-msg" id="apMsg">Cuando la comunidad crezca lo suficiente, entre todos votamos la causa y se abre el sorteo comunitario.</div>
   </div>
   <div class="pledges stagger">
     <div class="pledge reveal"><span class="ic">🤝</span><h4>Transparencia con los fondos</h4><p>Cuando se active la votación, la comunidad decide y se rinde cuenta de en qué se usa cada peso.</p></div>
@@ -226,8 +235,13 @@ footer a:hover{color:var(--muted)}
     <p style="color:var(--muted);max-width:54ch;margin:12px auto 0;font-size:.95rem">Todos pueden pedalear con Libre Pedal gratis — la ruta, la comunidad y la seguridad no se tocan. Premium suma extras para el ciclista de tomo y lomo.</p>
     <div class="offer-rows">
       <div class="offer-item"><div class="big">Gratis</div><div class="lbl">lo esencial, siempre y para todos</div></div>
+      <!-- OCULTO POR AHORA (descuento) — restaurar cuando se defina el lanzamiento:
       <div class="offer-item"><div class="big">50% OFF</div><div class="lbl">Premium · primeros 300, por 6 meses</div></div>
+      -->
+      <!-- OCULTO POR AHORA (valor de suscripcion) — restaurar cuando se defina el precio:
       <div class="offer-item"><div class="big">$3.000</div><div class="lbl">Premium al mes después · 7 días de prueba</div></div>
+      -->
+      <div class="offer-item"><div class="big">Premium</div><div class="lbl">extras para el que quiere más · pronto</div></div>
     </div>
   </div>
 </div></section>
@@ -320,21 +334,8 @@ var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matche
   var io=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){run(e.target);io.unobserve(e.target);}});},{threshold:.6});
   nodes.forEach(function(el){io.observe(el);});
 })();
-/* Comunidad viva: contador real de usuarios desde Firestore, solo lectura */
-(function(){
-  try{
-    firebase.initializeApp({apiKey:"AIzaSyBIhhvyhRR0ekVmOXmVDx7C_J-TBfVGCbQ",authDomain:"librepedal-cb983.firebaseapp.com",projectId:"librepedal-cb983",storageBucket:"librepedal-cb983.firebasestorage.app",messagingSenderId:"857811917976",appId:"1:857811917976:web:d088c2b9ea7f45e4ee84ed"});
-    var db=firebase.firestore(), META=5000;
-    db.collection('users').get().then(function(snap){
-      var total=snap.size, pct=Math.min(100,Math.round((total/META)*100));
-      document.getElementById('apUsers').textContent=total.toLocaleString('es-CL');
-      document.getElementById('apMsg').textContent=pct+'% del camino a 5.000 — cuando lleguemos, la comunidad vota la causa y se abre el sorteo.';
-      requestAnimationFrame(function(){setTimeout(function(){document.getElementById('apFill').style.width=pct+'%';},80);});
-    }).catch(function(){
-      document.getElementById('apMsg').textContent='No pudimos cargar los datos en vivo ahora mismo — entra a la app para verlos.';
-    });
-  }catch(e){var m=document.getElementById('apMsg');if(m)m.textContent='No pudimos cargar los datos en vivo ahora mismo.';}
-})();
+/* Contador de usuarios OCULTO por pedido de Inty: no revelar cuantos somos ni cuantos suscritos.
+   El panel usa un mensaje estatico (sin numero) en el HTML. No se consulta Firestore. */
 </script>
 </body>
 </html>
