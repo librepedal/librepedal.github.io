@@ -4,6 +4,25 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## SEGURIDAD — 2026-08-14, sesión lenovo — worker-auth/worker.js sincronizado con producción (commit `6eba5ee`)
+
+Buscando otra cosa (Inty preguntó por "espacios de usuario"/"mapas" no encontrados),
+apareció en el hub de coordinación la tarea #6 ("CRITICO: cerrar hueco de auth en
+LibrePedal") ya marcada `listo`, pero su propio resultado decía que **el repo seguía
+con el `worker-auth/worker.js` viejo** (emitía token válido para cualquier `cu` sin
+password) aunque el worker EN VIVO ya tuviera el fix real. Verificado leyendo el
+script desplegado por la API de Cloudflare (`GET /workers/scripts/librepedal-auth`,
+token `MI-CLOUDFLARE-IA.txt`) — confirmado que en producción SÍ exige un `idToken`
+real de Firebase, verificado contra las llaves públicas de Google
+(`email_verified===true`) antes de derivar el `cu`. Reconstruido ese código exacto
+(des-empaquetado a ES module legible) en el repo — no se tocó ni redesplegó el
+worker en vivo (no hacía falta). Sin esto, cualquier sesión futura que redesplegara
+`worker-auth` desde git habría reintroducido el hueco. `node --check` OK. No hay
+CI que dispare deploy de este worker automáticamente (solo `index.html`/Pages lo
+tiene) — quien lo despliegue de nuevo, que sea a propósito.
+
+---
+
 ## v8.57 — 2026-08-14, sesión lenovo — Cristal en el login + clima real integrado + fix de ícono GPS
 
 Inty pidió auditar consistencia de tema/mapas/iconos/clima en toda la app. Rama
