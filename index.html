@@ -1280,6 +1280,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
     <div style="background:rgba(239,77,90,0.14);border:1px solid #ef4d5a;border-radius:10px;padding:10px 12px;color:#ffd9dd">
       🛑 <b>Esto no es DIY.</b> Un freno mal armado es un accidente. No se improvisa (nada de nudos ni trucos). Te llevo al taller cercano.
     </div>
+    <a class="ab taller-cercano-link" style="margin-top:8px;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Ver taller más cercano</a>
   </div>
 </details>
 
@@ -1289,11 +1290,12 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
     <div style="background:rgba(239,77,90,0.14);border:1px solid #ef4d5a;border-radius:10px;padding:10px 12px;color:#ffd9dd">
       🛑 <b>Siempre al mecánico.</b> Dirección, horquilla y potencia son lo que te sostiene. Cualquier juego o ruido ahí se revisa en taller.
     </div>
+    <a class="ab taller-cercano-link" style="margin-top:8px;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Ver taller más cercano</a>
   </div>
 </details>
 
 <div class="quick-links" style="margin-top:14px">
-  <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Buscar taller cercano</a>
+  <a class="ab sec taller-cercano-link" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Buscar taller cercano</a>
   <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.parktool.com/es/blog/repair-help" target="_blank"><i class="fas fa-book-open"></i> Guías Park Tool (Calvin Jones)</a>
 </div>
 <!-- Elementos legacy OCULTOS: el arranque llama rm(MG) y loadRepairTips() y necesitan estos targets; sin ellos crashea el init. Quedan invisibles: ya no mostramos tips improvisados. -->
@@ -1434,7 +1436,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.52'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.53'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -7620,7 +7622,7 @@ function cv(id, _esVolver){
     _registrarPasoEnHistorial(id); // le da al botón atrás del teléfono algo que retroceder
   }
   _viewActual=id; _actualizarBtnAtras();
-  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.body.setAttribute('data-vista', id); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.body.setAttribute('data-vista', id); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='mac' && typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
      inicializar (sin categorias de puntos y sin sincronizar con la nube) porque cv() solo
      hacia cargarDiario() y openDiario() hacia tres cosas mas. La misma pantalla se veia
      distinta segun por donde entraras: eso es exactamente la falta de concordancia que
@@ -7831,6 +7833,42 @@ function suscribirCiclistasCerca(){
   }catch(e){ _ciclistasCerca=[]; }
 }
 function calculateDistance(lat1,lon1,lat2,lon2){ const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1000; }
+/* Taller: derivar al usuario a un taller de bicicletas REAL, no una busqueda a ciegas.
+   Antes el boton "Buscar taller cercano" abria una busqueda de texto sin ubicacion —
+   Google adivinaba por IP, no por donde el usuario esta parado. Ahora, en dos pasos:
+   1) mejora inmediata: centra la busqueda en su ubicacion GPS real (currentUserLocation,
+      la misma variable que ya usa el SOS de caidas).
+   2) mejor esfuerzo: consulta Overpass (OpenStreetMap, gratis, sin API key) por talleres
+      de verdad cerca, y si encuentra uno, cambia el link a una ruta directa con nombre y
+      distancia. Si no hay internet o Overpass no responde, se queda con la mejora del
+      paso 1 — nunca peor que el link generico de antes.
+   Igual que el SOS: nunca se abre nada solo (los WebView/navegadores mobile bloquean
+   window.open() despues de un await); se deja un <a href> real para que el usuario lo
+   toque cuando quiera. */
+async function _actualizarTallerCercano(){
+  const links=document.querySelectorAll('.taller-cercano-link');
+  if(!links.length) return;
+  const loc=currentUserLocation || (typeof us!=='undefined' && us && us.la!=null ? {lat:us.la,lon:us.lo} : null);
+  if(!loc) return;
+  links.forEach(function(a){ a.href='https://www.google.com/maps/search/taller+de+bicicletas/@'+loc.lat+','+loc.lon+',14z'; });
+  try{
+    const ctrl=new AbortController(); const to=setTimeout(function(){ ctrl.abort(); },7000);
+    const q='[out:json][timeout:6];(node["shop"="bicycle"](around:6000,'+loc.lat+','+loc.lon+');way["shop"="bicycle"](around:6000,'+loc.lat+','+loc.lon+'););out center 8;';
+    const r=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});
+    clearTimeout(to);
+    const j=await r.json();
+    const opciones=(j.elements||[]).map(function(e){
+      const lat=e.lat!=null?e.lat:(e.center&&e.center.lat), lon=e.lon!=null?e.lon:(e.center&&e.center.lon);
+      if(lat==null||lon==null) return null;
+      return {nombre:(e.tags&&e.tags.name)||'Taller de bicicletas', lat:lat, lon:lon, d:calculateDistance(loc.lat,loc.lon,lat,lon)};
+    }).filter(Boolean).sort(function(a,b){ return a.d-b.d; });
+    if(opciones.length){
+      const t=opciones[0], km=(t.d/1000).toFixed(1);
+      const url='https://www.google.com/maps/dir/?api=1&origin='+loc.lat+','+loc.lon+'&destination='+t.lat+','+t.lon+'&travelmode=bicycling';
+      document.querySelectorAll('.taller-cercano-link').forEach(function(a){ a.href=url; a.innerHTML='<i class="fas fa-location-dot"></i> '+escapeHTML(t.nombre)+' · '+km+' km'; });
+    }
+  }catch(e){ /* sin internet, timeout, o Overpass caido: queda la mejora del paso 1 */ }
+}
 
 function normalizar(t){ return String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
 // Deja SOLO el lugar: quita "pistero", muletillas y verbos de comando para que la búsqueda no falle.
