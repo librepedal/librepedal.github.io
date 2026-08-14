@@ -4,6 +4,23 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## INFRA — 2026-08-14 (resuelto) — sesión lenovo · CI de deploy arreglado + v8.51 en vivo
+
+**Resuelto lo que dejó anotado la entrada de abajo.** Tenía el token vigente en
+`MI-CLOUDFLARE.txt` local, así que:
+1. `gh secret set CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` en el repo
+   `intyriveraa-lab/librepedal` (antes solo existían los 4 secrets de firma Android).
+2. Deploy manual con `deploy-seguro.sh` para no esperar — v8.51 confirmado en vivo
+   (`curl https://librepedal.cl/version.txt` → `8.51`).
+3. Disparé el workflow "Deploy a Cloudflare" a mano (`gh workflow run`) para probar
+   que el arreglo es real, no otro falso positivo — terminó en verde de verdad esta
+   vez (antes terminaba en verde por el `exit 0` silencioso, ahora publica).
+
+Con esto el pipeline automático (push a `main` → web en vivo) vuelve a funcionar para
+cualquier cuenta, no depende de que alguien lo detecte y deployee a mano cada vez.
+
+---
+
 ## INFRA — 2026-08-14 — Claude (misma sesión que v8.51) · el CI de deploy NO está funcionando (secret faltante)
 
 **Hallazgo, no arreglado por esta sesión (sin credenciales para arreglarlo):** el push de v8.51 se
