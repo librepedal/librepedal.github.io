@@ -9234,10 +9234,9 @@ function wmoTexto(c){ const m={0:'despejado',1:'mayormente despejado',2:'parcial
 async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weather_code,wind_speed_10m&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=3'); return await r.json(); }catch(e){ return null; } }
 /* Enganche del efecto visual de clima (clima-fx.js) a los datos REALES de Open-Meteo.
    Mapeo de codigo WMO (mismas categorias que wmoTexto, arriba) a los 6 modos que expone
-   climaFxSetMode(). Umbral de "sol" (calor extremo) = 30 grados, sugerido en
-   COORDINACION-IA/SPEC-CLIMA-FX-2026-08-14.md — PENDIENTE de confirmar con Inty, no
-   inventado desde cero. Tormenta (95-99) usa el modo 'lluvia' (el mas intenso de los 6,
-   el modulo no tiene un modo propio de tormenta). */
+   climaFxSetMode(). Umbral de "sol" (calor extremo) = 30 grados — CONFIRMADO por Inty
+   2026-08-14. Tormenta (95-99) usa el modo 'lluvia' (el mas intenso de los 6, el modulo
+   no tiene un modo propio de tormenta). */
 function _climaFxModoDesde(codigo,temp){
   if(codigo==null) return 'off';
   if(codigo>=95) return 'lluvia';

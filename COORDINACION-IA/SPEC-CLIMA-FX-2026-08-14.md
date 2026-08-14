@@ -123,8 +123,8 @@ ciegas es la forma de "arreglar" esto rompiendo otra cosa. **Quien integre esto 
 5. **Probar en teléfono real** — todo lo de arriba se verificó en navegador de
    escritorio contra un servidor estático, no en dispositivo móvil real ni con sesión
    logueada real ni con datos de clima reales.
-6. **Definir umbral exacto de "sol" (calor extremo)** con Inty — hoy sólo existe el
-   modo, no la regla de cuándo se activa.
+6. ~~Definir umbral exacto de "sol" (calor extremo) con Inty~~ **RESUELTO 2026-08-14:
+   30°C, confirmado por Inty.** Implementado en `_climaFxModoDesde()`, index.html.
 
 ## Qué NO se tocó
 `index.html` no fue modificado por esta tarea — el módulo vive standalone en

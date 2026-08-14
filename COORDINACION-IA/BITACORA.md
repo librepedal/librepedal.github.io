@@ -23,7 +23,7 @@ Los 3 checks de CI (Tests, Deploy Cloudflare, Build APK) pasaron verdes.
    consulta el permiso de geolocalización EN SILENCIO con la Permissions API — nunca pide
    uno nuevo, para no meter un prompt sorpresa la noche antes del lanzamiento). Mapeo de
    código WMO→modo en `_climaFxModoDesde()`. Umbral de "sol" (30°C) es la sugerencia del
-   propio SPEC — **pendiente que Inty lo confirme.**
+   propio SPEC — **confirmado por Inty el mismo día.**
 2. **Tema Cristal en `#auth`/`.auth-box`**: único hueco real que quedaba del tema ya-en-
    producción (SPEC-TEMAS-APP-WIDE) — la pantalla de login no tenía el revestimiento de
    vidrio que sí tiene el resto de la app desde v8.52/v8.55.
