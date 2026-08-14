@@ -28,6 +28,9 @@ MI-AZURE.txt
 muestra-lorenzo-chileno.mp3
 muestra-catalina-chilena.mp3
 demo-voces/
+# Voces ElevenLabs (assets generados, ~56MB) — se regeneran con scripts/gen-voces-elevenlabs.js
+# o se re-bajan de producción; no inflan el historial de git.
+voces-el/
 MI-SENTRY.txt
 MI-*.txt
 señuelos/

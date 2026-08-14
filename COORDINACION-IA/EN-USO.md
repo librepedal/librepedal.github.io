@@ -31,4 +31,14 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ## Estado actual
 
-**LIBRE** - sesion Thunderobot, 2026-07-29 18:54. Integre el planificador Desde-Hasta (v7.51): chip "Trazar ruta" en la app + pagina /planificador-beta. Desplegado y verificado desde el Thunderobot. PENDIENTE: prueba en telefono real de Inty.
+**LIBRE** - sesion Claude Code (cuenta de hoy), 2026-08-14 03:5x. FASE A del SPEC-PULIDO-UI-2026-08-14 LISTA EN CODIGO (v8.51), sobre base v8.50 traida de produccion:
+- Botones (.ab/.ab sec/.bg): profundidad sutil (realce interior + sombra), se hunden al :active, primario con brillo controlado. Solo CSS.
+- Insignia Darma (.darma-badge): ahora moneda de metal (oro cepillado, numero tabular, dharmachakra fa en disco hundido). Solo CSS.
+- Logros (mostrarLogros): filas planas -> MEDALLA (medallon circular .lg-* + arco de progreso naranja; oro+glow al desbloquear). CSS nuevo + render reescrito con clases.
+- Version subida en los 3 lugares: APP_VERSION 8.51 / version.txt 8.51 / sw.js v851.
+- Validado: node validate.js -> 3 bloques, 0 errores.
+PENDIENTE: (1) Inty verifica en el telefono; (2) FASE B = migracion de iconos UI a linea (Lucide), 395 usos / 152 unicos, NO hecha (necesita verificacion en navegador); (3) deploy bloqueado: falta MI-CLOUDFLARE.txt en esta maquina y deploy-seguro.sh no copia voces-el ni los .js nuevos (traer arreglo de la otra cuenta).
+
+(anterior) LIBRE - sesion Thunderobot, 2026-07-29 18:54. Planificador Desde-Hasta (v7.51), desplegado y verificado.
+
+(anterior) LIBRE - sesion Thunderobot, 2026-07-29 18:54. Integre el planificador Desde-Hasta (v7.51). Desplegado y verificado. PENDIENTE: prueba en telefono real de Inty.
