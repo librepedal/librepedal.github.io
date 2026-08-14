@@ -31,6 +31,11 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ## Estado actual
 
+### 🚀 TAREA ABIERTA PARA CUALQUIER CUENTA: desplegar el lanzamiento
+**Inty lanza MANANA (2026-08-15). Ver `TAREA-LANZAMIENTO-2026-08-15.md`.** Todo listo y
+verificado (v8.51 en git + deploy-seguro.sh arreglado y probado). Falta SOLO el token
+`MI-CLOUDFLARE.txt` + correr `bash deploy-seguro.sh`. La toma quien tenga el token.
+
 ### PARA LA OTRA CUENTA (Inty confirmo que estas ACTIVA ahora, 2026-08-14)
 Coordinemos para NO divergir otra vez. Hoy ya paso: llevaste 8.35->8.50 desplegando a
 Cloudflare SIN pushear a git, y esta cuenta tuvo que rescatar el 8.50 bajandolo de
