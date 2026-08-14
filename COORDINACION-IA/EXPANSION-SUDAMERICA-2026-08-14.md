@@ -27,9 +27,12 @@ Evaluado por Opus; aquí el estado real y las tareas.
   mp3 de `voces-el/` (la rama es previa a ese banco; el merge los conserva). Verificar
   `node tests/run.mjs` 13/13 + que el **Worker** (`worker-ia`) se despliegue aparte (revisar
   `wrangler.toml`). **Necesita ✓ de Inty al rebranding pan-latino** antes de mergear.
-- **T-SA2 (P1) — Puntos referenciales por país.** Owner: LIBRE. Reemplazar la lista de
-  Santiago por una estructura por país/ciudad, o generarla dinámicamente (Nominatim/Overpass)
-  desde la ubicación. Empezar por las capitales de los países ya soportados (AR, CO, PE, etc.).
+- **T-SA2 (revisado) — Zonas rojas: NO fabricar.** Los "puntos referenciales" (línea ~4569,
+  `ZONAS_ROJAS`) son datos de SEGURIDAD reales (CIPER/prensa) de Chile. ⚠️ **PROHIBIDO
+  inventar zonas de peligro para otros países** (regla de Inty: seguridad = dato real o nada).
+  La app YA degrada seguro fuera de Chile (chequeo por distancia → sin avisos falsos) y se
+  llena con reportes REALES de la comunidad. Acción: **dejarlo así**. Si algún día hay data
+  real verificada por país, agregarla con su fuente; nunca generada por IA. NO es un bug.
 - **T-SA3 (P1) — Selector de país completo.** Owner: LIBRE. Verificar que el `<select>` de país
   (index.html ~741, hoy incluye 🇨🇱) liste todos los países objetivo y que Nominatim use el
   `countrycodes` correcto (ya existe el hook, ~línea 6811).
