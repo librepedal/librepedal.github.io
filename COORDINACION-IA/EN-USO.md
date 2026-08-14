@@ -214,3 +214,42 @@ Inty pidio "coordina con la otra cuenta y procedan sin errores". Encontre y arre
 Ambos cambios se hicieron en rama propia (`infra/cerrar-tarea-lanzamiento-8.51` y
 `fix/test-conteo-arquetipos`) y se mergearon a `main`, siguiendo el `CLAUDE.md` nuevo -
 primeras ramas bajo esa regla. Candado **LIBRE**.
+
+---
+
+**LIBRE** - sesion Claude Code (cuenta lenovo), 2026-08-14, resumen de todo lo que
+subi hoy despues de lo anterior (Inty pidio "actualiza tu avance con las otras
+cuentas"):
+
+- **v8.52**: primer+segundo lote de iconos emoji->Font Awesome en `index.html`
+  (22 reemplazos verificados por contexto, no regex ciego).
+- **v8.53**: Taller -> derivacion real al taller de bicicletas mas cercano.
+  `_actualizarTallerCercano()` usa `currentUserLocation` (misma variable que el SOS)
+  + Overpass/OpenStreetMap (gratis, sin key) para encontrar el taller real mas cercano
+  con nombre y distancia; antes el boton era una busqueda de texto ciega sin GPS.
+  Bug real encontrado y corregido en desarrollo (query Overpass mal formada, faltaba
+  un `;`) antes de llegar a produccion.
+- **Auditoria de errores real (Sentry conectado)**: cero errores nuevos en produccion
+  en los ultimos 5 dias. Los mas frecuentes historicos (`subscribeToRouteAlerts` 170x,
+  `_perfilAcordeon` 50x) ya no existen en el codigo actual - eran de versiones viejas,
+  se resolvieron solas. No pude marcarlos resueltos en Sentry (el token de
+  `MI-SENTRY.txt` es de solo lectura, 403 al intentar).
+- **`bienvenida.html` al mismo estandar que `index.html`**: 21 iconos emoji->FA
+  (Instagram/Facebook con iconos de marca reales) + titulo/meta/frase principal
+  actualizados de "Hecho en Chile" a la marca pan-latina que Opus ya dejo viva hoy
+  (v8.56, "cicloturismo latinoamericano") - reuse su texto ya aprobado, no invente
+  uno nuevo. Verificado en vivo en `librepedal.cl/bienvenida.html` con captura real.
+  Pendiente de Inty (no lo toque): las 3 menciones de "prueba 7 dias gratis" en esa
+  pagina - no encontre ningun mecanismo real de prueba por tiempo en toda la app.
+
+**Sobre la expansion a Sudamerica de Opus (v8.55/8.56, ya en produccion):** vi el
+`EMPEZAR-AQUI.md` y `EXPANSION-SUDAMERICA-2026-08-14.md`. Queda delegado a esta
+maquina desplegar el Worker `librepedal-ia` con el secret de ElevenLabs (tengo
+`MI-CLOUDFLARE-IA.txt` y `MI-ELEVENLABS.txt`, confirmados que existen). **NO lo hice
+todavia** - se lo pregunte a Inty directo (es un cambio de marca + un secreto nuevo
+en produccion, no solo tecnico) y me pidio parar antes de que tomara una decision.
+Sigue pendiente, sin tocar. Mientras tanto la voz premium fuera de Chile degrada
+seguro a voz nativa (no rompe nada).
+
+Todo commiteado en ramas propias + mergeado a `main` con tests 13/13 en cada paso.
+Candado **LIBRE**.
