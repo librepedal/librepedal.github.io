@@ -1,3 +1,17 @@
+> 📌 **TAREA (2026-08-14, sesión nueva) — para quien tenga el `CLOUDFLARE_API_TOKEN`
+> vigente:** el deploy automático a producción está roto. `gh secret list` en el repo
+> confirma que `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` **no existen** como
+> secrets de GitHub Actions (puede haberse perdido en la rotación del token del
+> 2026-07-29) — el workflow de deploy corre y queda en verde, pero solo porque hace
+> `exit 0` silencioso al no encontrar el token, sin desplegar nada de verdad. v8.51
+> (cámara en persecución del sobrevuelo) quedó commiteada y pusheada pero SIGUE SIN
+> estar en producción (`librepedal.cl/version.txt` verificado con curl, sigue en
+> 8.50). **Acción:** correr `gh secret set CLOUDFLARE_API_TOKEN` y
+> `gh secret set CLOUDFLARE_ACCOUNT_ID` con el token/cuenta vigentes, o mientras
+> tanto deployar manual con `wrangler` desde una máquina con `MI-CLOUDFLARE.txt`
+> válido (snippet en `LEEME.md`). Detalle completo en `BITACORA.md`, entrada
+> "INFRA — 2026-08-14". Esta sesión no tiene el token, no lo puede hacer ella misma.
+
 > 📌 **DIRECTIVA DE ARQUITECTURA (2026-08-13, Inty) — NO EJECUTAR TODAVÍA, solo guardar:**
 > cada función nueva debe vivir en su propio archivo/módulo con una sola responsabilidad
 > (ej. la integración de voz de ElevenLabs en `voz-elevenlabs.js` propio, no metida dentro
