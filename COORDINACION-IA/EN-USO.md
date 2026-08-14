@@ -188,3 +188,11 @@ merge (ver commit c65e8f0), no por el clima.
 TOMAR.** Esta cuenta SI tiene MI-CLOUDFLARE.txt localmente - se lo aviso a Inty en vez
 de tomarla en silencio, porque desplegar a produccion antes de un lanzamiento es su
 decision, no algo para decidir solo.
+
+---
+
+**LIBRE** - sesion Claude Code (cuenta de hoy), 2026-08-14, mas tarde. Agregue opcion
+nueva de animacion de logo (oro cepillado, "pulso de ruta") a ANIMACIONES-LOGO.md +
+logo-transparent-gold.png (asset nuevo, recolor a oro del logo real). NO toque
+index.html - mismo motivo que el clima, no arriesgar nada antes del lanzamiento de
+manana. Detalle completo en BITACORA.md.

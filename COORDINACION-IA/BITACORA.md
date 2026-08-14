@@ -4,6 +4,29 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## COORDINACION — 2026-08-14 — sesión lenovo · nueva opción de animación de logo (oro cepillado) agregada al banco, NO aplicada a index.html
+
+Inty pidió iterar la animación del logo del login (la elegida en producción, "Revelado",
+"no le convence"). Se mostraron 6 conceptos nuevos con `mcp__visualize__show_widget`
+(rueda libre con física real, destello de rayos, entrada rodando, pulso de ruta tipo GPS,
+traza infinita, combinado) — eligió **pulso de ruta**. Iterado en vivo hasta quedar
+aprobado: colores oro cepillado (no naranjo — el naranjo de los rayos no pegaba con el
+pulso), y arreglado un bug real de contraste (el neumático casi-negro se perdía contra
+el fondo casi-negro de la app — corregido con bronce cálido + rim light + veta especular,
+no bajando el brillo).
+
+Agregado como opción **N** en `ANIMACIONES-LOGO.md` (banco de opciones existente, mismo
+lugar que usan las otras sesiones) con el CSS/SVG completo listo para pegar en
+`index.html`. Generado el asset nuevo que necesita: `logo-transparent-gold.png`
+(recolor del logo real a oro, mismo tamaño 1251×1280, script de recoloreo en el
+historial de esta sesión si hace falta repetirlo). **Deliberadamente NO tocado
+`index.html`** — mismo motivo que el clima: lanzamiento mañana, esto es feature nueva.
+
+Pendiente anotado (no ejecutado, por regla de no gastar crédito de Claude en media):
+Inty sugirió pasar la textura del medallón por ComfyUI en el Thunder para un oro
+cepillado renderizado de verdad — queda como posible tarea de hub (Capone→hub→Tundra)
+si se quiere ese paso extra.
+
 ## COORDINACION — 2026-08-14 — sesión lenovo · merge con Thunderobot resuelto + prototipo de clima-fx entregado (NO en index.html)
 
 **Merge:** el local había divergido de `origin/main` (6 archivos en conflicto:

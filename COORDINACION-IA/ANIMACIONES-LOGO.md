@@ -74,3 +74,69 @@ contenedor y un `<span class="glint">`)
 .ring.r2{animation-delay:.95s}
 @keyframes ripple{0%{transform:translate(-50%,-50%) scale(.7);opacity:.75}100%{transform:translate(-50%,-50%) scale(1.45);opacity:0}}
 ```
+
+## N · Pulso de ruta en oro cepillado (2026-08-14, la más reciente — colores y animación
+YA aprobados por Inty en vivo, no aplicada a `index.html` todavía)
+
+Iterada hoy con Inty viendo cada versión (empezó como opción D de un banco de 6, quedó
+sola tras su feedback). Resuelve algo que las opciones de arriba no tenían: **el
+neumático (`#241612`/`#0d0906`, casi negro) se pierde contra el fondo real de la app
+(`#0a0f1d`, también casi negro)** — negro sobre negro, sin contraste. Se corrigió con
+teoría de color real, no bajando el brillo: bronce cálido (contraste de matiz, cálido vs.
+el navy frío del fondo) + un filo de luz fino en el borde exterior (rim light, la misma
+técnica que usa fotografía de producto para separar un objeto oscuro de un fondo oscuro)
++ una veta especular arriba-izquierda simulando luz pegándole al caucho.
+
+**Necesita un asset nuevo:** `COORDINACION-IA/logo-transparent-gold.png` (ya generado,
+mismo tamaño que el original 1251×1280 — el acento naranja del logo real recoloreado a
+oro por script, blanco/contorno intactos) en vez de `logo-transparent.png`. Si se aplica,
+mover ese archivo a la raíz (o donde corresponda) y actualizar el `src` de `.lp-logo-center`.
+
+**Pendiente que Inty mencionó y no se hizo esta sesión (por regla, no se gasta crédito de
+Claude generando media):** pasar la textura del medallón (rueda+neumático) por
+ComfyUI en el Thunder para un oro cepillado renderizado de verdad, más fino que el
+degradado SVG de abajo. Si se quiere, es tarea para el hub (Capone→hub→Tundra), no
+para esta sesión.
+
+```css
+/* reemplaza lpSpin por rueda-libre real: arranca y frena como una rueda de bici */
+.lp-wheel{animation:aCoast 6s cubic-bezier(.22,.9,.36,1) infinite}
+@keyframes aCoast{0%{transform:rotate(0)}10%{transform:rotate(400deg)}35%{transform:rotate(760deg)}60%{transform:rotate(980deg)}85%{transform:rotate(1060deg)}100%{transform:rotate(1080deg)}}
+
+/* pulso de ubicacion: 3 anillos que nacen del centro y se desvanecen, requiere
+   <span class="ring p1"></span><span class="ring p2"></span><span class="ring p3"></span>
+   dentro de .lp-logo-wrap, ademas de la rueda y el logo */
+.ring{position:absolute;top:50%;left:50%;width:100%;height:100%;transform:translate(-50%,-50%);
+  border-radius:50%;border:1.6px solid;border-image:linear-gradient(135deg,#fff2c4,#ffcf40,#b5820f) 1;
+  animation:ringPulse 2.8s ease-out infinite;opacity:0;
+  filter:drop-shadow(0 0 4px rgba(255,207,64,.6))}
+.ring.p2{animation-delay:.93s}
+.ring.p3{animation-delay:1.86s}
+@keyframes ringPulse{0%{transform:translate(-50%,-50%) scale(.7);opacity:.9}100%{transform:translate(-50%,-50%) scale(1.35);opacity:0}}
+```
+
+```svg
+<!-- dentro del <svg class="lp-wheel">, reemplaza los stroke="#241612"/"#0d0906"/"#e08a4a"
+     por estos gradientes (agregar a <defs>, o a un <defs> nuevo si el SVG no tiene uno) -->
+<defs>
+  <radialGradient id="lpGold" cx="38%" cy="30%" r="75%">
+    <stop offset="0%" stop-color="#fffae0"/><stop offset="24%" stop-color="#ffe066"/>
+    <stop offset="50%" stop-color="#f0a800"/><stop offset="78%" stop-color="#a8650a"/>
+    <stop offset="100%" stop-color="#6b3f08"/>
+  </radialGradient>
+  <linearGradient id="lpTire" x1="15%" y1="10%" x2="85%" y2="90%">
+    <stop offset="0%" stop-color="#7a4a18"/><stop offset="35%" stop-color="#4a2c0d"/>
+    <stop offset="70%" stop-color="#2c1908"/><stop offset="100%" stop-color="#1a0f05"/>
+  </linearGradient>
+  <linearGradient id="lpRimLight" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#ffe9b0" stop-opacity=".9"/><stop offset="50%" stop-color="#ffcf6b" stop-opacity=".15"/>
+    <stop offset="100%" stop-color="#ffe9b0" stop-opacity=".55"/>
+  </linearGradient>
+</defs>
+<!-- neumatico: stroke="url(#lpTire)" en vez de #241612 -->
+<!-- filo de luz nuevo, agregar despues del neumatico: -->
+<circle cx="50" cy="50" r="44.6" fill="none" stroke="url(#lpRimLight)" stroke-width="1.1" opacity=".85"/>
+<!-- veta especular nueva, agregar despues del filo de luz: -->
+<path d="M 24 26 A 40 40 0 0 1 62 15.5" fill="none" stroke="#ffdca0" stroke-width="2.2" stroke-linecap="round" opacity=".4"/>
+<!-- aro interior y radios: stroke="url(#lpGold)" en vez de #e08a4a -->
+```
