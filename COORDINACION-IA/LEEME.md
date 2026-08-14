@@ -170,6 +170,15 @@ Sube el número en cada cambio (la app se auto-repara comparando con `version.tx
 3. **No revertir** cambios del otro sin avisar en `BITACORA.md`.
 4. Anota lo que haces en `BITACORA.md` y actualiza `PENDIENTES.md`.
 5. Sube SIEMPRE la versión (evita el bucle de auto-reparación).
+6. **Valida con OTRA sesión antes de dar un cambio grande por listo para producción**
+   — no basta con autoverificarse. Si el cambio es grande, toca algo del 🛡️
+   PROTEGIDO de abajo, o implica un deploy/`firestore.rules`, pide que otra
+   sesión disponible lo revise (leer el diff, probarlo en el navegador si puede)
+   antes de desplegar, y que dé el visto bueno en `BITACORA.md`. Pedido explícito
+   de Inty (2026-08-14): "todas las actualizaciones tienen que ser validadas
+   entre las cuentas para que no se rompa nada". Si no hay otra sesión disponible
+   en el momento, decilo en la entrada de `BITACORA.md` en vez de saltarte el
+   paso en silencio.
 
 ## 🛡️ PROTEGIDO — funciones ya resueltas que NO se deben romper
 Inty reporta que "cosas ya solucionadas" se rompen entre versiones. Antes de commitear, verifica
