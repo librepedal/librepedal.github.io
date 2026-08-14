@@ -5450,20 +5450,82 @@ function toggleCapasPanel(){
   }
 }
 function _estiloDeCapa(t){ return t==='topo'?LP_ESTILO_TOPO:t==='sat'?LP_ESTILO_SAT:LP_ESTILO_CALLES; }
-/* Control flotante: muestra el ícono del estilo AL QUE saltarás al tocarlo (calles→topo→sat→calles). */
-function _actualizarBtnCapaMapa(){ const b=document.getElementById('btnCapaMapa'); if(b){ b.innerHTML=(capaMapaTipo==='calles')?'🏔️':(capaMapaTipo==='topo')?'🛰️':'🗺️'; b.title=(capaMapaTipo==='calles')?'Mapa en calles · toca para topográfico':(capaMapaTipo==='topo')?'Mapa topográfico · toca para satélite':'Mapa satélite · toca para calles'; } }
+/* ===== Temas de mapa "videojuego" (2026-08-14) — 3 en el lanzamiento: Aventura, Neón, Arcade.
+   Recolor de las capas del estilo liberty vía setPaintProperty (patrón PROBADO en
+   lp-work/prototipos-mapa). ADITIVO y todo en try/catch: si algo falla, el mapa base sigue.
+   NO usa body.tema-* (esas clases son del tema de UI Sólido/Cristal — no las piso). Los otros
+   3 (Maqueta 3D, Blueprint, Acuarela) quedan para post-lanzamiento. */
+const LP_CAPAS=['calles','topo','sat','aventura','neon','arcade'];
+const LP_CAPA_NOMBRE={calles:'Calles',topo:'Topográfico',sat:'Satélite',aventura:'Aventura',neon:'Neón',arcade:'Arcade'};
+function _siguienteCapa(t){ var i=LP_CAPAS.indexOf(t); return LP_CAPAS[(i+1)%LP_CAPAS.length]; }
+const LP_DEM_MAPA='https://tiles.mapterhorn.com/tilejson.json';
+const LP_PAL_MAPA={
+  aventura:{bg:'#e7d4a8',bgHondo:'#e0c99a',agua:'#8fb2b0',aguaL:'#5f8a86',bosque:'#9aae74',pasto:'#c2cf92',arena:'#ecd9a6',edif:'#d7bd8c',edifB:'#a9895a',vMayor:'#c79a4f',vMayorC:'#8f6a30',vMenor:'#dcc48c',vMenorC:'#b0925c',sendero:'#8a5a2b',riel:'#a1855c',borde:'#8a7a55',texto:'#4a3620',halo:'#f3e7c6',haloW:1.4},
+  neon:{bg:'#0a0f1d',bgHondo:'#0d1526',agua:'#08213f',aguaL:'#1e9fe0',bosque:'#0f2a1e',pasto:'#122a1c',arena:'#1a2030',edif:'#12203a',edifB:'#1c3a66',vMayor:'#00e5ff',vMayorC:'#063540',vMenor:'#ff7a3c',vMenorC:'#3a1c10',sendero:'#b26bff',riel:'#334455',borde:'#25406a',texto:'#cfe9ff',halo:'#04070f',haloW:1.6,glow:true},
+  arcade:{bg:'#57b85a',bgHondo:'#4fae52',agua:'#22a0e6',aguaL:'#1580c0',bosque:'#3f9e46',pasto:'#63c463',arena:'#e8d38a',edif:'#eaeaea',edifB:'#9aa0a6',vMayor:'#ffffff',vMayorC:'#222222',vMenor:'#f0f0f0',vMenorC:'#555555',sendero:'#8a5a2b',riel:'#888888',borde:'#222222',texto:'#0e2a12',halo:'#ffffff',haloW:2}
+};
+function _reskinMapa(map,P){
+  var set=function(id,p,v){ try{ map.setPaintProperty(id,p,v); }catch(e){} };
+  var layers=(map.getStyle()&&map.getStyle().layers)||[];
+  for(var i=0;i<layers.length;i++){ var L=layers[i]; var sl=L['source-layer']||'', id=(L.id||'').toLowerCase(), t=L.type;
+    if(t==='background'){ set(L.id,'background-color',P.bg); continue; }
+    if(t==='fill'){
+      if(/water/.test(sl)||/water/.test(id)){ set(L.id,'fill-color',P.agua); set(L.id,'fill-opacity',1); continue; }
+      if(/building/.test(sl)){ set(L.id,'fill-color',P.edif); set(L.id,'fill-opacity',.9); set(L.id,'fill-outline-color',P.edifB); continue; }
+      if(/(wood|forest)/.test(id)){ set(L.id,'fill-color',P.bosque); set(L.id,'fill-opacity',.55); continue; }
+      if(/(park|grass|garden|pitch|golf|meadow|scrub|cemetery|recreation)/.test(id)){ set(L.id,'fill-color',P.pasto); set(L.id,'fill-opacity',.5); continue; }
+      if(/(sand|beach|desert)/.test(id)){ set(L.id,'fill-color',P.arena); continue; }
+      if(/landcover/.test(sl)){ set(L.id,'fill-color',P.bosque); set(L.id,'fill-opacity',.32); continue; }
+      set(L.id,'fill-color',P.bgHondo); set(L.id,'fill-opacity',.45); continue;
+    }
+    if(t==='line'){
+      if(/waterway/.test(sl)){ set(L.id,'line-color',P.aguaL); continue; }
+      if(/(boundary|admin)/.test(sl)){ set(L.id,'line-color',P.borde); set(L.id,'line-dasharray',[3,2]); continue; }
+      if(/(rail|transit)/.test(id)){ set(L.id,'line-color',P.riel); continue; }
+      if(/(path|track|footway|cycle|trail|steps|pedestrian)/.test(id)){ set(L.id,'line-color',P.sendero); set(L.id,'line-dasharray',[2,2]); continue; }
+      var mayor=/(motorway|trunk|primary)/.test(id), casing=/casing/.test(id);
+      set(L.id,'line-color', mayor?(casing?P.vMayorC:P.vMayor):(casing?P.vMenorC:P.vMenor));
+      if(P.glow && !casing && mayor){ set(L.id,'line-blur',2); }
+      continue;
+    }
+    if(t==='symbol'){ set(L.id,'text-color',P.texto); set(L.id,'text-halo-color',P.halo); set(L.id,'text-halo-width',P.haloW); continue; }
+  }
+}
+function _hillshadeMapa(map){
+  try{ if(!map.getSource('lp-dem')) map.addSource('lp-dem',{type:'raster-dem',url:LP_DEM_MAPA});
+    if(!map.getLayer('lp-relieve')){ var before, ls=map.getStyle().layers; for(var i=0;i<ls.length;i++){ if(ls[i].type==='symbol'){ before=ls[i].id; break; } }
+      map.addLayer({id:'lp-relieve',type:'hillshade',source:'lp-dem',paint:{'hillshade-exaggeration':0.45,'hillshade-shadow-color':'#7a5230','hillshade-highlight-color':'#f6ead0','hillshade-accent-color':'#8a6a3a'}},before);
+    }
+  }catch(e){}
+}
+var LP_MAPA_POST={
+  aventura:function(m){ _hillshadeMapa(m); try{ m.setTerrain(null); }catch(e){} try{ m.easeTo({pitch:50,bearing:-16,duration:500}); }catch(e){} try{ m.setSky({'sky-color':'#e9c98f','horizon-color':'#e7d0a0','fog-color':'#e7d8b4','fog-ground-blend':0.5,'sky-horizon-blend':0.7}); }catch(e){} },
+  neon:function(m){ try{ m.setTerrain(null); }catch(e){} try{ m.easeTo({pitch:46,bearing:-10,duration:500}); }catch(e){} try{ m.setSky({'sky-color':'#0a0f1d','horizon-color':'#12325a','fog-color':'#0a0f1d','fog-ground-blend':0.6}); }catch(e){} },
+  arcade:function(m){ try{ m.setTerrain(null); }catch(e){} try{ m.easeTo({pitch:36,bearing:0,duration:500}); }catch(e){} }
+};
+/* Se llama en cada style.load de mp (inicial y tras cada cambio de capa). */
+function _aplicarTemaMapa(){
+  if(!mp) return;
+  try{
+    var t=capaMapaTipo, P=LP_PAL_MAPA[t];
+    if(P){ _reskinMapa(mp,P); (LP_MAPA_POST[t]||function(){})(mp); }
+    else { try{ mp.setTerrain(null); }catch(e){} try{ if(mp.getPitch()>3) mp.easeTo({pitch:0,bearing:0,duration:400}); }catch(e){} }
+  }catch(e){}
+}
+/* Control flotante: cicla calles→topo→sat→aventura→neón→arcade. */
+function _actualizarBtnCapaMapa(){ const b=document.getElementById('btnCapaMapa'); if(b){ b.innerHTML='<i class="fas fa-layer-group"></i>'; b.title='Mapa: '+(LP_CAPA_NOMBRE[capaMapaTipo]||capaMapaTipo)+' · toca para '+(LP_CAPA_NOMBRE[_siguienteCapa(capaMapaTipo)]||''); } }
 function toggleCapaMapa(){
   if(!mp) return;
-  capaMapaTipo=(capaMapaTipo==='calles')?'topo':(capaMapaTipo==='topo')?'sat':'calles';
+  capaMapaTipo=_siguienteCapa(capaMapaTipo);
   try{ localStorage.setItem('lp_capa_mapa',capaMapaTipo); }catch(e){}
-  mp.setStyle(_estiloDeCapa(capaMapaTipo));
-  // setStyle() borra TODO lo agregado con addSource/addLayer (nuestras polilíneas
-  // mlPolyline) — hay que volver a agregar la ruta en curso.
+  // {diff:false} = recarga completa del estilo. Necesario porque calles/aventura/neón/arcade
+  // comparten el MISMO URL (liberty): sin esto, MapLibre no dispara style.load y el recolor no corre.
+  mp.setStyle(_estiloDeCapa(capaMapaTipo), {diff:false});
   mp.once('idle',function(){
     if(crl && crl._coords && crl._coords.length>1){ crl._map=null; crl.addTo(mp); }
   });
   _actualizarBtnCapaMapa();
-  h(capaMapaTipo==='topo' ? "Mapa topográfico: se ven senderos y caminos rurales." : capaMapaTipo==='sat' ? "Vista satélite: el terreno real desde el cielo." : "Volví al mapa de calles.");
+  try{ h('Mapa '+(LP_CAPA_NOMBRE[capaMapaTipo]||capaMapaTipo)+'.'); }catch(e){}
 }
 function _mapaFalloVisible(msg){
   const c=document.getElementById('map'); if(!c) return;
@@ -5495,6 +5557,7 @@ async function im(){
     mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222"><i class="fas fa-location-dot"></i> Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer"><i class="fas fa-compass"></i> Navegar aquí</button>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
     mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); });
+    mp.on('style.load', _aplicarTemaMapa); // aplica el tema de mapa (aventura/neón/arcade) en cada carga de estilo, y resetea (plano) en calles/topo/sat
   }catch(err){
     mp=null;
     _mapaFalloVisible('No se pudo iniciar el mapa: '+(err&&err.message?err.message:'error desconocido'));
