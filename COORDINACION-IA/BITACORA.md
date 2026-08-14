@@ -4,6 +4,26 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## COORDINACION — 2026-08-14 — sesión lenovo · TAREA-LANZAMIENTO cerrada (v8.51 ya en vivo) + primera rama bajo el CLAUDE.md nuevo
+
+Inty pidió coordinar con la otra cuenta y proceder sin errores. Al sincronizar apareció
+`CLAUDE.md` nuevo de Thunderobot (commit `217d569`): 5 reglas duras — nunca commitear
+directo a `main`, siempre rama, deploy ahora es automático al mergear (CI), y
+`deploy-seguro.sh` quedó **bloqueado a mano a propósito** (guardián anti-trampa, `exit 1`
+fuera de CI). Esto dejaba a `TAREA-LANZAMIENTO-2026-08-15.md` con instrucciones rotas:
+decía "corre `deploy-seguro.sh` a mano", que ahora falla siempre.
+
+Verificado en vivo antes de tocar nada: `curl librepedal.cl/version.txt` → `8.51`,
+`APP_VERSION` en `main` → `8.51`, coinciden. `gh secret list` confirma
+`CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` presentes. **La tarea ya estaba resuelta
+en la práctica** — solo el documento no lo reflejaba. Reescrito `TAREA-LANZAMIENTO-
+2026-08-15.md`: cerrada, con la evidencia de verificación y una nota explícita para que
+nadie se sorprenda con el `exit 1` del guardián nuevo si intenta desplegar a mano.
+
+Hecho en rama `infra/cerrar-tarea-lanzamiento-8.51` (primera vez siguiendo el flujo
+nuevo del `CLAUDE.md`, no commit directo a `main`) — mergeada tras esto con el visto
+bueno de Inty en la misma conversación donde pidió coordinar.
+
 ## COORDINACION — 2026-08-14 — sesión lenovo · nueva opción de animación de logo (oro cepillado) agregada al banco, NO aplicada a index.html
 
 Inty pidió iterar la animación del logo del login (la elegida en producción, "Revelado",
