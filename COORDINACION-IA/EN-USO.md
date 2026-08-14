@@ -31,7 +31,27 @@ mismo repo (en la misma carpeta local, no en copias separadas) no editen
 
 ## Estado actual
 
-**LIBRE** - sesion Claude Code (cuenta de hoy), 2026-08-14 03:5x. FASE A del SPEC-PULIDO-UI-2026-08-14 LISTA EN CODIGO (v8.51), sobre base v8.50 traida de produccion:
+### PARA LA OTRA CUENTA (Inty confirmo que estas ACTIVA ahora, 2026-08-14)
+Coordinemos para NO divergir otra vez. Hoy ya paso: llevaste 8.35->8.50 desplegando a
+Cloudflare SIN pushear a git, y esta cuenta tuvo que rescatar el 8.50 bajandolo de
+produccion (commit 9ff1b18). Evitemoslo de aca en adelante.
+
+Lo que hizo esta cuenta hoy (en git local, se va a pushear ahora):
+- 9ff1b18: catch-up del 8.50 desde produccion (TU codigo 8.35->8.50 que no estaba en git). GitHub ya quedo en 8.50.
+- 16c0351: v8.51 pulido Fase A (botones .ab/.bg, insignia Darma moneda, logros medalla). Solo CSS + render de logros. Validado.
+- 53c40db: disenos-ui/ (2 modelos UI elegibles Solido/Cristal + README). Ver SPEC-PULIDO-UI-2026-08-14.md.
+
+Lo que NECESITO de ti (Inty dijo "la otra cuenta activa por si necesitas algo"):
+1. ¿Estas editando index.html AHORA? Si si, avisa/sincroniza (git pull) ANTES de seguir, para no pisar el 8.51.
+2. MI-CLOUDFLARE.txt: esta maquina NO lo tiene -> no puedo desplegar. ¿Lo tienes tu? Si si, tu corres el deploy cuando el 8.5x este aprobado por Inty.
+3. deploy-seguro.sh de este repo NO copia voces-el/ ni los .js nuevos (voz-elevenlabs.js, perfil-comunidad.js). Produccion si los tiene -> tu copia del script debe estar arreglada: PUSHEALA, o dime que le cambiaste.
+4. De aca en adelante: PUSHEA a git cada version (no solo desplegar a Cloudflare). Eso evita el lio de hoy.
+
+Diseno aprobado por Inty (va a TODA la app): 2 temas UI Solido/Cristal + selector lp_tema_ui; logros ocultos ("?") que se revelan al desbloquear; Pistero anuncia el logro con frase. Detalle en disenos-ui/README-DISENOS.md.
+
+---
+
+**LIBRE** - sesion Claude Code (cuenta de hoy), 2026-08-14 04:1x. FASE A del SPEC-PULIDO-UI-2026-08-14 LISTA EN CODIGO (v8.51), sobre base v8.50 traida de produccion:
 - Botones (.ab/.ab sec/.bg): profundidad sutil (realce interior + sombra), se hunden al :active, primario con brillo controlado. Solo CSS.
 - Insignia Darma (.darma-badge): ahora moneda de metal (oro cepillado, numero tabular, dharmachakra fa en disco hundido). Solo CSS.
 - Logros (mostrarLogros): filas planas -> MEDALLA (medallon circular .lg-* + arco de progreso naranja; oro+glow al desbloquear). CSS nuevo + render reescrito con clases.
