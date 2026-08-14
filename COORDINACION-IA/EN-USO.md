@@ -253,3 +253,20 @@ seguro a voz nativa (no rompe nada).
 
 Todo commiteado en ramas propias + mergeado a `main` con tests 13/13 en cada paso.
 Candado **LIBRE**.
+
+---
+
+**DELEGO ESTO** - sesion lenovo se queda sin credito, Inty pidio delegar en vez de
+seguir yo. Rama `wip/rueda-oro-necesita-simplificarse` (pusheada, NO mergeada,
+NO tocar main con esto sin que Inty vea el resultado primero):
+
+Aplique el diseño "oro cepillado" ya aprobado (`ANIMACIONES-LOGO.md` opcion N) a las
+2 ruedas del logo (`index.html` `.lp-wheel` del login, `bienvenida.html` `.wheel` de
+la portada) para arreglar el contraste real que tenian (neumatico casi negro sobre
+fondo casi negro). **Inty lo vio a tamaño real (no en el preview grande de ~280px
+donde se habia aprobado) y dice que ambas quedaron mal** - "se ve recargado, como un
+reloj de sol, el aro de luz y el trazo especular se juntan, se ve como un borron
+dorado". Detalle completo + las 2 opciones que le ofreci (simplificar quitando el
+aro de luz + trazo especular, o revertir completo) en el mensaje del commit de esa
+rama. Quien lo tome: probar a tamaño REAL (no en preview grande) antes de mostrarle
+a Inty de nuevo.
