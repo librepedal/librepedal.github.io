@@ -2565,7 +2565,10 @@ function _reproducirVoz(item){
     }
     if(navigator.onLine){ // frase nueva (nombres, calles, números): esa sí se genera en vivo
       vozTimerFin=setTimeout(_vozSiguiente, 12000);
-      _vozAzureRuntime(item, durEst, miGen);
+      // Voz por país: chilenos -> Azure es-CL (la marca de siempre); resto de Latinoamérica
+      // -> voz neutra premium (ElevenLabs) para que Pistero no suene chileno fuera de Chile.
+      const _cl = !paisUsuario || (''+paisUsuario).toLowerCase().slice(0,2)==='cl';
+      if(_cl){ _vozAzureRuntime(item, durEst, miGen); } else { _vozElevenRuntime(item, durEst, miGen); }
       return;
     }
   }
@@ -2635,6 +2638,23 @@ function _vozAzureRuntime(item, durEst, miGen){
   try{
     const pros=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
     const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&rate='+encodeURIComponent(pros.rate)+'&pitch='+encodeURIComponent(pros.pitch));
+    _vozNeuralAudio=a;
+    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
+    a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
+    a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
+    const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
+  }catch(e){ fallback(); }
+}
+function _vozElevenRuntime(item, durEst, miGen){
+  // Voz neutra latina EN VIVO (ElevenLabs) para usuarios fuera de Chile. Va por el worker
+  // de la expansion (/eltts, la llave está segura en el servidor). Cachea en Cloudflare, así
+  // frases repetidas no vuelven a pegarle a ElevenLabs (ahorra caracteres). Si falla, cae a
+  // la voz chilena Azure (mejor eso que la nativa "gringa").
+  let cayo=false;
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  try{
+    const a=new Audio(IA_URL_NEUTRA+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
@@ -3235,6 +3255,9 @@ let ultimoMovimientoTime=0, rutaSegCerrada=true, rutaSegDistIni=0;
 // Anécdotas FIDEDIGNAS: datos REALES del lugar sacados de Wikipedia (geolocalizados).
 // Nada inventado; si no hay dato real cercano, Pistero se queda callado.
 const IA_URL='https://librepedal-ia.librepedal.workers.dev';
+// Voz neutra latina (ElevenLabs) para usuarios fuera de Chile — vive en el worker de la
+// expansion Sudamerica (con su propia llave). Chile sigue por IA_URL (Azure es-CL).
+const IA_URL_NEUTRA='https://librepedal-ia-sudamerica.inty405.workers.dev';
 // ===== Chat con Pistero IA: le manda tu perfil + los hospedajes de la comunidad y
 // responde de rutas, mecánica, gastos de viaje y todo lo de la app (por texto y voz). =====
 let pisteroHistorial=[];
