@@ -24,7 +24,20 @@ Evaluado por Opus; aquí el estado real y las tareas.
   intacta; descriptor pan-latino vivo; i18n+voz+jerga por país en producción. **FALTA SOLO:
   desplegar el Worker `worker-ia`** (`cd worker-ia && npx wrangler deploy` + API key ElevenLabs
   como secreto del Worker) para que la voz premium por país (no-Chile→ElevenLabs) funcione;
-  mientras tanto degrada seguro a voz nativa. Historia previa:
+  mientras tanto degrada seguro a voz nativa.
+  **⚠️ DELEGADO A LENOVO/THUNDEROBOT (tiene las credenciales):** el worker `librepedal-ia` vive
+  en la cuenta CF **024bc = `Intyrivera@gmail.com`** (inty405 NO tiene acceso; máquina Windows
+  NO tiene el token). Se despliega SOLO desde la máquina con **`MI-CLOUDFLARE-IA.txt`** (token
+  que sí despliega Workers; el de Pages no). Pasos en esa máquina:
+  ```bash
+  cd worker-ia
+  CLOUDFLARE_API_TOKEN=$(cat ../MI-CLOUDFLARE-IA.txt) npx wrangler deploy
+  echo "<API_KEY_ELEVENLABS_de_peru>" | CLOUDFLARE_API_TOKEN=$(cat ../MI-CLOUDFLARE-IA.txt) npx wrangler secret put ELEVENLABS_API_KEY
+  ```
+  Voces/modelo ya tienen default en el código → solo falta ese secreto. Verificar:
+  `curl -s "https://librepedal-ia.librepedal.workers.dev/?eltts=hola" -o /dev/null -w "%{http_code}\n"`.
+  OJO: `worker-ia/wrangler.toml` ya está corregido a `name = "librepedal-ia"` (Opus revirtió el
+  rename a "-sudamerica" que habría creado un worker fantasma). Historia previa:
   Opus ya mergeó `feature/i18n-sudamerica` sobre main v8.55, resolvió el conflicto de voz
   (sin `navigator.onLine` + ruteo por país `_cl ? Azure : Eleven`), verificado: **0 conflictos,
   tests 13/13, banco 930 mp3 intacto, branding pan-latino ("cicloturismo latinoamericano"),
