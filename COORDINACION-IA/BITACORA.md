@@ -4,6 +4,52 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v8.51 — 2026-08-14 — Claude (sesión nueva, no Lenovo/Thunderobot/Sudamerica) · Cámara en persecución en `reproducirSobrevuelo` + regla #6 de validación cruzada
+
+**Contexto primero, porque es relevante:** esta sesión pasó buena parte del día trabajando sobre
+`C:\Users\intyr\lp-work`, una copia LOCAL VIEJA y desconectada de este repo (sin `.git`, quedó en
+v7.44). Recién ahora se descubrió que el repo real vive acá y ya tiene este `COORDINACION-IA/`.
+Ese trabajo viejo NO se desplegó (se detectó y canceló a tiempo, ver
+`github.com/intyriveraa-lab/coordinacion-ia` si hace falta el detalle). La regla #6 nueva en
+`LEEME.md` es justamente la respuesta a cómo se armó este lío — pedido explícito de Inty.
+
+**Cambio real de hoy, ya aplicado sobre ESTE repo (no la copia vieja):**
+`reproducirSobrevuelo` (~10405) — Inty pidió explícitamente "sobrevuelo en primera persona o
+seguimiento de la ruta" porque la cámara se quedaba fija con `fitBounds` mirando toda la ruta
+mientras el marcador cruzaba el mapa (no se sentía como "seguirlo"). Cambios:
+- Cámara ahora persigue al marcador cada cuadro (`mp.jumpTo` con `zoom:16.1, pitch:55`, rumbo
+  suavizado con `_lerpAng`/`_bearingEntrePuntos`, mismo criterio que ya usa `iniciarVueloRuta`/
+  `videoBearing` para el video ~4903-4929). Al terminar, vuelve a `fitBounds` de toda la ruta
+  (igual que antes).
+- Duración `coords.length*160` en vez de `*80` (rango 20-45s en vez de 7-20s) — a `*80` se sentía
+  apurado en persecución cerrada, feedback directo de Inty sobre un prototipo aislado donde se
+  probó esto primero (`lp-work/prototipos-mapa/sobrevuelo-pistero.html`, con los 6 temas de mapa).
+- `detenerSobrevuelo()` ahora restaura pitch/bearing a como estaba el mapa ANTES (`_sbvCamPrev`),
+  no a un 0/0 fijo — si Inty había inclinado/rotado el mapa a mano (`pitchWithRotate:true`), no se
+  lo pisa. Restauración corre desde el único punto de salida real, cubre cortes tempranos y errores.
+- `frame()` (corre por `requestAnimationFrame`, fuera del try/catch de la función) ahora tiene su
+  propio try/catch — antes un error ahí habría dejado la cámara ladeada y la animación congelada
+  sin aviso.
+- **NO se tocó** el ícono/cara de Pistero (`_pistoNuevo('feliz')`) — ya estaba mejor resuelto acá
+  que en lo que esta sesión había armado sobre la copia vieja; se descartó esa parte.
+
+**Verificado:** sintaxis (`node` sobre los bloques `<script>`, 0 errores — no encontré el
+`validate.js` que sí existe en la copia vieja, se usó el equivalente con `new Function()`). La
+MISMA lógica de cámara/duración/restauración de pitch se probó extensamente en el navegador real
+(Browser pane) sobre el prototipo aislado antes mencionado, con los 6 temas de mapa, play/detener
+repetido varias veces, sin errores de consola.
+
+**NO verificado (siendo honesto, no fingiendo que sí):** no se probó `reproducirSobrevuelo` en
+ESTE index.html real dentro de la app completa (necesita login real + una ruta grabada real; esta
+sesión no tiene esas credenciales/datos a mano). Tampoco se aplicó nada a `iniciarVueloRuta`/video
+(esa función ya tenía cámara en persecución desde antes, no se tocó).
+
+**Regla #6 (recién agregada, ver LEEME.md):** no hubo otra sesión disponible en el momento para
+validar esto antes de pushear — quedando anotado acá como pide la regla, en vez de saltarse el
+paso en silencio. Si alguien prueba esto en la app real (terminar una ruta o historial → 🚁) y
+encuentra algo raro, revertir es seguro: el cambio es autocontenido a `reproducirSobrevuelo`/
+`detenerSobrevuelo`, no toca otra función.
+
 ## INFRA — 2026-07-29 — Claude (sesión Windows/inty405) · CI de deploy en GitHub Actions + rotación del token Cloudflare
 
 No es cambio de app (sin bump de versión). Cambio de **infraestructura de despliegue** — leer si vas a publicar:
