@@ -313,6 +313,17 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .lg-check{width:18px;height:18px;border-radius:50%;background:var(--g);color:#5a3c00;display:grid;place-items:center;font-size:0.55rem;flex:0 0 auto}
 .lg-desc{font-size:0.7rem;color:#8695aa;margin-top:1px}
 .lg-meta{font-size:0.63rem;color:#7d8ba0;margin-top:5px;font-variant-numeric:tabular-nums}
+/* Logro OCULTO (misterio + pista) */
+.lg-mystery .lg-ic.lg-q{font-size:1.5rem;font-weight:800;color:#5a6478;line-height:1}
+.lg-mystery .lg-title{color:#7d8ba0}
+.lg-mystery .lg-desc{color:#66768f;font-style:italic}
+/* Toast de logro desbloqueado (Pistero anuncia) */
+.logro-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);z-index:9999;display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,rgba(255,215,0,0.16),rgba(16,22,36,0.97));border:1px solid rgba(255,215,0,0.5);border-radius:15px;padding:11px 15px;box-shadow:0 12px 32px -8px rgba(0,0,0,0.65);opacity:0;transition:opacity .35s ease,transform .35s cubic-bezier(.34,1.4,.6,1);max-width:88vw;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.logro-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.logro-toast__ic{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;font-size:1.2rem;color:#5a3c00;background:radial-gradient(circle at 36% 30%,#fff3c4,var(--g) 62%,#e88b00);box-shadow:0 4px 12px -3px rgba(255,215,0,0.6),inset 0 2px 4px rgba(255,255,255,0.6)}
+.logro-toast__b{display:flex;flex-direction:column;line-height:1.2}
+.logro-toast__b b{color:var(--g);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em}
+.logro-toast__b span{color:#eaf0ff;font-weight:700;font-size:0.9rem}
 /* Tarjeta hero de Inicio + la firma visual ciclista (perfil de ruta al fondo) */
 .hero-viaje{position:relative;overflow:hidden;background:#0f1728;border:0.5px solid rgba(255,255,255,0.07);border-radius:18px;padding:16px;margin-bottom:14px}
 .hero-ruta{position:absolute;top:10px;left:0;width:100%;height:46px;opacity:0.42;pointer-events:none}
@@ -5276,7 +5287,7 @@ function _ganarDarma(n){ var mult=_esFundador?2:1; us.d+=Math.round((n||0)*mult)
 function _kmBiciConfianza(){ var m=(us&&us.dm)||{}; var bike=(Number(m.ciclismo)||0)+(Number(m.cicloviaje)||0)+(Number(m.mtb)||0); if(bike<=0){ var modo=(typeof actividadTipo!=="undefined"&&actividadTipo)?actividadTipo:"ciclismo"; if(modo==="ciclismo"||modo==="cicloviaje"||modo==="mtb") return (us&&us.di)||0; } return bike; }
 var LP_KM_CONFIANZA=10; // km de bici reales para acciones sensibles (anti cuentas falsas)
 function _esCiclistaConfiable(){ return _kmBiciConfianza()>=LP_KM_CONFIANZA; }
-function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di)); const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); gd();
+function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di)); const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); try{ if(_logrosListo&&typeof _chequearLogros==='function') _chequearLogros(false); }catch(e){} gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
   // sueltos de Darma o al apagar el GPS libre — quien solo navegaba a un destino
@@ -6232,9 +6243,86 @@ function mostrarLogros(){
   _modalVolverA='mostrarLogrosComunidad';
   let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
-  items.forEach(function(it){ const l=it.l; const off=(125.66*(1-it.pct/100)).toFixed(1); html+='<div class="lg-item'+(it.done?' lg-done':'')+'"><span class="lg-medal">'+(it.done?'<span class="lg-glow"></span>':'<svg class="lg-prog" viewBox="0 0 46 46"><circle class="lg-prog-bg" cx="23" cy="23" r="20"></circle><circle class="lg-prog-fg" cx="23" cy="23" r="20" style="stroke-dashoffset:'+off+'"></circle></svg>')+'<span class="lg-ic">'+l.e+'</span></span><div class="lg-body"><div class="lg-title">'+escapeHTML(l.t)+(it.done?'<span class="lg-check"><i class="fas fa-check"></i></span>':'')+'</div><div class="lg-desc">'+escapeHTML(l.d)+'</div>'+(it.done?'':'<div class="lg-meta">'+(l.u==='km'?it.v.toFixed(1):Math.round(it.v))+' / '+l.meta+(l.u?' '+l.u:'')+'</div>')+'</div></div>'; });
+  items.forEach(function(it){ const l=it.l;
+    if(it.done){
+      html+='<div class="lg-item lg-done"><span class="lg-medal"><span class="lg-glow"></span><span class="lg-ic">'+l.e+'</span></span><div class="lg-body"><div class="lg-title">'+escapeHTML(l.t)+'<span class="lg-check"><i class="fas fa-check"></i></span></div><div class="lg-desc">'+escapeHTML(l.d)+'</div></div></div>';
+    } else {
+      const off=(125.66*(1-it.pct/100)).toFixed(1);
+      html+='<div class="lg-item lg-mystery"><span class="lg-medal"><svg class="lg-prog" viewBox="0 0 46 46"><circle class="lg-prog-bg" cx="23" cy="23" r="20"></circle><circle class="lg-prog-fg" cx="23" cy="23" r="20" style="stroke-dashoffset:'+off+'"></circle></svg><span class="lg-ic lg-q">?</span></span><div class="lg-body"><div class="lg-title">Logro por descubrir</div><div class="lg-desc">'+_pistaLogro(l)+'</div></div></div>';
+    }
+  });
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-trophy"></i> Logros'; document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
 }
+/* ===== Logros OCULTOS + anuncio de Pistero (2026-08-14) =====
+   Aditivo: si algo falla, cae en silencio (try/catch) y no afecta al resto de la app. */
+function _pistaLogro(l){
+  try{
+    if(l.u==='km') return 'Pista: algo de kilómetros…';
+    if(l.u==='cal') return 'Pista: algo de energía…';
+    if(/Darma/i.test(l.d)) return 'Pista: aporte a la comunidad…';
+    if(/viaje/i.test(l.d)) return 'Pista: viajes completados…';
+    if(/bit[aá]cora/i.test(l.d)) return 'Pista: tu Ciclo Bitácora…';
+  }catch(e){}
+  return 'Pista: un primer paso…';
+}
+var LOGROS_FRASES={
+  'Bienvenido':'¡Bienvenido a la comunidad, compadre! Esto recién empieza.',
+  'Primer pedaleo':'¡Tu primer kilómetro! Así se parte, de a poco y con ganas.',
+  '¡Mira mamá, sin rueditas!':'¡Diez kilómetros! Mírate, hecho todo un ciclista.',
+  'Explorador':'¡Cincuenta kilómetros! Ya andas explorando en serio.',
+  'Centenario':'¡Cien kilómetros, mi estimado! Eso ya es harta pedaleada.',
+  'Fondista':'¡Doscientos cincuenta! Piernas de fondista, compadre.',
+  'Rutero':'¡Quinientos kilómetros! Rutero de verdad. La constancia le gana al talento.',
+  'Cicloviajero':'¡Mil kilómetros! Elegible a premios y con toda la ruta ganada.',
+  'Trotamundos':'¡Dos mil quinientos! Trotamundos, ni las distancias te frenan.',
+  'Leyenda del pedal':'¡Cinco mil kilómetros! Eso no se compra, eso se pedalea. Leyenda.',
+  'Primer aporte':'¡Tu primer aporte a la comunidad! Gracias, así se construye.',
+  'Colaborador':'¡Cincuenta de Darma! Colaborador de tomo y lomo.',
+  'Pilar de la comunidad':'¡Pilar de la comunidad! Esto no sería igual sin ti.',
+  'Guardián':'¡Quinientos de Darma! Guardián de esta comunidad, compadre.',
+  'Embajador':'¡Mil de Darma! Embajador oficial de Libre Pedal.',
+  'Primer viaje':'¡Primer viaje completado! Y el primero de muchos.',
+  'Viajero':'¡Cinco viajes! Ya le tomaste el gusto a esto.',
+  'Aventurero':'¡Diez viajes! Aventurero de tomo y lomo.',
+  'Nómada':'¡Veinticinco viajes! Nómada, la casa es la ruta.',
+  'Con energía':'¡Mil calorías quemadas! Pura energía, compadre.',
+  'Máquina':'¡Cinco mil calorías! Andas hecho una máquina.',
+  'Imparable':'¡Quince mil calorías! Imparable, no hay quién te pare.',
+  'Cronista':'¡Escribiste en tu bitácora! Cronista de tus propias rutas.',
+  'Memorias':'¡Siete días de bitácora! Puras memorias sobre ruedas.'
+};
+function _fraseLogro(l){ return (l&&LOGROS_FRASES[l.t]) || ('¡Desbloqueaste '+(l?l.t:'un logro')+'! Sigue así, compadre.'); }
+function _toastLogro(l){
+  try{
+    var el=document.createElement('div'); el.className='logro-toast';
+    el.innerHTML='<span class="logro-toast__ic">'+l.e+'</span><div class="logro-toast__b"><b>¡Logro desbloqueado!</b><span>'+escapeHTML(l.t)+'</span></div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('on'); });
+    setTimeout(function(){ el.classList.remove('on'); setTimeout(function(){ try{ el.remove(); }catch(e){} }, 450); }, 4600);
+  }catch(e){}
+}
+function _anunciarLogro(l){
+  try{ _toastLogro(l); }catch(e){}
+  try{ if(typeof h==='function') h(_fraseLogro(l)); }catch(e){}
+}
+var _logrosListo=false;
+function _logrosDesbKey(){ return 'lp_logros_desb_'+(cu||'anon'); }
+function _chequearLogros(silencioso){
+  try{
+    if(!cu || typeof LOGROS==='undefined') return;
+    var prev; try{ prev=JSON.parse(localStorage.getItem(_logrosDesbKey())||'[]'); }catch(e){ prev=[]; }
+    if(!Array.isArray(prev)) prev=[];
+    var set={}; prev.forEach(function(i){ set[i]=1; });
+    var nuevos=[];
+    LOGROS.forEach(function(l,idx){
+      var v=0; try{ v=l.val()||0; }catch(e){ v=0; }
+      if(v>=l.meta && !set[idx]){ set[idx]=1; nuevos.push(l); }
+    });
+    try{ localStorage.setItem(_logrosDesbKey(), JSON.stringify(Object.keys(set).map(Number))); }catch(e){}
+    if(!silencioso && nuevos.length){ _anunciarLogro(nuevos[0]); } // uno a la vez, sin atochar la voz
+  }catch(e){}
+}
+function _iniciarLogros(){ try{ _chequearLogros(true); _logrosListo=true; }catch(e){} }
 /* Sube tus kilómetros y tu Darma a la nube.
    OJO con el catch: antes se tragaba el error en silencio, así que si la escritura fallaba
    (permisos, sesión a medio levantar, sin red) NADIE se enteraba — ni el usuario ni
@@ -6292,6 +6380,7 @@ function sincronizarAlEntrar(){
         }
       }
       sincronizarStats(); // recién ahora se sube, con el número correcto
+      try{ _iniciarLogros(); }catch(e){} // baseline de logros: registra lo ya ganado SIN anunciar; habilita anuncios reales
     }catch(e){
       try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarAlEntrar'}}); }catch(_){}
     }
