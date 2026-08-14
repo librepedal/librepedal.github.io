@@ -176,10 +176,15 @@ NOTA: el grep de conteo inicial sub-cuenta reglas multi-línea; revisar el CSS r
 ## 7. Estado de avance (actualizar al retomar)
 - [x] Rama `feature/temas-app-wide` creada.
 - [x] SPEC escrito (este archivo).
-- [ ] Scaffold: tokens `:root` + `body.tema-cristal` + `_aplicarTemaUI`/`elegirTemaUI`
-      + carga desde Firestore + anti-FOUC.
-- [ ] Selector en Preferencias + `renderTemaUIGrid`.
-- [ ] Lote 1 de superficies (nav, tarjetas, botones, Darma).
+- [x] Scaffold: tokens `:root` + `body.tema-cristal` + `_aplicarTemaUI`/`elegirTemaUI`
+      + anti-FOUC. (commit del scaffold)
+- [x] Selector en Preferencias ("Estilo de interfaz") + `renderTemaUIGrid` + mini-preview
+      `.tema-prev` + carga de `_prevData.temaUi` desde Firestore. Tests 12/12 verdes.
+- [ ] **Lote 1 de superficies (nav, tarjetas, botones, Darma)** ← SIGUIENTE. OJO: hoy
+      Cristal NO tiene efecto visible porque ningún componente consume `--surf*` todavía.
+      Preview del look aprobable: `preview-temas.html` (superficies leyendo `--surf*`).
+      Estrategia probada en ese preview: que cada superficie use
+      `background:var(--surf);border-color:var(--surf-br);backdrop-filter:blur(var(--surf-blur));box-shadow:var(--surf-sh)`.
 - [ ] Lote 2 (modales, chips, esfera).
 - [ ] Lote 3 (mapa, formularios, Pistero, logros).
 - [ ] Versión v8.52 + validate + prueba navegador + prueba teléfono.
