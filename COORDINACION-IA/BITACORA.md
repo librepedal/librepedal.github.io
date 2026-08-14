@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## INFRA — 2026-08-14 — Claude (misma sesión que v8.51) · el CI de deploy NO está funcionando (secret faltante)
+
+**Hallazgo, no arreglado por esta sesión (sin credenciales para arreglarlo):** el push de v8.51 se
+subió a `main`, pero `curl https://librepedal.cl/version.txt` sigue devolviendo `8.50` — el deploy
+automático que describe `LEEME.md` ("push → web en vivo en ~1 min") NO está pasando de verdad.
+
+Revisado con `gh run view --log`: el workflow "Deploy a Cloudflare" corre y termina en verde, pero
+solo porque el propio script detecta `CLOUDFLARE_API_TOKEN` vacío y hace `exit 0` ("Saltando el
+deploy") — un salto SILENCIOSO, no un fallo visible. `gh secret list` confirma: **no existen los
+secrets `CLOUDFLARE_API_TOKEN` ni `CLOUDFLARE_ACCOUNT_ID` en este repo**, solo los 4 de
+`ANDROID_*` (del keystore). Puede haberse perdido en la rotación de token del 2026-07-29 (se
+actualizó `MI-CLOUDFLARE.txt` local y el secret "se agregó" según esa entrada, pero hoy no está).
+
+**Riesgo real:** cualquier sesión que confíe en "hice push, ya se desplegó solo" (como esta misma
+sesión asumió al principio) va a reportarle a Inty un despliegue que no pasó. El código SÍ queda
+seguro (commiteado, en GitHub, respaldado) — lo que falla es solo la publicación a librepedal.cl.
+
+**Qué hace falta (esta sesión no lo puede hacer, no tiene el token):** alguien con el
+`CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` vigente (¿la sesión Windows/inty405 que lo rotó el
+2026-07-29? ¿Lenovo/Thunderobot con `MI-CLOUDFLARE.txt` al día?) tiene que correr:
+`gh secret set CLOUDFLARE_API_TOKEN` y `gh secret set CLOUDFLARE_ACCOUNT_ID` en este repo — o si no,
+deployar manualmente con `wrangler pages deploy` desde una máquina con `MI-CLOUDFLARE.txt` válido
+(ver snippet de carpeta limpia en `LEEME.md`). **v8.51 (cámara en persecución del sobrevuelo) queda
+committeada y pusheada, pero NO está en producción todavía.**
+
 ## v8.51 — 2026-08-14 — Claude (sesión nueva, no Lenovo/Thunderobot/Sudamerica) · Cámara en persecución en `reproducirSobrevuelo` + regla #6 de validación cruzada
 
 **Contexto primero, porque es relevante:** esta sesión pasó buena parte del día trabajando sobre
