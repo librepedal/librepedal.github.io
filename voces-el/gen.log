@@ -1778,3 +1778,373 @@
 [2026-08-14T01:50:35.523Z] AUTH ERROR (llave sin permiso o vencida): {"detail":{"type":"invalid_request","code":"quota_exceeded","message":"This request exceeds your quota of 40000. You have 0 credits remaining, while 34 credits are required for this request.","status":"quota_exceeded","request_id":"1360073e700e061b2b57fe6d3187d536"}}
 [2026-08-14T01:50:35.525Z] FAIL ccac1634690 [otaku] Ritmo suave, como los episodios slice of life. Tam
 [2026-08-14T01:50:35.894Z] LISTO. ok=560 fallo=218 saltado=0 frases=389 -> voces-el/manifest.json
+[2026-08-14T03:38:18.342Z] Frases a generar: 464 x 2 generos = 928 archivos
+[2026-08-14T03:38:20.898Z] OK   l294d4e5514 [cercano] El único kilómetro real es el que estás pisando ah
+[2026-08-14T03:38:23.346Z] OK   lb1af6761b8 [cercano] La ruta no es cuántos kilómetros dejas atrás, sino
+[2026-08-14T03:38:25.296Z] OK   l1009225854 [cercano] Pedalear aquí es elegir ver el mundo con tus propi
+[2026-08-14T03:38:26.823Z] OK   l4c6be8bc50 [cercano] Respeta el semáforo, aunque andes apurado.
+[2026-08-14T03:38:28.398Z] OK   l6cae1d46cd [cercano] En la ciudad el casco no es opcional, es tu mejor 
+[2026-08-14T03:38:30.196Z] OK   l0018263c62 [cercano] Si hay ciclovía, úsala, que para eso está.
+[2026-08-14T03:38:32.481Z] OK   l35d0da7593 [cercano] Ahora te toca disfrutar, pero ojo con los frenos.
+[2026-08-14T03:38:34.040Z] OK   l5df3f65da6 [cercano] Ojo con las curvas en la bajada, no hay apuro.
+[2026-08-14T03:38:35.761Z] OK   l6d5f5b6afa [cercano] Bajando rico, pero con la vista bien puesta en el 
+[2026-08-14T03:38:37.395Z] OK   l99201495cc [cercano] Toma agüita, que hidratarse es clave.
+[2026-08-14T03:38:38.920Z] OK   lf8f6a5b649 [cercano] ¿Todo bien? Avísame si necesitas algo.
+[2026-08-14T03:38:40.376Z] OK   lec576f1cb8 [cercano] Aprovecha y ajusta el asiento.
+[2026-08-14T03:38:41.918Z] OK   l18cde1a8e5 [cercano] Así da gusto, mantén ese pulso.
+[2026-08-14T03:38:43.420Z] OK   l593485acf1 [cercano] Pedalear es volver a lo esencial.
+[2026-08-14T03:38:44.965Z] OK   l248b10efb3 [cercano] No hay camino largo cuando suena buena música.
+[2026-08-14T03:38:46.647Z] OK   l9c009ed8ad [cercano] Disfruta: el destino importa tanto como el camino.
+[2026-08-14T03:38:48.390Z] OK   l9d7855558a [cercano] Subida a la vista, baja un cambio y no te apures.
+[2026-08-14T03:38:50.481Z] OK   l0f2e2a36e3 [cercano] Respira hondo, esta subida se acaba... en algún mo
+[2026-08-14T03:38:52.561Z] OK   l8cfe112063 [cercano] Cuesta arriba: ritmo parejo y no te la juegues tod
+[2026-08-14T03:38:54.019Z] OK   ldfee363bd1 [cercano] ¡Estás volando, respira!
+[2026-08-14T03:38:55.497Z] OK   ld858dfb21e [cercano] Frena un poquito en las curvas.
+[2026-08-14T03:38:57.189Z] OK   l3687c177ba [cercano] Cadena limpia, mente clara, piernas locas.
+[2026-08-14T03:38:58.751Z] OK   lc30bd87828 [relajado] Si el cuerpo pide rápido, dale, pero sin perder la
+[2026-08-14T03:39:00.256Z] OK   l215da1e40b [relajado] Hasta yendo rápido se puede fluir.
+[2026-08-14T03:39:01.781Z] OK   lf9854593ff [relajado] Rápido está bien, mientras no se sienta apurado.
+[2026-08-14T03:39:03.609Z] OK   l383d66d4b0 [aventurero] A esta velocidad seguro te saltas algo interesante
+[2026-08-14T03:39:05.326Z] OK   ld50807eeb5 [aventurero] Rápido está bien, pero lo bueno está en los detall
+[2026-08-14T03:39:07.242Z] OK   l4adb915b96 [cercano] ¿Todo bien por ahí?
+[2026-08-14T03:39:08.846Z] OK   lfbf4b99720 [cercano] Tranquilo: las pirámides se hicieron ladrillo a la
+[2026-08-14T03:39:10.452Z] OK   l2963dd952f [cercano] Dale un poco más de color al pedaleo.
+[2026-08-14T03:39:12.323Z] OK   ld5ba986257 [sabio] Ir lento también es una forma de llegar más lejos.
+[2026-08-14T03:39:13.929Z] OK   l397febcf70 [sabio] El que no tiene apuro, nunca pierde el camino.
+[2026-08-14T03:39:15.776Z] OK   l693606c291 [sabio] Despacio se cansa menos el cuerpo, y más el ego.
+[2026-08-14T03:39:17.525Z] OK   l4bde778069 [aventurero] Ir lento es la excusa perfecta para fijarte en cos
+[2026-08-14T03:39:19.092Z] OK   l6022a95ea8 [aventurero] A este ritmo se descubren los mejores atajos.
+[2026-08-14T03:39:20.712Z] OK   l31bd27eb9f [cercano] Viaje en pausa. Cuando quieras seguir, toca Reanud
+[2026-08-14T03:39:22.325Z] OK   leff0fc671b [cercano] Seguimos pedaleando.
+[2026-08-14T03:39:23.971Z] OK   lf82021d667 [cercano] Listo, así te hablo de ahora en adelante.
+[2026-08-14T03:39:25.949Z] OK   l302bcb55a6 [cercano] Cronómetro reiniciado. La distancia y el recorrido
+[2026-08-14T03:39:27.786Z] OK   l243a7a1712 [cercano] ¡Llegamos! Lo lograste. Que descanses esas piernas
+[2026-08-14T03:39:29.619Z] OK   l779331fd32 [cercano] Vas navegando. Para terminar el viaje usa el botón
+[2026-08-14T03:39:31.371Z] OK   l9b70fbac11 [cercano] Te desviaste del camino, dame un segundo que te re
+[2026-08-14T03:39:33.147Z] OK   l9253d17f87 [cercano] Por esta zona no tengo un camino claro marcado. Si
+[2026-08-14T03:39:34.800Z] OK   l4b09012015 [cercano] Vas más rápido que tu promedio de siempre, ¡buen r
+[2026-08-14T03:39:36.535Z] OK   ld37cb04fed [cercano] Vas más lento que tu ritmo habitual. Tranquilo, di
+[2026-08-14T03:39:40.165Z] OK   l3b6e1e4282 [cercano] Manos libres activado. Dime "Pistero" y lo que nec
+[2026-08-14T03:39:41.789Z] OK   lebd51156de [cercano] Manos libres desactivado.
+[2026-08-14T03:39:43.856Z] OK   l76a26c0b65 [cercano] Apagué el micrófono de manos libres porque llevaba
+[2026-08-14T03:39:45.492Z] OK   l3aa246ccc2 [cercano] ¿A dónde vamos? Toca el micrófono y dime solo el l
+[2026-08-14T03:39:47.140Z] OK   l47179b147e [cercano] No te escuché bien. Toca el micrófono y dime tu de
+[2026-08-14T03:39:49.187Z] OK   l548b4ad6f6 [cercano] Detecté un golpe fuerte. Toca "Estoy bien" si está
+[2026-08-14T03:39:50.723Z] OK   l7e745a18f9 [cercano] Qué bueno que estás bien. Sigo grabando tu ruta.
+[2026-08-14T03:39:52.437Z] OK   l1a61049cd7 [cercano] Ubicando tu posicion para el SOS, un segundo...
+[2026-08-14T03:39:54.657Z] OK   lbb24ca61b0 [cercano] Listo: avisamos a los ciclistas de tu zona, sin tu
+[2026-08-14T03:39:56.221Z] OK   l3168be5919 [cercano] Alerta lista. Toca a quién quieres avisar.
+[2026-08-14T03:39:57.708Z] OK   lbed78e1e21 [cercano] Pulsómetro conectado.
+[2026-08-14T03:39:59.266Z] OK   l64046611da [cercano] Potenciómetro conectado.
+[2026-08-14T03:40:00.746Z] OK   l967e1e3091 [cercano] Sensores Bluetooth desconectados.
+[2026-08-14T03:40:02.575Z] OK   le7174ddd82 [cercano] Necesito tu ubicación para buscar la historia de e
+[2026-08-14T03:40:04.105Z] OK   l645533741f [cercano] Dame un segundo, busco algo interesante de por aqu
+[2026-08-14T03:40:05.950Z] OK   l82aba686cf [cercano] Necesito saber dónde estás para el clima — activa 
+[2026-08-14T03:40:07.669Z] OK   l45161d0b69 [cercano] No pude traer el clima ahora mismo, prueba de nuev
+[2026-08-14T03:40:09.278Z] OK   laa5d27da8c [cercano] El mapa todavía no está listo, prueba de nuevo en 
+[2026-08-14T03:40:10.788Z] OK   l11d54a3ad5 [cercano] Aquí va el sobrevuelo de tu viaje.
+[2026-08-14T03:40:12.316Z] OK   l0c496526af [cercano] Listo, guardé tu ruta.
+[2026-08-14T03:40:14.465Z] OK   lb1134f67af [cercano] Ruta exportada en GPX. Súbela a Strava, Komoot o W
+[2026-08-14T03:40:16.081Z] OK   lda1028172d [cercano] Copié tu viaje al portapapeles. Pégalo donde quier
+[2026-08-14T03:40:18.538Z] OK   lfacc00ce0e [cercano] No pude guardar la ruta — parece que no hay sufici
+[2026-08-14T03:40:20.434Z] OK   lf7f4cec605 [cercano] Todavía no tienes un viaje en curso para guardar. 
+[2026-08-14T03:40:21.982Z] OK   l9fbea2f792 [cercano] La voz solo funciona desde la página publicada.
+[2026-08-14T03:40:23.621Z] OK   l49fa183636 [cercano] En la app escríbeme la pregunta aquí abajo; la voz
+[2026-08-14T03:40:25.532Z] OK   l827be70264 [cercano] Se nota que bajaste harto el ritmo respecto a como
+[2026-08-14T03:40:27.322Z] OK   l8dfc4c8f51 [cercano] Aquí está la esfera de aplicaciones.
+[2026-08-14T03:40:28.881Z] OK   l589dcc0e4c [cercano] Activa el GPS para empezar a grabar tu ruta.
+[2026-08-14T03:40:30.910Z] OK   l84705c22fa [cercano] Dejé de compartir tu ubicación en vivo. Ese link y
+[2026-08-14T03:40:32.933Z] OK   c294d4e5514 [cercano] El único kilómetro real es el que estás pisando ah
+[2026-08-14T03:40:34.840Z] OK   cb1af6761b8 [cercano] La ruta no es cuántos kilómetros dejas atrás, sino
+[2026-08-14T03:40:36.613Z] OK   c1009225854 [cercano] Pedalear aquí es elegir ver el mundo con tus propi
+[2026-08-14T03:40:38.187Z] OK   c4c6be8bc50 [cercano] Respeta el semáforo, aunque andes apurado.
+[2026-08-14T03:40:39.857Z] OK   c6cae1d46cd [cercano] En la ciudad el casco no es opcional, es tu mejor 
+[2026-08-14T03:40:41.372Z] OK   c0018263c62 [cercano] Si hay ciclovía, úsala, que para eso está.
+[2026-08-14T03:40:42.973Z] OK   c35d0da7593 [cercano] Ahora te toca disfrutar, pero ojo con los frenos.
+[2026-08-14T03:40:44.601Z] OK   c5df3f65da6 [cercano] Ojo con las curvas en la bajada, no hay apuro.
+[2026-08-14T03:40:46.200Z] OK   c6d5f5b6afa [cercano] Bajando rico, pero con la vista bien puesta en el 
+[2026-08-14T03:40:47.928Z] OK   cc37513cb56 [profe] Dato: dos minutos de pausa bajan el pulso más que 
+[2026-08-14T03:40:49.714Z] OK   c8eccda158d [profe] Si vas a parar más de diez minutos, abrígate: el c
+[2026-08-14T03:40:51.266Z] OK   c6f14c0d5c6 [profe] Aprovecha de comer algo si llevas más de una hora 
+[2026-08-14T03:40:52.703Z] OK   c31079a2a38 [solitario] Descansa.
+[2026-08-14T03:40:54.175Z] OK   c0e5f068cc3 [solitario] Sin apuro.
+[2026-08-14T03:40:55.620Z] OK   ca819367858 [solitario] Aquí espero.
+[2026-08-14T03:40:57.276Z] OK   c4d5125061d [loco] ¿Parada técnica o te dio flojera? Las dos valen.
+[2026-08-14T03:40:58.826Z] OK   c36794c3884 [loco] Aprovecha de saludar a alguien. O no.
+[2026-08-14T03:41:00.568Z] OK   ca062dc30b2 [loco] Estás detenido. Científicamente, eso es descansar.
+[2026-08-14T03:41:02.282Z] OK   c693f9d83f4 [loco] Los postes también descansan. Nadie los juzga.
+[2026-08-14T03:41:04.091Z] OK   c3d5aa00e84 [cicletero] Buen momento: revisa la presión de los neumáticos 
+[2026-08-14T03:41:05.746Z] OK   cef181cf285 [cicletero] Mira la cadena mientras descansas. ¿Está seca?
+[2026-08-14T03:41:07.522Z] OK   c489c0f6fa1 [cicletero] Aprovecha de revisar que no se soltó nada del port
+[2026-08-14T03:41:09.234Z] OK   c7f4f05f497 [cicletero] Detenido es cuando se arreglan las cosas chicas. O
+[2026-08-14T03:41:10.929Z] OK   cf9f5238ed9 [sabio] Parar también es parte de andar. Nadie te está mid
+[2026-08-14T03:41:12.651Z] OK   c4ffcb4b405 [sabio] Los mejores viajes tienen más paradas de las que u
+[2026-08-14T03:41:14.406Z] OK   c092135fcdb [sabio] Aquí es donde se conocen los caminos: parado, mira
+[2026-08-14T03:41:16.324Z] OK   caba1d8d2eb [sabio] Descansa. La ruta lleva ahí mucho más que nosotros
+[2026-08-14T03:41:17.951Z] OK   cdb1038f325 [relajado] Perfecto. Respira, mira el paisaje.
+[2026-08-14T03:41:19.652Z] OK   c8f0aa50a82 [relajado] Esta pausa es tan parte del viaje como pedalear.
+[2026-08-14T03:41:21.179Z] OK   c79e56b607e [relajado] No hay ningún apuro. Ninguno.
+[2026-08-14T03:41:22.609Z] OK   cf365575070 [relajado] Quédate el rato que quieras.
+[2026-08-14T03:41:24.338Z] OK   c5291a3c74c [aventurero] ¿Paramos porque cansaste o porque viste algo inter
+[2026-08-14T03:41:25.853Z] OK   cb422928860 [aventurero] Buen lugar para parar. ¿Exploramos un poco a pie?
+[2026-08-14T03:41:27.482Z] OK   cd5307f46de [aventurero] Desde acá se ve un camino que no estaba en el mapa
+[2026-08-14T03:41:29.009Z] OK   cb4f3fdfe69 [aventurero] Las mejores desviaciones empiezan en una parada.
+[2026-08-14T03:41:30.566Z] OK   cb5abb60dcf [maternal] Muy bien, descansa. ¿Comiste algo hoy?
+[2026-08-14T03:41:32.112Z] OK   c34f90d4cee [maternal] Aprovecha de tomar agua aunque no tengas sed.
+[2026-08-14T03:41:33.720Z] OK   c762cc8b614 [maternal] Si hace frío, ponte algo encima mientras estás qui
+[2026-08-14T03:41:35.310Z] OK   c794ba74d1a [maternal] Tómate el tiempo que necesites, de verdad.
+[2026-08-14T03:41:37.458Z] OK   c6d3c76e321 [seductor] Aprovechemos esta pausa. La buena compañía también
+[2026-08-14T03:41:39.245Z] OK   c6dd0d34a46 [seductor] Un descanso contigo nunca se siente perdido.
+[2026-08-14T03:41:40.949Z] OK   c63a3166ab8 [seductor] Quedémonos un rato así, sin apuro.
+[2026-08-14T03:41:42.735Z] OK   cbf0f8bbb24 [otaku] Punto de guardado. Aprovecha de recargar energía.
+[2026-08-14T03:41:44.474Z] OK   ca12f41b9c9 [otaku] Pausa técnica, como cuando el anime corta justo en
+[2026-08-14T03:41:46.347Z] OK   c88e286cc05 [otaku] Aprovecha este respiro: hasta los héroes necesitan
+[2026-08-14T03:41:47.838Z] OK   c99201495cc [cercano] Toma agüita, que hidratarse es clave.
+[2026-08-14T03:41:49.375Z] OK   cf8f6a5b649 [cercano] ¿Todo bien? Avísame si necesitas algo.
+[2026-08-14T03:41:50.968Z] OK   cec576f1cb8 [cercano] Aprovecha y ajusta el asiento.
+[2026-08-14T03:41:52.458Z] OK   c8e7861b955 [compadre] Vamos bien, compadre. Este ritmo es el bueno.
+[2026-08-14T03:41:54.098Z] OK   c207493ef3d [compadre] Así da gusto: ni apurado ni lento, como debe ser.
+[2026-08-14T03:41:55.615Z] OK   c6b1b41e10d [compadre] Buen paso llevas. Yo te acompaño.
+[2026-08-14T03:41:57.279Z] OK   c3fd43d47d3 [compadre] Tranquilo y parejo, que el camino es largo.
+[2026-08-14T03:41:58.899Z] OK   c355471d71b [entrenador] Ritmo sostenible. Mantén la cadencia entre ochenta
+[2026-08-14T03:42:00.549Z] OK   c0257f9c3f6 [entrenador] Este es tu paso de fondo: acá se construye la base
+[2026-08-14T03:42:02.362Z] OK   cd6cc0898f0 [entrenador] Respira parejo, hombros sueltos, manos livianas.
+[2026-08-14T03:42:04.034Z] OK   c470e537cfa [entrenador] Vas en zona cómoda. Perfecto para acumular kilómet
+[2026-08-14T03:42:05.511Z] OK   c4250aa5059 [roquero] Este es el ritmo de crucero. Suena bien.
+[2026-08-14T03:42:07.145Z] OK   c9263e93a55 [roquero] Vas en tempo, sin acelerar ni frenar. Puro groove.
+[2026-08-14T03:42:08.758Z] OK   c940bc0b697 [roquero] Así se rueda: constante, como una batería bien toc
+[2026-08-14T03:42:10.376Z] OK   cdef785c42a [roquero] Ritmo parejo, volumen medio. Después subimos.
+[2026-08-14T03:42:11.944Z] OK   cb896a85a92 [solitario] El camino y tú, nada más.
+[2026-08-14T03:42:13.666Z] OK   c5ca92ce79e [loco] Vas a velocidad de persona normal. Qué raro en ti.
+[2026-08-14T03:42:15.398Z] OK   c52d0aacd9f [loco] Este ritmo lo aprueban hasta los caracoles jubilad
+[2026-08-14T03:42:17.041Z] OK   c3ea1572e3b [loco] Vas tan parejo que pareces metrónomo con casco.
+[2026-08-14T03:42:18.603Z] OK   c6975a08a98 [loco] Ritmo perfecto para pensar tonteras. Aprovecha.
+[2026-08-14T03:42:20.614Z] OK   c693fced6d7 [cicletero] Buen ritmo. Escucha la bici: a este paso se nota s
+[2026-08-14T03:42:22.147Z] OK   ce970f8547a [cicletero] Ritmo parejo, cadena contenta.
+[2026-08-14T03:42:23.825Z] OK   c3463527399 [cicletero] A este paso revisa si el asiento te queda cómodo. 
+[2026-08-14T03:42:25.362Z] OK   c22418d83c4 [cicletero] Todo suena bien desde acá. Sigue así.
+[2026-08-14T03:42:27.122Z] OK   cdcfcb8e6cd [sabio] Este es el paso que sostiene una vida entera arrib
+[2026-08-14T03:42:28.749Z] OK   c2e4af2aa2b [sabio] Los que duran no son los rápidos: son los parejos.
+[2026-08-14T03:42:30.466Z] OK   c77aa713417 [sabio] Este ritmo lo aprendí a los cuarenta. Ojalá lo apr
+[2026-08-14T03:42:32.107Z] OK   c1cc47cd90f [sabio] Así se anda cuando ya no tienes nada que demostrar
+[2026-08-14T03:42:33.703Z] OK   ce0ae8cd1ee [relajado] Este ritmo está perfecto. No lo apures.
+[2026-08-14T03:42:35.297Z] OK   c0968c720c7 [relajado] Vas fluyendo, y eso es lo que importa.
+[2026-08-14T03:42:36.896Z] OK   c34d56019fb [relajado] El cuerpo te está pidiendo justo esto.
+[2026-08-14T03:42:38.470Z] OK   c32b8a9f08f [relajado] Bonito paso. Mira alrededor un rato.
+[2026-08-14T03:42:40.136Z] OK   c4f267f65aa [aventurero] Buen ritmo… ¿y si nos desviamos por ese camino de 
+[2026-08-14T03:42:41.703Z] OK   c19cdf6370d [aventurero] Vas cómodo. Perfecto para meterse en algo nuevo.
+[2026-08-14T03:42:43.345Z] OK   c239ac78352 [aventurero] Con este paso llegamos a cualquier parte. Elige tú
+[2026-08-14T03:42:44.864Z] OK   c0c1c1775e0 [aventurero] Ritmo de explorador. El bueno.
+[2026-08-14T03:42:46.357Z] OK   c2f60ede15e [maternal] Vas muy bien. ¿Tomaste agua hace rato?
+[2026-08-14T03:42:47.870Z] OK   c97fff191ad [maternal] Ese es el paso justo, no te exijas de más.
+[2026-08-14T03:42:49.496Z] OK   cab5bbdb14e [maternal] Todo tranquilo por acá. Avísame si algo molesta.
+[2026-08-14T03:42:51.025Z] OK   c17068168de [maternal] Bien ahí. Cuídate las rodillas en las bajadas.
+[2026-08-14T03:42:52.790Z] OK   c099f92cbf2 [seductor] Contigo hasta el camino más largo se hace corto.
+[2026-08-14T03:42:54.563Z] OK   cdc5f38fc50 [seductor] No sé si es la vista o la compañía, pero hoy el pa
+[2026-08-14T03:42:56.282Z] OK   c98bb79eff8 [seductor] Dicen que las mejores rutas se disfrutan bien acom
+[2026-08-14T03:42:57.933Z] OK   c01ce2e171d [seductor] Hay algo en cómo pedaleas que no se puede ignorar.
+[2026-08-14T03:42:59.743Z] OK   c57ba518d97 [otaku] Vas con ritmo de protagonista principal: constante
+[2026-08-14T03:43:01.695Z] OK   ca6e24371ae [otaku] Este es tu arco de entrenamiento silencioso, el qu
+[2026-08-14T03:43:03.426Z] OK   c64b4c8253e [otaku] Sigue así, que este ritmo tiene toda la pinta de u
+[2026-08-14T03:43:05.217Z] OK   c7bce36b634 [otaku] Nivel actual: ciclista imparable. Sigue subiendo d
+[2026-08-14T03:43:06.730Z] OK   c18cde1a8e5 [cercano] Así da gusto, mantén ese pulso.
+[2026-08-14T03:43:08.246Z] OK   c593485acf1 [cercano] Pedalear es volver a lo esencial.
+[2026-08-14T03:43:09.873Z] OK   c248b10efb3 [cercano] No hay camino largo cuando suena buena música.
+[2026-08-14T03:43:11.512Z] OK   c9c009ed8ad [cercano] Disfruta: el destino importa tanto como el camino.
+[2026-08-14T03:43:13.254Z] OK   c11a137e443 [roquero] Esta cuesta es el solo de guitarra: aguanta que ya
+[2026-08-14T03:43:14.822Z] OK   ca932086813 [roquero] Sube con rabia, que la pendiente no perdona a los 
+[2026-08-14T03:43:16.457Z] OK   c559eb47bf4 [roquero] Puro riff pesado esto. Dale que abajo suena mejor.
+[2026-08-14T03:43:17.977Z] OK   c71a9888857 [roquero] La cuesta es larga y tú tienes más volumen que ell
+[2026-08-14T03:43:19.554Z] OK   c99a356287b [roquero] Ponle actitud, que las piernas ya saben lo que hac
+[2026-08-14T03:43:21.220Z] OK   c3ae6d16d74 [profe] Cuesta a la vista. Dato: subir de pie gasta más ox
+[2026-08-14T03:43:22.939Z] OK   c1ef5cb6dd8 [profe] Esta pendiente se sube con cadencia alta y cabeza 
+[2026-08-14T03:43:24.723Z] OK   c83c206ce41 [profe] Fíjate en la respiración: tres pedaladas inhalando
+[2026-08-14T03:43:26.429Z] OK   c36a32e27ed [profe] El truco de los escaladores es no mirar la cima, s
+[2026-08-14T03:43:28.115Z] OK   c4c0d98e655 [profe] Si el corazón se te dispara, baja un cambio antes 
+[2026-08-14T03:43:29.480Z] OK   ce84b4c192c [solitario] Sube.
+[2026-08-14T03:43:30.966Z] OK   cafade2af8e [solitario] Nadie te está mirando. Mejor.
+[2026-08-14T03:43:32.451Z] OK   cd36eb8b766 [solitario] Esta cuesta es tuya y de nadie más.
+[2026-08-14T03:43:34.005Z] OK   c13499b1cd8 [solitario] Silencio y pedal. Así se sube.
+[2026-08-14T03:43:35.587Z] OK   c2dee828f1d [solitario] La montaña no compite contigo.
+[2026-08-14T03:43:37.143Z] OK   c80c6a40bd5 [loco] ¡Esta cuesta la puso alguien que te tiene mala!
+[2026-08-14T03:43:38.758Z] OK   c5ffc40d89e [loco] Si llegas arriba te doy un aplauso imaginario, per
+[2026-08-14T03:43:40.522Z] OK   ca40635639d [loco] Dicen que las cuestas son planas si cierras un ojo
+[2026-08-14T03:43:42.316Z] OK   c8b5bcf98c2 [loco] Piensa en un completo italiano allá arriba. Ya, ah
+[2026-08-14T03:43:43.940Z] OK   c4cc8b1e2da [loco] La gravedad y yo apostamos. Yo aposté por ti.
+[2026-08-14T03:43:45.721Z] OK   c7ec59eafa0 [cicletero] Cuesta arriba: cambia ANTES de que la cadena sufra
+[2026-08-14T03:43:47.472Z] OK   c34b2826166 [cicletero] Si escuchas la cadena rasparse, te pasaste de camb
+[2026-08-14T03:43:49.120Z] OK   c9817c9772a [cicletero] Súbela sentado, que de pie desgastas plato y piñón
+[2026-08-14T03:43:50.814Z] OK   c6a06c17b63 [cicletero] Cadencia pareja: la transmisión te lo agradece y l
+[2026-08-14T03:43:52.676Z] OK   c09f0f1cb1a [cicletero] Ojo con el cambio bajo carga, ahí es donde se romp
+[2026-08-14T03:43:54.626Z] OK   c6e6654a219 [entrenador] Cuesta a la vista: sube un cambio, cadencia consta
+[2026-08-14T03:43:56.391Z] OK   c49ebb24f3a [entrenador] Esta subida es tu gimnasio. Aprieta parejo, respir
+[2026-08-14T03:43:58.054Z] OK   c1ae7ac292b [entrenador] Aquí se construye el fondo: ritmo, no fuerza bruta
+[2026-08-14T03:43:59.848Z] OK   c2a12a5e52b [entrenador] La subida no se gana con las piernas, se gana con 
+[2026-08-14T03:44:01.493Z] OK   c2e16d2cb0f [entrenador] Si puedes hablar en la cuesta, puedes acelerar un 
+[2026-08-14T03:44:03.355Z] OK   c570d8374b5 [sabio] La subida enseña lo que la bajada esconde: quién e
+[2026-08-14T03:44:05.113Z] OK   caca2bc1f4e [sabio] Cada pedaleo cuesta arriba es una tranca mental qu
+[2026-08-14T03:44:07.010Z] OK   c074b74608e [sabio] No pelees la cuesta; fluye con ella. La montaña si
+[2026-08-14T03:44:08.756Z] OK   c08dd25ce32 [sabio] El esfuerzo de ahora es la paz de la cima. Sube pr
+[2026-08-14T03:44:10.392Z] OK   c01038e7fc7 [sabio] La cuesta no es un obstáculo, es el camino. Habíta
+[2026-08-14T03:44:12.228Z] OK   c30b7830872 [relajado] Subidita no más, sin apuro. Baja un cambio y disfr
+[2026-08-14T03:44:13.988Z] OK   c433dc881e1 [relajado] Tranquilo, la cima no se va a ningún lado. A tu ri
+[2026-08-14T03:44:15.729Z] OK   cca273f8740 [relajado] Si hay que bajarse un rato, se baja. Esto es un pa
+[2026-08-14T03:44:17.375Z] OK   ccf26a68226 [relajado] Suave con la cuesta, que lo lindo es el camino, no
+[2026-08-14T03:44:19.061Z] OK   cf83cb46f62 [maternal] Ojo con el corazón en la cuesta, mijo: baja un cam
+[2026-08-14T03:44:20.837Z] OK   cdd93495f65 [maternal] Sube con calma, toma agua arriba. Prefiero que lle
+[2026-08-14T03:44:22.500Z] OK   ce42ecf5e18 [maternal] No te la juegues toda en la subida, guárdate un po
+[2026-08-14T03:44:24.116Z] OK   c232942bc15 [maternal] Despacito la cuesta, que nadie te espera con reloj
+[2026-08-14T03:44:25.815Z] OK   c29057b3079 [aventurero] ¡Esta cuesta es tuya! Arriba te espera una vista q
+[2026-08-14T03:44:27.475Z] OK   c09888dcf48 [aventurero] ¡Épica subida! Conquístala y cuéntalo después.
+[2026-08-14T03:44:29.130Z] OK   c960807ada1 [aventurero] Lo desconocido está arriba. ¡Dale que la aventura 
+[2026-08-14T03:44:30.767Z] OK   c7583de057b [compadre] Ya po, apretá que esta cuesta es puro cuento. ¡Dal
+[2026-08-14T03:44:32.411Z] OK   c9fc12d10e5 [compadre] No aflojís, compadre, que arriba está la raja de v
+[2026-08-14T03:44:34.160Z] OK   c5da29b03a0 [compadre] Esta subidita es na, pura finta. Le ganái con los 
+[2026-08-14T03:44:35.994Z] OK   c2b9d1aab54 [seductor] Contigo hasta la cuesta más dura se hace buena com
+[2026-08-14T03:44:37.672Z] OK   c8955b86298 [seductor] No hay subida que no valga la pena si el paisaje e
+[2026-08-14T03:44:39.453Z] OK   ccd5be933f7 [seductor] Sube con calma. Yo disfruto el camino igual, miran
+[2026-08-14T03:44:41.221Z] OK   c939a8a1655 [seductor] Dicen que las cuestas revelan el carácter. El tuyo
+[2026-08-14T03:44:43.151Z] OK   cb5249850f7 [otaku] ¡Esto es el arco de entrenamiento! Cada cuesta te 
+[2026-08-14T03:44:45.024Z] OK   c47df8c8432 [otaku] Sube como protagonista de shonen: cuando parece im
+[2026-08-14T03:44:46.974Z] OK   ca82f2e6bdc [otaku] Esta cuesta es el jefe final del nivel. Tú tienes 
+[2026-08-14T03:44:49.340Z] OK   c3296b94001 [otaku] Nada de rendirse ahora, que el clímax del arco sie
+[2026-08-14T03:44:50.991Z] OK   c9d7855558a [cercano] Subida a la vista, baja un cambio y no te apures.
+[2026-08-14T03:44:52.702Z] OK   c0f2e2a36e3 [cercano] Respira hondo, esta subida se acaba... en algún mo
+[2026-08-14T03:44:54.409Z] OK   c8cfe112063 [cercano] Cuesta arriba: ritmo parejo y no te la juegues tod
+[2026-08-14T03:44:56.063Z] OK   c1233d8e1b1 [roquero] ¡Así se anda! Puro volumen arriba.
+[2026-08-14T03:44:57.702Z] OK   c5da8f7f465 [roquero] Vas rápido y suena bien. No aflojes.
+[2026-08-14T03:44:59.177Z] OK   ccef5303d94 [roquero] Ese ritmo es un temazo. Mantenlo.
+[2026-08-14T03:45:00.717Z] OK   cda1364871e [roquero] Vas a toda máquina, cuidado con las curvas.
+[2026-08-14T03:45:02.486Z] OK   c9ecf36b5ab [roquero] Rápido y con estilo, como debe ser.
+[2026-08-14T03:45:04.557Z] OK   c70c93b3919 [profe] Buen ritmo. A esta velocidad el viento es el 80% d
+[2026-08-14T03:45:06.305Z] OK   cafc0a8cddc [profe] Vas rápido: mantén la mirada lejos, no en la rueda
+[2026-08-14T03:45:08.045Z] OK   c69e7f6ed1f [profe] A esta velocidad frenar toma el doble de distancia
+[2026-08-14T03:45:09.902Z] OK   ca0bdd719b9 [profe] Dato: pedalear rápido con cadencia alta cansa meno
+[2026-08-14T03:45:11.517Z] OK   c496db30c2d [profe] Vas bien. La postura baja te ahorra energía sin qu
+[2026-08-14T03:45:13.004Z] OK   c23ff854335 [solitario] Vas rápido. Disfrútalo.
+[2026-08-14T03:45:14.534Z] OK   c3e74757c0d [solitario] Así, sin pensar.
+[2026-08-14T03:45:16.176Z] OK   cea822fe8db [solitario] El camino se abre solo cuando vas a este ritmo.
+[2026-08-14T03:45:17.705Z] OK   c61799c7a51 [solitario] Nada que decir. Sigue.
+[2026-08-14T03:45:19.297Z] OK   c468dd9516e [solitario] Este es el momento por el que saliste.
+[2026-08-14T03:45:20.891Z] OK   cf7d5afbdb2 [loco] ¡Vas tan rápido que los perros ya ni intentan!
+[2026-08-14T03:45:23.006Z] OK   cba63448022 [loco] A esta velocidad se te van a ordenar las ideas sol
+[2026-08-14T03:45:24.720Z] OK   c58b281ee99 [loco] Si aceleras más vas a llegar antes de haber salido
+[2026-08-14T03:45:26.375Z] OK   c7144cb2eec [loco] Voy a tener que hablar más rápido para alcanzarte.
+[2026-08-14T03:45:27.989Z] OK   c4f8d9a9f2b [loco] Los postes te están mirando con envidia.
+[2026-08-14T03:45:29.997Z] OK   cd535742f60 [cicletero] Buen ritmo. Ojo con los hoyos: a esta velocidad se
+[2026-08-14T03:45:31.689Z] OK   ccf7457bb74 [cicletero] Vas rápido: revisa que no vaya suelto nada del por
+[2026-08-14T03:45:33.276Z] OK   cf1a2c63e85 [cicletero] A esta velocidad, frenos limpios valen más que pie
+[2026-08-14T03:45:34.864Z] OK   ce2e63cba7a [cicletero] Si sientes vibración en el manubrio, para y revisa
+[2026-08-14T03:45:36.649Z] OK   c237391499a [cicletero] Vas volando. La presión correcta de neumáticos es 
+[2026-08-14T03:45:38.299Z] OK   ceaeec95801 [entrenador] Buen ritmo. Sostén esa cadencia sin trabar los hom
+[2026-08-14T03:45:39.985Z] OK   c1b6433f5ac [entrenador] Vas fuerte. Controla la respiración, mantén la lín
+[2026-08-14T03:45:41.714Z] OK   cb69c352994 [entrenador] Velocidad sólida. Ojo con las curvas, no pierdas l
+[2026-08-14T03:45:43.472Z] OK   c8675081847 [sabio] La velocidad embriaga, pero el camino se disfruta 
+[2026-08-14T03:45:45.320Z] OK   cf5ad436fae [sabio] Vas rápido; recuerda que llegar no es la meta, es 
+[2026-08-14T03:45:47.055Z] OK   c46d36e5cab [sabio] Rápido está bien, pero no tanto que te pierdas el 
+[2026-08-14T03:45:48.773Z] OK   c09ddb5722b [maternal] Despacio con esa velocidad, mijo, ojo con los bach
+[2026-08-14T03:45:50.510Z] OK   ca3eca12526 [maternal] Vas muy rápido, frena un poquito, prefiero verte l
+[2026-08-14T03:45:52.190Z] OK   cce2553ee60 [maternal] Cuidado a esa velocidad, las dos manos firmes.
+[2026-08-14T03:45:53.927Z] OK   c43f18db5ee [compadre] ¡Uuuh, andái enchufao hoy, volando bajito! ¡Así se
+[2026-08-14T03:45:55.517Z] OK   cb2e2575cc0 [compadre] Cómo le picái, compadre, vai como bala. ¡No pares,
+[2026-08-14T03:45:57.382Z] OK   c83e83c98a7 [seductor] Con ese ritmo, hasta el viento se queda corto para
+[2026-08-14T03:45:59.203Z] OK   c125241a817 [seductor] Vuela si quieres. Igual te voy a seguir el paso.
+[2026-08-14T03:46:00.772Z] OK   c6bacd198ae [seductor] Rápido y con estilo. No cualquiera lo logra.
+[2026-08-14T03:46:02.700Z] OK   c78fd5f4f2e [otaku] ¡Activaste el modo OP! Nadie te alcanza a este rit
+[2026-08-14T03:46:04.384Z] OK   c2141064e03 [otaku] Esto ya no es velocidad, esto es un power-up desbl
+[2026-08-14T03:46:06.355Z] OK   c9d0e7d6765 [otaku] Vas tan rápido que hasta el opening se te queda co
+[2026-08-14T03:46:07.900Z] OK   cdfee363bd1 [cercano] ¡Estás volando, respira!
+[2026-08-14T03:46:09.386Z] OK   cd858dfb21e [cercano] Frena un poquito en las curvas.
+[2026-08-14T03:46:10.995Z] OK   c3687c177ba [cercano] Cadena limpia, mente clara, piernas locas.
+[2026-08-14T03:46:12.817Z] OK   cc30bd87828 [relajado] Si el cuerpo pide rápido, dale, pero sin perder la
+[2026-08-14T03:46:14.386Z] OK   c215da1e40b [relajado] Hasta yendo rápido se puede fluir.
+[2026-08-14T03:46:15.976Z] OK   cf9854593ff [relajado] Rápido está bien, mientras no se sienta apurado.
+[2026-08-14T03:46:17.713Z] OK   c383d66d4b0 [aventurero] A esta velocidad seguro te saltas algo interesante
+[2026-08-14T03:46:19.349Z] OK   cd50807eeb5 [aventurero] Rápido está bien, pero lo bueno está en los detall
+[2026-08-14T03:46:20.944Z] OK   ccc4c4b3c32 [roquero] Bajaste el volumen. Todo bien, después subimos.
+[2026-08-14T03:46:22.594Z] OK   c364a3652ad [roquero] Hasta las mejores bandas tienen baladas. Esta es l
+[2026-08-14T03:46:24.172Z] OK   ca814ed2ed3 [roquero] Vas lento y no pasa nada. El disco igual suena.
+[2026-08-14T03:46:25.724Z] OK   ca266fe09ff [roquero] Recupera y volvemos con todo.
+[2026-08-14T03:46:27.505Z] OK   c242ac64a8a [roquero] Ritmo tranquilo, pero seguimos tocando.
+[2026-08-14T03:46:29.313Z] OK   c9fae205547 [profe] Ritmo suave. Es cuando el cuerpo aprende a usar me
+[2026-08-14T03:46:30.990Z] OK   c0c944fb871 [profe] Ir lento no es perder: es entrenar el fondo.
+[2026-08-14T03:46:32.632Z] OK   c281d3d82d7 [profe] Aprovecha para mirar alrededor, que a este ritmo s
+[2026-08-14T03:46:34.389Z] OK   cb483b3632c [profe] Buen momento para tomar agua: a ritmo suave el cue
+[2026-08-14T03:46:36.164Z] OK   c1c01a28314 [profe] El pedaleo lento y parejo cuida las rodillas más q
+[2026-08-14T03:46:37.656Z] OK   c1cf34525bd [solitario] Despacio también es andar.
+[2026-08-14T03:46:39.158Z] OK   cc3058dc92f [solitario] No hay apuro.
+[2026-08-14T03:46:40.818Z] OK   c985045968d [solitario] El camino no se va a ir.
+[2026-08-14T03:46:42.371Z] OK   c65c8444b8a [solitario] Está bien ir lento.
+[2026-08-14T03:46:43.979Z] OK   cbe9071e42e [loco] Vas lento, pero con una dignidad tremenda.
+[2026-08-14T03:46:45.528Z] OK   c91ee811f6d [loco] A este ritmo hasta las moscas te acompañan.
+[2026-08-14T03:46:47.109Z] OK   c0f8e1641f2 [loco] Lento y seguro, como el internet de antes.
+[2026-08-14T03:46:48.778Z] OK   c24cced98a7 [loco] Vas tan tranquilo que da sueño verte. Del bueno.
+[2026-08-14T03:46:50.356Z] OK   ca94dbfad53 [loco] Ir lento es ir rápido, pero con más tiempo.
+[2026-08-14T03:46:52.183Z] OK   c8aca6064b9 [cicletero] Ritmo suave: buen momento para escuchar si algo su
+[2026-08-14T03:46:53.939Z] OK   c0709645491 [cicletero] Si vas lento y cuesta más de lo normal, revisa la 
+[2026-08-14T03:46:55.543Z] OK   c4a65a429b1 [cicletero] A este ritmo se nota si el freno va rozando. Fíjat
+[2026-08-14T03:46:57.731Z] OK   c8b6af47dbc [cicletero] Aprovecha y mira la cadena: si está seca, te está 
+[2026-08-14T03:46:59.404Z] OK   c3386266d74 [cicletero] Buen momento para acomodar el asiento si algo te v
+[2026-08-14T03:47:01.208Z] OK   c75146d89f4 [relajado] Rico ese ritmo tranqui, sin apuros. Disfruta.
+[2026-08-14T03:47:02.840Z] OK   cd7468b5fef [relajado] Así, suavecito, que la vida no es una carrera.
+[2026-08-14T03:47:04.479Z] OK   ce8899358b9 [relajado] Buen paso de paseo. Respira y mira alrededor.
+[2026-08-14T03:47:06.015Z] OK   c015995ca93 [maternal] Despacito está bien, mijo, no te agites de más.
+[2026-08-14T03:47:07.753Z] OK   c501a59601d [maternal] A ese ritmo cuidas el cuerpo. Bien ahí, con calma.
+[2026-08-14T03:47:09.754Z] OK   c49aedc5553 [entrenador] Ritmo bajo: aprovecha para soltar piernas y recupe
+[2026-08-14T03:47:11.398Z] OK   c456c937e23 [compadre] Tranqui no má, sin apuro. La ruta no se arranca, t
+[2026-08-14T03:47:13.029Z] OK   c87ed4ed37b [compadre] Suave que suave se llega igual. Esto es pa' pasarl
+[2026-08-14T03:47:14.612Z] OK   c8dd03ac9b0 [seductor] No hay prisa. Contigo hasta ir despacio se disfrut
+[2026-08-14T03:47:16.197Z] OK   c1922a7e48c [seductor] Este ritmo tranquilo tiene su encanto, igual que t
+[2026-08-14T03:47:17.837Z] OK   c67a211fdd9 [seductor] A veces lo mejor se saborea lento. Como este camin
+[2026-08-14T03:47:19.811Z] OK   c5cecb3699f [otaku] Este es el capítulo tranquilo antes del arco impor
+[2026-08-14T03:47:22.199Z] OK   c411b25f193 [otaku] No todo puede ser clímax. Este tramo es el descans
+[2026-08-14T03:47:24.056Z] OK   ccac1634690 [otaku] Ritmo suave, como los episodios slice of life. Tam
+[2026-08-14T03:47:25.566Z] OK   c4adb915b96 [cercano] ¿Todo bien por ahí?
+[2026-08-14T03:47:27.215Z] OK   cfbf4b99720 [cercano] Tranquilo: las pirámides se hicieron ladrillo a la
+[2026-08-14T03:47:28.761Z] OK   c2963dd952f [cercano] Dale un poco más de color al pedaleo.
+[2026-08-14T03:47:30.464Z] OK   cd5ba986257 [sabio] Ir lento también es una forma de llegar más lejos.
+[2026-08-14T03:47:32.312Z] OK   c397febcf70 [sabio] El que no tiene apuro, nunca pierde el camino.
+[2026-08-14T03:47:33.926Z] OK   c693606c291 [sabio] Despacio se cansa menos el cuerpo, y más el ego.
+[2026-08-14T03:47:36.077Z] OK   c4bde778069 [aventurero] Ir lento es la excusa perfecta para fijarte en cos
+[2026-08-14T03:47:37.757Z] OK   c6022a95ea8 [aventurero] A este ritmo se descubren los mejores atajos.
+[2026-08-14T03:47:39.810Z] OK   c31bd27eb9f [cercano] Viaje en pausa. Cuando quieras seguir, toca Reanud
+[2026-08-14T03:47:41.279Z] OK   ceff0fc671b [cercano] Seguimos pedaleando.
+[2026-08-14T03:47:42.798Z] OK   cf82021d667 [cercano] Listo, así te hablo de ahora en adelante.
+[2026-08-14T03:47:44.560Z] OK   c302bcb55a6 [cercano] Cronómetro reiniciado. La distancia y el recorrido
+[2026-08-14T03:47:46.245Z] OK   c243a7a1712 [cercano] ¡Llegamos! Lo lograste. Que descanses esas piernas
+[2026-08-14T03:47:48.007Z] OK   c779331fd32 [cercano] Vas navegando. Para terminar el viaje usa el botón
+[2026-08-14T03:47:49.637Z] OK   c9b70fbac11 [cercano] Te desviaste del camino, dame un segundo que te re
+[2026-08-14T03:47:51.549Z] OK   c9253d17f87 [cercano] Por esta zona no tengo un camino claro marcado. Si
+[2026-08-14T03:47:53.107Z] OK   c4b09012015 [cercano] Vas más rápido que tu promedio de siempre, ¡buen r
+[2026-08-14T03:47:55.011Z] OK   cd37cb04fed [cercano] Vas más lento que tu ritmo habitual. Tranquilo, di
+[2026-08-14T03:47:58.863Z] OK   c3b6e1e4282 [cercano] Manos libres activado. Dime "Pistero" y lo que nec
+[2026-08-14T03:48:00.288Z] OK   cebd51156de [cercano] Manos libres desactivado.
+[2026-08-14T03:48:02.471Z] OK   c76a26c0b65 [cercano] Apagué el micrófono de manos libres porque llevaba
+[2026-08-14T03:48:04.114Z] OK   c3aa246ccc2 [cercano] ¿A dónde vamos? Toca el micrófono y dime solo el l
+[2026-08-14T03:48:05.800Z] OK   c47179b147e [cercano] No te escuché bien. Toca el micrófono y dime tu de
+[2026-08-14T03:48:07.756Z] OK   c548b4ad6f6 [cercano] Detecté un golpe fuerte. Toca "Estoy bien" si está
+[2026-08-14T03:48:09.399Z] OK   c7e745a18f9 [cercano] Qué bueno que estás bien. Sigo grabando tu ruta.
+[2026-08-14T03:48:11.037Z] OK   c1a61049cd7 [cercano] Ubicando tu posicion para el SOS, un segundo...
+[2026-08-14T03:48:13.811Z] OK   cbb24ca61b0 [cercano] Listo: avisamos a los ciclistas de tu zona, sin tu
+[2026-08-14T03:48:15.344Z] OK   c3168be5919 [cercano] Alerta lista. Toca a quién quieres avisar.
+[2026-08-14T03:48:16.835Z] OK   cbed78e1e21 [cercano] Pulsómetro conectado.
+[2026-08-14T03:48:18.349Z] OK   c64046611da [cercano] Potenciómetro conectado.
+[2026-08-14T03:48:19.834Z] OK   c967e1e3091 [cercano] Sensores Bluetooth desconectados.
+[2026-08-14T03:48:21.885Z] OK   ce7174ddd82 [cercano] Necesito tu ubicación para buscar la historia de e
+[2026-08-14T03:48:23.497Z] OK   c645533741f [cercano] Dame un segundo, busco algo interesante de por aqu
+[2026-08-14T03:48:25.326Z] OK   c82aba686cf [cercano] Necesito saber dónde estás para el clima — activa 
+[2026-08-14T03:48:27.031Z] OK   c45161d0b69 [cercano] No pude traer el clima ahora mismo, prueba de nuev
+[2026-08-14T03:48:28.711Z] OK   caa5d27da8c [cercano] El mapa todavía no está listo, prueba de nuevo en 
+[2026-08-14T03:48:30.305Z] OK   c11d54a3ad5 [cercano] Aquí va el sobrevuelo de tu viaje.
+[2026-08-14T03:48:31.853Z] OK   c0c496526af [cercano] Listo, guardé tu ruta.
+[2026-08-14T03:48:33.673Z] OK   cb1134f67af [cercano] Ruta exportada en GPX. Súbela a Strava, Komoot o W
+[2026-08-14T03:48:35.210Z] OK   cda1028172d [cercano] Copié tu viaje al portapapeles. Pégalo donde quier
+[2026-08-14T03:48:37.270Z] OK   cfacc00ce0e [cercano] No pude guardar la ruta — parece que no hay sufici
+[2026-08-14T03:48:39.120Z] OK   cf7f4cec605 [cercano] Todavía no tienes un viaje en curso para guardar. 
+[2026-08-14T03:48:40.664Z] OK   c9fbea2f792 [cercano] La voz solo funciona desde la página publicada.
+[2026-08-14T03:48:42.432Z] OK   c49fa183636 [cercano] En la app escríbeme la pregunta aquí abajo; la voz
+[2026-08-14T03:48:44.538Z] OK   c827be70264 [cercano] Se nota que bajaste harto el ritmo respecto a como
+[2026-08-14T03:48:46.052Z] OK   c8dfc4c8f51 [cercano] Aquí está la esfera de aplicaciones.
+[2026-08-14T03:48:47.598Z] OK   c589dcc0e4c [cercano] Activa el GPS para empezar a grabar tu ruta.
+[2026-08-14T03:48:49.629Z] OK   c84705c22fa [cercano] Dejé de compartir tu ubicación en vivo. Ese link y
+[2026-08-14T03:48:49.998Z] LISTO. ok=368 fallo=0 saltado=560 frases=464 -> voces-el/manifest.json

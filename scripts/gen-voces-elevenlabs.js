@@ -123,6 +123,56 @@ async function synthConReintento(voiceId, texto, dest, log) {
   return false;
 }
 
+// Frases de SISTEMA: mensajes fijos que Pistero dice todo el tiempo sin importar el
+// arquetipo elegido (pausar/reanudar viaje, GPS, SOS, sensores, clima, voz/mic, etc.)
+// Pedido de Inty (2026-08-14): "lo que mas se pregunte" no deberia caer a voz nativa
+// solo por no ser parte de FRASES_ARQ. Sacadas literal del codigo (h('...'), hCorta('...'),
+// hUrgente('...')) — deben calzar EXACTO con el texto real o el manifest no las va a
+// encontrar en runtime. Usan la voz BASE (Abel/Tatiana), igual que el mensaje de
+// bienvenida: no tienen sabor de arquetipo, son universales.
+const FRASES_SISTEMA = [
+  'Viaje en pausa. Cuando quieras seguir, toca Reanudar.',
+  'Seguimos pedaleando.',
+  'Listo, así te hablo de ahora en adelante.',
+  'Cronómetro reiniciado. La distancia y el recorrido siguen intactos.',
+  '¡Llegamos! Lo lograste. Que descanses esas piernas.',
+  'Vas navegando. Para terminar el viaje usa el botón Terminar, así no se pierde tu ruta.',
+  'Te desviaste del camino, dame un segundo que te recalculo.',
+  'Por esta zona no tengo un camino claro marcado. Sigue no más, cualquier cosa te aviso.',
+  'Vas más rápido que tu promedio de siempre, ¡buen ritmo!',
+  'Vas más lento que tu ritmo habitual. Tranquilo, disfruta el camino.',
+  'Manos libres activado. Dime "Pistero" y lo que necesites, sin tocar nada. Para callarme, di "cállate". Mantengo la pantalla encendida mientras te escucho; si la apagas a mano, dejo de oírte. Se apaga solo tras 12 min sin hablarme.',
+  'Manos libres desactivado.',
+  'Apagué el micrófono de manos libres porque llevabas rato sin usarlo, para cuidarte la batería. Actívalo de nuevo cuando quieras.',
+  '¿A dónde vamos? Toca el micrófono y dime solo el lugar.',
+  'No te escuché bien. Toca el micrófono y dime tu destino de nuevo.',
+  'Detecté un golpe fuerte. Toca "Estoy bien" si estás bien, o preparo el SOS.',
+  'Qué bueno que estás bien. Sigo grabando tu ruta.',
+  'Ubicando tu posicion para el SOS, un segundo...',
+  'Listo: avisamos a los ciclistas de tu zona, sin tu ubicacion exacta ni tu nombre. Si estas en peligro, llama tambien al 133.',
+  'Alerta lista. Toca a quién quieres avisar.',
+  'Pulsómetro conectado.',
+  'Potenciómetro conectado.',
+  'Sensores Bluetooth desconectados.',
+  'Necesito tu ubicación para buscar la historia de este lugar — activa el GPS y pregúntame de nuevo.',
+  'Dame un segundo, busco algo interesante de por aquí...',
+  'Necesito saber dónde estás para el clima — activa el GPS, o dime el lugar, y pregúntame de nuevo.',
+  'No pude traer el clima ahora mismo, prueba de nuevo en un rato.',
+  'El mapa todavía no está listo, prueba de nuevo en un momento.',
+  'Aquí va el sobrevuelo de tu viaje.',
+  'Listo, guardé tu ruta.',
+  'Ruta exportada en GPX. Súbela a Strava, Komoot o Wikiloc.',
+  'Copié tu viaje al portapapeles. Pégalo donde quieras.',
+  'No pude guardar la ruta — parece que no hay suficientes puntos grabados todavía.',
+  'Todavía no tienes un viaje en curso para guardar. Activa el GPS o empieza a navegar primero.',
+  'La voz solo funciona desde la página publicada.',
+  'En la app escríbeme la pregunta aquí abajo; la voz funciona en Chrome.',
+  'Se nota que bajaste harto el ritmo respecto a como arrancaste. Si puedes, date un respiro corto, toma agua y sigue con calma.',
+  'Aquí está la esfera de aplicaciones.',
+  'Activa el GPS para empezar a grabar tu ruta.',
+  'Dejé de compartir tu ubicación en vivo. Ese link ya no sirve — la próxima vez que compartas te doy uno nuevo.',
+];
+
 async function main() {
   const html = fs.readFileSync(path.join(BASE, 'index.html'), 'utf8');
   const FRASES_ARQ = extraerFrasesArq(html);
@@ -148,6 +198,12 @@ async function main() {
         tareas.push({ fid, texto: limpia(fr), arq });
       }
     }
+  }
+  for (const fr of FRASES_SISTEMA) {
+    if (manifest[fr]) continue;
+    const fid = idFor(fr);
+    manifest[fr] = fid;
+    tareas.push({ fid, texto: limpia(fr), arq: 'cercano' }); // voz base, sin sabor de arquetipo
   }
 
   const logPath = path.join(OUT, 'gen.log');
