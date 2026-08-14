@@ -20,7 +20,11 @@ Evaluado por Opus; aquí el estado real y las tareas.
    ubicación del usuario) — que no asuma Santiago para un ciclista en Lima o Bogotá.
 
 ## Tareas (reclamables — pon tu cuenta + rama al tomarlas)
-- **T-SA1 (P0) — Integración Sudamérica: ✅ HECHA Y PROBADA en rama `feature/sudamerica-integrada`.**
+- **T-SA1 (P0) — ✅✅ MERGEADO A PRODUCCIÓN (v8.56, vivo en librepedal.cl).** Marca LibrePedal
+  intacta; descriptor pan-latino vivo; i18n+voz+jerga por país en producción. **FALTA SOLO:
+  desplegar el Worker `worker-ia`** (`cd worker-ia && npx wrangler deploy` + API key ElevenLabs
+  como secreto del Worker) para que la voz premium por país (no-Chile→ElevenLabs) funcione;
+  mientras tanto degrada seguro a voz nativa. Historia previa:
   Opus ya mergeó `feature/i18n-sudamerica` sobre main v8.55, resolvió el conflicto de voz
   (sin `navigator.onLine` + ruteo por país `_cl ? Azure : Eleven`), verificado: **0 conflictos,
   tests 13/13, banco 930 mp3 intacto, branding pan-latino ("cicloturismo latinoamericano"),
