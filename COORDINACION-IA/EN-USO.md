@@ -129,3 +129,11 @@ Lo que agregué (top de lo de Thunderobot, ya en v8.47):
   resetee o Inty suba el plan.
 
 v8.48: deploy en curso con todo lo anterior fusionado. Candado liberado — **LIBRE**.
+
+**v8.49 (cierre, 2026-08-14 ~04:00) — catálogo de voces ElevenLabs 100% completo.**
+Inty subió el plan de ElevenLabs; se generaron los 368 archivos que faltaban (0
+fallos) más 40 frases de sistema nuevas (GPS, SOS, sensores, clima, manos libres,
+etc. — antes cadan a voz nativa por no estar en `FRASES_ARQ`). Total: 466 frases
+únicas x 2 géneros = 930 mp3, verificado sin huecos. Deploy hecho y confirmado en
+producción (`librepedal.cl` sirviendo v8.49, manifest con 466 frases). Candado
+**LIBRE**.
