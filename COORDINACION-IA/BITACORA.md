@@ -4,6 +4,45 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v8.57 — 2026-08-14, sesión lenovo — Cristal en el login + clima real integrado + fix de ícono GPS
+
+Inty pidió auditar consistencia de tema/mapas/iconos/clima en toda la app. Rama
+`fix/consistencia-noche-mapas-iconos-clima` → revisada por Inty vía una demo interactiva
+(artifact con el `clima-fx.js` real corriendo y la tarjeta de `#auth` con el CSS real) →
+aprobada ("procedamos") → mergeada a `main` (`bfc5e0e`+`4dc391c`, merge `c221074`) →
+desplegada. **Verificado en vivo:** `librepedal.cl` sirve `APP_VERSION 8.57`,
+`clima-fx.js` responde 200, la regla `body.tema-cristal #auth` está en el HTML servido.
+Los 3 checks de CI (Tests, Deploy Cloudflare, Build APK) pasaron verdes.
+
+1. **`clima-fx.js`** (nuevo, raíz): integra `COORDINACION-IA/clima-fx-prototipo.js`
+   (motor de dibujo sin tocar, ya aprobado por Inty en iteración previa). Resuelto el
+   z-index que lo tapaba (5→5500 — por encima de `#auth`/5000 y de todas las vistas,
+   por debajo de loading/tutorial/errores/hoja de acciones). Enganchado a clima real de
+   Open-Meteo vía `vigilarClima()` (durante viajes, con `vozActiva` desacoplado del chequeo
+   así el efecto sigue aunque la voz esté apagada) + `_climaFxInicial()` (cubre login/idle,
+   consulta el permiso de geolocalización EN SILENCIO con la Permissions API — nunca pide
+   uno nuevo, para no meter un prompt sorpresa la noche antes del lanzamiento). Mapeo de
+   código WMO→modo en `_climaFxModoDesde()`. Umbral de "sol" (30°C) es la sugerencia del
+   propio SPEC — **pendiente que Inty lo confirme.**
+2. **Tema Cristal en `#auth`/`.auth-box`**: único hueco real que quedaba del tema ya-en-
+   producción (SPEC-TEMAS-APP-WIDE) — la pantalla de login no tenía el revestimiento de
+   vidrio que sí tiene el resto de la app desde v8.52/v8.55.
+3. **Fix real en `index.html:7206`**: `_pausarGPSLibre()` reseteaba el botón "Grabar un
+   paseo" a un estilo verde+emoji de antes del rediseño v8.51 (regresión visual real).
+   Ahora reusa `_actualizarBtnGPS()`, la función correcta que ya existía.
+
+**Verificado antes de mergear:** `tests/run.mjs` 13/13, sintaxis de los 4 `<script>`
+inline + `clima-fx.js` sin errores, probado en navegador local (mapeo WMO→modo correcto,
+Cristal en `#auth`, fix de ícono confirmado con `ig=true/false`, 0 errores de consola
+nuevos).
+
+**Fuera de alcance a propósito** (quedan para después): migración del mapa de navegación
+(`#nav-map`, sigue en Leaflet+`tile.openstreetmap.org` directo) a MapTiler — necesita una
+API key que no tengo; migración completa de íconos a Lucide (395 usos/152 únicos, feature
+grande aparte).
+
+---
+
 ## COORDINACION — 2026-08-14 — sesión lenovo · TAREA-LANZAMIENTO cerrada (v8.51 ya en vivo) + primera rama bajo el CLAUDE.md nuevo
 
 Inty pidió coordinar con la otra cuenta y proceder sin errores. Al sincronizar apareció
