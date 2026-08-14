@@ -10,6 +10,22 @@
 # ningún secreto, y recién ahí publica. Si detecta un secreto, aborta.
 set -euo pipefail
 
+# ── Guardián anti-trampa de coordinación ─────────────────────────────────────
+# El deploy REAL lo hace SIEMPRE GitHub Actions al hacer push/merge a main
+# (.github/workflows/deploy-cloudflare.yml). Desplegar a mano desde una máquina deja
+# producción ADELANTE de git (pasó: una cuenta subió 8.35→8.50 sin pushear, y otra
+# tuvo que rescatarlo de producción). Para que NO vuelva a pasar, este script se niega
+# a correr fuera de CI. Publicar = mergear tu rama a main. Ver CLAUDE.md.
+if [ -z "${GITHUB_ACTIONS:-}" ] && [ "${1:-}" != "--forzar-local" ]; then
+  echo "✋ Deploy a mano BLOQUEADO (a propósito)."
+  echo "   El deploy es AUTOMÁTICO: mergeá tu rama a main y GitHub Actions publica (~40s)."
+  echo "   Así producción nunca queda adelante de git. Ver CLAUDE.md."
+  echo "   (Emergencia real, publicar a mano: bash deploy-seguro.sh --forzar-local)"
+  exit 1
+fi
+# Si se forzó local, saca el flag para no confundir al resto del script.
+[ "${1:-}" = "--forzar-local" ] && shift || true
+
 SRC="$(cd "$(dirname "$0")" && pwd)"
 OUT="$(mktemp -d)"
 trap 'rm -rf "$OUT"' EXIT
