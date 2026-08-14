@@ -1,5 +1,8 @@
 # LibrePedal — reglas de coordinación (LÉELAS, son obligatorias)
 
+> 👉 **¿Retomas el proyecto? Empieza por `COORDINACION-IA/EMPEZAR-AQUI.md`** — estado
+> actual, qué hacer y por dónde, en 2 minutos. Este archivo son las reglas; ese es el mapa.
+
 Hay **DOS cuentas de Claude** trabajando este repo, en **dos máquinas distintas**
 (Thunderobot y Lenovo). Casi todos los problemas de este proyecto han sido de
 coordinación: divergencias, trabajo pisado, producción adelante de git. Estas reglas
