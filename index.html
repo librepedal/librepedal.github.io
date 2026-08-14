@@ -12,14 +12,14 @@
 <meta name="description" content="Tu copiloto en cada pedaleo: navegación tipo Waze, rutas y Pistero, tu compañero ciclista.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Libre Pedal">
-<meta property="og:title" content="Libre Pedal — La app del ciclismo chileno">
-<meta property="og:description" content="Navega tipo Waze, graba tus rutas y súmate a la comunidad ciclista. Pistero, tu copiloto por voz. Hecho en Chile.">
+<meta property="og:title" content="Libre Pedal — La app del cicloturismo latinoamericano">
+<meta property="og:description" content="Navega tipo Waze, graba tus rutas y súmate a la comunidad ciclista. Pistero, tu copiloto por voz. Para toda Latinoamérica.">
 <meta property="og:url" content="https://librepedal.cl">
 <meta property="og:image" content="https://librepedal.cl/icon-512.png">
-<meta property="og:locale" content="es_CL">
+<meta property="og:locale" content="es_419">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Libre Pedal — La app del ciclismo chileno">
-<meta name="twitter:description" content="Navega, graba tus rutas y súmate a la comunidad ciclista. Hecho en Chile.">
+<meta name="twitter:title" content="Libre Pedal — La app del cicloturismo latinoamericano">
+<meta name="twitter:description" content="Navega, graba tus rutas y súmate a la comunidad ciclista. Para toda Latinoamérica.">
 <meta name="twitter:image" content="https://librepedal.cl/icon-512.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1283,7 +1283,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </section>
 
 <section id="v-novedades" class="view">
-<div class="section-info"><h4><i class="fas fa-newspaper"></i> Novedades del ciclismo en Chile</h4><p>Competencias, rodadas y cicloturismo — todo lo que se mueve en el país.</p></div>
+<div class="section-info"><h4><i class="fas fa-newspaper"></i> Novedades del ciclismo</h4><p>Competencias, rodadas y cicloturismo — todo lo que se mueve en tu país.</p></div>
 <div class="gt" id="novedadesTabs">
   <div class="gtt on" onclick="filtrarNovedades('todos',this)">Todos</div>
   <div class="gtt" onclick="filtrarNovedades('competencia',this)"><i class="fas fa-flag-checkered"></i> Competencias</div>
@@ -1504,7 +1504,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.55'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.56'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2782,14 +2782,13 @@ function _reproducirVoz(item){
       _vozArchivo(item, durEst, _id, miGen);
       return;
     }
-    // frase nueva (nombres, calles, números): esa sí se genera en vivo. Antes esto estaba
-    // detrás de `navigator.onLine` — la MISMA trampa que ya se sacó arriba para los mp3
-    // fijos, pero se había quedado acá: si `navigator.onLine` mentía diciendo que no hay
-    // red (pasa seguido), saltaba directo a la voz nativa sin ni intentar la buena. Ahora
-    // se intenta siempre; si de verdad no hay red, `_vozAzureRuntime` ya cae sola a la
-    // nativa por su propio onerror/catch (2026-08-13).
+    // frase nueva (nombres, calles, números): se genera en vivo. Sin candado `navigator.onLine`
+    // (trampa quitada 2026-08-13: miente seguido; los runtimes ya caen solos a la nativa por su
+    // onerror/catch). + Voz por país: chilenos -> Azure es-CL (la marca de siempre); resto de
+    // Latinoamérica -> voz neutra premium (ElevenLabs) para que Pistero no suene chileno fuera de Chile.
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
-    _vozAzureRuntime(item, durEst, miGen);
+    const _cl = !paisUsuario || (''+paisUsuario).toLowerCase().slice(0,2)==='cl';
+    if(_cl){ _vozAzureRuntime(item, durEst, miGen); } else { _vozElevenRuntime(item, durEst, miGen); }
     return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
@@ -2858,6 +2857,23 @@ function _vozAzureRuntime(item, durEst, miGen){
   try{
     const pros=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
     const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&rate='+encodeURIComponent(pros.rate)+'&pitch='+encodeURIComponent(pros.pitch));
+    _vozNeuralAudio=a;
+    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
+    a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
+    a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
+    const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
+  }catch(e){ fallback(); }
+}
+function _vozElevenRuntime(item, durEst, miGen){
+  // Voz neutra latina EN VIVO (ElevenLabs) para usuarios fuera de Chile. Va por el worker
+  // de la expansion (/eltts, la llave está segura en el servidor). Cachea en Cloudflare, así
+  // frases repetidas no vuelven a pegarle a ElevenLabs (ahorra caracteres). Si falla, cae a
+  // la voz chilena Azure (mejor eso que la nativa "gringa").
+  let cayo=false;
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  try{
+    const a=new Audio(IA_URL_NEUTRA+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
@@ -3288,10 +3304,16 @@ const frasesNeutro={
   bajada:["Bajada a la vista: cuidado con la velocidad.","Ahora te toca disfrutar, pero ojo con los frenos.","Aprovecha de descansar las piernas en la bajada.","Ojo con las curvas en la bajada, no hay apuro."]
 };
 const frasesFlavor={
-  ar:{normal:["¡Dale que va, campeón!","Así se pedalea, maestro."],rapido:["¡Pará un poco, loco!"],ciudad:["Ojo con el bondi, que no frena por nadie.","Cuidado con el pozo, la calle está brava."],motivacional:["¡Vamos que se puede!","No aflojes, que ya casi."],parado:["Tomate un mate y seguimos."]},
+  ar:{normal:["¡Dale que va, campeón!","Así se pedalea, maestro."],rapido:["¡Pará un poco, loco!"],ciudad:["Ojo con el bondi, que no frena por nadie.","Cuidado con el pozo, la calle está brava."],motivacional:["¡Vamos que se puede!","No aflojes, que ya casi."],parado:["Tomate un mate y seguimos."],lento:["Dale un poco más, che, que no es un paseo.","Metele que se hace tarde, campeón.","¿Te quedaste sin pilas? Vamos que podés."],subida:["Esta cuesta está brava, pero le damos, campeón.","Bajá un cambio y metele parejo, che.","Dale que la subida también se termina, maestro."],bajada:["Bajada a la vista, ojo con los frenos, che.","Aprovechá y descansá las gambas.","Tranqui en las curvas, no hay apuro, campeón."]},
   mx:{normal:["¡Órale, vas bien chido!","Así se hace, compa."],rapido:["¡Aguanta, no es el Tour!"],ciudad:["Aguas con el camión.","Cuidado con el bache, ¿eh?"],motivacional:["¡Échale ganas, tú puedes!","No te rajes, ya casi."],parado:["Échate un taco y seguimos."]},
   es:{normal:["¡Vas de lujo, máquina!","Así se pedalea, crack."],rapido:["¡Frena un poco, fiera!"],ciudad:["Ojo con el coche que no pone el intermitente.","Cuidado con el bordillo."],motivacional:["¡Vamos, que tú puedes!","¡Ánimo, que ya queda menos!"]},
-  co:{normal:["¡Bien ahí, parcero!","Así se hace, mijo."],rapido:["¡Suave, que no es competencia!"],ciudad:["Ojo con la buseta.","Cuidado con el hueco en la vía."],motivacional:["¡Dele que usted puede!","No se rinda, parce."]}
+  co:{normal:["¡Bien ahí, parcero!","Así se hace, mijo."],rapido:["¡Suave, que no es competencia!"],ciudad:["Ojo con la buseta.","Cuidado con el hueco en la vía."],motivacional:["¡Dele que usted puede!","No se rinda, parce."],lento:["Métale un poquito más, parce, que usted puede.","No se me duerma, mijo, dele.","Suave pero seguro, parce, pero avance."],parado:["Párese un momentico y tómese un agua, parce.","Buen momento para descansar, mijo.","Coja aire, parcero, y seguimos."],subida:["Esta loma está berraca, pero usted es más, parce.","Ponga un cambio suave y dele juicioso, mijo.","Dele que la subida ya casi se acaba, parcero."],bajada:["Bajadita rica, pero ojo con los frenos, parce.","Aproveche y descanse las piernas, mijo.","Suave en las curvas, parcero, no hay afán."]},
+  pe:{normal:["¡Bacán tu ritmo, causa!","Así se pedalea, pata.","Vas chévere, sigue nomás."],rapido:["¡Baja un cambio, causa, no es el Mundial!","Asu, cómo vuelas, con calma.","Frena un toque, pata."],ciudad:["Ojo con la combi, que no respeta a nadie.","Aguas con el micro en el paradero.","Cuidado con el hueco en la pista, causa."],motivacional:["¡Dale que puedes, causa!","No te rajes, pata, ya casi.","Arriba ese ánimo, tú puedes pe."],parado:["Párate nomás y respira, causa.","Buen momento para tomar agua, pata.","Descansa un toque, te lo mereces."],lento:["¿Estás jalado, causa? Mete pata.","Al toque un poco más de ritmo, pe.","Tranquilo nomás, pero no te duermas, causa."],subida:["Esta subida está tranca, pero tú puedes, causa.","Baja un cambio y mete pata, pe.","Arriba nomás, ya falta poco, pata."],bajada:["Bajada rica, pero ojo con el freno, causa.","Aprovecha y descansa las piernas, pata.","Suave con las curvas en la bajada, pe."]},
+  ve:{normal:["¡Vas fino, pana!","Así se pedalea, chamo.","Chévere ese ritmo, vale."],rapido:["¡Épale, baja que no es carrera!","Burda de rápido, chamo, con calma.","Frena un poco, pana."],ciudad:["Ojo con la camioneta que no para.","Cuidado con el hueco, chamo.","Pendiente con la moto, vale."],motivacional:["¡Dale que puedes, pana!","No aflojes, chamo, ya casi.","Arriba ese ánimo, vale."],parado:["Párate un momento y toma agua, pana.","Buen momento pa' descansar, chamo.","Respira y seguimos, vale."],lento:["Métele un poquito más, pana.","No te duermas, chamo, dale.","Suave pero dale, vale."],subida:["Esta subida está dura, pero puedes, pana.","Pon un cambio suave y dale, chamo.","Arriba que ya casi, vale."],bajada:["Bajadita sabrosa, pero ojo con el freno, pana.","Aprovecha y descansa las piernas, chamo.","Suave en las curvas, vale."]},
+  ec:{normal:["¡Bacán tu ritmo, ñaño!","Así se pedalea, pana.","Vas chévere, dale nomás."],rapido:["¡Chuta, baja que no es competencia!","Vas volando, ñaño, con calma.","Frena un poco, pana."],ciudad:["Ojo con la buseta que no para.","Cuidado con el hueco, ñaño.","Pendiente con la moto, pana."],motivacional:["¡Dale que puedes, ñaño!","No aflojes, pana, ya mismo.","Arriba ese ánimo, de una."],parado:["Párate un rato y toma agua, ñaño.","Buen momento para descansar, pana.","Respira y seguimos, ñaño."],lento:["Métele un poquito más, ñaño.","No te duermas, pana, dale.","Suave pero avanza, ñaño."],subida:["Esta subida está dura, pero puedes, ñaño.","Pon un cambio suave y dale, pana.","Arriba que ya falta poco, ñaño."],bajada:["Bajada rica, pero ojo con el freno, ñaño.","Aprovecha y descansa las piernas, pana.","Suave en las curvas, ñaño."]},
+  uy:{normal:["¡Vas bárbaro, bo!","Así se pedalea, crack.","Ta, ese ritmo va joya."],rapido:["¡Pará un poco, bo, no es carrera!","Vas volando, tranquilo.","Bajá un cambio, che."],ciudad:["Ojo con el ómnibus que no para.","Cuidado con el pozo, bo.","Pendiente con la moto, che."],motivacional:["¡Dale que podés, bo!","No aflojes, ya casi, che.","Arriba ese ánimo, ta."],parado:["Pará un rato y tomate un mate, bo.","Buen momento para descansar, che.","Respirá y seguimos, ta."],lento:["Metele un poco más, bo.","No te duermas, che, dale.","Suave pero avanzá, bo."],subida:["Esta cuesta está jodida, pero podés, bo.","Bajá un cambio y metele, che.","Dale que ya casi, ta."],bajada:["Bajada a la vista, ojo con los frenos, bo.","Aprovechá y descansá las gambas.","Tranqui en las curvas, che."]},
+  bo:{normal:["¡Vas bien, compadre!","Así se pedalea, chango.","Buen ritmo, pes."],rapido:["¡Despacio pes, no es carrera!","Vas volando, chango, con calma.","Frena un poco, compadre."],ciudad:["Ojo con el micro que no para.","Cuidado con el hueco, chango.","Pendiente con el minibús, pes."],motivacional:["¡Dale que puedes, compadre!","No aflojes, chango, ya casi.","Arriba ese ánimo, pes."],parado:["Párate un rato y toma agua, compadre.","Buen momento para descansar, chango.","Respira y seguimos, pes."],lento:["Métele un poco más, compadre.","No te duermas, chango, dale.","Suave pero avanza, pes."],subida:["Con esta altura la subida cansa, pero puedes, compadre.","Pon un cambio suave y dale, chango.","Arriba que ya falta poco, pes."],bajada:["Bajada rica, pero ojo con el freno, compadre.","Aprovecha y descansa las piernas, chango.","Suave en las curvas, pes."]},
+  py:{normal:["¡Vas bien, che ra'a!","Así se pedalea nomás.","Buen ritmo luego."],rapido:["¡Despacio na, no es carrera!","Vas volando, che ra'a, tranquilo.","Frena un poco na."],ciudad:["Ojo con el colectivo que no para.","Cuidado con el pozo, che ra'a.","Pendiente con la moto na."],motivacional:["¡Dale que podés luego!","No aflojes che ra'a, ya casi.","Arriba ese ánimo na."],parado:["Pará un rato y tomá un tereré, che ra'a.","Buen momento para descansar na.","Respirá y seguimos luego."],lento:["Metele un poco más na.","No te duermas che ra'a, dale.","Suave pero avanzá luego."],subida:["Esta subida está dura, pero podés che ra'a.","Poné un cambio suave y dale na.","Arriba que ya casi luego."],bajada:["Bajada linda, pero ojo con el freno na.","Aprovechá y descansá las piernas che ra'a.","Suave en las curvas luego."]}
 };
 function paisFrases(){ return (paisUsuario||'').toString().toLowerCase().slice(0,2); }
 function poolPais(cat){
@@ -3480,6 +3502,9 @@ let ultimoMovimientoTime=0, rutaSegCerrada=true, rutaSegDistIni=0;
 // Anécdotas FIDEDIGNAS: datos REALES del lugar sacados de Wikipedia (geolocalizados).
 // Nada inventado; si no hay dato real cercano, Pistero se queda callado.
 const IA_URL='https://librepedal-ia.librepedal.workers.dev';
+// Voz neutra latina (ElevenLabs) para usuarios fuera de Chile — vive en el worker de la
+// expansion Sudamerica (con su propia llave). Chile sigue por IA_URL (Azure es-CL).
+const IA_URL_NEUTRA='https://librepedal-ia-sudamerica.inty405.workers.dev';
 // ===== Chat con Pistero IA: le manda tu perfil + los hospedajes de la comunidad y
 // responde de rutas, mecánica, gastos de viaje y todo lo de la app (por texto y voz). =====
 let pisteroHistorial=[];
