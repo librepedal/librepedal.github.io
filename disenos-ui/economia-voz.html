@@ -1,0 +1,292 @@
+<title>Economía de la Voz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">LibrePedal · Estrategia de voz</p>
+    <h1>La voz de Pistero, sin quemar el presupuesto</h1>
+    <p class="lede"><b>Ya pagas ElevenLabs</b> → la misión no es gastar menos, es <b>repartir bien tu cuota mensual</b>: los caracteres premium para las frases que más se escuchan, y <b>voces genéricas nuestras</b> (gratis) para el resto — nombres, calles, números, relleno. Con un caché compartido, el premium te rinde el doble y nadie te quema la cuota.</p>
+    <div class="hero-stat">
+      <div class="hs"><span class="hs-n">$100</span><span class="hs-l">ElevenLabs / 1M car.</span></div>
+      <div class="hs"><span class="hs-n hs-warn">25×</span><span class="hs-l">más caro que WaveNet</span></div>
+      <div class="hs"><span class="hs-n hs-good">~$0</span><span class="hs-l">clon self-host + caché</span></div>
+    </div>
+  </header>
+
+  <section class="card danger-card">
+    <h2><span class="ic">⚠️</span> El problema, en números</h2>
+    <p>Una frase de Pistero ronda los <b>80 caracteres</b>. Si el chat dinámico usa ElevenLabs:</p>
+    <ul class="tight">
+      <li>≈ <b>$0,008 USD por frase</b> (0,8 centavo).</li>
+      <li>Un usuario que paga <b>$3.000 CLP ≈ $3,2 USD/mes</b> se "come" su cuota en <b>~200 frases nuevas</b> — y ahí ya no queda margen para nada más.</li>
+      <li>Un usuario intensivo (100 mensajes/día) = <b>~$24/mes de costo</b> contra $3,2 de ingreso. <b class="bad">Pérdida de 7×.</b></li>
+    </ul>
+    <p class="fine">Por eso no se trata de "apagar" la voz, sino de que lo ilimitado no toque ElevenLabs.</p>
+  </section>
+
+  <section>
+    <h2 class="sec-h">La arquitectura — 3 capas</h2>
+    <p class="sec-sub">Cada frase se enruta según su tipo. El color = costo.</p>
+
+    <div class="tier tier-bank">
+      <div class="tier-badge">🏦 BANCO</div>
+      <div class="tier-body">
+        <h3>Frases fijas → ElevenLabs pro, pregeneradas</h3>
+        <p>Las ~930 frases del guión de Pistero (2 géneros) se generan <b>una sola vez</b> con la voz profesional y se sirven como <b>mp3 estático</b> (<code>voces-el/</code>). Máxima calidad donde más se escucha.</p>
+        <div class="tier-cost cost-once">Costo: <b>una vez</b> (~93k car. ≈ 1 mes del plan Creator). Ya hecho. ✓</div>
+      </div>
+    </div>
+
+    <div class="flow">▼ lo que NO está en el banco baja a…</div>
+
+    <div class="tier tier-clone">
+      <div class="tier-badge">🧬 CLON + CACHÉ</div>
+      <div class="tier-body">
+        <h3>Frases dinámicas → voz clonada, generada 1 vez y cacheada</h3>
+        <p>Nombres, calles, números, respuestas de chat. Se generan con una <b>voz clonada de Pistero</b> (misma identidad) y se <b>guardan en un caché compartido</b> (R2/Storage) por texto. La 2ª vez que alguien pide "Avenida Providencia" → sale del caché, gratis.</p>
+        <div class="tier-cost cost-cheap">Costo: <b>casi cero</b>. Self-host = solo GPU. El caché mata la repetición entre los 35 usuarios.</div>
+      </div>
+    </div>
+
+    <div class="flow">▼ si no hay red / se pasó del límite…</div>
+
+    <div class="tier tier-native">
+      <div class="tier-badge">🔊 NATIVA</div>
+      <div class="tier-body">
+        <h3>Fallback → voz del navegador</h3>
+        <p>Offline, o cuando un usuario supera su cuota diaria. Suena "de robot" pero la app <b>nunca se queda muda</b>. Ya existe en el código.</p>
+        <div class="tier-cost cost-free">Costo: <b>cero</b>.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec-h">¿Con qué clonamos lo dinámico?</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Opción</th><th>Misma voz de Pistero</th><th>Costo por 1M car.</th><th>Comercial</th><th>Veredicto</th></tr></thead>
+        <tbody>
+          <tr class="win">
+            <td><b>Chatterbox</b> (Resemble AI)<br><span class="sub">self-host, licencia MIT</span></td>
+            <td class="yes">Sí (clona en ~5s)</td>
+            <td class="good">~$0 (solo GPU)</td>
+            <td class="yes">MIT ✓</td>
+            <td><b class="good">Recomendado</b> para lo dinámico</td>
+          </tr>
+          <tr>
+            <td><b>ElevenLabs</b> Instant Clone<br><span class="sub">gestionado</span></td>
+            <td class="yes">Sí, top</td>
+            <td class="bad">$100</td>
+            <td class="yes">Sí</td>
+            <td>Solo para el <b>banco</b>, no para ilimitado</td>
+          </tr>
+          <tr>
+            <td><b>Google WaveNet</b><br><span class="sub">gestionado</span></td>
+            <td class="no">No (voz genérica)</td>
+            <td class="mid">$4</td>
+            <td class="yes">Sí</td>
+            <td>Barato, pero <b>rompe la identidad</b> de Pistero</td>
+          </tr>
+          <tr class="lose">
+            <td><b>XTTS-v2</b> (Coqui)<br><span class="sub">self-host</span></td>
+            <td class="yes">Sí</td>
+            <td class="good">~$0</td>
+            <td class="no">NO comercial ✗</td>
+            <td><b class="bad">Evitar</b> — licencia lo prohíbe</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="fine">La clave: el clon debe sonar como el Pistero del banco, si no la voz "cambia" a mitad de conversación. Por eso Chatterbox (clona la identidad) le gana a WaveNet (genérica).</p>
+  </section>
+
+  <section>
+    <h2 class="sec-h">La economía por usuario / mes</h2>
+    <p class="sec-sub">Supuesto: usuario activo ≈ 900 frases dinámicas/mes, de las cuales ~30% son nuevas (el resto las cachea el sistema). Ingreso: $3.000 CLP ≈ $3,2 USD.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Backend de lo dinámico</th><th>Frases nuevas/mes</th><th>Costo voz/usuario</th><th>Margen vs $3,2</th></tr></thead>
+        <tbody>
+          <tr class="lose"><td>ElevenLabs, sin caché</td><td>900</td><td class="bad">$7,20</td><td class="bad">−$4,00 (pierde)</td></tr>
+          <tr><td>ElevenLabs + caché</td><td>270</td><td class="mid">$2,16</td><td class="mid">+$1,04 (al límite)</td></tr>
+          <tr><td>Google WaveNet + caché</td><td>270</td><td class="good">$0,86</td><td class="good">+$2,34</td></tr>
+          <tr class="win"><td><b>Clon self-host + caché</b></td><td>270</td><td class="good">≈ $0,05</td><td class="good"><b>+$3,15</b> (casi todo margen)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec-h">¿Cuántos mensajes por usuario?</h2>
+    <p class="sec-sub">Solo cuentan las frases <b>nuevas</b> (las cacheadas son gratis e ilimitadas). Límite = guardia anti-abuso, no castigo.</p>
+    <div class="caps">
+      <div class="cap cap-bad">
+        <div class="cap-h">Si lo dinámico fuera ElevenLabs</div>
+        <div class="cap-n">~7<span>frases nuevas / día</span></div>
+        <div class="cap-d">Tacaño. Mala experiencia.</div>
+      </div>
+      <div class="cap cap-mid">
+        <div class="cap-h">Con WaveNet + caché</div>
+        <div class="cap-n">~16<span>frases nuevas / día</span></div>
+        <div class="cap-d">Aceptable, pero voz genérica.</div>
+      </div>
+      <div class="cap cap-good">
+        <div class="cap-h">Clon self-host + caché ⭐</div>
+        <div class="cap-n">150–200<span>interacciones / día</span></div>
+        <div class="cap-d">Generoso. Tope suave de ~50 <b>nuevas</b>/día por si acaso; pasado eso, cae a voz nativa. Nadie te hace perder plata.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card cache-card">
+    <h2><span class="ic">♻️</span> El caché compartido es el multiplicador</h2>
+    <p>Muchas frases "dinámicas" se repiten entre los 35 usuarios: los números 1–100, las ciudades, las calles comunes, los saludos. Si se generan <b>una vez</b> y se guardan por texto:</p>
+    <ul class="tight">
+      <li><b>Pre-cargar</b> números, ciudades de Chile y frases-plantilla → el 60–80% del tráfico dinámico ya nace cacheado.</li>
+      <li>Cada frase nueva que genera <b>un</b> usuario queda gratis para <b>todos</b> los demás.</li>
+      <li>A más usuarios, <b>menos</b> costo marginal por usuario (economía de escala real).</li>
+    </ul>
+  </section>
+
+  <section class="card budget-card">
+    <h2><span class="ic">🎯</span> Cómo repartir tu cuota mensual (ya pagada)</h2>
+    <p>El banco fijo se sirve como mp3 estático → <b>no consume cuota mes a mes</b> (solo cuando cambias frases del guión). Así, casi toda tu cuota mensual queda libre para gastarla donde se nota:</p>
+    <div class="split">
+      <div class="split-col split-premium">
+        <div class="split-h">💎 PREMIUM (ElevenLabs)</div>
+        <p>Los <b>momentos que importan</b>: saludo, intro de Pistero, <b>logro desbloqueado</b> (que lo anuncie con emoción), pre-vuelo, cierres. Donde la voz de calidad marca diferencia.</p>
+      </div>
+      <div class="split-col split-generic">
+        <div class="split-h">🔊 GENÉRICO (gratis)</div>
+        <p>El <b>relleno repetitivo</b>: números, nombres de calles, confirmaciones ("recalculando", "girá a la derecha"). No necesita voz cara — nadie la saborea.</p>
+      </div>
+    </div>
+    <p class="fine">Ejemplo con plan <b>Creator (100k car./mes)</b>: alcanza para ~1.250 frases premium nuevas al mes ÷ 35 usuarios ≈ <b>~35 momentos premium por usuario/mes</b> (más de 1 al día). Con el caché, rinde bastante más. Si me dices tu plan, te calculo el reparto exacto.</p>
+  </section>
+
+  <section class="card plan-card">
+    <h2><span class="ic">🚀</span> Plan para tus 35 usuarios (ahora)</h2>
+    <ol class="plan">
+      <li><b>Fase 1 (ya casi lista):</b> banco ElevenLabs pregenerado ✓ + <b>caché compartido</b> de lo dinámico (generar-una-vez con lo que ya tienes: Azure/ElevenLabs) + fallback nativo. Esto solo ya te protege muchísimo.</li>
+      <li><b>Fase 2:</b> montar el <b>clon Chatterbox</b> como endpoint (tu máquina de ComfyUI ya tiene GPU, o un GPU serverless barato tipo Runpod/Replicate). Lo dinámico pasa a costar ~$0 y suena a Pistero.</li>
+      <li><b>Fase 3:</b> límite por usuario (cuota diaria de frases <b>nuevas</b>) + pre-carga de números/ciudades en el caché.</li>
+      <li><b>Plan ElevenLabs:</b> para el banco te basta <b>Creator ($22/mes)</b> — tiene clonación pro y 100k car., justo para regenerar el guión. No necesitas Pro/Scale.</li>
+    </ol>
+  </section>
+
+  <section class="card verdict">
+    <h2>Recomendación en una línea</h2>
+    <p><b>ElevenLabs solo para el banco fijo (una vez). Clon Chatterbox self-host + caché compartido para todo lo dinámico. Voz nativa de fallback. Límite = ~50 frases nuevas/usuario/día.</b> Resultado: das voz de calidad casi ilimitada, con margen de ~$3 por usuario, y ningún abuso te hace perder plata.</p>
+  </section>
+
+  <footer>
+    <p class="fine"><b>Supuestos (verificar):</b> USD/CLP ≈ 950 · frase ≈ 80 car. · usuario activo ≈ 900 frases/mes con ~30% nuevas · precios ElevenLabs/WaveNet 2026 (Multilingual v2 = 1 car./crédito). Los números son para decidir, no exactos: ajústalos con tu uso real.</p>
+    <p class="fine">Fuentes: precios ElevenLabs 2026 y alternativas open-source (Chatterbox MIT, XTTS no-comercial, WaveNet).</p>
+  </footer>
+
+</div>
+
+<style>
+  :root{
+    --bg:#0b0f17; --panel:#121826; --card:#161f30; --line:rgba(255,255,255,0.08);
+    --ink:#e9eef8; --mut:#9aa7bd; --faint:#66768f;
+    --p:#fc4c02; --p-hi:#ff7a3c; --gold:#ffd700; --clone:#4aa8ff;
+    --good:#3ecf8e; --mid:#f6c445; --bad:#ff5c5c;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:30px 20px 70px}
+  h1,h2,h3{text-wrap:balance;letter-spacing:-.01em}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:5px;color:#cfe0ff}
+  section{margin-top:34px}
+  .sec-h{font-size:1.35rem;margin:0 0 4px}
+  .sec-sub{color:var(--mut);font-size:.88rem;margin:0 0 16px}
+  b.good{color:var(--good)} b.bad{color:var(--bad)}
+
+  /* hero */
+  .hero{padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--p-hi);margin:0 0 10px}
+  .hero h1{font-size:2.1rem;line-height:1.1;margin:0 0 12px}
+  .lede{color:var(--mut);font-size:1rem;max-width:60ch;margin:0}
+  .hero-stat{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+  .hs{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .hs-n{display:block;font-size:1.7rem;font-weight:800;font-variant-numeric:tabular-nums}
+  .hs-warn{color:var(--bad)} .hs-good{color:var(--good)}
+  .hs-l{display:block;font-size:.72rem;color:var(--faint);margin-top:2px}
+
+  /* cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 20px}
+  .card h2{font-size:1.15rem;margin:0 0 10px;display:flex;align-items:center;gap:9px}
+  .ic{font-size:1.1rem}
+  .danger-card{border-color:rgba(255,92,92,.3);background:linear-gradient(180deg,rgba(255,92,92,.07),transparent)}
+  ul.tight,ol.plan{margin:8px 0 0;padding-left:20px}
+  ul.tight li,ol.plan li{margin-bottom:7px;font-size:.9rem;color:#cdd7e8}
+  .fine{font-size:.76rem;color:var(--faint);margin:12px 0 0}
+
+  /* tiers */
+  .tier{display:flex;gap:0;border-radius:16px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px}
+  .tier-badge{flex:0 0 108px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:.82rem;padding:14px 8px;letter-spacing:.02em}
+  .tier-body{flex:1;padding:15px 17px;background:var(--card)}
+  .tier-body h3{font-size:.98rem;margin:0 0 6px}
+  .tier-body p{margin:0;font-size:.85rem;color:var(--mut)}
+  .tier-cost{margin-top:9px;font-size:.78rem;font-weight:600;padding:6px 10px;border-radius:8px;display:inline-block}
+  .cost-once{background:rgba(255,215,0,.12);color:var(--gold)}
+  .cost-cheap{background:rgba(62,207,142,.12);color:var(--good)}
+  .cost-free{background:rgba(255,255,255,.07);color:var(--mut)}
+  .tier-bank .tier-badge{background:rgba(255,215,0,.14);color:var(--gold)}
+  .tier-clone .tier-badge{background:rgba(74,168,255,.14);color:var(--clone)}
+  .tier-native .tier-badge{background:rgba(255,255,255,.06);color:var(--mut)}
+  .flow{text-align:center;color:var(--faint);font-size:.74rem;padding:7px 0}
+
+  /* tables */
+  .table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-size:.83rem;min-width:520px}
+  th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--panel);color:var(--mut);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:last-child td{border-bottom:0}
+  td .sub{font-size:.72rem;color:var(--faint)}
+  .yes{color:var(--good)} .no{color:var(--bad)}
+  .good{color:var(--good);font-weight:700;font-variant-numeric:tabular-nums}
+  .mid{color:var(--mid);font-weight:700;font-variant-numeric:tabular-nums}
+  .bad{color:var(--bad);font-weight:700;font-variant-numeric:tabular-nums}
+  tr.win{background:rgba(62,207,142,.07)}
+  tr.lose{background:rgba(255,92,92,.06)}
+
+  /* caps */
+  .caps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .cap{border-radius:14px;padding:15px;border:1px solid var(--line);background:var(--card)}
+  .cap-h{font-size:.74rem;color:var(--mut);font-weight:700;min-height:2.4em}
+  .cap-n{font-size:2rem;font-weight:800;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+  .cap-n span{display:block;font-size:.62rem;font-weight:600;color:var(--faint);letter-spacing:.02em}
+  .cap-d{font-size:.74rem;color:var(--mut)}
+  .cap-bad{border-color:rgba(255,92,92,.3)} .cap-bad .cap-n{color:var(--bad)}
+  .cap-mid{border-color:rgba(246,196,69,.3)} .cap-mid .cap-n{color:var(--mid)}
+  .cap-good{border-color:rgba(62,207,142,.4);background:linear-gradient(180deg,rgba(62,207,142,.08),var(--card))} .cap-good .cap-n{color:var(--good)}
+
+  .budget-card{border-color:rgba(255,215,0,.25)}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .split-col{border-radius:12px;padding:13px 14px;border:1px solid var(--line)}
+  .split-h{font-size:.74rem;font-weight:800;letter-spacing:.04em;margin-bottom:6px}
+  .split-col p{margin:0;font-size:.82rem;color:var(--mut)}
+  .split-premium{background:rgba(255,215,0,.08);border-color:rgba(255,215,0,.3)}
+  .split-premium .split-h{color:var(--gold)}
+  .split-generic{background:rgba(255,255,255,.03)}
+  .split-generic .split-h{color:var(--mut)}
+  .cache-card{border-color:rgba(74,168,255,.25)}
+  .plan-card{border-color:rgba(252,76,2,.25)}
+  ol.plan li{margin-bottom:9px}
+  .verdict{background:linear-gradient(150deg,rgba(252,76,2,.14),rgba(255,215,0,.05));border-color:rgba(252,76,2,.4)}
+  .verdict h2{color:var(--p-hi)}
+  .verdict p{margin:0;font-size:.95rem}
+  footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
+
+  @media(max-width:560px){
+    .hero h1{font-size:1.7rem}
+    .caps{grid-template-columns:1fr}
+    .split{grid-template-columns:1fr}
+    .tier{flex-direction:column}
+    .tier-badge{flex-basis:auto;flex-direction:row;gap:6px;justify-content:flex-start;padding:9px 15px}
+  }
+</style>
