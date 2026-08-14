@@ -11,6 +11,11 @@ git fetch origin && git checkout main && git pull --ff-only origin main
 Reglas completas en `../CLAUDE.md` (auto-cargado): nunca commit directo a main; una rama
 por tarea; deploy = merge a main (automático); NO deploy manual; tests 13/13 antes de mergear.
 
+## 1-bis) ⚠️ LEE ANTES de tocar Worker/Cloudflare/ElevenLabs
+`LECCIONES-APRENDIDAS-2026-08-14.md` — evita repetir el vía crucis (cuenta CF correcta,
+bug de `wrangler login` en Windows → usar token, redeploy tras `secret put`, validar
+ElevenLabs con TTS no con /v1/user, etc.). **Ahorra horas.**
+
 ## 2) Estado actual (verificado)
 - **Producción: v8.55 EN VIVO**, estable, cero errores. Tests 13/13.
 - Ya en `main`: tema Sólido/Cristal + íconos Font Awesome + taller GPS + voces por arquetipo.
@@ -28,6 +33,7 @@ expansión. Sin eso → queda en su rama, sin riesgo.
 | **P1/P2** | **Backlog general** (21 tareas: perf, PWA, accesibilidad, código, seguridad) | `BACKLOG-MEJORAS-2026-08-14.md` |
 | **P1** | **Voz clon local** (indistinguible, listo; espera ✓ de Inty para generar banco ampliado) | `VOZ-CLON-LOCAL-2026-08-14.md` |
 | **P2** | **Tema Cristal**: falta verificar en teléfono + afinar si algo se ve mal (botones/Darma ya en vidrio) | `SPEC-TEMAS-APP-WIDE-2026-08-14.md` |
+| **P2** | **Animación rueda-oro** (login): en `wip/rueda-oro-necesita-simplificarse`, se ve mal a tamaño real → simplificar (mockup→✓ Inty) | `ANIMACION-RUEDA-ORO-2026-08-14.md` |
 
 ## 5) Auditoría CEO (contexto de por qué cada tarea)
 `AUDITORIA-CEO-2026-08-14.md` — revisión de toda la app por área, priorizada.

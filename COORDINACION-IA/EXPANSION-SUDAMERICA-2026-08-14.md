@@ -21,8 +21,7 @@ Evaluado por Opus; aquí el estado real y las tareas.
 
 ## Tareas (reclamables — pon tu cuenta + rama al tomarlas)
 - **T-SA1 (P0) — ✅✅ MERGEADO A PRODUCCIÓN (v8.56, vivo en librepedal.cl).** Marca LibrePedal
-  intacta; descriptor pan-latino vivo; i18n+voz+jerga por país en producción. **FALTA SOLO:
-  desplegar el Worker `worker-ia`** (`cd worker-ia && npx wrangler deploy` + API key ElevenLabs
+  intacta; descriptor pan-latino vivo; i18n+voz+jerga por país en producción. **WORKER DESPLEGADO Y FUNCIONANDO (2026-08-14): voz premium por pais VIVA.** (Antes: faltaba desplegar el Worker `worker-ia`** (`cd worker-ia && npx wrangler deploy` + API key ElevenLabs
   como secreto del Worker) para que la voz premium por país (no-Chile→ElevenLabs) funcione;
   mientras tanto degrada seguro a voz nativa.
   **⚠️ DELEGADO A LENOVO/THUNDEROBOT (tiene las credenciales):** el worker `librepedal-ia` vive

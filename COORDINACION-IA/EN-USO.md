@@ -256,6 +256,33 @@ Candado **LIBRE**.
 
 ---
 
+**LIBRE** - sesion lenovo, 2026-08-14 ~21:20, cierre. `index.html` en rama
+`fix/consistencia-noche-mapas-iconos-clima` (forkeada de `origin/main`, NO toca
+`fix/voz-elevenlabs-arquetipo` ni `wip/rueda-oro-necesita-simplificarse`), commit
+`bfc5e0e`, pusheada. Inty pidio auditar consistencia de tema/mapas/iconos/clima
+en toda la app. Hecho en esta pasada: (1) fix real de regresion visual en boton
+GPS libre (linea ~7206 volvia al verde viejo pre-rediseno v8.51 — reusa
+`_actualizarBtnGPS()`), (2) tema Cristal (ya en produccion, ver
+SPEC-TEMAS-APP-WIDE) extendido a la pantalla de login `#auth`+`.auth-box` (unico
+hueco real encontrado ahi), (3) `COORDINACION-IA/clima-fx-prototipo.js` integrado
+de verdad a `index.html` como `clima-fx.js` — z-index resuelto (5→5500,
+justificacion completa en el propio archivo), enganchado a clima real via
+`vigilarClima()` (viajes) + `_climaFxInicial()` (login/idle, sin pedir permiso
+nuevo de geolocalizacion). Version 8.56→8.57. Verificado: `tests/run.mjs` 13/13,
+sintaxis de los `<script>` + clima-fx.js sin errores, probado en navegador local
+(mapeo WMO→modo, Cristal en #auth, fix de icono, 0 errores de consola nuevos).
+**Inty pidio explicitamente ver el resultado antes de que se suba como
+actualizacion** - esta rama NO se mergea a main ni se deploya sola, queda para
+que la revise. Detalle completo en el mensaje del commit `bfc5e0e`.
+Fuera de alcance a proposito: migracion completa de iconos a Lucide (395
+usos/152 unicos, feature grande aparte) y consolidacion del mapa de navegacion
+(`#nav-map`) a MapTiler (sigue en Leaflet+`tile.openstreetmap.org` directo,
+inconsistente con el mapa principal que ya esta en MapLibre — necesita una API
+key de MapTiler que no tengo). Umbral de "sol" en clima-fx (30°C) es el
+sugerido en el SPEC, queda pendiente que Inty lo confirme.
+
+---
+
 **DELEGO ESTO** - sesion lenovo se queda sin credito, Inty pidio delegar en vez de
 seguir yo. Rama `wip/rueda-oro-necesita-simplificarse` (pusheada, NO mergeada,
 NO tocar main con esto sin que Inty vea el resultado primero):
