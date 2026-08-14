@@ -60,6 +60,39 @@ body.tema-cristal{--surf:rgba(255,255,255,0.055);--surf-2:rgba(255,255,255,0.03)
 .tema-prev--cristal{background:linear-gradient(135deg,rgba(252,76,2,.28),rgba(30,107,255,.24));border:1px solid rgba(255,255,255,.22)}
 .tema-prev--cristal span{background:rgba(255,255,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
 .tema-prev--cristal span:first-child{background:rgba(255,150,90,.72)}
+/* ===== TEMA CRISTAL — revestimiento de superficies (solo activo con body.tema-cristal;
+   en Sólido no cambia nada). Contenedores en vidrio translúcido sobre el fondo. ===== */
+body.tema-cristal .trip-card{
+  background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.03))!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 10px 30px -12px rgba(0,0,0,.6)}
+body.tema-cristal .hero-viaje{
+  background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.13);
+  -webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 10px 30px -12px rgba(0,0,0,.55)}
+body.tema-cristal .stat-card{
+  background:rgba(255,255,255,.06);border:.5px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 20px -10px rgba(0,0,0,.5)}
+body.tema-cristal .speed-display,
+body.tema-cristal .performance-bar,
+body.tema-cristal .chart-container{
+  background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.03))!important;
+  border:1px solid rgba(255,255,255,.13)!important;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+body.tema-cristal .tab-pill{
+  background:rgba(255,255,255,.06);border:.5px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.tema-cristal nav{
+  background:rgba(20,27,46,.55);border-top:1px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3)}
+body.tema-cristal .umenu{
+  background:rgba(26,35,60,.72);border:1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3)}
+body.tema-cristal .user-list-modal{
+  background:rgba(10,15,26,.80);
+  -webkit-backdrop-filter:blur(20px) saturate(1.2);backdrop-filter:blur(20px) saturate(1.2)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);color:#fff;overflow-x:hidden;padding-bottom:70px;min-height:100vh;display:flex;flex-direction:column}
 /* Los popups del mapa (MapLibre y Leaflet, se usan ambos según la pantalla) traen
@@ -1456,7 +1489,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.51'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.52'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
