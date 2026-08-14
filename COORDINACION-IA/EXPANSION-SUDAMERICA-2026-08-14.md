@@ -20,13 +20,14 @@ Evaluado por Opus; aquí el estado real y las tareas.
    ubicación del usuario) — que no asuma Santiago para un ciclista en Lima o Bogotá.
 
 ## Tareas (reclamables — pon tu cuenta + rama al tomarlas)
-- **T-SA1 (P0) — Mergear `feature/i18n-sudamerica` a main.** Owner: LIBRE.
-  Resolver el ÚNICO conflicto (index.html ~2785, voz dinámica): conservar el fix de main
-  (SIN el candado `navigator.onLine`) **y** sumar el ruteo por país
-  (`_cl ? _vozAzureRuntime : _vozElevenRuntime`). OJO: es un merge 3-way, NO borra los 930
-  mp3 de `voces-el/` (la rama es previa a ese banco; el merge los conserva). Verificar
-  `node tests/run.mjs` 13/13 + que el **Worker** (`worker-ia`) se despliegue aparte (revisar
-  `wrangler.toml`). **Necesita ✓ de Inty al rebranding pan-latino** antes de mergear.
+- **T-SA1 (P0) — Integración Sudamérica: ✅ HECHA Y PROBADA en rama `feature/sudamerica-integrada`.**
+  Opus ya mergeó `feature/i18n-sudamerica` sobre main v8.55, resolvió el conflicto de voz
+  (sin `navigator.onLine` + ruteo por país `_cl ? Azure : Eleven`), verificado: **0 conflictos,
+  tests 13/13, banco 930 mp3 intacto, branding pan-latino ("cicloturismo latinoamericano"),
+  worker `?eltts=` integrado.** FALTA SOLO: (1) **✓ de Inty** a la marca pan-latino; (2) merge
+  de `feature/sudamerica-integrada` → main (deploy web auto); (3) **desplegar el Worker
+  `worker-ia` aparte** (`cd worker-ia && npx wrangler deploy`, revisar `wrangler.toml` + que
+  la API key ElevenLabs esté como secreto del Worker). Con eso, parità 100% por país.
 - **T-SA2 (revisado) — Zonas rojas: NO fabricar.** Los "puntos referenciales" (línea ~4569,
   `ZONAS_ROJAS`) son datos de SEGURIDAD reales (CIPER/prensa) de Chile. ⚠️ **PROHIBIDO
   inventar zonas de peligro para otros países** (regla de Inty: seguridad = dato real o nada).
