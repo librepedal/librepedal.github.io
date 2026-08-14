@@ -51,6 +51,15 @@ body.tema-cristal{--surf:rgba(255,255,255,0.055);--surf-2:rgba(255,255,255,0.03)
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   body.tema-cristal{--surf:rgba(22,28,45,0.92);--surf-2:rgba(15,21,36,0.92);--surf-blur:0px}
 }
+/* Mini-preview del acabado en el selector de tema (Preferencias). */
+.tema-prev{width:46px;height:28px;margin:0 auto 6px;border-radius:7px;display:flex;flex-direction:column;gap:3px;padding:5px;justify-content:center}
+.tema-prev span{height:5px;border-radius:3px;display:block}
+.tema-prev--solido{background:#141a2b;border:1px solid rgba(255,255,255,.09)}
+.tema-prev--solido span{background:#2a3350}
+.tema-prev--solido span:first-child{background:var(--p)}
+.tema-prev--cristal{background:linear-gradient(135deg,rgba(252,76,2,.28),rgba(30,107,255,.24));border:1px solid rgba(255,255,255,.22)}
+.tema-prev--cristal span{background:rgba(255,255,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.tema-prev--cristal span:first-child{background:rgba(255,150,90,.72)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);color:#fff;overflow-x:hidden;padding-bottom:70px;min-height:100vh;display:flex;flex-direction:column}
 /* Los popups del mapa (MapLibre y Leaflet, se usan ambos según la pantalla) traen
@@ -1389,6 +1398,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <div class="customization-section" style="margin-top:0"><h3><i class="fas fa-bolt" style="color:var(--p);margin-right:6px"></i>Estilo de energía (esfera)</h3><div class="accessory-grid" id="estilosGrid"></div></div>
   <div class="customization-section"><h3><i class="fas fa-image" style="color:var(--p);margin-right:6px"></i>Fondo de la esfera</h3><div class="accessory-grid" id="fondosEsferaGrid"></div></div>
   <div class="customization-section"><h3><i class="fas fa-person-biking" style="color:var(--p);margin-right:6px"></i>Actividad</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia cómo calculo tus rutas y cómo te habla Pistero. El ciclismo es el modo de siempre.</p><div class="accessory-grid" id="actividadGrid"></div></div>
+  <div class="customization-section"><h3><i class="fas fa-layer-group" style="color:var(--p);margin-right:6px"></i>Estilo de interfaz</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Cambia el acabado de toda la app. Sólido es el de siempre; Cristal usa vidrio translúcido sobre el fondo. Se aplica al instante.</p><div class="accessory-grid" id="temaUIGrid"></div></div>
   <div class="customization-section" id="cicloCargadoBox" style="display:none"><h3><i class="fas fa-suitcase-rolling" style="color:var(--p);margin-right:6px"></i>¿Cómo andas en bici?</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Un cicloviajero con alforjas anda a otro ritmo que un rutero liviano — esto ajusta a qué pendiente y velocidad te aviso.</p><div style="display:flex;gap:8px"><button class="ab sec" id="btnRutero" style="flex:1;margin:0" onclick="setCicloCargado(false)"><i class="fas fa-flag-checkered"></i> Rutero (liviano)</button><button class="ab sec" id="btnCicloviajero" style="flex:1;margin:0" onclick="setCicloCargado(true)"><i class="fas fa-suitcase-rolling"></i> Cicloviajero (cargado)</button></div></div>
   <div class="customization-section"><h3><i class="fas fa-masks-theater" style="color:var(--p);margin-right:6px"></i>Tipos de Pistero</h3><p style="font-size:0.72rem;color:#9fb3c8;margin:0 0 8px">Es el mismo Pistero: cambia el tono con el que te habla.</p><div id="personalidadGrid" class="personalidad-grid"></div></div>
 </div>
@@ -2144,6 +2154,18 @@ function elegirActividad(id, silencioso){
 function renderActividadGrid(){
   const c=document.getElementById('actividadGrid'); if(!c) return;
   c.innerHTML=ACTIVIDADES.map(function(a){ return '<div class="custom-option'+(a.id===actividadTipo?' selected':'')+'" onclick="elegirActividad(\''+a.id+'\')"><div class="check">OK</div><div class="modo-ico-svg" style="color:'+a.color.p+'">'+MODO_SVG[a.id]+'</div><div class="label" style="font-size:0.72rem">'+a.label.replace(/^\S+\s/,'')+'</div></div>'; }).join('');
+}
+// Grid del selector de tema de UI (Sólido/Cristal). Mismo markup que actividad
+// (.custom-option + .check + .label) + un mini-preview visual del acabado.
+function renderTemaUIGrid(){
+  const c=document.getElementById('temaUIGrid'); if(!c) return;
+  const temas=[{id:'solido',label:'Sólido'},{id:'cristal',label:'Cristal'}];
+  c.innerHTML=temas.map(function(t){
+    return '<div class="custom-option'+(t.id===temaUI?' selected':'')+'" onclick="elegirTemaUI(\''+t.id+'\')">'+
+      '<div class="check">OK</div>'+
+      '<div class="tema-prev tema-prev--'+t.id+'"><span></span><span></span></div>'+
+      '<div class="label" style="font-size:0.72rem">'+t.label+'</div></div>';
+  }).join('');
 }
 // El mismo selector, pero en la primera pantalla (registro) — antes el modo
 // quedaba escondido dentro de Perfil → Preferencias, así que casi nadie lo
@@ -3127,7 +3149,7 @@ function initCustomization(){ try{ renderPistCustom(); }catch(e){}
                ['customizePanueloGrid',panueloOptions,selectedPanuelo,'selectPanuelo',false]];
   map.forEach(function(m){ const el=document.getElementById(m[0]); if(el) el.innerHTML=gridHTML(m[1],m[2],m[3],m[4]); });
   updatePreview(); updateCustomizePreview(); renderEstilos(); renderFondosEsfera();
-  renderActividadGrid(); renderPersonalidadGrid();
+  renderActividadGrid(); renderPersonalidadGrid(); renderTemaUIGrid();
   actualizarBadgeAdmin();
 }
 // Aviso de nuevos registros desde la ultima vez que el admin miro el Panel Admin
@@ -4013,6 +4035,7 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
     // elección al volver a entrar desde un teléfono nuevo (quedaba pisada por el
     // default de este dispositivo, 'ciclismo'/'cercano', en vez de conservarse).
     if(_prevData.actividad && ACTIVIDADES.some(function(a){return a.id===_prevData.actividad;})) actividadTipo=_prevData.actividad;
+    if(_prevData.temaUi==='solido'||_prevData.temaUi==='cristal'){ temaUI=_prevData.temaUi; try{localStorage.setItem('lp_tema_ui',temaUI);}catch(e){} if(typeof _aplicarTemaUI==='function') _aplicarTemaUI(); }
     if(_prevData.personalidad) pisteroPersonalidad=_prevData.personalidad;
   }
   try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
