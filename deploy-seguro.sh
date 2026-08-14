@@ -16,14 +16,17 @@ trap 'rm -rf "$OUT"' EXIT
 
 echo "→ armando carpeta limpia..."
 cd "$SRC"
-for f in *.html sw.js manifest.json version.txt _headers _redirects robots.txt favicon.ico; do
+for f in *.html *.js manifest.json version.txt _headers _redirects robots.txt favicon.ico; do
   [ -f "$f" ] && cp "$f" "$OUT/"
 done
+# `*.js` cubre sw.js + los modulos nuevos que carga index.html (voz-elevenlabs.js,
+# perfil-comunidad.js). El codigo de Workers NO va: vive en worker-auth/ y worker-ia/
+# (subcarpetas), no en la raiz, asi que este glob no lo toca.
 # `voces` lleva las voces pregeneradas y la detectó el control de completitud de más abajo
 # cuando se me quedó fuera. `demo-voces` y `resources` son material público del sitio.
 # NO van: worker-ia / worker-auth (código de Workers), scripts, tests, concepts,
 # prototipos, android, COORDINACION-IA. Nada de eso lo sirve el navegador.
-for d in icons img images assets fonts sonidos audio functions voces demo-voces resources; do
+for d in icons img images assets fonts sonidos audio functions voces voces-el demo-voces resources; do
   [ -d "$d" ] && cp -r "$d" "$OUT/"
 done
 cp *.png *.jpg *.jpeg *.svg *.webp *.mp3 *.ogg "$OUT/" 2>/dev/null || true

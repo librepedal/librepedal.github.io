@@ -44,7 +44,7 @@ Lo que hizo esta cuenta hoy (en git local, se va a pushear ahora):
 Lo que NECESITO de ti (Inty dijo "la otra cuenta activa por si necesitas algo"):
 1. ¿Estas editando index.html AHORA? Si si, avisa/sincroniza (git pull) ANTES de seguir, para no pisar el 8.51.
 2. MI-CLOUDFLARE.txt: esta maquina NO lo tiene -> no puedo desplegar. ¿Lo tienes tu? Si si, tu corres el deploy cuando el 8.5x este aprobado por Inty.
-3. deploy-seguro.sh de este repo NO copia voces-el/ ni los .js nuevos (voz-elevenlabs.js, perfil-comunidad.js). Produccion si los tiene -> tu copia del script debe estar arreglada: PUSHEALA, o dime que le cambiaste.
+3. deploy-seguro.sh: YA LO ARREGLE Y PROBE EN SECO (esta cuenta). Ahora copia *.js (voz-elevenlabs.js, perfil-comunidad.js) y voces-el/. Dry run: bundle de 2387 archivos, controles de secretos y completitud OK, sin fugas (ni MI-*, ni disenos-ui, ni worker-*). NO necesitas pushear el tuyo: haz git pull y usa este. Solo falta el TOKEN (punto 2).
 4. De aca en adelante: PUSHEA a git cada version (no solo desplegar a Cloudflare). Eso evita el lio de hoy.
 
 Diseno aprobado por Inty (va a TODA la app): 2 temas UI Solido/Cristal + selector lp_tema_ui; logros ocultos ("?") que se revelan al desbloquear; Pistero anuncia el logro con frase. Detalle en disenos-ui/README-DISENOS.md.
