@@ -41,6 +41,16 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
+/* ── Temas de UI app-wide (Sólido / Cristal) · ver COORDINACION-IA/SPEC-TEMAS-APP-WIDE-2026-08-14.md
+   Sólido = DEFAULT = look actual (cero cambio). Cristal solo se activa con la clase
+   body.tema-cristal, que enciende el usuario en Preferencias. TODO esto es aditivo e
+   inerte por defecto: si nadie enciende Cristal, no cambia ni un pixel de la app. ── */
+:root{--surf:#141a2b;--surf-2:#0f1524;--surf-br:rgba(255,255,255,0.09);--surf-blur:0px}
+body.tema-cristal{--surf:rgba(255,255,255,0.055);--surf-2:rgba(255,255,255,0.03);--surf-br:rgba(255,255,255,0.13);--surf-blur:14px}
+/* Fallback: navegadores sin backdrop-filter → superficies semi-opacas sólidas (texto legible). */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  body.tema-cristal{--surf:rgba(22,28,45,0.92);--surf-2:rgba(15,21,36,0.92);--surf-blur:0px}
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);color:#fff;overflow-x:hidden;padding-bottom:70px;min-height:100vh;display:flex;flex-direction:column}
 /* Los popups del mapa (MapLibre y Leaflet, se usan ambos según la pantalla) traen
@@ -609,6 +619,8 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 </style>
 </head>
 <body>
+<script>/* anti-parpadeo del tema: pone la clase antes de pintar. Default 'solido' = look actual. */
+try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='cristal')?'cristal':'solido'));}catch(e){document.body.classList.add('tema-solido');}</script>
 
 <style>
 /* Logo oficial quieto al centro + rueda de radios finos girando en naranjo (relieve leve en la goma). */
@@ -2098,6 +2110,23 @@ function _aplicarTemaActividad(){
   document.documentElement.style.setProperty('--p', c.p);
   document.documentElement.style.setProperty('--g', c.g);
 }
+// ── Tema de UI app-wide (Sólido / Cristal). Mismo patrón que la actividad: localStorage
+//    + Firestore + una clase en <body>. Sólido = default = look actual. Ver
+//    COORDINACION-IA/SPEC-TEMAS-APP-WIDE-2026-08-14.md
+let temaUI = (function(){ try{ return localStorage.getItem('lp_tema_ui')||'solido'; }catch(e){ return 'solido'; } })();
+function _aplicarTemaUI(){
+  if(!document.body) return;
+  document.body.classList.remove('tema-solido','tema-cristal');
+  document.body.classList.add('tema-'+(temaUI==='cristal'?'cristal':'solido'));
+}
+function elegirTemaUI(id, silencioso){
+  if(id!=='solido' && id!=='cristal') return;
+  temaUI=id; try{ localStorage.setItem('lp_tema_ui',id); }catch(e){}
+  if(typeof cu!=='undefined' && cu){ try{ db.collection('users').doc(cu).set({temaUi:id},{merge:true}).catch(function(){}); }catch(e){} }
+  _aplicarTemaUI();
+  if(typeof renderTemaUIGrid==='function') renderTemaUIGrid();
+  if(!silencioso && typeof h==='function') h('Tema '+(id==='cristal'?'Cristal':'Sólido')+' aplicado.');
+}
 function elegirActividad(id, silencioso){
   if(!ACTIVIDADES.some(function(a){return a.id===id;})) return;
   actividadTipo=id; try{ localStorage.setItem('lp_actividad',id); }catch(e){}
@@ -2177,7 +2206,7 @@ function _actualizarBtnCicloCargado(){
 // Aplica el tema y pinta el selector apenas carga el script — así la pantalla de
 // registro (y una sesión que vuelve) ya se ven con el color correcto desde el
 // primer pintado, no recién después de loguearse.
-_aplicarTemaActividad(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
+_aplicarTemaActividad(); _aplicarTemaUI(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
 // ===== Personalidad de Pistero: el tono cambia, la identidad (Pistero, chileno,
 // experto) no. 'cercano' es el default — mismo tono que siempre tuvo la app.
 /* Los arquetipos dejaron de ser rasgos abstractos («relajado», «directo») y pasaron a ser
