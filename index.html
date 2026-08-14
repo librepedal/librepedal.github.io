@@ -9043,7 +9043,7 @@ function enviarSOS(){
     }
     document.getElementById('modalTitle').innerText='🆘 Enviar SOS';
     let html=emerg+'<p style="color:#ffd0d0;font-size:0.85rem;margin-top:0">O toca un contacto para enviarle tu SOS por WhatsApp (el mensaje y tu ubicación ya van escritos).</p>';
-    html+=cs.map(function(x){ return '<a href="https://wa.me/'+x.fono+'?text='+encodeURIComponent(msg)+'" target="_blank" class="ab" style="display:block;text-align:center;text-decoration:none;background:#25D366;color:#03301a;border-color:#25D366;margin-bottom:6px">📲 Enviar a '+escapeHTML(x.nombre)+'</a>'; }).join('');
+    html+=cs.map(function(x){ return '<a href="https://wa.me/'+x.fono+'?text='+encodeURIComponent(msg)+'" target="_blank" class="ab" style="display:block;text-align:center;text-decoration:none;background:#25D366;color:#03301a;border-color:#25D366;margin-bottom:6px"><i class="fas fa-arrow-up-from-bracket"></i> Enviar a '+escapeHTML(x.nombre)+'</a>'; }).join('');
     html+='<button class="ab" style="background:#7c3aed;border-color:#7c3aed;color:#fff;margin-bottom:6px" onclick="_broadcastSOS()"><i class="fas fa-bullhorn"></i> Avisar a ciclistas cerca (anonimo)</button>';
     html+='<button class="ab sec" onclick="gestionarContactosSOS()">Editar contactos</button>';
     document.getElementById('modalContent').innerHTML=html; document.getElementById('userModal').classList.add('on');
