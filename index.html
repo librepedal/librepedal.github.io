@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Libre Pedal</title>
 <link rel="manifest" href="manifest.json">
+<script src="voz-elevenlabs.js"></script>
+<script src="perfil-comunidad.js"></script>
 <meta name="theme-color" content="#0a0f1d">
 <meta name="description" content="Tu copiloto en cada pedaleo: navegación tipo Waze, rutas y Pistero, tu compañero ciclista.">
 <meta property="og:type" content="website">
@@ -802,7 +804,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
   </div>
 </div>
 
-<div id="esferaScreen">
+<div id="esferaScreen" class="on">
 <canvas id="esStars"></canvas>
 <div id="esPostales"><div class="es-post-layer" id="esPostA"></div><div class="es-post-layer" id="esPostB"></div></div>
 <div id="esFlash"></div>
@@ -1312,7 +1314,8 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
      al contenido de esta pantalla. Mismo criterio que ya validó la otra sesión con
      el es-bottom: el Darma queda como DATO de un vistazo (sin onclick), no como
      un segundo menú; Logros y Estadísticas se sacan de acá — para eso está la Esfera. -->
-<div class="darma-badge"><i class="fas fa-wand-magic-sparkles"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
+<div class="darma-badge"><i class="fas fa-dharmachakra"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
+<button class="ab sec" style="margin-bottom:10px" onclick="if(typeof cu!=='undefined'&&cu) verPerfilUsuario(cu,'customize')"><i class="fas fa-id-card"></i> Ver mi perfil de comunidad</button>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
 <style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:12px;padding:6px 4px 5px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:42px;height:35px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.62rem;color:#cdd6e6;margin-top:3px;line-height:1.1}</style>
 <details class="pgrupo" open ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistCascoGrid"></div></div></details>
@@ -1322,7 +1325,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-eye pg-ic"></i><span class="pg-tt">Pestañas</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPestGrid"></div></div></details>
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-gem pg-ic"></i><span class="pg-tt">Aros</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistAroGrid"></div></div></details>
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-ribbon pg-ic"></i><span class="pg-tt">Pañoleta</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPanoGrid"></div></div></details>
-<details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-mustache pg-ic"></i><span class="pg-tt">Barba y bigote</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistBigoteGrid"></div></div></details>
+<!-- Barba y bigote: sacado del selector a pedido de Inty (2026-08-08, "no quedan bien"). Se deja _bigoteSVG() y los datos intactos por si algún personaje ya guardado tenía uno elegido. -->
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-star pg-ic"></i><span class="pg-tt">Accesorio de casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistAccGrid"></div></div></details>
 
 <details class="pgrupo" style="display:none" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)">
@@ -1412,7 +1415,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.34'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.50'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1427,6 +1430,10 @@ function _fetchT(url, ms, opts){ let c=null,t=null; try{ c=new AbortController()
 // a hablar "GPS activado" ni a disparar nada más — evita el "arranca dos veces" que
 // se sentía cada vez que la app se actualizaba sola en pleno arranque.
 window.__lpListoParaArrancar = new Promise(function(resolve){ window.__lpResolverArranque = resolve; });
+// Se resuelve cuando terminó de chequearse getRedirectResult() (vuelta de Google) en
+// window.onload, haya encontrado usuario o no. El auto-login anónimo de más abajo
+// espera esto antes de decidir, para no pisar una sesión real que recién se confirmó.
+window.__lpRedirectListo = new Promise(function(resolve){ window.__lpResolverRedirect = resolve; });
 // Hay OTRO mecanismo de auto-actualización totalmente aparte (el controllerchange
 // del Service Worker, más abajo) que también puede disparar su propio reload. Cada
 // uno por separado ya evita su propio loop infinito, pero no se coordinaban entre
@@ -1465,7 +1472,7 @@ async function forzarActualizacion(){
 }
 const firebaseConfig = {
   apiKey: "AIzaSyBIhhvyhRR0ekVmOXmVDx7C_J-TBfVGCbQ",
-  authDomain: "librepedal-cb983.firebaseapp.com",
+  authDomain: "librepedal.cl",
   projectId: "librepedal-cb983",
   storageBucket: "librepedal-cb983.firebasestorage.app",
   messagingSenderId: "857811917976",
@@ -1502,13 +1509,24 @@ async function _enviarLinkMagico(email){
 }
 
 // Canjea la sesión Firebase YA verificada (por el link) por un token uid==cu del Worker.
+function _lpDbg(ev,extra){
+  try{
+    var arr=JSON.parse(localStorage.getItem('lpFullTrace')||'[]');
+    arr.push(Object.assign({t:Date.now(),ev:ev},extra||{}));
+    localStorage.setItem('lpFullTrace', JSON.stringify(arr));
+  }catch(e){}
+}
 async function _canjearIdTokenPorSesion(){
-  const u=firebase.auth().currentUser; if(!u) throw new Error('sin sesión Firebase');
+  _lpDbg('canjear:start');
+  const u=firebase.auth().currentUser; if(!u){ _lpDbg('canjear:sin-user'); throw new Error('sin sesión Firebase'); }
   const idJwt=await u.getIdToken(true);
+  _lpDbg('canjear:tengo-idJwt', {len: idJwt ? idJwt.length : 0});
   const r=await fetch(AUTH_TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:idJwt})});
   const data=await r.json().catch(function(){return null;});
+  _lpDbg('canjear:respuesta', {status:r.status, ok:r.ok, data: data});
   if(!r.ok||!data||!data.token) throw new Error((data&&data.error)||'no se pudo verificar el correo');
   await firebase.auth().signInWithCustomToken(data.token);
+  _lpDbg('canjear:signInWithCustomToken-OK');
   return data.cu;
 }
 
@@ -1525,25 +1543,59 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
 
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
 async function _entrarConGoogle(){
+  // HISTORIAL de este botón (para quien lo toque después, que no repita el mismo camino):
+  // 1) signInWithPopup solo: se colgaba en Chrome por Cross-Origin-Opener-Policy de
+  //    accounts.google.com (bloquea el postMessage de vuelta sin rechazar la promesa).
+  // 2) signInWithRedirect directo (reemplazo del punto 1): PROBADO EN VIVO varias veces
+  //    con getRedirectResult() instrumentado — vuelve SIEMPRE {credential:null,user:null},
+  //    incluso justo después de un login real completo en Google. El auth state nunca
+  //    llega a tener el usuario real ni un instante (confirmado con onAuthStateChanged
+  //    logueado paso a paso). No es un problema de timing ni de nuestro código de arranque:
+  //    Firebase nunca recibe de vuelta la sesión por este camino, en este navegador/entorno.
+  // 3) ESTE (actual): no dependemos de que NINGUNA promesa se resuelva con el usuario.
+  //    Escuchamos onAuthStateChanged directamente — sea cual sea el mecanismo interno que
+  //    termine poniendo un usuario real (no-anónimo, con email) en Firebase, lo agarramos
+  //    ahí. signInWithPopup sigue siendo el disparador (si cuelga por COOP, dejamos el
+  //    listener vivo de todos modos por si el estado sí cambió por dentro); si la promesa
+  //    truena por popup bloqueado, caemos a signInWithRedirect como último recurso.
   var provider=new firebase.auth.GoogleAuthProvider();
+  if(typeof showLoading==='function') showLoading('Entrando con Google...');
+  var yaCompletado=false;
+  var unsub=firebase.auth().onAuthStateChanged(function(u){
+    if(!yaCompletado && u && !u.isAnonymous && u.email){
+      yaCompletado=true;
+      try{ unsub(); }catch(e){}
+      _completarDesdeGoogle(u);
+    }
+  });
+  setTimeout(function(){ if(!yaCompletado && typeof hideLoading==='function') hideLoading(); }, 15000);
   try{
-    if(typeof showLoading==='function') showLoading('Entrando con Google...');
-    var res=await firebase.auth().signInWithPopup(provider); // ventanita, sin salir de la app
-    if(res && res.user){ await _completarDesdeGoogle(res.user); return; }
-    if(typeof hideLoading==='function') hideLoading();
+    var res=await firebase.auth().signInWithPopup(provider);
+    if(res && res.user && !yaCompletado){
+      yaCompletado=true;
+      try{ unsub(); }catch(e){}
+      await _completarDesdeGoogle(res.user);
+    }
   }catch(err){
-    if(typeof hideLoading==='function') hideLoading();
     var code=(err&&err.code)||'';
-    if(code==='auth/popup-closed-by-user'||code==='auth/cancelled-popup-request'){ return; } // el usuario cerró
-    // Popup bloqueado o no soportado (algunos móviles): caemos al redirect, que vuelve solo.
+    if(code==='auth/popup-closed-by-user'||code==='auth/cancelled-popup-request'){
+      try{ unsub(); }catch(e){}
+      if(typeof hideLoading==='function') hideLoading();
+      return;
+    }
     if(code.indexOf('popup')>-1||code==='auth/operation-not-supported-in-this-environment'){
-      try{ if(typeof showLoading==='function') showLoading('Entrando con Google...'); await firebase.auth().signInWithRedirect(provider); }
-      catch(e2){ if(typeof hideLoading==='function') hideLoading(); lpAviso('No se pudo abrir Google: '+((e2&&e2.message)||e2)); }
-    } else { lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err)); }
+      try{ await firebase.auth().signInWithRedirect(provider); }
+      catch(e2){ try{ unsub(); }catch(e){} if(typeof hideLoading==='function') hideLoading(); lpAviso('No se pudo abrir Google: '+((e2&&e2.message)||e2)); }
+      return; // el listener sigue vivo por si igual completa; window.onload también revisa el retorno
+    }
+    // Cualquier otro código (incluido lo que deja colgado el COOP): NO apagamos el listener,
+    // puede que el auth state sí haya cambiado por dentro pese al error de la promesa.
+    console.warn('signInWithPopup no concluyó limpio, el listener de auth state sigue activo:', code);
   }
 }
 // Vuelta de Google: canjea el idToken verificado por el token uid==cu y arma la sesión.
 async function _completarDesdeGoogle(user){
+  _lpDbg('completarDesdeGoogle:start', {email: user && user.email});
   try{
     if(typeof showLoading==='function') showLoading('Entrando con Google...');
     var cuVal=await _canjearIdTokenPorSesion();
@@ -1551,8 +1603,11 @@ async function _completarDesdeGoogle(user){
     var nombre=(user&&user.displayName)||localStorage.getItem('lp_nombre_'+cuVal)||'Ciclista';
     try{ history.replaceState(null,'',location.origin+location.pathname); }catch(e){}
     if(typeof hideLoading==='function') hideLoading();
+    _lpDbg('completarDesdeGoogle:antes-de-completarLoginVerificado', {cuVal:cuVal});
     await _completarLoginVerificado(cuVal, nombre, email);
+    _lpDbg('completarDesdeGoogle:OK-FINAL', {hasSession: !!localStorage.getItem('lp_session')});
   }catch(err){
+    _lpDbg('completarDesdeGoogle:CATCH', {msg: err && err.message, stack: err && err.stack && err.stack.substring(0,300)});
     if(typeof hideLoading==='function') hideLoading();
     lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
     var a=document.getElementById('auth'); if(a) a.style.display='flex'; rm(MG); fg('todos'); initCustomization();
@@ -1588,18 +1643,30 @@ function _initGIS(n){
   if(n<50){ setTimeout(function(){ _initGIS(n+1); }, 150); }
   else { var fb=document.getElementById('gbtnFallback'); if(fb) fb.style.display='flex'; } // GIS no cargó: botón de respaldo
 }
-try{ _initGIS(0); }catch(e){}
+try{ var fb=document.getElementById('gbtnFallback'); if(fb) fb.style.display='flex'; }catch(e){} // GIS/FedCM desactivado: origin_mismatch persistente, se usa el flujo probado (popup/redirect)
 
 // Arranque de auth: NO pisar con login anónimo una sesión verificada persistida.
 (function(){
   try{
     if(firebase.auth){
       var _primera=true;
-      firebase.auth().onAuthStateChanged(function(u){
+      firebase.auth().onAuthStateChanged(async function(u){
         window.lpUID = u ? u.uid : null;
+        if(typeof _lpDbg==='function') _lpDbg('onAuthStateChanged', {primera:_primera, hasU:!!u, anon: u?u.isAnonymous:null, uidLen: u?String(u.uid).length:null});
         if(_primera){
           _primera=false;
-          if(!u){ firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth anónimo no disponible aún:', e && e.code); }); }
+          if(!u){
+            if(typeof _lpDbg==='function') _lpDbg('anonBlock:esperando-redirect');
+            // Antes de firmar como anónimo, esperamos a que termine de revisarse
+            // getRedirectResult() (vuelta de Google) — si no, esta carrera podía pisar
+            // una sesión real recién confirmada con una anónima nueva, silenciosamente.
+            try{ await Promise.race([window.__lpRedirectListo, new Promise(function(r){ setTimeout(r,4000); })]); }catch(e){}
+            if(typeof _lpDbg==='function') _lpDbg('anonBlock:despues-de-esperar', {currentUserAhora: !!firebase.auth().currentUser});
+            if(!firebase.auth().currentUser){
+              if(typeof _lpDbg==='function') _lpDbg('anonBlock:LLAMANDO-signInAnonymously');
+              firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth anónimo no disponible aún:', e && e.code); });
+            }
+          }
         }
       });
     }
@@ -2124,7 +2191,9 @@ const PERSONALIDADES=[
   {id:'sabio',      label:'🎖️ Veterano',      labelF:'🎖️ Veterana'},
   {id:'relajado',   label:'🌻 Hippie',        labelF:'🌻 Hippie'},
   {id:'aventurero', label:'💡 Malas Ideas',   labelF:'💡 Malas Ideas'},
-  {id:'maternal',   label:'🧣 Tío',           labelF:'🧣 Tía'}
+  {id:'maternal',   label:'🧣 Tío',           labelF:'🧣 Tía'},
+  {id:'seductor',   label:'🌹 Seductor',      labelF:'🌹 Seductora'},
+  {id:'otaku',      label:'🎌 Otaku',         labelF:'🎌 Otaku'}
 ];
 let pisteroPersonalidad=localStorage.getItem('lp_personalidad')||'cercano';
 // Variedad de voz por arquetipo: Azure es-CL solo tiene 2 voces (Catalina/Lorenzo), no hay
@@ -2150,7 +2219,9 @@ const PERSONALIDAD_PROSODIA={
   sabio:     {rate:'-18%', pitch:'-8%'},   // veterano, lento y grave
   relajado:  {rate:'-16%', pitch:'+0%'},   // hippie, mundo tranquilo
   aventurero:{rate:'+12%', pitch:'+6%'},   // "malas ideas", ágil y pícaro
-  maternal:  {rate:'-9%',  pitch:'-1%'}    // tío/tía, suave
+  maternal:  {rate:'-9%',  pitch:'-1%'},   // tío/tía, suave
+  seductor:  {rate:'-10%', pitch:'-4%'},   // elegante, suave y pausado
+  otaku:     {rate:'+10%', pitch:'+7%'}    // entusiasta, agudo y rápido
 };
 function elegirPersonalidad(id){
   if(!PERSONALIDADES.some(function(p){return p.id===id;})) return;
@@ -2163,7 +2234,28 @@ function elegirPersonalidad(id){
 }
 function renderPersonalidadGrid(){
   const c=document.getElementById('personalidadGrid'); if(!c) return;
-  c.innerHTML=PERSONALIDADES.map(function(p){ return '<div class="custom-option'+(p.id===pisteroPersonalidad?' selected':'')+'" onclick="elegirPersonalidad(\''+p.id+'\')" style="text-align:left;padding:9px 12px"><div class="check">OK</div><strong style="font-size:0.82rem">'+_labelPersonalidad(p)+'</strong></div>'; }).join('');
+  c.innerHTML=PERSONALIDADES.map(function(p){ return '<div class="custom-option'+(p.id===pisteroPersonalidad?' selected':'')+'" onclick="elegirPersonalidad(\''+p.id+'\')" style="text-align:left;padding:9px 34px 9px 12px"><div class="check">OK</div><strong style="font-size:0.82rem">'+_labelPersonalidad(p)+'</strong><button onclick="previsualizarPersonalidad(\''+p.id+'\',event)" style="position:absolute;bottom:4px;right:4px;background:rgba(252,76,2,0.15);border:1px solid var(--p);color:var(--p);border-radius:50%;width:26px;height:26px;font-size:0.75rem;cursor:pointer;line-height:1;padding:0" title="Escuchar voz" aria-label="Escuchar voz">🔊</button></div>'; }).join('');
+}
+/* Probador de voces: deja escuchar cómo suena cada arquetipo ANTES de elegirlo, con la
+   voz ElevenLabs real (voces-el/) — pidió Inty un "probador" en la selección de
+   personalidad. Toma la primera frase disponible de ese arquetipo en FRASES_ARQ, la busca
+   en el manifest de ElevenLabs y reproduce el mp3 ya generado. Si no hay frase o no está en
+   el catálogo (aún no generado), no hace nada — no interrumpe ni rompe la selección normal.
+   stopPropagation evita que el clic en el botón también dispare elegirPersonalidad(). */
+let _vozPreviewAudio=null;
+function previsualizarPersonalidad(id, ev){
+  try{ if(ev && ev.stopPropagation) ev.stopPropagation(); }catch(e){}
+  try{
+    let frase=null;
+    for(const cat of Object.keys(FRASES_ARQ)){ if(FRASES_ARQ[cat][id] && FRASES_ARQ[cat][id].length){ frase=FRASES_ARQ[cat][id][0]; break; } }
+    if(!frase) return;
+    const fid=(typeof VOCES_MANIFEST_EL!=='undefined') && VOCES_MANIFEST_EL && VOCES_MANIFEST_EL.map && VOCES_MANIFEST_EL.map[frase];
+    if(!fid) return;
+    if(_vozPreviewAudio){ try{ _vozPreviewAudio.pause(); }catch(e){} }
+    const a=new Audio('voces-el/'+pisteroGenero+fid+'.mp3');
+    _vozPreviewAudio=a;
+    a.play().catch(function(){});
+  }catch(e){}
 }
 let navUserMarkers = [], maxSpeed = 0, speedReadings = [];
 // Umbrales de ritmo FIJOS (km/h), iguales en frases, ánimo del personaje y el
@@ -2555,19 +2647,32 @@ function _reproducirVoz(item){
   if(vozMejorada){
     // v7.80: voz por ARQUETIPO (clips SLR71 chilenos en voces/<arq>/<id>.mp3).
     // v8.06: DESACTIVADA la capa de voces por arquetipo (SLR71) — se colaban voces distintas por frase.
-    // Por ahora usamos SOLO Azure (Lorenzo/Catalina, consistente). Las voces por arquetipo (premium)
-    // vuelven al llegar a 1000 usuarios. (Decision de Inty)
+    // v8.48 (2026-08-14, decision nueva de Inty, reemplaza la nota de "vuelve a los 1000 usuarios"):
+    // REACTIVADA con proveedor distinto — ElevenLabs (voces-el/), un mp3 FIJO pregenerado por
+    // frase+género+arquetipo (no elección de voz en vivo), así que no hereda el bug de mezcla de
+    // SLR71. Tiene prioridad; si la frase no está en el catálogo, cae al viejo Azure (voces/) como
+    // respaldo. Ver voz-elevenlabs.js.
+    const _idEL = (typeof VOCES_MANIFEST_EL!=='undefined') && VOCES_MANIFEST_EL && VOCES_MANIFEST_EL.map && VOCES_MANIFEST_EL.map[item.t];
+    if(_idEL && typeof _vozArchivoEL==='function'){
+      vozTimerFin=setTimeout(_vozSiguiente, 12000);
+      _vozArchivoEL(item, durEst, _idEL, miGen);
+      return;
+    }
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
     if(_id){
       vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso; se recalibra con la duración real del audio
       _vozArchivo(item, durEst, _id, miGen);
       return;
     }
-    if(navigator.onLine){ // frase nueva (nombres, calles, números): esa sí se genera en vivo
-      vozTimerFin=setTimeout(_vozSiguiente, 12000);
-      _vozAzureRuntime(item, durEst, miGen);
-      return;
-    }
+    // frase nueva (nombres, calles, números): esa sí se genera en vivo. Antes esto estaba
+    // detrás de `navigator.onLine` — la MISMA trampa que ya se sacó arriba para los mp3
+    // fijos, pero se había quedado acá: si `navigator.onLine` mentía diciendo que no hay
+    // red (pasa seguido), saltaba directo a la voz nativa sin ni intentar la buena. Ahora
+    // se intenta siempre; si de verdad no hay red, `_vozAzureRuntime` ya cae sola a la
+    // nativa por su propio onerror/catch (2026-08-13).
+    vozTimerFin=setTimeout(_vozSiguiente, 12000);
+    _vozAzureRuntime(item, durEst, miGen);
+    return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
   _vozNativaOWeb(item, durEst);
@@ -3098,6 +3203,9 @@ const FRASES_ARQ={
     relajado:["No hay ningún apuro. Nunca lo hubo.","El camino no se va a acabar.","Lo lindo es esto: estar acá, ahora.","Andar sin destino también es llegar."],
     aventurero:["Los mejores lugares no salen en ningún mapa.","Perderse un poco es parte del método.","Detrás de cada curva hay algo que no conoces.","El que nunca se desvía, nunca descubre nada."],
     maternal:["Cuídate, que el camino siempre va a estar ahí.","Lo importante es que vuelvas bien a casa.","No tienes que demostrarle nada a nadie hoy.","Descansar también es cuidar el cuerpo."],
+    seductor:["Hay caminos que se recuerdan por el paisaje, y otros por quién los acompañó.","El destino se olvida. La buena compañía, nunca.","A veces el viaje más lindo es simplemente compartirlo con alguien que vale la pena."],
+    otaku:["Todo protagonista tiene un arco de origen. El tuyo empieza en esta bici.","Los mejores animes enseñan que el esfuerzo constante siempre vale la pena. Esto no es distinto.","No necesitas ser el más fuerte del principio. Solo necesitas seguir pedaleando hasta el final del arco."],
+    cercano:["El único kilómetro real es el que estás pisando ahora. Deja de pensar en la meta y disfruta.","La ruta no es cuántos kilómetros dejas atrás, sino cuántas trancas mentales vas botando.","Pedalear aquí es elegir ver el mundo con tus propios ojos, no a través de una pantalla."],
   },
   ciudad:{
     compadre:["En ciudad ojo con las puertas, compadre. Un metro de los autos.","Acá se anda atento: mucho auto, mucha prisa ajena.","Ciudad. Hazte ver y no te pegues a la vereda.","Tranquilo entre los autos, que ninguno te está esperando."],
@@ -3111,6 +3219,9 @@ const FRASES_ARQ={
     relajado:["Ciudad, pero sin apurarse. Igual llegas.","Respira, que el taco no es tuyo.","Deja pasar al apurado. Tú vas bien.","Entre autos también se puede ir tranquilo."],
     aventurero:["¿Y si te vas por esa calle que nunca has tomado?","La ciudad tiene rincones que solo se ven en bici.","Buen momento para descubrir un atajo nuevo.","Cada barrio es un país distinto. Explóralo."],
     maternal:["En ciudad ándate con cuidado, por favor.","Ojo con las puertas de los autos, que es lo que más pasa.","Hazte ver: luces encendidas aunque sea de día.","Si te sientes apretado entre autos, mejor te detienes."],
+    seductor:["Hasta el tráfico se hace más llevadero contigo cerca.","En medio de tanto ruido, tú sigues siendo lo más interesante del panorama.","La ciudad tiene su encanto, pero hoy tú le ganas fácil."],
+    otaku:["Ciudad: modo esquiva-obstáculos activado. Reflejos de protagonista, por favor.","Aquí no hay pausa de opening: mantente atento en cada esquina.","Los autos son los villanos secundarios de este capítulo. Ojo con ellos."],
+    cercano:["Respeta el semáforo, aunque andes apurado.","En la ciudad el casco no es opcional, es tu mejor amigo.","Si hay ciclovía, úsala, que para eso está."],
   },
   bajada:{
     compadre:["Bajada, compadre. Disfrútala pero con ojo.","A soltar las piernas, pero sin confiarse.","Esta es la parte que te ganaste subiendo.","Manos firmes y a gozar."],
@@ -3124,6 +3235,9 @@ const FRASES_ARQ={
     relajado:["Bajada suave. Deja que el camino te lleve.","No hace falta correr. Disfruta el aire.","Suelta los hombros, respira, baja tranquilo.","Esto es lo lindo: nada que hacer más que estar."],
     aventurero:["Bajada nueva. ¿Viste ese desvío a la izquierda?","Buena bajada. Después de esta hay algo que ver, seguro.","Baja atento: en las bajadas se descubren los mejores lugares.","¿Y si al final de esta bajada seguimos derecho?"],
     maternal:["Con calma en la bajada, por favor.","Frena de a poco, no de golpe.","Si hace frío, cierra la chaqueta antes de bajar.","Baja tranquilo, que abajo te espero igual."],
+    seductor:["Suéltate con confianza... yo te sigo de cerca.","Hay bajadas que se disfrutan más despacio, para que duren.","Baja con estilo. Se nota que sabes lo que haces."],
+    otaku:["¡Bajada! Esto se siente como la escena final del arco, todo en cámara lenta.","Suelta el freno con estilo, como en la escena post-batalla.","Esto es tan satisfactorio como el capítulo donde por fin gana el protagonista."],
+    cercano:["Ahora te toca disfrutar, pero ojo con los frenos.","Ojo con las curvas en la bajada, no hay apuro.","Bajando rico, pero con la vista bien puesta en el camino."],
   },
   parado:{
     compadre:["Descansa nomás, compadre. Yo espero.","Buena pausa. Estírate un poco.","Tómate tu tiempo, no hay apuro.","Aprovecha y toma agua."],
@@ -3137,6 +3251,9 @@ const FRASES_ARQ={
     relajado:["Perfecto. Respira, mira el paisaje.","Esta pausa es tan parte del viaje como pedalear.","No hay ningún apuro. Ninguno.","Quédate el rato que quieras."],
     aventurero:["¿Paramos porque cansaste o porque viste algo interesante?","Buen lugar para parar. ¿Exploramos un poco a pie?","Desde acá se ve un camino que no estaba en el mapa.","Las mejores desviaciones empiezan en una parada."],
     maternal:["Muy bien, descansa. ¿Comiste algo hoy?","Aprovecha de tomar agua aunque no tengas sed.","Si hace frío, ponte algo encima mientras estás quieto.","Tómate el tiempo que necesites, de verdad."],
+    seductor:["Aprovechemos esta pausa. La buena compañía también merece su tiempo.","Un descanso contigo nunca se siente perdido.","Quedémonos un rato así, sin apuro."],
+    otaku:["Punto de guardado. Aprovecha de recargar energía.","Pausa técnica, como cuando el anime corta justo en la mejor parte.","Aprovecha este respiro: hasta los héroes necesitan su arco de descanso."],
+    cercano:["Toma agüita, que hidratarse es clave.","¿Todo bien? Avísame si necesitas algo.","Aprovecha y ajusta el asiento."],
   },
   normal:{
     compadre:["Vamos bien, compadre. Este ritmo es el bueno.","Así da gusto: ni apurado ni lento, como debe ser.","Buen paso llevas. Yo te acompaño.","Tranquilo y parejo, que el camino es largo."],
@@ -3150,6 +3267,9 @@ const FRASES_ARQ={
     relajado:["Este ritmo está perfecto. No lo apures.","Vas fluyendo, y eso es lo que importa.","El cuerpo te está pidiendo justo esto.","Bonito paso. Mira alrededor un rato."],
     aventurero:["Buen ritmo… ¿y si nos desviamos por ese camino de allá?","Vas cómodo. Perfecto para meterse en algo nuevo.","Con este paso llegamos a cualquier parte. Elige tú.","Ritmo de explorador. El bueno."],
     maternal:["Vas muy bien. ¿Tomaste agua hace rato?","Ese es el paso justo, no te exijas de más.","Todo tranquilo por acá. Avísame si algo molesta.","Bien ahí. Cuídate las rodillas en las bajadas."],
+    seductor:["Contigo hasta el camino más largo se hace corto.","No sé si es la vista o la compañía, pero hoy el paisaje se ve mejor.","Dicen que las mejores rutas se disfrutan bien acompañado. Yo ya elegí compañía.","Hay algo en cómo pedaleas que no se puede ignorar."],
+    otaku:["Vas con ritmo de protagonista principal: constante, sin relleno.","Este es tu arco de entrenamiento silencioso, el que nadie ve pero que te hace crecer.","Sigue así, que este ritmo tiene toda la pinta de un buen opening.","Nivel actual: ciclista imparable. Sigue subiendo de nivel."],
+    cercano:["Así da gusto, mantén ese pulso.","Pedalear es volver a lo esencial.","No hay camino largo cuando suena buena música.","Disfruta: el destino importa tanto como el camino."],
   },
   subida:{
     roquero:["Esta cuesta es el solo de guitarra: aguanta que ya viene el coro.","Sube con rabia, que la pendiente no perdona a los tibios.","Puro riff pesado esto. Dale que abajo suena mejor.","La cuesta es larga y tú tienes más volumen que ella.","Ponle actitud, que las piernas ya saben lo que hacen."],
@@ -3166,7 +3286,10 @@ const FRASES_ARQ={
     directo:["Subida. Baja un cambio, cadencia estable.","Cuesta arriba: reparte el esfuerzo, no arranques fuerte.","Mantén ritmo constante hasta la cima."],
     relator:["¡Y encara la subida! El público contiene la respiración… ¿podrá con ella?","¡Ataca la cuesta! Esto separa a los grandes. ¡Vamos, vamos!","La montaña lo desafía… ¡y él responde pedaleando con todo!"],
     aventurero:["¡Esta cuesta es tuya! Arriba te espera una vista que vale cada gota de sudor.","¡Épica subida! Conquístala y cuéntalo después.","Lo desconocido está arriba. ¡Dale que la aventura no espera!"],
-    compadre:["Ya po, apretá que esta cuesta es puro cuento. ¡Dale que podí!","No aflojís, compadre, que arriba está la raja de vista. Métele pata.","Esta subidita es na, pura finta. Le ganái con los ojos cerrados, cachái."]
+    compadre:["Ya po, apretá que esta cuesta es puro cuento. ¡Dale que podí!","No aflojís, compadre, que arriba está la raja de vista. Métele pata.","Esta subidita es na, pura finta. Le ganái con los ojos cerrados, cachái."],
+    seductor:["Contigo hasta la cuesta más dura se hace buena compañía.","No hay subida que no valga la pena si el paisaje eres tú.","Sube con calma. Yo disfruto el camino igual, mirando cómo lo haces.","Dicen que las cuestas revelan el carácter. El tuyo ya me convenció."],
+    otaku:["¡Esto es el arco de entrenamiento! Cada cuesta te hace más fuerte para el torneo final.","Sube como protagonista de shonen: cuando parece imposible, ahí es cuando más brillas.","Esta cuesta es el jefe final del nivel. Tú tienes el power-up: tus piernas.","Nada de rendirse ahora, que el clímax del arco siempre es la subida."],
+    cercano:["Subida a la vista, baja un cambio y no te apures.","Respira hondo, esta subida se acaba... en algún momento.","Cuesta arriba: ritmo parejo y no te la juegues toda de una."]
   },
   rapido:{
     roquero:["¡Así se anda! Puro volumen arriba.","Vas rápido y suena bien. No aflojes.","Ese ritmo es un temazo. Mantenlo.","Vas a toda máquina, cuidado con las curvas.","Rápido y con estilo, como debe ser."],
@@ -3179,7 +3302,12 @@ const FRASES_ARQ={
     sabio:["La velocidad embriaga, pero el camino se disfruta mirando, no corriendo.","Vas rápido; recuerda que llegar no es la meta, es el pretexto.","Rápido está bien, pero no tanto que te pierdas el paisaje."],
     maternal:["Despacio con esa velocidad, mijo, ojo con los baches y las curvas.","Vas muy rápido, frena un poquito, prefiero verte llegar entero.","Cuidado a esa velocidad, las dos manos firmes."],
     relator:["¡Y acelera! ¡Vuela por el camino! ¡El viento no lo alcanza!","¡Velocidad de campeonato! ¡El cronómetro tiembla!"],
-    compadre:["¡Uuuh, andái enchufao hoy, volando bajito! ¡Así se hace po, la raja!","Cómo le picái, compadre, vai como bala. ¡No pares, crack!"]
+    compadre:["¡Uuuh, andái enchufao hoy, volando bajito! ¡Así se hace po, la raja!","Cómo le picái, compadre, vai como bala. ¡No pares, crack!"],
+    seductor:["Con ese ritmo, hasta el viento se queda corto para alcanzarte.","Vuela si quieres. Igual te voy a seguir el paso.","Rápido y con estilo. No cualquiera lo logra."],
+    otaku:["¡Activaste el modo OP! Nadie te alcanza a este ritmo.","Esto ya no es velocidad, esto es un power-up desbloqueado.","Vas tan rápido que hasta el opening se te queda corto."],
+    cercano:["¡Estás volando, respira!","Frena un poquito en las curvas.","Cadena limpia, mente clara, piernas locas."],
+    relajado:["Si el cuerpo pide rápido, dale, pero sin perder la calma.","Hasta yendo rápido se puede fluir.","Rápido está bien, mientras no se sienta apurado."],
+    aventurero:["A esta velocidad seguro te saltas algo interesante. Baja el ritmo un poco.","Rápido está bien, pero lo bueno está en los detalles que te pierdes."]
   },
   lento:{
     roquero:["Bajaste el volumen. Todo bien, después subimos.","Hasta las mejores bandas tienen baladas. Esta es la tuya.","Vas lento y no pasa nada. El disco igual suena.","Recupera y volvemos con todo.","Ritmo tranquilo, pero seguimos tocando."],
@@ -3192,7 +3320,12 @@ const FRASES_ARQ={
     relajado:["Rico ese ritmo tranqui, sin apuros. Disfruta.","Así, suavecito, que la vida no es una carrera.","Buen paso de paseo. Respira y mira alrededor."],
     maternal:["Despacito está bien, mijo, no te agites de más.","A ese ritmo cuidas el cuerpo. Bien ahí, con calma."],
     entrenador:["Ritmo bajo: aprovecha para soltar piernas y recuperar. Luego aprietas."],
-    compadre:["Tranqui no má, sin apuro. La ruta no se arranca, tómate tu tiempo cachái.","Suave que suave se llega igual. Esto es pa' pasarlo bien, no pa' reventarse."]
+    compadre:["Tranqui no má, sin apuro. La ruta no se arranca, tómate tu tiempo cachái.","Suave que suave se llega igual. Esto es pa' pasarlo bien, no pa' reventarse."],
+    seductor:["No hay prisa. Contigo hasta ir despacio se disfruta.","Este ritmo tranquilo tiene su encanto, igual que tú.","A veces lo mejor se saborea lento. Como este camino."],
+    otaku:["Este es el capítulo tranquilo antes del arco importante. Disfruta el ritmo.","No todo puede ser clímax. Este tramo es el descanso entre arcos.","Ritmo suave, como los episodios slice of life. También se disfrutan."],
+    cercano:["¿Todo bien por ahí?","Tranquilo: las pirámides se hicieron ladrillo a ladrillo.","Dale un poco más de color al pedaleo."],
+    sabio:["Ir lento también es una forma de llegar más lejos.","El que no tiene apuro, nunca pierde el camino.","Despacio se cansa menos el cuerpo, y más el ego."],
+    aventurero:["Ir lento es la excusa perfecta para fijarte en cosas que nadie más ve.","A este ritmo se descubren los mejores atajos."]
   }
 };
 function obtenerFraseUnica(categoria){
@@ -3348,70 +3481,81 @@ function abrirPistero(){
   setTimeout(function(){ const i=document.getElementById('pisteroInput'); if(i) i.focus(); },250);
 }
 async function preguntarPistero(){
+  // Candado contra doble envío (pedido de Inty 2026-08-08, "sale otro globo a la
+  // derecha"): en Android el botón "enviar" del teclado a veces dispara el keypress
+  // dos veces (bug conocido de WebView con Gboard), o el dedo alcanza a tocar también
+  // el ✈️ mientras el Enter ya mandó el mensaje — sin este candado, el mismo texto se
+  // enviaba dos veces y aparecían dos globos naranjos (del usuario) seguidos.
+  if(preguntarPistero._enCurso) return;
   const inp=document.getElementById('pisteroInput'); if(!inp) return;
   const msg=inp.value.trim(); if(!msg) return;
-  trackEvent('funcion','chat_pistero');
-  inp.value='';
-  _pisteroBurbuja(msg,'yo');
-  const _msgNorm=normalizar(msg);
-  // Consulta escrita sobre peligros en una ruta ("¿hay policías en mi ruta a
-  // X?"): mismo criterio que por voz — solo cuenta como consulta con destino
-  // explícito o pregunta clara, si no, es un reporte normal.
-  {
-    const _catConsultaMsg=_detectarReporteVoz(_msgNorm);
-    if(_catConsultaMsg){
-      const _destinoConsultaMsg=_extraerDestinoConsulta(_msgNorm);
-      if(_destinoConsultaMsg || CONSULTA_RUTA_OPENER_RE.test(_msgNorm)){
-        const _respConsulta=await consultarPeligrosEnRuta(_catConsultaMsg, _destinoConsultaMsg);
-        _pisteroBurbuja(_respConsulta,'pistero'); try{ h(_respConsulta); }catch(e){}
-        return;
+  preguntarPistero._enCurso=true;
+  try{
+    trackEvent('funcion','chat_pistero');
+    inp.value='';
+    _pisteroBurbuja(msg,'yo');
+    const _msgNorm=normalizar(msg);
+    // Consulta escrita sobre peligros en una ruta ("¿hay policías en mi ruta a
+    // X?"): mismo criterio que por voz — solo cuenta como consulta con destino
+    // explícito o pregunta clara, si no, es un reporte normal.
+    {
+      const _catConsultaMsg=_detectarReporteVoz(_msgNorm);
+      if(_catConsultaMsg){
+        const _destinoConsultaMsg=_extraerDestinoConsulta(_msgNorm);
+        if(_destinoConsultaMsg || CONSULTA_RUTA_OPENER_RE.test(_msgNorm)){
+          const _respConsulta=await consultarPeligrosEnRuta(_catConsultaMsg, _destinoConsultaMsg);
+          _pisteroBurbuja(_respConsulta,'pistero'); try{ h(_respConsulta); }catch(e){}
+          return;
+        }
       }
     }
-  }
-  // Reportes de peligro escritos (pacos, animal atropellado, objeto en la vía,
-  // taco, accidente): se resuelven aquí mismo, sin gastar una llamada a la IA —
-  // son datos concretos para el mapa, no una conversación.
-  const _catReporte=_detectarReporteVoz(_msgNorm);
-  if(_catReporte){ const _conf=await reportarPorVozRapido(_catReporte); _pisteroBurbuja(_conf,'pistero'); try{ h(_conf); }catch(e){} return; }
-  const pensando=_pisteroBurbuja('Pistero está pensando…','pistero',true);
-  const hosp=(typeof allHostels!=='undefined'&&allHostels?allHostels:[]).slice(0,12).map(function(hh){
-    return {name:hh.name, tipo:hh.tipo, location:hh.location, desc:(hh.desc||'').toString().slice(0,120)};
-  });
-  const gustos=(typeof selectedHelmet!=='undefined'&&selectedHelmet)?('estilo/casco '+selectedHelmet):'';
-  const payload={
-    mensaje:msg,
-    usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos, personalidad:pisteroPersonalidad, actividad:actividadTipo },
-    contexto:_pisteroContexto(),
-    hospedajes:hosp,
-    historial:pisteroHistorial.slice(-12)
-  };
-  try{
-    // Con fetch() plano y sin timeout, si el Worker se cuelga (no cae, solo no
-    // contesta) la burbuja "Pistero está pensando…" quedaba pegada PARA SIEMPRE —
-    // el catch de abajo nunca se disparaba porque la promesa nunca se rechazaba.
-    const r=await _fetchT(IA_URL, 25000, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-    const data=await r.json();
-    let resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
-    // Separa las etiquetas de acción del texto: no se muestran ni se leen en voz.
-    const acciones=[];
-    resp=resp.replace(/\[ACCION:([a-z]+)(?:\|([^\]]+))?\]/gi, function(_m,tipo,arg){ acciones.push({tipo:tipo.toLowerCase(), arg:(arg||'').trim()}); return ''; })
-      // Red de seguridad: si por lo que sea el Worker deja pasar una etiqueta de
-      // herramienta [BUSCAR:...]/[CLIMA:...] sin resolver, nunca debe leerse ni
-      // mostrarse tal cual (se ve como "código" en vez de una respuesta normal).
-      .replace(/\[(BUSCAR|CLIMA):[^\]]*\]/gi, '')
-      .replace(/\s{2,}/g,' ').trim();
-    if(!resp && acciones.length) resp='¡Hecho!';
-    if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML(resp); }
-    else _pisteroBurbuja(resp,'pistero');
-    const cont=document.getElementById('pisteroMsgs'); if(cont) cont.scrollTop=cont.scrollHeight;
-    pisteroHistorial.push({role:'user',content:msg}); pisteroHistorial.push({role:'pistero',content:resp});
-    if(pisteroHistorial.length>40) pisteroHistorial=pisteroHistorial.slice(-40);
-    _pisteroGuardar();
-    try{ h(resp); }catch(e){}
-    _pisteroObedecer(acciones, msg);
-    if(!acciones.length) _pisteroPintarAcciones(msg);
-  }catch(e){
-    if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML('Se me cortó la señal. Inténtalo de nuevo en un ratito.'); }
+    // Reportes de peligro escritos (pacos, animal atropellado, objeto en la vía,
+    // taco, accidente): se resuelven aquí mismo, sin gastar una llamada a la IA —
+    // son datos concretos para el mapa, no una conversación.
+    const _catReporte=_detectarReporteVoz(_msgNorm);
+    if(_catReporte){ const _conf=await reportarPorVozRapido(_catReporte); _pisteroBurbuja(_conf,'pistero'); try{ h(_conf); }catch(e){} return; }
+    const pensando=_pisteroBurbuja('Pistero está pensando…','pistero',true);
+    const hosp=(typeof allHostels!=='undefined'&&allHostels?allHostels:[]).slice(0,12).map(function(hh){
+      return {name:hh.name, tipo:hh.tipo, location:hh.location, desc:(hh.desc||'').toString().slice(0,120)};
+    });
+    const gustos=(typeof selectedHelmet!=='undefined'&&selectedHelmet)?('estilo/casco '+selectedHelmet):'';
+    const payload={
+      mensaje:msg,
+      usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos, personalidad:pisteroPersonalidad, actividad:actividadTipo },
+      contexto:_pisteroContexto(),
+      hospedajes:hosp,
+      historial:pisteroHistorial.slice(-12)
+    };
+    try{
+      // Con fetch() plano y sin timeout, si el Worker se cuelga (no cae, solo no
+      // contesta) la burbuja "Pistero está pensando…" quedaba pegada PARA SIEMPRE —
+      // el catch de abajo nunca se disparaba porque la promesa nunca se rechazaba.
+      const r=await _fetchT(IA_URL, 25000, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      const data=await r.json();
+      let resp=(data&&data.respuesta)?data.respuesta:'Uy, no te cacho bien ahora. ¿Me lo repites?';
+      // Separa las etiquetas de acción del texto: no se muestran ni se leen en voz.
+      const acciones=[];
+      resp=resp.replace(/\[ACCION:([a-z]+)(?:\|([^\]]+))?\]/gi, function(_m,tipo,arg){ acciones.push({tipo:tipo.toLowerCase(), arg:(arg||'').trim()}); return ''; })
+        // Red de seguridad: si por lo que sea el Worker deja pasar una etiqueta de
+        // herramienta [BUSCAR:...]/[CLIMA:...] sin resolver, nunca debe leerse ni
+        // mostrarse tal cual (se ve como "código" en vez de una respuesta normal).
+        .replace(/\[(BUSCAR|CLIMA):[^\]]*\]/gi, '')
+        .replace(/\s{2,}/g,' ').trim();
+      if(!resp && acciones.length) resp='¡Hecho!';
+      if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML(resp); }
+      else _pisteroBurbuja(resp,'pistero');
+      const cont=document.getElementById('pisteroMsgs'); if(cont) cont.scrollTop=cont.scrollHeight;
+      pisteroHistorial.push({role:'user',content:msg}); pisteroHistorial.push({role:'pistero',content:resp});
+      if(pisteroHistorial.length>40) pisteroHistorial=pisteroHistorial.slice(-40);
+      _pisteroGuardar();
+      try{ h(resp); }catch(e){}
+      _pisteroObedecer(acciones, msg);
+      if(!acciones.length) _pisteroPintarAcciones(msg);
+    }catch(e){
+      if(pensando){ pensando.classList.remove('pensando'); pensando.innerHTML='<b>Pistero:</b> '+escapeHTML('Se me cortó la señal. Inténtalo de nuevo en un ratito.'); }
+    }
+  } finally {
+    preguntarPistero._enCurso=false;
   }
 }
 let pisteroRec=null;
@@ -3590,6 +3734,7 @@ async function _completarDesdeLinkMagico(){
     if(typeof hideLoading==='function') hideLoading();
     await _completarLoginVerificado(cuVal, nombre, email);
   }catch(err){
+    if(typeof _lpDbg==='function') _lpDbg('completarDesdeLinkMagico:CATCH', {msg: err&&err.message, name: err&&err.name, stack: err&&err.stack&&err.stack.substring(0,600)});
     if(typeof hideLoading==='function') hideLoading();
     lpAviso('No se pudo completar el ingreso: '+((err&&err.message)||err)+'. Pide el enlace de nuevo.');
     if(authEl) authEl.style.display='flex'; rm(MG); fg('todos'); initCustomization();
@@ -3598,6 +3743,7 @@ async function _completarDesdeLinkMagico(){
 
 window.onload = async function(){
   const sesion = localStorage.getItem('lp_session');
+  _lpDbg('onload:start', {hasSesionLS: !!sesion, href: location.href});
   initVoz();
   const _elVer=document.getElementById('lpVerMostrada'); if(_elVer) _elVer.innerText=APP_VERSION;
   _actualizarBtnAhorroGPS();
@@ -3612,9 +3758,13 @@ window.onload = async function(){
   try{
     if(typeof firebase!=='undefined' && firebase.auth){
       var _gr=await firebase.auth().getRedirectResult();
+      var _grDump='NOPE';
+      try{ _grDump = JSON.stringify(_gr, function(k,v){ return v===undefined?'__undef__':v; }); }catch(_e1){ _grDump='STRINGIFY-FAIL:'+_e1.message; }
+      _lpDbg('onload:getRedirectResult', {resultShape: _grDump.substring(0,900), opType: (_gr&&('opType_is_'+_gr.operationType)), credVal: (_gr&&('credVal_is_'+(_gr.credential===null?'NULL':(_gr.credential===undefined?'UNDEF':'SOMETHING')))), userVal: (_gr&&('userVal_is_'+(_gr.user===null?'NULL':(_gr.user===undefined?'UNDEF':'SOMETHING')))), url: location.href});
+      if(typeof window.__lpResolverRedirect==='function') window.__lpResolverRedirect();
       if(_gr && _gr.user){ await _completarDesdeGoogle(_gr.user); return; }
-    }
-  }catch(_eg){ console.warn('getRedirectResult', _eg && _eg.code); }
+    } else if(typeof window.__lpResolverRedirect==='function') window.__lpResolverRedirect();
+  }catch(_eg){ _lpDbg('onload:getRedirectResult-CATCH', {code:_eg&&_eg.code, msg:_eg&&_eg.message}); console.warn('getRedirectResult', _eg && _eg.code); if(typeof window.__lpResolverRedirect==='function') window.__lpResolverRedirect(); }
   // Login por link mágico (respaldo): si el usuario volvió del correo, completar y salir.
   if(typeof firebase!=='undefined' && firebase.auth && firebase.auth().isSignInWithEmailLink && firebase.auth().isSignInWithEmailLink(location.href)){
     await _completarDesdeLinkMagico();
@@ -3656,7 +3806,7 @@ window.onload = async function(){
     // si se abre con Pistero todavía hablando, el mic capta su propia voz.
     if(manosLibresOn) setTimeout(function(){ _iniciarEscuchaContinua(); },3000);
     if(!ghostMode) subscribeToUsers();
-    subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
+    subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
@@ -3775,7 +3925,7 @@ function _mostrarPantallaRevisaCorreo(email){
     +'</div>';
 }
 // Paso 2: se llama al volver del correo, con la sesión YA verificada y el token uid==cu listo.
-async function _completarLoginVerificado(cuVal, nombre, e_val){
+async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   cu=cuVal; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador(); if(typeof _mostrarBienvenidaFundador==='function') setTimeout(_mostrarBienvenidaFundador,900);
   nombreUsuario=nombre;
   const paisSel=localStorage.getItem('lp_pending_pais')||'auto';
@@ -3854,7 +4004,7 @@ async function _completarLoginVerificado(cuVal, nombre, e_val){
   await im(); au(); rm(MG); fg('todos');
   loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
   if(!ghostMode) subscribeToUsers();
-  subscribeToChat(); subscribeToRouteAlerts(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
+  subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
   getCurrentLocation();
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
@@ -3863,6 +4013,16 @@ async function _completarLoginVerificado(cuVal, nombre, e_val){
   else { setTimeout(function(){ if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
 }
 
+async function _completarLoginVerificado(cuVal, nombre, e_val){
+  if(typeof _lpDbg==='function') _lpDbg('completarLoginVerificado:ENTRA', {cuVal:cuVal});
+  try{
+    await _completarLoginVerificadoOriginal(cuVal, nombre, e_val);
+    if(typeof _lpDbg==='function') _lpDbg('completarLoginVerificado:TERMINO-OK');
+  }catch(err){
+    if(typeof _lpDbg==='function') _lpDbg('completarLoginVerificado:THREW', {msg: err&&err.message, name: err&&err.name, stack: err&&err.stack&&err.stack.substring(0,600)});
+    throw err;
+  }
+}
 async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
 function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
 // Ahora vive dentro del menú de la ficha de usuario: sin fondo de píldora, el estado
@@ -5363,7 +5523,15 @@ function enviarDM(){
 function cerrarChatAmigo(){ if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; showFriendsList(); }
 async function showFriendsList(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Amigos'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); try{ const res=await Promise.all([ db.collection('friendRequests').where('from','==',cu).get(), db.collection('friendRequests').where('to','==',cu).get() ]); const ids={}; res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; }); res[1].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; }); const friendIds=Object.keys(ids); if(friendIds.length===0){ c.innerHTML='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; return; } let html=''; for(const friendId of friendIds){ const nombre=await getNombreUsuario(friendId); html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1;cursor:pointer" onclick="verPerfilUsuario(\''+friendId+'\',\'showFriendsList\')"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa;text-decoration:underline">Ver perfil</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')"><i class="fas fa-comment"></i> Chat</button></div>'; } c.innerHTML=html+'<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>'; }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los amigos. Intenta de nuevo.</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; } }
 async function showFriendRequests(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Solicitudes'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); const snapshot=await db.collection('friendRequests').where('to','==',cu).get(); const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}); if(pend.length===0){ c.innerHTML='<p style="color:#888">Sin solicitudes</p>'; return; } let html=''; for(const doc of pend){ const data=doc.data(); const nombre=await getNombreUsuario(data.from); html+='<div class="friend-request"><span><strong>'+escapeHTML(nombre)+'</strong></span><div><button class="ab" style="width:auto;padding:6px 10px;margin:2px;font-size:0.75rem" onclick="acceptFriendRequest(\''+doc.id+'\',\''+data.from+'\')">Aceptar</button><button class="ab" style="width:auto;padding:6px 10px;margin:2px;background:#dc2626;font-size:0.75rem" onclick="rejectFriendRequest(\''+doc.id+'\')">Rechazar</button></div></div>'; } c.innerHTML=html; }
-function acceptFriendRequest(reqId,fromUser){ db.collection('friendRequests').doc(reqId).update({status:'accepted'}).then(function(){ h("¡Nuevo amigo agregado!"); showFriendsList(); }).catch(function(){ h("No se pudo aceptar, intenta de nuevo."); }); }
+function acceptFriendRequest(reqId,fromUser){
+  db.collection('friendRequests').doc(reqId).update({status:'accepted'}).then(function(){
+    // Espejo con id determinista (uid menor + '_' + uid mayor) para que la regla de
+    // Firestore del perfil privado (fotos/relatos) pueda chequear "son amigos" con
+    // un exists() simple, sin necesitar una query — ver perfil-comunidad.js.
+    try{ const a=cu<fromUser?cu:fromUser, b=cu<fromUser?fromUser:cu; db.collection('amistades').doc(a+'_'+b).set({a:a,b:b}); }catch(e){}
+    h("¡Nuevo amigo agregado!"); showFriendsList();
+  }).catch(function(){ h("No se pudo aceptar, intenta de nuevo."); });
+}
 function rejectFriendRequest(reqId){ db.collection('friendRequests').doc(reqId).update({status:'rejected'}); h("Solicitud rechazada."); showFriendRequests(); }
 async function showUserListForFriendRequest(){
   _modalVolverA='showFriendsList';
@@ -5901,7 +6069,7 @@ function mostrarLogrosComunidad(){
     +'<button class="ab sec" style="margin:0" onclick="verRetos()"><i class="fas fa-bullseye"></i> Retos y temporadas</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarResumenAnual()"><i class="fas fa-chart-column"></i> Mi año en Libre Pedal</button>'
     +'<button class="ab sec" style="margin:0" onclick="verRecomendacionRutas()"><i class="fas fa-compass"></i> Rutas para ti</button>'
-    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda(true)"><i class="fas fa-wand-magic-sparkles"></i> Tienda de Darma</button>'
+    +'<button class="ab sec" style="margin:0" onclick="mostrarTienda(true)"><i class="fas fa-dharmachakra"></i> Tienda de Darma</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarComunidad()"><i class="fas fa-handshake"></i> Meta de la comunidad (vota)</button>'
     +'<button class="ab sec" style="margin:0" onclick="mostrarFundadores()"><i class="fas fa-medal"></i> Socios Fundadores</button>'
     +'</div>';
@@ -6090,7 +6258,9 @@ async function verPerfilUsuario(userId, volverA){
     html+='<p style="font-size:0.8rem;color:#9fb3c8;text-align:center">Ha recorrido y grabado <strong style="color:var(--p)">'+totalKm.toFixed(1)+' km</strong> en '+rutas.length+' ruta'+(rutas.length===1?'':'s')+'.</p>';
     if(rutas.length){ html+='<button class="ab" onclick="mostrarRutasDe(\''+userId+'\',\''+encodeURIComponent(nombre)+'\')"><i class="fas fa-map"></i> Ver por dónde ha pedaleado</button>'; }
     if(userId!==cu){ html+='<button class="ab sec" style="margin-top:6px" onclick="abrirChatAmigo(\''+userId+'\')"><i class="fas fa-comment"></i> Enviar mensaje</button>'; }
+    html+='<div id="perfilComunidadSlot"></div>';
     c.innerHTML=html;
+    if(typeof renderPerfilComunidad==='function') renderPerfilComunidad(userId, userId===cu);
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudo cargar el perfil.</p>'; }
 }
 async function mostrarRutasDe(userId,nombreEnc){
@@ -9944,7 +10114,7 @@ const tutorialSteps=[
   {sel:'#btnEsferaHeader', d:'Tu Esfera: los accesos flotando. Gírala y toca un ícono. Este botón la reabre.'},
   {view:'dash', sel:'#quick-dest', d:'Escribe o dicta un destino del mundo y te guío paso a paso, aquí mismo en Inicio.'},
   {sel:'#micBtn', d:'O toca el micrófono y dime un destino de viva voz: te guío como Waze.'},
-  {sel:'nav .nb:nth-child(3)', d:'Y aquí abajo vivo yo: Pistero con IA. Pregúntame por rutas, arreglos o dónde alojar, desde cualquier pantalla.'},
+  {view:'pistero', sel:'#pisteroInput', d:'Este es mi chat. Escríbeme aquí cualquier pregunta —rutas, arreglos de bici, dónde alojar— y te respondo. Vivo en este botón de abajo, en cualquier pantalla.'},
   {view:'dash', sel:'.speed-display', d:'Tu velocidad en vivo. El GPS graba tu ruta solo: se guarda al detenerte, no prendas nada.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'SOS: guarda tus contactos y les mando tu ubicación por WhatsApp al toque.'},
   {view:'customize', sel:'.darma-badge', d:'Tu Darma: premio por aportar. Desbloquea cascos, skins y estilos.'},
@@ -10011,7 +10181,9 @@ function renderTutorial(){
   document.getElementById('tutProgress').innerText=(tutorialIdx+1)+' / '+tutorialSteps.length;
   document.getElementById('tutPrev').style.visibility=tutorialIdx===0?'hidden':'visible';
   document.getElementById('tutNext').innerText=tutorialIdx===tutorialSteps.length-1?'¡A pedalear!':'Siguiente ▶';
-  if(s.view) cv(s.view);
+  // El paso de Pistero necesita abrirPistero() (no solo cv()): así deja el chat
+  // inicializado con su saludo real, no la sección en blanco sin historial.
+  if(s.view==='pistero') abrirPistero(); else if(s.view) cv(s.view);
   pararVoz(); // corta la narración anterior al toque, sin esperar (nunca se encima con la del paso nuevo)
   // pequeño retardo para que la vista cambie y el elemento exista/posicione
   setTimeout(function(){
@@ -10174,7 +10346,25 @@ const lpSalud = (function(){
       // reales de Inty, sonaba como si ya hubieras salido a pedalear sin haberlo
       // decidido. Los recordatorios recurrentes (hidratación, etc.) sí siguen
       // corriendo igual — esos ya tardan varios minutos en aparecer.
-      if(!silencioso) setTimeout(function(){ if(activo() && typeof h==='function') h("Antes de salir: revisa presión de neumáticos, frenos, cadena y luces. ¡Buen viaje!"); }, 6500);
+      // Aviso al partir, distinto por modo de actividad (pedido de Inty 2026-08-08):
+      // ciclismo/MTB/cicloviaje = chequeo mecánico de la bici; trekking = frase motivadora;
+      // motorizado = niveles de agua/aceite, pero NO cada viaje (se sentía spam) — aleatorio,
+      // forzado al menos una vez al mes por si el azar nunca lo saca.
+      if(!silencioso) setTimeout(function(){
+        if(!activo() || typeof h!=='function') return;
+        if(actividadTipo==='trekking'){
+          h("Recuerda llevar fuego, ese fuego que llevas dentro. ¡Buen viaje!");
+        } else if(actividadTipo==='moto'){
+          var _kNiveles='lp_aviso_niveles_'+(cu||'x');
+          var _diasNiveles=(Date.now()-parseInt(localStorage.getItem(_kNiveles)||'0',10))/86400000;
+          if(_diasNiveles>=30 || Math.random()<0.25){
+            h("¿Hace cuánto que no revisas los niveles de agua y aceite? ¡Buen viaje!");
+            localStorage.setItem(_kNiveles, String(Date.now()));
+          }
+        } else {
+          h("Antes de salir: revisa tu bici. ¡Buen viaje!");
+        }
+      }, 6500);
       timer=setInterval(tick, 60000);
     },
     stop:function(){ if(timer){ clearInterval(timer); timer=null; } mins=0; }
@@ -10383,9 +10573,9 @@ function _pisteroIntroPrimeraVez(nombre){
     if(typeof cu==='undefined' || !cu) return false;
     if(localStorage.getItem('lp_intro_pistero_'+cu)) return false;
     var esPistera = (typeof pisteroGenero!=='undefined' && pisteroGenero==='c');
-    var quien = esPistera ? 'Pistera, tu compañera' : 'Pistero, tu compañero';
-    var nom = nombre ? (', '+String(nombre).split(' ')[0]) : '';
-    var msg = 'Hola'+nom+'. Soy '+quien+' de ruta. Si tienes cualquier duda sobre la app, solo pregúntame y te enseño.';
+    var msg = esPistera
+      ? 'Hola. Soy Pistera. Te confieso algo: sé harto de esta app, pero no soy adivina para todo lo demás. Por eso viene un tutorial cortito para mostrarte cómo funciona. Y si algo se te queda dando vueltas, me preguntas cuando quieras.'
+      : 'Hola. Soy Pistero. Te confieso algo: sé harto de esta app, pero no soy adivino para todo lo demás. Por eso viene un tutorial cortito para mostrarte cómo funciona. Y si algo se te queda dando vueltas, me preguntas cuando quieras.';
     if(typeof h==='function') h(msg);
     localStorage.setItem('lp_intro_pistero_'+cu, '1');
     try{ db.collection('users').doc(cu).set({introPistero:true},{merge:true}); }catch(e){}
