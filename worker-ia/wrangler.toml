@@ -1,4 +1,4 @@
-name = "librepedal-ia"
+name = "librepedal-ia-sudamerica"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 

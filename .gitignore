@@ -4,6 +4,9 @@ LibrePedal-publicar.zip
 Thumbs.db
 
 # Tokens/credenciales locales — nunca deben subirse al repo
+peru.txt
+*.key.txt
+.dev.vars
 MI-CLOUDFLARE.txt
 MI-CLOUDFLARE-IA.txt
 MI-TOKEN-NETLIFY.txt
