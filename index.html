@@ -3355,6 +3355,13 @@ function saveCustomization(){
   if(helmetMarker) helmetMarker.setIcon(L.divIcon({className:'',html:riderMarkerHTML(selectedHelmet, skinColor(selectedSkin), true),iconSize:[50,34],iconAnchor:[25,17]}));
   h("Tu personaje quedó listo. Te ves de lujo.");
 }
+// _btnVolverModal() llama a _modalVolverA+'()' -- verPerfilUsuario(cu,'customize')
+// (botón "Ver mi perfil de comunidad" en Perfil) dejaba _modalVolverA='customize',
+// pero no existía función customize() (la real es cv('customize')): el botón
+// "Volver" del modal quedaba muerto (ReferenceError silencioso). Wrapper mínimo
+// para que el nombre de vista funcione como nombre de función, igual que el resto
+// de los volverA (mostrarLogrosComunidad, showFriendsList, etc.).
+function customize(){ closeModal(); cv('customize'); }
 
 // ===== Frases por PAÍS (jerga local). CL = set chileno; resto = neutral + sabor local. =====
 const frasesNeutro={
