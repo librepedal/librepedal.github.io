@@ -8,6 +8,8 @@ archivado por tema.
 ## 📌 Documentos vivos (raíz) — se leen/editan seguido, en TODA sesión nueva
 
 - **`LEEME.md`** — el protocolo de trabajo completo, léelo primero si sos sesión nueva.
+- **`METODO-DE-TRABAJO-INTY.md`** — el ESTILO de trabajo que Inty espera (más allá de
+  LibrePedal): ritmo, calidad, autonomía, diseño, trampas técnicas ya encontradas.
 - **`EMPEZAR-AQUI.md`** — resumen rápido de por dónde seguir ahora mismo.
 - **`EN-USO.md`** — el candado: quién está editando `index.html` en este momento.
 - **`PENDIENTES.md`** — lista de tareas abiertas, por fecha (más nuevo abajo).
