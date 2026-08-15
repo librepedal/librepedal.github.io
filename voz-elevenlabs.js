@@ -35,12 +35,19 @@
     };
     try{
       const a = new Audio('voces-el/' + pisteroGenero + id + '.mp3');
+      // Aplica la prosodia del arquetipo elegido (rate) tambien a lo pre-grabado --
+      // antes solo la voz en vivo (Azure runtime) sonaba distinta por personalidad,
+      // asi que ElevenLabs (que tiene prioridad) sonaba igual sin importar el
+      // arquetipo. Ver _rateArq() en index.html.
+      const _pr = (typeof _rateArq==='function') ? _rateArq() : 1;
+      try{ a.playbackRate = _pr; }catch(_e2){}
       _vozNeuralAudio = a;
       a.onloadedmetadata = function(){
         if(isFinite(a.duration) && a.duration > 0){
+          var ms = a.duration * 1000 / _pr;
           clearTimeout(vozTimerFin);
-          _pisteroHabla(a.duration * 1000 + 300);
-          vozTimerFin = setTimeout(_vozSiguiente, Math.round(a.duration * 1000) + 2500);
+          _pisteroHabla(ms + 300);
+          vozTimerFin = setTimeout(_vozSiguiente, Math.round(ms) + 2500);
         }
       };
       a.onplaying = function(){ cayo = true; };
