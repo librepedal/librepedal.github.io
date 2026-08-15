@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "cl.librepedal.app",
+    "sha256_cert_fingerprints": [
+      "D5:89:D4:B0:51:29:63:83:09:1D:28:17:6F:B3:4F:8D:2B:AE:43:08:23:FF:0A:49:28:D3:69:77:F7:FE:EE:94"
+    ]
+  }
+}]

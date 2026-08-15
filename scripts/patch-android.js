@@ -18,6 +18,38 @@ if (!fs.existsSync(manifestPath)) {
 
 let xml = fs.readFileSync(manifestPath, 'utf8');
 
+// ===== App Links (2026-08-15) =====
+// Sin esto, cualquier link a librepedal.cl (el link mágico de login por correo,
+// links compartidos, etc.) abre el navegador del teléfono en vez de la app
+// instalada -- y como el navegador y la app instalada NO comparten sesión/storage
+// (son contextos separados de Android), el login que se completa en el navegador
+// nunca lo ve la app. Con este intent-filter + `.well-known/assetlinks.json`
+// (verificación del lado del servidor, ver deploy-seguro.sh) Android verifica la
+// asociación al instalar y desde ahí cualquier link a librepedal.cl abre DIRECTO
+// en la app. `autoVerify="true"` es lo que dispara esa verificación automática.
+const appLinksFilter = `        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" android:host="librepedal.cl" />
+            <data android:scheme="https" android:host="www.librepedal.cl" />
+        </intent-filter>
+`;
+if (xml.indexOf('android:host="librepedal.cl"') === -1) {
+  const activityRe = /(<activity\b[^>]*android:name="\.MainActivity"[^>]*>)([\s\S]*?)(<\/activity>)/;
+  if (activityRe.test(xml)) {
+    xml = xml.replace(activityRe, function (_m, abre, adentro, cierra) {
+      return abre + adentro + appLinksFilter + cierra;
+    });
+    console.log('App Links (intent-filter) agregado a MainActivity para librepedal.cl');
+  } else {
+    console.error('No se encontró la etiqueta <activity> de MainActivity — no se pudo agregar App Links.');
+    process.exit(1);
+  }
+} else {
+  console.log('App Links ya estaba presente.');
+}
+
 const permisos = [
   'android.permission.ACCESS_COARSE_LOCATION',
   'android.permission.ACCESS_FINE_LOCATION',

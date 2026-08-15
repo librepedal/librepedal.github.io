@@ -42,7 +42,10 @@ done
 # cuando se me quedó fuera. `demo-voces` y `resources` son material público del sitio.
 # NO van: worker-ia / worker-auth (código de Workers), scripts, tests, concepts,
 # prototipos, android, COORDINACION-IA. Nada de eso lo sirve el navegador.
-for d in icons img images assets fonts sonidos audio functions voces voces-el demo-voces resources; do
+# `.well-known` (2026-08-15): Android App Links necesita `assetlinks.json` servido en
+# `/.well-known/assetlinks.json` — al ser carpeta oculta (empieza con punto) no la agarra
+# ningún glob de arriba, así que va explícita.
+for d in icons img images assets fonts sonidos audio functions voces voces-el demo-voces resources .well-known; do
   [ -d "$d" ] && cp -r "$d" "$OUT/"
 done
 cp *.png *.jpg *.jpeg *.svg *.webp *.mp3 *.ogg *.mp4 "$OUT/" 2>/dev/null || true
