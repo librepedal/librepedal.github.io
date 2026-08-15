@@ -81,8 +81,10 @@ h1 span{color:var(--p)}
 @media(max-width:640px){.vision{grid-template-columns:1fr}}
 .vgoal{background:var(--bg3);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center}
 .vgoal .ic{font-size:1.5rem;display:block;margin-bottom:8px}
-.vgoal b{font-size:.9rem;display:block}
+.vgoal b,.vgoal span{filter:blur(4px);user-select:none;transition:filter .3s ease}
+.vgoal b{font-size:.9rem;display:block;opacity:.85}
 .vgoal span{font-size:.76rem;color:var(--faint)}
+@media (prefers-reduced-motion:reduce){.vgoal b,.vgoal span{filter:blur(3px)}}
 .alive-panel{background:var(--bg3);border:1px solid var(--line);border-radius:20px;padding:28px clamp(20px,4vw,40px)}
 .ap-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.95rem;color:var(--muted)}
 .ap-top .big{font-size:1.6rem;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
