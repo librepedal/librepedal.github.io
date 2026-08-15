@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "857811917976-81a9o9dsrtf67fvlkcbp8nk5v1loec71.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "cl.librepedal.app",
+            "certificate_hash": "9b05199b0a05ddea5d7710517c09142caaf4e45c"
+          }
+        },
+        {
           "client_id": "857811917976-e6f9vde1bkh5bn2824b2ipl2rkjim0p7.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
