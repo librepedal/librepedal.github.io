@@ -391,3 +391,35 @@ Cabos sueltos para quien retome (ninguno bloqueante):
   server local durante esta sesion) — vale la pena que lo confirme ahi tambien,
   sobre todo el timing del audio (throttling de video en background/pantalla
   bloqueada puede desincronizar los beats).
+
+---
+
+**LIBRE** — sesion Lenovo, 2026-08-15/16 madrugada. Login roto: `auth/quota-exceeded`
+de Firebase (51 testers pidiendo el link magico casi a la misma hora agotaron el cupo
+diario gratis). Se saco el link magico, Google Sign-In nativo (`@capacitor-firebase/
+authentication`) queda como unico metodo — **todo en rama `google-signin-nativo`, NO
+mergeada a `main` todavia**, esperando que Inty confirme que funciona de verdad en su
+telefono con un AAB de prueba (subido a mano a "Prueba interna" de Play Console, no vía
+API — no tengo credenciales del Play Developer API, solo de Firebase Management API).
+
+Lo que SI llego a `main`/produccion (mergeado con lo de arriba sin conflictos reales,
+solo version.txt/APP_VERSION): fix de voces por arquetipo (el audio pre-grabado de
+ElevenLabs no variaba por arquetipo, solo por genero — `_rateArq()` le aplica la
+prosodia tambien al audio fijo, no solo a la voz en vivo) + proteccion anti-abuso del
+Worker `librepedal-ia` (cache real + tope diario de caracteres + limite por IP, KV
+`VOZ_CUOTA`). v8.72 en produccion.
+
+**⚠️ URGENTE, bloquea a CUALQUIER sesion que intente deployar ahora mismo:** el token de
+`MI-CLOUDFLARE.txt` dejo de poder publicar a Cloudflare Pages (`Authentication error
+[code: 10000]` en `deploy-cloudflare.yml`) justo despues de que Inty le agregara permisos
+de Workers Scripts/KV Storage para poder deployar `worker-ia` — parece que la edicion del
+token en el dashboard reemplazo la lista de permisos en vez de sumarle. Si tu deploy
+tambien falla con ese mismo error, NO es tu codigo — es el token. Le avise a Inty que
+revise `https://dash.cloudflare.com/profile/api-tokens` y confirme que "Cloudflare
+Pages: Edit" siga ahi junto a los permisos nuevos de Workers.
+
+**PENDIENTE para quien maneje la expansion Sudamerica:** el Worker
+`librepedal-ia-sudamerica.inty405.workers.dev` (usado por `IA_URL_NEUTRA` para la voz
+ElevenLabs de usuarios fuera de Chile) no tiene la proteccion anti-abuso de arriba — no
+encontre su codigo fuente en este repo, solo pude proteger `worker-ia/worker.js`
+(Chile). Ver detalle completo en `PENDIENTES.md` (entrada de esta misma fecha).
