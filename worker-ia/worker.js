@@ -123,13 +123,26 @@ async function correrModelo(env, messages, maxTokens) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const cors = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type"
     };
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+
+    // ===== Caché real de audio (Cache API de Workers, sin necesitar KV): las voces
+    // aztts/eltts son frases fijas repetidas miles de veces (el banco de Pistero es
+    // finito), así que la MISMA URL (texto+voz+params) nunca debería pegarle dos veces
+    // a Azure/ElevenLabs. Evita gastar cuota/plata de nuevo por una frase ya generada.
+    // Solo aplica a GET (como llama la app hoy); POST no se cachea. =====
+    const cache = caches.default;
+    const esAudio = request.method === "GET" && (new URL(request.url).searchParams.has("aztts") || new URL(request.url).searchParams.has("eltts"));
+    if (esAudio) {
+      const hit = await cache.match(request);
+      if (hit) return hit;
+    }
+
     const url = new URL(request.url);
     let lugar = url.searchParams.get("lugar") || "";
     let body = null;
@@ -166,7 +179,9 @@ export default {
         });
         if (!r.ok) return new Response(JSON.stringify({ error: "aztts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
         const buf = await r.arrayBuffer();
-        return new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+        const resp = new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+        ctx.waitUntil(cache.put(request, resp.clone()));
+        return resp;
       } catch (e) {
         return new Response(JSON.stringify({ error: "aztts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       }
@@ -215,7 +230,9 @@ export default {
         });
         if (!r.ok) return new Response(JSON.stringify({ error: "eltts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
         const buf = await r.arrayBuffer();
-        return new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+        const resp = new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+        ctx.waitUntil(cache.put(request, resp.clone()));
+        return resp;
       } catch (e) {
         return new Response(JSON.stringify({ error: "eltts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       }
