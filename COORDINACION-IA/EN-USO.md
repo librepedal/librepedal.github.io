@@ -427,3 +427,24 @@ Ojo, este merge (Google Sign-In nativo) es real y grande -- saca el link
 magico por completo, toca `index.html`/`worker-ia/worker.js`/`google-services.json`
 -- no es algo para revertir a la ligera si ya esta en produccion cuando esto
 se lea; coordinar con Inty antes de deshacer nada.
+
+---
+
+**LIBRE** - sesion Claude Code, 2026-08-15, mas tarde. Inty reporto: "en la seccion
+de Perfil hay botones que no hacen nada". Reproducido en navegador local (sin login
+real, forzando la vista): el boton "Volver" del modal que abre "Ver mi perfil de
+comunidad" (dentro de Perfil) tiraba `ReferenceError: customize is not defined` y no
+hacia nada -- `verPerfilUsuario(cu,'customize')` deja `_modalVolverA='customize'`,
+y `_btnVolverModal()` arma el onclick como `_modalVolverA+'()'`, pero solo existia
+`cv('customize')`, nunca una funcion `customize()` sola. El resto de los controles
+de Perfil (swatches de casco/piel/pelo/etc via `_pistSet`, Preferencias, Guardar
+personaje) SI funcionaban bien -- probado uno por uno, sin errores.
+
+Fix: agregado wrapper `function customize(){ closeModal(); cv('customize'); }`
+junto a `saveCustomization()`. Verificado en navegador: antes del fix, Volver
+tiraba el ReferenceError y el modal se quedaba abierto; despues, cierra el modal
+y vuelve a Perfil sin errores. `node tests/run.mjs` 13/13 verde.
+
+Commiteado en rama `fix/perfil-volver-modal-roto` (commit `8df119b`), **NO
+pusheada, NO mergeada a main** -- queda para que Inty la revise/apruebe antes de
+subir, segun la regla dura del CLAUDE.md. Candado **LIBRE**.
