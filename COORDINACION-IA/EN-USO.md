@@ -371,3 +371,23 @@ entorno):
 - **PENDIENTE real**: no pude probar audio ni video en este entorno (sandbox sin
   reproduccion real) — Inty tiene que abrir `bienvenida.html` e `index.html` en un
   navegador de verdad antes de aprobar el merge.
+
+**MERGEADO Y DESPLEGADO (2026-08-15, con ✓ de Inty sobre un preview con dev server
+local, incluido el bloque de "misterio" con blur en Sorteo/Reforestar/Deportistas
+que se agrego despues del commit de arriba).** `main` = `daa2d59`, verificado en
+vivo: `librepedal.cl/version.txt` = 8.70, y `bienvenida.html`/`logo-sound.js`/
+`logo-transparent-gold.png`/`logo-presentacion.mp4` responden 200 en produccion.
+Candado **LIBRE**.
+
+Cabos sueltos para quien retome (ninguno bloqueante):
+- `wip/rueda-oro-necesita-simplificarse` quedo obsoleta para el logo del login/
+  landing (la reemplazo el video en ambos lados) — sigue pusheada sin mergear;
+  revisar si tiene algo mas que rescatar antes de borrarla, o preguntarle a Inty.
+- `landing.html` (la landing vieja/simple, separada de `bienvenida.html`) NO se
+  toco en esta tanda — sigue con su copy original, sin el enfoque "sin plata/
+  cantidades" ni el logo nuevo. Si sigue en uso, falta decidir si se actualiza
+  igual o se retira.
+- Inty todavia no probo el sonido/video en su telefono real (solo en un dev
+  server local durante esta sesion) — vale la pena que lo confirme ahi tambien,
+  sobre todo el timing del audio (throttling de video en background/pantalla
+  bloqueada puede desincronizar los beats).
