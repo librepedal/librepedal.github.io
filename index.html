@@ -1529,7 +1529,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.65'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.66'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2769,6 +2769,19 @@ function hAmbiente(t){ if(typeof micOn!=='undefined'&&micOn) return; h(t, PRIO_V
 function hCorta(t){ h(t, PRIO_VOZ.NAV); }        // navegación/tutorial: corta lo menos importante, pero NO pisa seguridad ni otro giro
 function hUrgente(t){ try{ _pisteroMood='enojado'; }catch(e){} h(t, PRIO_VOZ.SEGURIDAD); } // caída/SOS: manda sobre todo
 function _durEstVoz(txt){ return Math.min(55000, Math.max(1800, txt.length*75)); }
+// 2026-08-15: helper para no repetir el bug del tutorial (algo visual/sonoro
+// disparado con un setTimeout de tiempo fijo, cortando la voz de Pistero a
+// mitad de frase). h()/_reproducirVoz() ponen vozHablando=true de forma
+// SINCRONICA al llamar h(), asi que esperar este flag es seguro llamando la
+// funcion justo despues de h(). Tope de seguridad por si vozHablando queda
+// pegado en true por algun error de otro lado.
+function _esperarFinVoz(cb, maxEsperaMs){
+  var limite=Date.now()+(maxEsperaMs||20000);
+  (function _chk(){
+    if(!vozHablando || Date.now()>limite){ cb(); return; }
+    setTimeout(_chk, 300);
+  })();
+}
 function _reproducirVoz(item){
   const miGen=++vozGen; // turno de esta frase — ver nota junto a "let vozGen" más arriba
   vozHablando=true;
@@ -3979,11 +3992,17 @@ window.onload = async function(){
     await im(); au(); rm(MG); fg('todos');
     loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
     initCustomization();
-    setTimeout(function(){ h(saludoBienvenida(nombreUsuario)); },500);
-    setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },950);
-    // Espera a que termine el saludo hablado antes de abrir la escucha continua:
-    // si se abre con Pistero todavía hablando, el mic capta su propia voz.
-    if(manosLibresOn) setTimeout(function(){ _iniciarEscuchaContinua(); },3000);
+    // 2026-08-15: antes eran 2 timeouts de tiempo fijo (950ms para abrirEsfera, 3000ms
+    // para el mic de manos libres) adivinando cuanto dura el saludo -- con saludos
+    // largos, el flash+sonido de abrirEsfera() cortaba la voz a mitad de frase (mismo
+    // bug que el del tutorial). Ahora se espera de verdad a que vozHablando sea false.
+    setTimeout(function(){
+      h(saludoBienvenida(nombreUsuario));
+      _esperarFinVoz(function(){
+        if(typeof abrirEsfera==='function') abrirEsfera();
+        if(manosLibresOn) _iniciarEscuchaContinua();
+      });
+    },500);
     if(!ghostMode) subscribeToUsers();
     subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
     getCurrentLocation();
@@ -4201,8 +4220,20 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   // se lo piden por chat (línea ~10487: "tutorial"/"ayuda"/"no entiendo") o desde el
   // botón "Ver tutorial" en Ajustes (línea ~1069). No se tocó esa lógica, solo se sacó
   // el arranque automático y forzado la primera vez.
-  if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(function(){ _pisteroIntroPrimeraVez(nombre); }, 500); setTimeout(function(){ if(cu) localStorage.setItem('lp_tut_'+cu,'done'); if(typeof abrirEsfera==='function') abrirEsfera(); }, 2600); }
-  else { setTimeout(function(){ if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
+  // 2026-08-15: los timeouts fijos (2600ms / 1050ms) para abrirEsfera() no esperaban a
+  // que terminara la voz -- el mensaje de primera vez (~17s estimados) quedaba cortado
+  // por el flash+sonido de abrirEsfera(). Ahora se espera a que vozHablando sea false.
+  if(localStorage.getItem('lp_tut_'+cu)!=='done'){
+    setTimeout(function(){
+      _pisteroIntroPrimeraVez(nombre);
+      _esperarFinVoz(function(){ if(cu) localStorage.setItem('lp_tut_'+cu,'done'); if(typeof abrirEsfera==='function') abrirEsfera(); });
+    }, 500);
+  } else {
+    setTimeout(function(){
+      if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre));
+      _esperarFinVoz(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); });
+    },600);
+  }
 }
 
 async function _completarLoginVerificado(cuVal, nombre, e_val){
@@ -10616,7 +10647,7 @@ function renderTutorial(){
 }
 function tutNext(){ if(tutorialIdx<tutorialSteps.length-1){ tutorialIdx++; renderTutorial(); } else { closeTutorial(); } }
 function tutPrev(){ if(tutorialIdx>0){ tutorialIdx--; renderTutorial(); } }
-function closeTutorial(){ document.getElementById('tutorialOverlay').classList.remove('on'); if(cu) localStorage.setItem('lp_tut_'+cu,'done'); hCorta("¡Listo! Ya conoces lo básico. Cualquier duda, tócame el micrófono. ¡A rodar!"); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },500); }
+function closeTutorial(){ document.getElementById('tutorialOverlay').classList.remove('on'); if(cu) localStorage.setItem('lp_tut_'+cu,'done'); hCorta("¡Listo! Ya conoces lo básico. Cualquier duda, tócame el micrófono. ¡A rodar!"); _esperarFinVoz(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); }); }
 
 /* ===== PWA: Service Worker + Wake Lock (GPS/voz con pantalla apagada) ===== */
 if('serviceWorker' in navigator){
@@ -10991,9 +11022,12 @@ function _pisteroIntroPrimeraVez(nombre){
     if(typeof cu==='undefined' || !cu) return false;
     if(localStorage.getItem('lp_intro_pistero_'+cu)) return false;
     var esPistera = (typeof pisteroGenero!=='undefined' && pisteroGenero==='c');
+    // 2026-08-15: se saco el tutorial automatico (cortaba este mismo mensaje a mitad de
+    // camino) -- el texto ya NO promete que "viene un tutorial", ahora invita a preguntar
+    // cuando quieras (Pistero ya sabe mostrar el paso exacto si se lo pides por chat).
     var msg = esPistera
-      ? 'Hola. Soy Pistera. Te confieso algo: sé harto de esta app, pero no soy adivina para todo lo demás. Por eso viene un tutorial cortito para mostrarte cómo funciona. Y si algo se te queda dando vueltas, me preguntas cuando quieras.'
-      : 'Hola. Soy Pistero. Te confieso algo: sé harto de esta app, pero no soy adivino para todo lo demás. Por eso viene un tutorial cortito para mostrarte cómo funciona. Y si algo se te queda dando vueltas, me preguntas cuando quieras.';
+      ? 'Hola. Soy Pistera. Te confieso algo: sé harto de esta app, pero no soy adivina para todo lo demás. Si algo se te queda dando vueltas, me preguntas cuando quieras y te muestro cómo funciona.'
+      : 'Hola. Soy Pistero. Te confieso algo: sé harto de esta app, pero no soy adivino para todo lo demás. Si algo se te queda dando vueltas, me preguntas cuando quieras y te muestro cómo funciona.';
     if(typeof h==='function') h(msg);
     localStorage.setItem('lp_intro_pistero_'+cu, '1');
     try{ db.collection('users').doc(cu).set({introPistero:true},{merge:true}); }catch(e){}
