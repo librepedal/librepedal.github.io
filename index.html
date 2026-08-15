@@ -1584,7 +1584,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.67'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.68'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4170,7 +4170,8 @@ async function enviarLinkMagico(e){
     _mostrarPantallaRevisaCorreo(e_val);
   }catch(err){
     if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane"></i> Enviarme el enlace'; }
-    lpAviso('No se pudo enviar el enlace: '+((err&&err.message)||err));
+    var _code=(err&&err.code)?' ('+err.code+')':'';
+    lpAviso('No se pudo enviar el enlace'+_code+': '+((err&&err.message)||err));
   }
 }
 function _mostrarPantallaRevisaCorreo(email){
@@ -4179,8 +4180,28 @@ function _mostrarPantallaRevisaCorreo(email){
     +'<div style="font-size:2.6rem;color:var(--p);margin-bottom:10px"><i class="fas fa-envelope-circle-check"></i></div>'
     +'<h2 style="font-size:1.1rem;margin:0 0 8px;color:#e7edf6">Revisa tu correo</h2>'
     +'<p style="font-size:0.88rem;color:#9fb3c8;line-height:1.55">Te enviamos un enlace a <b style="color:#dfe7ff">'+escapeHTML(email)+'</b>.<br>Ábrelo desde este teléfono para entrar. Puede tardar un par de minutos — revisa también spam.</p>'
-    +'<p style="font-size:0.76rem;color:#7d8ba0;margin-top:14px">¿No llegó? <a href="#" onclick="location.reload();return false" style="color:var(--p);font-weight:700">Reintentar</a></p>'
+    +'<p id="reenviarLinkWrap" style="font-size:0.76rem;color:#7d8ba0;margin-top:14px">¿No llegó? <a href="#" id="reenviarLinkBtn" style="color:var(--p);font-weight:700">Reenviar enlace</a></p>'
     +'</div>';
+  var _rb=document.getElementById('reenviarLinkBtn');
+  if(_rb) _rb.onclick=function(ev){ ev.preventDefault(); _reenviarLinkMagico(email); };
+}
+// Reenvía de verdad (sin recargar la app ni perder el email ya escrito). Cooldown
+// de 20s para no gatillar el limite de envios de Firebase si alguien clickea seguido.
+var _reenviandoLink=false;
+async function _reenviarLinkMagico(email){
+  if(_reenviandoLink) return;
+  var wrap=document.getElementById('reenviarLinkWrap'); var btn=document.getElementById('reenviarLinkBtn');
+  _reenviandoLink=true;
+  if(btn){ btn.style.pointerEvents='none'; btn.style.opacity='0.6'; }
+  if(wrap) wrap.firstChild && (wrap.innerHTML='Reenviando…');
+  try{
+    await _enviarLinkMagico(email);
+    if(wrap) wrap.innerHTML='Reenviado. Revisa tu correo (y spam) — puede tardar un par de minutos.';
+  }catch(err){
+    var _code=(err&&err.code)||'sin-código';
+    if(wrap) wrap.innerHTML='No se pudo reenviar ('+escapeHTML(_code)+'). Espera un minuto e intenta de nuevo, o escríbeme.';
+  }
+  setTimeout(function(){ _reenviandoLink=false; var b=document.getElementById('reenviarLinkBtn'); if(b){ b.style.pointerEvents='auto'; b.style.opacity='1'; } }, 20000);
 }
 // Paso 2: se llama al volver del correo, con la sesión YA verificada y el token uid==cu listo.
 async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
