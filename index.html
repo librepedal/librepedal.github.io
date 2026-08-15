@@ -2421,6 +2421,19 @@ const PERSONALIDAD_PROSODIA={
   seductor:  {rate:'-10%', pitch:'-4%'},   // elegante, suave y pausado
   otaku:     {rate:'+10%', pitch:'+7%'}    // entusiasta, agudo y rápido
 };
+// 2026-08-16: el audio PRE-GRABADO (ElevenLabs/Azure fijo) sonaba igual sin importar
+// el arquetipo elegido -- solo la voz EN VIVO (Azure runtime) aplicaba esta prosodia.
+// Como ElevenLabs tiene prioridad y cubre la mayoría de las frases, en la práctica
+// casi nunca se oía la personalidad elegida, y cuando SÍ caía a la voz en vivo (frases
+// nuevas) sonaba de golpe distinto -- eso es lo que reportó Inty como "voces
+// diferentes en las frases". playbackRate es lo único que un <audio> puede ajustar
+// sin re-generar el archivo (no hay pitch real sin procesar la onda); los navegadores
+// modernos preservan el tono al cambiar la velocidad, así que no suena a ardilla.
+function _rateArq(){
+  var pr=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
+  var n=parseInt(pr.rate,10)||0;
+  return Math.max(0.75,Math.min(1.25, 1+n/100));
+}
 function elegirPersonalidad(id){
   if(!PERSONALIDADES.some(function(p){return p.id===id;})) return;
   pisteroPersonalidad=id; try{ localStorage.setItem('lp_personalidad',id); }catch(e){}
@@ -2917,8 +2930,9 @@ function _vozArchivo(item, durEst, id, miGen){
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
   try{
     const a=new Audio('voces/'+pisteroGenero+id+'.mp3');
+    const _pr=_rateArq(); try{ a.playbackRate=_pr; }catch(_e2){}
     _vozNeuralAudio=a;
-    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ var ms=a.duration*1000/_pr; clearTimeout(vozTimerFin); _pisteroHabla(ms+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(ms)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: comprometidos con este audio, no dispares un segundo (evita voz duplicada)
     a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
     a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
