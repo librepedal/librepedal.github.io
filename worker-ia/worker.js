@@ -122,6 +122,40 @@ async function correrModelo(env, messages, maxTokens) {
   return { texto, usado, ultimoError };
 }
 
+// ===== Protección anti-abuso para aztts/eltts (2026-08-16, pedido de Inty: "evitar
+// colapsar a ElevenLabs por abuso de voces"). Dos capas, ambas con KV (best-effort,
+// sin locking atómico -- alcanza para frenar un abuso real, no para contar centavos
+// exactos):
+// 1) Límite por IP: máx REQS_POR_MIN pedidos/minuto -- para una ráfaga de un solo origen.
+// 2) Presupuesto diario de caracteres: si se pasa MAX_CHARS_DIA en un día, se corta el
+//    envío a Azure/ElevenLabs entero hasta el día siguiente (circuit breaker), pase lo
+//    que pase con el límite por IP. Con la caché de arriba, el uso normal (banco de
+//    ~900 frases fijas) casi nunca debería tocar este presupuesto. =====
+const REQS_POR_MIN = 30;
+const MAX_CHARS_DIA = 20000;
+async function _limiteIP(env, ip) {
+  if (!env.VOZ_CUOTA || !ip) return true;
+  const minuto = Math.floor(Date.now() / 60000);
+  const key = "rl:" + ip + ":" + minuto;
+  try {
+    const actual = parseInt((await env.VOZ_CUOTA.get(key)) || "0", 10);
+    if (actual >= REQS_POR_MIN) return false;
+    await env.VOZ_CUOTA.put(key, String(actual + 1), { expirationTtl: 90 });
+    return true;
+  } catch (e) { return true; } // si KV falla, no bloqueamos voz por un problema nuestro
+}
+async function _presupuestoDiario(env, chars) {
+  if (!env.VOZ_CUOTA) return true;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const key = "presupuesto:" + hoy;
+  try {
+    const usado = parseInt((await env.VOZ_CUOTA.get(key)) || "0", 10);
+    if (usado + chars > MAX_CHARS_DIA) return false;
+    await env.VOZ_CUOTA.put(key, String(usado + chars), { expirationTtl: 172800 });
+    return true;
+  } catch (e) { return true; }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const cors = {
@@ -147,12 +181,15 @@ export default {
     let lugar = url.searchParams.get("lugar") || "";
     let body = null;
     if (request.method === "POST") { try { body = await request.json(); } catch (e) {} }
+    const clientIP = request.headers.get("CF-Connecting-IP") || "";
 
     // ===== VOZ CHILENA EN VIVO (Azure es-CL) para las frases DINÁMICAS (saludo con nombre,
     // calles de navegación, números, chat) que no se pueden pre-grabar. Proxy seguro: la
     // llave vive en el secreto AZURE_TTS_KEY, nunca en la app. Devuelve MP3 directo. =====
     const azText = url.searchParams.get("aztts") || (body && body.aztts);
     if (azText) {
+      if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      if (!(await _presupuestoDiario(env, String(azText).length))) return new Response(JSON.stringify({ error: "presupuesto_diario_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
       const key = env.AZURE_TTS_KEY;
       if (!key) return new Response(JSON.stringify({ error: "sin_llave_azure" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       const region = env.AZURE_TTS_REGION || "eastus";
@@ -206,6 +243,8 @@ export default {
     // Uso: ?eltts=<texto>&voz=<voiceId>  (voz opcional si defines ELEVENLABS_VOICE_DEFAULT). Devuelve MP3. =====
     const elText = url.searchParams.get("eltts") || (body && body.eltts);
     if (elText) {
+      if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      if (!(await _presupuestoDiario(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_diario_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
       const key = env.ELEVENLABS_API_KEY;
       if (!key) return new Response(JSON.stringify({ error: "sin_llave_elevenlabs" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       // Par neutro-latino por defecto: Miguel G (masc) / Ninoska (fem). Se elige por ?g=c (femenina)

@@ -4,3 +4,7 @@ compatibility_date = "2024-11-01"
 
 [ai]
 binding = "AI"
+
+[[kv_namespaces]]
+binding = "VOZ_CUOTA"
+id = "3e7076907d724ba794e1cf432a62e688"
