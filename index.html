@@ -1519,7 +1519,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.62'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.63'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4029,18 +4029,23 @@ function cadenaClick(v){
     // Burst de ruido muy corto con decay = el "tic" del trinquete
     const len=Math.floor(ac.sampleRate*0.011);
     const buf=ac.createBuffer(1,len,ac.sampleRate); const d=buf.getChannelData(0);
-    for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
+    for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2); }
     const src=ac.createBufferSource(); src.buffer=buf;
     // Queja real de Inty: "genérico y muy fuerte". Causa 1 (genérico): solo tenía dos
     // resonancias agudas (2.9-5.7kHz) — sonaba a "tic" fino de sintetizador, sin el
     // cuerpo grave metálico de un trinquete real. Se agrega bp0 (grave) para el "clac"
     // mecánico. Causa 2 (fuerte): bp1+bp2 se sumaban en el mismo nodo de ganancia ANTES
     // de aplicar v — dos resonancias sumadas suenan más fuerte de lo que v sugiere. Se
-    // compensa con un factor fijo (*0.55) en vez de subir v en cada lugar que lo llama.
+    // compensa con un factor fijo (antes *0.55) en vez de subir v en cada lugar que lo llama.
+    // 2026-08-15: Inty pidió otra vuelta — sigue sonando fuerte y quiere más realismo.
+    // Bajado el factor de ganancia (0.55->0.30) y las resonancias agudas de Q más
+    // angosto (6.5/7 -> 4.5/5): un Q muy alto suena "tonal"/sintético (silbido fino),
+    // uno más ancho se parece más al clic seco de un piñón real. Decay más rápido
+    // (pow 2.6->3.2) = transiente más corto y percusivo, menos "zumbido".
     const bp0=ac.createBiquadFilter(); bp0.type='bandpass'; bp0.frequency.value=950+Math.random()*250; bp0.Q.value=3.5;
-    const bp1=ac.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value=2900+Math.random()*500; bp1.Q.value=6.5;
-    const bp2=ac.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value=5000+Math.random()*700; bp2.Q.value=7;
-    const g=ac.createGain(); g.gain.value=(v==null?0.05:v)*0.55;
+    const bp1=ac.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value=2900+Math.random()*500; bp1.Q.value=4.5;
+    const bp2=ac.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value=5000+Math.random()*700; bp2.Q.value=5;
+    const g=ac.createGain(); g.gain.value=(v==null?0.05:v)*0.30;
     const gBody=ac.createGain(); gBody.gain.value=0.5; // el grave aporta cuerpo, no debe tapar el "tic"
     const send=ac.createGain(); send.gain.value=0.07; // pizca de reverb = "alta calidad", sin embarrar
     src.connect(bp0); src.connect(bp1); src.connect(bp2);
