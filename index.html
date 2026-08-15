@@ -1529,7 +1529,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.64'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.65'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4194,7 +4194,14 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
   _intentarReanudarNavegacion();
-  if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(function(){ _pisteroIntroPrimeraVez(nombre); }, 500); setTimeout(startTutorial, 2600); }
+  // 2026-08-15: pedido de Inty -- el tutorial automático se disparaba a los 2.6s SIN
+  // esperar a que terminara de hablar el mensaje de bienvenida, cortándolo a mitad de
+  // camino. El mensaje de bienvenida ya le dice al usuario que puede preguntarle a
+  // Pistero cualquier duda -- y Pistero YA sabe mostrar el tutorial paso a paso cuando
+  // se lo piden por chat (línea ~10487: "tutorial"/"ayuda"/"no entiendo") o desde el
+  // botón "Ver tutorial" en Ajustes (línea ~1069). No se tocó esa lógica, solo se sacó
+  // el arranque automático y forzado la primera vez.
+  if(localStorage.getItem('lp_tut_'+cu)!=='done'){ setTimeout(function(){ _pisteroIntroPrimeraVez(nombre); }, 500); setTimeout(function(){ if(cu) localStorage.setItem('lp_tut_'+cu,'done'); if(typeof abrirEsfera==='function') abrirEsfera(); }, 2600); }
   else { setTimeout(function(){ if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre)); },600); setTimeout(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); },1050); }
 }
 
