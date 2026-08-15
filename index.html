@@ -735,6 +735,61 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
     v.removeAttribute('autoplay'); v.removeAttribute('loop'); v.pause();
   }
 })();
+// 2026-08-15: sonido sutil del logo del login (pedido de Inty, eligio combinar las
+// 3 opciones que se probaron por separado -- son tan cortas que juntas siguen
+// siendo discretas). Reusa _ac()/_reverb(), el MISMO motor de audio que ya usa
+// cadenaClick() (rueda de carga) mas abajo en el archivo -- no crea un segundo
+// AudioContext. Los navegadores bloquean audio audible antes de un gesto real del
+// usuario, asi que no se dispara solo al cargar: se engancha al primer toque en la
+// pantalla de login (una sola vez), que de todos modos pasa casi al instante.
+(function(){
+  var yaSono=false;
+  // 2026-08-15: volumen calibrado segun principio consistente en las guias de
+  // sonido de interfaz (Apple HIG "Playing audio" + convenciones de UI sound
+  // design): breve, baja intensidad, nunca sobresaltar, no competir con lo demas.
+  // No hay un numero de dB unico oficial, pero todas coinciden en "casi imperceptible,
+  // no un efecto protagonico". MASTER ademas compensa que las 3 capas suenan juntas
+  // (se suman entre si) -- bajado a la mitad de los valores ya bajos que se probaron
+  // en la demo, mas MASTER como perilla unica para ajustar todo junto despues.
+  var MASTER=0.5;
+  function sonidoLogoLogin(){
+    if(yaSono) return; yaSono=true;
+    try{
+      var c=_ac();
+      // capa A: dos clics de pinon (mismo lenguaje que cadenaClick)
+      [[0,1600,0.055],[0.09,1150,0.04]].forEach(function(p){
+        var len=Math.floor(c.sampleRate*0.012);
+        var buf=c.createBuffer(1,len,c.sampleRate); var d=buf.getChannelData(0);
+        for(var i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2); }
+        var src=c.createBufferSource(); src.buffer=buf;
+        var bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=p[1]; bp.Q.value=4.5;
+        var g=c.createGain(); g.gain.value=p[2]*MASTER;
+        src.connect(bp); bp.connect(g); g.connect(c.destination);
+        src.start(c.currentTime+p[0]);
+      });
+      // capa B: campanita calida, dos notas ascendentes
+      [[0,587.33,0.34,0.05],[0.09,880.00,0.42,0.045]].forEach(function(p){
+        var o=c.createOscillator(); o.type='sine'; o.frequency.value=p[1];
+        var g=c.createGain(); var t=c.currentTime+p[0];
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(p[3]*MASTER,t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0008,t+p[2]);
+        o.connect(g); g.connect(c.destination);
+        o.start(t); o.stop(t+p[2]+0.05);
+      });
+      // capa C: resplandor suave (ruido filtrado, textura de fondo)
+      var len2=Math.floor(c.sampleRate*0.5);
+      var buf2=c.createBuffer(1,len2,c.sampleRate); var d2=buf2.getChannelData(0);
+      for(var j=0;j<len2;j++){ d2[j]=(Math.random()*2-1)*Math.pow(Math.sin(Math.PI*j/len2),1.4); }
+      var src2=c.createBufferSource(); src2.buffer=buf2;
+      var bp2=c.createBiquadFilter(); bp2.type='bandpass';
+      bp2.frequency.setValueAtTime(700,c.currentTime); bp2.frequency.exponentialRampToValueAtTime(2600,c.currentTime+0.5); bp2.Q.value=1.1;
+      var g2=c.createGain(); g2.gain.value=0.0275*MASTER;
+      src2.connect(bp2); bp2.connect(g2); g2.connect(c.destination);
+      src2.start();
+    }catch(e){}
+  }
+  document.addEventListener('pointerdown', sonidoLogoLogin, {once:true, passive:true});
+})();
 </script>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Únete a la comunidad ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
@@ -1529,7 +1584,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.66'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.67'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
