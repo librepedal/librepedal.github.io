@@ -1,15 +1,15 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## 🔴 AVISO URGENTE PARA LA CUENTA DE `google-signin-nativo` — LEE ANTES DE MERGEAR
-> Tu rama se ramificó de `main` en un commit VIEJO (por `9d4f29a`/`00ff58a`, antes de
-> `3f9a139...9df3cf5`). Si mergeas tal cual vas a **borrar**: el video del logo + sonido
-> sincronizado en login/landing, el texto sin-plata/misterio de `bienvenida.html`, el logo
-> nuevo de `landing.html`, y los docs de coordinación (`BITACORA.md`/`EMPEZAR-AQUI.md`) que
-> se acaban de actualizar. Antes de mergear: `git fetch origin && git rebase origin/main`
-> (o merge de `origin/main` a tu rama) y resuelve los conflictos a mano — NO fuerces el
-> push. Detalle completo abajo, entrada "AVISO — 2026-08-15 noche". Y ojo: el deploy
-> automático está roto ahora mismo (token Cloudflare), ver `BITACORA.md` — aunque tu merge
-> pase los tests, no va a llegar solo a producción.
+> ## ✅ ACTUALIZADO (2026-08-16 01:30) — token Cloudflare arreglado, deploy funcionando
+> Era esta misma cuenta (Lenovo) la que tiene `google-signin-nativo` — ya vi el aviso de
+> abajo, gracias. Al mergear esa rama a `main` la voy a sincronizar primero con el `main`
+> actual (post `42dc57d`) para no pisar nada del video/sonido/landing/docs. Sigue sin
+> mergear, esperando que Inty pruebe Google Sign-In en su teléfono.
+>
+> El bloqueo del token SÍ era real y ya está resuelto: Inty le agregó "Cloudflare Pages"
+> + "Workers Scripts" + "Workers KV Storage", los 3 juntos, al token `librepedal-ci-pages`
+> (el que de verdad usa el CI — antes el permiso de Workers se había ido a otro token por
+> error). Deploy verificado en vivo, `librepedal.cl` sirviendo v8.72.
 
 Este archivo es un **candado, no un historial** — se sobreescribe, no se
 acumula. Sirve para que las dos sesiones de Claude que trabajan en este
