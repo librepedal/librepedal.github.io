@@ -719,7 +719,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 #abanicoReporte .abn-op:active{transform:scale(.94)}
 #abanicoReporte .abn-e{font-size:1.15rem}
 </style>
-<form id="auth" onsubmit="enviarLinkMagico(event)">
+<form id="auth" onsubmit="event.preventDefault(); _entrarConGoogle(); return false;">
 <div class="auth-box">
 <div class="lp-logo-wrap">
   <video class="lp-logo-video" autoplay muted loop playsinline disablepictureinpicture poster="logo-transparent.png" aria-label="Libre Pedal">
@@ -793,21 +793,20 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </script>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Únete a la comunidad ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
-<!-- 2026-08-15: correo primero (visible por defecto, sin toggle) — "Entrar con Google"
-     pasa a opción secundaria abajo. Motivo real: signInWithRedirect (plan B cuando el
-     popup se bloquea, ver _entrarConGoogle() más abajo) falla con "missing initial
-     state" cuando el link se abre desde el navegador integrado de otra app (WhatsApp,
-     Gmail, Play Store) — error de la propia infraestructura de Firebase/Google, no
-     interceptable desde este código. El correo no depende de ese mecanismo, así que
-     menos gente cae en el camino frágil. No se tocó la lógica de _entrarConGoogle() ni
-     el render de #gbtn/#gbtnFallback, solo el orden/visibilidad en la pantalla. -->
+<!-- 2026-08-16: se saca el link mágico por completo (pedido directo de Inty) — el
+     correo de login dependía de la cuota diaria de Firebase, que se agotó con solo
+     51 testers reales el día 1. Google Sign-In queda como ÚNICO método, ahora
+     arreglado de raíz con el plugin nativo (@capacitor-firebase/authentication):
+     usa el selector de cuenta real de Android, no una ventana web dentro del
+     WebView — eso es lo que hacía fallar los 3 intentos anteriores (popup/redirect/
+     GIS, ver comentarios en _entrarConGoogle()). El nombre ya no se pide: Google lo
+     entrega solo. País sigue siendo necesario (adapta la jerga de Pistero) y se
+     guarda al tocar "Entrar con Google" — ver _entrarConGoogle(). -->
 <div id="emailFallback">
 <div style="margin-bottom:14px;text-align:left">
   <p style="color:var(--g);font-size:0.78rem;font-weight:800;margin:0 0 8px">¿Cómo te mueves? <span style="color:#7d8ba0;font-weight:400">— la app se acomoda a tu modo, y lo cambias cuando quieras</span></p>
   <div class="helmet-grid" id="modoRegistroGrid"></div>
 </div>
-<input type="text" id="nombre-input" placeholder="Tu nombre" required maxlength="60" style="border:2px solid var(--g)">
-<input type="email" id="em" placeholder="correo@ejemplo.com" required maxlength="100">
 <select id="pais-input" title="Tu país (adapta las frases a tu jerga)">
 <option value="auto"><i class="fas fa-earth-americas"></i> Detectar mi país automáticamente</option>
 <option value="cl">🇨🇱 Chile</option>
@@ -827,12 +826,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <option value="pr">🇵🇷 Puerto Rico</option>
 <option value="us"><i class="fas fa-globe"></i> Otro / Internacional</option>
 </select>
-<button type="submit"><i class="fas fa-paper-plane"></i> Enviarme el enlace</button>
-<p style="color:#7d8ba0;font-size:0.72rem;margin-top:8px;text-align:center">Te llega un enlace al correo para entrar seguro (sin contraseña).</p>
 </div><!-- /emailFallback -->
-<div style="text-align:center;margin:16px 0 8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
-  <p style="color:#7d8ba0;font-size:0.74rem;margin:0 0 10px">o entra con Google</p>
-</div>
 <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
 <button type="button" id="gbtnFallback" onclick="_entrarConGoogle()" style="display:none;width:100%;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.5 26.9 35.5 24 35.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.6 5.6C41.9 36.6 44 30.9 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
@@ -1584,7 +1578,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.69'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.70'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1671,12 +1665,6 @@ const AUTH_TOKEN_URL = (location.hostname==='localhost'||location.hostname==='12
 const _EMAIL_LINK_KEY='lp_pending_email';
 function _actionCodeSettings(){ return { url: location.origin + location.pathname, handleCodeInApp: true }; }
 
-// Paso 1 del login: manda el enlace mágico al correo (Firebase entrega el correo).
-async function _enviarLinkMagico(email){
-  await firebase.auth().sendSignInLinkToEmail(email, _actionCodeSettings());
-  try{ localStorage.setItem(_EMAIL_LINK_KEY, email); }catch(e){}
-}
-
 // Canjea la sesión Firebase YA verificada (por el link) por un token uid==cu del Worker.
 function _lpDbg(ev,extra){
   try{
@@ -1710,8 +1698,36 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
   }catch(e){}
 }
 
+// ENTRAR CON GOOGLE — NATIVO (2026-08-16): en la app instalada (APK), usa el selector
+// de cuenta real de Android (@capacitor-firebase/authentication) en vez de abrir una
+// ventana web dentro del WebView. Los 3 caminos web de abajo (popup/redirect/GIS) se
+// probaron los tres y los tres fallan en este entorno (ver comentarios de cada uno) —
+// por eso se saca el link mágico y este es ahora el único método de login.
+async function _entrarConGoogleNativo(){
+  var plugin=lpPlugin('FirebaseAuthentication');
+  if(typeof showLoading==='function') showLoading('Entrando con Google...');
+  try{
+    var r=await plugin.signInWithGoogle();
+    var idToken=r && r.credential && r.credential.idToken;
+    if(!idToken) throw new Error('Google no devolvió credencial');
+    var cred=firebase.auth.GoogleAuthProvider.credential(idToken);
+    var res=await firebase.auth().signInWithCredential(cred);
+    if(res && res.user){ await _completarDesdeGoogle(res.user); }
+    else throw new Error('Firebase no completó la sesión');
+  }catch(err){
+    if(typeof hideLoading==='function') hideLoading();
+    var code=(err&&err.code)||'';
+    if(code==='ERR_CANCELED') return; // el usuario cerró el selector de cuenta, no es un error real
+    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+  }
+}
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
 async function _entrarConGoogle(){
+  // El país ya no se manda por el form (se sacó el link mágico) — se guarda acá,
+  // al tocar el botón, mismo mecanismo (lp_pending_pais) que ya lee _completarLoginVerificado.
+  try{ var _paisSel=(document.getElementById('pais-input')||{}).value||'auto'; localStorage.setItem('lp_pending_pais',_paisSel); }catch(_e){}
+  var pluginNativo=lpPlugin('FirebaseAuthentication');
+  if(pluginNativo){ return _entrarConGoogleNativo(); }
   // HISTORIAL de este botón (para quien lo toque después, que no repita el mismo camino):
   // 1) signInWithPopup solo: se colgaba en Chrome por Cross-Origin-Opener-Policy de
   //    accounts.google.com (bloquea el postMessage de vuelta sin rechazar la promesa).
@@ -4154,63 +4170,6 @@ function cadenaCoast(){ _cad.coast=true; } // soltaste: la cadena desacelera y s
 function sonidoCadenaIniciar(){ cadenaIniciar(0.4); }
 function sonidoCadenaDetener(){ cadenaCoast(); }
 
-// Paso 1: el formulario ya no entra directo — manda el enlace mágico al correo.
-async function enviarLinkMagico(e){
-  e.preventDefault();
-  const nombre=document.getElementById('nombre-input').value.trim();
-  const e_val=document.getElementById('em').value.trim();
-  if(!nombre) return lpAviso("Ingresa tu nombre");
-  if(!e_val||!e_val.includes('@')) return lpAviso("El correo es obligatorio");
-  const paisSel=(document.getElementById('pais-input')||{}).value||'auto';
-  try{ localStorage.setItem('lp_pending_nombre',nombre); localStorage.setItem('lp_pending_pais',paisSel); }catch(_e){}
-  const btn=e.target.querySelector('button[type=submit]');
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
-  try{
-    await _enviarLinkMagico(e_val);
-    _mostrarPantallaRevisaCorreo(e_val);
-  }catch(err){
-    if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane"></i> Enviarme el enlace'; }
-    var _code=(err&&err.code)?' ('+err.code+')':'';
-    if(err && err.code==='auth/quota-exceeded'){
-      lpAviso('Estamos con mucha demanda ahorita — inténtalo de nuevo en un rato. No es un error tuyo, ya lo estamos viendo.');
-    } else {
-      lpAviso('No se pudo enviar el enlace'+_code+': '+((err&&err.message)||err));
-    }
-  }
-}
-function _mostrarPantallaRevisaCorreo(email){
-  var box=document.querySelector('#auth .auth-box'); if(!box){ lpAviso('Enlace enviado a '+email); return; }
-  box.innerHTML='<div style="text-align:center;padding:14px 6px">'
-    +'<div style="font-size:2.6rem;color:var(--p);margin-bottom:10px"><i class="fas fa-envelope-circle-check"></i></div>'
-    +'<h2 style="font-size:1.1rem;margin:0 0 8px;color:#e7edf6">Revisa tu correo</h2>'
-    +'<p style="font-size:0.88rem;color:#9fb3c8;line-height:1.55">Te enviamos un enlace a <b style="color:#dfe7ff">'+escapeHTML(email)+'</b>.<br>Ábrelo desde este teléfono para entrar. Puede tardar un par de minutos — revisa también spam.</p>'
-    +'<p id="reenviarLinkWrap" style="font-size:0.76rem;color:#7d8ba0;margin-top:14px">¿No llegó? <a href="#" id="reenviarLinkBtn" style="color:var(--p);font-weight:700">Reenviar enlace</a></p>'
-    +'</div>';
-  var _rb=document.getElementById('reenviarLinkBtn');
-  if(_rb) _rb.onclick=function(ev){ ev.preventDefault(); _reenviarLinkMagico(email); };
-}
-// Reenvía de verdad (sin recargar la app ni perder el email ya escrito). Cooldown
-// de 20s para no gatillar el limite de envios de Firebase si alguien clickea seguido.
-var _reenviandoLink=false;
-async function _reenviarLinkMagico(email){
-  if(_reenviandoLink) return;
-  var wrap=document.getElementById('reenviarLinkWrap'); var btn=document.getElementById('reenviarLinkBtn');
-  _reenviandoLink=true;
-  if(btn){ btn.style.pointerEvents='none'; btn.style.opacity='0.6'; }
-  if(wrap) wrap.firstChild && (wrap.innerHTML='Reenviando…');
-  try{
-    await _enviarLinkMagico(email);
-    if(wrap) wrap.innerHTML='Reenviado. Revisa tu correo (y spam) — puede tardar un par de minutos.';
-  }catch(err){
-    if(err && err.code==='auth/quota-exceeded'){
-      if(wrap) wrap.innerHTML='Estamos con mucha demanda ahorita. No es un error tuyo — intenta más tarde.';
-    } else {
-      var _code=(err&&err.code)||'sin-código';
-      if(wrap) wrap.innerHTML='No se pudo reenviar ('+escapeHTML(_code)+'). Espera un minuto e intenta de nuevo, o escríbeme.';
-    }
-  }
-  setTimeout(function(){ _reenviandoLink=false; var b=document.getElementById('reenviarLinkBtn'); if(b){ b.style.pointerEvents='auto'; b.style.opacity='1'; } }, 20000);
-}
 // Paso 2: se llama al volver del correo, con la sesión YA verificada y el token uid==cu listo.
 async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   cu=cuVal; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador(); if(typeof _mostrarBienvenidaFundador==='function') setTimeout(_mostrarBienvenidaFundador,900);

@@ -35,6 +35,9 @@ jobs:
       - name: Agregar plataforma Android
         run: npx cap add android
 
+      - name: Copiar google-services.json (Google Sign-In nativo)
+        run: cp google-services.json android/app/google-services.json
+
       - name: Instalar plataforma Android 16 (API 36) en el SDK del runner
         # Android 16/API 36 es muy reciente: el SDK preinstalado en el runner de
         # GitHub puede no traerla todavía. La instalamos a mano antes de compilar
