@@ -4,10 +4,22 @@
 
    Dos cosas:
    1) versionCode/versionName: Capacitor los deja fijos en 1/"1.0" — Play Store
-      exige que cada subida tenga un versionCode MAYOR al anterior, así que se
-      derivan de version.txt (fuente de verdad de todo el proyecto) de forma
-      determinística: "6.52" -> versionCode 652, versionName "6.52". Mientras
-      la versión del proyecto siga subiendo, el versionCode también sube solo.
+      exige que cada subida tenga un versionCode MAYOR al anterior. versionName
+      sigue viniendo de version.txt (fuente de verdad legible, ej "8.63"), pero
+      el versionCode YA NO se deriva de ahí (ver "2026-08-15" abajo).
+   1-bis) 2026-08-15 — el esquema viejo (versionCode = major*1000+minor, ej
+      "8.62"->8062) chocó DOS VECES con "ya se usó ese código" (v8.44 hace
+      semanas, y hoy con 8043/8061/8062): Play Console recuerda TODO codigo
+      subido alguna vez para esta app -- incluidos intentos de sesiones/repos
+      viejos que ya no estan en este git -- y ese historial no es consultable
+      desde aca. Un rango de solo miles (0-9999) choca facil con años de
+      pruebas. Ahora el versionCode sale de MINUTOS DESDE EPOCH UNIX
+      (Date.now()/60000): siempre crece con el reloj real, nunca se repite, y
+      hoy da ~29 millones -- lejísimos de cualquier código viejo en el rango
+      6000-9000, con margen para más de 3000 años antes de tocar el límite de
+      Play (2.100.000.000). Sacrifica que el versionCode ya no sea "leible"
+      (antes decía la version a simple vista) -- versionName sigue siendo la
+      fuente humana real, se muestra en Play Console al lado del codigo.
    2) signingConfig: lee la ruta del keystore y las contraseñas de variables de
       ENTORNO (nunca de un archivo commiteado) — en CI (GitHub Actions) esas
       variables se exportan desde los secrets del repo justo antes de correr
@@ -24,13 +36,10 @@ if (!fs.existsSync(gradlePath)) {
 }
 let gradle = fs.readFileSync(gradlePath, 'utf8');
 
-// ===== 1) versionCode/versionName desde version.txt =====
+// ===== 1) versionName desde version.txt (legible) + versionCode desde reloj (nunca choca) =====
 const versionTxtPath = path.join(__dirname, '..', 'version.txt');
-const version = fs.readFileSync(versionTxtPath, 'utf8').trim(); // ej "6.52"
-const partes = version.split('.').map(function (n) { return parseInt(n, 10) || 0; });
-// "6.52" -> 6*1000 + 52 = 6052. Dos dígitos de "hueco" para el minor: alcanza
-// hasta 6.999 antes de necesitar más dígitos, de sobra para este proyecto.
-const versionCode = partes[0] * 1000 + (partes[1] || 0);
+const version = fs.readFileSync(versionTxtPath, 'utf8').trim(); // ej "8.63" -- solo para versionName
+const versionCode = Math.floor(Date.now() / 60000); // minutos desde epoch Unix -- ver nota 1-bis arriba
 
 gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode ' + versionCode);
 gradle = gradle.replace(/versionName\s+"[^"]*"/, 'versionName "' + version + '"');
