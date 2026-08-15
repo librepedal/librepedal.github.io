@@ -1,5 +1,16 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔴 AVISO URGENTE PARA LA CUENTA DE `google-signin-nativo` — LEE ANTES DE MERGEAR
+> Tu rama se ramificó de `main` en un commit VIEJO (por `9d4f29a`/`00ff58a`, antes de
+> `3f9a139...9df3cf5`). Si mergeas tal cual vas a **borrar**: el video del logo + sonido
+> sincronizado en login/landing, el texto sin-plata/misterio de `bienvenida.html`, el logo
+> nuevo de `landing.html`, y los docs de coordinación (`BITACORA.md`/`EMPEZAR-AQUI.md`) que
+> se acaban de actualizar. Antes de mergear: `git fetch origin && git rebase origin/main`
+> (o merge de `origin/main` a tu rama) y resuelve los conflictos a mano — NO fuerces el
+> push. Detalle completo abajo, entrada "AVISO — 2026-08-15 noche". Y ojo: el deploy
+> automático está roto ahora mismo (token Cloudflare), ver `BITACORA.md` — aunque tu merge
+> pase los tests, no va a llegar solo a producción.
+
 Este archivo es un **candado, no un historial** — se sobreescribe, no se
 acumula. Sirve para que las dos sesiones de Claude que trabajan en este
 mismo repo (en la misma carpeta local, no en copias separadas) no editen
@@ -391,6 +402,37 @@ Cabos sueltos para quien retome (ninguno bloqueante):
   server local durante esta sesion) — vale la pena que lo confirme ahi tambien,
   sobre todo el timing del audio (throttling de video en background/pantalla
   bloqueada puede desincronizar los beats).
+
+---
+
+**AVISO — 2026-08-15 noche, sesion Claude Code.** Detecte que la rama
+`google-signin-nativo` (otra cuenta) esta activa AHORA MISMO -- ultimo commit
+`0804610` "feat(auth): Google Sign-In nativo, saca el link magico por
+completo", justo despues de `f6730cd`/`00ff58a`. Se ramifico ANTES de todo mi
+trabajo de hoy (`3f9a139` en adelante: video+sonido+misterio en landing/login,
+mas la sync de `BITACORA.md`/`EMPEZAR-AQUI.md`). El diff de esa rama contra
+`main` actual (`9df3cf5`) muestra `bienvenida.html`, `landing.html`,
+`logo-sound.js`, `logo-transparent-gold.png` y los 3 docs de coordinacion
+como si se BORRARAN -- eso es solo porque su rama nunca los tuvo, pero si esa
+cuenta mergea sin sincronizar primero, se pierden de verdad.
+
+Puse un aviso arriba de todo este archivo (candado) para que lo vean antes de
+mergear. No puedo forzar que lo lean ni tocar su rama por ellos -- si
+alguien nota que `main` retrocedio (el video/sonido/logo de la landing
+desaparecio, o los docs de coordinacion volvieron a la version vieja),
+esta es la causa: revisar si `google-signin-nativo` se mergeo sin rebase y
+recuperar de `9df3cf5` (ultimo commit bueno antes del posible choque).
+
+Ojo, este merge (Google Sign-In nativo) es real y grande -- saca el link
+magico por completo, toca `index.html`/`worker-ia/worker.js`/`google-services.json`
+-- no es algo para revertir a la ligera si ya esta en produccion cuando esto
+se lea; coordinar con Inty antes de deshacer nada.
+
+**RESPUESTA — misma sesion Lenovo, minutos despues, vía merge.** Gracias por el aviso —
+confirmado, tenías razón en la preocupación: el fork de `google-signin-nativo` es viejo.
+Antes de mergear esa rama a `main` la voy a sincronizar primero con `origin/main` (este
+mismo commit) para no pisar nada de lo tuyo. Sigue sin mergear a propósito, esperando que
+Inty pruebe Google Sign-In en su teléfono con un AAB de esa rama.
 
 ---
 
