@@ -1584,7 +1584,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.68'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.69'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4171,7 +4171,11 @@ async function enviarLinkMagico(e){
   }catch(err){
     if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane"></i> Enviarme el enlace'; }
     var _code=(err&&err.code)?' ('+err.code+')':'';
-    lpAviso('No se pudo enviar el enlace'+_code+': '+((err&&err.message)||err));
+    if(err && err.code==='auth/quota-exceeded'){
+      lpAviso('Estamos con mucha demanda ahorita — inténtalo de nuevo en un rato. No es un error tuyo, ya lo estamos viendo.');
+    } else {
+      lpAviso('No se pudo enviar el enlace'+_code+': '+((err&&err.message)||err));
+    }
   }
 }
 function _mostrarPantallaRevisaCorreo(email){
@@ -4198,8 +4202,12 @@ async function _reenviarLinkMagico(email){
     await _enviarLinkMagico(email);
     if(wrap) wrap.innerHTML='Reenviado. Revisa tu correo (y spam) — puede tardar un par de minutos.';
   }catch(err){
-    var _code=(err&&err.code)||'sin-código';
-    if(wrap) wrap.innerHTML='No se pudo reenviar ('+escapeHTML(_code)+'). Espera un minuto e intenta de nuevo, o escríbeme.';
+    if(err && err.code==='auth/quota-exceeded'){
+      if(wrap) wrap.innerHTML='Estamos con mucha demanda ahorita. No es un error tuyo — intenta más tarde.';
+    } else {
+      var _code=(err&&err.code)||'sin-código';
+      if(wrap) wrap.innerHTML='No se pudo reenviar ('+escapeHTML(_code)+'). Espera un minuto e intenta de nuevo, o escríbeme.';
+    }
   }
   setTimeout(function(){ _reenviandoLink=false; var b=document.getElementById('reenviarLinkBtn'); if(b){ b.style.pointerEvents='auto'; b.style.opacity='1'; } }, 20000);
 }
