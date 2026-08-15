@@ -36,6 +36,10 @@
   .btn-s{background:transparent;color:var(--ink);border-color:var(--edge)}
   .libre{margin-top:18px;font-size:.86rem;color:var(--g);font-weight:600}
 
+  .hero-logo-wrap{position:relative;width:min(220px,60vw);margin:0 auto 8px}
+  .hero-logo-glow{position:absolute;inset:-20% -10%;border-radius:50%;background:radial-gradient(circle,rgba(252,76,2,.35),transparent 68%);filter:blur(8px)}
+  .hero-logo-video{position:relative;width:100%;height:auto;display:block;border-radius:12px;filter:drop-shadow(0 8px 20px rgba(0,0,0,.55))}
+
   h2{font-size:clamp(1.5rem,4.4vw,2.2rem);font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
   .lead{color:var(--sub);max-width:660px;margin-bottom:34px;font-size:clamp(.95rem,2.3vw,1.05rem)}
 
@@ -74,6 +78,12 @@
 
 <header>
   <div class="wrap">
+    <div class="hero-logo-wrap">
+      <div class="hero-logo-glow"></div>
+      <video class="hero-logo-video" autoplay muted loop playsinline disablepictureinpicture poster="logo-transparent-gold.png" aria-label="Libre Pedal">
+        <source src="logo-presentacion.mp4" type="video/mp4">
+      </video>
+    </div>
     <div class="logo">LIBRE <span>PEDAL</span></div>
     <p class="tag">Nadie que ande en bici anda tan solo.</p>
     <p class="sub">Los ciclistas de Chile marcando la ruta para los que vienen atrás: dónde dormir, dónde arreglar la bici, dónde hay perros sueltos y dónde vale la pena parar. Para el que sale tres horas y para el que sale tres semanas.</p>
@@ -217,6 +227,16 @@
     <p style="margin-top:14px">Libre Pedal · Nunca pedalees solo 🚴</p>
   </div>
 </footer>
+
+<script>
+(function(){
+  var v=document.querySelector('.hero-logo-video');
+  if(v && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    v.removeAttribute('autoplay'); v.removeAttribute('loop'); v.pause();
+  }
+})();
+</script>
+<script src="logo-sound.js"></script>
 
 </body>
 </html>

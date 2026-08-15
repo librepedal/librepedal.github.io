@@ -336,3 +336,58 @@ dorado". Detalle completo + las 2 opciones que le ofreci (simplificar quitando e
 aro de luz + trazo especular, o revertir completo) en el mensaje del commit de esa
 rama. Quien lo tome: probar a tamaño REAL (no en preview grande) antes de mostrarle
 a Inty de nuevo.
+
+---
+
+**LIBRE** - sesion Claude Code (cuenta de hoy), 2026-08-15. Nota: la rueda-oro CSS
+de arriba (`wip/rueda-oro-necesita-simplificarse`) quedo superada — la OTRA cuenta
+la reemplazo hoy por un video real (`logo-presentacion.mp4`) en el login de
+`index.html`, ya en `main`. Esa rama sigue sin mergear pero ya no hace falta
+retomarla para el logo del login (si sigue teniendo algo util para otra cosa,
+revisar antes de descartarla del todo).
+
+Trabaje en rama `feature/landing-mistica-sonido` (pusheada, NO mergeada — Inty
+la tiene que ver primero, sobre todo el sonido, que no se puede probar en este
+entorno):
+- `bienvenida.html`: hero ahora usa el mismo `logo-presentacion.mp4` que el login
+  (antes: rueda CSS + imagen estatica separada). Logo estatico de respaldo/poster
+  = `logo-transparent-gold.png`. Saco todo lo que hablaba de plata y cantidad de
+  usuarios (5.000 suscritos, "cada peso", plan Premium con precio, "inversionistas")
+  y lo reemplazo por lenguaje de misterio, en linea con el pilar secreto que ya
+  existia ("hay detalles que preferimos no contarte").
+- `logo-sound.js` (nuevo, raiz del repo, compartido entre `bienvenida.html` e
+  `index.html`): reemplaza el sonido del logo que la otra cuenta agrego HOY mismo
+  en el login (Inty lo encontro soso/corto). El nuevo esta sincronizado a lo que
+  pasa DE VERDAD en el video, no a un timer ciego — medi el brillo de cada frame
+  con ffprobe/signalstats: el flash del logo cae en el frame 186 (t=7.40s de 8.4s),
+  ahi va el golpe principal (campanita en 3 notas + shimmer); antes hay clics de
+  piñon de anticipacion (~2.35s-3.15s) siguiendo la curva de brillo que empieza a
+  subir ahi. Suena UNA sola vez por sesion (sessionStorage), enganchado al primer
+  gesto real del usuario (bloqueo de audio de los navegadores).
+- Version 8.69 -> 8.70 en los 3 lugares (de paso corregi `version.txt`, que habia
+  quedado en 8.67 desincronizado de `APP_VERSION`/`sw.js` = 8.69).
+- `tests/run.mjs` 13/13 verde, sintaxis de los `<script>` de ambos HTML + el .js
+  nuevo validada con `node -e`.
+- **PENDIENTE real**: no pude probar audio ni video en este entorno (sandbox sin
+  reproduccion real) — Inty tiene que abrir `bienvenida.html` e `index.html` en un
+  navegador de verdad antes de aprobar el merge.
+
+**MERGEADO Y DESPLEGADO (2026-08-15, con ✓ de Inty sobre un preview con dev server
+local, incluido el bloque de "misterio" con blur en Sorteo/Reforestar/Deportistas
+que se agrego despues del commit de arriba).** `main` = `daa2d59`, verificado en
+vivo: `librepedal.cl/version.txt` = 8.70, y `bienvenida.html`/`logo-sound.js`/
+`logo-transparent-gold.png`/`logo-presentacion.mp4` responden 200 en produccion.
+Candado **LIBRE**.
+
+Cabos sueltos para quien retome (ninguno bloqueante):
+- `wip/rueda-oro-necesita-simplificarse` quedo obsoleta para el logo del login/
+  landing (la reemplazo el video en ambos lados) — sigue pusheada sin mergear;
+  revisar si tiene algo mas que rescatar antes de borrarla, o preguntarle a Inty.
+- `landing.html` (la landing vieja/simple, separada de `bienvenida.html`) NO se
+  toco en esta tanda — sigue con su copy original, sin el enfoque "sin plata/
+  cantidades" ni el logo nuevo. Si sigue en uso, falta decidir si se actualiza
+  igual o se retira.
+- Inty todavia no probo el sonido/video en su telefono real (solo en un dev
+  server local durante esta sesion) — vale la pena que lo confirme ahi tambien,
+  sobre todo el timing del audio (throttling de video en background/pantalla
+  bloqueada puede desincronizar los beats).
