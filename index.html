@@ -738,13 +738,15 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </script>
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Libre Pedal</h1>
 <p style="color:#888;font-size:0.8rem;margin-bottom:12px">Únete a la comunidad ciclista · <a href="bienvenida.html" style="color:var(--p)">¿Qué es Libre Pedal?</a></p>
-<div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
-<button type="button" id="gbtnFallback" onclick="_entrarConGoogle()" style="display:none;width:100%;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">
-  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.5 26.9 35.5 24 35.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.6 5.6C41.9 36.6 44 30.9 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
-  Entrar con Google
-</button>
-<div style="text-align:center;margin:14px 0 4px"><a href="#" onclick="var e=document.getElementById('emailFallback');e.style.display=(e.style.display==='none'?'block':'none');this.style.display='none';return false" style="color:#7d8ba0;font-size:0.78rem;text-decoration:none">o entra con tu correo →</a></div>
-<div id="emailFallback" style="display:none">
+<!-- 2026-08-15: correo primero (visible por defecto, sin toggle) — "Entrar con Google"
+     pasa a opción secundaria abajo. Motivo real: signInWithRedirect (plan B cuando el
+     popup se bloquea, ver _entrarConGoogle() más abajo) falla con "missing initial
+     state" cuando el link se abre desde el navegador integrado de otra app (WhatsApp,
+     Gmail, Play Store) — error de la propia infraestructura de Firebase/Google, no
+     interceptable desde este código. El correo no depende de ese mecanismo, así que
+     menos gente cae en el camino frágil. No se tocó la lógica de _entrarConGoogle() ni
+     el render de #gbtn/#gbtnFallback, solo el orden/visibilidad en la pantalla. -->
+<div id="emailFallback">
 <div style="margin-bottom:14px;text-align:left">
   <p style="color:var(--g);font-size:0.78rem;font-weight:800;margin:0 0 8px">¿Cómo te mueves? <span style="color:#7d8ba0;font-weight:400">— la app se acomoda a tu modo, y lo cambias cuando quieras</span></p>
   <div class="helmet-grid" id="modoRegistroGrid"></div>
@@ -773,6 +775,14 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <button type="submit"><i class="fas fa-paper-plane"></i> Enviarme el enlace</button>
 <p style="color:#7d8ba0;font-size:0.72rem;margin-top:8px;text-align:center">Te llega un enlace al correo para entrar seguro (sin contraseña).</p>
 </div><!-- /emailFallback -->
+<div style="text-align:center;margin:16px 0 8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
+  <p style="color:#7d8ba0;font-size:0.74rem;margin:0 0 10px">o entra con Google</p>
+</div>
+<div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
+<button type="button" id="gbtnFallback" onclick="_entrarConGoogle()" style="display:none;width:100%;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">
+  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.5l-6.6-5.6C29.6 34.5 26.9 35.5 24 35.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.6 5.6C41.9 36.6 44 30.9 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
+  Entrar con Google
+</button>
 <p style="color:#7d8ba0;font-size:0.68rem;margin-top:6px;text-align:center">Al entrar aceptas los <a href="terminos.html" target="_blank" style="color:var(--p)">Términos</a> y la <a href="privacidad.html" target="_blank" style="color:var(--p)">Política de Privacidad</a>.</p>
 <div style="display:none" aria-hidden="true">
 <div class="character-preview-large">
@@ -1519,7 +1529,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.63'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.64'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
