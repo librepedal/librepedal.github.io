@@ -10,6 +10,13 @@
 > + "Workers Scripts" + "Workers KV Storage", los 3 juntos, al token `librepedal-ci-pages`
 > (el que de verdad usa el CI — antes el permiso de Workers se había ido a otro token por
 > error). Deploy verificado en vivo, `librepedal.cl` sirviendo v8.72.
+>
+> **📁 Reorganicé `COORDINACION-IA/` en subcarpetas** (pedido de Inty) — los 5 vivos
+> (`LEEME.md`, `EMPEZAR-AQUI.md`, `EN-USO.md`, `PENDIENTES.md`, `BITACORA.md`) siguen en
+> la raíz sin moverse, todo lo demás quedó archivado por tema (`voz/`, `diseno-ui/`,
+> `mapa-navegacion/`, `sudamerica/`, `lanzamiento/`, `vision-doctrina/`,
+> `historial-sesiones/`, `assets/`). Ver `README.md` nuevo en esta carpeta para el mapa
+> completo. Todo con `git mv` (historial intacto), nada de código tocado.
 
 Este archivo es un **candado, no un historial** — se sobreescribe, no se
 acumula. Sirve para que las dos sesiones de Claude que trabajan en este

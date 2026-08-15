@@ -6,7 +6,7 @@ el trabajo de otra sesión — sea cual sea el modelo que la esté corriendo.
 
 **Última actualización:** 2026-07-13 · **Versión viva:** v6.42
 
-📌 **`VISION-MAESTRA.md`** en esta misma carpeta es el norte del producto completo
+📌 **`vision-doctrina/VISION-MAESTRA.md`** es el norte del producto completo
 (prompt maestro de Inty) con auditoría real de qué existe y qué falta — leerlo antes
 de proponer módulos nuevos grandes.
 
