@@ -17,6 +17,7 @@ reflectante, LED trasera/parpadeo.
 
 Piel completa (4 tonos + base): claro, trigueño, moreno, oscuro (`piel-*.png`).
 
+Ánimos completos (4/4): feliz, enojado, cansado, con sueño (`animo-*.png`).
+
 Pendiente (ver backlog completo en la Biblia): vello facial de Pistero, labial de
-Pistera, lentes con estilo sobre la base sin-lentes, ánimos (feliz/enojado/cansado/con
-sueño), accesorios por arquetipo.
+Pistera, lentes con estilo sobre la base sin-lentes, accesorios por arquetipo.

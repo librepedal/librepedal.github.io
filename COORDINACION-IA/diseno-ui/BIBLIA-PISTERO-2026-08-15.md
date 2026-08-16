@@ -181,8 +181,13 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       "medio" = el tono de `base-neutral.png`, ya existente). Máscara óvalo de cara +
       ambas orejas (ver lección 3-quinquies sobre por qué la primera tanda no servía a
       pesar de diff=0 fuera de máscara).
-- [ ] Máscara de boca+cejas combinada para estados de ánimo (feliz, enojado, cansado, con
-      sueño) — más grande que la de boca sola, porque enojado/cansado necesitan cejas.
+- [x] **Ánimos — HECHO (4/4).** feliz, enojado, cansado, con sueño. Como los ojos siempre
+      están tapados por los lentes de sol en esta base, el ánimo se juega TODO en cejas +
+      boca — se reusó el mismo óvalo de cara completo (técnica de la lección "Frankenstein",
+      ampliado ~20px hacia arriba para agarrar las cejas enteras) en vez de una máscara chica
+      boca+cejas separada, evitando el riesgo de costura visto antes. Aplicada también la
+      lección 3-quinquies (lenguaje comparativo explícito por expresión, no solo el nombre
+      del ánimo) — dio 4 expresiones bien diferenciables a la primera pasada.
 - [ ] **Vello facial para Pistero** (pedido 2026-08-15/16): barba corta, bigote/mostacho —
       máscara de mentón+labio superior, mismo método. Ya se había sacado del selector SVG
       viejo por no verse bien (2026-08-08) — con esta calidad nueva vale la pena reintentar.
