@@ -24,10 +24,6 @@
     ]
   },
   "plugins": {
-    "BackgroundGeolocation": {},
-    "FirebaseAuthentication": {
-      "skipNativeAuth": false,
-      "providers": ["google.com"]
-    }
+    "BackgroundGeolocation": {}
   }
 }
