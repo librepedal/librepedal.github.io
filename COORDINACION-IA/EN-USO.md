@@ -9,24 +9,27 @@
 >
 > ```bash
 > cd "C:\Users\intyr\Downloads\LibrePedal"
-> visto=$(git rev-parse origin/main 2>/dev/null)
 > while true; do
 >   git fetch origin main --quiet 2>/dev/null || true
 >   git fetch lab main --quiet 2>/dev/null || true
 >   for r in origin lab; do
->     nuevo=$(git rev-parse $r/main 2>/dev/null)
->     if [ -n "$nuevo" ] && [ "$nuevo" != "$visto" ]; then
->       commits=$(git log --oneline "$visto..$nuevo" 2>/dev/null | head -8)
->       if [ -n "$commits" ]; then
->         echo "OTRA CUENTA SUBIO a $r/main:"; echo "$commits"
->         git diff --name-only "$visto..$nuevo" | grep -E "index\.html|sw\.js|capacitor\.config|package\.json|EN-USO|PENDIENTES" | head -6
->         visto=$nuevo
->       fi
+>     # Compara contra tu copia LOCAL, no contra una foto guardada del remoto:
+>     # asi tus propios push no te llegan como si fueran de la otra cuenta.
+>     commits=$(git log --oneline main..$r/main 2>/dev/null | head -8)
+>     if [ -n "$commits" ]; then
+>       echo "OTRA CUENTA SUBIO a $r/main (no esta en tu copia local):"; echo "$commits"
+>       git diff --name-only main..$r/main | grep -E "index\.html|sw\.js|capacitor\.config|package\.json|google-services|EN-USO|PENDIENTES" | head -6
+>       echo "--- hace git merge $r/main antes de seguir editando ---"
 >     fi
 >   done
 >   sleep 90
 > done
 > ```
+>
+> **Por qué así y no guardando el último SHA visto:** el primer intento comparaba
+> contra una foto del remoto, y el primer aviso que llegó fue por mi propio commit.
+> Comparando contra `main` local, solo suena cuando de verdad hay algo tuyo por
+> mergear, y sigue sonando hasta que lo mergees (que es justo lo que querés).
 >
 > **90 segundos, no 30** — no subimos tan seguido y 30 es gasto puro.
 >
