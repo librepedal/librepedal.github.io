@@ -1530,7 +1530,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.72'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.73'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1656,8 +1656,37 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
   }catch(e){}
 }
 
+// ENTRAR CON GOOGLE — NATIVO (2026-08-16): en la app instalada (APK) que YA trae el
+// plugin @capacitor-firebase/authentication compilado, usa el selector de cuenta real
+// de Android en vez de abrir una ventana web dentro del WebView — evita de raíz los 3
+// bugs de abajo (COOP/missing-initial-state/origin_mismatch), que son todos del camino
+// web. En instalaciones VIEJAS (sin el plugin) lpPlugin() devuelve null y sigue el
+// camino web de siempre, sin ningún cambio de comportamiento para ellas — aditivo,
+// cero riesgo de regresión. El link mágico SIGUE siendo la opción visible por ahora
+// (se saca en un cambio aparte, una vez confirmado que esto funciona en un teléfono
+// real) — este commit SOLO agrega la capacidad de usar el nativo cuando está.
+async function _entrarConGoogleNativo(){
+  var plugin=lpPlugin('FirebaseAuthentication');
+  if(typeof showLoading==='function') showLoading('Entrando con Google...');
+  try{
+    var r=await plugin.signInWithGoogle();
+    var idToken=r && r.credential && r.credential.idToken;
+    if(!idToken) throw new Error('Google no devolvió credencial');
+    var cred=firebase.auth.GoogleAuthProvider.credential(idToken);
+    var res=await firebase.auth().signInWithCredential(cred);
+    if(res && res.user){ await _completarDesdeGoogle(res.user); }
+    else throw new Error('Firebase no completó la sesión');
+  }catch(err){
+    if(typeof hideLoading==='function') hideLoading();
+    var code=(err&&err.code)||'';
+    if(code==='ERR_CANCELED') return; // el usuario cerró el selector de cuenta, no es un error real
+    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+  }
+}
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
 async function _entrarConGoogle(){
+  var pluginNativo=lpPlugin('FirebaseAuthentication');
+  if(pluginNativo){ return _entrarConGoogleNativo(); }
   // HISTORIAL de este botón (para quien lo toque después, que no repita el mismo camino):
   // 1) signInWithPopup solo: se colgaba en Chrome por Cross-Origin-Opener-Policy de
   //    accounts.google.com (bloquea el postMessage de vuelta sin rechazar la promesa).
