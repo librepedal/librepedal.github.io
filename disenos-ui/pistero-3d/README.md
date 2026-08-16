@@ -13,7 +13,9 @@ Generados con ComfyUI local (Z-Image-Turbo) + inpainting enmascarado. Método co
   todavía cuál queda como base oficial.
 
 Accesorios de casco completos (6/6): LED delantera, cámara, antena, cresta, cinta
-reflectante, LED trasera/parpadeo.
+reflectante, LED lateral (luz de visibilidad al costado del casco — se llamó "trasera"
+al principio, error de concepto: una luz trasera no se puede ver en un retrato de frente;
+corregido 2026-08-16).
 
 Piel completa (4 tonos + base): claro, trigueño, moreno, oscuro (`piel-*.png`).
 

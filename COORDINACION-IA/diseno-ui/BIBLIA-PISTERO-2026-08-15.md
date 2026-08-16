@@ -200,6 +200,21 @@ algún elemento vuelve a salir plano después de aplicar esta lección. Bloopers
       cubriendo nariz+boca dejando los ojos libres) — coincidía con lo ya planeado, sin
       necesidad de corregir después.
 
+## 4-quinter) CORRECCIÓN 2026-08-16: "LED trasera" era un error de concepto, no de técnica
+
+Inty señaló el error de fondo: el personaje se muestra SOLO de frente en este catálogo —
+una luz literalmente TRASERA no puede verse nunca en un retrato de frente, sin importar
+qué tan bien se ejecute. Lo que se generó y aprobó (ver 4-cuater abajo) físicamente está
+montada al COSTADO del casco, cerca de la oreja — visible desde el frente. Eso SÍ es un
+producto real (luz de visibilidad lateral, existe en cascos reales), pero llamarlo
+"trasera" era la confusión. **Archivo renombrado:** `acc-led-trasera.png` →
+`acc-led-lateral.png`. Ninguna imagen se regeneró, es una corrección de nombre/concepto,
+no de píxeles. Lección para todo lo que sigue: además de investigar la referencia real del
+PRODUCTO (protocolo ya guardado en `METODO-DE-TRABAJO-INTY.md`), hay que verificar que el
+concepto pedido sea representable en el FORMATO del asset (acá: retrato solo de frente) —
+si algo por definición no se puede ver desde el ángulo disponible, no tiene sentido
+generarlo con ese nombre aunque la ejecución salga perfecta.
+
 ## 4-cuater) LED trasera — 3 intentos de hacerla "más notoria" fallaron, se deja como está
 
 Inty pidió que las luces fueran "notorias" (más visibles). Se intentó 3 veces mejorar la
@@ -240,11 +255,11 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       naranjo original de `base-neutral.png`. Falta: cejas/ojos propios para variar
       expresión sin lentes puestos (no pedido aún explícitamente).
 - [x] **Accesorios de casco — HECHO (6/6).** LED delantera, cámara de acción, antena,
-      cresta, cinta reflectante, LED trasera/parpadeo (roja). Referencia real investigada
-      antes de generar (luces LED delantera/trasera, soportes tipo GoPro, cinta 3M
-      Scotchlite — ver fuentes en BITACORA de esta fecha). Antena/cresta necesitaron
-      máscara más alta (ver lección 3-ter). LED trasera necesitó lo CONTRARIO — ver
-      lección 3-quater abajo.
+      cresta, cinta reflectante, LED lateral/parpadeo (roja, llamada "trasera" al
+      principio por error — ver corrección 4-quinter). Referencia real investigada antes
+      de generar (luces LED delantera/laterales, soportes tipo GoPro, cinta 3M Scotchlite
+      — ver fuentes en BITACORA de esta fecha). Antena/cresta necesitaron máscara más alta
+      (ver lección 3-ter). La LED lateral necesitó lo CONTRARIO — ver lección 3-quater.
 - [x] **Piel — HECHO (4 tonos nuevos + base).** claro, trigueño, moreno, oscuro (más
       "medio" = el tono de `base-neutral.png`, ya existente). Máscara óvalo de cara +
       ambas orejas (ver lección 3-quinquies sobre por qué la primera tanda no servía a
