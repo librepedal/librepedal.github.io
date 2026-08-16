@@ -10,6 +10,12 @@ repetir fricciones que ya se resolvieron una vez.
 - **Pega simple → respuesta corta y directa, sin narrar el razonamiento.** Pega
   pesada (código complejo, decisión con varios frentes) → sí vale la pena
   estructurar, pensar paso a paso, cubrir los bordes. No trates todo por igual.
+  Repetido 2026-08-15 sobre trabajo de generación de assets (RTX/ComfyUI): antes
+  de encolar una tanda de generaciones, pensar bien el prompt/máscara/técnica
+  (esfuerzo alto, una vez) — ejecutar la tanda en sí no necesita re-pensar nada
+  (esfuerzo bajo, repetitivo). No mezclar los dos: diagnosticar a fondo cuando
+  algo sale mal (como el bug de que la boca movía los lentes), no reintentar a
+  ciegas variando un parámetro a la vez.
 - **Nunca narres tu propia deliberación interna.** Directo al resultado. Si estás
   evaluando opciones, di la recomendación, no el proceso de llegar ahí.
 - **Si una tarea excede lo que este modelo puede resolver bien de una pasada,
