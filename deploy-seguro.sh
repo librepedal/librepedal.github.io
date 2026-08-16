@@ -79,9 +79,18 @@ fi
 echo "  ✓ limpio ($(find "$OUT" -type f | wc -l) archivos)"
 
 echo "→ control de completitud (que no falte nada que el sitio use)..."
+# El escaneo saca CUALQUIER cosa con pinta de nombre de archivo, incluidas las que
+# aparecen dentro de COMENTARIOS. El 2026-08-16 el deploy se cayó porque un comentario
+# de index.html nombraba `scripts/generar-enlaces-acceso.js`: el control lo tomó como
+# un recurso que la web necesita y abortó al no encontrarlo en la carpeta limpia —
+# cuando en realidad `scripts/` NO se publica nunca, a propósito. Se filtran acá las
+# carpetas que jamás van al deploy, así nombrarlas en un comentario deja de romper la
+# publicación (le habría pasado igual a cualquiera que documentara una ruta interna).
 cat "$SRC"/index.html "$SRC"/sw.js "$SRC"/manifest.json 2>/dev/null \
  | grep -oE "[A-Za-z0-9_./-]+\.(png|jpg|jpeg|svg|webp|mp3|ogg|mp4|js|css|json|html)" \
- | grep -v "^http" | sed 's|^\./||;s|^/||' | sort -u | while read -r r; do
+ | grep -v "^http" | sed 's|^\./||;s|^/||' \
+ | grep -vE "^(scripts|worker-ia|worker-auth|android|tests|concepts|prototipos|node_modules|COORDINACION-IA|senuelos|señuelos)/" \
+ | sort -u | while read -r r; do
     [ -z "$r" ] && continue
     if [ ! -e "$OUT/$r" ] && [ -e "$SRC/$r" ]; then echo "✗ ABORTADO: falta $r"; exit 1; fi
   done
