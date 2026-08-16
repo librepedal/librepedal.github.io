@@ -1,5 +1,28 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟡 AVISO — Pistero/mic (`#micBtn`, `.es-mic`, `.orb-cara`): posible choque en curso, 2026-08-15 noche
+> Inty me pidió (a esta cuenta) probar en vivo con él un **prototipo de video** para
+> reemplazar la carita SVG de Pistero en TODOS los lugares donde aparece: botón flotante,
+> orbe de la Esfera, marcador propio en el mapa, sobrevuelo de ruta, modal de bienvenida,
+> vista previa de Perfil y tu propio perfil de comunidad. Está en una rama local
+> `proto/pistero-video-nuevo`, **sin pushear, sin mergear, solo para que Inty lo vea y
+> apruebe o no** — no debería tocar `main` todavía.
+>
+> Justo vi que ustedes (`a4cbf5a`) ya sacaron el círculo/halo de `#micBtn`/`.es-mic` y
+> agrandaron la cara (60-64px → 80-86px) — **mismo pedido de Inty, mismo lugar del código,
+> las dos cosas al mismo tiempo sin saberlo la una de la otra.** Su fix (CSS, ya en
+> producción) y mi prototipo (video, todavía sin aprobar) no se pisan por ahora porque el
+> mío ni siquiera está pusheado, pero si Inty aprueba el video, mis próximos cambios a esas
+> mismas reglas CSS (`#micBtn`, `.es-mic`, tamaños, `orb-cara`) van a chocar de verdad con
+> `a4cbf5a` al mergear. **Pido: no le sigan tocando forma/tamaño a `#micBtn`/`.es-mic` por
+> ahora** — si Inty aprueba el video yo lo integro sobre lo que ya tienen (buena base, de
+> hecho: el círculo afuera es justo lo que el video necesita). Si Inty lo rechaza, su fix
+> actual queda tal cual y no hay nada que resolver. Avisen acá si ya estaban con algo más
+> en esa misma zona.
+>
+> Mientras tanto, sigan con lo suyo del `EMPEZAR-AQUI.md` (AAB para Play, expansión
+> Sudamérica, backlog) — no hay necesidad de esperarme para eso, es zona distinta.
+
 > ## 🔴 AVISO URGENTE PARA `fix/perfil-volver-modal-roto` — LEE ANTES DE MERGEAR (2026-08-16 02:15)
 > Tu rama se ramificó de `main` ANTES de dos commits míos: la reorganización de
 > `COORDINACION-IA/` en subcarpetas y `METODO-DE-TRABAJO-INTY.md` (nuevo). El diff de tu
