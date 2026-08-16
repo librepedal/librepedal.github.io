@@ -153,6 +153,18 @@ dio una progresión clara y monótona clara→oscura. Bloopers de la v1 guardado
 `disenos-ui/pistero-3d/bloopers/piel-{moreno,oscuro}-v1-sin-diferenciar.png` como referencia
 de qué NO alcanza.
 
+## 4-bis) Ronda 2 de accesorios "creativos" (pedido 2026-08-16: "itera, itera, itera")
+
+Inty pidió expandir la variedad más allá del catálogo base (cuernos, calcomanías,
+máscaras/buff, y dejó abiertas "las españolas" sin aclarar y "accesorios de manubrio" que
+quedan fuera de este pipeline porque son de la bicicleta, no de la cara del personaje).
+
+- [x] **Cuernos de casco — HECHO (3/3).** Vikingos (marfil, curvos, laterales), diablo
+      (rojo oscuro, arriba), unicornio (espiral arcoíris, frontal-centro). Máscara ANCHA
+      de protrusión (más ancha que la de antena/cresta, para dar espacio a dos cuernos
+      laterales a la vez) — diff fuera de máscara 4-16 (un poco más alto que lo usual por
+      lo ancha que es la máscara, pero sin artefactos visibles).
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
