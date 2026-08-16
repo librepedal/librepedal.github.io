@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "857811917976",
+    "project_id": "librepedal-cb983",
+    "storage_bucket": "librepedal-cb983.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:857811917976:android:a3d60e653691339cee84ed",
+        "android_client_info": {
+          "package_name": "cl.librepedal.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "857811917976-81a9o9dsrtf67fvlkcbp8nk5v1loec71.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "cl.librepedal.app",
+            "certificate_hash": "9b05199b0a05ddea5d7710517c09142caaf4e45c"
+          }
+        },
+        {
+          "client_id": "857811917976-e6f9vde1bkh5bn2824b2ipl2rkjim0p7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "cl.librepedal.app",
+            "certificate_hash": "c4810bba6c19a30388da3ff7ee57f8d1c57e54a5"
+          }
+        },
+        {
+          "client_id": "857811917976-cqqkdjr9sk5te2mb1hb4lk0ri7iufsc8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlxQUDixvHR8tQ-n9S042LBjPaCqhys64"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "857811917976-cqqkdjr9sk5te2mb1hb4lk0ri7iufsc8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

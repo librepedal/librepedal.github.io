@@ -101,6 +101,11 @@ function encontrarMainActivity(dir) {
 const javaRoot = path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'java');
 const mainActivityPath = fs.existsSync(javaRoot) ? encontrarMainActivity(javaRoot) : null;
 
+// Nota Google Sign-In nativo (2026-08-16): el classpath de google-services y el
+// "apply plugin" ya los inyecta solo @capacitor-firebase/authentication al hacer
+// `cap add android` (verificado contra un build real) — solo falta que el
+// workflow copie google-services.json a android/app/ antes de compilar.
+
 if (mainActivityPath) {
   const original = fs.readFileSync(mainActivityPath, 'utf8');
   const paqueteMatch = original.match(/^package\s+([\w.]+);/m);
