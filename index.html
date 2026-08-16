@@ -1559,7 +1559,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.750'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.751'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3036,13 +3036,23 @@ function _vozArchivoArq(item, durEst, arq, id, miGen){
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
-function _vozAzureRuntime(item, durEst, miGen){
+function _vozAzureRuntime(item, durEst, miGen, _yaProboEleven){
   // Voz chilena Azure EN VIVO para frases dinámicas (nombre, calles, números, chat).
-  // Va por el Worker (/aztts, la llave está segura en el servidor). Si falla, voz nativa
-  // (NO MeloTTS: esa es la "gringa" que no queremos). Cachea en Cloudflare, así frases
-  // repetidas no vuelven a pegarle a Azure.
+  // Va por el Worker (/aztts, la llave está segura en el servidor). Cachea en Cloudflare,
+  // así frases repetidas no vuelven a pegarle a Azure.
+  //
+  // ORDEN DE RESPALDO (arreglado 2026-08-16): si Azure falla, se prueba ElevenLabs ANTES
+  // de rendirse con la voz nativa. Antes caía directo a la nativa, y eso fue exactamente
+  // lo que pasó: la suscripción de Azure venció (el worker devolvía 502 con code:401) y,
+  // como los usuarios chilenos van por Azure, TODOS terminaban escuchando la voz nativa
+  // de Android — lo que Inty describió como "volvió la voz antigua". ElevenLabs estuvo
+  // vivo todo el tiempo, solo que nadie lo intentaba. `_yaProboEleven` corta el rebote
+  // infinito entre los dos motores.
   let cayo=false;
-  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true;
+    if(!_yaProboEleven) _vozElevenRuntime(item, durEst, miGen, true);
+    else _vozNativaOWeb(item, durEst);
+  };
   try{
     const pros=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
     const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&rate='+encodeURIComponent(pros.rate)+'&pitch='+encodeURIComponent(pros.pitch));
@@ -3054,13 +3064,17 @@ function _vozAzureRuntime(item, durEst, miGen){
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
-function _vozElevenRuntime(item, durEst, miGen){
+function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure){
   // Voz neutra latina EN VIVO (ElevenLabs) para usuarios fuera de Chile. Va por el worker
   // de la expansion (/eltts, la llave está segura en el servidor). Cachea en Cloudflare, así
   // frases repetidas no vuelven a pegarle a ElevenLabs (ahorra caracteres). Si falla, cae a
-  // la voz chilena Azure (mejor eso que la nativa "gringa").
+  // la voz chilena Azure (mejor eso que la nativa "gringa") y, si esa tampoco, recién ahí
+  // a la nativa. `_yaProboAzure` corta el rebote infinito entre los dos motores.
   let cayo=false;
-  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true;
+    if(!_yaProboAzure) _vozAzureRuntime(item, durEst, miGen, true);
+    else _vozNativaOWeb(item, durEst);
+  };
   try{
     const a=new Audio(IA_URL_NEUTRA+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
     _vozNeuralAudio=a;
