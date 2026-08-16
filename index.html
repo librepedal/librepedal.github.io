@@ -39,7 +39,12 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Google Identity Services (GIS) SACADO el 2026-08-16: estaba desactivado desde hacía
+     tiempo (`_initGIS` no se llama desde ningún lado, ver la nota junto a esa función
+     por el origin_mismatch persistente), pero el script se seguía descargando en CADA
+     apertura de la app. Era una petición a accounts.google.com por visita, para nada.
+     Si alguna vez se revive GIS, hay que volver a agregar esta línea. -->
+<!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
 <style>
 :root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
 /* ── Temas de UI app-wide (Sólido / Cristal) · ver COORDINACION-IA/SPEC-TEMAS-APP-WIDE-2026-08-14.md
@@ -1546,7 +1551,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.748'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.749'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
