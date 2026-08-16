@@ -159,8 +159,13 @@ button.es-dato{cursor:pointer}
 .es-ind-l{font-size:0.6rem;color:#8fb0c8;text-transform:uppercase;letter-spacing:1px}
 .es-badge{position:relative}
 .es-badge[data-n]:not([data-n="0"])::after{content:attr(data-n);position:absolute;top:-4px;right:2px;background:#ff2d6b;color:#fff;font-size:0.55rem;font-weight:800;min-width:14px;height:14px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
-.es-mic{position:relative;width:64px;height:64px;border-radius:50%;border:none;background:radial-gradient(circle at 50% 40%,#22324f,#0c1424);cursor:pointer;box-shadow:0 0 18px 1px rgba(120,170,230,0.35);animation:esAura 2.6s ease-in-out infinite;padding:0}
-.es-mic.listening{box-shadow:0 0 24px 3px rgba(255,45,107,0.55)}
+/* 2026-08-16: sacado el orbe circular con halo (quedó viejo — el mismo rediseño de
+   "sin círculo, sombra fina" que ya se aplicó a la carita de Pistero del sobrevuelo de
+   ruta, ver reproducirSobrevuelo()). Ahora es solo la carita, más grande, con una
+   sombra sutil para que se lea bien sobre cualquier fondo. La forma circular se
+   mantiene invisible (radio + sin fondo) solo como área de toque, no como diseño visible. */
+.es-mic{position:relative;width:86px;height:86px;border-radius:50%;border:none;background:transparent;cursor:pointer;padding:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
+.es-mic.listening{filter:drop-shadow(0 0 10px rgba(255,45,107,.75))}
 /* ===== Look premium unificado (glass + neón) en toda la app ===== */
 .bg,.bd,.btrip,.bpdf{border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.2);letter-spacing:0.3px}
 /* Nocturno Pro: .stat-card SALE de esta lista — los tiles de dato ya no llevan
@@ -198,7 +203,6 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-ico{width:60px;height:60px;margin:0 auto;border-radius:20px;display:flex;align-items:center;justify-content:center;color:var(--p);background:linear-gradient(180deg,#141f33,#0c1422);border:0.5px solid rgba(252,76,2,0.4);box-shadow:0 7px 20px rgba(0,0,0,0.5);animation:esPulse 2.6s ease-in-out infinite;will-change:transform;position:relative;overflow:hidden}
 .es-ico::before{display:none}
 @keyframes esPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-@keyframes esAura{0%,100%{box-shadow:0 0 18px rgba(252,76,2,0.4),inset 0 0 12px rgba(252,76,2,0.25)}50%{box-shadow:0 0 30px rgba(252,76,2,0.75),inset 0 0 16px rgba(252,76,2,0.4)}}
 #esCanvas{position:absolute;left:0;top:0;pointer-events:none;z-index:0}
 .es-icon{z-index:1}
 .es-lbl{font-size:0.62rem;color:#cfeeff;margin-top:4px;font-weight:700;text-shadow:0 1px 3px #000}
@@ -613,17 +617,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
    Se oculta al escribir (lp-typing) para no tapar inputs de chat/Pistero. */
 /* Orbe Pistero v7.84: cara con casco + expresiones por estado + ojos que siguen al
    usuario (mirada). Halo: reposo morado, naranja escuchando, azul hablando. */
-#micBtn{bottom:78px;left:50%;right:auto;transform:translateX(-50%);width:60px;height:60px;border:none;padding:0;overflow:visible;opacity:.97;background:radial-gradient(circle at 50% 40%,#22324f,#0c1424);box-shadow:0 6px 18px rgba(0,0,0,.5)}
+/* Mismo criterio que .es-mic de arriba: sin orbe/halo circular, solo la carita más
+   grande con sombra sutil. El estado (reposo/escuchando/hablando) ahora se lee en el
+   drop-shadow de color, no en un círculo detrás. */
+#micBtn{bottom:78px;left:50%;right:auto;transform:translateX(-50%);width:80px;height:80px;border:none;padding:0;overflow:visible;opacity:.97;background:transparent;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
 #micBtn i{display:none}
 #micBtn .orb-cara,.es-mic .orb-cara{display:block;width:100%;height:100%;position:relative;z-index:2}
 #micBtn .orb-cara svg,.es-mic .orb-cara svg{width:100%;height:100%;display:block}
-#micBtn::after{content:'';position:absolute;inset:0;border-radius:50%;animation:orbHalo 3.4s ease-in-out infinite;pointer-events:none}
-@keyframes orbHalo{0%,100%{box-shadow:0 0 12px 1px rgba(120,170,230,.22)}50%{box-shadow:0 0 18px 3px rgba(120,170,230,.07)}}
-#micBtn.listening{opacity:1}
-#micBtn.listening::after{animation:orbHaloOn 1.3s ease-in-out infinite}
-@keyframes orbHaloOn{0%,100%{box-shadow:0 0 16px 2px rgba(252,76,2,.42)}50%{box-shadow:0 0 22px 5px rgba(252,76,2,.12)}}
-body.pistero-hablando #micBtn::after{animation:orbHaloBlue 1.6s ease-in-out infinite}
-@keyframes orbHaloBlue{0%,100%{box-shadow:0 0 18px 3px rgba(47,176,255,.45)}50%{box-shadow:0 0 24px 6px rgba(47,176,255,.14)}}
+#micBtn.listening{opacity:1;filter:drop-shadow(0 0 10px rgba(252,76,2,.75))}
+body.pistero-hablando #micBtn{filter:drop-shadow(0 0 10px rgba(47,176,255,.75))}
 body.lp-typing #micBtn{opacity:0;pointer-events:none}
 .nav-manoslibres-btn{display:none!important}
 body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
@@ -1530,7 +1532,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.72'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.74'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1656,8 +1658,37 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
   }catch(e){}
 }
 
+// ENTRAR CON GOOGLE — NATIVO (2026-08-16): en la app instalada (APK) que YA trae el
+// plugin @capacitor-firebase/authentication compilado, usa el selector de cuenta real
+// de Android en vez de abrir una ventana web dentro del WebView — evita de raíz los 3
+// bugs de abajo (COOP/missing-initial-state/origin_mismatch), que son todos del camino
+// web. En instalaciones VIEJAS (sin el plugin) lpPlugin() devuelve null y sigue el
+// camino web de siempre, sin ningún cambio de comportamiento para ellas — aditivo,
+// cero riesgo de regresión. El link mágico SIGUE siendo la opción visible por ahora
+// (se saca en un cambio aparte, una vez confirmado que esto funciona en un teléfono
+// real) — este commit SOLO agrega la capacidad de usar el nativo cuando está.
+async function _entrarConGoogleNativo(){
+  var plugin=lpPlugin('FirebaseAuthentication');
+  if(typeof showLoading==='function') showLoading('Entrando con Google...');
+  try{
+    var r=await plugin.signInWithGoogle();
+    var idToken=r && r.credential && r.credential.idToken;
+    if(!idToken) throw new Error('Google no devolvió credencial');
+    var cred=firebase.auth.GoogleAuthProvider.credential(idToken);
+    var res=await firebase.auth().signInWithCredential(cred);
+    if(res && res.user){ await _completarDesdeGoogle(res.user); }
+    else throw new Error('Firebase no completó la sesión');
+  }catch(err){
+    if(typeof hideLoading==='function') hideLoading();
+    var code=(err&&err.code)||'';
+    if(code==='ERR_CANCELED') return; // el usuario cerró el selector de cuenta, no es un error real
+    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+  }
+}
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
 async function _entrarConGoogle(){
+  var pluginNativo=lpPlugin('FirebaseAuthentication');
+  if(pluginNativo){ return _entrarConGoogleNativo(); }
   // HISTORIAL de este botón (para quien lo toque después, que no repita el mismo camino):
   // 1) signInWithPopup solo: se colgaba en Chrome por Cross-Origin-Opener-Policy de
   //    accounts.google.com (bloquea el postMessage de vuelta sin rechazar la promesa).

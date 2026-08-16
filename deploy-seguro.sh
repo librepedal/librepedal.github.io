@@ -54,7 +54,12 @@ echo "→ control de secretos..."
 if find "$OUT" \( -iname "MI-*" -o -iname "*.rules" -o -iname "*.keystore" -o -iname "*.jks" -o -iname ".env*" \) | grep -q .; then
   echo "✗ ABORTADO: hay archivos de credenciales en la carpeta de deploy."; exit 1
 fi
-if grep -rliE "TOKEN *=|ACCOUNT_ID *=|BEGIN .*PRIVATE KEY|API_KEY *=" "$OUT" >/dev/null 2>&1; then
+# \b antes de TOKEN/API_KEY: sin esto, cualquier variable normal de JS que
+# contenga "token" en camelCase (idToken, authToken, refreshToken...) hacía
+# falso positivo -- "idToken=" matcheaba "TOKEN *=" como substring. Con \b
+# sigue cachando el patrón real de los MI-*.txt (TOKEN=xxx al inicio de línea
+# o tras espacio/comilla), pero ya no una variable de código legítima.
+if grep -rliE "\bTOKEN *=|\bACCOUNT_ID *=|BEGIN .*PRIVATE KEY|\bAPI_KEY *=" "$OUT" >/dev/null 2>&1; then
   echo "✗ ABORTADO: hay contenido con pinta de credencial."; exit 1
 fi
 echo "  ✓ limpio ($(find "$OUT" -type f | wc -l) archivos)"
