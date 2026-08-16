@@ -117,6 +117,23 @@ entrando en la zona del anillo/fondo — así el modelo tiene lugar para dibujar
 sobresalga de verdad. Mismo criterio que la lección anterior (margen generoso), pero acá
 el margen tiene que ir en la dirección donde el objeto necesita "salirse" del dibujo base.
 
+## 3-quater) Lección de máscara — clip-on chico, lo contrario a 3-ter
+
+Para LED trasera (foco chico atornillado al borde del casco, cerca de la oreja) el primer
+intento reusó el criterio de 3-ter (máscara grande, con margen hacia el fondo/anillo) —
+salió MAL, pero de forma distinta a "invisible": el modelo interpretó el hueco vacío como
+espacio para dibujar MÁS casco, y se comió la oreja entera (diff adentro de la máscara
+alto, pero el resultado no tenía ningún foco, solo geometría rara). Causa: 3-ter aplica a
+objetos que sobresalen DEL VOLUMEN del casco (antena, cresta — necesitan aire arriba para
+dibujarse), pero un foco/clip chico NO sobresale del volumen, va PEGADO a la superficie
+sólida existente. Con máscara mayormente vacía, el modelo no tiene "ancla" de material
+para clipear algo encima. **Solución:** máscara chica, la mayoría ENCIMA de superficie
+sólida ya pintada (la carcasa del casco), con apenas un borde tocando el fondo — igual
+criterio que LED delantera/cámara (que sí funcionaron a la primera). Regla práctica: si el
+accesorio sobresale del contorno → máscara con margen hacia el fondo (3-ter). Si el
+accesorio va pegado/clipeado a una superficie existente → máscara pegada a esa superficie,
+casi sin fondo vacío.
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
@@ -135,11 +152,12 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       arriba — necesitó máscara grande). Diff de píxeles = 0 exacto en la versión final
       (`sin_lentes_v5`). Falta: lentes CON estilo (deportivas/redondas/aviador) sobre la
       misma máscara, y cejas/ojos propios para variar expresión sin lentes puestos.
-- [x] **Accesorios de casco — HECHO (5/5).** LED delantera, cámara de acción, antena,
-      cresta, cinta reflectante. Referencia real investigada antes de generar (luces
-      LED delantera/trasera, soportes tipo GoPro, cinta 3M Scotchlite — ver fuentes en
-      BITACORA de esta fecha). Antena/cresta necesitaron máscara más alta (ver lección
-      arriba). Falta: LED trasera/parpadeo (roja, distinta de la delantera).
+- [x] **Accesorios de casco — HECHO (6/6).** LED delantera, cámara de acción, antena,
+      cresta, cinta reflectante, LED trasera/parpadeo (roja). Referencia real investigada
+      antes de generar (luces LED delantera/trasera, soportes tipo GoPro, cinta 3M
+      Scotchlite — ver fuentes en BITACORA de esta fecha). Antena/cresta necesitaron
+      máscara más alta (ver lección 3-ter). LED trasera necesitó lo CONTRARIO — ver
+      lección 3-quater abajo.
 - [ ] Máscara de piel (cara, orejas, cuello visible). 5 tonos: claro, medio, trigueño,
       moreno, oscuro.
 - [ ] Máscara de boca+cejas combinada para estados de ánimo (feliz, enojado, cansado, con
