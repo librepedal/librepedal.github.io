@@ -132,7 +132,14 @@ async function correrModelo(env, messages, maxTokens) {
 //    que pase con el límite por IP. Con la caché de arriba, el uso normal (banco de
 //    ~900 frases fijas) casi nunca debería tocar este presupuesto. =====
 const REQS_POR_MIN = 30;
-const MAX_CHARS_DIA = 20000;
+// Subido de 20.000 a 120.000 el 2026-08-16. El número viejo se calculó cuando la mayoría
+// de las frases salían de mp3 pregrabados y solo lo nuevo (nombres, calles, números) se
+// generaba en vivo. Ahora TODO se genera en vivo con la voz elegida —así Pistero no cambia
+// de timbre a mitad de conversación— y con 20.000 el corte saltaba el mismo día, dejando a
+// los testers con la voz robótica. La caché de Cloudflare hace el trabajo pesado: cada
+// frase se paga una sola vez y después se sirve del borde. Sigue siendo un tope duro
+// contra abuso, solo que a una altura que el uso real no toca.
+const MAX_CHARS_DIA = 120000;
 async function _limiteIP(env, ip) {
   if (!env.VOZ_CUOTA || !ip) return true;
   const minuto = Math.floor(Date.now() / 60000);

@@ -1559,7 +1559,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.752'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.753'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2958,31 +2958,26 @@ function _reproducirVoz(item){
     // frase+género+arquetipo (no elección de voz en vivo), así que no hereda el bug de mezcla de
     // SLR71. Tiene prioridad; si la frase no está en el catálogo, cae al viejo Azure (voces/) como
     // respaldo. Ver voz-elevenlabs.js.
+    // LA VOZ ELEGIDA MANDA EN TODA LA APP (2026-08-16, pedido de Inty).
+    //
+    // Antes los mp3 pregrabados tenían prioridad y se llevaban puesta la voz elegida. El
+    // comentario de arriba decía que estaban indexados "por frase+género+arquetipo", pero el
+    // manifiesto solo tiene frase+género — la dimensión de arquetipo NO existe. Resultado:
+    // unas frases sonaban con la voz del catálogo y otras con la voz en vivo, y Pistero
+    // cambiaba de timbre a mitad de conversación. Eso es lo que Inty describía como
+    // "voces diferentes en las frases".
+    //
+    // Ahora se genera SIEMPRE en vivo con la voz elegida (ver _vozELid), y los pregrabados
+    // quedan de respaldo para cuando no hay red. No sale caro: el worker cachea en Cloudflare,
+    // así que una frase repetida no vuelve a pegarle a ElevenLabs.
+    //
+    // Sin candado `navigator.onLine` (trampa quitada 2026-08-13: miente seguido; los runtimes
+    // ya caen solos por su onerror/catch). Tampoco hay reparto por país: Azure quedó sin
+    // suscripción y ElevenLabs ya tiene voces chilenas reales.
     const _idEL = (typeof VOCES_MANIFEST_EL!=='undefined') && VOCES_MANIFEST_EL && VOCES_MANIFEST_EL.map && VOCES_MANIFEST_EL.map[item.t];
-    if(_idEL && typeof _vozArchivoEL==='function'){
-      vozTimerFin=setTimeout(_vozSiguiente, 12000);
-      _vozArchivoEL(item, durEst, _idEL, miGen);
-      return;
-    }
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
-    if(_id){
-      vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso; se recalibra con la duración real del audio
-      _vozArchivo(item, durEst, _id, miGen);
-      return;
-    }
-    // frase nueva (nombres, calles, números): se genera en vivo. Sin candado `navigator.onLine`
-    // (trampa quitada 2026-08-13: miente seguido; los runtimes ya caen solos a la nativa por su
-    // onerror/catch). + Voz por país: chilenos -> Azure es-CL (la marca de siempre); resto de
-    // Latinoamérica -> voz neutra premium (ElevenLabs) para que Pistero no suene chileno fuera de Chile.
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
-    const _cl = !paisUsuario || (''+paisUsuario).toLowerCase().slice(0,2)==='cl';
-    // TODOS por ElevenLabs desde el 2026-08-16, chilenos incluidos: Azure quedó sin
-    // suscripción y ElevenLabs ya tiene voces chilenas reales (Victoria / Cristian
-    // Cornejo, ver _vozELid). El reparto por país dejó de tener sentido — antes los
-    // chilenos iban a Azure justamente para sonar chilenos, y ahora suenan chilenos acá.
-    // `_cl` se conserva por si se quiere volver a separar por país más adelante.
-    void _cl;
-    _vozElevenRuntime(item, durEst, miGen);
+    _vozElevenRuntime(item, durEst, miGen, false, { idEL:_idEL, idAz:_id });
     return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
@@ -3015,7 +3010,10 @@ function _vozArchivo(item, durEst, id, miGen){
   let cayo=false;
   // miGen!==vozGen: esta frase ya no es la vigente (se cortó o ya empezó la
   // siguiente) — no caer a la voz de respaldo por algo que ya nadie está esperando.
-  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  // A la nativa y no a Azure (2026-08-16): estos archivos pregrabados ya son EL RESPALDO
+  // de la voz en vivo, asi que si tambien fallan no queda nada mejor que intentar — mandarlos
+  // de vuelta a Azure hacia rebotar la cadena entre motores sin ganar nada.
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
     const a=new Audio('voces/'+pisteroGenero+id+'.mp3');
     const _pr=_rateArq(); try{ a.playbackRate=_pr; }catch(_e2){}
@@ -3031,7 +3029,10 @@ function _vozArchivoArq(item, durEst, arq, id, miGen){
   // Frase fija en la voz chilena del arquetipo (SLR71): voces/{arq}/{id}.mp3.
   try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onplaying=_vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=null; _vozNeuralAudio=null; } }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} 
   let cayo=false;
-  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  // A la nativa y no a Azure (2026-08-16): estos archivos pregrabados ya son EL RESPALDO
+  // de la voz en vivo, asi que si tambien fallan no queda nada mejor que intentar — mandarlos
+  // de vuelta a Azure hacia rebotar la cadena entre motores sin ganar nada.
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
     const a=new Audio('voces/'+arq+'/'+id+'.mp3');
     _vozNeuralAudio=a;
@@ -3082,15 +3083,21 @@ function _vozAzureRuntime(item, durEst, miGen, _yaProboEleven){
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
-function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure){
-  // Voz neutra latina EN VIVO (ElevenLabs) para usuarios fuera de Chile. Va por el worker
-  // de la expansion (/eltts, la llave está segura en el servidor). Cachea en Cloudflare, así
-  // frases repetidas no vuelven a pegarle a ElevenLabs (ahorra caracteres). Si falla, cae a
-  // la voz chilena Azure (mejor eso que la nativa "gringa") y, si esa tampoco, recién ahí
-  // a la nativa. `_yaProboAzure` corta el rebote infinito entre los dos motores.
+function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure, _respaldo){
+  // Voz EN VIVO por ElevenLabs — es el motor principal de Pistero desde el 2026-08-16.
+  // Va por el worker (/eltts, la llave vive en el servidor) y le manda la voz elegida en
+  // `&voz=`. Cachea en Cloudflare, así una frase repetida no vuelve a pegarle a ElevenLabs.
+  //
+  // Escalera de respaldo, en orden: (1) el mp3 PREGRABADO de esa misma frase, si existe —
+  // sirve sin red y suena mucho mejor que la nativa; (2) Azure, por si algún día vuelve;
+  // (3) la voz nativa del teléfono, último recurso. `_yaProboAzure` corta el rebote
+  // infinito entre motores, y `_respaldo` trae los ids de los catálogos pregrabados.
   let cayo=false;
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true;
-    if(!_yaProboAzure) _vozAzureRuntime(item, durEst, miGen, true);
+    const r=_respaldo||{};
+    if(r.idEL && typeof _vozArchivoEL==='function') _vozArchivoEL(item, durEst, r.idEL, miGen);
+    else if(r.idAz && typeof _vozArchivo==='function') _vozArchivo(item, durEst, r.idAz, miGen);
+    else if(!_yaProboAzure) _vozAzureRuntime(item, durEst, miGen, true);
     else _vozNativaOWeb(item, durEst);
   };
   try{
