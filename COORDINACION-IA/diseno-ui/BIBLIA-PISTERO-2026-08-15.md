@@ -188,9 +188,10 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       boca+cejas separada, evitando el riesgo de costura visto antes. Aplicada también la
       lección 3-quinquies (lenguaje comparativo explícito por expresión, no solo el nombre
       del ánimo) — dio 4 expresiones bien diferenciables a la primera pasada.
-- [ ] **Vello facial para Pistero** (pedido 2026-08-15/16): barba corta, bigote/mostacho —
-      máscara de mentón+labio superior, mismo método. Ya se había sacado del selector SVG
-      viejo por no verse bien (2026-08-08) — con esta calidad nueva vale la pena reintentar.
+- [x] **Vello facial para Pistero — HECHO (2/2).** Barba corta prolija (mentón+mandíbula) y
+      bigote (solo labio superior, sin tocar el mentón) — máscara única mentón+labio
+      superior, mismo método. Se había sacado del selector SVG viejo por no verse bien
+      (2026-08-08); con esta calidad nueva sí funciona limpio (diff 4-5 fuera de máscara).
 - [ ] **Pistera (versión femenina) — 3 conceptos ya generados** (coletas, cola ladeada,
       flequillo) como generación completa nueva, NO inpainting sobre la base de Pistero
       (peinado cambia geometría, no es una capa parcheable). Pendiente que Inty elija cuál

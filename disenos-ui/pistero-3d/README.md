@@ -19,5 +19,8 @@ Piel completa (4 tonos + base): claro, trigueño, moreno, oscuro (`piel-*.png`).
 
 Ánimos completos (4/4): feliz, enojado, cansado, con sueño (`animo-*.png`).
 
-Pendiente (ver backlog completo en la Biblia): vello facial de Pistero, labial de
-Pistera, lentes con estilo sobre la base sin-lentes, accesorios por arquetipo.
+Vello facial completo (2/2): barba, bigote (`vello-*.png`).
+
+Pendiente (ver backlog completo en la Biblia): labial de Pistera (bloqueado en que Inty
+elija base de peinado), lentes con estilo sobre la base sin-lentes, accesorios por
+arquetipo (necesita sesión de diseño), catálogo Darma (decisión de producto).
