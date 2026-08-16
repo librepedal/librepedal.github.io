@@ -26,6 +26,9 @@ generados sobre la base sin-lentes.
 
 Cuernos de casco (3/3): vikingos, diablo, unicornio (`cuernos-*.png`).
 
+Calcomanías de casco (3/3): rayo, llama, bandera a cuadros (`calco-*.png`) — con relieve
+3D real, no íconos planos (ver lección de vocabulario "molded" en la Biblia).
+
 Pendiente (ver backlog completo en la Biblia, todo bloqueado en decisiones de Inty, no en
 trabajo técnico): labial de Pistera (falta elegir base de peinado), accesorios por
 arquetipo (necesita sesión de diseño), catálogo Darma (decisión de producto).

@@ -165,6 +165,36 @@ quedan fuera de este pipeline porque son de la bicicleta, no de la cara del pers
       laterales a la vez) — diff fuera de máscara 4-16 (un poco más alto que lo usual por
       lo ancha que es la máscara, pero sin artefactos visibles).
 
+## 4-ter) Lección de prompt — "sticker/decal" produce un ícono PLANO, no algo moldeado
+
+Al pedir calcomanías de casco (rayo, llama) con vocabulario "sticker decal printed on the
+helmet", el resultado técnicamente cumplía el diff de píxeles (0 fuera de máscara) pero
+Inty lo rechazó con razón: "esa fotito con un fueguito arriba... está de kindergarten".
+Comparando de cerca: con la palabra "sticker/decal" el modelo dibuja un ícono 100% plano,
+relleno de color sólido sin degradado ni brillo — literalmente como un emoji pegado encima,
+sin relación con el material brillante/3D del resto del casco. **Causa real:** "sticker"
+como concepto lingüístico implica un objeto plano aplicado ENCIMA de una superficie, así
+que el modelo lo renderiza así — es un problema de VOCABULARIO, no de semilla ni de
+máscara (confirmado: 3 reintentos con distintas máscaras/semillas en la palabra "estrella"
+no arreglaron nada, hasta que se cambió el concepto). **Solución que sí funcionó:**
+describir el gráfico como si fuera parte del MOLDE físico del casco, no algo pegado encima:
+"{elemento} vinyl-wrapped and MOLDED directly into the glossy helmet plastic shell,
+following the exact curve of the helmet surface, same glossy molded plastic material and
+specular highlights as the rest of the helmet, seamlessly integrated factory graphic (not
+an applied sticker)" + en negativo agregar explícitamente "flat sticker, paper decal,
+applique, floating flat icon, cartoon emoji style". Con este cambio de vocabulario (mismos
+pasos/cfg/máscara) el resultado pasó de un ícono plano a una forma con volumen 3D real,
+degradado de luz y brillo coherente con el resto del casco — sin tocar la técnica de
+máscara ni instalar nada nuevo. Se investigó también la opción de un ControlNet específico
+para Z-Image-Turbo (`PriuS2/Z-Image-Controlnet`, encontrado en GitHub) para forzar que el
+gráfico siga el mapa de profundidad real del casco, pero NO fue necesario — el arreglo de
+vocabulario solo ya cerró la brecha de calidad. Queda como opción de escalamiento futuro si
+algún elemento vuelve a salir plano después de aplicar esta lección. Bloopers de la v1/v2
+"sticker plano" guardados en `disenos-ui/pistero-3d/bloopers/calco-*-plano-sticker.png`.
+- [x] **Calcomanías de casco — HECHO (3/3).** Rayo, llama, bandera a cuadros. Panel
+      lateral izquierdo liso del casco (sin ventilaciones) para rayo/llama, óvalo topper
+      original para bandera. Ver lección de vocabulario "molded" arriba.
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
