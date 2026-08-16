@@ -1559,7 +1559,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.751'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.752'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2976,7 +2976,13 @@ function _reproducirVoz(item){
     // Latinoamérica -> voz neutra premium (ElevenLabs) para que Pistero no suene chileno fuera de Chile.
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
     const _cl = !paisUsuario || (''+paisUsuario).toLowerCase().slice(0,2)==='cl';
-    if(_cl){ _vozAzureRuntime(item, durEst, miGen); } else { _vozElevenRuntime(item, durEst, miGen); }
+    // TODOS por ElevenLabs desde el 2026-08-16, chilenos incluidos: Azure quedó sin
+    // suscripción y ElevenLabs ya tiene voces chilenas reales (Victoria / Cristian
+    // Cornejo, ver _vozELid). El reparto por país dejó de tener sentido — antes los
+    // chilenos iban a Azure justamente para sonar chilenos, y ahora suenan chilenos acá.
+    // `_cl` se conserva por si se quiere volver a separar por país más adelante.
+    void _cl;
+    _vozElevenRuntime(item, durEst, miGen);
     return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
@@ -3036,6 +3042,18 @@ function _vozArchivoArq(item, durEst, arq, id, miGen){
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
+// VOCES CHILENAS DE ELEVENLABS (2026-08-16). Azure murió (suscripción vencida: el
+// worker devolvía 502 con code:401) y con él se fue la voz chilena. En vez de renovar
+// Azure, Pistero pasa a hablar SIEMPRE por ElevenLabs, con voces chilenas de verdad:
+//   Pistera -> Victoria (chilena profesional)
+//   Pistero -> Cristian Cornejo (chileno)
+// Se mandan por `&voz=` en la petición, así no hay que tocar el worker de la otra
+// cuenta (librepedal-ia-sudamerica vive en otra cuenta de Cloudflare, sin acceso).
+// Para cambiar de voz alcanza con reemplazar el id de acá: el catálogo completo se
+// consulta en `<worker>/?voces=1`.
+const VOZ_EL_F = 'Fd38GRHtJllY0CuguAy9'; // Victoria — Chilean Professional Fresh
+const VOZ_EL_M = 'ClNifCEVq1smkl4M3aTk'; // Cristian Cornejo — Spanish Chilean
+function _vozELid(){ return (pisteroGenero==='l') ? VOZ_EL_M : VOZ_EL_F; }
 function _vozAzureRuntime(item, durEst, miGen, _yaProboEleven){
   // Voz chilena Azure EN VIVO para frases dinámicas (nombre, calles, números, chat).
   // Va por el Worker (/aztts, la llave está segura en el servidor). Cachea en Cloudflare,
@@ -3076,7 +3094,7 @@ function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure){
     else _vozNativaOWeb(item, durEst);
   };
   try{
-    const a=new Audio(IA_URL_NEUTRA+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
+    const a=new Audio(IA_URL_NEUTRA+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&voz='+encodeURIComponent(_vozELid()));
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
