@@ -165,6 +165,72 @@ quedan fuera de este pipeline porque son de la bicicleta, no de la cara del pers
       laterales a la vez) — diff fuera de máscara 4-16 (un poco más alto que lo usual por
       lo ancha que es la máscara, pero sin artefactos visibles).
 
+## 4-ter) Lección de prompt — "sticker/decal" produce un ícono PLANO, no algo moldeado
+
+Al pedir calcomanías de casco (rayo, llama) con vocabulario "sticker decal printed on the
+helmet", el resultado técnicamente cumplía el diff de píxeles (0 fuera de máscara) pero
+Inty lo rechazó con razón: "esa fotito con un fueguito arriba... está de kindergarten".
+Comparando de cerca: con la palabra "sticker/decal" el modelo dibuja un ícono 100% plano,
+relleno de color sólido sin degradado ni brillo — literalmente como un emoji pegado encima,
+sin relación con el material brillante/3D del resto del casco. **Causa real:** "sticker"
+como concepto lingüístico implica un objeto plano aplicado ENCIMA de una superficie, así
+que el modelo lo renderiza así — es un problema de VOCABULARIO, no de semilla ni de
+máscara (confirmado: 3 reintentos con distintas máscaras/semillas en la palabra "estrella"
+no arreglaron nada, hasta que se cambió el concepto). **Solución que sí funcionó:**
+describir el gráfico como si fuera parte del MOLDE físico del casco, no algo pegado encima:
+"{elemento} vinyl-wrapped and MOLDED directly into the glossy helmet plastic shell,
+following the exact curve of the helmet surface, same glossy molded plastic material and
+specular highlights as the rest of the helmet, seamlessly integrated factory graphic (not
+an applied sticker)" + en negativo agregar explícitamente "flat sticker, paper decal,
+applique, floating flat icon, cartoon emoji style". Con este cambio de vocabulario (mismos
+pasos/cfg/máscara) el resultado pasó de un ícono plano a una forma con volumen 3D real,
+degradado de luz y brillo coherente con el resto del casco — sin tocar la técnica de
+máscara ni instalar nada nuevo. Se investigó también la opción de un ControlNet específico
+para Z-Image-Turbo (`PriuS2/Z-Image-Controlnet`, encontrado en GitHub) para forzar que el
+gráfico siga el mapa de profundidad real del casco, pero NO fue necesario — el arreglo de
+vocabulario solo ya cerró la brecha de calidad. Queda como opción de escalamiento futuro si
+algún elemento vuelve a salir plano después de aplicar esta lección. Bloopers de la v1/v2
+"sticker plano" guardados en `disenos-ui/pistero-3d/bloopers/calco-*-plano-sticker.png`.
+- [x] **Calcomanías de casco — HECHO (3/3).** Rayo, llama, bandera a cuadros. Panel
+      lateral izquierdo liso del casco (sin ventilaciones) para rayo/llama, óvalo topper
+      original para bandera. Ver lección de vocabulario "molded" arriba.
+
+- [x] **Máscara/buff ciclista — HECHO (2/2).** Liso (azul marino) y estampado (camo
+      colorido). Referencia real investigada primero (buff tubular elástico, se sube
+      cubriendo nariz+boca dejando los ojos libres) — coincidía con lo ya planeado, sin
+      necesidad de corregir después.
+
+## 4-quinter) CORRECCIÓN 2026-08-16: "LED trasera" era un error de concepto, no de técnica
+
+Inty señaló el error de fondo: el personaje se muestra SOLO de frente en este catálogo —
+una luz literalmente TRASERA no puede verse nunca en un retrato de frente, sin importar
+qué tan bien se ejecute. Lo que se generó y aprobó (ver 4-cuater abajo) físicamente está
+montada al COSTADO del casco, cerca de la oreja — visible desde el frente. Eso SÍ es un
+producto real (luz de visibilidad lateral, existe en cascos reales), pero llamarlo
+"trasera" era la confusión. **Archivo renombrado:** `acc-led-trasera.png` →
+`acc-led-lateral.png`. Ninguna imagen se regeneró, es una corrección de nombre/concepto,
+no de píxeles. Lección para todo lo que sigue: además de investigar la referencia real del
+PRODUCTO (protocolo ya guardado en `METODO-DE-TRABAJO-INTY.md`), hay que verificar que el
+concepto pedido sea representable en el FORMATO del asset (acá: retrato solo de frente) —
+si algo por definición no se puede ver desde el ángulo disponible, no tiene sentido
+generarlo con ese nombre aunque la ejecución salga perfecta.
+
+## 4-cuater) LED trasera — 3 intentos de hacerla "más notoria" fallaron, se deja como está
+
+Inty pidió que las luces fueran "notorias" (más visibles). Se intentó 3 veces mejorar la
+LED trasera ya aprobada (v2, la que está en producción): (1) máscara más grande — volvió a
+fallar igual que el intento original documentado en la lección 3-quater (el modelo rellena
+con más casco en vez de dibujar el foco); (2) misma máscara chica pero con prompt mucho más
+insistente en "brillante, grande, muy visible" y semilla nueva — también salió invisible.
+**Diagnóstico:** con esta técnica (mask+seed+turbo/cfg=1.0) el resultado es sensible a la
+semilla de forma no controlable de forma fina — no hay un botón de "más prominente" seguro
+sin arriesgar perder el elemento por completo. Después de 3 fallos seguidos empeorando el
+resultado (regla: parar y no forzar), se dejó la v2 original tal cual está en producción
+(diff limpio, luz roja pequeña pero visible) en vez de reemplazarla por algo peor. Si se
+quiere una LED trasera genuinamente más grande en el futuro, la vía más segura es
+post-procesar la imagen ya aprobada (agrandar el punto rojo con edición de imagen directa,
+no regenerar con IA) en vez de seguir tirando semillas.
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
@@ -189,11 +255,11 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       naranjo original de `base-neutral.png`. Falta: cejas/ojos propios para variar
       expresión sin lentes puestos (no pedido aún explícitamente).
 - [x] **Accesorios de casco — HECHO (6/6).** LED delantera, cámara de acción, antena,
-      cresta, cinta reflectante, LED trasera/parpadeo (roja). Referencia real investigada
-      antes de generar (luces LED delantera/trasera, soportes tipo GoPro, cinta 3M
-      Scotchlite — ver fuentes en BITACORA de esta fecha). Antena/cresta necesitaron
-      máscara más alta (ver lección 3-ter). LED trasera necesitó lo CONTRARIO — ver
-      lección 3-quater abajo.
+      cresta, cinta reflectante, LED lateral/parpadeo (roja, llamada "trasera" al
+      principio por error — ver corrección 4-quinter). Referencia real investigada antes
+      de generar (luces LED delantera/laterales, soportes tipo GoPro, cinta 3M Scotchlite
+      — ver fuentes en BITACORA de esta fecha). Antena/cresta necesitaron máscara más alta
+      (ver lección 3-ter). La LED lateral necesitó lo CONTRARIO — ver lección 3-quater.
 - [x] **Piel — HECHO (4 tonos nuevos + base).** claro, trigueño, moreno, oscuro (más
       "medio" = el tono de `base-neutral.png`, ya existente). Máscara óvalo de cara +
       ambas orejas (ver lección 3-quinquies sobre por qué la primera tanda no servía a

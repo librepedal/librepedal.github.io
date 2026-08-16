@@ -13,7 +13,9 @@ Generados con ComfyUI local (Z-Image-Turbo) + inpainting enmascarado. Método co
   todavía cuál queda como base oficial.
 
 Accesorios de casco completos (6/6): LED delantera, cámara, antena, cresta, cinta
-reflectante, LED trasera/parpadeo.
+reflectante, LED lateral (luz de visibilidad al costado del casco — se llamó "trasera"
+al principio, error de concepto: una luz trasera no se puede ver en un retrato de frente;
+corregido 2026-08-16).
 
 Piel completa (4 tonos + base): claro, trigueño, moreno, oscuro (`piel-*.png`).
 
@@ -25,6 +27,11 @@ Lentes con estilo completos (3/3): redondas, aviador, deportivas negras (`lentes
 generados sobre la base sin-lentes.
 
 Cuernos de casco (3/3): vikingos, diablo, unicornio (`cuernos-*.png`).
+
+Calcomanías de casco (3/3): rayo, llama, bandera a cuadros (`calco-*.png`) — con relieve
+3D real, no íconos planos (ver lección de vocabulario "molded" en la Biblia).
+
+Máscara/buff ciclista (2/2): liso, estampado (`buff-*.png`).
 
 Pendiente (ver backlog completo en la Biblia, todo bloqueado en decisiones de Inty, no en
 trabajo técnico): labial de Pistera (falta elegir base de peinado), accesorios por
