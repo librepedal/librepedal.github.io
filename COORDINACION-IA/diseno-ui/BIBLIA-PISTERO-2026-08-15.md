@@ -169,8 +169,13 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       primer intento). Diff de píxeles ~3-5 fuera de máscara en los 8.
 - [x] **Sin lentes — HECHO.** Ojos limpios, sin resto naranja (ver lección de máscara
       arriba — necesitó máscara grande). Diff de píxeles = 0 exacto en la versión final
-      (`sin_lentes_v5`). Falta: lentes CON estilo (deportivas/redondas/aviador) sobre la
-      misma máscara, y cejas/ojos propios para variar expresión sin lentes puestos.
+      (`sin_lentes_v5`).
+- [x] **Lentes con estilo — HECHO (3/3).** Redondas (marco fino negro), aviador (marco
+      dorado, lente gota), deportivas negras (envolvente, marco negro mate) — generadas
+      sobre `sin-lentes.png` como base (no sobre `base-neutral.png`), misma máscara óvalo
+      de cara+cejas de la capa de ánimos. Las tres bien diferenciadas entre sí y del par
+      naranjo original de `base-neutral.png`. Falta: cejas/ojos propios para variar
+      expresión sin lentes puestos (no pedido aún explícitamente).
 - [x] **Accesorios de casco — HECHO (6/6).** LED delantera, cámara de acción, antena,
       cresta, cinta reflectante, LED trasera/parpadeo (roja). Referencia real investigada
       antes de generar (luces LED delantera/trasera, soportes tipo GoPro, cinta 3M

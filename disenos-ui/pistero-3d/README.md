@@ -21,6 +21,9 @@ Piel completa (4 tonos + base): claro, trigueño, moreno, oscuro (`piel-*.png`).
 
 Vello facial completo (2/2): barba, bigote (`vello-*.png`).
 
-Pendiente (ver backlog completo en la Biblia): labial de Pistera (bloqueado en que Inty
-elija base de peinado), lentes con estilo sobre la base sin-lentes, accesorios por
+Lentes con estilo completos (3/3): redondas, aviador, deportivas negras (`lentes-*.png`),
+generados sobre la base sin-lentes.
+
+Pendiente (ver backlog completo en la Biblia, todo bloqueado en decisiones de Inty, no en
+trabajo técnico): labial de Pistera (falta elegir base de peinado), accesorios por
 arquetipo (necesita sesión de diseño), catálogo Darma (decisión de producto).
