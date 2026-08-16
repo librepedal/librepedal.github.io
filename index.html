@@ -1532,7 +1532,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.746'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.747'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4197,8 +4197,13 @@ async function enviarLinkMagico(e){
   e.preventDefault();
   const nombre=document.getElementById('nombre-input').value.trim();
   const e_val=document.getElementById('em').value.trim();
-  if(!nombre) return lpAviso("Ingresa tu nombre");
-  if(!e_val||!e_val.includes('@')) return lpAviso("El correo es obligatorio");
+  // _lpAvisoLogin y no lpAviso en TODA esta función: lpAviso() -> mostrarBocadillo() se
+  // niega a mostrarse fuera de v-pistero/v-map, o sea que en la pantalla de login era
+  // MUDO. Esto es lo que vivieron los 51 testers la noche del 15/16-ago: escribían su
+  // correo, tocaban "Enviarme el enlace", el botón se reseteaba y no aparecía NADA —
+  // ni el error de cupo agotado ni "falta tu nombre". Concluyeron que la app no servía.
+  if(!nombre) return _lpAvisoLogin("Ingresá tu nombre");
+  if(!e_val||!e_val.includes('@')) return _lpAvisoLogin("El correo es obligatorio");
   const paisSel=(document.getElementById('pais-input')||{}).value||'auto';
   try{ localStorage.setItem('lp_pending_nombre',nombre); localStorage.setItem('lp_pending_pais',paisSel); }catch(_e){}
   const btn=e.target.querySelector('button[type=submit]');
@@ -4210,14 +4215,14 @@ async function enviarLinkMagico(e){
     if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane"></i> Enviarme el enlace'; }
     var _code=(err&&err.code)?' ('+err.code+')':'';
     if(err && err.code==='auth/quota-exceeded'){
-      lpAviso('Estamos con mucha demanda ahorita — inténtalo de nuevo en un rato. No es un error tuyo, ya lo estamos viendo.');
+      _lpAvisoLogin('Hoy se llenó el cupo de correos de la app — no es culpa tuya.\n\nEscribile a Inty por WhatsApp y te manda un enlace directo para entrar al toque. Mañana el envío por correo vuelve a funcionar solo.');
     } else {
-      lpAviso('No se pudo enviar el enlace'+_code+': '+((err&&err.message)||err));
+      _lpAvisoLogin('No se pudo enviar el enlace'+_code+': '+((err&&err.message)||err));
     }
   }
 }
 function _mostrarPantallaRevisaCorreo(email){
-  var box=document.querySelector('#auth .auth-box'); if(!box){ lpAviso('Enlace enviado a '+email); return; }
+  var box=document.querySelector('#auth .auth-box'); if(!box){ _lpAvisoLogin('Enlace enviado a '+email); return; }
   box.innerHTML='<div style="text-align:center;padding:14px 6px">'
     +'<div style="font-size:2.6rem;color:var(--p);margin-bottom:10px"><i class="fas fa-envelope-circle-check"></i></div>'
     +'<h2 style="font-size:1.1rem;margin:0 0 8px;color:#e7edf6">Revisa tu correo</h2>'
