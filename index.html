@@ -1532,7 +1532,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.74'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.741'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1689,6 +1689,18 @@ async function _entrarConGoogleNativo(){
 async function _entrarConGoogle(){
   var pluginNativo=lpPlugin('FirebaseAuthentication');
   if(pluginNativo){ return _entrarConGoogleNativo(); }
+  // DEBUG TEMPORAL (2026-08-16, sacar apenas se confirme por qué el plugin no aparece):
+  // el AAB instalado SÍ trae @capacitor-firebase/authentication compilado (confirmado
+  // en el log de CI), pero lpPlugin() no lo encuentra en runtime. Este aviso muestra
+  // qué ve realmente Capacitor.Plugins en el teléfono, para diagnosticar sin ADB/USB.
+  try{
+    var _dbgCap=(typeof window.Capacitor==='undefined')?'window.Capacitor NO existe':JSON.stringify({
+      isNative: (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : 'sin isNativePlatform'),
+      platform: window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : 'sin getPlatform',
+      plugins: window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins) : 'sin Capacitor.Plugins'
+    });
+    lpAviso('DEBUG: '+_dbgCap);
+  }catch(_e){ try{ lpAviso('DEBUG error: '+(_e&&_e.message)); }catch(_e2){} }
   // HISTORIAL de este botón (para quien lo toque después, que no repita el mismo camino):
   // 1) signInWithPopup solo: se colgaba en Chrome por Cross-Origin-Opener-Policy de
   //    accounts.google.com (bloquea el postMessage de vuelta sin rechazar la promesa).
