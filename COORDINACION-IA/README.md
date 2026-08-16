@@ -12,6 +12,12 @@ archivado por tema.
   LibrePedal): ritmo, calidad, autonomía, diseño, trampas técnicas ya encontradas.
 - **`EMPEZAR-AQUI.md`** — resumen rápido de por dónde seguir ahora mismo.
 - **`EN-USO.md`** — el candado: quién está editando `index.html` en este momento.
+  Arranca con un ÍNDICE que dice qué avisos siguen vivos y cuáles ya se resolvieron —
+  leé ese índice primero, el archivo entero pasa las 600 líneas.
+- **`ESTADO-LOGIN-GOOGLE.md`** — estado del login con Google (el trabajo de la
+  madrugada del 15/16-ago): qué está hecho, qué falta, los errores que ya se
+  cometieron, y cómo verificar un `.aab` por dentro antes de mandárselo a Inty.
+  **Léelo antes de tocar cualquier cosa de autenticación.**
 - **`PENDIENTES.md`** — lista de tareas abiertas, por fecha (más nuevo abajo).
 - **`BITACORA.md`** — historial completo de versiones/cambios (es un log, no se reescribe).
 

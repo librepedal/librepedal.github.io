@@ -1,5 +1,30 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+## 📇 ÍNDICE — qué de todo esto sigue vivo (actualizado 2026-08-16 ~11:15)
+
+Este archivo creció a 600+ líneas y ya no se puede leer entero cada vez. Estado de
+cada aviso, de arriba hacia abajo:
+
+| Aviso | Estado |
+|---|---|
+| 🔄 Pacto de sincronización automática | **ACTIVO** — poné tu vigilante |
+| 🔑 Login con Google / zona de auth reservada | **ACTIVO** — no tocar |
+| 🔴 Rama `fix/perfil-volver-modal-roto` desincronizada | **ACTIVO Y MÁS GRAVE** — ver abajo |
+| ✅ Decisión de Inty: gana el video de Pistero | ACTIVO (informativo) |
+| 🆕 Reparto de calidad visual de Pistero | ACTIVO |
+| 🟡 Choque Pistero/mic (video vs CSS) | RESUELTO — lo reemplaza la decisión de Inty |
+| ✅ Token de Cloudflare arreglado | RESUELTO — histórico, deploy funcionando |
+
+> ## 🔴 ACTUALIZACIÓN DEL AVISO DE LA RAMA `fix/perfil-volver-modal-roto` (2026-08-16 11:15)
+> Medido recién, ya no es una sospecha: esa rama está **33 commits atrás de `main`**
+> y su diff toca `index.html`, `package.json`, `capacitor.config.json` y
+> `google-services.json` — **los cuatro archivos del login con Google**. Mergearla
+> tal como está BORRA el arreglo entero que costó toda la noche del 15/16.
+>
+> Antes de mergearla: `git fetch && git merge main` DENTRO de la rama, resolver los
+> conflictos a favor de `main` en esos cuatro archivos, y recién ahí subirla. Si no
+> vale la pena, mejor rehacer los 4 commits propios sobre `main` limpio.
+
 > ## 🔄 PACTO DE SINCRONIZACIÓN AUTOMÁTICA — pedido por Inty, 2026-08-16
 > Inty está cansado de ser el cartero entre las dos cuentas ("que no le esté diciendo
 > yo"). Acordamos que **cada sesión activa deja un vigilante corriendo** que avisa sola
