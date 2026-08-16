@@ -108,6 +108,15 @@ más de lo que parece necesario a simple vista (no pegada al objeto, con margen 
 alrededor) — recién ahí el diff de píxeles dio 0 exacto. Para la próxima capa (piel,
 ánimos, etc.): partir con margen generoso desde el principio, no ajustar fino.
 
+## 3-ter) Lección de máscara — elementos que sobresalen del casco (antena, cresta)
+
+Con la máscara pegada a la cúpula del casco, antena/cresta salían CASI invisibles (el
+modelo no tenía espacio en la máscara para dibujar algo que sobresale del silueta). Se
+soluciona agrandando la máscara hacia ARRIBA, más allá del borde superior del casco,
+entrando en la zona del anillo/fondo — así el modelo tiene lugar para dibujar algo que
+sobresalga de verdad. Mismo criterio que la lección anterior (margen generoso), pero acá
+el margen tiene que ir en la dirección donde el objeto necesita "salirse" del dibujo base.
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
@@ -126,6 +135,11 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       arriba — necesitó máscara grande). Diff de píxeles = 0 exacto en la versión final
       (`sin_lentes_v5`). Falta: lentes CON estilo (deportivas/redondas/aviador) sobre la
       misma máscara, y cejas/ojos propios para variar expresión sin lentes puestos.
+- [x] **Accesorios de casco — HECHO (5/5).** LED delantera, cámara de acción, antena,
+      cresta, cinta reflectante. Referencia real investigada antes de generar (luces
+      LED delantera/trasera, soportes tipo GoPro, cinta 3M Scotchlite — ver fuentes en
+      BITACORA de esta fecha). Antena/cresta necesitaron máscara más alta (ver lección
+      arriba). Falta: LED trasera/parpadeo (roja, distinta de la delantera).
 - [ ] Máscara de piel (cara, orejas, cuello visible). 5 tonos: claro, medio, trigueño,
       moreno, oscuro.
 - [ ] Máscara de boca+cejas combinada para estados de ánimo (feliz, enojado, cansado, con
