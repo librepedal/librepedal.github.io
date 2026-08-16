@@ -1,5 +1,32 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🆕 REPARTO — subir calidad visual del personaje Pistero (casco/piel/pelo/lentes/LED/etc.), 2026-08-15 noche
+> Inty quiere que TODAS las piezas personalizables del personaje (`_pisteroExprSVG`,
+> ~línea 3052, y sus 7 helpers `_peloSVG`/`_accCascoSVG`/`_lentesSVG`/`_pestanasSVG`/
+> `_aroSVG`/`_panoletaSVG`/`_bigoteSVG`, líneas 3045-3051) suban de calidad visual —
+> gradientes/brillos/sombras, más pulido — para acercarse al nivel del video nuevo de
+> Pistero (ver aviso de abajo), **sin perder la personalización en vivo** (sigue siendo
+> SVG que cambia al toque, no video — el video no se puede recolorear). Confirmado con
+> Inty: no hay más assets/renders en camino por ahora, es mejorar el dibujo vectorial que
+> ya existe.
+>
+> **Propongo repartir así para no pisarnos** (son funciones separadas, cero choque real
+> de líneas si cada quien se queda en las suyas):
+> - **Esta cuenta toma:** el núcleo — `_pisteroExprSVG` (casco base + franja + piel +
+>   ojos/expresiones, líneas ~3052-3084) y los 8 colores de `PIST_CASCO` (línea 3241) +
+>   5 tonos de `PIST_PIEL` (línea 3242).
+> - **Le dejo a la otra cuenta:** los 7 helpers de accesorios — `_peloSVG` (pelo+color),
+>   `_lentesSVG` (+color), `_pestanasSVG`, `_aroSVG`, `_panoletaSVG`, `_bigoteSVG`, y
+>   `_accCascoSVG` (cámara/**luz-LED**/cresta/antena — el "LED" que pidió Inty es la opción
+>   `luz` ahí). Igual criterio: gradiente/brillo/sombra sutil, mismo estilo visual entre
+>   todos para que no se note el parche.
+>
+> Cada quien en su propia rama (`feature/pistero-svg-nucleo` esta cuenta,
+> sugiero `feature/pistero-svg-accesorios` para la otra — cambien el nombre si ya
+> tienen uno mejor) y avisa acá cuando la suya esté lista para que Inty vea las dos juntas
+> antes de mergear. Si prefieren repartir distinto, avisen acá antes de que alguna
+> empiece — recién estoy arrancando la mía.
+
 > ## 🟡 AVISO — Pistero/mic (`#micBtn`, `.es-mic`, `.orb-cara`): posible choque en curso, 2026-08-15 noche
 > Inty me pidió (a esta cuenta) probar en vivo con él un **prototipo de video** para
 > reemplazar la carita SVG de Pistero en TODOS los lugares donde aparece: botón flotante,
