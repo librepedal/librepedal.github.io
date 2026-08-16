@@ -1532,7 +1532,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.741'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.742'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1667,6 +1667,13 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
 // cero riesgo de regresión. El link mágico SIGUE siendo la opción visible por ahora
 // (se saca en un cambio aparte, una vez confirmado que esto funciona en un teléfono
 // real) — este commit SOLO agrega la capacidad de usar el nativo cuando está.
+// Aviso que SÍ se ve en la pantalla de login: lpAviso()/mostrarBocadillo() se niega a
+// mostrar nada fuera de las vistas v-pistero/v-map (ver mostrarBocadillo más abajo), así
+// que en el login cualquier error de Google quedaba MUDO — el usuario tocaba el botón,
+// algo fallaba de verdad, y no pasaba nada visible. Encontrado 2026-08-16 probando en
+// teléfono real: el spinner "Entrando con Google..." aparecía y desaparecía sin dejar
+// rastro del error real. window.alert() no depende de ninguna vista/DOM, siempre se ve.
+function _lpAvisoLogin(msg){ try{ window.alert(String(msg)); }catch(e){} }
 async function _entrarConGoogleNativo(){
   var plugin=lpPlugin('FirebaseAuthentication');
   if(typeof showLoading==='function') showLoading('Entrando con Google...');
@@ -1682,7 +1689,7 @@ async function _entrarConGoogleNativo(){
     if(typeof hideLoading==='function') hideLoading();
     var code=(err&&err.code)||'';
     if(code==='ERR_CANCELED') return; // el usuario cerró el selector de cuenta, no es un error real
-    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+    _lpAvisoLogin('No se pudo entrar con Google: '+((err&&err.message)||err));
   }
 }
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
@@ -1699,8 +1706,8 @@ async function _entrarConGoogle(){
       platform: window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : 'sin getPlatform',
       plugins: window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins) : 'sin Capacitor.Plugins'
     });
-    lpAviso('DEBUG: '+_dbgCap);
-  }catch(_e){ try{ lpAviso('DEBUG error: '+(_e&&_e.message)); }catch(_e2){} }
+    _lpAvisoLogin('DEBUG: '+_dbgCap);
+  }catch(_e){ try{ _lpAvisoLogin('DEBUG error: '+(_e&&_e.message)); }catch(_e2){} }
   // HISTORIAL de este botón (para quien lo toque después, que no repita el mismo camino):
   // 1) signInWithPopup solo: se colgaba en Chrome por Cross-Origin-Opener-Policy de
   //    accounts.google.com (bloquea el postMessage de vuelta sin rechazar la promesa).
@@ -1743,7 +1750,7 @@ async function _entrarConGoogle(){
     }
     if(code.indexOf('popup')>-1||code==='auth/operation-not-supported-in-this-environment'){
       try{ await firebase.auth().signInWithRedirect(provider); }
-      catch(e2){ try{ unsub(); }catch(e){} if(typeof hideLoading==='function') hideLoading(); lpAviso('No se pudo abrir Google: '+((e2&&e2.message)||e2)); }
+      catch(e2){ try{ unsub(); }catch(e){} if(typeof hideLoading==='function') hideLoading(); _lpAvisoLogin('No se pudo abrir Google: '+((e2&&e2.message)||e2)); }
       return; // el listener sigue vivo por si igual completa; window.onload también revisa el retorno
     }
     // Cualquier otro código (incluido lo que deja colgado el COOP): NO apagamos el listener,
@@ -1767,7 +1774,7 @@ async function _completarDesdeGoogle(user){
   }catch(err){
     _lpDbg('completarDesdeGoogle:CATCH', {msg: err && err.message, stack: err && err.stack && err.stack.substring(0,300)});
     if(typeof hideLoading==='function') hideLoading();
-    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+    _lpAvisoLogin('No se pudo entrar con Google: '+((err&&err.message)||err));
     var a=document.getElementById('auth'); if(a) a.style.display='flex'; rm(MG); fg('todos'); initCustomization();
   }
 }
@@ -1785,7 +1792,7 @@ async function _gisCallback(resp){
     else if(typeof hideLoading==='function'){ hideLoading(); }
   }catch(err){
     if(typeof hideLoading==='function') hideLoading();
-    lpAviso('No se pudo entrar con Google: '+((err&&err.message)||err));
+    _lpAvisoLogin('No se pudo entrar con Google: '+((err&&err.message)||err));
   }
 }
 function _initGIS(n){
