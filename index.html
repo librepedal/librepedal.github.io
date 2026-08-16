@@ -1532,7 +1532,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.743'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.744'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1707,6 +1707,22 @@ async function _entrarConGoogle(){
       plugins: window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins) : 'sin Capacitor.Plugins'
     });
   }catch(_e){}
+  // APP INSTALADA SIN EL PLUGIN NATIVO (2026-08-16): callejón sin salida comprobado.
+  // Dentro del WebView, accounts.google.com NO está en allowNavigation, así que Android
+  // abre el login de Google en el navegador EXTERNO; la vuelta del redirect aterriza en
+  // Chrome, que es otro contexto de almacenamiento que el de la app -> Firebase responde
+  // "missing initial state" y el usuario queda tirado en una pantalla de error en blanco,
+  // fuera de la app. No hay forma de arreglarlo desde la web: el arreglo real es el plugin
+  // nativo, que viaja compilado en el .aab. Hasta que actualicen, los mandamos por el
+  // camino que SÍ funciona (enlace al correo) en vez de romperles la sesión.
+  try{
+    var _esAppNativa = (typeof window.Capacitor!=='undefined') && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+    if(_esAppNativa){
+      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualizá Libre Pedal desde Play Store para activarlo.\n\nMientras tanto podés entrar con tu correo: escribilo arriba y tocá "Enviarme el enlace".');
+      var _em=document.getElementById('em'); if(_em){ try{ _em.scrollIntoView({behavior:'smooth',block:'center'}); _em.focus(); }catch(e){} }
+      return;
+    }
+  }catch(_e2){}
   // HISTORIAL de este botón (para quien lo toque después, que no repita el mismo camino):
   // 1) signInWithPopup solo: se colgaba en Chrome por Cross-Origin-Opener-Policy de
   //    accounts.google.com (bloquea el postMessage de vuelta sin rechazar la promesa).
