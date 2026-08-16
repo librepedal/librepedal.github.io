@@ -4032,6 +4032,17 @@ window.onload = async function(){
     solicitarPermisosEsenciales();
     sincronizarAlEntrar(); // sube los km que quedaron guardados solo en el teléfono
     _intentarReanudarNavegacion();
+    // Deep link de "Compartir este perfil" (compartirPerfilComunidad() en
+    // perfil-comunidad.js genera ?perfil=<id>): antes nada leía ese parámetro,
+    // el link no abría nada. Solo con sesión -- #auth tiene z-index más alto
+    // que el modal (5000 vs 4000), así que sin login el modal quedaría tapado.
+    try{
+      const _pid=new URLSearchParams(location.search).get('perfil');
+      if(_pid && typeof verPerfilUsuario==='function'){
+        verPerfilUsuario(_pid);
+        history.replaceState({}, '', location.pathname);
+      }
+    }catch(e){}
   } else {
     document.getElementById('auth').style.display='flex';
     rm(MG); fg('todos'); initCustomization();
