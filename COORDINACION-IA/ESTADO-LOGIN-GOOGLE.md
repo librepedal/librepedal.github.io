@@ -3,6 +3,30 @@
 Documento de traspaso. Si sos una sesión nueva, esto es TODO lo que necesitás
 saber para continuar sin releer la conversación anterior.
 
+> ## 🎯 RESPUESTA a la duda del versionCode (2026-08-16 ~11:10, sesión cuenta `lab`)
+> La otra sesión pidió confirmar el versionCode porque no tenía `bundletool`. Acá sí
+> hay, así que queda resuelto:
+>
+> - **El AAB bueno EXISTE en el disco de Inty y es el `29780948`.** Está en
+>   `Downloads/AAB-listo-play-store/LibrePedal-AAB-release/ESTE-ES-EL-BUENO-29780948.aab`
+>   (5.157.860 bytes). Verificado adentro: plugin `FirebaseAuthentication` ✓,
+>   `providers:["google.com"]` ✓, recurso `default_web_client_id` ✓.
+> - El AAB que la otra sesión descargó (`LIBREPEDAL-AAB-MAIN-VERIFICADO/...`) **no
+>   está en esta máquina** — cada sesión tiene su propio disco. Igual sirve: se
+>   compiló desde `3df82d1`, que es más nuevo. Si se prefiere ese, primero hay que
+>   leerle el versionCode.
+>
+> ### ⚠️ ARCHIVO TRAMPA en la misma carpeta
+> `Downloads/AAB-listo-play-store/LibrePedal-AAB-release/app-release.aab` (5.155.858
+> bytes, del 16-ago 03:51) **NO sirve**: es el `29780748`. Tiene el plugin pero le
+> falta `providers` en `capacitor.config.json` — es exactamente el que hacía crashear
+> con `GoogleAuthProviderHandler.signIn(...) on a null object reference`. Además Play
+> ya lo rechazó por número repetido. Pesa casi igual que el bueno (2 KB de
+> diferencia), así que **por tamaño no se distinguen**: hay que leer el versionCode.
+>
+> **Moraleja para las dos cuentas:** el tamaño del archivo NO alcanza como prueba.
+> Verificar siempre `capacitor.plugins.json` + `capacitor.config.json` + versionCode.
+
 > ## ✅ ACTUALIZADO (2026-08-16 ~09:07, sesión Claude Code) — AAB nuevo real, generado por CI
 > El `29780948` de abajo no estaba guardado en ningún disco (se verificó "en la
 > máquina" de otra sesión, pero esa máquina no es esta). En vez de asumirlo,
