@@ -1,5 +1,26 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔑 LOGIN CON GOOGLE — estado al 2026-08-16 ~10:30. NO TOCAR el bloque de auth.
+> Estado completo en **`COORDINACION-IA/ESTADO-LOGIN-GOOGLE.md`** (léanlo antes de
+> opinar o tocar cualquier cosa de login). Resumen de una línea:
+>
+> - **El arreglo de código ESTÁ HECHO y en `main`.** Plugin nativo
+>   `@capacitor-firebase/authentication` + `google-services.json` +
+>   `providers:["google.com"]` en `capacitor.config.json`. Verificado abriendo el
+>   propio .aab, no el log de CI.
+> - **Falta SOLO que Inty suba el AAB `29780948` a la pista Alpha.** Está en su
+>   máquina, verificado. Hasta que lo suba, el botón de Google no funciona para los
+>   51 testers porque el arreglo es NATIVO (viaja compilado en el .aab, no por web).
+> - **Ya está en vivo (web) un paliativo:** si la app instalada no tiene el plugin,
+>   el botón de Google ya no manda al usuario a una pantalla de error de Firebase
+>   fuera de la app — ahora avisa que actualice y lo lleva al ingreso por correo,
+>   que sí funciona. Ver `_esAppNativa` dentro de `_entrarConGoogle()`.
+> - **NO mergear la rama `google-signin-nativo` a `main`.** Esa rama elimina el link
+>   mágico, y mientras haya testers con builds viejos el link mágico es su ÚNICA
+>   forma de entrar. Se saca recién cuando todos estén actualizados.
+> - Zona reservada de `index.html`: `_entrarConGoogle()`, `_entrarConGoogleNativo()`,
+>   `_completarDesdeGoogle()`, `_lpAvisoLogin()` (~líneas 1660-1810). El resto libre.
+
 > ## ✅ DECISIÓN DE INTY (2026-08-16 02:35) — el VIDEO gana, no el fix CSS
 > Le mostré las dos opciones y eligió el prototipo en video sobre mi arreglo simple de
 > círculo/tamaño. **Dejo mi CSS tal cual está (no lo revierto)** ya que ustedes mismos
