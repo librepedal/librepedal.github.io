@@ -85,6 +85,23 @@ Reusar este orden en vez de adivinar por dónde empezar.
   una vez") es una señal de que la ronda anterior de diagnóstico no llegó al
   fondo — no una señal para repetir la misma pregunta.** Subí un nivel de
   profundidad en la investigación en vez de pedir el mismo dato de otra forma.
+- **Verificá el ARTEFACTO, no el log de CI.** Caso real de esa noche: el log
+  decía "Found 4 Capacitor plugins" (incluido el de Firebase) y aun así el AAB
+  salía con 3 — el log era de OTRA rama. Abrir el binario es la única prueba:
+  `unzip -p app.aab base/assets/capacitor.plugins.json`, y
+  `bundletool dump manifest|resources --bundle=app.aab` para versionCode y
+  para confirmar que `google-services.json` se procesó (`default_web_client_id`
+  tiene que existir en los recursos). **Nunca le mandes un binario a Inty para
+  subir a Play sin haberlo abierto y verificado adentro** — cada AAB malo le
+  cuesta una subida, una revisión de Google y una reinstalación en el teléfono.
+- **Si el trabajo se hizo en una rama, confirmá QUÉ rama compila el CI.** Esa
+  fue la causa raíz esa noche: la dependencia del plugin y el
+  `google-services.json` vivían solo en `google-signin-nativo`, pero los builds
+  salían de `main` → tres AAB seguidos sin el plugin.
+- **Si Inty reporta lo mismo dos veces, dudá de tu diagnóstico antes que de su
+  reporte.** Sus capturas mostraban la lista de plugins sin el de Firebase: era
+  el dato exacto que resolvía el caso, y se descartó dos veces como "tiene un
+  build viejo", haciéndolo reinstalar de gusto.
 
 ## Decisiones, alcance y autonomía
 
