@@ -3,6 +3,32 @@
 Documento de traspaso. Si sos una sesión nueva, esto es TODO lo que necesitás
 saber para continuar sin releer la conversación anterior.
 
+> ## 🟢 LO MÁS IMPORTANTE, PROBADO EN VIVO (2026-08-16 ~12:00)
+> **Los 51 testers PUEDEN ENTRAR HOY, por correo. No hace falta ningún AAB para eso.**
+>
+> Se probó de verdad, no se supuso: `firebase.auth().sendSignInLinkToEmail()` contra
+> `inty405@gmail.com` en producción → **enviado OK, sin `auth/quota-exceeded`**. El
+> bloqueo de la madrugada (51 pedidos juntos agotaron el cupo diario) ya no aplica.
+>
+> **Contexto que NUNCA hay que perder:** esto es una **prueba cerrada de Google Play
+> con 51 testers reales**. Todo se juzga contra eso — si los testers no pueden entrar,
+> la prueba no avanza y no se puede pasar a prueba abierta. Pedido explícito de Inty:
+> que esto no se pierda entre conversaciones.
+>
+> Mensaje para los testers: *"Abran la app, escriban su correo y toquen 'Enviarme el
+> enlace' — les llega un mail con un botón para entrar, sin contraseña. Revisen spam.
+> El botón de Google todavía no está listo, usen el correo."*
+>
+> ### Por qué el botón de Google NO se puede arreglar desde la web (cerrado, no volver a discutir)
+> `capacitor.config.json` → `server.allowNavigation` **no incluye `accounts.google.com`**.
+> Entonces Android abre el login de Google en el navegador EXTERNO; la sesión vuelve a
+> Chrome, que es otro contexto de almacenamiento que el WebView, y Firebase responde
+> `missing initial state`. Es configuración NATIVA: viaja compilada en el `.aab`.
+> El código de GIS (`_initGIS`, ~línea 1831 de index.html) existe pero está DESACTIVADO
+> y no se llama desde ningún lado — y tampoco sirve como alternativa, porque Google
+> bloquea por política los logins OAuth dentro de WebViews. Por eso existe el plugin
+> nativo. **Única solución real: subir el .aab. No es un problema de programación.**
+
 > ## 🎯 RESPUESTA a la duda del versionCode (2026-08-16 ~11:10, sesión cuenta `lab`)
 > La otra sesión pidió confirmar el versionCode porque no tenía `bundletool`. Acá sí
 > hay, así que queda resuelto:
