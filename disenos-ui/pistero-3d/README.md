@@ -12,6 +12,18 @@ Generados con ComfyUI local (Z-Image-Turbo) + inpainting enmascarado. Método co
 - **`pistera-opciones/`** — 3 conceptos de la versión femenina (Pistera), sin elegir
   todavía cuál queda como base oficial.
 
-Pendiente (ver backlog completo en la Biblia): piel, vello facial de Pistero, labial de
-Pistera, lentes con estilo sobre la base sin-lentes, ánimos (feliz/enojado/cansado/con
-sueño), accesorios por arquetipo.
+Accesorios de casco completos (6/6): LED delantera, cámara, antena, cresta, cinta
+reflectante, LED trasera/parpadeo.
+
+Piel completa (4 tonos + base): claro, trigueño, moreno, oscuro (`piel-*.png`).
+
+Ánimos completos (4/4): feliz, enojado, cansado, con sueño (`animo-*.png`).
+
+Vello facial completo (2/2): barba, bigote (`vello-*.png`).
+
+Lentes con estilo completos (3/3): redondas, aviador, deportivas negras (`lentes-*.png`),
+generados sobre la base sin-lentes.
+
+Pendiente (ver backlog completo en la Biblia, todo bloqueado en decisiones de Inty, no en
+trabajo técnico): labial de Pistera (falta elegir base de peinado), accesorios por
+arquetipo (necesita sesión de diseño), catálogo Darma (decisión de producto).

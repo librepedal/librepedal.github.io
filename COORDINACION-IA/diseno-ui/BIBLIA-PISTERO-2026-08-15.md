@@ -108,6 +108,51 @@ más de lo que parece necesario a simple vista (no pegada al objeto, con margen 
 alrededor) — recién ahí el diff de píxeles dio 0 exacto. Para la próxima capa (piel,
 ánimos, etc.): partir con margen generoso desde el principio, no ajustar fino.
 
+## 3-ter) Lección de máscara — elementos que sobresalen del casco (antena, cresta)
+
+Con la máscara pegada a la cúpula del casco, antena/cresta salían CASI invisibles (el
+modelo no tenía espacio en la máscara para dibujar algo que sobresale del silueta). Se
+soluciona agrandando la máscara hacia ARRIBA, más allá del borde superior del casco,
+entrando en la zona del anillo/fondo — así el modelo tiene lugar para dibujar algo que
+sobresalga de verdad. Mismo criterio que la lección anterior (margen generoso), pero acá
+el margen tiene que ir en la dirección donde el objeto necesita "salirse" del dibujo base.
+
+## 3-quater) Lección de máscara — clip-on chico, lo contrario a 3-ter
+
+Para LED trasera (foco chico atornillado al borde del casco, cerca de la oreja) el primer
+intento reusó el criterio de 3-ter (máscara grande, con margen hacia el fondo/anillo) —
+salió MAL, pero de forma distinta a "invisible": el modelo interpretó el hueco vacío como
+espacio para dibujar MÁS casco, y se comió la oreja entera (diff adentro de la máscara
+alto, pero el resultado no tenía ningún foco, solo geometría rara). Causa: 3-ter aplica a
+objetos que sobresalen DEL VOLUMEN del casco (antena, cresta — necesitan aire arriba para
+dibujarse), pero un foco/clip chico NO sobresale del volumen, va PEGADO a la superficie
+sólida existente. Con máscara mayormente vacía, el modelo no tiene "ancla" de material
+para clipear algo encima. **Solución:** máscara chica, la mayoría ENCIMA de superficie
+sólida ya pintada (la carcasa del casco), con apenas un borde tocando el fondo — igual
+criterio que LED delantera/cámara (que sí funcionaron a la primera). Regla práctica: si el
+accesorio sobresale del contorno → máscara con margen hacia el fondo (3-ter). Si el
+accesorio va pegado/clipeado a una superficie existente → máscara pegada a esa superficie,
+casi sin fondo vacío.
+
+## 3-quinquies) Lección de prompt — cfg 1.0 diluye adjetivos sutiles de color
+
+Al hacer los 4 tonos de piel, la primera tanda ("very fair light pink" / "warm golden olive
+tan" / "medium warm brown" / "deep rich dark brown") salió con diff de píxeles perfecto
+(0 fuera de máscara) pero el resultado NO servía: a simple vista "moreno" quedó más CLARO
+que "trigueño", y "oscuro" apenas se distinguía de "claro" — sin progresión real. La
+técnica de máscara estaba bien, el problema fue el PROMPT: con `cfg=1.0` (necesario para
+que el modelo turbo funcione bien) los adjetivos de color quedan débiles, en especial
+cuando van al final de una oración larga. Se rechazó a ojo (no pasó el diff porque el diff
+solo mide que no se corrió nada FUERA de la máscara, no mide si el contenido DENTRO es el
+pedido — ojo con confundir "diff en 0" con "aprobado", son verificaciones distintas).
+**Solución:** (1) mover la descripción de color al PRINCIPIO del prompt, pegada al sujeto
+("...mascot character with {tono} skin..."), repetirla una segunda vez más adelante; (2)
+usar lenguaje comparativo explícito en vez de adjetivos sueltos ("clearly darker than tan",
+"much darker than caramel") en lugar de solo el nombre del tono. Con eso la segunda tanda sí
+dio una progresión clara y monótona clara→oscura. Bloopers de la v1 guardados en
+`disenos-ui/pistero-3d/bloopers/piel-{moreno,oscuro}-v1-sin-diferenciar.png` como referencia
+de qué NO alcanza.
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
@@ -124,15 +169,34 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       primer intento). Diff de píxeles ~3-5 fuera de máscara en los 8.
 - [x] **Sin lentes — HECHO.** Ojos limpios, sin resto naranja (ver lección de máscara
       arriba — necesitó máscara grande). Diff de píxeles = 0 exacto en la versión final
-      (`sin_lentes_v5`). Falta: lentes CON estilo (deportivas/redondas/aviador) sobre la
-      misma máscara, y cejas/ojos propios para variar expresión sin lentes puestos.
-- [ ] Máscara de piel (cara, orejas, cuello visible). 5 tonos: claro, medio, trigueño,
-      moreno, oscuro.
-- [ ] Máscara de boca+cejas combinada para estados de ánimo (feliz, enojado, cansado, con
-      sueño) — más grande que la de boca sola, porque enojado/cansado necesitan cejas.
-- [ ] **Vello facial para Pistero** (pedido 2026-08-15/16): barba corta, bigote/mostacho —
-      máscara de mentón+labio superior, mismo método. Ya se había sacado del selector SVG
-      viejo por no verse bien (2026-08-08) — con esta calidad nueva vale la pena reintentar.
+      (`sin_lentes_v5`).
+- [x] **Lentes con estilo — HECHO (3/3).** Redondas (marco fino negro), aviador (marco
+      dorado, lente gota), deportivas negras (envolvente, marco negro mate) — generadas
+      sobre `sin-lentes.png` como base (no sobre `base-neutral.png`), misma máscara óvalo
+      de cara+cejas de la capa de ánimos. Las tres bien diferenciadas entre sí y del par
+      naranjo original de `base-neutral.png`. Falta: cejas/ojos propios para variar
+      expresión sin lentes puestos (no pedido aún explícitamente).
+- [x] **Accesorios de casco — HECHO (6/6).** LED delantera, cámara de acción, antena,
+      cresta, cinta reflectante, LED trasera/parpadeo (roja). Referencia real investigada
+      antes de generar (luces LED delantera/trasera, soportes tipo GoPro, cinta 3M
+      Scotchlite — ver fuentes en BITACORA de esta fecha). Antena/cresta necesitaron
+      máscara más alta (ver lección 3-ter). LED trasera necesitó lo CONTRARIO — ver
+      lección 3-quater abajo.
+- [x] **Piel — HECHO (4 tonos nuevos + base).** claro, trigueño, moreno, oscuro (más
+      "medio" = el tono de `base-neutral.png`, ya existente). Máscara óvalo de cara +
+      ambas orejas (ver lección 3-quinquies sobre por qué la primera tanda no servía a
+      pesar de diff=0 fuera de máscara).
+- [x] **Ánimos — HECHO (4/4).** feliz, enojado, cansado, con sueño. Como los ojos siempre
+      están tapados por los lentes de sol en esta base, el ánimo se juega TODO en cejas +
+      boca — se reusó el mismo óvalo de cara completo (técnica de la lección "Frankenstein",
+      ampliado ~20px hacia arriba para agarrar las cejas enteras) en vez de una máscara chica
+      boca+cejas separada, evitando el riesgo de costura visto antes. Aplicada también la
+      lección 3-quinquies (lenguaje comparativo explícito por expresión, no solo el nombre
+      del ánimo) — dio 4 expresiones bien diferenciables a la primera pasada.
+- [x] **Vello facial para Pistero — HECHO (2/2).** Barba corta prolija (mentón+mandíbula) y
+      bigote (solo labio superior, sin tocar el mentón) — máscara única mentón+labio
+      superior, mismo método. Se había sacado del selector SVG viejo por no verse bien
+      (2026-08-08); con esta calidad nueva sí funciona limpio (diff 4-5 fuera de máscara).
 - [ ] **Pistera (versión femenina) — 3 conceptos ya generados** (coletas, cola ladeada,
       flequillo) como generación completa nueva, NO inpainting sobre la base de Pistero
       (peinado cambia geometría, no es una capa parcheable). Pendiente que Inty elija cuál
