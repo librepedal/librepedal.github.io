@@ -787,6 +787,20 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   Entrar con Google
 </button>
 <p style="color:#7d8ba0;font-size:0.68rem;margin-top:6px;text-align:center">Al entrar aceptas los <a href="terminos.html" target="_blank" style="color:var(--p)">Términos</a> y la <a href="privacidad.html" target="_blank" style="color:var(--p)">Política de Privacidad</a>.</p>
+<!-- ENTRADA POR CÓDIGO DE TESTER (2026-08-16, temporal — se saca al cerrar la prueba
+     cerrada). Existe porque durante la prueba el ingreso quedó bloqueado por los dos
+     lados a la vez: Google no funciona en la app ya instalada (config nativa, necesita
+     un .aab nuevo en Play) y el correo no se entrega (SMTP sin SPF/DKIM + el cupo
+     diario de Firebase, que 3 pruebas agotan). Con esto el tester entra solo. -->
+<div style="margin-top:14px;text-align:center">
+  <a href="#" id="abrirCodigoTester" style="color:#9fb3c8;font-size:0.74rem;text-decoration:underline">Soy tester y tengo un código</a>
+</div>
+<div id="cajaCodigoTester" style="display:none;margin-top:10px;padding:12px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;background:rgba(255,255,255,0.03)">
+  <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 9px;line-height:1.5">Escribí el código que te pasaron y el correo con el que te inscribiste a la prueba.</p>
+  <input type="text" id="codigoTesterInput" placeholder="Código de tester" autocomplete="off" maxlength="40" style="width:100%;margin-bottom:8px">
+  <input type="email" id="correoTesterInput" placeholder="tu correo de la prueba" autocomplete="email" maxlength="100" style="width:100%;margin-bottom:10px">
+  <button type="button" id="btnEntrarCodigo" style="width:100%;background:var(--p);color:#0b1220;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:0.92rem;cursor:pointer">Entrar</button>
+</div>
 <div style="display:none" aria-hidden="true">
 <div class="character-preview-large">
   <svg id="preview-svg" viewBox="0 0 200 200"></svg>
@@ -1532,7 +1546,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.747'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.748'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1679,6 +1693,45 @@ async function _actualizarAuthConTokenPersonalizado(cuVal){
 // teléfono real: el spinner "Entrando con Google..." aparecía y desaparecía sin dejar
 // rastro del error real. window.alert() no depende de ninguna vista/DOM, siempre se ve.
 function _lpAvisoLogin(msg){ try{ window.alert(String(msg)); }catch(e){} }
+
+// ENTRAR CON CÓDIGO DE TESTER (2026-08-16, temporal para la prueba cerrada).
+// El worker valida el código compartido Y que el correo esté en la lista de testers,
+// y recién ahí firma un token. Acá solo se canjea ese token por la sesión, igual que
+// hace el camino del link mágico. Ver worker-auth/worker.js, rama `modo:'codigo'`.
+async function _entrarConCodigoTester(){
+  var codigo=(document.getElementById('codigoTesterInput')||{}).value||'';
+  var correo=(document.getElementById('correoTesterInput')||{}).value||'';
+  codigo=codigo.trim(); correo=correo.trim().toLowerCase();
+  if(!codigo) return _lpAvisoLogin('Escribí el código que te pasaron.');
+  if(!correo||correo.indexOf('@')===-1) return _lpAvisoLogin('Escribí el correo con el que te inscribiste a la prueba.');
+  var btn=document.getElementById('btnEntrarCodigo');
+  if(btn){ btn.disabled=true; btn.innerText='Entrando...'; }
+  try{
+    if(typeof showLoading==='function') showLoading('Entrando...');
+    var r=await fetch(AUTH_TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modo:'codigo',codigo:codigo,email:correo})});
+    var data=await r.json().catch(function(){return null;});
+    if(!r.ok||!data||!data.token) throw new Error((data&&data.error)||('no se pudo entrar ('+r.status+')'));
+    await firebase.auth().signInWithCustomToken(data.token);
+    var nombre=localStorage.getItem('lp_nombre_'+data.cu)||(correo.split('@')[0])||'Ciclista';
+    if(typeof hideLoading==='function') hideLoading();
+    await _completarLoginVerificado(data.cu, nombre, correo);
+  }catch(err){
+    if(typeof hideLoading==='function') hideLoading();
+    if(btn){ btn.disabled=false; btn.innerText='Entrar'; }
+    _lpAvisoLogin('No se pudo entrar: '+((err&&err.message)||err));
+  }
+}
+(function(){
+  function wire(){
+    var a=document.getElementById('abrirCodigoTester'), caja=document.getElementById('cajaCodigoTester');
+    if(a&&caja){ a.addEventListener('click',function(e){ e.preventDefault(); caja.style.display=(caja.style.display==='none'?'block':'none'); var c=document.getElementById('codigoTesterInput'); if(c&&caja.style.display==='block') try{ c.focus(); }catch(_e){} }); }
+    var b=document.getElementById('btnEntrarCodigo');
+    if(b) b.addEventListener('click',function(){ _entrarConCodigoTester(); });
+    var ci=document.getElementById('correoTesterInput');
+    if(ci) ci.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); _entrarConCodigoTester(); } });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wire); else wire();
+})();
 async function _entrarConGoogleNativo(){
   var plugin=lpPlugin('FirebaseAuthentication');
   if(typeof showLoading==='function') showLoading('Entrando con Google...');
