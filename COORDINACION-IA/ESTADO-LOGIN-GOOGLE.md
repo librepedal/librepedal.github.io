@@ -3,6 +3,26 @@
 Documento de traspaso. Si sos una sesión nueva, esto es TODO lo que necesitás
 saber para continuar sin releer la conversación anterior.
 
+> ## ✅ ACTUALIZADO (2026-08-16 ~09:07, sesión Claude Code) — AAB nuevo real, generado por CI
+> El `29780948` de abajo no estaba guardado en ningún disco (se verificó "en la
+> máquina" de otra sesión, pero esa máquina no es esta). En vez de asumirlo,
+> disparé `build-aab-release.yml` sobre `main` (commit `3df82d1`, que ya incluye el
+> fix `55be810` de providers) y verifiqué el binario resultante yo misma:
+> - `capacitor.plugins.json` incluye `FirebaseAuthentication` ✓
+> - `capacitor.config.json` compilado incluye `providers:["google.com"]` ✓
+> - 5.158.336 bytes (~5,16 MB, coincide con el tamaño "bueno")
+>
+> Descargado en `Downloads/LIBREPEDAL-AAB-MAIN-VERIFICADO/LibrePedal-AAB-release/app-release.aab`.
+> Run de CI: https://github.com/librepedal/librepedal.github.io/actions/runs/31938079199
+> (versionCode exacto sin confirmar — no hay `bundletool` en este entorno para leerlo
+> del binario; version.txt = 8.70. Antes de subirlo, comparar el versionCode que
+> Play Console lea de este archivo contra el `29780948`/`29780919` ya mencionados
+> abajo, para no subir uno más viejo por error).
+>
+> Sigue pendiente exactamente lo mismo que decía este documento: **solo Inty puede
+> subirlo a Play Console** (pista Alpha, link abajo) — ninguna sesión de Claude tiene
+> ni puede tener credenciales de Play Developer.
+
 ## El problema que se estaba resolviendo
 
 El login por link mágico (correo) se quedó sin cupo de Firebase cuando 51 testers
