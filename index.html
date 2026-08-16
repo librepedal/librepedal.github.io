@@ -629,6 +629,29 @@ body.pistero-hablando #micBtn{filter:drop-shadow(0 0 10px rgba(47,176,255,.75))}
 body.lp-typing #micBtn{opacity:0;pointer-events:none}
 .nav-manoslibres-btn{display:none!important}
 body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
+/* Escena cinemática de Pistero hablando (2026-08-16): en vez de solo cambiar el
+   brillo del botón chico, Pistero se agranda al centro con una esfera de energía
+   (anillos girando + pulso) y se encoge/desaparece al terminar. Se activa con la
+   MISMA clase body.pistero-hablando que ya pone _pisteroHabla()/_pisteroCalla() —
+   cero JS nuevo para el estado, solo CSS. No bloquea toques (pointer-events:none) y
+   no se muestra si ya estás en el chat de Pistero (ahí se ve la cara grande igual,
+   sería redundante) ni mientras se escribe. */
+#pisteroEscena{position:fixed;inset:0;z-index:4600;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transform:scale(.55);transition:opacity .4s ease,transform .55s cubic-bezier(.34,1.56,.64,1)}
+body.pistero-hablando #pisteroEscena{opacity:1;transform:scale(1)}
+body[data-vista="pistero"] #pisteroEscena,body.lp-typing #pisteroEscena{opacity:0!important;transform:scale(.55)!important}
+#pisteroEscena .pe-veil{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(8,14,26,.5) 0%,rgba(6,10,18,.68) 55%,rgba(4,7,13,.8) 100%);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+#pisteroEscena .pe-stage{position:relative;width:240px;height:240px;display:flex;align-items:center;justify-content:center}
+#pisteroEscena .pe-ring{position:absolute;border-radius:50%;inset:0}
+#pisteroEscena .pe-ring1{background:conic-gradient(from 0deg,rgba(47,176,255,0) 0%,rgba(120,200,255,.95) 10%,rgba(47,176,255,0) 28%,rgba(47,176,255,0) 100%);filter:blur(1.5px);animation:peSpin 2.2s linear infinite}
+#pisteroEscena .pe-ring2{inset:16px;border:1.5px solid rgba(47,176,255,.4);animation:peBreathe 3.1s ease-in-out infinite}
+#pisteroEscena .pe-ring3{inset:34px;border:1px solid rgba(150,205,255,.55);animation:peBreathe 3.1s ease-in-out infinite reverse;animation-delay:.35s}
+#pisteroEscena .pe-glow{position:absolute;inset:46px;border-radius:50%;background:radial-gradient(circle,rgba(47,176,255,.55),rgba(47,176,255,0) 72%);animation:pePulse 1.7s ease-in-out infinite}
+@keyframes peSpin{to{transform:rotate(360deg)}}
+@keyframes peBreathe{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.09);opacity:.9}}
+@keyframes pePulse{0%,100%{opacity:.4;transform:scale(.93)}50%{opacity:.85;transform:scale(1.06)}}
+#pisteroEscenaOrb{position:relative;z-index:2;width:132px;height:132px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.55)) drop-shadow(0 0 20px rgba(47,176,255,.6))}
+#pisteroEscenaOrb .orb-cara{display:block;width:100%;height:100%}
+#pisteroEscenaOrb .orb-cara svg{width:100%;height:100%;display:block}
 /* Animaciones de la cara (compartidas mapa+esfera) */
 .lp-eye{transform-box:fill-box;transform-origin:center}
 .lp-parpadeo{animation:lpParp 4.4s ease-in-out infinite}
@@ -808,6 +831,16 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </form>
 
 <button class="fab" id="micBtn" onclick="toggleMic()" title="Pistero — toca y habla" aria-label="Pistero, asistente de voz"><span class="orb-cara"></span></button>
+<div id="pisteroEscena" aria-hidden="true">
+  <div class="pe-veil"></div>
+  <div class="pe-stage">
+    <div class="pe-ring pe-ring1"></div>
+    <div class="pe-ring pe-ring2"></div>
+    <div class="pe-ring pe-ring3"></div>
+    <div class="pe-glow"></div>
+    <div id="pisteroEscenaOrb"><span class="orb-cara"></span></div>
+  </div>
+</div>
 <div id="saver" onclick="toggleSaver()">
   <div class="saver-spd"><span id="saverSpd">0</span><small>km/h</small></div>
   <div class="saver-km"><span id="saverKm">0.00</span> km</div>
@@ -3139,7 +3172,7 @@ function _setExprPistero(expr){
   if(!expr) expr='feliz';
   _pisteroExprActual=expr;
   var svg=(typeof _pistOpts==='function')?_pisteroExprSVG(expr, _pistCascoCol(), _pistPielCol(), _pistOpts().lentes, _pistOpts().bigote, _pistOpts().acc, _pistOpts()):_pisteroExprSVG(expr);
-  var ids=['micBtn','esMic'];
+  var ids=['micBtn','esMic','pisteroEscenaOrb'];
   for(var i=0;i<ids.length;i++){ var b=document.getElementById(ids[i]); if(!b) continue; var c=b.querySelector('.orb-cara'); if(c) c.innerHTML=svg; }
   _aplicarMirada();
 }
