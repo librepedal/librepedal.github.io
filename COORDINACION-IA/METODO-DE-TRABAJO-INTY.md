@@ -45,6 +45,22 @@ repetir fricciones que ya se resolvieron una vez.
   etc.), buscar fotos/video reales del fenómeno ANTES de programar. Lo mismo
   aplica a decisiones de producto: si hay un líder del rubro, estudiarlo antes de
   crear desde cero.
+- **Extensión 2026-08-16, generación de assets visuales (ComfyUI/accesorios de
+  Pistero): esto también aplica a CADA elemento físico que se genera, no solo a
+  fenómenos naturales.** Antes de pedirle al modelo de imagen un accesorio real
+  (luz LED, cámara de acción, parche/calcomanía, casco, lo que sea), investigar
+  primero CÓMO es ese producto de verdad: cómo se monta, qué forma tiene, qué
+  tan grande se ve en proporción, qué material/brillo tiene — no generar algo
+  "genérico" y corregir después a ojo. Caso real que costó una ronda completa de
+  reintentos: se generaron calcomanías de casco pidiendo un "sticker decal" —
+  el modelo dibujó un ícono plano tipo emoji pegado encima (Inty: "está de
+  kindergarten"), porque la palabra "sticker" implica linguísticamente algo
+  plano aplicado ENCIMA, no algo fabricado como parte del casco. Buscar
+  referencia real (fotos de producto, vocabulario real de la industria — para
+  gráficos en cascos/autos es "vinyl wrap graphics molded into the shell") y
+  usar ESE vocabulario en el prompt desde el primer intento, no adivinar y
+  reintentar a ciegas. Ver detalle técnico completo en
+  `COORDINACION-IA/diseno-ui/BIBLIA-PISTERO-2026-08-15.md`, sección 4-ter.
 - **Protocolo de entrega: renderizar y auditar CADA estado con lupa antes de
   mostrar.** Inty no es el control de calidad — si algo se ve raro, se encuentra
   antes de entregarlo, no después de que él lo note.
