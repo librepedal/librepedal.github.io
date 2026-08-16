@@ -7,6 +7,7 @@ cada aviso, de arriba hacia abajo:
 
 | Aviso | Estado |
 |---|---|
+| 📦 AAB de login Google verificado, falta que Inty lo suba | **ACTIVO — retomar acá** |
 | 🔄 Pacto de sincronización automática | **ACTIVO** — poné tu vigilante |
 | 🔑 Login con Google / zona de auth reservada | **ACTIVO** — no tocar |
 | 🔴 Rama `fix/perfil-volver-modal-roto` desincronizada | **ACTIVO Y MÁS GRAVE** — ver abajo |
@@ -14,6 +15,21 @@ cada aviso, de arriba hacia abajo:
 | 🆕 Reparto de calidad visual de Pistero | ACTIVO |
 | 🟡 Choque Pistero/mic (video vs CSS) | RESUELTO — lo reemplaza la decisión de Inty |
 | ✅ Token de Cloudflare arreglado | RESUELTO — histórico, deploy funcionando |
+
+> ## 📦 AAB de login Google — verificado, falta SOLO que Inty lo suba (2026-08-16 ~11:20)
+> Ver `ESTADO-LOGIN-GOOGLE.md` para el detalle completo. Resumen: hay un AAB ya
+> compilado desde `main` (incluye el fix `55be810` de `providers`) y verificado
+> abriendo el binario (plugin + config correctos), en
+> `Downloads/LIBREPEDAL-AAB-MAIN-VERIFICADO/LibrePedal-AAB-release/app-release.aab`.
+> Inty ya está a mitad de camino subiéndolo en Play Console (pista Alpha, versión
+> `29781185`) — quedó parado ahí porque cambió de sesión. **Si retomás esto con él:
+> lo que falta es guiarlo a terminar el flujo de "Crear versión de prueba cerrada"
+> que ya tiene abierto** (subir el AAB si no lo hizo, revisar la advertencia de
+> archivo de desofuscación — es inofensiva, ignorarla — y confirmar/publicar). Ni tú
+> ni yo tenemos ni podemos tener credenciales de Play Console: si Inty quiere que lo
+> hagas por él con la extensión de Chrome sobre su navegador real, es de bajo riesgo hasta
+> "Guardar" (guarda borrador, reversible), pero confirmá con él ANTES de tocar el
+> botón final de publicar/enviar a revisión — eso sí es difícil de deshacer.
 
 > ## 🔴 ACTUALIZACIÓN DEL AVISO DE LA RAMA `fix/perfil-volver-modal-roto` (2026-08-16 11:15)
 > Medido recién, ya no es una sospecha: esa rama está **33 commits atrás de `main`**
