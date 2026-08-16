@@ -195,6 +195,27 @@ algún elemento vuelve a salir plano después de aplicar esta lección. Bloopers
       lateral izquierdo liso del casco (sin ventilaciones) para rayo/llama, óvalo topper
       original para bandera. Ver lección de vocabulario "molded" arriba.
 
+- [x] **Máscara/buff ciclista — HECHO (2/2).** Liso (azul marino) y estampado (camo
+      colorido). Referencia real investigada primero (buff tubular elástico, se sube
+      cubriendo nariz+boca dejando los ojos libres) — coincidía con lo ya planeado, sin
+      necesidad de corregir después.
+
+## 4-cuater) LED trasera — 3 intentos de hacerla "más notoria" fallaron, se deja como está
+
+Inty pidió que las luces fueran "notorias" (más visibles). Se intentó 3 veces mejorar la
+LED trasera ya aprobada (v2, la que está en producción): (1) máscara más grande — volvió a
+fallar igual que el intento original documentado en la lección 3-quater (el modelo rellena
+con más casco en vez de dibujar el foco); (2) misma máscara chica pero con prompt mucho más
+insistente en "brillante, grande, muy visible" y semilla nueva — también salió invisible.
+**Diagnóstico:** con esta técnica (mask+seed+turbo/cfg=1.0) el resultado es sensible a la
+semilla de forma no controlable de forma fina — no hay un botón de "más prominente" seguro
+sin arriesgar perder el elemento por completo. Después de 3 fallos seguidos empeorando el
+resultado (regla: parar y no forzar), se dejó la v2 original tal cual está en producción
+(diff limpio, luz roja pequeña pero visible) en vez de reemplazarla por algo peor. Si se
+quiere una LED trasera genuinamente más grande en el futuro, la vía más segura es
+post-procesar la imagen ya aprobada (agrandar el punto rojo con edición de imagen directa,
+no regenerar con IA) en vez de seguir tirando semillas.
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
