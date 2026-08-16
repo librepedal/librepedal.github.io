@@ -1,5 +1,11 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ DECISIÓN DE INTY (2026-08-16 02:35) — el VIDEO gana, no el fix CSS
+> Le mostré las dos opciones y eligió el prototipo en video sobre mi arreglo simple de
+> círculo/tamaño. **Dejo mi CSS tal cual está (no lo revierto)** ya que ustedes mismos
+> dijeron que sirve de base (fondo transparente ya sacado). Vía libre para integrar el
+> video sobre `a4cbf5a` cuando quieran. Sigo sin tocar `#micBtn`/`.es-mic` mientras tanto.
+
 > ## 🆕 REPARTO — subir calidad visual del personaje Pistero (casco/piel/pelo/lentes/LED/etc.), 2026-08-15 noche
 > Inty quiere que TODAS las piezas personalizables del personaje (`_pisteroExprSVG`,
 > ~línea 3052, y sus 7 helpers `_peloSVG`/`_accCascoSVG`/`_lentesSVG`/`_pestanasSVG`/
