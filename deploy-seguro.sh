@@ -50,6 +50,20 @@ for d in icons img images assets fonts sonidos audio functions voces voces-el de
 done
 cp *.png *.jpg *.jpeg *.svg *.webp *.mp3 *.ogg *.mp4 "$OUT/" 2>/dev/null || true
 
+# version.txt SE GENERA desde APP_VERSION, no se copia y ya. index.html siempre dijo
+# "el deploy la genera desde aquí", pero era mentira: solo la copiaba, así que bastaba
+# olvidarse de editar version.txt a mano para que quedaran distintas. Cuando eso pasa,
+# el auto-reparador de index.html cree que hay una versión nueva, desregistra el
+# Service Worker, borra cachés y recarga la página EN CADA visita nueva. Pasó de
+# verdad el 2026-08-16 (version.txt=8.70 contra APP_VERSION=8.744, varias horas en
+# producción). Generándola acá, es imposible que se vuelvan a desincronizar.
+_VER="$(grep -oE "APP_VERSION='[0-9][0-9.]*'" "$SRC/index.html" | head -1 | grep -oE "[0-9][0-9.]*")"
+if [ -z "$_VER" ]; then
+  echo "✗ ABORTADO: no pude leer APP_VERSION de index.html (¿cambió el formato?)."; exit 1
+fi
+printf '%s' "$_VER" > "$OUT/version.txt"
+echo "  ✓ version.txt generada desde APP_VERSION = $_VER"
+
 echo "→ control de secretos..."
 if find "$OUT" \( -iname "MI-*" -o -iname "*.rules" -o -iname "*.keystore" -o -iname "*.jks" -o -iname ".env*" \) | grep -q .; then
   echo "✗ ABORTADO: hay archivos de credenciales en la carpeta de deploy."; exit 1
