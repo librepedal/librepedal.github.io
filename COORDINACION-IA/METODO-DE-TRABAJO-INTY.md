@@ -46,6 +46,40 @@ repetir fricciones que ya se resolvieron una vez.
   seguidas adivinando, parar y diagnosticar la causa real antes del tercer
   intento.
 
+## Depurar bugs "fantasma" (no se ve nada, pero algo está fallando)
+
+Método usado la noche del 2026-08-15/16 para el login nativo de Google, que
+sirvió: varias capas fallaban en silencio a la vez y ninguna mostraba error.
+Reusar este orden en vez de adivinar por dónde empezar.
+
+- **Tratá cada eslabón de la cadena como sospechoso, no solo el último que
+  tocaste.** Esa noche: ¿el servidor sirve el código nuevo? ¿el build nativo
+  trae el plugin compilado? ¿el teléfono está corriendo ese código o uno
+  cacheado? ¿la config nativa activa ese plugin? ¿el propio mecanismo de aviso
+  de error funciona? Verificar CADA uno por separado con datos reales — logs
+  de CI (`gh run view --log`), headers HTTP reales (`curl -sI`), contenido
+  realmente servido (`curl -sL`) — no asumir que el más reciente es la causa.
+- **Cuando una captura/video del usuario no alcanza para diagnosticar, sacale
+  más información en vez de pedirle que repita a ciegas.** `ffmpeg` para sacar
+  frames de un video (incluso con detección de cambio de escena para no
+  revisar frame por frame) resolvió esto varias veces esta noche, cuando una
+  sola captura no mostraba el momento clave.
+- **Sospechá del propio mecanismo de diagnóstico, no solo del bug original.**
+  "No aparece ningún error" puede significar que el error SÍ ocurre pero el
+  aviso está roto — pasó esta noche: la función de avisos usaba un cartel que
+  se niega a mostrarse fuera de ciertas pantallas, así que errores reales
+  quedaban completamente mudos. Si un diagnóstico no muestra nada dos veces
+  seguidas, dudá del diagnóstico antes de concluir "no pasa nada".
+- **Ante fricción de acceso del usuario (login, permisos, cuenta equivocada),
+  no lo mandes a pelearla — resolvela vos si podés.** Bajar un artefacto de CI
+  y mandarlo directo por archivo es más rápido y más confiable que un link que
+  depende de que esté logueado con la cuenta correcta en el dispositivo
+  correcto.
+- **Un mensaje corto y frustrado del usuario ("está igual", "solucionalo de
+  una vez") es una señal de que la ronda anterior de diagnóstico no llegó al
+  fondo — no una señal para repetir la misma pregunta.** Subí un nivel de
+  profundidad en la investigación en vez de pedir el mismo dato de otra forma.
+
 ## Decisiones, alcance y autonomía
 
 - **Sé visionario, no solo ejecutor.** Cumplir lo pedido literal es el piso, no
