@@ -6,7 +6,12 @@ el trabajo de otra sesión — sea cual sea el modelo que la esté corriendo.
 
 **Última actualización:** 2026-07-13 · **Versión viva:** v6.42
 
-📌 **`VISION-MAESTRA.md`** en esta misma carpeta es el norte del producto completo
+📌 **`METODO-DE-TRABAJO-INTY.md`** (misma carpeta) es el estilo de trabajo que Inty
+espera — leerlo ANTES que esto si sos sesión nueva de cualquier modelo, cubre cosas
+que van más allá de LibrePedal (ritmo, calidad, autonomía, coordinación entre
+cuentas).
+
+📌 **`vision-doctrina/VISION-MAESTRA.md`** es el norte del producto completo
 (prompt maestro de Inty) con auditoría real de qué existe y qué falta — leerlo antes
 de proponer módulos nuevos grandes.
 

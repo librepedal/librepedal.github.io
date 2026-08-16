@@ -37,6 +37,8 @@ nav.top .wrap{display:flex;align-items:center;justify-content:space-between;heig
 .navlinks{display:flex;gap:22px;align-items:center;font-size:.88rem;color:var(--muted)}
 .navlinks a:hover{color:var(--ink)}
 .cta-mini{background:var(--p);color:#fff;padding:9px 16px;border-radius:20px;font-weight:700;font-size:.85rem;white-space:nowrap}
+.sfx-toggle{background:transparent;border:1px solid var(--line);color:var(--muted);width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.82rem;transition:color .15s ease,border-color .15s ease}
+.sfx-toggle:hover{color:var(--ink);border-color:var(--p2)}
 @media(max-width:640px){.navlinks a:not(.cta-mini){display:none}}
 .hero{position:relative;padding:82px 0 58px;overflow:hidden}
 .hero-road{position:absolute;inset:0;pointer-events:none;opacity:.5}
@@ -59,14 +61,10 @@ h1 span{color:var(--p)}
 .btn-ghost:hover{border-color:var(--p2);background:rgba(252,76,2,.06)}
 .hero-note{margin-top:16px;font-size:.78rem;color:var(--faint)}
 .hero-visual{position:relative;display:flex;align-items:center;justify-content:center}
-.hero-logo-wrap{position:relative;width:min(300px,70vw);aspect-ratio:1;display:flex;align-items:center;justify-content:center}
-.hero-logo-glow{position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(252,76,2,.38),transparent 68%);filter:blur(6px);animation:pulseGlow 4.5s ease-in-out infinite}
+.hero-logo-wrap{position:relative;width:min(360px,78vw);margin:0 auto}
+.hero-logo-glow{position:absolute;inset:-14% -6%;border-radius:50%;background:radial-gradient(circle,rgba(252,76,2,.38),transparent 68%);filter:blur(6px);animation:pulseGlow 4.5s ease-in-out infinite}
 @keyframes pulseGlow{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.9;transform:scale(1.07)}}
-.wheel{position:absolute;inset:0;width:100%;height:100%}
-.wheel .spin{transform-origin:150px 150px;animation:spinW 9s linear infinite}
-@keyframes spinW{to{transform:rotate(360deg)}}
-.hero-logo-center{position:absolute;width:48%;height:48%;object-fit:contain;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));animation:floatLogo 5.2s ease-in-out infinite}
-@keyframes floatLogo{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.hero-logo-video{position:relative;width:100%;height:auto;display:block;border-radius:14px;filter:drop-shadow(0 10px 26px rgba(0,0,0,.55))}
 .quickstats{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .quickstats .wrap{display:grid;grid-template-columns:repeat(4,1fr);padding:26px 24px}
 @media(max-width:720px){.quickstats .wrap{grid-template-columns:repeat(2,1fr);gap:20px 0}}
@@ -83,8 +81,10 @@ h1 span{color:var(--p)}
 @media(max-width:640px){.vision{grid-template-columns:1fr}}
 .vgoal{background:var(--bg3);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center}
 .vgoal .ic{font-size:1.5rem;display:block;margin-bottom:8px}
-.vgoal b{font-size:.9rem;display:block}
+.vgoal b,.vgoal span{filter:blur(4px);user-select:none;transition:filter .3s ease}
+.vgoal b{font-size:.9rem;display:block;opacity:.85}
 .vgoal span{font-size:.76rem;color:var(--faint)}
+@media (prefers-reduced-motion:reduce){.vgoal b,.vgoal span{filter:blur(3px)}}
 .alive-panel{background:var(--bg3);border:1px solid var(--line);border-radius:20px;padding:28px clamp(20px,4vw,40px)}
 .ap-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.95rem;color:var(--muted)}
 .ap-top .big{font-size:1.6rem;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -153,6 +153,7 @@ footer a:hover{color:var(--muted)}
   <div class="navlinks">
     <a href="#comunidad">Comunidad</a>
     <a href="#descargar">Descargar</a>
+    <button id="sfxToggle" class="sfx-toggle" type="button" aria-label="Sonido activado, tocar para silenciar"><i class="fas fa-volume-high"></i></button>
     <a href="index.html" class="cta-mini">Entrar</a>
   </div>
 </div></nav>
@@ -169,7 +170,7 @@ footer a:hover{color:var(--muted)}
     <div>
       <div class="eyebrow"><i class="fas fa-earth-americas"></i> Cicloturismo latinoamericano · esta comunidad la hacemos todos</div>
       <h1>La ruta es libre. La comunidad, de <span>todos</span>.</h1>
-      <p class="lead">Libre Pedal es el movimiento ciclista que se construye entre todos. Grabas tus rutas, te conectas con ciclistas de verdad, y cuando crezcamos, en qué invertimos lo <strong style="color:#eef2fb">vota la comunidad</strong> — no nosotros.</p>
+      <p class="lead">Libre Pedal es el movimiento ciclista que se construye entre todos. Grabas tus rutas, te conectas con ciclistas de verdad, y hacia dónde va esto lo <strong style="color:#eef2fb">decide la comunidad</strong> — no nosotros.</p>
       <div class="hero-ctas">
         <a href="#descargar" class="btn btn-primary"><i class="fas fa-download"></i> Descargar la app</a>
         <a href="#comunidad" class="btn btn-ghost">Ver a dónde vamos juntos</a>
@@ -179,24 +180,24 @@ footer a:hover{color:var(--muted)}
     <div class="hero-visual">
       <div class="hero-logo-wrap">
         <div class="hero-logo-glow"></div>
-        <svg class="wheel" viewBox="0 0 300 300" aria-hidden="true">
-          <g class="spin">
-            <circle cx="150" cy="150" r="120" fill="none" stroke="#241612" stroke-width="16"/>
-            <circle cx="150" cy="150" r="120" fill="none" stroke="#0d0906" stroke-width="16" stroke-dasharray="5 7" opacity=".5"/>
-            <circle cx="150" cy="150" r="103" fill="none" stroke="#e08a4a" stroke-width="3" opacity=".85"/>
-            <g stroke="#e08a4a" stroke-width="2.5" stroke-linecap="round" opacity=".9">
-              <line x1="150" y1="78" x2="150" y2="46"/><line x1="150" y1="222" x2="150" y2="254"/>
-              <line x1="78" y1="150" x2="46" y2="150"/><line x1="222" y1="150" x2="254" y2="150"/>
-              <line x1="99" y1="99" x2="76" y2="76"/><line x1="201" y1="201" x2="224" y2="224"/>
-              <line x1="99" y1="201" x2="76" y2="224"/><line x1="201" y1="99" x2="224" y2="76"/>
-            </g>
-          </g>
-        </svg>
-        <img src="logo-transparent.png" class="hero-logo-center" alt="Libre Pedal">
+        <video class="hero-logo-video" autoplay muted loop playsinline disablepictureinpicture poster="logo-transparent-gold.png" aria-label="Libre Pedal">
+          <source src="logo-presentacion.mp4" type="video/mp4">
+        </video>
       </div>
     </div>
   </div>
 </section>
+<script>
+// Respeta prefers-reduced-motion: no autorreproduce, se queda en el poster (logo
+// quieto) — mismo criterio que index.html.
+(function(){
+  var v=document.querySelector('.hero-logo-video');
+  if(v && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    v.removeAttribute('autoplay'); v.removeAttribute('loop'); v.pause();
+  }
+})();
+</script>
+<script src="logo-sound.js"></script>
 
 <section class="quickstats"><div class="wrap stagger">
   <div class="qstat reveal"><div class="n">🇨🇱→🌎</div><div class="l">de Chile para Latinoamérica</div></div>
@@ -207,12 +208,12 @@ footer a:hover{color:var(--muted)}
 
 <section class="alive" id="comunidad"><div class="wrap">
   <div class="sec-head center">
-    <div class="sec-eyebrow">Lo que queremos lograr juntos</div>
-    <h2>Cuando seamos 5.000, decidimos entre todos.</h2>
-    <p>Al llegar a <strong style="color:#eef2fb">5.000 suscritos</strong> se activa la votación de la comunidad, y <strong style="color:#eef2fb">entre todos decidimos qué hacer con los fondos</strong>. Algunas ideas sobre la mesa:</p>
+    <div class="sec-eyebrow">Lo que se viene</div>
+    <h2>La comunidad decide. Nosotros solo abrimos la puerta.</h2>
+    <p>No te vamos a llenar de números. Cuando llegue el momento, la comunidad vota hacia dónde vamos. Algunas ideas ya están sobre la mesa:</p>
   </div>
   <div class="vision stagger">
-    <div class="vgoal reveal"><span class="ic"><i class="fas fa-gift"></i></span><b>Sorteo</b><span>accesorios para tu bici entre usuarios</span></div>
+    <div class="vgoal reveal"><span class="ic"><i class="fas fa-gift"></i></span><b>Sorteo</b><span>accesorios para tu bici entre la comunidad</span></div>
     <div class="vgoal reveal"><span class="ic"><i class="fas fa-tree"></i></span><b>Reforestar</b><span>zonas naturales</span></div>
     <div class="vgoal reveal"><span class="ic"><i class="fas fa-trophy"></i></span><b>Deportistas</b><span>apoyo a ciclistas</span></div>
   </div>
@@ -220,10 +221,10 @@ footer a:hover{color:var(--muted)}
     <div class="ap-top">
       <span>Un movimiento ciclista que crece cada día <i class="fas fa-person-biking"></i></span>
     </div>
-    <div class="ap-msg" id="apMsg">Cuando la comunidad crezca lo suficiente, entre todos votamos la causa y se abre el sorteo comunitario.</div>
+    <div class="ap-msg" id="apMsg">Algo se está armando. Cuando esté listo, la comunidad es la primera en saberlo.</div>
   </div>
   <div class="pledges stagger">
-    <div class="pledge reveal"><span class="ic"><i class="fas fa-handshake"></i></span><h4>Transparencia con los fondos</h4><p>Cuando se active la votación, la comunidad decide y se rinde cuenta de en qué se usa cada peso.</p></div>
+    <div class="pledge reveal"><span class="ic"><i class="fas fa-moon"></i></span><h4>Hay cosas que no contamos acá</h4><p>Se van revelando en el camino, no en una página de bienvenida.</p></div>
     <div class="pledge reveal"><span class="ic"><i class="fas fa-lock"></i></span><h4>Tu ubicación, tu criterio</h4><p>Tu posición se comparte aproximada, nunca exacta. Modo fantasma cuando quieras.</p></div>
     <div class="pledge reveal"><span class="ic"><i class="fas fa-map"></i></span><h4>Datos reales</h4><p>El mapa se siembra con puntos reales de OpenStreetMap — no inventados.</p></div>
   </div>
@@ -231,18 +232,12 @@ footer a:hover{color:var(--muted)}
 
 <section class="offer"><div class="wrap">
   <div class="offer-card reveal">
-    <span class="tag">Planes</span>
-    <h2>Lo esencial, siempre gratis. Premium para el que quiere más.</h2>
-    <p style="color:var(--muted);max-width:54ch;margin:12px auto 0;font-size:.95rem">Todos pueden pedalear con Libre Pedal gratis — la ruta, la comunidad y la seguridad no se tocan. Premium suma extras para el ciclista de tomo y lomo.</p>
+    <span class="tag">Lo esencial</span>
+    <h2>Gratis. Para siempre.</h2>
+    <p style="color:var(--muted);max-width:54ch;margin:12px auto 0;font-size:.95rem">Todos pedalean con Libre Pedal gratis — la ruta, la comunidad y la seguridad no se tocan. Y hay más esperando, para cuando estés listo para encontrarlo.</p>
     <div class="offer-rows">
       <div class="offer-item"><div class="big">Gratis</div><div class="lbl">lo esencial, siempre y para todos</div></div>
-      <!-- OCULTO POR AHORA (descuento) — restaurar cuando se defina el lanzamiento:
-      <div class="offer-item"><div class="big">50% OFF</div><div class="lbl">Premium · primeros 300, por 6 meses</div></div>
-      -->
-      <!-- OCULTO POR AHORA (valor de suscripcion) — restaurar cuando se defina el precio:
-      <div class="offer-item"><div class="big">$3.000</div><div class="lbl">Premium al mes después · 7 días de prueba</div></div>
-      -->
-      <div class="offer-item"><div class="big">Premium</div><div class="lbl">extras para el que quiere más · pronto</div></div>
+      <div class="offer-item"><div class="big">?</div><div class="lbl">algo más, todavía en secreto</div></div>
     </div>
   </div>
 </div></section>
@@ -275,7 +270,7 @@ footer a:hover{color:var(--muted)}
   </div>
   <div class="join reveal">
     <h3>¿Quieres ser parte del proyecto?</h3>
-    <p>Buscamos auspiciadores, inversionistas y aportes voluntarios que crean en una comunidad ciclista de verdad. Si te suma, hablemos.</p>
+    <p>Buscamos aliados y auspiciadores que crean en una comunidad ciclista de verdad. Si te suma, hablemos.</p>
     <a href="https://instagram.com/libre_pedal" target="_blank" rel="noopener" class="btn btn-primary"><i class="fab fa-instagram"></i> Escríbenos por Instagram</a>
     <a href="https://www.facebook.com/share/18wTofCbr1/" target="_blank" rel="noopener" class="btn btn-ghost"><i class="fab fa-facebook"></i> Facebook</a>
   </div>
@@ -337,6 +332,63 @@ var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matche
 })();
 /* Contador de usuarios OCULTO por pedido de Inty: no revelar cuantos somos ni cuantos suscritos.
    El panel usa un mensaje estatico (sin numero) en el HTML. No se consulta Firestore. */
+(function(){
+  // Mismo lenguaje sonoro que el clic de piñón del logo (logo-sound.js) y de
+  // cadenaClick() en la app: ruido filtrado en banda, no un tono puro — para que
+  // los botones de la landing suenen a la misma familia que el resto de Libre Pedal.
+  var KEY='lp_land_sfx';
+  var on = localStorage.getItem(KEY) !== 'off';
+  var ctx;
+  function getCtx(){
+    if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==='suspended') ctx.resume();
+    return ctx;
+  }
+  function clickPinon(freq,vol,delay){
+    if(!on) return;
+    try{
+      var c=getCtx(), len=Math.floor(c.sampleRate*0.014);
+      var buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0);
+      for(var i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2); }
+      var src=c.createBufferSource(); src.buffer=buf;
+      var bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=freq; bp.Q.value=4.5;
+      var g=c.createGain(); g.gain.value=vol;
+      src.connect(bp); bp.connect(g); g.connect(c.destination);
+      src.start(c.currentTime+(delay||0));
+    }catch(e){}
+  }
+  function tone(freq,dur,vol,delay){
+    if(!on) return;
+    try{
+      var c=getCtx(), o=c.createOscillator(), g=c.createGain();
+      o.type='sine'; o.frequency.value=freq;
+      o.connect(g); g.connect(c.destination);
+      var t0=c.currentTime+(delay||0);
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(vol,t0+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      o.start(t0); o.stop(t0+dur+0.02);
+    }catch(e){}
+  }
+  function clickSound(){ clickPinon(1600,0.06); clickPinon(1150,0.045,0.045); }
+  function toggleSound(nowOn){ tone(nowOn?880:520,0.1,0.05); }
+  document.querySelectorAll('.btn').forEach(function(b){ b.addEventListener('click',clickSound); });
+  var btn=document.getElementById('sfxToggle');
+  function paint(){
+    if(!btn) return;
+    btn.innerHTML = on ? '<i class="fas fa-volume-high"></i>' : '<i class="fas fa-volume-xmark"></i>';
+    btn.setAttribute('aria-label', on ? 'Sonido activado, tocar para silenciar' : 'Sonido silenciado, tocar para activar');
+  }
+  if(btn){
+    btn.addEventListener('click',function(){
+      on=!on;
+      localStorage.setItem(KEY,on?'on':'off');
+      paint();
+      toggleSound(on);
+    });
+    paint();
+  }
+})();
 </script>
 </body>
 </html>

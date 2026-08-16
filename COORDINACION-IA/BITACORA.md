@@ -4,6 +4,91 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## 🔴 CRÍTICO — 2026-08-15, sesión Claude Code — el deploy automático está ROTO (token Cloudflare)
+
+`CLOUDFLARE_API_TOKEN` (secreto de GitHub Actions) dejó de funcionar entre las 22:52 y las
+22:58 UTC de hoy — el job "Deploy a Cloudflare" falla con `Authentication error [code:
+10000]`, y wrangler además avisa que le faltan los permisos `User→User Details→Read` y
+`User→Memberships→Read`. Reintenté el mismo job 2 veces (`gh run rerun --failed`), mismo
+error las 2 veces — **no es un hiccup pasajero, el token está mal**. No lo puedo arreglar
+yo (necesita la cuenta de Cloudflare de Inty). **Mientras esto no se resuelva, CUALQUIER
+push a `main` de CUALQUIER cuenta se va a quedar sin desplegar** aunque el merge y los
+tests salgan verdes — revisa siempre la pestaña Actions después de mergear, no asumas que
+"mergeado a main" == "en producción" hasta ver el run en verde.
+
+Arreglo: Cloudflare dashboard → *My Profile → API Tokens* → regenerar/editar el token que
+usa este repo con permisos `Account → Cloudflare Pages → Edit` + los dos de arriba → pegar
+el nuevo valor en GitHub → este repo → Settings → Secrets and variables → Actions →
+`CLOUDFLARE_API_TOKEN`. Después de eso, `gh run rerun <run-id> --failed` reintenta sin
+necesidad de un commit nuevo.
+
+**Última versión que SÍ llegó a producción antes del corte: `main` @ `f625424` (verificado
+en vivo, `version.txt`=8.70).** Todo lo mergeado a `main` DESPUÉS de ese commit (por ahora:
+`8a9a312`, el logo/video/sonido de `landing.html`) está en git pero no en producción hasta
+que se arregle el token y se reintente el deploy.
+
+---
+
+## v8.70 — 2026-08-15, sesión Claude Code — logo/video/sonido consistente en landing+login, sin plata ni cifras de usuarios
+
+Pedido de Inty: actualizar la landing con el logo nuevo y mejorar el sonido; después pidió
+sacar toda mención a plata/cantidad de usuarios y meter más misterio, y por último
+sincronizar el sonido del logo con lo que pasa de verdad en la animación (el que había
+puesto la otra cuenta hoy mismo, en `9d4f29a`, le pareció soso).
+
+**`bienvenida.html`** (la landing rica, con hero/stats/sponsors — no confundir con
+`landing.html`, la simple):
+- Hero: la rueda CSS + imagen estática del logo se reemplazó por el mismo video
+  (`logo-presentacion.mp4`) que ya tiene el login de `index.html` — misma identidad en
+  los dos lados. `logo-transparent-gold.png` como poster/respaldo (era un asset huérfano:
+  existía SOLO en `wip/rueda-oro-necesita-simplificarse`, nunca llegó a `main` — lo traje
+  de ahí con `git show`, sin el resto de esa rama).
+- Sacado todo lo que hablaba de plata/cifras: "5.000 suscritos", "cada peso", el plan
+  Premium con precio, "inversionistas". Reemplazado por lenguaje de misterio, en línea con
+  el pilar secreto que ya existía ("hay detalles que preferimos no contarte") — el ítem
+  "Premium" ahora es un "?" ("algo más, todavía en secreto").
+- Las 3 tarjetas de ideas de la comunidad (Sorteo/Reforestar/Deportistas) llevan
+  `filter:blur(4px)` en título y descripción — pedido explícito de Inty: "que no se pueda
+  dilucidar qué dice", solo se distingue el ícono.
+- Sonido de botones (`.btn`): de tono puro a "clic de piñón" (ruido filtrado en banda),
+  mismo lenguaje que el resto de la marca. Toggle de silencio en el nav
+  (`localStorage.lp_land_sfx`).
+
+**`logo-sound.js`** (nuevo, raíz del repo, `<script src>` compartido entre `bienvenida.html`,
+`landing.html` e `index.html`): reemplaza el sonido de `9d4f29a` (Inty: "muy soso, se
+corta"). Sincronizado a los momentos REALES del video, no a un timer ciego — medí el brillo
+de cada frame con `ffprobe`/`signalstats`: el flash del logo cae en el frame 186 de 210
+(t=7.40s de los 8.4s del clip, el pico de brillo de todo el clip). Ahí va el golpe
+principal (campanita de 3 notas + shimmer); antes hay clics de piñón de anticipación
+(~2.35s–3.15s) siguiendo la curva de brillo que empieza a subir ahí. Suena UNA sola vez
+por sesión (`sessionStorage`), enganchado al primer gesto real del usuario (los
+navegadores bloquean audio sin eso) — si el gesto llega tarde, simplemente suena en el
+loop del video en el que ya esté desbloqueado, nunca más de una vez.
+
+**`landing.html`** (la landing vieja/simple): no tenía NINGÚN logo gráfico, solo el
+wordmark de texto "LIBRE PEDAL". Se le agregó el mismo video + `logo-sound.js` arriba del
+wordmark para consistencia de marca. No se tocó el copy — a diferencia de `bienvenida.html`,
+esta página nunca tuvo cifras de usuarios ni precios, el pedido de "sin plata/cantidades"
+ya estaba cumplido de origen ahí.
+
+**index.html**: se reemplazó el bloque de sonido inline (`9d4f29a`) por
+`<script src="logo-sound.js">` — mismo motor que la landing, una sola fuente de verdad.
+
+Versión 8.69 → 8.70 en los 3 lugares (de paso corregí `version.txt`, que había quedado en
+8.67, desincronizado de `APP_VERSION`/`sw.js`=8.69 desde antes de esta sesión).
+
+**Limpieza:** `wip/rueda-oro-necesita-simplificarse` se borró (con ✓ de Inty) — quedó
+obsoleta, el video ya reemplazó esa animación en los dos lados; el único asset útil que
+tenía (`logo-transparent-gold.png`) ya se rescató antes de borrarla.
+
+Tests: `node tests/run.mjs` → 13/13 verde en cada commit. Sintaxis de los `<script>` de
+los 3 HTML + `logo-sound.js` validada con `node -e`. Probado con un dev server local
+(`python -m http.server` vía el preview del propio Claude Code) — no en teléfono real, eso
+sigue pendiente de Inty. Deploy: ver el aviso 🔴 CRÍTICO arriba, el token se rompió a mitad
+de esta tanda de trabajo.
+
+---
+
 ## SEGURIDAD — 2026-08-14, sesión lenovo — worker-auth/worker.js sincronizado con producción (commit `6eba5ee`)
 
 Buscando otra cosa (Inty preguntó por "espacios de usuario"/"mapas" no encontrados),
