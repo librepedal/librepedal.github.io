@@ -1532,7 +1532,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.745'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.746'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3999,6 +3999,11 @@ async function _completarDesdeLinkMagico(){
   var authEl=document.getElementById('auth');
   var email='';
   try{ email=localStorage.getItem(_EMAIL_LINK_KEY)||''; }catch(e){}
+  // Enlace generado a mano y mandado por WhatsApp (ver scripts/generar-enlaces-acceso.js):
+  // el tester nunca pidió el enlace desde ESTE teléfono, así que no hay correo guardado
+  // en localStorage y sin esto le saldría un prompt pidiéndoselo. El generador mete el
+  // correo en `?em=` para que entre de un solo toque, sin escribir nada.
+  if(!email){ try{ email=(new URLSearchParams(location.search).get('em')||'').trim(); }catch(e){} }
   if(!email){ try{ email=(window.prompt('Confirma tu correo para completar el ingreso:')||'').trim(); }catch(e){} }
   if(!email){ if(authEl) authEl.style.display='flex'; rm(MG); fg('todos'); initCustomization(); return; }
   try{
@@ -4013,7 +4018,10 @@ async function _completarDesdeLinkMagico(){
   }catch(err){
     if(typeof _lpDbg==='function') _lpDbg('completarDesdeLinkMagico:CATCH', {msg: err&&err.message, name: err&&err.name, stack: err&&err.stack&&err.stack.substring(0,600)});
     if(typeof hideLoading==='function') hideLoading();
-    lpAviso('No se pudo completar el ingreso: '+((err&&err.message)||err)+'. Pide el enlace de nuevo.');
+    // _lpAvisoLogin y no lpAviso: en la pantalla de login lpAviso() es MUDO
+    // (mostrarBocadillo se niega a mostrarse fuera de v-pistero/v-map), así que un
+    // enlace vencido o ya usado dejaba al tester mirando una pantalla sin explicación.
+    _lpAvisoLogin('No se pudo completar el ingreso: '+((err&&err.message)||err)+'. Pedí el enlace de nuevo.');
     if(authEl) authEl.style.display='flex'; rm(MG); fg('todos'); initCustomization();
   }
 }
