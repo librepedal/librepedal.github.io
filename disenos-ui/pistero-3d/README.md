@@ -24,6 +24,8 @@ Vello facial completo (2/2): barba, bigote (`vello-*.png`).
 Lentes con estilo completos (3/3): redondas, aviador, deportivas negras (`lentes-*.png`),
 generados sobre la base sin-lentes.
 
+Cuernos de casco (3/3): vikingos, diablo, unicornio (`cuernos-*.png`).
+
 Pendiente (ver backlog completo en la Biblia, todo bloqueado en decisiones de Inty, no en
 trabajo técnico): labial de Pistera (falta elegir base de peinado), accesorios por
 arquetipo (necesita sesión de diseño), catálogo Darma (decisión de producto).
