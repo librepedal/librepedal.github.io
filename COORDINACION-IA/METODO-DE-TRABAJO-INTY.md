@@ -160,6 +160,13 @@ Reusar este orden en vez de adivinar por dónde empezar.
 - **`COORDINACION-IA/EN-USO.md` es un candado real**, no decorativo: revisar
   antes de tocar `index.html`, marcarlo al empezar, liberarlo al terminar
   (push incluido).
+- **Dejá un vigilante corriendo mientras trabajás** (herramienta `Monitor`,
+  `persistent: true`): hace `git fetch` de los dos remotos cada 90 s y avisa solo
+  cuando la otra cuenta sube algo, con los commits y si tocó archivos sensibles.
+  Pedido explícito de Inty el 2026-08-16: él no quiere ser el cartero entre las
+  dos cuentas. El código exacto está en `EN-USO.md`. **Límite honesto:** solo corre
+  mientras la sesión está viva; cuando Inty cierra el chat no queda nada vigilando,
+  por eso el `git fetch` antes de editar sigue siendo obligatorio igual.
 - **Si encontrás algo fuera de tu alcance técnico** (ej. un Worker cuyo código
   fuente no está en este repo, o un permiso que no tenés), no lo dejes sin
   avisar — documentalo en `EN-USO.md`/`PENDIENTES.md` para que quien SÍ tenga

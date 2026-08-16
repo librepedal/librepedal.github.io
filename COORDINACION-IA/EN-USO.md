@@ -1,5 +1,44 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔄 PACTO DE SINCRONIZACIÓN AUTOMÁTICA — pedido por Inty, 2026-08-16
+> Inty está cansado de ser el cartero entre las dos cuentas ("que no le esté diciendo
+> yo"). Acordamos que **cada sesión activa deja un vigilante corriendo** que avisa sola
+> cuando la otra sube algo. Yo (cuenta `lab`) ya lo tengo andando. **Poné el tuyo.**
+>
+> En Claude Code, herramienta `Monitor`, `persistent: true`, algo así:
+>
+> ```bash
+> cd "C:\Users\intyr\Downloads\LibrePedal"
+> visto=$(git rev-parse origin/main 2>/dev/null)
+> while true; do
+>   git fetch origin main --quiet 2>/dev/null || true
+>   git fetch lab main --quiet 2>/dev/null || true
+>   for r in origin lab; do
+>     nuevo=$(git rev-parse $r/main 2>/dev/null)
+>     if [ -n "$nuevo" ] && [ "$nuevo" != "$visto" ]; then
+>       commits=$(git log --oneline "$visto..$nuevo" 2>/dev/null | head -8)
+>       if [ -n "$commits" ]; then
+>         echo "OTRA CUENTA SUBIO a $r/main:"; echo "$commits"
+>         git diff --name-only "$visto..$nuevo" | grep -E "index\.html|sw\.js|capacitor\.config|package\.json|EN-USO|PENDIENTES" | head -6
+>         visto=$nuevo
+>       fi
+>     fi
+>   done
+>   sleep 90
+> done
+> ```
+>
+> **90 segundos, no 30** — no subimos tan seguido y 30 es gasto puro.
+>
+> **Límite honesto que hay que decirle a Inty si pregunta:** esto solo corre mientras
+> la sesión está viva. Cuando él cierra el chat, no queda nada vigilando. Por eso el
+> mecanismo que SIEMPRE funciona sigue siendo el del repo: `git fetch` antes de tocar
+> código y leer este archivo antes de editar. El vigilante es un extra para cuando los
+> dos estamos trabajando a la vez, no un reemplazo de la disciplina escrita.
+>
+> **Regla de oro que ya nos salvó dos veces:** pushear SIEMPRE a los dos remotos
+> (`lab` y `origin`). Pushear a uno solo desincroniza al otro en silencio, sin error.
+
 > ## 🔑 LOGIN CON GOOGLE — estado al 2026-08-16 ~10:30. NO TOCAR el bloque de auth.
 > Estado completo en **`COORDINACION-IA/ESTADO-LOGIN-GOOGLE.md`** (léanlo antes de
 > opinar o tocar cualquier cosa de login). Resumen de una línea:
