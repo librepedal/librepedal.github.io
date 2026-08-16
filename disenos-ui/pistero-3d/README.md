@@ -15,6 +15,8 @@ Generados con ComfyUI local (Z-Image-Turbo) + inpainting enmascarado. Método co
 Accesorios de casco completos (6/6): LED delantera, cámara, antena, cresta, cinta
 reflectante, LED trasera/parpadeo.
 
-Pendiente (ver backlog completo en la Biblia): piel, vello facial de Pistero, labial de
+Piel completa (4 tonos + base): claro, trigueño, moreno, oscuro (`piel-*.png`).
+
+Pendiente (ver backlog completo en la Biblia): vello facial de Pistero, labial de
 Pistera, lentes con estilo sobre la base sin-lentes, ánimos (feliz/enojado/cansado/con
 sueño), accesorios por arquetipo.

@@ -134,6 +134,25 @@ accesorio sobresale del contorno → máscara con margen hacia el fondo (3-ter).
 accesorio va pegado/clipeado a una superficie existente → máscara pegada a esa superficie,
 casi sin fondo vacío.
 
+## 3-quinquies) Lección de prompt — cfg 1.0 diluye adjetivos sutiles de color
+
+Al hacer los 4 tonos de piel, la primera tanda ("very fair light pink" / "warm golden olive
+tan" / "medium warm brown" / "deep rich dark brown") salió con diff de píxeles perfecto
+(0 fuera de máscara) pero el resultado NO servía: a simple vista "moreno" quedó más CLARO
+que "trigueño", y "oscuro" apenas se distinguía de "claro" — sin progresión real. La
+técnica de máscara estaba bien, el problema fue el PROMPT: con `cfg=1.0` (necesario para
+que el modelo turbo funcione bien) los adjetivos de color quedan débiles, en especial
+cuando van al final de una oración larga. Se rechazó a ojo (no pasó el diff porque el diff
+solo mide que no se corrió nada FUERA de la máscara, no mide si el contenido DENTRO es el
+pedido — ojo con confundir "diff en 0" con "aprobado", son verificaciones distintas).
+**Solución:** (1) mover la descripción de color al PRINCIPIO del prompt, pegada al sujeto
+("...mascot character with {tono} skin..."), repetirla una segunda vez más adelante; (2)
+usar lenguaje comparativo explícito en vez de adjetivos sueltos ("clearly darker than tan",
+"much darker than caramel") en lugar de solo el nombre del tono. Con eso la segunda tanda sí
+dio una progresión clara y monótona clara→oscura. Bloopers de la v1 guardados en
+`disenos-ui/pistero-3d/bloopers/piel-{moreno,oscuro}-v1-sin-diferenciar.png` como referencia
+de qué NO alcanza.
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
@@ -158,8 +177,10 @@ que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás
       Scotchlite — ver fuentes en BITACORA de esta fecha). Antena/cresta necesitaron
       máscara más alta (ver lección 3-ter). LED trasera necesitó lo CONTRARIO — ver
       lección 3-quater abajo.
-- [ ] Máscara de piel (cara, orejas, cuello visible). 5 tonos: claro, medio, trigueño,
-      moreno, oscuro.
+- [x] **Piel — HECHO (4 tonos nuevos + base).** claro, trigueño, moreno, oscuro (más
+      "medio" = el tono de `base-neutral.png`, ya existente). Máscara óvalo de cara +
+      ambas orejas (ver lección 3-quinquies sobre por qué la primera tanda no servía a
+      pesar de diff=0 fuera de máscara).
 - [ ] Máscara de boca+cejas combinada para estados de ánimo (feliz, enojado, cansado, con
       sueño) — más grande que la de boca sola, porque enojado/cansado necesitan cejas.
 - [ ] **Vello facial para Pistero** (pedido 2026-08-15/16): barba corta, bigote/mostacho —
