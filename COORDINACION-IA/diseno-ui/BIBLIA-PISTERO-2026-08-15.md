@@ -95,6 +95,19 @@ ffmpeg -loop 1 -t 0.5 -i neutral.png -loop 1 -t 0.5 -i E.png ... \
 **Pendiente reportado por Inty:** la boca en el set actual quedó un poco más ARRIBA de lo
 ideal — al reajustar la máscara para la próxima tanda, bajarla ~10-15px.
 
+## 3-bis) Lección de máscara: la fuga en espacio latente es más grande que el mask visible
+
+Al hacer "sin lentes" (quitar los lentes naranjos, mostrar ojos), con una máscara del
+tamaño "justo" (pegada al borde visible de los lentes) quedaba un resto naranja bajo los
+ojos en TODOS los intentos (5 intentos: probé blur, sin blur, grow_mask_by distinto,
+sacar "lentes" del prompt negativo — nada de eso lo arregló). Causa real: el VAE
+codifica/decodifica en baja resolución (8-16x downsample), así que el modelo "ve" algo de
+contexto más allá del borde exacto del pixel-mask — la fuga no es un bug de la técnica,
+es inherente al espacio latente. **Solución que sí funcionó:** agrandar la máscara bastante
+más de lo que parece necesario a simple vista (no pegada al objeto, con margen generoso
+alrededor) — recién ahí el diff de píxeles dio 0 exacto. Para la próxima capa (piel,
+ánimos, etc.): partir con margen generoso desde el principio, no ajustar fino.
+
 ## 4) Backlog — "biblia" completa del personaje (pedido 2026-08-15, sin hacer aún)
 
 Inty quiere el catálogo completo, al nivel del `_pisteroExprSVG` viejo pero con esta
@@ -105,15 +118,36 @@ y estados de ánimo (feliz, enojado, cansado, con sueño), pensado para poder an
 cientos de imágenes, inviable). Hacer como CAPAS independientes con máscara propia, igual
 que la boca — cada categoría cambia sobre la MISMA base, sin tocar las demás:
 
-- [ ] Máscara de casco (ya se probó una vez para cambiar solo el casco en la sesión
-      anterior de SVG — para render 3D hay que recortar la máscara de nuevo sobre esta
-      composición). 8 colores: azul, naranja, verde, morado, rojo, negro, celeste, dorado.
+- [x] **Casco — HECHO.** 8 colores (azul=base, naranja, verde, morado, rojo, negro,
+      celeste, dorado), máscara poligonal de la cúpula (hay que cubrir generoso el
+      "faldón" lateral cerca de las orejas, se veía un resto de color viejo ahí en el
+      primer intento). Diff de píxeles ~3-5 fuera de máscara en los 8.
+- [x] **Sin lentes — HECHO.** Ojos limpios, sin resto naranja (ver lección de máscara
+      arriba — necesitó máscara grande). Diff de píxeles = 0 exacto en la versión final
+      (`sin_lentes_v5`). Falta: lentes CON estilo (deportivas/redondas/aviador) sobre la
+      misma máscara, y cejas/ojos propios para variar expresión sin lentes puestos.
 - [ ] Máscara de piel (cara, orejas, cuello visible). 5 tonos: claro, medio, trigueño,
       moreno, oscuro.
-- [ ] Máscara de lentes (incluye el estado "sin lentes" — ojos visibles, hay que generar
-      cejas/ojos propios ahí). Estilos: deportivas, redondas, aviador, sin lentes.
 - [ ] Máscara de boca+cejas combinada para estados de ánimo (feliz, enojado, cansado, con
       sueño) — más grande que la de boca sola, porque enojado/cansado necesitan cejas.
+- [ ] **Vello facial para Pistero** (pedido 2026-08-15/16): barba corta, bigote/mostacho —
+      máscara de mentón+labio superior, mismo método. Ya se había sacado del selector SVG
+      viejo por no verse bien (2026-08-08) — con esta calidad nueva vale la pena reintentar.
+- [ ] **Pistera (versión femenina) — 3 conceptos ya generados** (coletas, cola ladeada,
+      flequillo) como generación completa nueva, NO inpainting sobre la base de Pistero
+      (peinado cambia geometría, no es una capa parcheable). Pendiente que Inty elija cuál
+      queda como base oficial de Pistera. Sobre esa base: labial/labios pintados (pedido
+      explícito, "las mujeres son más vanidosas... labios pintados").
+- [ ] **Accesorios diferenciadores por arquetipo de personalidad** (pedido 2026-08-15/16):
+      la app ya tiene 14 arquetipos de voz (`PERSONALIDADES`, ver [[pistero-asistente-voz]])
+      — Inty quiere que cada uno tenga tambien una diferencia VISUAL, no solo de voz. Sin
+      definir aún cuál accesorio va con cuál arquetipo — necesita una sesión de diseño
+      antes de generar (no adivinar la asignación).
+- [ ] **Renovar el catálogo de la tienda ("Darma")** — pedido explícito: "ya no van a
+      quedar los [skins] que estaban, ahora todo se renueva". Esto es una migración grande
+      (`PRECIOS` en `index.html`, ~40 items) — no empezar sin que Inty confirme el alcance
+      exacto (¿se botan los items viejos de la gente que ya los compró, o quedan como
+      legado?). Marcar como pendiente de decisión de producto, no técnica.
 - [ ] Una vez todas las capas probadas por separado: armar la matriz real que Inty
       necesite (probablemente no todas las combinaciones, las que se usen de verdad en la
       app) componiendo capas en cadena (base → casco → piel → lentes → expresión, cada
