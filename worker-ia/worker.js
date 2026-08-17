@@ -268,11 +268,20 @@ export default {
       const parseNum = function (v, def) { const n = parseFloat(v); return (isFinite(n) && n >= 0 && n <= 1) ? n : def; };
       const stab = parseNum(url.searchParams.get("stab") || (body && body.stab), 0.32);
       const style = parseNum(url.searchParams.get("style") || (body && body.style), 0.6);
+      // VELOCIDAD (?vel=). Agregado el 17-ago-2026: un tester reportó que Pistero habla
+      // demasiado rápido y no se le entiende. La causa era que al pasar toda la voz a
+      // ElevenLabs, las velocidades por arquetipo (de -18% a +22%, definidas en
+      // PERSONALIDAD_PROSODIA) dejaron de enviarse — sonaba siempre a la velocidad por
+      // defecto de ElevenLabs, que es rápida. El default de acá (0.92) es levemente más
+      // lento que el neutro a propósito: para hablarle a alguien pedaleando, con viento
+      // y tráfico, la claridad vale más que la agilidad. Rango permitido por ElevenLabs.
+      const velRaw = parseFloat(url.searchParams.get("vel") || (body && body.vel));
+      const vel = (isFinite(velRaw) && velRaw >= 0.7 && velRaw <= 1.2) ? velRaw : 0.92;
       try {
         const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
           method: "POST",
           headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" },
-          body: JSON.stringify({ text: t, model_id: modelo, voice_settings: { stability: stab, similarity_boost: 0.8, style: style, use_speaker_boost: true } })
+          body: JSON.stringify({ text: t, model_id: modelo, voice_settings: { stability: stab, similarity_boost: 0.8, style: style, use_speaker_boost: true, speed: vel } })
         });
         if (!r.ok) return new Response(JSON.stringify({ error: "eltts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
         const buf = await r.arrayBuffer();

@@ -1589,7 +1589,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.754'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.755'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3086,6 +3086,21 @@ function _vozArchivoArq(item, durEst, arq, id, miGen){
 const VOZ_EL_F = 'Fd38GRHtJllY0CuguAy9'; // Victoria — Chilean Professional Fresh
 const VOZ_EL_M = 'ClNifCEVq1smkl4M3aTk'; // Cristian Cornejo — Spanish Chilean
 function _vozELid(){ return (pisteroGenero==='l') ? VOZ_EL_M : VOZ_EL_F; }
+// Velocidad de habla del arquetipo elegido, traducida al parámetro de ElevenLabs.
+// La base es 0.92 y no 1.0 a propósito: Pistero le habla a alguien pedaleando, con
+// viento y ruido de calle — se entiende mejor un poco más pausado. Sobre esa base se
+// aplica el ajuste del arquetipo (el "sabio" habla más lento, el "loco" más rápido),
+// acotado al rango que acepta ElevenLabs para que ninguna personalidad quede ininteligible.
+function _velArq(){
+  var base=0.92;
+  try{
+    var pr=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
+    var n=parseInt(pr.rate,10)||0;          // ej. '-18%' -> -18
+    var v=base*(1+n/200);                   // se aplica a la mitad: el % estaba pensado
+                                            // para Azure, que exagera menos que ElevenLabs
+    return Math.max(0.75, Math.min(1.1, Math.round(v*100)/100));
+  }catch(e){ return base; }
+}
 function _vozAzureRuntime(item, durEst, miGen, _yaProboEleven){
   // Voz chilena Azure EN VIVO para frases dinámicas (nombre, calles, números, chat).
   // Va por el Worker (/aztts, la llave está segura en el servidor). Cachea en Cloudflare,
@@ -3132,7 +3147,13 @@ function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure, _respaldo){
     else _vozNativaOWeb(item, durEst);
   };
   try{
-    const a=new Audio(IA_URL_NEUTRA+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&voz='+encodeURIComponent(_vozELid()));
+    // Va por IA_URL (worker propio) y NO por IA_URL_NEUTRA: ese otro vive en una cuenta
+    // de Cloudflare distinta, sin acceso desde acá, así que no se le podían agregar
+    // cosas como la velocidad. Los dos sirven /eltts igual.
+    // `vel` traduce la velocidad del arquetipo (PERSONALIDAD_PROSODIA, de -18% a +22%)
+    // al parámetro de ElevenLabs. Sin esto la voz salía siempre a la velocidad por
+    // defecto —rápida— y un tester reportó que no se le entendía a Pistero.
+    const a=new Audio(IA_URL+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&voz='+encodeURIComponent(_vozELid())+'&vel='+_velArq());
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
@@ -7344,8 +7365,34 @@ function elegirSugerencia(lat,lon,nombre){
 // País del usuario (código ISO, ej "cl") para resolver bien destinos ambiguos
 // como "Santiago" (la capital de TU país, no otra del mundo). Se cachea.
 let paisUsuario=localStorage.getItem('lp_pais')||null;
+// Deduce el país por la ZONA HORARIA del teléfono. Es instantáneo, no pide permisos y
+// no depende de la red ni del GPS. Existe porque el buscador de direcciones quedaba sin
+// ninguna referencia geográfica cuando el país era desconocido: alguien en Santiago
+// escribía "Providencia" y el primer resultado era Rhode Island, Estados Unidos. El
+// usuario concluye, con razón, que el buscador no sirve. Reportado el 17-ago-2026.
+function _paisPorZonaHoraria(){
+  var tz='';
+  try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){ return null; }
+  var mapa={
+    'America/Santiago':'cl','Pacific/Easter':'cl',
+    'America/Argentina':'ar','America/Buenos_Aires':'ar',
+    'America/Lima':'pe','America/Bogota':'co','America/Mexico_City':'mx',
+    'America/La_Paz':'bo','America/Asuncion':'py','America/Montevideo':'uy',
+    'America/Guayaquil':'ec','America/Caracas':'ve','America/Costa_Rica':'cr',
+    'America/Guatemala':'gt','America/Santo_Domingo':'do','America/Puerto_Rico':'pr',
+    'Europe/Madrid':'es','Atlantic/Canary':'es'
+  };
+  if(mapa[tz]) return mapa[tz];
+  // "America/Argentina/Cordoba" y similares: se prueba con el prefijo de dos tramos.
+  var pref=tz.split('/').slice(0,2).join('/');
+  if(mapa[pref]) return mapa[pref];
+  return null;
+}
 async function paisDelUsuario(){
   if(paisUsuario) return paisUsuario;
+  // Antes de rendirse por falta de GPS: la zona horaria ya dice el país en la práctica.
+  var tzCc=_paisPorZonaHoraria();
+  if(tzCc){ paisUsuario=tzCc; try{ localStorage.setItem('lp_pais',tzCc); }catch(e){} return paisUsuario; }
   if(!currentUserLocation) return null;
   try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=3&lat='+currentUserLocation.lat+'&lon='+currentUserLocation.lon); const j=await r.json(); const cc=(j.address&&j.address.country_code)?j.address.country_code:null; if(cc){ paisUsuario=cc; try{ localStorage.setItem('lp_pais',cc); }catch(e){} } }catch(e){}
   return paisUsuario;
