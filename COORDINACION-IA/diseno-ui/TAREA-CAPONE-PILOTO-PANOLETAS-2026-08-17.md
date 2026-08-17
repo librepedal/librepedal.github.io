@@ -1,3 +1,12 @@
+> **ACTUALIZACIÓN 2026-08-17:** no encontré una sesión "Capone" activa para delegar esto
+> (solo rastros viejos del 13-ago en el output compartido). Inty pidió seguir sin esperar,
+> así que esta cuenta hizo el piloto directo. Además, corrección de concepto: "pañoleta
+> atada al cuello" resultó IMPOSIBLE en el formato actual (busto recortado en la
+> mandíbula, sin cuello — ver detalle abajo). Se generó en su lugar sobre la misma región
+> ya probada del buff (nariz+boca). Resultado en rama `assets/panoletas-piloto-2026-08-17`,
+> sin mergear, esperando aprobación de Inty. Si alguien retoma esto vía Capone, usar como
+> referencia el resultado ya aprobado en vez de repetir el piloto desde cero.
+
 # Tarea piloto para Capone — 3 pañoletas de prueba
 
 Pedido de Inty (2026-08-17): antes de repartir todo el catálogo grande de pañoletas/

@@ -33,6 +33,13 @@ Calcomanías de casco (3/3): rayo, llama, bandera a cuadros (`calco-*.png`) — 
 
 Máscara/buff ciclista (2/2): liso, estampado (`buff-*.png`).
 
+Pañoletas/máscaras — piloto (3, sin aprobar aún): negra sólida, paisley clásico
+rojo/negro, camuflaje bosque (`panoleta-*.png`). Misma máscara/región que buff (nariz+boca)
+— "pañoleta atada al cuello" no es representable en este crop (busto recortado en la
+mandíbula, sin cuello, ver corrección en la Biblia). Rama `assets/panoletas-piloto-2026-08-17`,
+esperando que Inty apruebe antes de sumarlas al resto del catálogo (~17 piezas más
+planeadas: bandera, tie-dye, animal print, tribal, alta visibilidad, temporada, etc.).
+
 Pendiente (ver backlog completo en la Biblia, todo bloqueado en decisiones de Inty, no en
 trabajo técnico): labial de Pistera (falta elegir base de peinado), accesorios por
 arquetipo (necesita sesión de diseño), catálogo Darma (decisión de producto).
