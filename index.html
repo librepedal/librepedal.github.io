@@ -1589,7 +1589,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.756'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.757'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -7359,10 +7359,35 @@ function sugerirDestino(q){
   if(q.length<3){ box.classList.remove('show'); box.innerHTML=''; return; }
   clearTimeout(sugTimer);
   sugTimer=setTimeout(async function(){
-    let url='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=6&q='+encodeURIComponent(q);
-    const cc=await paisDelUsuario(); if(cc) url+='&countrycodes='+cc;
-    if(currentUserLocation){ const d=3,lo=currentUserLocation.lon,la=currentUserLocation.lat; url+='&viewbox='+(lo-d)+','+(la+d)+','+(lo+d)+','+(la-d); }
-    let g=[]; try{ const r=await fetch(url); g=await r.json(); }catch(e){}
+    const cc=await paisDelUsuario();
+    // BUSCADOR PREDICTIVO (17-ago-2026). Antes esto iba solo a Nominatim, que NO es un
+    // buscador de los que completan mientras escribís: exige el nombre casi entero. Inty
+    // escribió "baldía" —así transcribe la voz "Valdivia", porque en Chile la b y la v
+    // suenan igual— y recibió "Sin resultados"; con razón concluyó que el mapa no servía.
+    // Y con "Providencia" el primer resultado era Rhode Island, Estados Unidos.
+    // Photon (mismo OpenStreetMap detrás, gratis) sí es predictivo y acepta palabras a
+    // medias: "puerto var" -> Puerto Varas, "cajon del maip" -> Cajón del Maipo,
+    // "las cond" -> Las Condes. Con sesgo geográfico además ordena bien: "provi" devuelve
+    // Providencia de Santiago, no Provin de Francia. Nominatim queda de RESPALDO si
+    // Photon no responde, así que no se pierde nada de lo que ya andaba.
+    let g=[];
+    const sesgo=_sesgoBusqueda(cc);
+    try{
+      let pu='https://photon.komoot.io/api/?limit=6&q='+encodeURIComponent(q);
+      if(sesgo) pu+='&lat='+sesgo.lat+'&lon='+sesgo.lon;
+      const rp=await fetch(pu); const jp=await rp.json();
+      g=((jp&&jp.features)||[]).map(function(f){
+        const p=f.properties||{}, c=(f.geometry&&f.geometry.coordinates)||[];
+        const partes=[p.name, p.district||p.city||p.county, p.state, p.country].filter(Boolean);
+        return { lat:c[1], lon:c[0], display_name:partes.join(', ') };
+      }).filter(function(x){ return x.lat!=null && x.lon!=null; });
+    }catch(e){}
+    if(!g.length){
+      let url='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=6&q='+encodeURIComponent(q);
+      if(cc) url+='&countrycodes='+cc;
+      if(currentUserLocation){ const d=3,lo=currentUserLocation.lon,la=currentUserLocation.lat; url+='&viewbox='+(lo-d)+','+(la+d)+','+(lo+d)+','+(la-d); }
+      try{ const r=await fetch(url); g=await r.json(); }catch(e){}
+    }
     if(!g||!g.length){ box.innerHTML='<div class="sug" style="color:#7d8ba0">Sin resultados para "'+escapeHTML(q)+'"</div>'; box.classList.add('show'); return; }
     // titulo/resto se muestran como HTML: igual que en el resto de la app (rutas,
     // chat, comunidad) van por escapeHTML antes de insertarse — display_name viene
@@ -7404,6 +7429,23 @@ function _paisPorZonaHoraria(){
   var pref=tz.split('/').slice(0,2).join('/');
   if(mapa[pref]) return mapa[pref];
   return null;
+}
+// Punto de referencia para ordenar los resultados del buscador. Primero el GPS real; si
+// no hay (permiso no dado todavía, o recién abrió la app), el centro del país deducido de
+// la zona horaria. Sin ninguna referencia, el buscador devuelve el mundo entero ordenado
+// por popularidad global y aparecen lugares de otros continentes antes que el de al lado.
+const _CENTROS_PAIS={
+  cl:{lat:-33.45,lon:-70.66}, ar:{lat:-34.60,lon:-58.38}, pe:{lat:-12.05,lon:-77.04},
+  co:{lat:4.71,lon:-74.07},   mx:{lat:19.43,lon:-99.13}, bo:{lat:-16.50,lon:-68.15},
+  py:{lat:-25.28,lon:-57.63}, uy:{lat:-34.90,lon:-56.16}, ec:{lat:-0.18,lon:-78.47},
+  ve:{lat:10.48,lon:-66.90},  cr:{lat:9.93,lon:-84.08},   gt:{lat:14.63,lon:-90.51},
+  do:{lat:18.49,lon:-69.93},  pr:{lat:18.47,lon:-66.11},  es:{lat:40.42,lon:-3.70}
+};
+function _sesgoBusqueda(cc){
+  if(typeof currentUserLocation!=='undefined' && currentUserLocation && currentUserLocation.lat!=null){
+    return { lat:currentUserLocation.lat, lon:currentUserLocation.lon };
+  }
+  return (cc && _CENTROS_PAIS[cc]) ? _CENTROS_PAIS[cc] : null;
 }
 async function paisDelUsuario(){
   if(paisUsuario) return paisUsuario;
