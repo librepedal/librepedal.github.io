@@ -236,7 +236,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-classic{min-height:48px;display:inline-flex;align-items:center;justify-content:center;position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
 /* Medido: 37x28. El boton Atras llegaba a 22px de alto, menos de la mitad del minimo. */
 .es-globe{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
-#auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px 20px 40px;text-align:center;overflow-y:auto}
+#auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:calc(20px + env(safe-area-inset-top,0px)) 20px 40px;text-align:center;overflow-y:auto}
 /* Sin sesión guardada -> el login se ve DESDE EL PRIMER DIBUJADO, sin que asome la
    Esfera antes (ver el script de arranque en el <head>). window.onload sigue haciendo
    lo suyo después; esto solo adelanta la decisión para que no haya destello. */
@@ -298,7 +298,12 @@ html.lp-sin-sesion #auth{display:flex}
 .custom-option.locked{opacity:0.6}
 .custom-option.locked .lock-badge{position:static;display:block;margin-bottom:4px;background:rgba(0,0,0,0.8);color:var(--g);font-size:0.55rem;font-weight:800;padding:2px 5px;border-radius:8px;border:1px solid var(--g);z-index:2;width:fit-content;margin-left:auto;margin-right:auto}
 .skin-swatch{width:100%;height:42px;border-radius:8px;margin-bottom:4px}
-header{padding:8px 12px;background:rgba(10,15,29,0.98);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;position:sticky;top:0;z-index:1000}
+/* El padding de arriba suma env(safe-area-inset-top): la app dibuja de borde a borde
+   (viewport-fit=cover en el meta viewport), así que sin esto el encabezado se mete
+   DEBAJO de la barra de estado del teléfono y el título queda encima de la hora y los
+   íconos del sistema — ilegible. El margen de abajo ya se respetaba desde siempre
+   (ver .view y el overlay del final); el de arriba nunca se había puesto. 17-ago-2026. */
+header{padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:rgba(10,15,29,0.98);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;position:sticky;top:0;z-index:1000}
 header h2{margin:0;font-size:1rem;font-weight:800}
 .ulvl{background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;padding:4px 10px;border-radius:12px;font-weight:800;font-size:0.7rem}
 main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
@@ -1589,7 +1594,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.757'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.758'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -2973,10 +2978,15 @@ function _durEstVoz(txt){ return Math.min(55000, Math.max(1800, txt.length*75));
 // SINCRONICA al llamar h(), asi que esperar este flag es seguro llamando la
 // funcion justo despues de h(). Tope de seguridad por si vozHablando queda
 // pegado en true por algun error de otro lado.
-function _esperarFinVoz(cb, maxEsperaMs){
+/* Espera a que Pistero termine de hablar y recién ahí sigue. El respiro de
+   600ms no es adorno: sin él la esfera se abría EXACTO en la última sílaba del
+   saludo y se sentía atropellado (lo notó Inty el 2026-08-17). Una persona
+   deja pasar un instante entre que termina de hablar y hace lo siguiente. */
+function _esperarFinVoz(cb, maxEsperaMs, respiroMs){
   var limite=Date.now()+(maxEsperaMs||20000);
+  var respiro=(respiroMs==null)?600:respiroMs;
   (function _chk(){
-    if(!vozHablando || Date.now()>limite){ cb(); return; }
+    if(!vozHablando || Date.now()>limite){ setTimeout(cb, respiro); return; }
     setTimeout(_chk, 300);
   })();
 }
@@ -4733,6 +4743,10 @@ function toggleGPS(silencioso){
       tripStartTime=Date.now(); _iniciarCronometroDash();
       if(!silencioso) _prevueloPistero(false);
     } else { lpAviso("Tu dispositivo no soporta GPS"); }
+    // Aviso ÚNICO (2026-08, bug ruta = línea recta): en Android el rastreo con la pantalla
+    // apagada/bolsillo necesita ubicación en "Permitir siempre". El permiso normal solo graba
+    // con la app abierta y deja el track como una recta entre inicio y fin. Se muestra 1 sola vez.
+    try{ if(!localStorage.getItem('lp_tip_bg_ubic')){ localStorage.setItem('lp_tip_bg_ubic','1'); setTimeout(function(){ lpAviso('Consejo: para que se grabe tu ruta con la pantalla apagada, activa la Ubicación en "Permitir siempre" en los ajustes del teléfono. Con el permiso normal, el trazado puede quedar como una línea recta.'); }, 4500); } }catch(e){}
   } else {
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
     ig=false; _lpWLoff(); detenerDeteccionCaidas(); _detenerCronometroDash();
@@ -4897,7 +4911,13 @@ function ug(p){
   // al (0,0) se suma de golpe al kilometraje total, silenciosamente, sin ningún error.
   if(!Number.isFinite(la) || !Number.isFinite(lo)) return;
   // Descarta fixes imprecisos: el GPS "salta" varios metros aunque estés quieto.
-  if(p.coords.accuracy && p.coords.accuracy>35){ _gpsBadgeToggle('gpsSignalBadge', true); return; }
+  // OJO (2026-08: reporte de Inty, ruta grabada como LÍNEA RECTA de un punto a otro): el
+  // umbral de 35 m era demasiado estricto. En ciudad, al arrancar o con día nublado el GPS
+  // reporta 40-60 m de precisión REAL (no ruido), y botábamos casi todos los puntos → el
+  // track quedaba con solo inicio y fin = recta. Se sube a 65 m para no perder el trazado.
+  // La distancia/km NO se infla por esto: más abajo solo se suma con sp>0 (movimiento real
+  // confirmado por la ventana de velocidad) y _saltoEsPlausible, que ya filtran el ruido.
+  if(p.coords.accuracy && p.coords.accuracy>65){ _gpsBadgeToggle('gpsSignalBadge', true); return; }
   _gpsBadgeToggle('gpsSignalBadge', false);
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
   const _msDesdeUltimoFix=lastFixTime?(Date.now()-lastFixTime):0; // para el chequeo de velocidad plausible más abajo
@@ -9819,10 +9839,11 @@ function enviarSOS(){
 function wmoTexto(c){ const m={0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'neblina',48:'neblina',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',66:'lluvia helada',67:'lluvia helada',71:'nieve ligera',73:'nieve',75:'nieve intensa',77:'nieve',80:'chubascos',81:'chubascos',82:'chubascos fuertes',85:'nevadas',86:'nevadas',95:'tormenta',96:'tormenta con granizo',99:'tormenta con granizo'}; return m[c]||'clima variable'; }
 async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weather_code,wind_speed_10m&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=3'); return await r.json(); }catch(e){ return null; } }
 /* Enganche del efecto visual de clima (clima-fx.js) a los datos REALES de Open-Meteo.
-   Mapeo de codigo WMO (mismas categorias que wmoTexto, arriba) a los 6 modos que expone
+   Mapeo de codigo WMO (mismas categorias que wmoTexto, arriba) a los modos que expone
    climaFxSetMode(). Umbral de "sol" (calor extremo) = 30 grados — CONFIRMADO por Inty
-   2026-08-14. Tormenta (95-99) usa el modo 'lluvia' (el mas intenso de los 6, el modulo
-   no tiene un modo propio de tormenta). */
+   2026-08-14. Tormenta (95-99) usa el modo 'lluvia' (el mas intenso, el modulo no tiene
+   un modo propio de tormenta). Cielo despejado bajo 30 grados = 'solsuave', agregado el
+   2026-08-17: antes un dia lindo y fresco no mostraba NADA, que fue justo el reclamo. */
 function _climaFxModoDesde(codigo,temp){
   if(codigo==null) return 'off';
   if(codigo>=95) return 'lluvia';
@@ -9830,7 +9851,9 @@ function _climaFxModoDesde(codigo,temp){
   if((codigo>=71&&codigo<=77)||codigo===85||codigo===86) return 'nieve';
   if(codigo===45||codigo===48) return 'neblina';
   if(codigo===2||codigo===3) return 'nubes';
-  if((codigo===0||codigo===1)&&temp!=null&&temp>=30) return 'sol';
+  // Cielo despejado: 30°C o más es golpe de calor ('sol' = ondas de radiación
+  // + pollo asado). Un día lindo normal muestra 'solsuave', que es solo luz.
+  if(codigo===0||codigo===1) return (temp!=null&&temp>=30)?'sol':'solsuave';
   return 'off';
 }
 function _climaFxAplicar(w){
