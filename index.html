@@ -1589,7 +1589,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.755'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.756'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1761,6 +1761,23 @@ async function _entrarConCodigoTester(){
   }catch(err){
     if(typeof hideLoading==='function') hideLoading();
     if(btn){ btn.disabled=false; btn.innerText='Entrar'; }
+    // Reporte automático a Sentry (17-ago-2026): este ingreso funciona en la web pero
+    // falla en la app instalada, y pedirle a Inty que dicte el error costó varias rondas.
+    // Se manda el contexto que dice DÓNDE se corta —si la petición al worker ni sale, si
+    // sale y responde otra cosa, o si falla el paso de Firebase— y sobre todo si corre en
+    // app nativa o en navegador, que es justamente la diferencia entre lo que anda y lo
+    // que no. Así el próximo fallo se diagnostica leyendo Sentry, sin interrogar a nadie.
+    try{
+      if(window.Sentry && Sentry.captureException){
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), {
+          tags:{ donde:'entrarConCodigoTester',
+                 nativo: (typeof window.Capacitor!=='undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? 'si' : 'no' },
+          extra:{ correo:correo, urlWorker:AUTH_TOKEN_URL,
+                  version:(typeof APP_VERSION!=='undefined'?APP_VERSION:'?'),
+                  agente:(navigator.userAgent||'').slice(0,180) }
+        });
+      }
+    }catch(_s){}
     _lpAvisoLogin('No se pudo entrar: '+((err&&err.message)||err));
   }
 }
