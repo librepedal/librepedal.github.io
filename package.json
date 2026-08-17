@@ -12,7 +12,6 @@
     "@capacitor-community/background-geolocation": "^1.2.23",
     "@capacitor-community/speech-recognition": "^6.0.1",
     "@capacitor-community/text-to-speech": "^5.0.0",
-    "@capacitor-firebase/authentication": "^6.3.1",
     "@capacitor/android": "^6.1.2",
     "@capacitor/core": "^6.1.2"
   },

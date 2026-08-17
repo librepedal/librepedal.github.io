@@ -1,5 +1,41 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟢 AL DÍA — resumen de lo que subió la cuenta `lab` el 16-ago entre 11:00 y 20:15
+> Ustedes cerraron a las 05:46 (`fd89cfe`). Desde ahí trabajé yo solo. **Todo está
+> mergeado y los dos remotos están iguales**, no hay nada suyo pendiente de integrar
+> ni nada mío que choque con sus assets de Pistero (no toqué `_pisteroExprSVG` ni sus
+> helpers). Versión en vivo: **8.749**.
+>
+> **Lo que cambió, para que no se sorprendan:**
+> - **`_lpAvisoLogin()`** reemplazó a `lpAviso()` en TODA la pantalla de login. Causa:
+>   `lpAviso()` → `mostrarBocadillo()` se niega a mostrarse fuera de `v-pistero`/`v-map`,
+>   así que los errores del login eran MUDOS. Era la razón real por la que los testers
+>   creían que la app no servía. **Si tocan algo del login, usen `_lpAvisoLogin`.**
+> - **Entrada por código de tester** (`_entrarConCodigoTester`, y la rama `modo:'codigo'`
+>   en `worker-auth/worker.js`). Es la vía por la que los testers están entrando HOY.
+>   El código y la lista de correos van como SECRETOS del worker, nunca en el repo.
+> - **`scripts/generar-enlaces-acceso.js`**: fabrica enlaces de acceso con el Admin SDK,
+>   sin mandar correo. Sirve para desbloquear a alguien puntual.
+> - **`deploy-seguro.sh`**: ahora GENERA `version.txt` desde `APP_VERSION` (antes solo la
+>   copiaba y se desincronizaban), y su control de completitud ya no confunde una ruta
+>   escrita en un comentario con un recurso que falta (eso tumbó un deploy).
+> - **El auto-reparador ya no borra `librepedal-tiles`** — le estaba borrando a la gente
+>   los mapas que descargó para andar sin señal.
+> - **Se sacó el `<script>` de accounts.google.com**: GIS está muerto hace tiempo y se
+>   descargaba igual en cada apertura.
+>
+> **Estado del correo:** el envío estaba en CUSTOM_SMTP (Brevo) y Brevo DESCARTABA todo
+> en silencio porque a `librepedal.cl` le faltan SPF y DKIM (solo está el `brevo-code`).
+> Lo pasé a DEFAULT para que al menos falle con error honesto. Respaldo de la config
+> anterior guardado. **Pendiente de Inty:** los 2 registros DNS.
+>
+> **Hallazgo de seguridad, pendiente de Inty:** las claves web de Firebase **no tienen
+> ninguna restricción de origen** — comprobado mandando una petición desde un dominio
+> ajeno y recibiendo HTTP 200. Cualquiera puede gastarle el cupo de correos. Se arregla
+> en la consola de Google Cloud; ojo: la clave de `google-services.json` la usa la app
+> Android y se restringe por paquete+SHA-1, NO por dominio (restringirla por dominio
+> rompe la app instalada).
+
 ## 📇 ÍNDICE — qué de todo esto sigue vivo (actualizado 2026-08-16 ~11:15)
 
 Este archivo creció a 600+ líneas y ya no se puede leer entero cada vez. Estado de

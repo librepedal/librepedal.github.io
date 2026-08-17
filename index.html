@@ -45,6 +45,17 @@
      apertura de la app. Era una petición a accounts.google.com por visita, para nada.
      Si alguna vez se revive GIS, hay que volver a agregar esta línea. -->
 <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
+<script>
+/* ARRANQUE SIN DESTELLO (2026-08-17). Bug que reportó Inty: al abrir la app aparecía
+   un instante la Esfera/Inicio y recién después saltaba el login. Causa: `#auth` nace
+   con `display:none` en el CSS, así que el primer dibujado siempre era la app, y la
+   decisión de mostrar el login llegaba tarde, en `window.onload` — después de cargar
+   Firebase, mapas y todo lo demás.
+   Se decide ACÁ, antes de pintar: si no hay sesión guardada, se marca el documento y
+   el CSS muestra el login de entrada. Es una lectura sincrónica de localStorage, no
+   espera red ni Firebase. Quien SÍ tiene sesión no ve ningún cambio. */
+try{ if(!localStorage.getItem('lp_session')) document.documentElement.classList.add('lp-sin-sesion'); }catch(e){}
+</script>
 <style>
 :root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
 /* ── Temas de UI app-wide (Sólido / Cristal) · ver COORDINACION-IA/SPEC-TEMAS-APP-WIDE-2026-08-14.md
@@ -169,7 +180,10 @@ button.es-dato{cursor:pointer}
    ruta, ver reproducirSobrevuelo()). Ahora es solo la carita, más grande, con una
    sombra sutil para que se lea bien sobre cualquier fondo. La forma circular se
    mantiene invisible (radio + sin fondo) solo como área de toque, no como diseño visible. */
-.es-mic{position:relative;width:86px;height:86px;border-radius:50%;border:none;background:transparent;cursor:pointer;padding:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
+/* Mismo criterio que #micBtn: sin círculo ni sombra de caja. El border-radius no hacía
+   daño acá (no hay fondo que recortar), pero se saca para que las dos reglas digan lo
+   mismo y nadie vuelva a agregarle un fondo creyendo que va dentro de un orbe. */
+.es-mic{position:relative;width:86px;height:86px;border-radius:0;box-shadow:none;border:none;background:transparent;cursor:pointer;padding:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
 .es-mic.listening{filter:drop-shadow(0 0 10px rgba(255,45,107,.75))}
 /* ===== Look premium unificado (glass + neón) en toda la app ===== */
 .bg,.bd,.btrip,.bpdf{border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.2);letter-spacing:0.3px}
@@ -223,6 +237,10 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 /* Medido: 37x28. El boton Atras llegaba a 22px de alto, menos de la mitad del minimo. */
 .es-globe{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
 #auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px 20px 40px;text-align:center;overflow-y:auto}
+/* Sin sesión guardada -> el login se ve DESDE EL PRIMER DIBUJADO, sin que asome la
+   Esfera antes (ver el script de arranque en el <head>). window.onload sigue haciendo
+   lo suyo después; esto solo adelanta la decisión para que no haya destello. */
+html.lp-sin-sesion #auth{display:flex}
 .auth-box{background:#151b2e;padding:20px;border-radius:20px;border:1px solid var(--p);width:100%;max-width:400px}
 .auth-box h1{color:var(--p);margin:10px 0;font-size:1.3rem}
 .auth-box input{width:100%;padding:10px;margin-bottom:8px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:16px;outline:none}
@@ -625,7 +643,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* Mismo criterio que .es-mic de arriba: sin orbe/halo circular, solo la carita más
    grande con sombra sutil. El estado (reposo/escuchando/hablando) ahora se lee en el
    drop-shadow de color, no en un círculo detrás. */
-#micBtn{bottom:78px;left:50%;right:auto;transform:translateX(-50%);width:80px;height:80px;border:none;padding:0;overflow:visible;opacity:.97;background:transparent;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
+/* box-shadow:none + border-radius:0 anulan lo que hereda de `.fab` (50% + sombra de
+   caja). Con el fondo ya transparente, esa sombra circular seguía dibujando un halo
+   redondo detrás de la carita de Pistero — el resto del "orbe" que Inty pidió sacar.
+   La sombra buena es el drop-shadow de acá abajo, que sigue el contorno del dibujo.
+   Solo afecta a ESTE botón: los demás `.fab` de la app mantienen su círculo. */
+#micBtn{bottom:78px;left:50%;right:auto;transform:translateX(-50%);width:80px;height:80px;border:none;padding:0;overflow:visible;opacity:.97;background:transparent;box-shadow:none;border-radius:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
 #micBtn i{display:none}
 #micBtn .orb-cara,.es-mic .orb-cara{display:block;width:100%;height:100%;position:relative;z-index:2}
 #micBtn .orb-cara svg,.es-mic .orb-cara svg{width:100%;height:100%;display:block}
@@ -726,7 +749,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 #abanicoReporte .abn-op:active{transform:scale(.94)}
 #abanicoReporte .abn-e{font-size:1.15rem}
 </style>
-<form id="auth" onsubmit="enviarLinkMagico(event)">
+<!-- El submit del formulario apunta al ingreso por CÓDIGO, no al link mágico: el botón
+     del link mágico está oculto durante la prueba, pero los campos siguen en el DOM y
+     un Enter dentro de la caja del código habría disparado el envío de correo (que hoy
+     no entrega) en vez de entrar. -->
+<form id="auth" onsubmit="event.preventDefault(); _entrarConCodigoTester(); return false;">
 <div class="auth-box">
 <div class="lp-logo-wrap">
   <video class="lp-logo-video" autoplay muted loop playsinline disablepictureinpicture poster="logo-transparent.png" aria-label="Libre Pedal">
@@ -759,8 +786,17 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <p style="color:var(--g);font-size:0.78rem;font-weight:800;margin:0 0 8px">¿Cómo te mueves? <span style="color:#7d8ba0;font-weight:400">— la app se acomoda a tu modo, y lo cambias cuando quieras</span></p>
   <div class="helmet-grid" id="modoRegistroGrid"></div>
 </div>
-<input type="text" id="nombre-input" placeholder="Tu nombre" required maxlength="60" style="border:2px solid var(--g)">
-<input type="email" id="em" placeholder="correo@ejemplo.com" required maxlength="100">
+<!-- BLOQUE DEL LINK MÁGICO — OCULTO durante la prueba cerrada (2026-08-17).
+     Por qué: el envío por correo NO está entregando. El SMTP propio (Brevo) descarta
+     los mensajes porque a librepedal.cl le faltan SPF y DKIM, y el mailer de Firebase
+     tiene un cupo diario que 3 pruebas agotan. Un tester escribía su correo, tocaba
+     "Enviarme el enlace" y no le llegaba nada — la peor experiencia posible, porque
+     parece que la app está rota. Se vuelve a mostrar cuando el correo entregue de
+     verdad. Los campos quedan en el DOM (no se borran) para no romper el código que
+     los lee; solo se ocultan. -->
+<div id="bloqueLinkMagico" style="display:none">
+<input type="text" id="nombre-input" placeholder="Tu nombre" maxlength="60" style="border:2px solid var(--g)">
+<input type="email" id="em" placeholder="correo@ejemplo.com" maxlength="100">
 <select id="pais-input" title="Tu país (adapta las frases a tu jerga)">
 <option value="auto"><i class="fas fa-earth-americas"></i> Detectar mi país automáticamente</option>
 <option value="cl">🇨🇱 Chile</option>
@@ -782,9 +818,25 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </select>
 <button type="submit"><i class="fas fa-paper-plane"></i> Enviarme el enlace</button>
 <p style="color:#7d8ba0;font-size:0.72rem;margin-top:8px;text-align:center">Te llega un enlace al correo para entrar seguro (sin contraseña).</p>
+</div><!-- /bloqueLinkMagico -->
+
+<!-- ENTRADA POR CÓDIGO — la ÚNICA vía durante la prueba cerrada, y por eso va primera,
+     grande y abierta. Antes era un enlace chico al final de la pantalla y la gente no lo
+     encontraba. No depende del correo ni de Google: solo del worker propio. -->
+<div id="cajaCodigoTester" style="margin-top:6px;padding:16px;border:2px solid var(--p);border-radius:14px;background:rgba(252,76,2,.07)">
+  <p style="font-size:.95rem;color:#e7edf6;font-weight:800;margin:0 0 4px">Entrar a la prueba</p>
+  <p style="font-size:.78rem;color:#9fb3c8;margin:0 0 12px;line-height:1.5">Escribe el código que te pasaron y tu correo.</p>
+  <input type="text" id="codigoTesterInput" placeholder="Código" autocomplete="off" maxlength="40" style="width:100%;margin-bottom:9px;font-size:1.05rem;letter-spacing:.06em;text-align:center;font-weight:700;text-transform:uppercase">
+  <input type="email" id="correoTesterInput" placeholder="tu correo" autocomplete="email" maxlength="100" style="width:100%;margin-bottom:12px;font-size:1rem">
+  <button type="button" id="btnEntrarCodigo" style="width:100%;background:var(--p);color:#0b1220;border:none;border-radius:12px;padding:15px;font-weight:900;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 14px rgba(252,76,2,.35)">Entrar</button>
+</div>
 </div><!-- /emailFallback -->
-<div style="text-align:center;margin:16px 0 8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
-  <p style="color:#7d8ba0;font-size:0.74rem;margin:0 0 10px">o entra con Google</p>
+
+<!-- Google queda ABAJO y discreto: todavía no funciona en la app instalada (necesita el
+     plugin nativo, retirado el 17-ago por el crash al abrir). Se deja en su sitio para
+     reactivarlo sin rehacer nada cuando esté resuelto. -->
+<div style="text-align:center;margin:20px 0 8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
+  <p style="color:#7d8ba0;font-size:0.72rem;margin:0 0 10px">o entra con Google</p>
 </div>
 <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
 <button type="button" id="gbtnFallback" onclick="_entrarConGoogle()" style="display:none;width:100%;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">
@@ -792,20 +844,6 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   Entrar con Google
 </button>
 <p style="color:#7d8ba0;font-size:0.68rem;margin-top:6px;text-align:center">Al entrar aceptas los <a href="terminos.html" target="_blank" style="color:var(--p)">Términos</a> y la <a href="privacidad.html" target="_blank" style="color:var(--p)">Política de Privacidad</a>.</p>
-<!-- ENTRADA POR CÓDIGO DE TESTER (2026-08-16, temporal — se saca al cerrar la prueba
-     cerrada). Existe porque durante la prueba el ingreso quedó bloqueado por los dos
-     lados a la vez: Google no funciona en la app ya instalada (config nativa, necesita
-     un .aab nuevo en Play) y el correo no se entrega (SMTP sin SPF/DKIM + el cupo
-     diario de Firebase, que 3 pruebas agotan). Con esto el tester entra solo. -->
-<div style="margin-top:14px;text-align:center">
-  <a href="#" id="abrirCodigoTester" style="color:#9fb3c8;font-size:0.74rem;text-decoration:underline">Soy tester y tengo un código</a>
-</div>
-<div id="cajaCodigoTester" style="display:none;margin-top:10px;padding:12px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;background:rgba(255,255,255,0.03)">
-  <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 9px;line-height:1.5">Escribí el código que te pasaron y el correo con el que te inscribiste a la prueba.</p>
-  <input type="text" id="codigoTesterInput" placeholder="Código de tester" autocomplete="off" maxlength="40" style="width:100%;margin-bottom:8px">
-  <input type="email" id="correoTesterInput" placeholder="tu correo de la prueba" autocomplete="email" maxlength="100" style="width:100%;margin-bottom:10px">
-  <button type="button" id="btnEntrarCodigo" style="width:100%;background:var(--p);color:#0b1220;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:0.92rem;cursor:pointer">Entrar</button>
-</div>
 <div style="display:none" aria-hidden="true">
 <div class="character-preview-large">
   <svg id="preview-svg" viewBox="0 0 200 200"></svg>
@@ -1551,7 +1589,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.749'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.757'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1723,13 +1761,31 @@ async function _entrarConCodigoTester(){
   }catch(err){
     if(typeof hideLoading==='function') hideLoading();
     if(btn){ btn.disabled=false; btn.innerText='Entrar'; }
+    // Reporte automático a Sentry (17-ago-2026): este ingreso funciona en la web pero
+    // falla en la app instalada, y pedirle a Inty que dicte el error costó varias rondas.
+    // Se manda el contexto que dice DÓNDE se corta —si la petición al worker ni sale, si
+    // sale y responde otra cosa, o si falla el paso de Firebase— y sobre todo si corre en
+    // app nativa o en navegador, que es justamente la diferencia entre lo que anda y lo
+    // que no. Así el próximo fallo se diagnostica leyendo Sentry, sin interrogar a nadie.
+    try{
+      if(window.Sentry && Sentry.captureException){
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), {
+          tags:{ donde:'entrarConCodigoTester',
+                 nativo: (typeof window.Capacitor!=='undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? 'si' : 'no' },
+          extra:{ correo:correo, urlWorker:AUTH_TOKEN_URL,
+                  version:(typeof APP_VERSION!=='undefined'?APP_VERSION:'?'),
+                  agente:(navigator.userAgent||'').slice(0,180) }
+        });
+      }
+    }catch(_s){}
     _lpAvisoLogin('No se pudo entrar: '+((err&&err.message)||err));
   }
 }
 (function(){
   function wire(){
-    var a=document.getElementById('abrirCodigoTester'), caja=document.getElementById('cajaCodigoTester');
-    if(a&&caja){ a.addEventListener('click',function(e){ e.preventDefault(); caja.style.display=(caja.style.display==='none'?'block':'none'); var c=document.getElementById('codigoTesterInput'); if(c&&caja.style.display==='block') try{ c.focus(); }catch(_e){} }); }
+    // Ya no hay enlace "Soy tester y tengo un código" que desplegar: la caja está abierta
+    // y es lo primero de la pantalla. Se quitó el wiring de ese enlace junto con él, para
+    // no dejar código muerto apuntando a un elemento que no existe.
     var b=document.getElementById('btnEntrarCodigo');
     if(b) b.addEventListener('click',function(){ _entrarConCodigoTester(); });
     var ci=document.getElementById('correoTesterInput');
@@ -2950,25 +3006,26 @@ function _reproducirVoz(item){
     // frase+género+arquetipo (no elección de voz en vivo), así que no hereda el bug de mezcla de
     // SLR71. Tiene prioridad; si la frase no está en el catálogo, cae al viejo Azure (voces/) como
     // respaldo. Ver voz-elevenlabs.js.
+    // LA VOZ ELEGIDA MANDA EN TODA LA APP (2026-08-16, pedido de Inty).
+    //
+    // Antes los mp3 pregrabados tenían prioridad y se llevaban puesta la voz elegida. El
+    // comentario de arriba decía que estaban indexados "por frase+género+arquetipo", pero el
+    // manifiesto solo tiene frase+género — la dimensión de arquetipo NO existe. Resultado:
+    // unas frases sonaban con la voz del catálogo y otras con la voz en vivo, y Pistero
+    // cambiaba de timbre a mitad de conversación. Eso es lo que Inty describía como
+    // "voces diferentes en las frases".
+    //
+    // Ahora se genera SIEMPRE en vivo con la voz elegida (ver _vozELid), y los pregrabados
+    // quedan de respaldo para cuando no hay red. No sale caro: el worker cachea en Cloudflare,
+    // así que una frase repetida no vuelve a pegarle a ElevenLabs.
+    //
+    // Sin candado `navigator.onLine` (trampa quitada 2026-08-13: miente seguido; los runtimes
+    // ya caen solos por su onerror/catch). Tampoco hay reparto por país: Azure quedó sin
+    // suscripción y ElevenLabs ya tiene voces chilenas reales.
     const _idEL = (typeof VOCES_MANIFEST_EL!=='undefined') && VOCES_MANIFEST_EL && VOCES_MANIFEST_EL.map && VOCES_MANIFEST_EL.map[item.t];
-    if(_idEL && typeof _vozArchivoEL==='function'){
-      vozTimerFin=setTimeout(_vozSiguiente, 12000);
-      _vozArchivoEL(item, durEst, _idEL, miGen);
-      return;
-    }
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
-    if(_id){
-      vozTimerFin=setTimeout(_vozSiguiente, 12000); // generoso; se recalibra con la duración real del audio
-      _vozArchivo(item, durEst, _id, miGen);
-      return;
-    }
-    // frase nueva (nombres, calles, números): se genera en vivo. Sin candado `navigator.onLine`
-    // (trampa quitada 2026-08-13: miente seguido; los runtimes ya caen solos a la nativa por su
-    // onerror/catch). + Voz por país: chilenos -> Azure es-CL (la marca de siempre); resto de
-    // Latinoamérica -> voz neutra premium (ElevenLabs) para que Pistero no suene chileno fuera de Chile.
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
-    const _cl = !paisUsuario || (''+paisUsuario).toLowerCase().slice(0,2)==='cl';
-    if(_cl){ _vozAzureRuntime(item, durEst, miGen); } else { _vozElevenRuntime(item, durEst, miGen); }
+    _vozElevenRuntime(item, durEst, miGen, false, { idEL:_idEL, idAz:_id });
     return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
@@ -3001,7 +3058,10 @@ function _vozArchivo(item, durEst, id, miGen){
   let cayo=false;
   // miGen!==vozGen: esta frase ya no es la vigente (se cortó o ya empezó la
   // siguiente) — no caer a la voz de respaldo por algo que ya nadie está esperando.
-  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  // A la nativa y no a Azure (2026-08-16): estos archivos pregrabados ya son EL RESPALDO
+  // de la voz en vivo, asi que si tambien fallan no queda nada mejor que intentar — mandarlos
+  // de vuelta a Azure hacia rebotar la cadena entre motores sin ganar nada.
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
     const a=new Audio('voces/'+pisteroGenero+id+'.mp3');
     const _pr=_rateArq(); try{ a.playbackRate=_pr; }catch(_e2){}
@@ -3017,7 +3077,10 @@ function _vozArchivoArq(item, durEst, arq, id, miGen){
   // Frase fija en la voz chilena del arquetipo (SLR71): voces/{arq}/{id}.mp3.
   try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onplaying=_vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=null; _vozNeuralAudio=null; } }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} 
   let cayo=false;
-  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  // A la nativa y no a Azure (2026-08-16): estos archivos pregrabados ya son EL RESPALDO
+  // de la voz en vivo, asi que si tambien fallan no queda nada mejor que intentar — mandarlos
+  // de vuelta a Azure hacia rebotar la cadena entre motores sin ganar nada.
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
     const a=new Audio('voces/'+arq+'/'+id+'.mp3');
     _vozNeuralAudio=a;
@@ -3028,13 +3091,50 @@ function _vozArchivoArq(item, durEst, arq, id, miGen){
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
-function _vozAzureRuntime(item, durEst, miGen){
+// VOCES CHILENAS DE ELEVENLABS (2026-08-16). Azure murió (suscripción vencida: el
+// worker devolvía 502 con code:401) y con él se fue la voz chilena. En vez de renovar
+// Azure, Pistero pasa a hablar SIEMPRE por ElevenLabs, con voces chilenas de verdad:
+//   Pistera -> Victoria (chilena profesional)
+//   Pistero -> Cristian Cornejo (chileno)
+// Se mandan por `&voz=` en la petición, así no hay que tocar el worker de la otra
+// cuenta (librepedal-ia-sudamerica vive en otra cuenta de Cloudflare, sin acceso).
+// Para cambiar de voz alcanza con reemplazar el id de acá: el catálogo completo se
+// consulta en `<worker>/?voces=1`.
+const VOZ_EL_F = 'Fd38GRHtJllY0CuguAy9'; // Victoria — Chilean Professional Fresh
+const VOZ_EL_M = 'ClNifCEVq1smkl4M3aTk'; // Cristian Cornejo — Spanish Chilean
+function _vozELid(){ return (pisteroGenero==='l') ? VOZ_EL_M : VOZ_EL_F; }
+// Velocidad de habla del arquetipo elegido, traducida al parámetro de ElevenLabs.
+// La base es 0.92 y no 1.0 a propósito: Pistero le habla a alguien pedaleando, con
+// viento y ruido de calle — se entiende mejor un poco más pausado. Sobre esa base se
+// aplica el ajuste del arquetipo (el "sabio" habla más lento, el "loco" más rápido),
+// acotado al rango que acepta ElevenLabs para que ninguna personalidad quede ininteligible.
+function _velArq(){
+  var base=0.92;
+  try{
+    var pr=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
+    var n=parseInt(pr.rate,10)||0;          // ej. '-18%' -> -18
+    var v=base*(1+n/200);                   // se aplica a la mitad: el % estaba pensado
+                                            // para Azure, que exagera menos que ElevenLabs
+    return Math.max(0.75, Math.min(1.1, Math.round(v*100)/100));
+  }catch(e){ return base; }
+}
+function _vozAzureRuntime(item, durEst, miGen, _yaProboEleven){
   // Voz chilena Azure EN VIVO para frases dinámicas (nombre, calles, números, chat).
-  // Va por el Worker (/aztts, la llave está segura en el servidor). Si falla, voz nativa
-  // (NO MeloTTS: esa es la "gringa" que no queremos). Cachea en Cloudflare, así frases
-  // repetidas no vuelven a pegarle a Azure.
+  // Va por el Worker (/aztts, la llave está segura en el servidor). Cachea en Cloudflare,
+  // así frases repetidas no vuelven a pegarle a Azure.
+  //
+  // ORDEN DE RESPALDO (arreglado 2026-08-16): si Azure falla, se prueba ElevenLabs ANTES
+  // de rendirse con la voz nativa. Antes caía directo a la nativa, y eso fue exactamente
+  // lo que pasó: la suscripción de Azure venció (el worker devolvía 502 con code:401) y,
+  // como los usuarios chilenos van por Azure, TODOS terminaban escuchando la voz nativa
+  // de Android — lo que Inty describió como "volvió la voz antigua". ElevenLabs estuvo
+  // vivo todo el tiempo, solo que nadie lo intentaba. `_yaProboEleven` corta el rebote
+  // infinito entre los dos motores.
   let cayo=false;
-  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true;
+    if(!_yaProboEleven) _vozElevenRuntime(item, durEst, miGen, true);
+    else _vozNativaOWeb(item, durEst);
+  };
   try{
     const pros=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
     const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&rate='+encodeURIComponent(pros.rate)+'&pitch='+encodeURIComponent(pros.pitch));
@@ -3046,15 +3146,31 @@ function _vozAzureRuntime(item, durEst, miGen){
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
-function _vozElevenRuntime(item, durEst, miGen){
-  // Voz neutra latina EN VIVO (ElevenLabs) para usuarios fuera de Chile. Va por el worker
-  // de la expansion (/eltts, la llave está segura en el servidor). Cachea en Cloudflare, así
-  // frases repetidas no vuelven a pegarle a ElevenLabs (ahorra caracteres). Si falla, cae a
-  // la voz chilena Azure (mejor eso que la nativa "gringa").
+function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure, _respaldo){
+  // Voz EN VIVO por ElevenLabs — es el motor principal de Pistero desde el 2026-08-16.
+  // Va por el worker (/eltts, la llave vive en el servidor) y le manda la voz elegida en
+  // `&voz=`. Cachea en Cloudflare, así una frase repetida no vuelve a pegarle a ElevenLabs.
+  //
+  // Escalera de respaldo, en orden: (1) el mp3 PREGRABADO de esa misma frase, si existe —
+  // sirve sin red y suena mucho mejor que la nativa; (2) Azure, por si algún día vuelve;
+  // (3) la voz nativa del teléfono, último recurso. `_yaProboAzure` corta el rebote
+  // infinito entre motores, y `_respaldo` trae los ids de los catálogos pregrabados.
   let cayo=false;
-  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozAzureRuntime(item, durEst, miGen); };
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true;
+    const r=_respaldo||{};
+    if(r.idEL && typeof _vozArchivoEL==='function') _vozArchivoEL(item, durEst, r.idEL, miGen);
+    else if(r.idAz && typeof _vozArchivo==='function') _vozArchivo(item, durEst, r.idAz, miGen);
+    else if(!_yaProboAzure) _vozAzureRuntime(item, durEst, miGen, true);
+    else _vozNativaOWeb(item, durEst);
+  };
   try{
-    const a=new Audio(IA_URL_NEUTRA+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
+    // Va por IA_URL (worker propio) y NO por IA_URL_NEUTRA: ese otro vive en una cuenta
+    // de Cloudflare distinta, sin acceso desde acá, así que no se le podían agregar
+    // cosas como la velocidad. Los dos sirven /eltts igual.
+    // `vel` traduce la velocidad del arquetipo (PERSONALIDAD_PROSODIA, de -18% a +22%)
+    // al parámetro de ElevenLabs. Sin esto la voz salía siempre a la velocidad por
+    // defecto —rápida— y un tester reportó que no se le entendía a Pistero.
+    const a=new Audio(IA_URL+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&voz='+encodeURIComponent(_vozELid())+'&vel='+_velArq());
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
@@ -7243,10 +7359,35 @@ function sugerirDestino(q){
   if(q.length<3){ box.classList.remove('show'); box.innerHTML=''; return; }
   clearTimeout(sugTimer);
   sugTimer=setTimeout(async function(){
-    let url='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=6&q='+encodeURIComponent(q);
-    const cc=await paisDelUsuario(); if(cc) url+='&countrycodes='+cc;
-    if(currentUserLocation){ const d=3,lo=currentUserLocation.lon,la=currentUserLocation.lat; url+='&viewbox='+(lo-d)+','+(la+d)+','+(lo+d)+','+(la-d); }
-    let g=[]; try{ const r=await fetch(url); g=await r.json(); }catch(e){}
+    const cc=await paisDelUsuario();
+    // BUSCADOR PREDICTIVO (17-ago-2026). Antes esto iba solo a Nominatim, que NO es un
+    // buscador de los que completan mientras escribís: exige el nombre casi entero. Inty
+    // escribió "baldía" —así transcribe la voz "Valdivia", porque en Chile la b y la v
+    // suenan igual— y recibió "Sin resultados"; con razón concluyó que el mapa no servía.
+    // Y con "Providencia" el primer resultado era Rhode Island, Estados Unidos.
+    // Photon (mismo OpenStreetMap detrás, gratis) sí es predictivo y acepta palabras a
+    // medias: "puerto var" -> Puerto Varas, "cajon del maip" -> Cajón del Maipo,
+    // "las cond" -> Las Condes. Con sesgo geográfico además ordena bien: "provi" devuelve
+    // Providencia de Santiago, no Provin de Francia. Nominatim queda de RESPALDO si
+    // Photon no responde, así que no se pierde nada de lo que ya andaba.
+    let g=[];
+    const sesgo=_sesgoBusqueda(cc);
+    try{
+      let pu='https://photon.komoot.io/api/?limit=6&q='+encodeURIComponent(q);
+      if(sesgo) pu+='&lat='+sesgo.lat+'&lon='+sesgo.lon;
+      const rp=await fetch(pu); const jp=await rp.json();
+      g=((jp&&jp.features)||[]).map(function(f){
+        const p=f.properties||{}, c=(f.geometry&&f.geometry.coordinates)||[];
+        const partes=[p.name, p.district||p.city||p.county, p.state, p.country].filter(Boolean);
+        return { lat:c[1], lon:c[0], display_name:partes.join(', ') };
+      }).filter(function(x){ return x.lat!=null && x.lon!=null; });
+    }catch(e){}
+    if(!g.length){
+      let url='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=6&q='+encodeURIComponent(q);
+      if(cc) url+='&countrycodes='+cc;
+      if(currentUserLocation){ const d=3,lo=currentUserLocation.lon,la=currentUserLocation.lat; url+='&viewbox='+(lo-d)+','+(la+d)+','+(lo+d)+','+(la-d); }
+      try{ const r=await fetch(url); g=await r.json(); }catch(e){}
+    }
     if(!g||!g.length){ box.innerHTML='<div class="sug" style="color:#7d8ba0">Sin resultados para "'+escapeHTML(q)+'"</div>'; box.classList.add('show'); return; }
     // titulo/resto se muestran como HTML: igual que en el resto de la app (rutas,
     // chat, comunidad) van por escapeHTML antes de insertarse — display_name viene
@@ -7266,8 +7407,51 @@ function elegirSugerencia(lat,lon,nombre){
 // País del usuario (código ISO, ej "cl") para resolver bien destinos ambiguos
 // como "Santiago" (la capital de TU país, no otra del mundo). Se cachea.
 let paisUsuario=localStorage.getItem('lp_pais')||null;
+// Deduce el país por la ZONA HORARIA del teléfono. Es instantáneo, no pide permisos y
+// no depende de la red ni del GPS. Existe porque el buscador de direcciones quedaba sin
+// ninguna referencia geográfica cuando el país era desconocido: alguien en Santiago
+// escribía "Providencia" y el primer resultado era Rhode Island, Estados Unidos. El
+// usuario concluye, con razón, que el buscador no sirve. Reportado el 17-ago-2026.
+function _paisPorZonaHoraria(){
+  var tz='';
+  try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){ return null; }
+  var mapa={
+    'America/Santiago':'cl','Pacific/Easter':'cl',
+    'America/Argentina':'ar','America/Buenos_Aires':'ar',
+    'America/Lima':'pe','America/Bogota':'co','America/Mexico_City':'mx',
+    'America/La_Paz':'bo','America/Asuncion':'py','America/Montevideo':'uy',
+    'America/Guayaquil':'ec','America/Caracas':'ve','America/Costa_Rica':'cr',
+    'America/Guatemala':'gt','America/Santo_Domingo':'do','America/Puerto_Rico':'pr',
+    'Europe/Madrid':'es','Atlantic/Canary':'es'
+  };
+  if(mapa[tz]) return mapa[tz];
+  // "America/Argentina/Cordoba" y similares: se prueba con el prefijo de dos tramos.
+  var pref=tz.split('/').slice(0,2).join('/');
+  if(mapa[pref]) return mapa[pref];
+  return null;
+}
+// Punto de referencia para ordenar los resultados del buscador. Primero el GPS real; si
+// no hay (permiso no dado todavía, o recién abrió la app), el centro del país deducido de
+// la zona horaria. Sin ninguna referencia, el buscador devuelve el mundo entero ordenado
+// por popularidad global y aparecen lugares de otros continentes antes que el de al lado.
+const _CENTROS_PAIS={
+  cl:{lat:-33.45,lon:-70.66}, ar:{lat:-34.60,lon:-58.38}, pe:{lat:-12.05,lon:-77.04},
+  co:{lat:4.71,lon:-74.07},   mx:{lat:19.43,lon:-99.13}, bo:{lat:-16.50,lon:-68.15},
+  py:{lat:-25.28,lon:-57.63}, uy:{lat:-34.90,lon:-56.16}, ec:{lat:-0.18,lon:-78.47},
+  ve:{lat:10.48,lon:-66.90},  cr:{lat:9.93,lon:-84.08},   gt:{lat:14.63,lon:-90.51},
+  do:{lat:18.49,lon:-69.93},  pr:{lat:18.47,lon:-66.11},  es:{lat:40.42,lon:-3.70}
+};
+function _sesgoBusqueda(cc){
+  if(typeof currentUserLocation!=='undefined' && currentUserLocation && currentUserLocation.lat!=null){
+    return { lat:currentUserLocation.lat, lon:currentUserLocation.lon };
+  }
+  return (cc && _CENTROS_PAIS[cc]) ? _CENTROS_PAIS[cc] : null;
+}
 async function paisDelUsuario(){
   if(paisUsuario) return paisUsuario;
+  // Antes de rendirse por falta de GPS: la zona horaria ya dice el país en la práctica.
+  var tzCc=_paisPorZonaHoraria();
+  if(tzCc){ paisUsuario=tzCc; try{ localStorage.setItem('lp_pais',tzCc); }catch(e){} return paisUsuario; }
   if(!currentUserLocation) return null;
   try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=3&lat='+currentUserLocation.lat+'&lon='+currentUserLocation.lon); const j=await r.json(); const cc=(j.address&&j.address.country_code)?j.address.country_code:null; if(cc){ paisUsuario=cc; try{ localStorage.setItem('lp_pais',cc); }catch(e){} } }catch(e){}
   return paisUsuario;

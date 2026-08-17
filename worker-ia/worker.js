@@ -132,7 +132,14 @@ async function correrModelo(env, messages, maxTokens) {
 //    que pase con el límite por IP. Con la caché de arriba, el uso normal (banco de
 //    ~900 frases fijas) casi nunca debería tocar este presupuesto. =====
 const REQS_POR_MIN = 30;
-const MAX_CHARS_DIA = 20000;
+// Subido de 20.000 a 120.000 el 2026-08-16. El número viejo se calculó cuando la mayoría
+// de las frases salían de mp3 pregrabados y solo lo nuevo (nombres, calles, números) se
+// generaba en vivo. Ahora TODO se genera en vivo con la voz elegida —así Pistero no cambia
+// de timbre a mitad de conversación— y con 20.000 el corte saltaba el mismo día, dejando a
+// los testers con la voz robótica. La caché de Cloudflare hace el trabajo pesado: cada
+// frase se paga una sola vez y después se sirve del borde. Sigue siendo un tope duro
+// contra abuso, solo que a una altura que el uso real no toca.
+const MAX_CHARS_DIA = 120000;
 async function _limiteIP(env, ip) {
   if (!env.VOZ_CUOTA || !ip) return true;
   const minuto = Math.floor(Date.now() / 60000);
@@ -261,11 +268,20 @@ export default {
       const parseNum = function (v, def) { const n = parseFloat(v); return (isFinite(n) && n >= 0 && n <= 1) ? n : def; };
       const stab = parseNum(url.searchParams.get("stab") || (body && body.stab), 0.32);
       const style = parseNum(url.searchParams.get("style") || (body && body.style), 0.6);
+      // VELOCIDAD (?vel=). Agregado el 17-ago-2026: un tester reportó que Pistero habla
+      // demasiado rápido y no se le entiende. La causa era que al pasar toda la voz a
+      // ElevenLabs, las velocidades por arquetipo (de -18% a +22%, definidas en
+      // PERSONALIDAD_PROSODIA) dejaron de enviarse — sonaba siempre a la velocidad por
+      // defecto de ElevenLabs, que es rápida. El default de acá (0.92) es levemente más
+      // lento que el neutro a propósito: para hablarle a alguien pedaleando, con viento
+      // y tráfico, la claridad vale más que la agilidad. Rango permitido por ElevenLabs.
+      const velRaw = parseFloat(url.searchParams.get("vel") || (body && body.vel));
+      const vel = (isFinite(velRaw) && velRaw >= 0.7 && velRaw <= 1.2) ? velRaw : 0.92;
       try {
         const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
           method: "POST",
           headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" },
-          body: JSON.stringify({ text: t, model_id: modelo, voice_settings: { stability: stab, similarity_boost: 0.8, style: style, use_speaker_boost: true } })
+          body: JSON.stringify({ text: t, model_id: modelo, voice_settings: { stability: stab, similarity_boost: 0.8, style: style, use_speaker_boost: true, speed: vel } })
         });
         if (!r.ok) return new Response(JSON.stringify({ error: "eltts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
         const buf = await r.arrayBuffer();

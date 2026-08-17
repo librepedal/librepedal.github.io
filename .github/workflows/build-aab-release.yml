@@ -35,8 +35,9 @@ jobs:
       - name: Agregar plataforma Android
         run: npx cap add android
 
-      - name: Copiar google-services.json (Google Sign-In nativo)
-        run: cp google-services.json android/app/google-services.json
+      # Paso de google-services.json DESACTIVADO el 2026-08-17 junto con el plugin nativo
+      # de Firebase: sin el plugin, este archivo no lo procesa nadie. Se reactiva cuando
+      # se vuelva a intentar el Google Sign-In nativo, junto con la dependencia.
 
       - name: Instalar plataforma Android 16 (API 36) en el SDK del runner
         # Android 16/API 36 es muy reciente: el SDK preinstalado en el runner de

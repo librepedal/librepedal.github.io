@@ -1,4 +1,29 @@
 # Estado del login con Google — 2026-08-16 (madrugada)
+> ## 🔴 LA APP SE CAIA AL ABRIR — plugin nativo retirado (2026-08-17 ~00:45)
+> Los testers reportaron que la app se cerraba sola al abrirla ("Libre Pedal continua
+> fallando" / "esta aplicacion tiene un error"). Es un crash NATIVO: ocurre antes de que
+> cargue nada de la web, por eso ningun arreglo del login lo tocaba. NADIE podia entrar.
+>
+> **Causa mas probable (no confirmada con traza):** el plugin nativo de Firebase. Es lo
+> UNICO nativo que cambio entre el ultimo build que funcionaba y el que se cae:
+>   29780164 (15-ago) sin plugin -> funcionaba
+>   29780919 (16-ago) con plugin -> se cae
+> El plugin se inicializa al arrancar el proceso, justo cuando ocurre el crash.
+>
+> **Accion tomada:** se saco el plugin, su bloque de capacitor.config.json y el paso del
+> workflow que copia google-services.json. Build 29781994 (8.753) verificado por dentro
+> (3 plugins, sin Firebase, 4,5 MB = el tamano de los builds sanos) y ENVIADO A REVISION
+> en la pista Alpha el 17-ago 00:45.
+>
+> **Play Console todavia NO tiene la traza**: la lista de Fallas y ANR sale vacia incluso
+> sin filtros porque los datos van con ~1 dia de atraso (ultima actualizacion: domingo
+> 23:00). Revisar el 17-ago para confirmar o descartar la hipotesis:
+> https://play.google.com/console/u/0/developers/7214985752909042364/app/4976151700640409134/vitals/crashes
+>
+> **No se perdio nada:** todo el trabajo del Sign-In nativo sigue en git (rama
+> google-signin-nativo y el historial de main). El ingreso por codigo de tester es 100%
+> web y no depende de este plugin, asi que sigue funcionando.
+
 
 Documento de traspaso. Si sos una sesión nueva, esto es TODO lo que necesitás
 saber para continuar sin releer la conversación anterior.
