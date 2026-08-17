@@ -45,6 +45,17 @@
      apertura de la app. Era una petición a accounts.google.com por visita, para nada.
      Si alguna vez se revive GIS, hay que volver a agregar esta línea. -->
 <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
+<script>
+/* ARRANQUE SIN DESTELLO (2026-08-17). Bug que reportó Inty: al abrir la app aparecía
+   un instante la Esfera/Inicio y recién después saltaba el login. Causa: `#auth` nace
+   con `display:none` en el CSS, así que el primer dibujado siempre era la app, y la
+   decisión de mostrar el login llegaba tarde, en `window.onload` — después de cargar
+   Firebase, mapas y todo lo demás.
+   Se decide ACÁ, antes de pintar: si no hay sesión guardada, se marca el documento y
+   el CSS muestra el login de entrada. Es una lectura sincrónica de localStorage, no
+   espera red ni Firebase. Quien SÍ tiene sesión no ve ningún cambio. */
+try{ if(!localStorage.getItem('lp_session')) document.documentElement.classList.add('lp-sin-sesion'); }catch(e){}
+</script>
 <style>
 :root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
 /* ── Temas de UI app-wide (Sólido / Cristal) · ver COORDINACION-IA/SPEC-TEMAS-APP-WIDE-2026-08-14.md
@@ -226,6 +237,10 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 /* Medido: 37x28. El boton Atras llegaba a 22px de alto, menos de la mitad del minimo. */
 .es-globe{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
 #auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px 20px 40px;text-align:center;overflow-y:auto}
+/* Sin sesión guardada -> el login se ve DESDE EL PRIMER DIBUJADO, sin que asome la
+   Esfera antes (ver el script de arranque en el <head>). window.onload sigue haciendo
+   lo suyo después; esto solo adelanta la decisión para que no haya destello. */
+html.lp-sin-sesion #auth{display:flex}
 .auth-box{background:#151b2e;padding:20px;border-radius:20px;border:1px solid var(--p);width:100%;max-width:400px}
 .auth-box h1{color:var(--p);margin:10px 0;font-size:1.3rem}
 .auth-box input{width:100%;padding:10px;margin-bottom:8px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:16px;outline:none}
@@ -734,7 +749,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 #abanicoReporte .abn-op:active{transform:scale(.94)}
 #abanicoReporte .abn-e{font-size:1.15rem}
 </style>
-<form id="auth" onsubmit="enviarLinkMagico(event)">
+<!-- El submit del formulario apunta al ingreso por CÓDIGO, no al link mágico: el botón
+     del link mágico está oculto durante la prueba, pero los campos siguen en el DOM y
+     un Enter dentro de la caja del código habría disparado el envío de correo (que hoy
+     no entrega) en vez de entrar. -->
+<form id="auth" onsubmit="event.preventDefault(); _entrarConCodigoTester(); return false;">
 <div class="auth-box">
 <div class="lp-logo-wrap">
   <video class="lp-logo-video" autoplay muted loop playsinline disablepictureinpicture poster="logo-transparent.png" aria-label="Libre Pedal">
@@ -767,8 +786,17 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <p style="color:var(--g);font-size:0.78rem;font-weight:800;margin:0 0 8px">¿Cómo te mueves? <span style="color:#7d8ba0;font-weight:400">— la app se acomoda a tu modo, y lo cambias cuando quieras</span></p>
   <div class="helmet-grid" id="modoRegistroGrid"></div>
 </div>
-<input type="text" id="nombre-input" placeholder="Tu nombre" required maxlength="60" style="border:2px solid var(--g)">
-<input type="email" id="em" placeholder="correo@ejemplo.com" required maxlength="100">
+<!-- BLOQUE DEL LINK MÁGICO — OCULTO durante la prueba cerrada (2026-08-17).
+     Por qué: el envío por correo NO está entregando. El SMTP propio (Brevo) descarta
+     los mensajes porque a librepedal.cl le faltan SPF y DKIM, y el mailer de Firebase
+     tiene un cupo diario que 3 pruebas agotan. Un tester escribía su correo, tocaba
+     "Enviarme el enlace" y no le llegaba nada — la peor experiencia posible, porque
+     parece que la app está rota. Se vuelve a mostrar cuando el correo entregue de
+     verdad. Los campos quedan en el DOM (no se borran) para no romper el código que
+     los lee; solo se ocultan. -->
+<div id="bloqueLinkMagico" style="display:none">
+<input type="text" id="nombre-input" placeholder="Tu nombre" maxlength="60" style="border:2px solid var(--g)">
+<input type="email" id="em" placeholder="correo@ejemplo.com" maxlength="100">
 <select id="pais-input" title="Tu país (adapta las frases a tu jerga)">
 <option value="auto"><i class="fas fa-earth-americas"></i> Detectar mi país automáticamente</option>
 <option value="cl">🇨🇱 Chile</option>
@@ -790,9 +818,25 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </select>
 <button type="submit"><i class="fas fa-paper-plane"></i> Enviarme el enlace</button>
 <p style="color:#7d8ba0;font-size:0.72rem;margin-top:8px;text-align:center">Te llega un enlace al correo para entrar seguro (sin contraseña).</p>
+</div><!-- /bloqueLinkMagico -->
+
+<!-- ENTRADA POR CÓDIGO — la ÚNICA vía durante la prueba cerrada, y por eso va primera,
+     grande y abierta. Antes era un enlace chico al final de la pantalla y la gente no lo
+     encontraba. No depende del correo ni de Google: solo del worker propio. -->
+<div id="cajaCodigoTester" style="margin-top:6px;padding:16px;border:2px solid var(--p);border-radius:14px;background:rgba(252,76,2,.07)">
+  <p style="font-size:.95rem;color:#e7edf6;font-weight:800;margin:0 0 4px">Entrar a la prueba</p>
+  <p style="font-size:.78rem;color:#9fb3c8;margin:0 0 12px;line-height:1.5">Escribe el código que te pasaron y tu correo.</p>
+  <input type="text" id="codigoTesterInput" placeholder="Código" autocomplete="off" maxlength="40" style="width:100%;margin-bottom:9px;font-size:1.05rem;letter-spacing:.06em;text-align:center;font-weight:700;text-transform:uppercase">
+  <input type="email" id="correoTesterInput" placeholder="tu correo" autocomplete="email" maxlength="100" style="width:100%;margin-bottom:12px;font-size:1rem">
+  <button type="button" id="btnEntrarCodigo" style="width:100%;background:var(--p);color:#0b1220;border:none;border-radius:12px;padding:15px;font-weight:900;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 14px rgba(252,76,2,.35)">Entrar</button>
+</div>
 </div><!-- /emailFallback -->
-<div style="text-align:center;margin:16px 0 8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)">
-  <p style="color:#7d8ba0;font-size:0.74rem;margin:0 0 10px">o entra con Google</p>
+
+<!-- Google queda ABAJO y discreto: todavía no funciona en la app instalada (necesita el
+     plugin nativo, retirado el 17-ago por el crash al abrir). Se deja en su sitio para
+     reactivarlo sin rehacer nada cuando esté resuelto. -->
+<div style="text-align:center;margin:20px 0 8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
+  <p style="color:#7d8ba0;font-size:0.72rem;margin:0 0 10px">o entra con Google</p>
 </div>
 <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
 <button type="button" id="gbtnFallback" onclick="_entrarConGoogle()" style="display:none;width:100%;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">
@@ -800,20 +844,6 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   Entrar con Google
 </button>
 <p style="color:#7d8ba0;font-size:0.68rem;margin-top:6px;text-align:center">Al entrar aceptas los <a href="terminos.html" target="_blank" style="color:var(--p)">Términos</a> y la <a href="privacidad.html" target="_blank" style="color:var(--p)">Política de Privacidad</a>.</p>
-<!-- ENTRADA POR CÓDIGO DE TESTER (2026-08-16, temporal — se saca al cerrar la prueba
-     cerrada). Existe porque durante la prueba el ingreso quedó bloqueado por los dos
-     lados a la vez: Google no funciona en la app ya instalada (config nativa, necesita
-     un .aab nuevo en Play) y el correo no se entrega (SMTP sin SPF/DKIM + el cupo
-     diario de Firebase, que 3 pruebas agotan). Con esto el tester entra solo. -->
-<div style="margin-top:14px;text-align:center">
-  <a href="#" id="abrirCodigoTester" style="color:#9fb3c8;font-size:0.74rem;text-decoration:underline">Soy tester y tengo un código</a>
-</div>
-<div id="cajaCodigoTester" style="display:none;margin-top:10px;padding:12px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;background:rgba(255,255,255,0.03)">
-  <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 9px;line-height:1.5">Escribí el código que te pasaron y el correo con el que te inscribiste a la prueba.</p>
-  <input type="text" id="codigoTesterInput" placeholder="Código de tester" autocomplete="off" maxlength="40" style="width:100%;margin-bottom:8px">
-  <input type="email" id="correoTesterInput" placeholder="tu correo de la prueba" autocomplete="email" maxlength="100" style="width:100%;margin-bottom:10px">
-  <button type="button" id="btnEntrarCodigo" style="width:100%;background:var(--p);color:#0b1220;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:0.92rem;cursor:pointer">Entrar</button>
-</div>
 <div style="display:none" aria-hidden="true">
 <div class="character-preview-large">
   <svg id="preview-svg" viewBox="0 0 200 200"></svg>
@@ -1559,7 +1589,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.753'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.754'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1736,8 +1766,9 @@ async function _entrarConCodigoTester(){
 }
 (function(){
   function wire(){
-    var a=document.getElementById('abrirCodigoTester'), caja=document.getElementById('cajaCodigoTester');
-    if(a&&caja){ a.addEventListener('click',function(e){ e.preventDefault(); caja.style.display=(caja.style.display==='none'?'block':'none'); var c=document.getElementById('codigoTesterInput'); if(c&&caja.style.display==='block') try{ c.focus(); }catch(_e){} }); }
+    // Ya no hay enlace "Soy tester y tengo un código" que desplegar: la caja está abierta
+    // y es lo primero de la pantalla. Se quitó el wiring de ese enlace junto con él, para
+    // no dejar código muerto apuntando a un elemento que no existe.
     var b=document.getElementById('btnEntrarCodigo');
     if(b) b.addEventListener('click',function(){ _entrarConCodigoTester(); });
     var ci=document.getElementById('correoTesterInput');
