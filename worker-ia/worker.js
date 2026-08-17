@@ -197,29 +197,28 @@ export default {
     if (azText) {
       if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
       if (!(await _presupuestoDiario(env, String(azText).length))) return new Response(JSON.stringify({ error: "presupuesto_diario_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
-      const key = env.AZURE_TTS_KEY;
-      if (!key) return new Response(JSON.stringify({ error: "sin_llave_azure" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
-      const region = env.AZURE_TTS_REGION || "eastus";
-      // Voz: por defecto la chilena según género; o una específica vía ?v=ShortName (variedad por arquetipo).
-      // OJO: es-CL solo tiene 2 voces neuronales (Catalina/Lorenzo) — no hay más "voces" chilenas
-      // que pedir por nombre. La variedad real por arquetipo (Entrenador, Sabio, Pícaro, etc.) se
-      // logra con prosodia (rate/pitch) sobre esas mismas 2 voces, no cambiando de voz.
-      const vParam = url.searchParams.get("v");
-      const voz = (vParam && /^es-[A-Z]{2}-[A-Za-z]+Neural$/.test(vParam)) ? vParam : ((url.searchParams.get("g") === "c") ? "es-CL-CatalinaNeural" : "es-CL-LorenzoNeural");
-      const t = String(azText).slice(0, 480).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      // rate/pitch: porcentaje con signo, ej "+10%"/"-15%" (formato SSML de Azure). Se validan
-      // estrictos porque van directo al SSML — cualquier otra cosa se ignora, sin prosodia.
-      const rateP = url.searchParams.get("rate");
-      const pitchP = url.searchParams.get("pitch");
-      const rate = (rateP && /^[+-]\d{1,2}%$/.test(rateP)) ? rateP : null;
-      const pitch = (pitchP && /^[+-]\d{1,2}%$/.test(pitchP)) ? pitchP : null;
-      const inner = (rate || pitch) ? ("<prosody rate='" + (rate || "+0%") + "' pitch='" + (pitch || "+0%") + "'>" + t + "</prosody>") : t;
-      const ssml = "<speak version='1.0' xml:lang='es-CL'><voice name='" + voz + "'>" + inner + "</voice></speak>";
+      // VOZ DINÁMICA por ElevenLabs (Azure es-CL murió: su clave gratis expiró y daba 401 ->
+      // Pistero caía a la voz robótica). Mapa arquetipo->voice_id = los MISMOS de la
+      // pre-generación voces-el/, para que la voz EN VIVO suene igual que las frases fijas del
+      // arquetipo elegido (fin del "se cuela otra voz"). La app manda ?arq=<personalidad>&g=<l|c>.
+      // Se conserva el anti-abuso + caché de arriba/abajo intactos.
+      const key = env.ELEVENLABS_API_KEY;
+      if (!key) return new Response(JSON.stringify({ error: "sin_llave_elevenlabs" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      const VOZ_ARQ = {
+        l: { cercano:"452WrNT9o8dphaYW5YGU", compadre:"0cheeVA5B3Cv6DGq65cT", entrenador:"qRUgOhnxGASxirG4fKjv", roquero:"4XUsiqPDK4UACIM2BILe", profe:"57D8YIbQSuE3REDPO6Vm", solitario:"94zOad0g7T7K4oa7zhDq", loco:"tomkxGQGz4b1kE0EM722", cicletero:"j7XQZUnVCfhpa94EsaJS", sabio:"9TcPbUAhHnAV8mzFDAWU", relajado:"dF1Qg3iMRirscWEMtEKb", aventurero:"kKcRoM4gR6HLJt6Zupbs", maternal:"yytxkT3pNVMWDHn3KXrY", seductor:"P6PQtQGB3yM21Aj1vGJ2", otaku:"4GeB1bS2GAHAsGRM0eeU" },
+        c: { cercano:"2rigMbVWLdqtBSCahJFX", compadre:"Fd38GRHtJllY0CuguAy9", entrenador:"rEVYTKPqwSMhytFPayIb", roquero:"nbcvT3C2tyOd2OsRAtUf", profe:"86V9x9hrQds83qf7zaGn", solitario:"9EU0h6CVtEDS6vriwwq5", loco:"qWWAqFomnJ99VwQLREfT", cicletero:"x5IDPSl4ZUbhosMmVFTk", sabio:"eBthAb30UYbt2nojGXeA", relajado:"2Lb1en5ujrODDIqmp7F3", aventurero:"9oPKasc15pfAbMr7N6Gs", maternal:"ajOR9IDAaubDK5qtLUqQ", seductor:"LudcwvHIZaqQOcQfVZSY", otaku:"iFhPOZcajR7W3sDL39qJ" }
+      };
+      const gsel = (url.searchParams.get("g") === "c") ? "c" : "l";
+      const arq = (url.searchParams.get("arq") || "").toLowerCase().replace(/[^a-z]/g, "");
+      const vId = url.searchParams.get("voz") || (body && body.voz);
+      const voiceId = (vId && /^[A-Za-z0-9]{16,40}$/.test(vId)) ? vId : (VOZ_ARQ[gsel][arq] || VOZ_ARQ[gsel].cercano);
+      const t = String(azText).slice(0, 480);
+      const modelo = env.ELEVENLABS_MODEL || "eleven_multilingual_v2";
       try {
-        const r = await fetch("https://" + region + ".tts.speech.microsoft.com/cognitiveservices/v1", {
+        const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
           method: "POST",
-          headers: { "Ocp-Apim-Subscription-Key": key, "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "audio-24khz-96kbitrate-mono-mp3", "User-Agent": "LibrePedal" },
-          body: ssml
+          headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" },
+          body: JSON.stringify({ text: t, model_id: modelo, voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true } })
         });
         if (!r.ok) return new Response(JSON.stringify({ error: "aztts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
         const buf = await r.arrayBuffer();
