@@ -229,7 +229,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-hint{position:absolute;top:44px;left:0;right:0;text-align:center;color:#8fb0c8;font-size:0.72rem;pointer-events:none}
 .es-modo-rapido{position:absolute;top:66px;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;gap:14px;z-index:4;pointer-events:none}
 .es-modo-chip{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;pointer-events:auto}
-.es-modo-chip .es-modo-ico{width:48px;height:48px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1.5rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
+.es-modo-chip .es-modo-ico{width:36px;height:36px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1.15rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
 .es-modo-chip .es-modo-txt{font-size:0.6rem;font-weight:700;letter-spacing:0.02em;color:#8fb0c8;text-shadow:0 1px 3px rgba(0,0,0,0.6);opacity:0.75;transition:color 0.15s,opacity 0.15s}
 .es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.14);box-shadow:0 0 16px -2px var(--chip-c)}
 .es-modo-chip.selected .es-modo-txt{color:#fff;opacity:1}
@@ -740,7 +740,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 .lp-logo-video{width:100%;height:auto;display:block;border-radius:10px;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.5))}
 /* Iconos de modo a medida (bici/huellas/auto) — tamaño y color heredado del modo. */
 .modo-ico-svg{display:flex;justify-content:center;align-items:center;height:30px}
-.modo-ico-svg svg,.es-modo-ico svg{width:26px;height:26px;display:block}
+.modo-ico-svg svg,.es-modo-ico svg{width:20px;height:20px;display:block}
 /* Abanico de reporte (v7.29): el botón Reportar del mapa despliega 4 opciones animadas. */
 #abanicoReporte{position:absolute;right:14px;bottom:170px;z-index:501;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
 #abanicoReporte.on{pointer-events:auto}
@@ -1004,7 +1004,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <header>
 <div style="display:flex;align-items:center;gap:4px">
 <button class="es-globe" id="btnAtras" onclick="volverAtras()" title="Atrás" style="display:none"><i class="fas fa-arrow-left"></i></button>
-<h2 style="margin:0"><i class="fas fa-bicycle"></i> Libre Pedal</h2>
+<h2 style="margin:0"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></h2>
 </div>
 <div class="hdr-right">
 <button class="es-globe" id="btnEsferaHeader" onclick="abrirEsfera()" title="Esfera de apps"><i class="fas fa-globe"></i> </button>
@@ -10660,7 +10660,7 @@ function _pintarLunaEsfera(){
     var s=50, r=s/2*0.86, cx=s/2, cy=s/2, t=f*2*Math.PI, rx=r*Math.cos(t), wax=f<0.5, sO=wax?1:0, sI=(rx>0)?(1-sO):sO;
     var top=cx+","+(cy-r), bot=cx+","+(cy+r);
     var lit="M "+top+" A "+r+","+r+" 0 0 "+sO+" "+bot+" A "+Math.abs(rx).toFixed(2)+","+r+" 0 0 "+sI+" "+top+" Z";
-    el.innerHTML='<svg width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><defs><radialGradient id="lnG" cx="38%" cy="34%" r="72%"><stop offset="0%" stop-color="#fdfdf5"/><stop offset="55%" stop-color="#e9edf4"/><stop offset="100%" stop-color="#b9c2d4"/></radialGradient><clipPath id="lnC"><path d="'+lit+'"/></clipPath></defs><circle cx="'+cx+'" cy="'+cy+'" r="'+(r*1.45)+'" fill="rgba(210,225,255,.14)"/><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#141a26"/><path d="'+lit+'" fill="url(#lnG)"/><g clip-path="url(#lnC)" opacity="0.5" fill="#9aa4b8"><ellipse cx="'+(cx-r*0.18)+'" cy="'+(cy-r*0.22)+'" rx="'+(r*0.2)+'" ry="'+(r*0.16)+'"/><ellipse cx="'+(cx-r*0.02)+'" cy="'+(cy+r*0.05)+'" rx="'+(r*0.26)+'" ry="'+(r*0.2)+'"/><ellipse cx="'+(cx+r*0.3)+'" cy="'+(cy+r*0.18)+'" rx="'+(r*0.14)+'" ry="'+(r*0.12)+'"/></g></svg>';
+    el.innerHTML='<svg width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><defs><radialGradient id="lnG" cx="38%" cy="34%" r="72%"><stop offset="0%" stop-color="#fdfdf5"/><stop offset="55%" stop-color="#e9edf4"/><stop offset="100%" stop-color="#b9c2d4"/></radialGradient><clipPath id="lnC"><path d="'+lit+'"/></clipPath></defs><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#141a26"/><path d="'+lit+'" fill="url(#lnG)"/><g clip-path="url(#lnC)" opacity="0.5" fill="#9aa4b8"><ellipse cx="'+(cx-r*0.18)+'" cy="'+(cy-r*0.22)+'" rx="'+(r*0.2)+'" ry="'+(r*0.16)+'"/><ellipse cx="'+(cx-r*0.02)+'" cy="'+(cy+r*0.05)+'" rx="'+(r*0.26)+'" ry="'+(r*0.2)+'"/><ellipse cx="'+(cx+r*0.3)+'" cy="'+(cy+r*0.18)+'" rx="'+(r*0.14)+'" ry="'+(r*0.12)+'"/></g></svg>';
     el.title="Luna";
     el.style.opacity=0.92;
   }catch(e){}
