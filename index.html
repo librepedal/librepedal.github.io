@@ -219,7 +219,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-icon{position:absolute;left:0;top:0;width:76px;text-align:center;will-change:transform,opacity}
 /* Nocturno Pro: la caja del ícono deja el degradado café y el glow naranja.
    Superficie limpia + hairline; el color del ícono lo hereda el SVG (currentColor). */
-.es-ico{width:60px;height:60px;margin:0 auto;border-radius:20px;display:flex;align-items:center;justify-content:center;color:var(--p);background:linear-gradient(180deg,#141f33,#0c1422);border:0.5px solid rgba(252,76,2,0.4);box-shadow:0 7px 20px rgba(0,0,0,0.5);animation:esPulse 2.6s ease-in-out infinite;will-change:transform;position:relative;overflow:hidden}
+.es-ico{width:60px;height:60px;margin:0 auto;border-radius:20px;display:flex;align-items:center;justify-content:center;color:var(--p);background:linear-gradient(180deg,#141f33,#0c1422);border:0.5px solid rgba(252,76,2,0.4);animation:esPulse 2.6s ease-in-out infinite;will-change:transform;position:relative;overflow:hidden}
 .es-ico::before{display:none}
 @keyframes esPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 #esCanvas{position:absolute;left:0;top:0;pointer-events:none;z-index:0}
@@ -229,7 +229,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-hint{position:absolute;top:44px;left:0;right:0;text-align:center;color:#8fb0c8;font-size:0.72rem;pointer-events:none}
 .es-modo-rapido{position:absolute;top:66px;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;gap:14px;z-index:4;pointer-events:none}
 .es-modo-chip{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;pointer-events:auto}
-.es-modo-chip .es-modo-ico{width:36px;height:36px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1.15rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
+.es-modo-chip .es-modo-ico{width:30px;height:30px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
 .es-modo-chip .es-modo-txt{font-size:0.6rem;font-weight:700;letter-spacing:0.02em;color:#8fb0c8;text-shadow:0 1px 3px rgba(0,0,0,0.6);opacity:0.75;transition:color 0.15s,opacity 0.15s}
 .es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.14);box-shadow:0 0 16px -2px var(--chip-c)}
 .es-modo-chip.selected .es-modo-txt{color:#fff;opacity:1}
@@ -741,7 +741,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 .lp-logo-video{width:100%;height:auto;display:block;border-radius:10px;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.5))}
 /* Iconos de modo a medida (bici/huellas/auto) — tamaño y color heredado del modo. */
 .modo-ico-svg{display:flex;justify-content:center;align-items:center;height:30px}
-.modo-ico-svg svg,.es-modo-ico svg{width:20px;height:20px;display:block}
+.modo-ico-svg svg,.es-modo-ico svg{width:17px;height:17px;display:block}
 /* Abanico de reporte (v7.29): el botón Reportar del mapa despliega 4 opciones animadas. */
 #abanicoReporte{position:absolute;right:14px;bottom:170px;z-index:501;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
 #abanicoReporte.on{pointer-events:auto}
