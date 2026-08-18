@@ -4547,7 +4547,7 @@ async function _completarLoginVerificado(cuVal, nombre, e_val){
     throw err;
   }
 }
-async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
+async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ try{ await firebase.auth().signOut(); }catch(e){} localStorage.removeItem('lp_session'); location.reload(); } }
 function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
 // Ahora vive dentro del menú de la ficha de usuario: sin fondo de píldora, el estado
 // se marca con el cian de Pistero cuando está activo.
