@@ -979,6 +979,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <canvas id="esStars"></canvas>
 <div id="esPostales"><div class="es-post-layer" id="esPostA"></div><div class="es-post-layer" id="esPostB"></div></div>
 <div id="esFlash"></div>
+<div id="esLuna" aria-hidden="true" style="position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;width:50px;height:50px;z-index:4;pointer-events:none;opacity:0;transition:opacity 1.4s ease;filter:drop-shadow(0 2px 7px rgba(0,0,0,.5))"></div>
 <div class="es-title">Libre Pedal</div>
 <div class="es-hint">Gira con el dedo · toca un ícono para entrar</div>
 <div class="es-modo-rapido" id="esModoRapido"></div>
@@ -10650,6 +10651,20 @@ function _esTap(e){
   const p=_esXY(e), r=wrap.getBoundingClientRect();
   esToques.push({x:p.x-r.left, y:p.y-r.top, t:Date.now()});
 }
+function _pintarLunaEsfera(){
+  try{
+    var el=document.getElementById("esLuna"); if(!el) return;
+    var h=new Date().getHours(); if(!(h>=19||h<7)){ el.style.opacity=0; return; }
+    var SIN=29.530588853, REF=Date.UTC(2000,0,6,18,14);
+    var f=((new Date().getTime()-REF)/864e5 % SIN)/SIN; if(f<0) f+=1;
+    var s=50, r=s/2*0.86, cx=s/2, cy=s/2, t=f*2*Math.PI, rx=r*Math.cos(t), wax=f<0.5, sO=wax?1:0, sI=(rx>0)?(1-sO):sO;
+    var top=cx+","+(cy-r), bot=cx+","+(cy+r);
+    var lit="M "+top+" A "+r+","+r+" 0 0 "+sO+" "+bot+" A "+Math.abs(rx).toFixed(2)+","+r+" 0 0 "+sI+" "+top+" Z";
+    el.innerHTML='<svg width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><defs><radialGradient id="lnG" cx="38%" cy="34%" r="72%"><stop offset="0%" stop-color="#fdfdf5"/><stop offset="55%" stop-color="#e9edf4"/><stop offset="100%" stop-color="#b9c2d4"/></radialGradient><clipPath id="lnC"><path d="'+lit+'"/></clipPath></defs><circle cx="'+cx+'" cy="'+cy+'" r="'+(r*1.45)+'" fill="rgba(210,225,255,.14)"/><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#141a26"/><path d="'+lit+'" fill="url(#lnG)"/><g clip-path="url(#lnC)" opacity="0.5" fill="#9aa4b8"><ellipse cx="'+(cx-r*0.18)+'" cy="'+(cy-r*0.22)+'" rx="'+(r*0.2)+'" ry="'+(r*0.16)+'"/><ellipse cx="'+(cx-r*0.02)+'" cy="'+(cy+r*0.05)+'" rx="'+(r*0.26)+'" ry="'+(r*0.2)+'"/><ellipse cx="'+(cx+r*0.3)+'" cy="'+(cy+r*0.18)+'" rx="'+(r*0.14)+'" ry="'+(r*0.12)+'"/></g></svg>';
+    el.title="Luna";
+    el.style.opacity=0.92;
+  }catch(e){}
+}
 function abrirEsfera(){
   const sc=document.getElementById('esferaScreen'); if(!sc) return; sc.classList.add('on');
   if(!esEls.length) construirEsfera();
@@ -10662,7 +10677,7 @@ function abrirEsfera(){
   esIntroStart=Date.now();
   const fl=document.getElementById('esFlash'); if(fl){ fl.classList.remove('boom'); void fl.offsetWidth; fl.classList.add('boom'); }
   sonidoArco();
-  esAplicarFondoModo();
+  esAplicarFondoModo(); _pintarLunaEsfera();
   const k=document.getElementById('esKm'); if(k) k.innerText=(us.di||0).toFixed(1);
   // Antes solo contaba viajes PLANIFICADOS completados — para la mayoría, que sale a
   // pedalear con "Iniciar navegación" directo (sin pasar por el planificador), este
