@@ -4,6 +4,49 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## v8.758 — 2026-08-18 — Claude (sesión nueva) · hipótesis + fix: faltaban los Workers en `allowNavigation` de Capacitor (posible causa de "funciona en la web, falla en la app instalada")
+
+**Contexto:** Inty reportó "traté de entrar y no pude" (recién, hoy). Encontré el commit
+`41c8020` ("diag(login): reportar a Sentry cuando falla el ingreso por codigo en la app",
+17-ago) donde el propio Inty escribió: *"este ingreso funciona en la web pero falla en la
+app instalada"* — o sea, es un bug YA CONOCIDO y sin causa raíz confirmada (por eso se
+agregó Sentry ahí, no un fix directo).
+
+**Hipótesis con evidencia, no un "debería ser":** `capacitor.config.json` →
+`server.allowNavigation` lista TODOS los dominios externos que la app consulta por
+`fetch()` (Nominatim, OSRM, Mapterhorn, OpenFreeMap, Firebase, gstatic) — **excepto los 4
+Workers de Cloudflare** que también usa vía `fetch()`:
+- `librepedal-auth.librepedal.workers.dev` (login por código Y link mágico —
+  `_entrarConCodigoTester`/`_canjearIdTokenPorSesion`, exactamente el flujo que falla)
+- `librepedal-auth-staging.librepedal.workers.dev`
+- `librepedal-ia.librepedal.workers.dev` (chat de Pistero)
+- `librepedal-ia-sudamerica.inty405.workers.dev` (chat de Pistero, región Sudamérica)
+
+Es la única asimetría real entre "todo lo demás que la app consulta por red" y "lo que le
+falta a este dominio específico" — coincide con que el login por código es justo lo que
+falla, y probablemente el chat de Pistero tenga el mismo problema en la app instalada
+(no reportado aún, pero mismo mecanismo).
+
+**Fix aplicado:** se agregaron los 4 dominios a `allowNavigation`. Cambio puramente
+aditivo (una allowlist, no puede romper nada que ya funcionaba).
+
+**⚠️ NO verificado en un teléfono real — siendo honesto, no fingiendo que sí.** No tengo
+forma de compilar/instalar el APK ni de reproducir el bug desde acá. Dos cosas
+importantes para quien siga:
+1. **Este archivo es de build nativo — NO alcanza con desplegar la web.** Necesita que
+   corra el workflow "Construir APK Android" (se dispara con push a `main`, ya en cola con
+   este commit) Y que alguien instale el `.aab`/APK resultante en un teléfono real para
+   que el fix llegue a producción de verdad.
+2. Si esto NO resuelve el problema, revisar los reportes de Sentry con el tag
+   `donde:entrarConCodigoTester` que ya deja el commit `41c8020` — ahí va a decir
+   exactamente en qué paso se corta (fetch al Worker, respuesta del Worker, o
+   `signInWithCustomToken`), lo cual descarta o confirma esta hipótesis con datos reales
+   en vez de otra ronda de teoría.
+
+Versión 8.757 → 8.758 en los 3 lugares. Sintaxis validada (`node -e` sobre los bloques
+`<script>`, 0 errores) y `capacitor.config.json` validado como JSON. NO se tocó ninguna
+otra cosa.
+
 ## 🔴 CRÍTICO — 2026-08-15, sesión Claude Code — el deploy automático está ROTO (token Cloudflare)
 
 `CLOUDFLARE_API_TOKEN` (secreto de GitHub Actions) dejó de funcionar entre las 22:52 y las
