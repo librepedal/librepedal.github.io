@@ -225,7 +225,7 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 #esCanvas{position:absolute;left:0;top:0;pointer-events:none;z-index:0}
 .es-icon{z-index:1}
 .es-lbl{font-size:0.62rem;color:#cfeeff;margin-top:4px;font-weight:700;text-shadow:0 1px 3px #000}
-.es-title{position:absolute;top:18px;left:0;right:0;text-align:center;color:var(--p);font-weight:800;font-size:1.1rem;text-shadow:0 0 10px rgba(252,76,2,0.5);pointer-events:none}
+.es-title{position:absolute;top:18px;left:0;right:0;text-align:center;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;font-size:1.2rem;text-transform:uppercase;letter-spacing:.03em;text-shadow:0 2px 8px rgba(0,0,0,0.5);pointer-events:none}
 .es-hint{position:absolute;top:44px;left:0;right:0;text-align:center;color:#8fb0c8;font-size:0.72rem;pointer-events:none}
 .es-modo-rapido{position:absolute;top:66px;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;gap:14px;z-index:4;pointer-events:none}
 .es-modo-chip{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;pointer-events:auto}
@@ -981,7 +981,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div id="esPostales"><div class="es-post-layer" id="esPostA"></div><div class="es-post-layer" id="esPostB"></div></div>
 <div id="esFlash"></div>
 <div id="esLuna" aria-hidden="true" style="position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;width:50px;height:50px;z-index:4;pointer-events:none;opacity:0;transition:opacity 1.4s ease;filter:drop-shadow(0 2px 7px rgba(0,0,0,.5))"></div>
-<div class="es-title">Libre Pedal</div>
+<div class="es-title"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></div>
 <div class="es-hint">Gira con el dedo · toca un ícono para entrar</div>
 <div class="es-modo-rapido" id="esModoRapido"></div>
 <div id="esferaWrap"></div>
