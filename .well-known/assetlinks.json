@@ -4,7 +4,9 @@
     "namespace": "android_app",
     "package_name": "cl.librepedal.app",
     "sha256_cert_fingerprints": [
-      "D5:89:D4:B0:51:29:63:83:09:1D:28:17:6F:B3:4F:8D:2B:AE:43:08:23:FF:0A:49:28:D3:69:77:F7:FE:EE:94"
+      "D5:89:D4:B0:51:29:63:83:09:1D:28:17:6F:B3:4F:8D:2B:AE:43:08:23:FF:0A:49:28:D3:69:77:F7:FE:EE:94",
+      "8B:3A:67:25:F9:67:5B:87:2A:C1:09:7B:3C:B4:C6:01:4D:09:6A:4B:28:55:A3:11:EA:DB:EC:C8:23:E8:B6:2F",
+      "85:E9:50:9F:7F:51:A3:49:0B:09:4D:85:6B:AE:D3:B2:82:F7:52:E3:38:1C:A2:90:44:23:5F:FA:C1:AF:4D:DD"
     ]
   }
 }]
