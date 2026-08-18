@@ -1744,7 +1744,7 @@ function _lpAvisoLogin(msg){ try{ window.alert(String(msg)); }catch(e){} }
 async function _entrarConCodigoTester(){
   var codigo=(document.getElementById('codigoTesterInput')||{}).value||'';
   var correo=(document.getElementById('correoTesterInput')||{}).value||'';
-  codigo=codigo.trim(); correo=correo.trim().toLowerCase();
+  codigo=codigo.trim().toUpperCase(); correo=correo.trim().toLowerCase();
   if(!codigo) return _lpAvisoLogin('Escribí el código que te pasaron.');
   if(!correo||correo.indexOf('@')===-1) return _lpAvisoLogin('Escribí el correo con el que te inscribiste a la prueba.');
   var btn=document.getElementById('btnEntrarCodigo');
