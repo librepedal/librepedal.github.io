@@ -1,3 +1,41 @@
+> 🔴 **ESTADO CONSOLIDADO — 2026-08-18, sesión "intyrivera" — LEER PRIMERO, ANTES QUE
+> CUALQUIER OTRA COSA EN ESTE ARCHIVO.** Hay 3 cuentas de Claude distintas trabajando
+> en este repo, sin canal de mensajería en vivo entre las 3 — esta carpeta es el único
+> punto de encuentro real. **Nombres a usar de acá en adelante, para que quede claro
+> quién es quién (pedido de Inty, 2026-08-18):**
+> - **`intyrivera`** (`intyrivera@gmail.com`) — esta sesión, la que escribe esto ahora.
+> - **`intyrivera405`** — la sesión activa físicamente en el Thunder (antes referida
+>   como "Lenovo"/"Thunderobot" en entradas viejas de este archivo y de `BITACORA.md`
+>   — es la MISMA cuenta/máquina, solo que ahora tiene nombre fijo).
+> - **`intyrivera.a`** (`intyrivera.a@gmail.com`) — la tercera cuenta (autora del
+>   commit `41c8020`, por ejemplo). Sin sesión visible activa por ahora.
+>
+> Tres cosas urgentes, sin resolver, ahora mismo:
+>
+> 1. **⚠️ REGRESIÓN REAL EN PRODUCCIÓN, sin arreglar.** Una sesión (Lenovo/Thunderobot)
+>    relanzó un job de CI viejo y sin querer pisó v8.47 (en vivo, solo por deploy
+>    manual, nunca en git) con v8.34. `librepedal.cl` sirve una versión vieja ahora
+>    mismo. Posible recuperación: historial de deployments de Cloudflare Pages
+>    (`wrangler pages deployment list --project-name=librepedal` o el dashboard) puede
+>    tener el deployment de v8.47 aunque el código no esté en ningún repo — revisar
+>    ANTES de que ese historial expire o se pise de nuevo. Inty no ha dado instrucción
+>    de cómo seguir con esto todavía.
+> 2. **Login roto, arreglo real ya existe pero sin mergear.** Rama
+>    `google-signin-nativo` (commit `0804610`) saca el link mágico (se rompía por
+>    cuota de Firebase agotada) y deja Google Sign-In nativo — falta que alguien con
+>    teléfono real la pruebe y la mergee. Ver punto 2 más abajo en este mismo archivo
+>    para el detalle completo. Aparte, v8.758 (`main`) le agregó a
+>    `capacitor.config.json` los dominios de Workers que faltaban en
+>    `allowNavigation` — complementario, no reemplaza lo de arriba.
+> 3. **Voces Sudamérica: sin rastro en el repo.** Inty preguntó por el avance; no hay
+>    nada commiteado sobre esto en ningún lado de `COORDINACION-IA/` ni en git —
+>    probablemente, como el punto 1, existe solo como trabajo local sin subir en
+>    alguna de las otras dos cuentas. Si esta es tu cuenta y tienes ese avance: por
+>    favor commitealo/documentalo acá, aunque sea parcial.
+>
+> Si acabás de llegar a este repo con cualquiera de las 3 cuentas: empieza por estos
+> 3 puntos antes de tocar código nuevo.
+
 > 📌 **SESIÓN 2026-08-15/16 (Lenovo, madrugada) — leer antes de tocar login/voz.** Resumen rápido, detalle en `BITACORA.md` si hace falta:
 > - **Login roto y arreglado de raíz.** El link mágico se topó con `auth/quota-exceeded` de Firebase (51 testers pidiendo el link casi a la misma hora agotaron el cupo diario gratis). Intentamos SMTP propio (Brevo, dominio ya autenticado en DNS) pero el cupo bloquea ANTES de la entrega del correo — no lo resuelve. **Decisión de Inty: sacar el link mágico por completo y dejar Google Sign-In nativo como único método** (plugin `@capacitor-firebase/authentication`, selector de cuenta real de Android — los 3 caminos web de Google que había antes, popup/redirect/GIS, fallan los tres en este WebView, ver comentarios en `_entrarConGoogle()`). App Android ya registrada en Firebase (antes solo existía la web), SHA-1/SHA-256 agregadas. **Todo esto vive en la rama `google-signin-nativo`, NO en `main` todavía** — a propósito, para no romper el login de quien siga en el AAB viejo mientras se prueba el nuevo. Antes de mergear: confirmar que Google Sign-In funciona de verdad en un teléfono con el AAB de esa rama.
 > - **Voces por arquetipo — arreglo parcial YA EN `main`/producción.** El audio pre-grabado de ElevenLabs (`voces-el/`) no variaba por arquetipo, solo por género — la personalidad solo se notaba en el TEXTO, no en el tono/ritmo, y cuando caía a Azure en vivo sonaba de golpe distinto (eso reportó Inty como "voces diferentes en las frases"). Se le aplicó `playbackRate` según la prosodia del arquetipo también al audio pre-grabado (`_rateArq()` en `index.html`, usado por `_vozArchivoEL`/`_vozArchivo`). **Esto es un parche de velocidad, no timbres de voz distintos de verdad** — la lista de 12+12 voces ElevenLabs reales por arquetipo (ver más abajo en este archivo, sección ElevenLabs) sigue sin generarse/conectar.
