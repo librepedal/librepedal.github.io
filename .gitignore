@@ -38,3 +38,15 @@ MI-SENTRY.txt
 MI-*.txt
 señuelos/
 .deploy-clean/
+
+# Paquete confidencial de inversionista — nunca a este repo (origin es publico)
+# Patron ampliado 2026-08-19: INVERSIONISTA-* solo cubria archivos que EMPIEZAN asi.
+# PROMPTS-GEMINI-VIDEO-PISTERO.md filtro al publico porque el nombre no calzaba aunque
+# el CONTENIDO era confidencial (guion con cifras de la oferta). Nunca confiar solo en
+# el nombre del archivo — cualquier doc con cifras/terminos de inversionista va a
+# confidencial/, carpeta entera ignorada, sin importar como se llame el archivo.
+INVERSIONISTA-*
+*INVERSIONISTA*
+PROMPTS-GEMINI-VIDEO-PISTERO.md
+GUION-SEGMENTOS-PISTERO-INVERSIONISTA.md
+confidencial/
