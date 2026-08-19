@@ -40,11 +40,13 @@
 ## 🧭 ROADMAP — mejorar la app capa por capa
 Trabajar de a una, probar, y NO romper lo de arriba. Marcar EN-CURSO antes de tocar.
 
-**A. AUTH / acceso (casi listo, blindar)**
+**A. AUTH / acceso (casi listo, blindar) — 🔵 EN-CURSO por `intyrivera`, 2026-08-19.**
+Trabajando en rama `auth-blindaje-intyrivera`, SIN pushear a `main` hasta probar y que
+Inty dé el visto bueno (regla dura de hoy: cero margen a errores, integrar sin fallas).
 - Cambiar el mensaje a testers para que usen el **CÓDIGO** (`PEDAL26`), no el link mágico.
-- **Pendiente de Inty:** DNS **SPF + DKIM** en `librepedal.cl` (sin eso los correos del link
-  mágico se pierden en silencio). App Links del AAB para que el link abra la app (assetlinks
-  ya tiene la huella de Play).
+- **Pendiente de Inty (no lo toca ninguna IA):** DNS **SPF + DKIM** en `librepedal.cl` (sin
+  eso los correos del link mágico se pierden en silencio). App Links del AAB para que el
+  link abra la app (assetlinks ya tiene la huella de Play).
 
 **B. DATOS / persistencia**
 - Enlazar cuenta anónima → correo al entrar (Firebase `linkWithCredential`, conserva UID+datos).
