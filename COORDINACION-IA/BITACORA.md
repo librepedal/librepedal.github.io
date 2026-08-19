@@ -4,6 +4,32 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## SEGURIDAD — 2026-08-19 — Inty (consola de Google Cloud) + Claude (sesión intyrivera, verificación) · claves de Firebase restringidas por origen — CERRADO
+
+**Hallazgo (de una sesión anterior, ver EN-USO.md):** la clave web de Firebase
+("Browser key (auto created by Firebase)", proyecto `librepedal-cb983`) tenía
+`Application restrictions: Ninguno` — cualquiera podía usarla desde cualquier
+dominio, comprobado con una petición desde un origen ajeno que devolvía 200.
+
+**Fix (aplicado por Inty en la consola, no por ninguna IA, como corresponde):**
+`Application restrictions` → `Sitios web`, con:
+- `https://librepedal.cl/*`
+- `https://www.librepedal.cl/*`
+- `https://librepedal.github.io/*`
+
+**Verificado de verdad, no "debería funcionar":**
+- **Web:** se mandó un intento de login real con código inventado
+  (`TESTVERIFICACION`) para forzar una petición de verdad al Worker de auth.
+  La petición llegó sin bloqueo (nada de error CORS/clave rechazada), el
+  Worker respondió `401` (rechazo correcto de un código que no existe), y la
+  app mostró el mensaje esperado "No se pudo entrar: código incorrecto" — el
+  camino completo funciona igual que antes del cambio.
+- **App instalada (Android):** Inty entró con el código real sin problemas.
+  Esto cierra la duda real que quedaba abierta (la app nativa a veces no manda
+  el mismo header de origen que un navegador — no fue el caso acá).
+
+**Nada pendiente en este hallazgo.**
+
 ## v8.758 — 2026-08-18 — Claude (sesión nueva) · hipótesis + fix: faltaban los Workers en `allowNavigation` de Capacitor (posible causa de "funciona en la web, falla en la app instalada")
 
 **Contexto:** Inty reportó "traté de entrar y no pude" (recién, hoy). Encontré el commit
