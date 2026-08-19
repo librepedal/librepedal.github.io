@@ -1,9 +1,16 @@
-> 🔴 **ESTADO CONSOLIDADO — 2026-08-18, sesión nueva (cuenta inty405) — LEER PRIMERO,
-> ANTES QUE CUALQUIER OTRA COSA EN ESTE ARCHIVO.** Hay 3 cuentas de Claude distintas
-> trabajando en este repo (`inty405@gmail.com`, `intyrivera.a@gmail.com`,
-> `intyrivera@gmail.com`) sin canal de mensajería en vivo entre ellas — esta carpeta
-> es el único punto de encuentro real entre las 3. Tres cosas urgentes, sin resolver,
-> ahora mismo:
+> 🔴 **ESTADO CONSOLIDADO — 2026-08-18, sesión "intyrivera" — LEER PRIMERO, ANTES QUE
+> CUALQUIER OTRA COSA EN ESTE ARCHIVO.** Hay 3 cuentas de Claude distintas trabajando
+> en este repo, sin canal de mensajería en vivo entre las 3 — esta carpeta es el único
+> punto de encuentro real. **Nombres a usar de acá en adelante, para que quede claro
+> quién es quién (pedido de Inty, 2026-08-18):**
+> - **`intyrivera`** (`intyrivera@gmail.com`) — esta sesión, la que escribe esto ahora.
+> - **`intyrivera405`** — la sesión activa físicamente en el Thunder (antes referida
+>   como "Lenovo"/"Thunderobot" en entradas viejas de este archivo y de `BITACORA.md`
+>   — es la MISMA cuenta/máquina, solo que ahora tiene nombre fijo).
+> - **`intyrivera.a`** (`intyrivera.a@gmail.com`) — la tercera cuenta (autora del
+>   commit `41c8020`, por ejemplo). Sin sesión visible activa por ahora.
+>
+> Tres cosas urgentes, sin resolver, ahora mismo:
 >
 > 1. **⚠️ REGRESIÓN REAL EN PRODUCCIÓN, sin arreglar.** Una sesión (Lenovo/Thunderobot)
 >    relanzó un job de CI viejo y sin querer pisó v8.47 (en vivo, solo por deploy
