@@ -3781,12 +3781,20 @@ const FRASES_ARQ={
 function obtenerFraseUnica(categoria){
   const ahora=Date.now();
   if(ahora-lastFraseTime < MIN_INTERVALO) return null;
+  // 2026-08-20: FRASES_ARQ (el banco por personalidad) es todo sabor bicicleta ("pedalea",
+  // cambios, etc.) y antes se consultaba SIEMPRE primero — así que un viaje en moto o
+  // trekking terminaba escuchando frases de ciclismo, porque casi nunca faltaba banco de
+  // arquetipo (el fallback a FRASES_POR_MODO en poolPais() casi nunca se alcanzaba a usar).
+  // Ahora, si el modo actual no es ciclismo y existe banco propio para ese modo+categoría,
+  // ese banco manda primero — ya está escrito y es bueno, solo no se estaba usando.
+  const modoActual=(typeof actividadTipo!=='undefined')?actividadTipo:'ciclismo';
+  const poolModo=(modoActual!=='ciclismo' && FRASES_POR_MODO[modoActual] && FRASES_POR_MODO[modoActual][categoria]) || null;
   // Sabor del arquetipo elegido si hay banco para esta categoría; si no, las genéricas.
   const arqId=(typeof pisteroPersonalidad!=='undefined'?pisteroPersonalidad:'cercano');
-  const arqPool=(FRASES_ARQ[categoria] && FRASES_ARQ[categoria][arqId]) || null;
+  const arqPool=poolModo?null:((FRASES_ARQ[categoria] && FRASES_ARQ[categoria][arqId]) || null);
   const usaArq=!!(arqPool && arqPool.length);
-  const pool = usaArq ? arqPool : poolPais(categoria);
-  const clave = usaArq ? (categoria+'@'+arqId) : categoria; // repeticiones separadas por pool
+  const pool = poolModo ? poolModo : (usaArq ? arqPool : poolPais(categoria));
+  const clave = poolModo ? (categoria+'@modo:'+modoActual) : (usaArq ? (categoria+'@'+arqId) : categoria); // repeticiones separadas por pool
   if(!frasesUsadas[clave]) frasesUsadas[clave]=[]; // claves de arquetipo (categoria@arqId) no venian pre-inicializadas -> .push crasheaba (bug real Sentry)
   const usadas = frasesUsadas[clave];
   const disp = pool.filter(function(_,i){return usadas.indexOf(i)===-1;});
@@ -4040,12 +4048,17 @@ async function pisteroPorVoz(){
     pisteroRec.start();
   }catch(e){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); }
 }
-let ultimoLugarAnecdota='';
+// 2026-08-20: antes era una sola variable (el ÚLTIMO lugar nada más), así que si la ruta
+// pasaba de vuelta por una ciudad ya visitada (ida y vuelta, o límite de zona con ruido de
+// GPS), el freno "una vez por zona" ya no aplicaba porque ultimoLugarAnecdota apuntaba a
+// OTRA ciudad — y volvía a sonar. Con un Set queda bloqueada CUALQUIER ciudad ya anunciada
+// en esta sesión, no solo la inmediatamente anterior.
+let lugaresAnecdotaContados=new Set();
 function _anecdotasContadas(){ try{ return JSON.parse(localStorage.getItem('lp_anecdotas'))||[]; }catch(e){ return []; } }
 function _marcarAnecdota(t){ try{ const a=_anecdotasContadas(); if(a.indexOf(t)===-1){ a.push(t); localStorage.setItem('lp_anecdotas', JSON.stringify(a.slice(-250))); } }catch(e){} }
 async function contarAnecdotaDelLugar(clave, full, lat, lon){
-  if(!clave || clave===ultimoLugarAnecdota) return; // una sola vez por zona (en esta sesión)
-  ultimoLugarAnecdota=clave;
+  if(!clave || lugaresAnecdotaContados.has(clave)) return; // una sola vez por zona (en esta sesión), sin importar el orden en que se visiten
+  lugaresAnecdotaContados.add(clave);
   if(lat==null || lon==null) return;
   try{
     // 1) Wikipedia geosearch: artículos REALES cercanos a tu posición
@@ -4109,7 +4122,9 @@ async function _pisteroHistoriaLugar(pedirMito){
     let texto=frases.slice(0,3).join(' ');
     if(texto.length>320) texto=frases.slice(0,2).join(' ');
     _marcarAnecdota(elegido.title);
-    ultimoLugarAnecdota=null; // si la pediste a mano, no bloquea que la automática también suene después
+    // 2026-08-20: antes esto desbloqueaba TODO lo ya anunciado (con la variable única no
+    // había forma de desbloquear solo el lugar actual). Ahora que ya la pediste a mano,
+    // tiene más sentido que la automática NO la repita después — ya la escuchaste.
     const aviso=(pedirMito && !esMitoReal) ? 'No tengo un mito o leyenda específico documentado por aquí, pero mira este dato real: ' : '';
     h(aviso+texto);
   }catch(e){ h('No pude buscar la historia de este lugar ahora mismo, prueba de nuevo en un rato.'); }
@@ -4570,7 +4585,14 @@ let usuariosCercanosData=[];
 // confirmado en Firebase Console). El nombre YA viene en el mismo documento
 // (reg() lo guarda como campo `nombre`) — no hace falta pedirlo de nuevo. También
 // se agrega .limit(150): sin tope, la consulta crece sin control con más usuarios.
-function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ if(!mp) return; sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; usuariosCercanosData=[]; snapshot.docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; usuariosCercanosData.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon}); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=mlMarker([data.lat,data.lon],{icon:{html:riderMarkerHTML(data.helmet||'giro',jersey,false)}}).addTo(mp).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); } }); }); }
+// 2026-08-20: el mapa principal y el mapa de navegación usaban DOS suscripciones
+// Firestore separadas pero con la MISMA consulta (users, visible==true, limit 150) —
+// cada actualización de posición se pagaba dos veces en lecturas. Ahora hay UNA sola
+// suscripción (acá abajo); ambos mapas se pintan desde el mismo snapshot en memoria.
+let _lastUsersSnapshotDocs=null;
+function _renderMainMapUsers(docs){ if(!mp) return; sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; usuariosCercanosData=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; usuariosCercanosData.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon}); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=mlMarker([data.lat,data.lon],{icon:{html:riderMarkerHTML(data.helmet||'giro',jersey,false)}}).addTo(mp).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); } }); }
+function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } }); }
+function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ _lastUsersSnapshotDocs=snapshot.docs; _renderMainMapUsers(snapshot.docs); if(_navMapUsersActive) _renderNavMapUsers(snapshot.docs); }); }
 /* ===== CICLISTAS DE LA COMUNIDAD: pelotón demo por todo Chile + usuarios reales al entrar ===== */
 // Al registrarse o entrar, publica tu zona aproximada (~1 km, por privacidad):
 // así apareces al tiro en el mapa sin esperar a pedalear.
@@ -5930,7 +5952,7 @@ function irAlPuntoYNavegar(lat,lon,name){
   lat=parseFloat(lat); lon=parseFloat(lon); name=name||'este punto';
   cv('map');
   setTimeout(function(){ if(!mp) return; if(mp._irMarker) mp.removeLayer(mp._irMarker); mp._irMarker=mlMarker([lat,lon],{}).addTo(mp).bindPopup('<b>'+escapeHTML(name)+'</b>').openPopup(); mp.setView([lat,lon],15); },160);
-  setTimeout(async function(){ if(await lpConfirmar('¿Iniciar navegación hacia '+name+'?')){ if(!currentUserLocation){ lpAviso('Necesito tu GPS para navegar'); return; } currentTrip=null; calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,lat,lon,name); } },450);
+  setTimeout(async function(){ if(await lpConfirmar('¿Iniciar navegación hacia '+name+'?')){ await getCurrentLocation(); /* 2026-08-20: siempre pide un fix de GPS fresco al iniciar — antes reusaba currentUserLocation de cuando cargó la app, minutos atrás, y la ruta arrancaba mal calculada desde ahí */ if(!currentUserLocation){ lpAviso('Necesito tu GPS para navegar'); return; } currentTrip=null; calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,lat,lon,name); } },450);
 }
 // Con puntos de todo Chile (miles), pintarlos TODOS como marcadores DOM sin importar
 // el zoom trababa el mapa en celulares modestos. La primera versión de esto cortaba
@@ -7007,12 +7029,13 @@ function togglePuntoMapaViaje(){
 }
 async function navegarAPuntoMapaElegido(){
   if(!puntoViajeCoords){ lpAviso('Marca un punto en el mapa primero.'); return; }
-  if(!currentUserLocation){
-    showLoading("Obteniendo ubicación...");
-    await getCurrentLocation();
-    hideLoading();
-    if(!currentUserLocation){ lpAviso("Necesito tu GPS"); return; }
-  }
+  // 2026-08-20: fix de GPS fresco SIEMPRE al iniciar, no solo si currentUserLocation nunca
+  // se había pedido — si no, la ruta arrancaba calculada desde donde estabas al abrir la
+  // app, no desde donde estás parado ahora mismo.
+  showLoading("Obteniendo ubicación...");
+  await getCurrentLocation();
+  hideLoading();
+  if(!currentUserLocation){ lpAviso("Necesito tu GPS"); return; }
   currentTrip=null;
   const lat=puntoViajeCoords.lat, lon=puntoViajeCoords.lon;
   const cont=document.getElementById('punto-mapa-viaje'); if(cont) cont.style.display='none';
@@ -7347,7 +7370,7 @@ function loadTrips(){ db.collection('trips').where('user','==',cu).onSnapshot(fu
 function renderTrips(){ const c=document.getElementById('trips-list'); if(!c) return; if(trips.length===0){ c.innerHTML='<p style="color:#888;text-align:center;padding:15px">Aún no tienes viajes</p>'; return; } let html=''; for(let t=0;t<trips.length;t++){ const trip=trips[t]; let dests=''; for(let d=0;d<trip.destinations.length;d++){ dests+='<div>'+(d+1)+'. '+escapeHTML(trip.destinations[d].name)+'</div>'; } const badge=trip.status==='completed'?'(completado)':trip.status==='active'?'(en curso)':'(pendiente)'; html+='<div class="trip-card"><h3>'+escapeHTML(trip.name)+' <span style="font-size:0.7rem;color:#888">'+badge+'</span></h3><div class="meta">Desde: '+escapeHTML(trip.start)+' · '+trip.destinations.length+' destinos</div>'; if(trip.gpsData&&trip.gpsData.distance){ html+='<div style="color:var(--p);font-size:0.8rem;margin-bottom:8px">'+trip.gpsData.distance.toFixed(2)+' km · '+trip.gpsData.duration+'</div>'; } html+='<div class="dest-list">'+dests+'</div><div class="actions">'; if(trip.status!=='completed'){ html+='<button class="btn btn-start" onclick="startNavigation(\''+trip.id+'\')">Iniciar</button>'; } else { html+='<button class="btn btn-view" onclick="viewCompletedTrip(\''+trip.id+'\')">Ver</button>'; } html+='<button class="btn btn-delete" onclick="deleteTrip(\''+trip.id+'\')">Borrar</button></div></div>'; } c.innerHTML=html; }
 async function deleteTrip(id){ if(await lpConfirmar("¿Eliminar este viaje?")){ db.collection('trips').doc(id).delete(); } }
 function viewCompletedTrip(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip||!trip.gpsData||!trip.gpsData.points) return lpAviso("Este viaje no tiene ruta grabada"); currentTrip=trip; gpsPoints=trip.gpsData.points; totalDistance=trip.gpsData.distance||0; document.getElementById('nav-screen').classList.add('active'); if(navMap) navMap.remove(); navMap=L.map('nav-map').setView([gpsPoints[0].lat,gpsPoints[0].lon],15); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(navMap); showHostelsOnNavMap(); drawGpsRoute(); document.getElementById('navText').innerText="Ruta completada"; document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2); document.getElementById('navTime').innerText=trip.gpsData.duration||'0 min'; document.getElementById('navSpeed').innerText='0'; document.getElementById('etaDist').innerText=totalDistance.toFixed(2)+' km'; document.getElementById('etaDuration').innerText=trip.gpsData.duration||'0 min'; document.getElementById('etaTime').innerText='--:--'; showSpeechBubble("Recorriste "+totalDistance.toFixed(2)+" km"); }
-async function startNavigation(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip) return; currentTrip=trip; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS para navegar"); return; } } const dest=trip.destinations[trip.destinations.length-1]; let dLat=dest.lat, dLon=dest.lon; if(!dLat||!dLon){ showLoading("Buscando "+dest.name+"..."); try{ const r=await geocodeDestino(dest.addr||dest.name); if(r){ dLat=r.lat; dLon=r.lon; } }catch(e){} hideLoading(); } if(!dLat||!dLon){ lpAviso('No pude ubicar "'+(dest.name||'el destino')+'". Escríbelo con más detalle (ciudad o región), o usa 📍 "elegir en el mapa" para marcarlo tú.'); return; } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dLat,dLon,dest.name); }
+async function startNavigation(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip) return; currentTrip=trip; showLoading("Obteniendo ubicación..."); await getCurrentLocation(); /* 2026-08-20: siempre fresco, ver navegarAPuntoMapaElegido */ if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS para navegar"); return; } const dest=trip.destinations[trip.destinations.length-1]; let dLat=dest.lat, dLon=dest.lon; if(!dLat||!dLon){ showLoading("Buscando "+dest.name+"..."); try{ const r=await geocodeDestino(dest.addr||dest.name); if(r){ dLat=r.lat; dLon=r.lon; } }catch(e){} hideLoading(); } if(!dLat||!dLon){ lpAviso('No pude ubicar "'+(dest.name||'el destino')+'". Escríbelo con más detalle (ciudad o región), o usa 📍 "elegir en el mapa" para marcarlo tú.'); return; } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dLat,dLon,dest.name); }
 // Geocodificador global e inteligente: reconoce cualquier punto del mundo, pero
 // si conocemos tu ubicación, prefiere los resultados cercanos (para términos
 // genéricos como "la plaza", "farmacia", "supermercado"). Sigue siendo global:
@@ -7503,7 +7526,7 @@ async function geocodeDestino(query){
   for(const v of _variantesFoneticas(query)){ r=await intentar(v); if(r) return r; }
   return null;
 }
-async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ lpAviso("Escribe un destino"); return; } currentTrip=null; if(!currentUserLocation){ showLoading("Obteniendo ubicación..."); await getCurrentLocation(); if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS"); return; } } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); lpAviso('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'Estás sin señal para buscar el destino. Prueba de nuevo con internet, o marca el punto en el mapa.' : 'No pude buscar ese destino ahora. Inténtalo otra vez.'); } }
+async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ lpAviso("Escribe un destino"); return; } currentTrip=null; showLoading("Obteniendo ubicación..."); await getCurrentLocation(); /* 2026-08-20: siempre fresco, ver navegarAPuntoMapaElegido */ if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS"); return; } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); lpAviso('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'Estás sin señal para buscar el destino. Prueba de nuevo con internet, o marca el punto en el mapa.' : 'No pude buscar ese destino ahora. Inténtalo otra vez.'); } }
 function _tileXY(lat,lon,zoom){ const n=Math.pow(2,zoom); const x=Math.floor((lon+180)/360*n); const latRad=lat*Math.PI/180; const y=Math.floor((1-Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n); return {x:x,y:y}; }
 async function descargarMapaRuta(){
   const btn=document.getElementById('btnDescargarMapa');
@@ -7587,14 +7610,16 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   if(rutaPerfil.length) avisarPendienteAnticipada(lat,lon); else comentarPendiente(navPendienteHistory, speed);
   avisarPuntosCercanos(lat,lon,speed);
   avisarReportesCercanos(lat,lon,speed);
-  /* Aviso de ciclista adelante (solo si voy motorizado). El rumbo no viene en la posición,
-     así que se deduce de los dos últimos puntos del track: es más confiable que
-     coords.heading, que en teléfonos casi parados devuelve null o basura. */
-  if(typeof _revisarCiclistasAdelante==='function' && typeof gpsPoints!=='undefined' && gpsPoints && gpsPoints.length>1){
+  /* Rumbo real deducido de los dos últimos puntos del track (más confiable que
+     coords.heading, que en teléfonos casi parados devuelve null o basura). Se calcula
+     UNA vez y lo usan tanto el aviso de ciclista adelante como el de viento en contra. */
+  let _rumbo=null;
+  if(typeof gpsPoints!=='undefined' && gpsPoints && gpsPoints.length>1){
     const _a=gpsPoints[gpsPoints.length-2], _b=gpsPoints[gpsPoints.length-1];
-    const _rumbo=(_a&&_b)?_bearingEntrePuntos({lat:_a.lat,lon:_a.lon},{lat:_b.lat,lon:_b.lon}):null;
-    _revisarCiclistasAdelante(lat,lon,_rumbo,speed);
+    _rumbo=(_a&&_b)?_bearingEntrePuntos({lat:_a.lat,lon:_a.lon},{lat:_b.lat,lon:_b.lon}):null;
   }
+  if(typeof _revisarCiclistasAdelante==='function'){ _revisarCiclistasAdelante(lat,lon,_rumbo,speed); }
+  if(typeof _avisarVientoEnContra==='function'){ _avisarVientoEnContra(_rumbo); }
   _avisoLluviaProactivo(lat,lon); vigilarClima(lat,lon);
   _verificarFatiga(tiempoActivoMs(), speed);
   checkNavigationSteps(lat,lon,speed);
@@ -7648,8 +7673,10 @@ function _pendienteActualTexto(){
       if(iAhead>=0){
         const grade=((rutaPerfil[iAhead].ele-eleNow)/(rutaPerfil[iAhead].d-dNow))*100;
         const _u=_umbralPendiente();
-        if(grade>=_u) return 'Vamos en subida ahora mismo, dale con ganas.';
-        if(grade<=-_u) return 'Vamos en bajada ahora mismo, ojo con la velocidad.';
+        const _gTxt=Math.round(Math.abs(grade))+'%';
+        const _fuerte=Math.abs(grade)>=_u*2;
+        if(grade>=_u) return 'Vamos en subida'+(_fuerte?' fuerte':'')+' ahora mismo, al '+_gTxt+'. Dale con ganas.';
+        if(grade<=-_u) return 'Vamos en bajada'+(_fuerte?' pronunciada':'')+' ahora mismo, al '+_gTxt+'. Ojo con la velocidad.';
         return 'Vamos en terreno más o menos plano por ahora.';
       }
     }
@@ -7720,8 +7747,14 @@ function avisarPendienteAnticipada(lat,lon){
   if(pendAntAvisadas.has(key)) return;
   pendAntAvisadas.add(key); pendAntCooldown=ahora;
   const dist=Math.round(r.dist/10)*10;
-  if(r.tipo==='subida') h('Ojo, se viene una subida en los próximos '+dist+' metros. Baja un cambio y dosifica.');
-  else h('Prepárate: viene una bajada en unos '+dist+' metros. Ojo con la velocidad y los frenos.');
+  // 2026-08-20: antes avisaba "subida"/"bajada" sin decir cuánta pendiente — y el dato
+  // real (r.grade, % calculado del perfil de elevación de verdad) ya estaba disponible,
+  // solo no se usaba. Fuerte = el doble o más del umbral que ya usa el modo actual para
+  // considerar que ALGO es pendiente (ver _umbralPendiente): mismo criterio, no uno nuevo.
+  const gradeTxt=Math.round(Math.abs(r.grade))+'%';
+  const fuerte=Math.abs(r.grade)>=_umbralPendiente()*2;
+  if(r.tipo==='subida') h('Ojo, se viene una subida'+(fuerte?' fuerte':'')+' al '+gradeTxt+' en los próximos '+dist+' metros. Baja un cambio y dosifica.');
+  else h('Prepárate: viene una bajada'+(fuerte?' pronunciada':'')+' al '+gradeTxt+' en unos '+dist+' metros. Ojo con la velocidad y los frenos.');
 }
 function _distPuntoASegmento(plat,plon, alat,alon, blat,blon){
   const R=6371000, tr=Math.PI/180, cl=Math.cos(plat*tr);
@@ -8048,15 +8081,27 @@ function compararRitmoHistorico(distanciaKm, duracionActivaMs){
   else if(diffPct<-0.15) h('Vas más lento que tu ritmo habitual. Tranquilo, disfruta el camino.');
 }
 let _unsubUsersOnNavMap=null;
+let _navMapUsersActive=false;
 function subscribeToUsersOnNavMap(){
   navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[];
-  // Antes se creaba un listener nuevo cada vez que empezaba una navegación sin cerrar
-  // el anterior: en un viaje con varios destinos (o si el usuario reinicia navegación
-  // varias veces) se iban acumulando listeners activos para siempre — fuga real.
-  if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; }
-  _unsubUsersOnNavMap=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; snapshot.docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } }); });
+  // 2026-08-20: antes esto abría una SEGUNDA suscripción a Firestore, idéntica a la del
+  // mapa principal (subscribeToUsers) — cada actualización de posición se leía dos veces,
+  // doblando el consumo de cuota (170K lecturas vs 2,9K escrituras el día que se cayó la
+  // app). Ahora comparte la ÚNICA suscripción del mapa principal: solo activa el flag de
+  // render y pinta de inmediato con el último snapshot ya en memoria (_lastUsersSnapshotDocs),
+  // sin esperar el próximo cambio ni abrir una lectura nueva.
+  _navMapUsersActive=true;
+  if(!ulp) subscribeToUsers();
+  _renderNavMapUsers(_lastUsersSnapshotDocs||[]);
 }
-function getTurnInstruction(type,modifier,street){ const s=street?' por '+street:''; switch(type){ case 'depart':return 'Comienza el recorrido'+s; case 'arrive':return 'Has llegado a tu destino'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return 'Gira a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'Gira a la derecha'+s; if(modifier&&modifier.indexOf('sharp')!==-1) return 'Giro pronunciado'+s; return 'Gira'+s; case 'roundabout': case 'rotary': return 'Toma la rotonda'+s; case 'merge': return 'Incorpórate'+s; case 'fork': if(modifier&&modifier.indexOf('left')!==-1) return 'En la bifurcación, mantente a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'En la bifurcación, mantente a la derecha'+s; return 'Toma la bifurcación'+s; case 'end of road': return 'Al final del camino'+s; case 'continue': return 'Sigue recto'+s; case 'new name': return 'Continúa'+s; default: return 'Continúa'+s; } }
+function getTurnInstruction(type,modifier,street){ const s=street?' por '+street:''; switch(type){ case 'depart':return 'Comienza el recorrido'+s; case 'arrive':return 'Has llegado a tu destino'; case 'turn':
+  // 2026-08-20: OSRM manda modifier="sharp left"/"sharp right" (dato real del motor de
+  // rutas, no inventado) — pero como "left"/"right" se revisaban ANTES que "sharp", una
+  // curva cerrada SIEMPRE calzaba primero con el genérico "left"/"right" (porque "sharp
+  // left" contiene "left") y el aviso de curva cerrada nunca se alcanzaba a decir. Dead
+  // code real. Ahora "sharp" se revisa primero.
+  if(modifier&&modifier.indexOf('sharp')!==-1){ if(modifier.indexOf('left')!==-1) return 'Curva cerrada a la izquierda'+s; if(modifier.indexOf('right')!==-1) return 'Curva cerrada a la derecha'+s; return 'Curva cerrada'+s; }
+  if(modifier&&modifier.indexOf('left')!==-1) return 'Gira a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'Gira a la derecha'+s; return 'Gira'+s; case 'roundabout': case 'rotary': return 'Toma la rotonda'+s; case 'merge': return 'Incorpórate'+s; case 'fork': if(modifier&&modifier.indexOf('left')!==-1) return 'En la bifurcación, mantente a la izquierda'+s; if(modifier&&modifier.indexOf('right')!==-1) return 'En la bifurcación, mantente a la derecha'+s; return 'Toma la bifurcación'+s; case 'end of road': return 'Al final del camino'+s; case 'continue': return 'Sigue recto'+s; case 'new name': return 'Continúa'+s; default: return 'Continúa'+s; } }
 // 2026-07-14: bug real reportado por Inty — los avisos de giro llegaban tarde
 // (a veces prácticamente al llegar al giro, no antes). Causa: esta función
 // medía la distancia al FINAL de la geometría del paso ACTUAL — que en
@@ -8169,7 +8214,7 @@ async function _intentarReanudarNavegacion(){
   // pegado — mejor no reaparecer solo con una ruta vieja y quizás ya irrelevante.
   if(!data.guardadoEn || (Date.now()-data.guardadoEn)>3*3600000){ _limpiarEstadoNavGuardado(); return; }
   _limpiarEstadoNavGuardado(); // se vuelve a guardar solo apenas la navegación reanudada avance
-  if(!currentUserLocation){ await getCurrentLocation(); }
+  await getCurrentLocation(); // 2026-08-20: siempre fresco, ver navegarAPuntoMapaElegido
   if(!currentUserLocation) return; // sin GPS no hay cómo recalcular la ruta
   await calculateAndStartNavigation(currentUserLocation.lat, currentUserLocation.lon, data.destLat, data.destLon, data.destName);
   // calculateAndStartNavigation arranca el progreso en cero, como cualquier viaje
@@ -8212,7 +8257,7 @@ function endNavigation(){
   if(typeof sincronizarStats==='function') sincronizarStats();
   _lpWLoff(); detenerDeteccionCaidas();
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
-  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); if(_unsubUsersOnNavMap){ _unsubUsersOnNavMap(); _unsubUsersOnNavMap=null; } navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; rutaPerfil=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
+  if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); _navMapUsersActive=false; navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; rutaPerfil=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
 }
 // Historial de vistas para el botón "← Atrás" del header: cv() apila la vista que
 // dejas atrás (salvo cuando el que llama es volverAtras()); "Inicio" siempre limpia
@@ -9819,7 +9864,7 @@ function enviarSOS(){
     {enableHighAccuracy:true, timeout:8000, maximumAge:0});
 }
 function wmoTexto(c){ const m={0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'neblina',48:'neblina',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',66:'lluvia helada',67:'lluvia helada',71:'nieve ligera',73:'nieve',75:'nieve intensa',77:'nieve',80:'chubascos',81:'chubascos',82:'chubascos fuertes',85:'nevadas',86:'nevadas',95:'tormenta',96:'tormenta con granizo',99:'tormenta con granizo'}; return m[c]||'clima variable'; }
-async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weather_code,wind_speed_10m&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=3'); return await r.json(); }catch(e){ return null; } }
+async function climaDeZona(lat,lon){ try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=3'); return await r.json(); }catch(e){ return null; } }
 /* Enganche del efecto visual de clima (clima-fx.js) a los datos REALES de Open-Meteo.
    Mapeo de codigo WMO (mismas categorias que wmoTexto, arriba) a los 6 modos que expone
    climaFxSetMode(). Umbral de "sol" (calor extremo) = 30 grados — CONFIRMADO por Inty
@@ -9963,6 +10008,29 @@ function _cambioClimaRelevante(base, actual){
 }
 /* Vigila el clima durante todo el viaje, no solo al principio. La primera vez guarda la
    foto del pronóstico; después compara y solo habla si cambió de verdad. */
+let _vientoUltimoAviso=0;
+const VIENTO_MIN_ENTRE_AVISOS=480000; // 8 min: el rumbo cambia con las curvas, pero no hay que atosigar
+const VIENTO_KMH_MIN=15; // bajo esto no se nota pedaleando, no vale la pena avisar
+const VIENTO_ANGULO_CONTRA=50; // grados de tolerancia entre de dónde sopla el viento y tu rumbo, para llamarlo "en contra"
+function _diferenciaAngular(a,b){ let d=Math.abs(a-b)%360; if(d>180) d=360-d; return d; }
+/* Viento en contra: 2026-08-20, pedido nuevo de Inty. Usa el MISMO dato de viento que ya
+   consulta vigilarClima (_climaBase) — no agrega otra llamada a la API — más el rumbo real
+   calculado de tus últimos puntos GPS (mismo patrón que _revisarCiclistasAdelante). Solo
+   aplica a modos donde el viento realmente se siente pedaleando: en auto/moto a velocidad
+   de ruta no se nota, y no tiene sentido avisarlo ahí. Dato real, no cosmético:
+   wind_direction_10m es de dónde SOPLA el viento (convención meteorológica) — si sopla
+   desde cerca de tu propio rumbo de avance, te está pegando de frente. */
+function _avisarVientoEnContra(rumbo){
+  if(rumbo==null || !vozActiva || vozOcupada() || vozCola.length) return;
+  if(typeof actividadTipo!=='undefined' && actividadTipo!=='ciclismo' && actividadTipo!=='cicloviaje' && actividadTipo!=='mtb') return;
+  if(!_climaBase || _climaBase.viento==null || _climaBase.direccion==null) return;
+  if(_climaBase.viento<VIENTO_KMH_MIN) return;
+  const ahora=Date.now();
+  if(ahora-_vientoUltimoAviso<VIENTO_MIN_ENTRE_AVISOS) return;
+  if(_diferenciaAngular(_climaBase.direccion, rumbo)>VIENTO_ANGULO_CONTRA) return;
+  _vientoUltimoAviso=ahora;
+  h('Viento en contra, como '+Math.round(_climaBase.viento)+' kilómetros por hora. Vas a sentir más resistencia de lo normal.');
+}
 async function vigilarClima(lat,lon){
   // vozActiva solo bloquea el AVISO hablado — si el modulo de efectos visuales de clima
   // esta cargado, igual necesitamos seguir consultando para mantener el efecto al dia
@@ -9986,7 +10054,7 @@ async function vigilarClima(lat,lon){
       const prox=horas.slice(idx,idx+2);
       if(prox.length) lluvia=Math.max.apply(null,prox);
     }
-    const foto={ lluvia:lluvia, viento:w.current.wind_speed_10m, temp:w.current.temperature_2m, codigo:w.current.weather_code };
+    const foto={ lluvia:lluvia, viento:w.current.wind_speed_10m, direccion:w.current.wind_direction_10m, temp:w.current.temperature_2m, codigo:w.current.weather_code };
     if(!_climaBase){ _climaBase=foto; return; } // primera lectura: solo se guarda, no se habla
     const cambio=_cambioClimaRelevante(_climaBase, foto);
     _climaBase=foto; // la foto nueva pasa a ser la referencia
