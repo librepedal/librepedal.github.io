@@ -1,5 +1,13 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> **OCUPADO — sesión Lenovo, 2026-08-21 ~16:05 UTC.** Rama
+> `feature/mapa-ciclistas-zoom-cluster`. Tocando `_renderMainMapUsers`,
+> `riderMarkerHTML`, `_renderizarPuntosVisibles`, `renderReporteMarkers` y el CSS
+> de `.helmet-pin` — pedido de Inty: ciclistas más chicos y agrupados por zoom,
+> animación idle sincronizada para todos (no solo el propio), distinguirlos aun
+> con el mismo casco, y ocultar agua/alertas a escala país/mundo (solo
+> ciclistas). No toco login/auth ni voz. Aviso al liberar el candado.
+
 > ## 🟢 AL DÍA — resumen de lo que subió la cuenta `lab` el 16-ago entre 11:00 y 20:15
 > Ustedes cerraron a las 05:46 (`fd89cfe`). Desde ahí trabajé yo solo. **Todo está
 > mergeado y los dos remotos están iguales**, no hay nada suyo pendiente de integrar
