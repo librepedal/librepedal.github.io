@@ -670,7 +670,10 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
 /* Animaciones de la cara (compartidas mapa+esfera) */
 .lp-eye{transform-box:fill-box;transform-origin:center}
-.lp-parpadeo{animation:lpParp 4.4s ease-in-out infinite}
+/* --blink-delay: por defecto 0s (esfera/mic, un solo personaje, sin cambios). Los
+   marcadores del mapa (riderMarkerHTML) lo pisan con un valor al azar por ciclista
+   para que no parpadeen todos al mismo tiempo — ver ahí el porqué. */
+.lp-parpadeo{animation:lpParp 4.4s ease-in-out infinite;animation-delay:var(--blink-delay, 0s)}
 @keyframes lpParp{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
 .lp-iris{transform-box:fill-box;transition:transform .18s ease-out}
 .lp-boca{transform-box:fill-box;transform-origin:center;animation:lpBoca .45s ease-in-out infinite}
@@ -3277,7 +3280,7 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var ring=(!mine&&accent)?('<i class="hp-ring" style="background:'+accent+'"></i>'):''; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in">'+ring+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
+function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var ring=(!mine&&accent)?('<i class="hp-ring" style="background:'+accent+'"></i>'):''; var blinkDelay=(Math.random()*4.4).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+ring+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
 
 // ===== Cara expresiva de Pistero (casco + ojos kawaii + expresiones + mirada) =====
 function _bigoteSVG(id){ if(id==='bigote') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/>'; if(id==='candado') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/><path d="M46.5 77 Q50 81.5 53.5 77 Q51.5 78.7 50 78.7 Q48.5 78.7 46.5 77 Z" fill="#5a3a1a"/>'; if(id==='barba') return '<path d="M27 65 Q29 81 50 83 Q71 81 73 65 Q63 73 50 72 Q37 73 27 65 Z" fill="#5a3a1a" opacity="0.92"/>'; return ''; }
@@ -6036,24 +6039,36 @@ function _renderizarPuntosVisiblesThrottled(){
   if(mapPointsRenderTimer) clearTimeout(mapPointsRenderTimer);
   mapPointsRenderTimer=setTimeout(_renderizarPuntosVisibles, 250);
 }
+// Metros por pixel en Mercator (misma fórmula que usa el ScaleControl nativo de
+// MapLibre) — depende de la latitud, no solo del zoom: Chile va de Arica (~-18°) a
+// Punta Arenas (~-53°), y a un mismo zoom un grado de longitud mide bastante menos
+// cerca del polo que cerca del ecuador. Sin esto, un umbral fijo en "zoom" muestra
+// los puntos a escalas reales distintas según en qué parte del país estés.
+function _kmPorPixel(zoom, lat){ return 156543.03392804097 * Math.cos(lat*Math.PI/180) / Math.pow(2, zoom) / 1000; }
+// "Escala visible" = km reales que representa una referencia de 100px en el centro
+// del mapa — el mismo criterio que el ScaleControl de la esquina, para que "30 km"
+// acá sea el mismo "30 km" que se ve dibujado en el mapa.
+function _escalaVisibleKm(mapa){ const c=mapa.getCenter(); return _kmPorPixel(mapa.getZoom(), c.lat) * 100; }
 // Con miles de puntos sembrados desde OpenStreetMap, mostrarlos todos apenas se abre
 // el mapa a nivel país los inunda de íconos de mirador. El tope ahora escala con el
 // zoom: casi nada a nivel país, más a nivel ciudad, todos los que entren en pantalla
-// a nivel calle. 2026-08-21 (pedido de Inty): antes los puntos de la comunidad (agua,
-// miradores, etc.) se mostraban SIEMPRE sin importar el zoom porque son pocos — pero
-// a escala país/mundo se veían mezclados con los ciclistas y saturaban el mapa. Ahora
-// respetan el mismo umbral de zoom<6 que los sembrados: a esa escala solo se ven los
-// ciclistas.
+// a nivel calle.
 function _maxRenderParaZoom(zoom){
   if(zoom<6) return 0;
   if(zoom<9) return 40;
   if(zoom<12) return 150;
   return MAPPOINTS_MAX_RENDER;
 }
+// 2026-08-21 (pedido de Inty, ajustado en vivo probando varios valores): agua,
+// miradores y demás puntos de interés (comunidad Y sembrados) solo se ven con el
+// mapa a ~30 km de escala visible o más cerca — más alejado que eso se ven
+// amontonados y ensucian el mapa. Los ciclistas NO tienen este límite, se ven
+// siempre sin importar la escala.
 function _renderizarPuntosVisibles(){
   if(!mp) return;
   if(mp._pts){ mp._pts.forEach(function(m){ mp.removeLayer(m); }); }
   mp._pts=[];
+  if(_escalaVisibleKm(mp) > 30) return;
   const b=mp.getBounds(), margen=0.08;
   const w=b.getWest()-margen, e=b.getEast()+margen, s=b.getSouth()-margen, n=b.getNorth()+margen;
   const enVista=mapPointsData.filter(function(d){ return !(d.lon<w||d.lon>e||d.lat<s||d.lat>n); });
@@ -6068,7 +6083,7 @@ function _renderizarPuntosVisibles(){
     m.bindPopup('<b>'+escapeHTML(d.title||'Punto')+'</b><br><small>'+escapeHTML(d.desc||'')+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+d.lat+','+d.lon+');return false" style="color:#fc4c02;font-weight:700"><i class="fas fa-compass"></i> Ir aquí</a>');
     mp._pts.push(m);
   };
-  if(mp.getZoom()>=6) comunidad.forEach(pintar);
+  comunidad.forEach(pintar);
   if(maxSembrados>0) sembrados.forEach(function(d,i){ if(i%paso===0) pintar(d); });
 }
 // Aviso anticipado por voz: cuando te acercas a ~300m de un mirador, punto de agua u
@@ -6627,10 +6642,10 @@ function _grupoDeCat(cat){ for(const g in CAPA_GRUPOS){ if(CAPA_GRUPOS[g].indexO
 function renderReporteMarkers(){
   if(!mp) return;
   reporteMarkers.forEach(function(m){ mp.removeLayer(m); }); reporteMarkers=[];
-  // 2026-08-21 (pedido de Inty): a escala país/mundo (mismo umbral que los puntos de
-  // la comunidad, zoom<6) los reportes/alertas se ocultan — a esa escala solo se ven
-  // los ciclistas, sin amontonarse con íconos de peligro/servicios.
-  if(mp.getZoom()<6) return;
+  // 2026-08-21 (pedido de Inty, mismo umbral de ~30 km de escala visible que
+  // _renderizarPuntosVisibles): más alejado que eso los reportes/alertas se ocultan
+  // — solo se ven los ciclistas, sin amontonarse con íconos de peligro/servicios.
+  if(_escalaVisibleKm(mp) > 30) return;
   reportesData.filter(reporteVisible).forEach(function(r){
     if(!(r.lat&&r.lon)) return;
     if(!mapaCapas[_grupoDeCat(r.cat)]) return; // capa apagada
