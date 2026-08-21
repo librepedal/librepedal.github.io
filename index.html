@@ -643,7 +643,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
    único que sigue distinguiendo a cada quien en el mapa. Solo en ciclistas ajenos. */
 .hp-ring{position:absolute;left:50%;bottom:-2px;width:9px;height:9px;border-radius:50%;transform:translateX(-50%);border:1.5px solid rgba(10,14,22,.85);box-shadow:0 0 3px rgba(0,0,0,.5);z-index:2}
 @keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-.rider-cluster{width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff8a3d,#fc4c02 70%);border:2px solid rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.5);color:#1a0900;font-weight:800;font-size:12px;font-family:inherit;cursor:pointer}
+/* Tarjeta de grupo: pila de cascos reales (no un número pelado) — pedido de Inty
+   tras ver el diseño anterior ("no quiero mostrar grupos de ciclistas esa
+   manera"). RIDER_STACK_MAX/RIDER_STACK_AV_PX (más abajo) controlan cuántos
+   cascos se ven antes del "+N" y su tamaño. */
+.rider-cluster{display:flex;align-items:center;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
+.rc-stack{display:flex}
+.rc-av{border-radius:7px;background:#0e1420;border:1.5px solid rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+.rc-av svg{width:88%;height:76%;display:block}
+.rc-more{margin-left:3px;background:var(--p);color:#1a0900;font-weight:800;font-size:10px;padding:2px 6px;border-radius:8px;border:1.5px solid rgba(255,255,255,.9);white-space:nowrap}
 .fab{position:fixed;right:14px;width:56px;height:56px;border-radius:50%;border:none;color:#fff;font-size:1.3rem;cursor:pointer;z-index:2200;box-shadow:0 4px 14px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center}
 /* Orbe Pistero (v7.65): un solo control de voz = cara con casco + anillo que gira
    siempre (estilo Kimi). Morado=reposo, naranja=escuchando, azul=Pistero habla.
@@ -3280,7 +3288,7 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var ring=(!mine&&accent)?('<i class="hp-ring" style="background:'+accent+'"></i>'):''; var blinkDelay=(Math.random()*4.4).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+ring+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
+function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var ring=(!mine&&accent)?('<i class="hp-ring" style="background:'+accent+'"></i>'):''; var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+ring+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
 
 // ===== Cara expresiva de Pistero (casco + ojos kawaii + expresiones + mirada) =====
 function _bigoteSVG(id){ if(id==='bigote') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/>'; if(id==='candado') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/><path d="M46.5 77 Q50 81.5 53.5 77 Q51.5 78.7 50 78.7 Q48.5 78.7 46.5 77 Z" fill="#5a3a1a"/>'; if(id==='barba') return '<path d="M27 65 Q29 81 50 83 Q71 81 73 65 Q63 73 50 72 Q37 73 27 65 Z" fill="#5a3a1a" opacity="0.92"/>'; return ''; }
@@ -4607,12 +4615,38 @@ let _lastUsersSnapshotDocs=null;
 // Tamaño de los cascos en el mapa principal según el zoom (pedido de Inty,
 // 2026-08-21): a escala país/mundo se veían todos igual de grandes que a escala
 // calle, amontonados. Ajusta la var CSS --rider-scale (usada por .helmet-pin svg).
-function _riderScaleParaZoom(zoom){ if(zoom<4) return 0.5; if(zoom<7) return 0.62; if(zoom<10) return 0.8; if(zoom<13) return 0.92; return 1; }
+// Valores calibrados en vivo por Inty con el panel de control del demo
+// (COORDINACION-IA/mapa-navegacion), "Asignado" el 2026-08-21.
+function _riderScaleParaZoom(zoom){ if(zoom<4) return 0.20; if(zoom<7) return 0.62; if(zoom<10) return 0.80; if(zoom<13) return 0.92; return 1; }
 // Celda de agrupamiento (en píxeles de pantalla) para juntar ciclistas cercanos en
-// una burbuja con contador en vez de superponer cascos idénticos. 0 = sin agrupar
+// una tarjeta de grupo en vez de superponer cascos idénticos. 0 = sin agrupar
 // (zoom de calle, donde cada ciclista ya se ve suficientemente separado).
-function _celdaClusterParaZoom(zoom){ if(zoom<4) return 90; if(zoom<7) return 66; if(zoom<10) return 48; return 0; }
-function riderClusterHTML(n){ return '<div class="rider-cluster"><span>'+n+'</span></div>'; }
+function _celdaClusterParaZoom(zoom){ if(zoom<4) return 35; if(zoom<7) return 66; if(zoom<10) return 48; return 0; }
+// Tope del delay aleatorio de parpadeo (para que los ciclistas no parpadeen todos
+// a la vez, ver .lp-parpadeo) y tamaño de la tarjeta de grupo — mismos valores
+// calibrados en vivo.
+const RIDER_BLINK_MAX_S=5.4;
+const RIDER_STACK_MAX=1;
+const RIDER_STACK_AV_PX=16;
+function _miniHelmetSVG_cluster(col){
+  return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'
+    +'<path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/>'
+    +'<path d="M12 54 A38 36 0 0 1 88 54 Z" fill="'+col+'"/>'
+    +'<path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/>'
+    +'<circle cx="40" cy="63" r="5.5" fill="#16203a"/><circle cx="60" cy="63" r="5.5" fill="#16203a"/>'
+    +'</svg>';
+}
+// Tarjeta de grupo: pila de cascos reales (jersey de cada ciclista) en vez de un
+// número pelado — pedido de Inty tras ver la primera versión ("no quiero mostrar
+// grupos de ciclistas esa manera"). RIDER_STACK_MAX cascos visibles, el resto en
+// una píldora "+N".
+function riderClusterHTML(grupo){
+  const shown=grupo.slice(0, RIDER_STACK_MAX);
+  const extra=grupo.length-shown.length;
+  const avatares=shown.map(function(u,i){ return '<span class="rc-av" style="width:'+RIDER_STACK_AV_PX+'px;height:'+Math.round(RIDER_STACK_AV_PX*0.73)+'px;margin-left:'+(i===0?0:-Math.round(RIDER_STACK_AV_PX*0.42))+'px;z-index:'+(RIDER_STACK_MAX-i)+'">'+_miniHelmetSVG_cluster(u.jersey||'#00aaff')+'</span>'; }).join('');
+  const mas=extra>0?('<span class="rc-more">+'+extra+'</span>'):'';
+  return '<div class="rider-cluster"><span class="rc-stack">'+avatares+'</span>'+mas+'</div>';
+}
 function _actualizarVisibilidadCiclistas(){
   if(!mp) return;
   document.documentElement.style.setProperty('--rider-scale', _riderScaleParaZoom(mp.getZoom()));
@@ -4640,7 +4674,7 @@ function _renderMainMapUsers(docs){
     const grupo=buckets[k];
     if(grupo.length===1){ _pintarUnCiclista(grupo[0]); return; }
     const lat=grupo.reduce(function(s,u){return s+u.lat;},0)/grupo.length, lon=grupo.reduce(function(s,u){return s+u.lon;},0)/grupo.length;
-    const marker=mlMarker([lat,lon],{icon:{html:riderClusterHTML(grupo.length)}}).addTo(mp);
+    const marker=mlMarker([lat,lon],{icon:{html:riderClusterHTML(grupo)}}).addTo(mp);
     const el=marker._ml&&marker._ml.getElement();
     if(el) el.addEventListener('click', function(){ mp.flyTo({center:[lon,lat], zoom:Math.min(mp.getZoom()+3,15)}); });
     sm.push(marker);
