@@ -383,11 +383,14 @@ function riderMarkerHTML(col, accent, mine){
   return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+ring+svg+'</div></div>';
 }
 function _miniHelmetSVG(col){
+  // Ojos con brillo blanco: sin esto, dos circulos oscuros lisos sobre la sombra
+  // del casco (tambien oscura) se leian como agujeros de mascara, no como ojos.
   return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'
     + '<path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/>'
     + '<path d="M12 54 A38 36 0 0 1 88 54 Z" fill="'+col+'"/>'
-    + '<path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/>'
-    + '<circle cx="40" cy="63" r="5.5" fill="#16203a"/><circle cx="60" cy="63" r="5.5" fill="#16203a"/>'
+    + '<path d="M12 54 Q50 63 88 54 L88 50 Q50 58 12 50 Z" fill="rgba(0,0,0,0.22)"/>'
+    + '<ellipse cx="40" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><circle cx="37.8" cy="60" r="2.5" fill="#fff"/>'
+    + '<ellipse cx="60" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><circle cx="57.8" cy="60" r="2.5" fill="#fff"/>'
     + '</svg>';
 }
 // Pila de personajes en vez de un número pelado: cada ciclista agrupado se sigue

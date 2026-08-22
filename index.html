@@ -4644,11 +4644,15 @@ const RIDER_BLINK_MAX_S=5.4;
 const RIDER_STACK_MAX=2;
 const RIDER_STACK_AV_PX=16;
 function _miniHelmetSVG_cluster(col){
+  // Ojos con brillo blanco (igual que el personaje completo, eO() más abajo): sin
+  // esto, dos círculos oscuros lisos sobre la sombra del casco (también oscura) se
+  // leen como agujeros de máscara, no como ojos. Reporte real de Inty, 2026-08-22.
   return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'
     +'<path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/>'
     +'<path d="M12 54 A38 36 0 0 1 88 54 Z" fill="'+col+'"/>'
-    +'<path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/>'
-    +'<circle cx="40" cy="63" r="5.5" fill="#16203a"/><circle cx="60" cy="63" r="5.5" fill="#16203a"/>'
+    +'<path d="M12 54 Q50 63 88 54 L88 50 Q50 58 12 50 Z" fill="rgba(0,0,0,0.22)"/>'
+    +'<ellipse cx="40" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><circle cx="37.8" cy="60" r="2.5" fill="#fff"/>'
+    +'<ellipse cx="60" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><circle cx="57.8" cy="60" r="2.5" fill="#fff"/>'
     +'</svg>';
 }
 // Tarjeta de grupo: pila de cascos reales (jersey de cada ciclista) en vez de un
@@ -4667,6 +4671,7 @@ function _actualizarVisibilidadCiclistas(){
   document.documentElement.style.setProperty('--rider-scale', _riderScaleParaZoom(mp.getZoom()));
   if(_lastUsersSnapshotDocs) _renderMainMapUsers(_lastUsersSnapshotDocs);
   if(typeof renderReporteMarkers==='function') renderReporteMarkers();
+  if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas();
 }
 function _pintarUnCiclista(u){ const marker=mlMarker([u.lat,u.lon],{icon:{html:riderMarkerHTML(u.helmet,u.jersey,false)}}).addTo(mp).bindPopup('<b>'+escapeHTML(u.nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+u.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); }
 function _renderMainMapUsers(docs){
@@ -5148,6 +5153,10 @@ function _dibujarZonasRojas(){
   if(!mp || typeof ZONAS_ROJAS==='undefined' || typeof mlMarker!=='function') return;
   try{
     _zrMarkers.forEach(function(m){ try{ mp.removeLayer(m); }catch(e){} }); _zrMarkers=[];
+    // Mismo umbral de ~30 km de escala visible que agua/miradores/alertas (pedido de
+    // Inty, 2026-08-22): a escala país/mundo, las zonas de riesgo saturaban el mapa
+    // igual que antes lo hacían los POI — ahora respetan el mismo protocolo visual.
+    if(typeof _escalaVisibleKm==='function' && _escalaVisibleKm(mp)>30) return;
     ZONAS_ROJAS.forEach(function(z){
       try{
         var mk=mlMarker([z.lat,z.lon],{icon:{html:lpBadgeHTML('<i class="fas fa-triangle-exclamation" style="color:#ff6b6b"></i>','#ff3b3b')}}).addTo(mp)
