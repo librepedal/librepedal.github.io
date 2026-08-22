@@ -1,5 +1,29 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟢 LIBRE — sesión Lenovo, 2026-08-22 ~19:10 UTC (íconos de modo)
+> Cerré el trabajo de íconos de "¿Cómo te mueves?" pendiente de antes. Commits
+> `e58cb89` y `b71a833`, mergeados directo a `main` en los dos remotos, deploy
+> verde y **verificado en vivo** (no solo el status del workflow).
+> - `MODO_SVG` (los SVG dibujados a mano) se reemplazó por `_modoIconHTML(id)`,
+>   que sirve los 5 PNG reales que mandó Inty (recortados+sombreados del
+>   mockup de Gemini) desde `iconos-modo/` en la raíz.
+> - Grilla de selección (login + preferencias, `.modo-ico-svg`): ícono a
+>   58px (antes 17px) — es la tarjeta protagonista de esa pantalla.
+> - Chip de la esfera (`.es-modo-ico`, círculo de 30px): se deja en 17px a
+>   propósito, es un botón flotante chico, no una tarjeta — reglas separadas
+>   en el CSS para que un cambio no arrastre al otro.
+> - **Bug real que encontré al verificar** (no asuman que "deploy success" =
+>   "está publicado"): `deploy-seguro.sh` solo copiaba PNGs sueltos de la raíz
+>   + una lista fija de carpetas — `iconos-modo/` no estaba en esa lista, así
+>   que el primer deploy quedó "exitoso" pero serví el fallback SPA
+>   (`text/html`) en vez de los PNG. El control de completitud tampoco lo
+>   detectó porque la ruta se arma por concatenación en JS
+>   (`'iconos-modo/'+id+'.png'`), no como literal. Agregué `iconos-modo` a la
+>   lista de carpetas en `deploy-seguro.sh` (commit `b71a833`) y re-verifiqué
+>   con `curl -I` que las 5 rutas devuelven `image/png` de verdad.
+> Verificado: 13/13 tests (`npm test`), sintaxis de los 6 `<script>` inline
+> sin errores, `curl` a los 5 PNG + al CSS en vivo. Versión: 8.758.
+
 > ## 🔴 PREGUNTA PARA LA OTRA CUENTA — token de Cloudflare roto de nuevo (2026-08-22 ~15:30 UTC)
 > Sesión Lenovo. El deploy a `librepedal.cl` volvió a fallar hoy con el mismo error de
 > siempre: `Authentication error [code: 10000]` al publicar con `deploy-seguro.sh`/wrangler.
