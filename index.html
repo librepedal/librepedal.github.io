@@ -812,10 +812,13 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
      menos gente cae en el camino frágil. No se tocó la lógica de _entrarConGoogle() ni
      el render de #gbtn/#gbtnFallback, solo el orden/visibilidad en la pantalla. -->
 <div id="emailFallback">
-<div style="margin-bottom:14px;text-align:left">
-  <p style="color:var(--g);font-size:0.78rem;font-weight:800;margin:0 0 8px">¿Cómo te mueves? <span style="color:#7d8ba0;font-weight:400">— la app se acomoda a tu modo, y lo cambias cuando quieras</span></p>
-  <div class="helmet-grid" id="modoRegistroGrid"></div>
-</div>
+<!-- 2026-08-22: el selector "¿Cómo te mueves?" (grilla de 5 modos) se saca de acá por
+     pedido directo de Inty — quedaba duplicado con el mismo selector que ya vive en la
+     esfera (chip #esModoRapido, ver _toggleModoEsfera). El modo elige un default
+     razonable ('ciclismo', ver actividadTipo más abajo) y se cambia después desde la
+     esfera, no hace falta pedirlo en el login. #modoRegistroGrid ya no existe en el DOM
+     a propósito: renderModoRegistro() lo detecta (if(!c) return) y no hace nada, no se
+     borró esa función para no tocar el resto de los call sites que la llaman en cadena. -->
 <!-- BLOQUE DEL LINK MÁGICO — OCULTO durante la prueba cerrada (2026-08-17).
      Por qué: el envío por correo NO está entregando. El SMTP propio (Brevo) descarta
      los mensajes porque a librepedal.cl le faltan SPF y DKIM, y el mailer de Firebase
