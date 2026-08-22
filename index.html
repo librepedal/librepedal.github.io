@@ -635,9 +635,28 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .bikewheel{width:84px;height:84px;animation:spin 1.9s linear infinite;filter:drop-shadow(0 0 10px rgba(252,76,2,0.45))}
 @keyframes spin{to{transform:rotate(360deg)}}
 .helmet-pin{filter:drop-shadow(0 2px 3px rgba(0,0,0,0.6))}
-.helmet-pin svg{width:44px;height:30px;display:block}
-.helmet-pin.mine{filter:drop-shadow(0 0 8px var(--p));animation:helmBob 1.1s ease-in-out infinite}
+/* La animación y el escalado van en .hp-in (adentro), NUNCA en .helmet-pin: ese es
+   el mismo elemento que le pasamos como "element" a maplibregl.Marker, que le
+   reescribe el transform en cada frame para posicionarlo en el mapa — una
+   animación CSS de transform ahí pisaría esa posición (el marker se iría a la
+   esquina). Por eso el bob/tamaño vive en el hijo, no en el elemento del marker. */
+.helmet-pin .hp-in{position:relative;animation:helmBob 2.6s ease-in-out infinite}
+.helmet-pin svg{width:calc(44px * var(--rider-scale, 1));height:calc(30px * var(--rider-scale, 1));display:block;position:relative;z-index:1}
+.helmet-pin.mine{filter:drop-shadow(0 0 8px var(--p))}
+.helmet-pin.mine .hp-in{animation:helmBob 1.1s ease-in-out infinite}
+/* Anillo de color (jersey del ciclista): con cascos repetidos entre usuarios, es lo
+   único que sigue distinguiendo a cada quien en el mapa. Solo en ciclistas ajenos. */
+.hp-ring{position:absolute;left:50%;bottom:-2px;width:9px;height:9px;border-radius:50%;transform:translateX(-50%);border:1.5px solid rgba(10,14,22,.85);box-shadow:0 0 3px rgba(0,0,0,.5);z-index:2}
 @keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+/* Tarjeta de grupo: pila de cascos reales (no un número pelado) — pedido de Inty
+   tras ver el diseño anterior ("no quiero mostrar grupos de ciclistas esa
+   manera"). RIDER_STACK_MAX/RIDER_STACK_AV_PX (más abajo) controlan cuántos
+   cascos se ven antes del "+N" y su tamaño. */
+.rider-cluster{display:flex;align-items:center;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
+.rc-stack{display:flex}
+.rc-av{border-radius:7px;background:#0e1420;border:1.5px solid rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+.rc-av svg{width:88%;height:76%;display:block}
+.rc-more{margin-left:3px;background:var(--p);color:#1a0900;font-weight:800;font-size:10px;padding:2px 6px;border-radius:8px;border:1.5px solid rgba(255,255,255,.9);white-space:nowrap}
 .fab{position:fixed;right:14px;width:56px;height:56px;border-radius:50%;border:none;color:#fff;font-size:1.3rem;cursor:pointer;z-index:2200;box-shadow:0 4px 14px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center}
 /* Orbe Pistero (v7.65): un solo control de voz = cara con casco + anillo que gira
    siempre (estilo Kimi). Morado=reposo, naranja=escuchando, azul=Pistero habla.
@@ -664,7 +683,10 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
 /* Animaciones de la cara (compartidas mapa+esfera) */
 .lp-eye{transform-box:fill-box;transform-origin:center}
-.lp-parpadeo{animation:lpParp 4.4s ease-in-out infinite}
+/* --blink-delay: por defecto 0s (esfera/mic, un solo personaje, sin cambios). Los
+   marcadores del mapa (riderMarkerHTML) lo pisan con un valor al azar por ciclista
+   para que no parpadeen todos al mismo tiempo — ver ahí el porqué. */
+.lp-parpadeo{animation:lpParp 4.4s ease-in-out infinite;animation-delay:var(--blink-delay, 0s)}
 @keyframes lpParp{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
 .lp-iris{transform-box:fill-box;transition:transform .18s ease-out}
 .lp-boca{transform-box:fill-box;transform-origin:center;animation:lpBoca .45s ease-in-out infinite}
@@ -3276,7 +3298,7 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; return '<div class="helmet-pin'+(mine?' mine':'')+'">'+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div>'; }
+function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var ring=(!mine&&accent)?('<i class="hp-ring" style="background:'+accent+'"></i>'):''; var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+ring+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
 
 // ===== Cara expresiva de Pistero (casco + ojos kawaii + expresiones + mirada) =====
 function _bigoteSVG(id){ if(id==='bigote') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/>'; if(id==='candado') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/><path d="M46.5 77 Q50 81.5 53.5 77 Q51.5 78.7 50 78.7 Q48.5 78.7 46.5 77 Z" fill="#5a3a1a"/>'; if(id==='barba') return '<path d="M27 65 Q29 81 50 83 Q71 81 73 65 Q63 73 50 72 Q37 73 27 65 Z" fill="#5a3a1a" opacity="0.92"/>'; return ''; }
@@ -4600,7 +4622,79 @@ let usuariosCercanosData=[];
 // cada actualización de posición se pagaba dos veces en lecturas. Ahora hay UNA sola
 // suscripción (acá abajo); ambos mapas se pintan desde el mismo snapshot en memoria.
 let _lastUsersSnapshotDocs=null;
-function _renderMainMapUsers(docs){ if(!mp) return; sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; usuariosCercanosData=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; usuariosCercanosData.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon}); const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=mlMarker([data.lat,data.lon],{icon:{html:riderMarkerHTML(data.helmet||'giro',jersey,false)}}).addTo(mp).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); } }); }
+// Tamaño de los cascos en el mapa principal según el zoom (pedido de Inty,
+// 2026-08-21): a escala país/mundo se veían todos igual de grandes que a escala
+// calle, amontonados. Ajusta la var CSS --rider-scale (usada por .helmet-pin svg).
+// Valores calibrados en vivo por Inty con el panel de control del demo
+// (COORDINACION-IA/mapa-navegacion). El valor de "continente" quedó ajustado a
+// mano (0.35->0.56 en tamaño, 50->110px en agrupamiento): el que había asignado
+// Inty hacía que el ciclista se achicara al pasar de mundo a continente y volviera
+// a crecer después — visualmente se veía como que "encogía", así que se corrigió
+// para que crezca parejo en todos los escalones (mundo 0.51 -> continente 0.56 ->
+// país 0.62 -> regional 0.80 -> ciudad 0.92).
+function _riderScaleParaZoom(zoom){ if(zoom<2) return 0.51; if(zoom<4) return 0.56; if(zoom<7) return 0.62; if(zoom<10) return 0.80; if(zoom<13) return 0.92; return 1; }
+// Celda de agrupamiento (en píxeles de pantalla) para juntar ciclistas cercanos en
+// una tarjeta de grupo en vez de superponer cascos idénticos. 0 = sin agrupar
+// (zoom de calle, donde cada ciclista ya se ve suficientemente separado).
+function _celdaClusterParaZoom(zoom){ if(zoom<2) return 154; if(zoom<4) return 110; if(zoom<7) return 66; if(zoom<10) return 48; return 0; }
+// Tope del delay aleatorio de parpadeo (para que los ciclistas no parpadeen todos
+// a la vez, ver .lp-parpadeo) y tamaño de la tarjeta de grupo — mismos valores
+// calibrados en vivo.
+const RIDER_BLINK_MAX_S=5.4;
+const RIDER_STACK_MAX=2;
+const RIDER_STACK_AV_PX=16;
+function _miniHelmetSVG_cluster(col){
+  return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'
+    +'<path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/>'
+    +'<path d="M12 54 A38 36 0 0 1 88 54 Z" fill="'+col+'"/>'
+    +'<path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/>'
+    +'<circle cx="40" cy="63" r="5.5" fill="#16203a"/><circle cx="60" cy="63" r="5.5" fill="#16203a"/>'
+    +'</svg>';
+}
+// Tarjeta de grupo: pila de cascos reales (jersey de cada ciclista) en vez de un
+// número pelado — pedido de Inty tras ver la primera versión ("no quiero mostrar
+// grupos de ciclistas esa manera"). RIDER_STACK_MAX cascos visibles, el resto en
+// una píldora "+N".
+function riderClusterHTML(grupo){
+  const shown=grupo.slice(0, RIDER_STACK_MAX);
+  const extra=grupo.length-shown.length;
+  const avatares=shown.map(function(u,i){ return '<span class="rc-av" style="width:'+RIDER_STACK_AV_PX+'px;height:'+Math.round(RIDER_STACK_AV_PX*0.73)+'px;margin-left:'+(i===0?0:-Math.round(RIDER_STACK_AV_PX*0.42))+'px;z-index:'+(RIDER_STACK_MAX-i)+'">'+_miniHelmetSVG_cluster(u.jersey||'#00aaff')+'</span>'; }).join('');
+  const mas=extra>0?('<span class="rc-more">+'+extra+'</span>'):'';
+  return '<div class="rider-cluster"><span class="rc-stack">'+avatares+'</span>'+mas+'</div>';
+}
+function _actualizarVisibilidadCiclistas(){
+  if(!mp) return;
+  document.documentElement.style.setProperty('--rider-scale', _riderScaleParaZoom(mp.getZoom()));
+  if(_lastUsersSnapshotDocs) _renderMainMapUsers(_lastUsersSnapshotDocs);
+  if(typeof renderReporteMarkers==='function') renderReporteMarkers();
+}
+function _pintarUnCiclista(u){ const marker=mlMarker([u.lat,u.lon],{icon:{html:riderMarkerHTML(u.helmet,u.jersey,false)}}).addTo(mp).bindPopup('<b>'+escapeHTML(u.nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+u.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); }
+function _renderMainMapUsers(docs){
+  if(!mp) return;
+  sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; usuariosCercanosData=[];
+  const vivos=[];
+  docs.forEach(function(doc){
+    const data=doc.data();
+    if(data.lat&&data.lon&&doc.id!==cu){
+      const nombre=data.nombre||doc.id;
+      usuariosCercanosData.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon});
+      vivos.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon,helmet:data.helmet||'giro',jersey:data.skin?skinColor(data.skin):'#ff6600'});
+    }
+  });
+  const celda=_celdaClusterParaZoom(mp.getZoom());
+  if(celda<=0 || vivos.length<2){ vivos.forEach(_pintarUnCiclista); return; }
+  const buckets={};
+  vivos.forEach(function(u){ const p=mp.project([u.lon,u.lat]); const key=Math.round(p.x/celda)+'_'+Math.round(p.y/celda); (buckets[key]=buckets[key]||[]).push(u); });
+  Object.keys(buckets).forEach(function(k){
+    const grupo=buckets[k];
+    if(grupo.length===1){ _pintarUnCiclista(grupo[0]); return; }
+    const lat=grupo.reduce(function(s,u){return s+u.lat;},0)/grupo.length, lon=grupo.reduce(function(s,u){return s+u.lon;},0)/grupo.length;
+    const marker=mlMarker([lat,lon],{icon:{html:riderClusterHTML(grupo)}}).addTo(mp);
+    const el=marker._ml&&marker._ml.getElement();
+    if(el) el.addEventListener('click', function(){ mp.flyTo({center:[lon,lat], zoom:Math.min(mp.getZoom()+3,15)}); });
+    sm.push(marker);
+  });
+}
 function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } }); }
 function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ _lastUsersSnapshotDocs=snapshot.docs; _renderMainMapUsers(snapshot.docs); if(_navMapUsersActive) _renderNavMapUsers(snapshot.docs); }); }
 /* ===== CICLISTAS DE LA COMUNIDAD: pelotón demo por todo Chile + usuarios reales al entrar ===== */
@@ -5960,7 +6054,7 @@ async function im(){
     // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
     mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222"><i class="fas fa-location-dot"></i> Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer"><i class="fas fa-compass"></i> Navegar aquí</button>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
-    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); });
+    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); mp.on('zoomend', _actualizarVisibilidadCiclistas); _actualizarVisibilidadCiclistas(); });
     mp.on('style.load', _aplicarTemaMapa); // aplica el tema de mapa (aventura/neón/arcade) en cada carga de estilo, y resetea (plano) en calles/topo/sat
   }catch(err){
     mp=null;
@@ -6004,21 +6098,36 @@ function _renderizarPuntosVisiblesThrottled(){
   if(mapPointsRenderTimer) clearTimeout(mapPointsRenderTimer);
   mapPointsRenderTimer=setTimeout(_renderizarPuntosVisibles, 250);
 }
+// Metros por pixel en Mercator (misma fórmula que usa el ScaleControl nativo de
+// MapLibre) — depende de la latitud, no solo del zoom: Chile va de Arica (~-18°) a
+// Punta Arenas (~-53°), y a un mismo zoom un grado de longitud mide bastante menos
+// cerca del polo que cerca del ecuador. Sin esto, un umbral fijo en "zoom" muestra
+// los puntos a escalas reales distintas según en qué parte del país estés.
+function _kmPorPixel(zoom, lat){ return 156543.03392804097 * Math.cos(lat*Math.PI/180) / Math.pow(2, zoom) / 1000; }
+// "Escala visible" = km reales que representa una referencia de 100px en el centro
+// del mapa — el mismo criterio que el ScaleControl de la esquina, para que "30 km"
+// acá sea el mismo "30 km" que se ve dibujado en el mapa.
+function _escalaVisibleKm(mapa){ const c=mapa.getCenter(); return _kmPorPixel(mapa.getZoom(), c.lat) * 100; }
 // Con miles de puntos sembrados desde OpenStreetMap, mostrarlos todos apenas se abre
 // el mapa a nivel país los inunda de íconos de mirador. El tope ahora escala con el
 // zoom: casi nada a nivel país, más a nivel ciudad, todos los que entren en pantalla
-// a nivel calle. Los puntos que aportó la comunidad (no sembrados) siempre se
-// muestran sin importar el zoom: son pocos y valen más vistos siempre.
+// a nivel calle.
 function _maxRenderParaZoom(zoom){
   if(zoom<6) return 0;
   if(zoom<9) return 40;
   if(zoom<12) return 150;
   return MAPPOINTS_MAX_RENDER;
 }
+// 2026-08-21 (pedido de Inty, ajustado en vivo probando varios valores): agua,
+// miradores y demás puntos de interés (comunidad Y sembrados) solo se ven con el
+// mapa a ~30 km de escala visible o más cerca — más alejado que eso se ven
+// amontonados y ensucian el mapa. Los ciclistas NO tienen este límite, se ven
+// siempre sin importar la escala.
 function _renderizarPuntosVisibles(){
   if(!mp) return;
   if(mp._pts){ mp._pts.forEach(function(m){ mp.removeLayer(m); }); }
   mp._pts=[];
+  if(_escalaVisibleKm(mp) > 30) return;
   const b=mp.getBounds(), margen=0.08;
   const w=b.getWest()-margen, e=b.getEast()+margen, s=b.getSouth()-margen, n=b.getNorth()+margen;
   const enVista=mapPointsData.filter(function(d){ return !(d.lon<w||d.lon>e||d.lat<s||d.lat>n); });
@@ -6592,6 +6701,10 @@ function _grupoDeCat(cat){ for(const g in CAPA_GRUPOS){ if(CAPA_GRUPOS[g].indexO
 function renderReporteMarkers(){
   if(!mp) return;
   reporteMarkers.forEach(function(m){ mp.removeLayer(m); }); reporteMarkers=[];
+  // 2026-08-21 (pedido de Inty, mismo umbral de ~30 km de escala visible que
+  // _renderizarPuntosVisibles): más alejado que eso los reportes/alertas se ocultan
+  // — solo se ven los ciclistas, sin amontonarse con íconos de peligro/servicios.
+  if(_escalaVisibleKm(mp) > 30) return;
   reportesData.filter(reporteVisible).forEach(function(r){
     if(!(r.lat&&r.lon)) return;
     if(!mapaCapas[_grupoDeCat(r.cat)]) return; // capa apagada

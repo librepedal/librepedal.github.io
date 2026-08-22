@@ -1,0 +1,761 @@
+<meta charset="utf-8">
+<title>Ciclistas por Escala</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#0a0f1d;
+  --panel:#101a2d;
+  --panel-2:#0c1526;
+  --border:#223252;
+  --text:#eaf1ff;
+  --text-dim:#8fa0bd;
+  --text-faint:#5c6f8f;
+  --accent:#fc4c02;
+  --accent-dim:#7a2f0a;
+  --cyan:#2fc2ff;
+  --land:#17253d;
+  --land-line:#2f4265;
+  --ok:#2fd18f;
+  --off:#3a4a6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:'Sora',system-ui,sans-serif;overflow:hidden}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+#stage{position:relative;width:100vw;height:100vh}
+#map{position:absolute;inset:0;background:var(--bg)}
+#map canvas{outline:none}
+
+/* ---- HUD superior: qué está pasando ahora mismo ---- */
+#hud{
+  position:absolute;top:14px;left:14px;right:14px;
+  display:flex;flex-wrap:wrap;gap:8px;
+  pointer-events:none;
+}
+.chip{
+  pointer-events:auto;
+  background:rgba(16,26,45,.88);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:9px 13px;
+  display:flex;align-items:baseline;gap:7px;
+  backdrop-filter:blur(6px);
+  box-shadow:0 4px 16px rgba(0,0,0,.35);
+}
+.chip .k{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);font-weight:600}
+.chip .v{font-size:.92rem;font-weight:600;color:var(--text)}
+.chip .v.accent{color:var(--accent)}
+.chip .v.cyan{color:var(--cyan)}
+.chip .state{
+  font-size:.66rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  padding:2px 7px;border-radius:20px;
+}
+.state.on{background:rgba(47,209,143,.15);color:var(--ok)}
+.state.off{background:rgba(58,74,107,.25);color:var(--text-faint)}
+
+/* ---- Título flotante, breve ---- */
+#title{
+  position:absolute;left:14px;bottom:14px;max-width:300px;
+  background:rgba(16,26,45,.88);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,0,0,.35);
+}
+#title h1{margin:0 0 4px;font-size:1rem;font-weight:700;letter-spacing:-.01em}
+#title p{margin:0;font-size:.78rem;line-height:1.45;color:var(--text-dim)}
+#title .legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+#title .legend span{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--text-dim)}
+#title .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+
+/* ---- Presets de escala (lo que Inty pidió poder ver) ---- */
+#presets{
+  position:absolute;right:14px;bottom:14px;
+  display:flex;flex-direction:column;gap:7px;align-items:flex-end;
+}
+.preset-btn{
+  font-family:'Sora',sans-serif;
+  background:var(--panel);border:1px solid var(--border);color:var(--text);
+  border-radius:11px;padding:9px 14px;font-size:.78rem;font-weight:600;
+  cursor:pointer;text-align:right;min-width:170px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  transition:background .15s, border-color .15s, transform .1s;
+}
+.preset-btn:hover{background:#152340;border-color:var(--accent)}
+.preset-btn:active{transform:scale(.97)}
+.preset-btn.active{border-color:var(--accent);background:linear-gradient(90deg,rgba(252,76,2,.12),var(--panel))}
+.preset-btn .lbl{display:block;font-weight:700}
+.preset-btn .sub{display:block;font-size:.66rem;color:var(--text-faint);font-weight:500;margin-top:1px}
+
+/* ---- Zoom manual +/- ---- */
+#zoomCtl{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:1px;
+  background:var(--panel);border:1px solid var(--border);border-radius:11px;overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,.3)}
+#zoomCtl button{width:38px;height:36px;background:transparent;border:none;color:var(--text);
+  font-size:1.1rem;cursor:pointer;font-family:'Sora',sans-serif}
+#zoomCtl button:hover{background:rgba(252,76,2,.15)}
+#zoomCtl button:first-child{border-bottom:1px solid var(--border)}
+
+/* ==== Elementos del mapa real (copiados de index.html) ==== */
+.helmet-pin{filter:drop-shadow(0 2px 3px rgba(0,0,0,0.6))}
+.helmet-pin .hp-in{position:relative;animation:helmBob 2.6s ease-in-out infinite}
+.helmet-pin svg{width:calc(44px * var(--rider-scale, 1));height:calc(30px * var(--rider-scale, 1));display:block;position:relative;z-index:1}
+.helmet-pin.mine{filter:drop-shadow(0 0 8px var(--accent))}
+.helmet-pin.mine .hp-in{animation:helmBob 1.1s ease-in-out infinite}
+/* Sin maplibre-gl.css (este demo no carga CSS externo salvo Google Fonts) hay que
+   declarar a mano el position:absolute que esa hoja le pone a .maplibregl-marker
+   — si no, el marker queda en flujo normal del documento y el translate() de
+   MapLibre lo desplaza desde ahí, no desde la esquina del mapa (bug real que se
+   vio en vivo: markers apilados muy por debajo del canvas). */
+.maplibregl-marker{position:absolute;top:0;left:0;will-change:transform}
+.maplibregl-canvas-container{position:relative}
+.hp-ring{position:absolute;left:50%;bottom:-2px;width:9px;height:9px;border-radius:50%;transform:translateX(-50%);border:1.5px solid rgba(10,14,22,.85);box-shadow:0 0 3px rgba(0,0,0,.5);z-index:2}
+@keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.rider-cluster{display:flex;align-items:center;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
+.rc-stack{display:flex}
+.rc-av{border-radius:7px;background:#0e1420;border:1.5px solid rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+.rc-av:first-child{margin-left:0}
+.rc-av svg{width:88%;height:76%;display:block}
+.rc-more{margin-left:3px;background:var(--accent);color:#1a0900;font-weight:800;font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:8px;border:1.5px solid rgba(255,255,255,.9);white-space:nowrap}
+.lp-eye{transform-box:fill-box;transform-origin:center}
+.lp-parpadeo{animation:lpParp 4.4s ease-in-out infinite;animation-delay:var(--blink-delay, 0s)}
+@keyframes lpParp{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
+.poi-badge{width:26px;height:26px;border-radius:50%;background:rgba(14,18,28,.9);border:1.5px solid rgba(47,194,255,.55);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.poi-badge svg{width:13px;height:13px;display:block}
+
+/* ---- Panel de control: ajustar cada valor a gusto ---- */
+#panelToggle{
+  position:absolute;top:14px;left:14px;width:38px;height:38px;
+  background:var(--panel);border:1px solid var(--border);border-radius:11px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  transition:border-color .15s, background .15s;
+}
+#panelToggle:hover{border-color:var(--accent)}
+#panelToggle svg{width:18px;height:18px}
+#panelToggle.open{border-color:var(--accent);background:linear-gradient(135deg,rgba(252,76,2,.18),var(--panel))}
+#hud{left:62px}
+
+#ctrlPanel{
+  position:absolute;top:62px;left:14px;width:280px;max-height:calc(100vh - 90px);
+  overflow-y:auto;
+  background:rgba(16,26,45,.94);border:1px solid var(--border);border-radius:14px;
+  padding:16px;backdrop-filter:blur(8px);box-shadow:0 8px 28px rgba(0,0,0,.45);
+  display:none;
+}
+#ctrlPanel.open{display:block}
+body.panel-open #title{display:none}
+#ctrlPanel h2{margin:0 0 2px;font-size:.92rem;font-weight:700}
+#ctrlPanel .hint{margin:0 0 14px;font-size:.72rem;color:var(--text-dim);line-height:1.4}
+.ctrl-group{margin-bottom:16px}
+.ctrl-group .gname{font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);font-weight:700;margin-bottom:8px;display:block}
+.ctrl-row{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.ctrl-row:last-child{margin-bottom:0}
+.ctrl-row .rlbl{display:flex;justify-content:space-between;font-size:.74rem;color:var(--text-dim)}
+.ctrl-row .rlbl b{color:var(--text);font-weight:600;font-family:'JetBrains Mono',monospace}
+.ctrl-row input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;
+  background:var(--off);outline:none;margin:2px 0;
+}
+.ctrl-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--accent);border:2px solid #1a0900;cursor:pointer;
+}
+.ctrl-row input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border-radius:50%;background:var(--accent);border:2px solid #1a0900;cursor:pointer;
+}
+/* Fila compacta: una escala de zoom, dos mini-sliders (tamaño / agrupamiento) */
+.esc-row{display:grid;grid-template-columns:64px 1fr 1fr;align-items:center;gap:8px;margin-bottom:9px}
+.esc-tier{font-size:.72rem;color:var(--text-dim);font-weight:600}
+.esc-mini{display:flex;flex-direction:column;gap:1px}
+.esc-mini input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:3px;background:var(--off);outline:none}
+.esc-mini input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid #1a0900;cursor:pointer}
+.esc-mini input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid #1a0900;cursor:pointer}
+.esc-mini b{font-size:.62rem;color:var(--text-faint);font-family:'JetBrains Mono',monospace;text-align:right}
+.esc-mini.esc-off{align-items:center;justify-content:center;font-size:.62rem;color:var(--text-faint);font-style:italic;padding-top:3px}
+#assignBtn{
+  width:100%;margin-top:4px;padding:10px;border:none;border-radius:10px;
+  background:linear-gradient(90deg,var(--accent),#ff7a3d);color:#1a0900;
+  font-family:'Sora',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+#assignBtn:active{transform:scale(.98)}
+.seed-mode{display:flex;gap:6px;margin-bottom:8px}
+.seed-mode-btn{
+  flex:1;padding:7px;border-radius:8px;border:1px solid var(--border);
+  background:var(--panel-2);color:var(--text-dim);font-family:'Sora',sans-serif;
+  font-size:.72rem;font-weight:600;cursor:pointer;
+}
+.seed-mode-btn.active{border-color:var(--cyan);color:var(--text);background:rgba(47,194,255,.12)}
+.seed-select{
+  width:100%;padding:8px 10px;border-radius:8px;background:var(--panel-2);
+  border:1px solid var(--border);color:var(--text);font-family:'Sora',sans-serif;
+  font-size:.8rem;cursor:pointer;
+}
+.seed-btn{
+  width:100%;margin-top:8px;padding:9px;border:none;border-radius:10px;
+  background:linear-gradient(90deg,var(--cyan),#5fd6ff);color:#04202e;
+  font-family:'Sora',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.seed-btn:active{transform:scale(.98)}
+.ghost-btn{
+  width:100%;margin-top:6px;padding:8px;border-radius:9px;
+  background:transparent;border:1px solid var(--border);color:var(--text-dim);
+  font-family:'Sora',sans-serif;font-weight:600;font-size:.74rem;cursor:pointer;
+}
+.ghost-btn:hover{border-color:var(--accent);color:var(--text)}
+.ghost-btn.danger:hover{border-color:#e5484d;color:#ff8a8f}
+#assignOut{
+  margin-top:10px;padding:10px;border-radius:9px;background:var(--panel-2);
+  border:1px solid var(--border);font-family:'JetBrains Mono',monospace;
+  font-size:.68rem;line-height:1.6;color:var(--text-dim);white-space:pre-wrap;
+  display:none;
+}
+#assignOut.show{display:block}
+#assignOut .ok{color:var(--ok);font-weight:700}
+</style>
+
+<div id="stage">
+  <div id="map"></div>
+
+  <button id="panelToggle" title="Panel de control" aria-label="Panel de control">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 7h10M18 7h2M4 17h2M8 17h12" stroke="#eaf1ff" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="16" cy="7" r="2.4" fill="#fc4c02" stroke="#eaf1ff" stroke-width="1.3"/>
+      <circle cx="6" cy="17" r="2.4" fill="#fc4c02" stroke="#eaf1ff" stroke-width="1.3"/>
+    </svg>
+  </button>
+
+  <div id="hud">
+    <div class="chip"><span class="k">Zoom</span><span class="v mono" id="hZoom">–</span></div>
+    <div class="chip"><span class="k">Escala visible</span><span class="v mono accent" id="hKm">–</span></div>
+    <div class="chip"><span class="k">Tamaño ciclista</span><span class="v mono" id="hScale">–</span></div>
+    <div class="chip"><span class="k">Ciclistas</span><span class="v mono" id="hRiders">–</span></div>
+    <div class="chip"><span class="k">Puntos de interés</span><span class="state" id="hPoi">–</span></div>
+  </div>
+
+  <div id="ctrlPanel">
+    <h2>Panel de control</h2>
+    <p class="hint">Mové los sliders y mirá el mapa en vivo. Cuando quede como querés, tocá "Asignar" para dejarlo fijo con esos números.</p>
+
+    <div class="ctrl-group">
+      <span class="gname">Escala por zoom — tamaño / agrupamiento</span>
+      <div class="esc-row">
+        <span class="esc-tier">Mundo</span>
+        <span class="esc-mini"><input type="range" id="rRS0" min="10" max="100" step="1" value="51"><b id="lblRS0">51%</b></span>
+        <span class="esc-mini"><input type="range" id="rCC0" min="10" max="160" step="2" value="154"><b id="lblCC0">154px</b></span>
+      </div>
+      <div class="esc-row">
+        <span class="esc-tier">Continente</span>
+        <span class="esc-mini"><input type="range" id="rRS1" min="10" max="100" step="1" value="56"><b id="lblRS1">56%</b></span>
+        <span class="esc-mini"><input type="range" id="rCC1" min="10" max="160" step="2" value="110"><b id="lblCC1">110px</b></span>
+      </div>
+      <div class="esc-row">
+        <span class="esc-tier">País</span>
+        <span class="esc-mini"><input type="range" id="rRS2" min="10" max="100" step="1" value="62"><b id="lblRS2">62%</b></span>
+        <span class="esc-mini"><input type="range" id="rCC2" min="20" max="160" step="2" value="66"><b id="lblCC2">66px</b></span>
+      </div>
+      <div class="esc-row">
+        <span class="esc-tier">Regional</span>
+        <span class="esc-mini"><input type="range" id="rRS3" min="10" max="100" step="1" value="80"><b id="lblRS3">80%</b></span>
+        <span class="esc-mini"><input type="range" id="rCC3" min="20" max="160" step="2" value="48"><b id="lblCC3">48px</b></span>
+      </div>
+      <div class="esc-row">
+        <span class="esc-tier">Ciudad</span>
+        <span class="esc-mini"><input type="range" id="rRS4" min="10" max="100" step="1" value="92"><b id="lblRS4">92%</b></span>
+        <span class="esc-mini esc-off">sin agrupar</span>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="gname">Puntos de interés</span>
+      <div class="ctrl-row"><span class="rlbl">Radio visible <b id="lblPOI">30 km</b></span><input type="range" id="rPOI" min="5" max="150" step="5" value="30"></div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="gname">Tarjeta de grupo</span>
+      <div class="ctrl-row"><span class="rlbl">Cascos visibles antes del +N <b id="lblSTM">2</b></span><input type="range" id="rSTM" min="1" max="6" step="1" value="2"></div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="gname">Sembrar usuarios de prueba</span>
+      <div class="seed-mode">
+        <button type="button" id="modePais" class="seed-mode-btn active">Por país</button>
+        <button type="button" id="modeContinente" class="seed-mode-btn">Por continente</button>
+      </div>
+      <div class="ctrl-row" id="seedSelectRow">
+        <select id="seedCountry" class="seed-select"></select>
+      </div>
+      <div class="ctrl-row"><span class="rlbl">Cantidad <b id="lblSeedN">100</b></span><input type="range" id="rSeedN" min="1" max="1000" step="1" value="100"></div>
+      <button id="seedBtn" class="seed-btn">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="#eaf1ff" stroke-width="2.2" stroke-linecap="round"/></svg>
+        Sembrar
+      </button>
+      <button id="clearSeedBtn" class="ghost-btn">Vaciar sembrados</button>
+      <button id="clearAllBtn" class="ghost-btn danger">Vaciar todo (empezar de 0)</button>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="gname">Prueba de escala real</span>
+      <p class="hint" style="margin-bottom:8px">Puebla los 179 países con la misma cantidad cada uno (usa el slider de arriba) y después recorré los botones de escala para ver cómo aguanta.</p>
+      <button id="seedAllBtn" class="seed-btn">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="#eaf1ff" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <span id="seedAllLbl">Sembrar 50 por país (179 países)</span>
+      </button>
+    </div>
+
+    <button id="assignBtn">
+      <svg viewBox="0 0 24 24" fill="none" width="15" height="15" xmlns="http://www.w3.org/2000/svg"><path d="M5 12.5l4.5 4.5L19 7" stroke="#1a0900" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Asignar
+    </button>
+    <div id="assignOut"></div>
+  </div>
+
+  <div id="title">
+    <h1>Cómo se ven los ciclistas según la escala</h1>
+    <p>Datos de prueba (16 ciudades reales de Chile + 2 países vecinos). Mismo código que <code>index.html</code>: zoom, agrupamiento y umbral de 30&nbsp;km son los reales.</p>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--accent)"></i>Ciclista / grupo</span>
+      <span><i class="dot" style="background:var(--cyan)"></i>Punto de interés</span>
+      <span><i class="dot" style="background:var(--land-line)"></i>Chile</span>
+    </div>
+  </div>
+
+  <div id="zoomCtl">
+    <button id="zIn">+</button>
+    <button id="zOut">–</button>
+  </div>
+
+  <div id="presets"></div>
+</div>
+
+<script>
+/*__MAPLIBRE_JS__*/
+</script>
+<script>
+(function(){
+"use strict";
+
+var WORLD_GEOJSON = /*__WORLD_GEOJSON__*/;
+var WORLD_ZONES = /*__WORLD_ZONES__*/;
+// 6 continentes (sin Antártida) — cada país de WORLD_ZONES trae .continent con una
+// de estas claves, calculado por región/subregión real (no a mano país por país).
+var CONTINENTES = {
+  america_sur:   'América del Sur',
+  america_norte: 'América del Norte',
+  europa:        'Europa',
+  africa:        'África',
+  asia:          'Asia',
+  oceania:       'Oceanía'
+};
+var CHILE_GEOJSON = {"type":"FeatureCollection","features":[
+{"type":"Feature","id":"CHL","properties":{"name":"Chile"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-68.63401,-52.63637],[-68.63335,-54.8695],[-67.56244,-54.87001],[-66.95992,-54.89681],[-67.29103,-55.30124],[-68.14863,-55.61183],[-68.639991,-55.580018],[-69.2321,-55.49906],[-69.95809,-55.19843],[-71.00568,-55.05383],[-72.2639,-54.49514],[-73.2852,-53.95752],[-74.66253,-52.83749],[-73.8381,-53.04743],[-72.43418,-53.7154],[-71.10773,-54.07433],[-70.59178,-53.61583],[-70.26748,-52.93123],[-69.34565,-52.5183],[-68.63401,-52.63637]]],[[[-68.219913,-21.494347],[-67.82818,-22.872919],[-67.106674,-22.735925],[-66.985234,-22.986349],[-67.328443,-24.025303],[-68.417653,-24.518555],[-68.386001,-26.185016],[-68.5948,-26.506909],[-68.295542,-26.89934],[-69.001235,-27.521214],[-69.65613,-28.459141],[-70.01355,-29.367923],[-69.919008,-30.336339],[-70.535069,-31.36501],[-70.074399,-33.09121],[-69.814777,-33.273886],[-69.817309,-34.193571],[-70.388049,-35.169688],[-70.364769,-36.005089],[-71.121881,-36.658124],[-71.118625,-37.576827],[-70.814664,-38.552995],[-71.413517,-38.916022],[-71.680761,-39.808164],[-71.915734,-40.832339],[-71.746804,-42.051386],[-72.148898,-42.254888],[-71.915424,-43.408565],[-71.464056,-43.787611],[-71.793623,-44.207172],[-71.329801,-44.407522],[-71.222779,-44.784243],[-71.659316,-44.973689],[-71.552009,-45.560733],[-71.917258,-46.884838],[-72.447355,-47.738533],[-72.331161,-48.244238],[-72.648247,-48.878618],[-73.415436,-49.318436],[-73.328051,-50.378785],[-72.975747,-50.74145],[-72.309974,-50.67701],[-72.329404,-51.425956],[-71.914804,-52.009022],[-69.498362,-52.142761],[-68.571545,-52.299444],[-69.461284,-52.291951],[-69.94278,-52.537931],[-70.845102,-52.899201],[-71.006332,-53.833252],[-71.429795,-53.856455],[-72.557943,-53.53141],[-73.702757,-52.835069],[-73.702757,-52.83507],[-74.946763,-52.262754],[-75.260026,-51.629355],[-74.976632,-51.043396],[-75.479754,-50.378372],[-75.608015,-48.673773],[-75.18277,-47.711919],[-74.126581,-46.939253],[-75.644395,-46.647643],[-74.692154,-45.763976],[-74.351709,-44.103044],[-73.240356,-44.454961],[-72.717804,-42.383356],[-73.3889,-42.117532],[-73.701336,-43.365776],[-74.331943,-43.224958],[-74.017957,-41.794813],[-73.677099,-39.942213],[-73.217593,-39.258689],[-73.505559,-38.282883],[-73.588061,-37.156285],[-73.166717,-37.12378],[-72.553137,-35.50884],[-71.861732,-33.909093],[-71.43845,-32.418899],[-71.668721,-30.920645],[-71.370083,-30.095682],[-71.489894,-28.861442],[-70.905124,-27.64038],[-70.724954,-25.705924],[-70.403966,-23.628997],[-70.091246,-21.393319],[-70.16442,-19.756468],[-70.372572,-18.347975],[-69.858444,-18.092694],[-69.590424,-17.580012],[-69.100247,-18.260125],[-68.966818,-18.981683],[-68.442225,-19.405068],[-68.757167,-20.372658],[-68.219913,-21.494347]]]]}}
+]};
+
+/* ==== Valores en vivo: el panel de control edita esto, no las funciones ====
+   Base = lo último "Asignado" y ya aplicado a index.html (2026-08-21). Ahora con
+   un escalón más: mundo / continente / país / regional / ciudad, para poder
+   calibrar "continente" por separado en vez de que comparta el mismo valor
+   que "mundo". */
+var CONFIG = {
+  riderScale: [0.51, 0.56, 0.62, 0.8, 0.92], // tamaño: mundo/continente/país/regional/ciudad (100% desde zoom 13)
+  clusterCell: [154, 110, 66, 48],              // px de agrupamiento: mundo/continente/país/regional (0 = sin agrupar desde zoom 10)
+  poiKm: 30,                            // hasta qué escala (km reales) se ven agua/miradores/alertas
+  blinkMax: 5.4,                        // segundos: tope del delay aleatorio de parpadeo
+  stackMax: 2,                          // cuántos cascos se ven en la tarjeta de grupo antes del "+N"
+  stackAvSize: 16                       // px de cada casco dentro de la tarjeta de grupo
+};
+
+/* ==== Funciones reales de index.html (misma lógica, valores desde CONFIG) ==== */
+function _riderScaleParaZoom(zoom){ if(zoom<2) return CONFIG.riderScale[0]; if(zoom<4) return CONFIG.riderScale[1]; if(zoom<7) return CONFIG.riderScale[2]; if(zoom<10) return CONFIG.riderScale[3]; if(zoom<13) return CONFIG.riderScale[4]; return 1; }
+function _celdaClusterParaZoom(zoom){ if(zoom<2) return CONFIG.clusterCell[0]; if(zoom<4) return CONFIG.clusterCell[1]; if(zoom<7) return CONFIG.clusterCell[2]; if(zoom<10) return CONFIG.clusterCell[3]; return 0; }
+function _kmPorPixel(zoom, lat){ return 156543.03392804097 * Math.cos(lat*Math.PI/180) / Math.pow(2, zoom) / 1000; }
+function _escalaVisibleKm(mapa){ var c=mapa.getCenter(); return _kmPorPixel(mapa.getZoom(), c.lat) * 100; }
+
+function riderMarkerHTML(col, accent, mine){
+  var ring = (!mine && accent) ? ('<i class="hp-ring" style="background:'+accent+'"></i>') : '';
+  var blinkDelay = (Math.random()*CONFIG.blinkMax).toFixed(2)+'s';
+  var eyeCol = mine ? 'var(--accent)' : col;
+  var svg = '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'
+    + '<path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/>'
+    + '<path d="M12 54 A38 36 0 0 1 88 54 Z" fill="'+eyeCol+'"/>'
+    + '<path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/>'
+    + '<g class="lp-eye lp-parpadeo"><ellipse cx="40" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><circle cx="37.8" cy="60" r="2.5" fill="#fff"/></g>'
+    + '<g class="lp-eye lp-parpadeo"><ellipse cx="60" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><circle cx="57.8" cy="60" r="2.5" fill="#fff"/></g>'
+    + '</svg>';
+  return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+ring+svg+'</div></div>';
+}
+function _miniHelmetSVG(col){
+  return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'
+    + '<path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/>'
+    + '<path d="M12 54 A38 36 0 0 1 88 54 Z" fill="'+col+'"/>'
+    + '<path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/>'
+    + '<circle cx="40" cy="63" r="5.5" fill="#16203a"/><circle cx="60" cy="63" r="5.5" fill="#16203a"/>'
+    + '</svg>';
+}
+// Pila de personajes en vez de un número pelado: cada ciclista agrupado se sigue
+// viendo como personaje (su casco/color real), no como una cifra abstracta.
+// CONFIG.stackMax cascos superpuestos (panel de control); el resto se resume en
+// una píldora "+N".
+function riderClusterHTML(grupo){
+  var MAX = CONFIG.stackMax;
+  var shown = grupo.slice(0, MAX);
+  var extra = grupo.length - shown.length;
+  var avatars = shown.map(function(u, i){ return '<span class="rc-av" style="width:'+CONFIG.stackAvSize+'px;height:'+Math.round(CONFIG.stackAvSize*0.73)+'px;margin-left:'+(i===0?0:-Math.round(CONFIG.stackAvSize*0.42))+'px;z-index:'+(MAX-i)+'">'+_miniHelmetSVG(u.col)+'</span>'; }).join('');
+  var more = extra>0 ? '<span class="rc-more">+'+extra+'</span>' : '';
+  return '<div class="rider-cluster"><span class="rc-stack">'+avatars+'</span>'+more+'</div>';
+}
+function poiMarkerHTML(){
+  return '<div class="poi-badge"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C12 2 5 10.5 5 15.2C5 19 8.13 22 12 22C15.87 22 19 19 19 15.2C19 10.5 12 2 12 2Z" fill="#2fc2ff"/></svg></div>';
+}
+
+/* ==== Datos de prueba: ciudades reales de Chile + vecinos ==== */
+var CHILE_CIUDADES = [
+  {n:'Arica',lat:-18.4783,lon:-70.3126},
+  {n:'Iquique',lat:-20.2141,lon:-70.1522},
+  {n:'Antofagasta',lat:-23.6509,lon:-70.3975},
+  {n:'Copiapó',lat:-27.3668,lon:-70.3323},
+  {n:'La Serena',lat:-29.9027,lon:-71.2519},
+  {n:'Valparaíso',lat:-33.0472,lon:-71.6127},
+  {n:'Santiago',lat:-33.4489,lon:-70.6693},
+  {n:'Rancagua',lat:-34.1708,lon:-70.7444},
+  {n:'Talca',lat:-35.4264,lon:-71.6554},
+  {n:'Concepción',lat:-36.8201,lon:-73.0444},
+  {n:'Temuco',lat:-38.7359,lon:-72.5904},
+  {n:'Valdivia',lat:-39.8142,lon:-73.2459},
+  {n:'Puerto Montt',lat:-41.4693,lon:-72.9424},
+  {n:'Coyhaique',lat:-45.5752,lon:-72.0662},
+  {n:'Punta Arenas',lat:-53.1638,lon:-70.9171}
+];
+// Zonas para "Sembrar usuarios": los 177 países de WORLD_ZONES (calculados del
+// mismo geojson que dibuja el mapa, centro + mitad ancho/alto reales — no un
+// círculo parejo, así países angostos como Chile o Vietnam no tiran usuarios al
+// mar). Chile pisa esa entrada con las ciudades reales (igual que el set base).
+var COUNTRY_ZONES = WORLD_ZONES;
+COUNTRY_ZONES.chile = {label:'Chile', cities:CHILE_CIUDADES, continent:'america_sur'};
+var COLORES = ['#00aaff','#e63946','#2a9d8f','#f4a300','#a78bfa','#ff7ab6'];
+var riders = [];
+var ridId = 0;
+CHILE_CIUDADES.forEach(function(c){
+  var n = c.n==='Santiago' ? 7 : (c.n==='Valparaíso'||c.n==='Concepción') ? 3 : 1;
+  for(var i=0;i<n;i++){
+    riders.push({
+      id:'r'+(ridId++), city:c.n,
+      lat:c.lat+(Math.random()-0.5)*(c.n==='Santiago'?0.32:0.12),
+      lon:c.lon+(Math.random()-0.5)*(c.n==='Santiago'?0.32:0.12),
+      col:COLORES[ridId%COLORES.length], mine:false
+    });
+  }
+});
+[{n:'Buenos Aires',lat:-34.6037,lon:-58.3816},{n:'Lima',lat:-12.0464,lon:-77.0428}].forEach(function(c){
+  riders.push({id:'r'+(ridId++), city:c.n, lat:c.lat, lon:c.lon, col:COLORES[ridId%COLORES.length], mine:false});
+});
+riders.push({id:'yo', city:'Santiago (tú)', lat:-33.44, lon:-70.66, col:'#00aaff', mine:true});
+
+// Sembrado manual desde el panel: agrega N ciclistas al azar en el país elegido,
+// repartidos por un continente entero (cada uno cae en un país real de ese
+// continente, no en cualquier punto del mapa), o por TODOS los países si
+// key==='__mundo__'. Marcados .seeded para poder vaciarlos después sin perder
+// el set base de arriba.
+var __seedSeq = 1;
+var __zoneKeys = Object.keys(COUNTRY_ZONES);
+var __paisesPorContinente = {};
+Object.keys(CONTINENTES).forEach(function(c){
+  __paisesPorContinente[c] = __zoneKeys.filter(function(k){ return COUNTRY_ZONES[k].continent === c; });
+});
+function _puntoEnZona(zone){
+  if(zone.cities){
+    var c = zone.cities[Math.floor(Math.random()*zone.cities.length)];
+    return { lat: c.lat + (Math.random()-0.5)*0.6, lon: c.lon + (Math.random()-0.5)*0.6 };
+  }
+  return {
+    lon: zone.center[0] + (Math.random()-0.5)*2*zone.halfLon,
+    lat: zone.center[1] + (Math.random()-0.5)*2*zone.halfLat
+  };
+}
+function sembrarPais(key, n){
+  var mundial = key === '__mundo__';
+  var continente = CONTINENTES.hasOwnProperty(key) ? key : null;
+  for(var i=0;i<n;i++){
+    var zoneKey;
+    if(mundial){ zoneKey = __zoneKeys[Math.floor(Math.random()*__zoneKeys.length)]; }
+    else if(continente){ var lista=__paisesPorContinente[continente]; if(!lista.length) continue; zoneKey = lista[Math.floor(Math.random()*lista.length)]; }
+    else { zoneKey = key; }
+    var zone = COUNTRY_ZONES[zoneKey];
+    if(!zone) continue;
+    var p = _puntoEnZona(zone);
+    riders.push({id:'seed'+(__seedSeq++), city:zone.label, lat:p.lat, lon:p.lon, col:COLORES[Math.floor(Math.random()*COLORES.length)], mine:false, seeded:true});
+  }
+}
+function vaciarSembrados(){ riders = riders.filter(function(u){ return !u.seeded; }); }
+
+/* Puntos de interés: un puñado cerca de Santiago/Valparaíso para ver el umbral de 30km */
+var pois = [];
+for(var i=0;i<7;i++){ pois.push({lat:-33.44+(Math.random()-0.5)*0.5, lon:-70.66+(Math.random()-0.5)*0.5}); }
+for(var i=0;i<4;i++){ pois.push({lat:-33.04+(Math.random()-0.5)*0.3, lon:-71.6+(Math.random()-0.5)*0.3}); }
+
+/* ==== Mapa ==== */
+var map = new maplibregl.Map({
+  container:'map',
+  style:{
+    version:8,
+    sources:{ world:{type:'geojson', data:WORLD_GEOJSON}, chile:{type:'geojson', data:CHILE_GEOJSON} },
+    layers:[
+      {id:'bg', type:'background', paint:{'background-color':'#0a0f1d'}},
+      {id:'world-fill', type:'fill', source:'world', paint:{'fill-color':'#111b2e'}},
+      {id:'world-line', type:'line', source:'world', paint:{'line-color':'#1c2942','line-width':.6}},
+      {id:'chile-fill', type:'fill', source:'chile', paint:{'fill-color':'#1b2c4a'}},
+      {id:'chile-line', type:'line', source:'chile', paint:{'line-color':'#fc4c02','line-width':1.4,'line-opacity':.65}}
+    ]
+  },
+  center:[-70,-33], zoom:3, attributionControl:false, dragRotate:false
+});
+map.on('error', function(e){ console.error('MAP ERROR', e && e.error); });
+// El resize() inicial se hace ANTES de posicionar el mapa, no en el constructor: si
+// el contenedor todavía no tenía su tamaño CSS final (webfont/layout async) cuando
+// el mapa lee sus dimensiones, el transform interno queda mal calculado y los
+// marcadores se proyectan fuera del canvas visible aunque el canvas ya se vea
+// del tamaño correcto (bug real que vimos en vivo: markers con y > alto del canvas).
+// Zoom fijo (no fitBounds) por la misma razón que los presets de abajo: así el
+// arranque cae siempre en el escalón "país", sin importar el tamaño de pantalla.
+map.on('load', function(){
+  map.resize();
+  activePreset='chile';
+  map.jumpTo({center:[-71,-38], zoom:5.5});
+  updatePresetActive();
+});
+window.addEventListener('resize', function(){ map.resize(); });
+// ResizeObserver además del evento 'resize' de window: el contenedor del artifact
+// puede cambiar de tamaño sin que la ventana del navegador dispare 'resize' (panel
+// lateral, iframe, etc.) — esto lo agarra igual.
+if(typeof ResizeObserver !== 'undefined'){
+  new ResizeObserver(function(){ map.resize(); }).observe(document.getElementById('map'));
+}
+
+var riderMarkers = [], poiMarkers = [];
+
+function render(){
+  riderMarkers.forEach(function(m){ m.remove(); }); riderMarkers=[];
+  poiMarkers.forEach(function(m){ m.remove(); }); poiMarkers=[];
+
+  var zoom = map.getZoom();
+  var scale = _riderScaleParaZoom(zoom);
+  var kmVisible = _escalaVisibleKm(map);
+  document.documentElement.style.setProperty('--rider-scale', scale);
+
+  // Solo se procesan ciclistas/POI dentro del viewport (+ margen): en index.html real
+  // esto ya lo hacía _renderizarPuntosVisibles para agua/miradores, pero el mapa de
+  // ciclistas no filtraba por bounds — con usuarios repartidos por todo el mundo eso
+  // crea marcadores fuera de pantalla en cada re-render, sin necesidad.
+  var b = map.getBounds(), margen = 0.15;
+  var w = b.getWest()-margen, e = b.getEast()+margen, s = b.getSouth()-margen, n = b.getNorth()+margen;
+  var enVista = riders.filter(function(u){ return !(u.lon<w||u.lon>e||u.lat<s||u.lat>n); });
+
+  var celda = _celdaClusterParaZoom(zoom);
+  var clusterCount = 0, singleCount = 0;
+
+  function pintarUno(u){
+    var el = document.createElement('div');
+    el.innerHTML = riderMarkerHTML(u.col, u.col, u.mine);
+    var m = new maplibregl.Marker({element: el.firstElementChild}).setLngLat([u.lon, u.lat]).addTo(map);
+    riderMarkers.push(m); singleCount++;
+  }
+  function pintarGrupo(grupo){
+    var lat = grupo.reduce(function(s,u){return s+u.lat;},0)/grupo.length;
+    var lon = grupo.reduce(function(s,u){return s+u.lon;},0)/grupo.length;
+    var el = document.createElement('div');
+    el.innerHTML = riderClusterHTML(grupo);
+    var m = new maplibregl.Marker({element: el.firstElementChild}).setLngLat([lon, lat]).addTo(map);
+    var domEl = m.getElement();
+    domEl.addEventListener('click', function(){ map.flyTo({center:[lon,lat], zoom:Math.min(zoom+3.2,15)}); });
+    riderMarkers.push(m); clusterCount++;
+  }
+
+  if(celda<=0){
+    enVista.forEach(pintarUno);
+  } else {
+    var buckets = {};
+    enVista.forEach(function(u){
+      var p = map.project([u.lon,u.lat]);
+      var key = Math.round(p.x/celda)+'_'+Math.round(p.y/celda);
+      (buckets[key]=buckets[key]||[]).push(u);
+    });
+    Object.keys(buckets).forEach(function(k){
+      var grupo = buckets[k];
+      if(grupo.length===1){ pintarUno(grupo[0]); } else { pintarGrupo(grupo); }
+    });
+  }
+
+  var poiVisible = kmVisible <= CONFIG.poiKm;
+  if(poiVisible){
+    pois.filter(function(p){ return !(p.lon<w||p.lon>e||p.lat<s||p.lat>n); }).forEach(function(p){
+      var el = document.createElement('div');
+      el.innerHTML = poiMarkerHTML();
+      var m = new maplibregl.Marker({element: el.firstElementChild}).setLngLat([p.lon, p.lat]).addTo(map);
+      poiMarkers.push(m);
+    });
+  }
+
+  document.getElementById('hZoom').textContent = zoom.toFixed(2);
+  document.getElementById('hKm').textContent = kmVisible>=1000 ? (kmVisible/1000).toFixed(1)+' mil km' : Math.round(kmVisible)+' km';
+  document.getElementById('hScale').textContent = Math.round(scale*100)+'%';
+  document.getElementById('hRiders').textContent = riders.length+' → '+(singleCount+clusterCount)+' marcador'+((singleCount+clusterCount)!==1?'es':'')+(clusterCount?(' ('+clusterCount+' agrupado'+(clusterCount>1?'s':'')+')'):'');
+  var poiEl = document.getElementById('hPoi');
+  poiEl.textContent = poiVisible ? 'Visibles' : ('Ocultos (>'+CONFIG.poiKm+' km)');
+  poiEl.className = 'state ' + (poiVisible ? 'on' : 'off');
+
+  updatePresetActive();
+}
+// Un fitBounds/flyTo animado dispara 'zoomend'/'moveend' varias veces durante la
+// transición — sin esto, render() (que reconstruye TODOS los marcadores) corría 8+
+// veces por cada clic en un preset. Se recalcula solo una vez, al asentarse.
+var __renderTimer = null;
+function renderThrottled(){ if(__renderTimer) clearTimeout(__renderTimer); __renderTimer = setTimeout(render, 120); }
+
+map.on('load', render);
+map.on('zoomend', renderThrottled);
+map.on('moveend', renderThrottled);
+
+document.getElementById('zIn').addEventListener('click', function(){ map.zoomTo(map.getZoom()+1); });
+document.getElementById('zOut').addEventListener('click', function(){ map.zoomTo(map.getZoom()-1); });
+
+/* ==== Presets: saltar directo a las escalas de las que hablamos ==== */
+// Zoom FIJO por preset (no fitBounds): con fitBounds el zoom resultante depende del
+// ancho/alto de la ventana, y podía caer en OTRO escalón del que decía el botón —
+// ese fue el bug real que reportó Inty ("le puse asignar en distintas escalas y no
+// cambió": estaba viendo el escalón Mundo aunque el botón decía País). Con zoom fijo,
+// cada botón cae siempre en el mismo casillero de _riderScaleParaZoom/_celdaClusterParaZoom
+// sin importar el tamaño de pantalla.
+var PRESETS = [
+  {id:'mundo', lbl:'Mundo', sub:'el planeta completo', center:[0,10], zoom:0},
+  {id:'continente', lbl:'Continente', sub:'Sudamérica completa', center:[-60,-16], zoom:3},
+  {id:'chile', lbl:'País', sub:'Chile, ~2.000 km de escala', center:[-71,-38], zoom:5.5},
+  {id:'regional', lbl:'Regional', sub:'~30 km · aparecen los POI', center:[-70.66,-33.44], zoom:8.8},
+  {id:'ciudad', lbl:'Escala calle', sub:'ciclistas a tamaño real', center:[-70.66,-33.44], zoom:12}
+];
+var activePreset = null;
+var presetsEl = document.getElementById('presets');
+PRESETS.forEach(function(p){
+  var b = document.createElement('button');
+  b.className = 'preset-btn'; b.id = 'preset-'+p.id;
+  b.innerHTML = '<span class="lbl">'+p.lbl+'</span><span class="sub">'+p.sub+'</span>';
+  b.addEventListener('click', function(){
+    activePreset = p.id;
+    map.resize();
+    map.flyTo({center:p.center, zoom:p.zoom, duration:900});
+    updatePresetActive();
+  });
+  presetsEl.appendChild(b);
+});
+map.on('dragstart', function(){ activePreset=null; });
+map.on('wheel', function(){ activePreset=null; });
+function updatePresetActive(){
+  PRESETS.forEach(function(p){ document.getElementById('preset-'+p.id).classList.toggle('active', p.id===activePreset); });
+}
+
+/* ==== Panel de control: cada slider escribe directo en CONFIG y vuelve a pintar ==== */
+var panelToggle = document.getElementById('panelToggle');
+var ctrlPanel = document.getElementById('ctrlPanel');
+panelToggle.addEventListener('click', function(){
+  ctrlPanel.classList.toggle('open');
+  panelToggle.classList.toggle('open');
+  document.body.classList.toggle('panel-open');
+});
+
+function wireSlider(id, lblId, target, fmt){
+  var el = document.getElementById(id), lbl = document.getElementById(lblId);
+  el.addEventListener('input', function(){
+    var v = parseFloat(el.value);
+    target(v);
+    lbl.textContent = fmt(v);
+    render();
+  });
+}
+wireSlider('rRS0','lblRS0', function(v){ CONFIG.riderScale[0]=v/100; }, function(v){ return v+'%'; });
+wireSlider('rRS1','lblRS1', function(v){ CONFIG.riderScale[1]=v/100; }, function(v){ return v+'%'; });
+wireSlider('rRS2','lblRS2', function(v){ CONFIG.riderScale[2]=v/100; }, function(v){ return v+'%'; });
+wireSlider('rRS3','lblRS3', function(v){ CONFIG.riderScale[3]=v/100; }, function(v){ return v+'%'; });
+wireSlider('rRS4','lblRS4', function(v){ CONFIG.riderScale[4]=v/100; }, function(v){ return v+'%'; });
+wireSlider('rCC0','lblCC0', function(v){ CONFIG.clusterCell[0]=v; }, function(v){ return v+'px'; });
+wireSlider('rCC1','lblCC1', function(v){ CONFIG.clusterCell[1]=v; }, function(v){ return v+'px'; });
+wireSlider('rCC2','lblCC2', function(v){ CONFIG.clusterCell[2]=v; }, function(v){ return v+'px'; });
+wireSlider('rCC3','lblCC3', function(v){ CONFIG.clusterCell[3]=v; }, function(v){ return v+'px'; });
+wireSlider('rPOI','lblPOI', function(v){ CONFIG.poiKm=v; }, function(v){ return v+' km'; });
+wireSlider('rSTM','lblSTM', function(v){ CONFIG.stackMax=v; }, function(v){ return String(v); });
+
+var seedCountrySel = document.getElementById('seedCountry');
+var modePaisBtn = document.getElementById('modePais'), modeContinenteBtn = document.getElementById('modeContinente');
+function _poblarSelectPaises(){
+  seedCountrySel.innerHTML = '';
+  var mundoOpt = document.createElement('option');
+  mundoOpt.value = '__mundo__'; mundoOpt.textContent = 'Todo el mundo (al azar)';
+  seedCountrySel.appendChild(mundoOpt);
+  Object.keys(COUNTRY_ZONES).map(function(k){ return {k:k, label:COUNTRY_ZONES[k].label}; })
+    .sort(function(a,b){ return a.label.localeCompare(b.label, 'es'); })
+    .forEach(function(z){
+      var opt = document.createElement('option');
+      opt.value = z.k; opt.textContent = z.label;
+      if(z.k==='chile') opt.selected = true;
+      seedCountrySel.appendChild(opt);
+    });
+}
+function _poblarSelectContinentes(){
+  seedCountrySel.innerHTML = '';
+  Object.keys(CONTINENTES).map(function(k){ return {k:k, label:CONTINENTES[k], n:__paisesPorContinente[k].length}; })
+    .sort(function(a,b){ return a.label.localeCompare(b.label, 'es'); })
+    .forEach(function(z){
+      var opt = document.createElement('option');
+      opt.value = z.k; opt.textContent = z.label+' ('+z.n+' países)';
+      if(z.k==='america_sur') opt.selected = true;
+      seedCountrySel.appendChild(opt);
+    });
+}
+modePaisBtn.addEventListener('click', function(){
+  modePaisBtn.classList.add('active'); modeContinenteBtn.classList.remove('active');
+  _poblarSelectPaises();
+});
+modeContinenteBtn.addEventListener('click', function(){
+  modeContinenteBtn.classList.add('active'); modePaisBtn.classList.remove('active');
+  _poblarSelectContinentes();
+});
+_poblarSelectPaises();
+
+var rSeedN = document.getElementById('rSeedN'), lblSeedN = document.getElementById('lblSeedN');
+var seedAllLbl = document.getElementById('seedAllLbl');
+function _actualizarLblSeedAll(){ seedAllLbl.textContent = 'Sembrar '+rSeedN.value+' por país ('+__zoneKeys.length+' países)'; }
+rSeedN.addEventListener('input', function(){ lblSeedN.textContent = rSeedN.value; _actualizarLblSeedAll(); });
+_actualizarLblSeedAll();
+document.getElementById('seedBtn').addEventListener('click', function(){
+  var country = document.getElementById('seedCountry').value;
+  var n = parseInt(rSeedN.value, 10);
+  sembrarPais(country, n);
+  render();
+});
+// "Prueba de escala real": mete la MISMA cantidad en cada uno de los 179 países a
+// la vez (pedido de Inty) — así los botones de escala muestran cómo se ve con carga
+// pareja en todo el mundo, no un país aislado.
+document.getElementById('seedAllBtn').addEventListener('click', function(){
+  var n = parseInt(rSeedN.value, 10);
+  __zoneKeys.forEach(function(k){ sembrarPais(k, n); });
+  render();
+});
+document.getElementById('clearSeedBtn').addEventListener('click', function(){
+  vaciarSembrados();
+  render();
+});
+document.getElementById('clearAllBtn').addEventListener('click', function(){
+  riders = [];
+  render();
+});
+
+document.getElementById('assignBtn').addEventListener('click', function(){
+  var out = document.getElementById('assignOut');
+  out.classList.add('show');
+  out.innerHTML = '<span class="ok">✓ Asignado</span> — estos son los valores para pasar a index.html:\n\n'
+    + '_riderScaleParaZoom (mundo/continente/país/regional/ciudad): ['+CONFIG.riderScale.map(function(n){return n.toFixed(2);}).join(', ')+']\n'
+    + '_celdaClusterParaZoom (mundo/continente/país/regional): ['+CONFIG.clusterCell.join(', ')+']\n'
+    + 'umbral POI (km): '+CONFIG.poiKm+'\n'
+    + 'blink máx (s): '+CONFIG.blinkMax.toFixed(1)+'\n'
+    + 'tarjeta de grupo — cascos visibles: '+CONFIG.stackMax+', tamaño: '+CONFIG.stackAvSize+'px';
+  render();
+});
+
+})();
+</script>

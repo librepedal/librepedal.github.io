@@ -1,5 +1,27 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> **LIBRE — sesión Lenovo, 2026-08-21 ~16:20 UTC.** Cerré
+> `feature/mapa-ciclistas-zoom-cluster` (commit `0022de6`, pusheada a `lab` y
+> `origin`, **NO mergeada a `main` todavía** — Inty tiene que verla primero,
+> cambia cómo se ven TODOS los ciclistas en el mapa principal). Resumen:
+> - Cascos ahora escalan con el zoom (`--rider-scale`) en vez de tamaño fijo.
+> - Ciclistas cercanos entre sí a bajo zoom se agrupan en una burbuja con
+>   contador (clustering por celda de píxeles vía `mp.project`) en vez de
+>   superponerse; tocarla acerca el mapa ahí.
+> - Anillo de color con el jersey de cada uno (parámetro `accent` que existía
+>   pero nunca se usaba) para distinguirlos aunque compartan casco.
+> - El bob idle (antes solo en el propio marker) corre ahora en TODOS, vía un
+>   div interno `.hp-in` — nunca directo en `.helmet-pin`, que es el mismo
+>   elemento que `maplibregl.Marker` reposiciona en cada frame (animar
+>   transform ahí rompía la posición real; quedó documentado en el CSS).
+> - Reportes/alertas y puntos de "comunidad" (agua, miradores) ahora respetan
+>   zoom<6 igual que los puntos sembrados de OSM — a escala país/mundo solo se
+>   ven los ciclistas.
+> Verificado: 13/13 tests, sintaxis de los 6 `<script>` sin errores, y un
+> harness aparte con maplibre-gl real confirmando clustering + que la posición
+> del marker no se mueve mientras el bob interno anima. No probado en teléfono
+> real ni con datos reales de Firestore (sin login en este entorno).
+
 > ## 🟢 AL DÍA — resumen de lo que subió la cuenta `lab` el 16-ago entre 11:00 y 20:15
 > Ustedes cerraron a las 05:46 (`fd89cfe`). Desde ahí trabajé yo solo. **Todo está
 > mergeado y los dos remotos están iguales**, no hay nada suyo pendiente de integrar
