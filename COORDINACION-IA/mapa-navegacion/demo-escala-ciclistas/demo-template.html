@@ -105,7 +105,6 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
    vio en vivo: markers apilados muy por debajo del canvas). */
 .maplibregl-marker{position:absolute;top:0;left:0;will-change:transform}
 .maplibregl-canvas-container{position:relative}
-.hp-ring{position:absolute;right:-1px;bottom:-1px;width:6px;height:6px;border-radius:50%;border:1.2px solid rgba(10,14,22,.9);box-shadow:0 0 2px rgba(0,0,0,.5);z-index:2;transform:scale(var(--rider-scale,1));transform-origin:bottom right}
 @keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 .rider-cluster{display:flex;align-items:center;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
 .rc-stack{display:flex}
@@ -370,7 +369,6 @@ function _kmPorPixel(zoom, lat){ return 156543.03392804097 * Math.cos(lat*Math.P
 function _escalaVisibleKm(mapa){ var c=mapa.getCenter(); return _kmPorPixel(mapa.getZoom(), c.lat) * 100; }
 
 function riderMarkerHTML(col, accent, mine){
-  var ring = (!mine && accent) ? ('<i class="hp-ring" style="background:'+accent+'"></i>') : '';
   var blinkDelay = (Math.random()*CONFIG.blinkMax).toFixed(2)+'s';
   var eyeCol = mine ? 'var(--accent)' : col;
   var svg = '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'
@@ -380,7 +378,7 @@ function riderMarkerHTML(col, accent, mine){
     + '<g class="lp-eye lp-parpadeo"><ellipse cx="40" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><circle cx="37.8" cy="60" r="2.5" fill="#fff"/></g>'
     + '<g class="lp-eye lp-parpadeo"><ellipse cx="60" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><circle cx="57.8" cy="60" r="2.5" fill="#fff"/></g>'
     + '</svg>';
-  return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+ring+svg+'</div></div>';
+  return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+svg+'</div></div>';
 }
 function _miniHelmetSVG(col){
   // Ojos con brillo blanco: sin esto, dos circulos oscuros lisos sobre la sombra

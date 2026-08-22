@@ -644,13 +644,6 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .helmet-pin svg{width:calc(44px * var(--rider-scale, 1));height:calc(30px * var(--rider-scale, 1));display:block;position:relative;z-index:1}
 .helmet-pin.mine{filter:drop-shadow(0 0 8px var(--p))}
 .helmet-pin.mine .hp-in{animation:helmBob 1.1s ease-in-out infinite}
-/* Anillo de color (jersey del ciclista): con cascos repetidos entre usuarios, es lo
-   único que sigue distinguiendo a cada quien en el mapa. Solo en ciclistas ajenos.
-   2026-08-22: estaba centrado abajo y con tamaño fijo (9px) — sobre un personaje de
-   ~30px de alto eso tapaba la boca, se veía como una mordaza/máscara. Movido a la
-   esquina (no al centro, lejos de la cara) y escalado junto con --rider-scale para
-   que no quede sobredimensionado a zoom bajo. */
-.hp-ring{position:absolute;right:-1px;bottom:-1px;width:6px;height:6px;border-radius:50%;border:1.2px solid rgba(10,14,22,.9);box-shadow:0 0 2px rgba(0,0,0,.5);z-index:2;transform:scale(var(--rider-scale,1));transform-origin:bottom right}
 @keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 /* Tarjeta de grupo: pila de cascos reales (no un número pelado) — pedido de Inty
    tras ver el diseño anterior ("no quiero mostrar grupos de ciclistas esa
@@ -3302,7 +3295,7 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var ring=(!mine&&accent)?('<i class="hp-ring" style="background:'+accent+'"></i>'):''; var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+ring+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
+function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
 
 // ===== Cara expresiva de Pistero (casco + ojos kawaii + expresiones + mirada) =====
 function _bigoteSVG(id){ if(id==='bigote') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/>'; if(id==='candado') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/><path d="M46.5 77 Q50 81.5 53.5 77 Q51.5 78.7 50 78.7 Q48.5 78.7 46.5 77 Z" fill="#5a3a1a"/>'; if(id==='barba') return '<path d="M27 65 Q29 81 50 83 Q71 81 73 65 Q63 73 50 72 Q37 73 27 65 Z" fill="#5a3a1a" opacity="0.92"/>'; return ''; }
