@@ -160,7 +160,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 #esFlash{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 44%,rgba(255,255,255,0.98) 0%,rgba(252,76,2,0.55) 18%,rgba(180,0,255,0.3) 34%,transparent 60%)}
 #esFlash.boom{animation:supernova 1.05s ease-out forwards}
 @keyframes supernova{0%{opacity:0;transform:scale(0.05)}10%{opacity:1}55%{opacity:0.8}100%{opacity:0;transform:scale(2.8)}}
-.es-bottom{position:absolute;bottom:16px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:14px;z-index:3}
+.es-bottom{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;display:flex;align-items:center;justify-content:center;gap:14px;z-index:3}
 /* min-height 48px: medido el 2026-07-20, estos indicadores quedaban en 36px, la mitad
    del minimo tactil. Ahora que 'mi puesto' y 'viajes' ademas NAVEGAN, tienen que poder
    tocarse sin fallar. */
@@ -219,21 +219,21 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-icon{position:absolute;left:0;top:0;width:76px;text-align:center;will-change:transform,opacity}
 /* Nocturno Pro: la caja del ícono deja el degradado café y el glow naranja.
    Superficie limpia + hairline; el color del ícono lo hereda el SVG (currentColor). */
-.es-ico{width:60px;height:60px;margin:0 auto;border-radius:20px;display:flex;align-items:center;justify-content:center;color:var(--p);background:linear-gradient(180deg,#141f33,#0c1422);border:0.5px solid rgba(252,76,2,0.4);box-shadow:0 7px 20px rgba(0,0,0,0.5);animation:esPulse 2.6s ease-in-out infinite;will-change:transform;position:relative;overflow:hidden}
+.es-ico{width:60px;height:60px;margin:0 auto;border-radius:20px;display:flex;align-items:center;justify-content:center;color:var(--p);background:linear-gradient(180deg,#141f33,#0c1422);border:0.5px solid rgba(252,76,2,0.4);animation:esPulse 2.6s ease-in-out infinite;will-change:transform;position:relative;overflow:hidden}
 .es-ico::before{display:none}
 @keyframes esPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 #esCanvas{position:absolute;left:0;top:0;pointer-events:none;z-index:0}
 .es-icon{z-index:1}
 .es-lbl{font-size:0.62rem;color:#cfeeff;margin-top:4px;font-weight:700;text-shadow:0 1px 3px #000}
-.es-title{position:absolute;top:18px;left:0;right:0;text-align:center;color:var(--p);font-weight:800;font-size:1.1rem;text-shadow:0 0 10px rgba(252,76,2,0.5);pointer-events:none}
+.es-title{display:none;position:absolute;top:18px;left:0;right:0;text-align:center;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;font-size:1.2rem;text-transform:uppercase;letter-spacing:.03em;text-shadow:0 2px 8px rgba(0,0,0,0.5);pointer-events:none}
 .es-hint{position:absolute;top:44px;left:0;right:0;text-align:center;color:#8fb0c8;font-size:0.72rem;pointer-events:none}
 .es-modo-rapido{position:absolute;top:66px;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;gap:14px;z-index:4;pointer-events:none}
 .es-modo-chip{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;pointer-events:auto}
-.es-modo-chip .es-modo-ico{width:48px;height:48px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1.5rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
+.es-modo-chip .es-modo-ico{width:30px;height:30px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
 .es-modo-chip .es-modo-txt{font-size:0.6rem;font-weight:700;letter-spacing:0.02em;color:#8fb0c8;text-shadow:0 1px 3px rgba(0,0,0,0.6);opacity:0.75;transition:color 0.15s,opacity 0.15s}
 .es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.14);box-shadow:0 0 16px -2px var(--chip-c)}
 .es-modo-chip.selected .es-modo-txt{color:#fff;opacity:1}
-.es-classic{min-height:48px;display:inline-flex;align-items:center;justify-content:center;position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
+.es-classic{min-height:48px;display:inline-flex;align-items:center;justify-content:center;position:absolute;bottom:calc(92px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
 /* Medido: 37x28. El boton Atras llegaba a 22px de alto, menos de la mitad del minimo. */
 .es-globe{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
 #auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:calc(20px + env(safe-area-inset-top,0px)) 20px 40px;text-align:center;overflow-y:auto}
@@ -392,7 +392,7 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 #sugerencias-dest .sug{padding:9px 11px;border-bottom:1px solid #1a2740;cursor:pointer;font-size:0.82rem;color:#dfe7ff;line-height:1.3}
 #sugerencias-dest .sug:active{background:rgba(252,76,2,0.14)}
 #sugerencias-dest .sug small{color:#7d8ba0;font-size:0.68rem}
-nav{position:fixed;bottom:0;width:100%;background:rgba(10,15,29,0.99);display:flex;justify-content:space-around;padding:6px 0 14px;border-top:1px solid #222;z-index:1000}
+nav{position:fixed;bottom:0;width:100%;background:rgba(10,15,29,0.99);display:flex;justify-content:space-around;padding:6px 0 calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid #222;z-index:1000}
 /* Auditoria 2026-07-20: los 5 botones de la barra inferior median 38px de alto y ~35 de
    ancho. Es el control mas usado de la app y estaba 10px bajo el minimo tactil. */
 .nb{min-height:48px;min-width:48px;background:none;border:none;color:#666;cursor:pointer;transition:0.3s;padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
@@ -653,7 +653,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
    redondo detrás de la carita de Pistero — el resto del "orbe" que Inty pidió sacar.
    La sombra buena es el drop-shadow de acá abajo, que sigue el contorno del dibujo.
    Solo afecta a ESTE botón: los demás `.fab` de la app mantienen su círculo. */
-#micBtn{bottom:78px;left:50%;right:auto;transform:translateX(-50%);width:80px;height:80px;border:none;padding:0;overflow:visible;opacity:.97;background:transparent;box-shadow:none;border-radius:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
+#micBtn{bottom:calc(78px + env(safe-area-inset-bottom,0px));left:50%;right:auto;transform:translateX(-50%);width:80px;height:80px;border:none;padding:0;overflow:visible;opacity:.97;background:transparent;box-shadow:none;border-radius:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
 #micBtn i{display:none}
 #micBtn .orb-cara,.es-mic .orb-cara{display:block;width:100%;height:100%;position:relative;z-index:2}
 #micBtn .orb-cara svg,.es-mic .orb-cara svg{width:100%;height:100%;display:block}
@@ -727,6 +727,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .gtt:active{transform:scale(.93)}
 .gtt.on{background:rgba(252,76,2,0.16)!important;border-color:var(--p)!important;color:var(--p)!important}
 </style>
+<style>@font-face{font-family:'LibrePedalLogo';src:url(data:font/woff2;base64,d09GMgABAAAAAAW4AA8AAAAACgwAAAVeAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG4FkHDQGYD9TVEFUKgBkEQgKiBCGOQsWAAE2AiQDKAQgBYQKByAMBxsZCMjE4HHOv/eSWopLsCBeTItLgTmuE+3m6VyssC+u+WM/VyfWd+uicQt1q+WLv5k6oqETiiUaR3KpJK2kTsiVFd0mbp1DwRuOR18NAoBDIkrAZmQVVEBoaBzSwEnm1V7ZUTvQBQEsALwhtCw/mYA2tPYPwKy9sa+LpX4igElnsVBBCYoecP1eoAQhk07LQSJkYADpLzYK2IRCU6ESuOkJGehfCeQKqIBhhRSUWwAWxZZzMhvICUyiBFaHhtXiVPoYn0IDjWU3zkmiceG5Eb3K8JClqUirWVt+XCPjoCEHTDoL2zFrZir4qeUbMvMrsnAdPMrY6P9+ZSZYJ2rCg6xqT5PHdBSPsE6TQ8PwY2y3C+jE5paB47JRdEUiY3iUwIDsDDjMokSOWsCibZxHGjKRiwIJyg59Fw8tMmqPSB9JN6Tr0hXpknReOnfuVjjDBESSYH72iauidARInp9sBDnZAwHqgoxH2AtYCzacZcPMbFRCWaFSqc3ljzVVqcWrhNFfU5saroDOuszVqRmumVv/+rVLxfrNm9fbrN7NiU+JfpPzphHW1HnfiNpgdDxh/DSP1ec58aqbTrd1eLi6Sl3ZDI5UVhmMRsx6zYl3h4WHhNEf8j03+O2Y9fo1pzNcIvqLnHjahq45ozY8I/qLzcN+76wds26f2mA0VuqHhznxdeTu/aCzcs8Y1YaRkdFquvo0J74kVRyjf6U2nLGtJqZrtmDWYW5CImkiTcFV2bpzV1zBaDWtEF+SSmmbrhFb/fCrnLjbpoY7REfdDES3tafX66oO3LhxxXHzY068GgCd3+az0fsb740+XfG/k++cj/UfI+Wh3GCrtc/Za9tTPk8/M/nWH3YaK3ezqWkz3RuEAaHbvXpAlWnpqSl02WbltzBgte/iLy7/5BFeoncYb9201jrbMvV4eMb8d23mY0rPlKdTlk1mx1b3+8RnR9WtGr/I/hctd6Ah8pXtkODcxEXNFHU1msS0br5Qlh3Y7e78LNi8dkfbq5vWfqleHo9wM6haV5VhSneM+eiGWWiGn0/xqdhO3eKNGS3CeOURYcj2VWTDjAaVZ+ParPIlSL1w8PTONQ6BloEHsg5OCLQMdFizs6BhYUjbDlufH12Yn8Witl22Pj+6eI0symvbYevzkwtSLxy7sNPoELk65OiCY0tOfG6nORGO1AvHTpcqAy0Dx4xZEtN2ytbnF5dLxmNLTnxupzkRju8zwvz9BOHLYIvUHfFeX7XaDgnOYzmfRSsHG7UpE/qjYvKPKXYaHSJXh+C7HE2AThDkUabhO9Kdfqq1HRKca7gI0TBQl5Qxvi+6XdjqPvatea7LV2R6BN4JiX18TLHT6BC5OgQAAOLfcSqiZEB3b7x54m9KhvnyOcm8u2P9h9y9720ff/p/xX+/Kv9gowHIHyCcLAmCOLYy4n/FnxHKPx7Ln+PoYZTgPkD7YU/boaUboaXe0JJwaCmBlmZCS2uhJbjqLzDFCdJd4djZHm4GebhZFR/fiJ9zHYEnnusozHBTxyAai7ez/ToZnNDHySmOZLVmiIRbHwFMYMWzMum9QCYmYQB9qEUautGBBlShEa1oRgsG/PYB9CAeodJp/ahHH1rRgwGeDTER9vUdCEE3+tCMUBQjCwVIQy060G3spEHw0nwd9E07vRtd4BGOEMQgjFuWmicgE/moQNaGluKXHd2MQXSgFn1Alpet8d3p6EYPJqMgEGIgbOPpOPCoQAsaSXuVJc4rQR+60YZG1IOjWgyeGwx3sx88/M6TvV+ONqO1NzyIOuNv69GNToQiE+2owGT0oBGhDPi/LlD1IGkzNHA6zxNp3nF2CQAA) format('woff2');font-weight:800;font-display:swap}</style>
 </head>
 <body>
 <script>/* anti-parpadeo del tema: pone la clase antes de pintar. Default 'solido' = look actual. */
@@ -745,7 +746,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 .lp-logo-video{width:100%;height:auto;display:block;border-radius:10px;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.5))}
 /* Iconos de modo a medida (bici/huellas/auto) — tamaño y color heredado del modo. */
 .modo-ico-svg{display:flex;justify-content:center;align-items:center;height:30px}
-.modo-ico-svg svg,.es-modo-ico svg{width:26px;height:26px;display:block}
+.modo-ico-svg svg,.es-modo-ico svg{width:17px;height:17px;display:block}
 /* Abanico de reporte (v7.29): el botón Reportar del mapa despliega 4 opciones animadas. */
 #abanicoReporte{position:absolute;right:14px;bottom:170px;z-index:501;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
 #abanicoReporte.on{pointer-events:auto}
@@ -984,7 +985,8 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <canvas id="esStars"></canvas>
 <div id="esPostales"><div class="es-post-layer" id="esPostA"></div><div class="es-post-layer" id="esPostB"></div></div>
 <div id="esFlash"></div>
-<div class="es-title">Libre Pedal</div>
+<div id="esLuna" aria-hidden="true" style="position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;width:50px;height:50px;z-index:4;pointer-events:none;opacity:0;transition:opacity 1.4s ease;filter:drop-shadow(0 2px 7px rgba(0,0,0,.5))"></div>
+<div class="es-title"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></div>
 <div class="es-hint">Gira con el dedo · toca un ícono para entrar</div>
 <div class="es-modo-rapido" id="esModoRapido"></div>
 <div id="esferaWrap"></div>
@@ -1008,7 +1010,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <header>
 <div style="display:flex;align-items:center;gap:4px">
 <button class="es-globe" id="btnAtras" onclick="volverAtras()" title="Atrás" style="display:none"><i class="fas fa-arrow-left"></i></button>
-<h2 style="margin:0"><i class="fas fa-bicycle"></i> Libre Pedal</h2>
+<h2 style="margin:0;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:1.18rem"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></h2>
 </div>
 <div class="hdr-right">
 <button class="es-globe" id="btnEsferaHeader" onclick="abrirEsfera()" title="Esfera de apps"><i class="fas fa-globe"></i> </button>
@@ -1749,7 +1751,7 @@ function _lpAvisoLogin(msg){ try{ window.alert(String(msg)); }catch(e){} }
 async function _entrarConCodigoTester(){
   var codigo=(document.getElementById('codigoTesterInput')||{}).value||'';
   var correo=(document.getElementById('correoTesterInput')||{}).value||'';
-  codigo=codigo.trim(); correo=correo.trim().toLowerCase();
+  codigo=codigo.trim().toUpperCase(); correo=correo.trim().toLowerCase();
   if(!codigo) return _lpAvisoLogin('Escribí el código que te pasaron.');
   if(!correo||correo.indexOf('@')===-1) return _lpAvisoLogin('Escribí el correo con el que te inscribiste a la prueba.');
   var btn=document.getElementById('btnEntrarCodigo');
@@ -4557,7 +4559,7 @@ async function _completarLoginVerificado(cuVal, nombre, e_val){
     throw err;
   }
 }
-async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ localStorage.removeItem('lp_session'); location.reload(); } }
+async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ try{ await firebase.auth().signOut(); }catch(e){} localStorage.removeItem('lp_session'); location.reload(); } }
 function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
 // Ahora vive dentro del menú de la ficha de usuario: sin fondo de píldora, el estado
 // se marca con el cian de Pistero cuando está activo.
@@ -10673,6 +10675,20 @@ function _esTap(e){
   const p=_esXY(e), r=wrap.getBoundingClientRect();
   esToques.push({x:p.x-r.left, y:p.y-r.top, t:Date.now()});
 }
+function _pintarLunaEsfera(){
+  try{
+    var el=document.getElementById("esLuna"); if(!el) return;
+    var h=new Date().getHours(); if(!(h>=19||h<7)){ el.style.opacity=0; return; }
+    var SIN=29.530588853, REF=Date.UTC(2000,0,6,18,14);
+    var f=((new Date().getTime()-REF)/864e5 % SIN)/SIN; if(f<0) f+=1;
+    var s=50, r=s/2*0.86, cx=s/2, cy=s/2, t=f*2*Math.PI, rx=r*Math.cos(t), wax=f<0.5, sO=wax?1:0, sI=(rx>0)?(1-sO):sO;
+    var top=cx+","+(cy-r), bot=cx+","+(cy+r);
+    var lit="M "+top+" A "+r+","+r+" 0 0 "+sO+" "+bot+" A "+Math.abs(rx).toFixed(2)+","+r+" 0 0 "+sI+" "+top+" Z";
+    el.innerHTML='<svg width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><defs><radialGradient id="lnG" cx="38%" cy="34%" r="72%"><stop offset="0%" stop-color="#fdfdf5"/><stop offset="55%" stop-color="#e9edf4"/><stop offset="100%" stop-color="#b9c2d4"/></radialGradient><clipPath id="lnC"><path d="'+lit+'"/></clipPath></defs><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#141a26"/><path d="'+lit+'" fill="url(#lnG)"/><g clip-path="url(#lnC)" opacity="0.5" fill="#9aa4b8"><ellipse cx="'+(cx-r*0.18)+'" cy="'+(cy-r*0.22)+'" rx="'+(r*0.2)+'" ry="'+(r*0.16)+'"/><ellipse cx="'+(cx-r*0.02)+'" cy="'+(cy+r*0.05)+'" rx="'+(r*0.26)+'" ry="'+(r*0.2)+'"/><ellipse cx="'+(cx+r*0.3)+'" cy="'+(cy+r*0.18)+'" rx="'+(r*0.14)+'" ry="'+(r*0.12)+'"/></g></svg>';
+    el.title="Luna";
+    el.style.opacity=0.92;
+  }catch(e){}
+}
 function abrirEsfera(){
   const sc=document.getElementById('esferaScreen'); if(!sc) return; sc.classList.add('on');
   if(!esEls.length) construirEsfera();
@@ -10685,7 +10701,7 @@ function abrirEsfera(){
   esIntroStart=Date.now();
   const fl=document.getElementById('esFlash'); if(fl){ fl.classList.remove('boom'); void fl.offsetWidth; fl.classList.add('boom'); }
   sonidoArco();
-  esAplicarFondoModo();
+  esAplicarFondoModo(); _pintarLunaEsfera();
   const k=document.getElementById('esKm'); if(k) k.innerText=(us.di||0).toFixed(1);
   // Antes solo contaba viajes PLANIFICADOS completados — para la mayoría, que sale a
   // pedalear con "Iniciar navegación" directo (sin pasar por el planificador), este

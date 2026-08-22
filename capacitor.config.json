@@ -20,7 +20,11 @@
       "*.gstatic.com",
       "*.googleapis.com",
       "*.firebaseio.com",
-      "firestore.googleapis.com"
+      "firestore.googleapis.com",
+      "librepedal-auth.librepedal.workers.dev",
+      "librepedal-auth-staging.librepedal.workers.dev",
+      "librepedal-ia.librepedal.workers.dev",
+      "librepedal-ia-sudamerica.inty405.workers.dev"
     ]
   },
   "plugins": {

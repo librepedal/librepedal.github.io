@@ -87,6 +87,13 @@ mecanismo de auto-reparación por versión ya estaban sólidos de sesiones
 anteriores; un matiz de caché offline (Firebase/MapLibre no se cachean en el
 SW) quedó anotado como "a verificar" en `PENDIENTES.md`, no urgente.
 
+> ✏️ **Corrección (2026-08-14):** el párrafo de arriba sobre el correo público
+> quedó desactualizado — confundió a una sesión nueva que pensó que seguía
+> abierto. **Ya está CERRADO desde el 2026-07-16**: correo migrado a
+> `usersPrivate` (21/21, verificado con Admin SDK), reglas publicadas por Inty
+> y reverificadas contra la API en vivo de Firebase. Ver `PENDIENTES.md`,
+> ítem marcado `[x]` "Fuga de correos CERRADA" — nada pendiente ahí.
+
 **🎉 Con esto se completó una vuelta entera del barrido por todas las
 secciones de la app** (GPS, Inicio, Rutas, Diario, Comunidad, Social, Pistero
 IA, SOS, Gamificación, Personalización, Música, Novedades, CicloGuía, Ajustes,
