@@ -105,7 +105,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
    vio en vivo: markers apilados muy por debajo del canvas). */
 .maplibregl-marker{position:absolute;top:0;left:0;will-change:transform}
 .maplibregl-canvas-container{position:relative}
-.hp-ring{position:absolute;left:50%;bottom:-2px;width:9px;height:9px;border-radius:50%;transform:translateX(-50%);border:1.5px solid rgba(10,14,22,.85);box-shadow:0 0 3px rgba(0,0,0,.5);z-index:2}
+.hp-ring{position:absolute;right:-1px;bottom:-1px;width:6px;height:6px;border-radius:50%;border:1.2px solid rgba(10,14,22,.9);box-shadow:0 0 2px rgba(0,0,0,.5);z-index:2;transform:scale(var(--rider-scale,1));transform-origin:bottom right}
 @keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 .rider-cluster{display:flex;align-items:center;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
 .rc-stack{display:flex}
@@ -259,7 +259,7 @@ body.panel-open #title{display:none}
       </div>
       <div class="esc-row">
         <span class="esc-tier">Ciudad</span>
-        <span class="esc-mini"><input type="range" id="rRS4" min="10" max="100" step="1" value="92"><b id="lblRS4">92%</b></span>
+        <span class="esc-mini"><input type="range" id="rRS4" min="10" max="100" step="1" value="100"><b id="lblRS4">100%</b></span>
         <span class="esc-mini esc-off">sin agrupar</span>
       </div>
     </div>
@@ -355,7 +355,7 @@ var CHILE_GEOJSON = {"type":"FeatureCollection","features":[
    calibrar "continente" por separado en vez de que comparta el mismo valor
    que "mundo". */
 var CONFIG = {
-  riderScale: [0.51, 0.56, 0.62, 0.8, 0.92], // tamaño: mundo/continente/país/regional/ciudad (100% desde zoom 13)
+  riderScale: [0.51, 0.56, 0.62, 0.8, 1], // tamaño: mundo/continente/país/regional/ciudad (115% desde zoom 13, ver _riderScaleParaZoom)
   clusterCell: [154, 110, 66, 48],              // px de agrupamiento: mundo/continente/país/regional (0 = sin agrupar desde zoom 10)
   poiKm: 30,                            // hasta qué escala (km reales) se ven agua/miradores/alertas
   blinkMax: 5.4,                        // segundos: tope del delay aleatorio de parpadeo
@@ -364,7 +364,7 @@ var CONFIG = {
 };
 
 /* ==== Funciones reales de index.html (misma lógica, valores desde CONFIG) ==== */
-function _riderScaleParaZoom(zoom){ if(zoom<2) return CONFIG.riderScale[0]; if(zoom<4) return CONFIG.riderScale[1]; if(zoom<7) return CONFIG.riderScale[2]; if(zoom<10) return CONFIG.riderScale[3]; if(zoom<13) return CONFIG.riderScale[4]; return 1; }
+function _riderScaleParaZoom(zoom){ if(zoom<2) return CONFIG.riderScale[0]; if(zoom<4) return CONFIG.riderScale[1]; if(zoom<7) return CONFIG.riderScale[2]; if(zoom<10) return CONFIG.riderScale[3]; if(zoom<13) return CONFIG.riderScale[4]; return 1.15; }
 function _celdaClusterParaZoom(zoom){ if(zoom<2) return CONFIG.clusterCell[0]; if(zoom<4) return CONFIG.clusterCell[1]; if(zoom<7) return CONFIG.clusterCell[2]; if(zoom<10) return CONFIG.clusterCell[3]; return 0; }
 function _kmPorPixel(zoom, lat){ return 156543.03392804097 * Math.cos(lat*Math.PI/180) / Math.pow(2, zoom) / 1000; }
 function _escalaVisibleKm(mapa){ var c=mapa.getCenter(); return _kmPorPixel(mapa.getZoom(), c.lat) * 100; }

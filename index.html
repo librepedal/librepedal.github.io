@@ -645,8 +645,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .helmet-pin.mine{filter:drop-shadow(0 0 8px var(--p))}
 .helmet-pin.mine .hp-in{animation:helmBob 1.1s ease-in-out infinite}
 /* Anillo de color (jersey del ciclista): con cascos repetidos entre usuarios, es lo
-   único que sigue distinguiendo a cada quien en el mapa. Solo en ciclistas ajenos. */
-.hp-ring{position:absolute;left:50%;bottom:-2px;width:9px;height:9px;border-radius:50%;transform:translateX(-50%);border:1.5px solid rgba(10,14,22,.85);box-shadow:0 0 3px rgba(0,0,0,.5);z-index:2}
+   único que sigue distinguiendo a cada quien en el mapa. Solo en ciclistas ajenos.
+   2026-08-22: estaba centrado abajo y con tamaño fijo (9px) — sobre un personaje de
+   ~30px de alto eso tapaba la boca, se veía como una mordaza/máscara. Movido a la
+   esquina (no al centro, lejos de la cara) y escalado junto con --rider-scale para
+   que no quede sobredimensionado a zoom bajo. */
+.hp-ring{position:absolute;right:-1px;bottom:-1px;width:6px;height:6px;border-radius:50%;border:1.2px solid rgba(10,14,22,.9);box-shadow:0 0 2px rgba(0,0,0,.5);z-index:2;transform:scale(var(--rider-scale,1));transform-origin:bottom right}
 @keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 /* Tarjeta de grupo: pila de cascos reales (no un número pelado) — pedido de Inty
    tras ver el diseño anterior ("no quiero mostrar grupos de ciclistas esa
@@ -4632,7 +4636,7 @@ let _lastUsersSnapshotDocs=null;
 // a crecer después — visualmente se veía como que "encogía", así que se corrigió
 // para que crezca parejo en todos los escalones (mundo 0.51 -> continente 0.56 ->
 // país 0.62 -> regional 0.80 -> ciudad 0.92).
-function _riderScaleParaZoom(zoom){ if(zoom<2) return 0.51; if(zoom<4) return 0.56; if(zoom<7) return 0.62; if(zoom<10) return 0.80; if(zoom<13) return 0.92; return 1; }
+function _riderScaleParaZoom(zoom){ if(zoom<2) return 0.51; if(zoom<4) return 0.56; if(zoom<7) return 0.62; if(zoom<10) return 0.80; if(zoom<13) return 1; return 1.15; }
 // Celda de agrupamiento (en píxeles de pantalla) para juntar ciclistas cercanos en
 // una tarjeta de grupo en vez de superponer cascos idénticos. 0 = sin agrupar
 // (zoom de calle, donde cada ciclista ya se ve suficientemente separado).
