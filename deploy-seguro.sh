@@ -40,12 +40,16 @@ done
 # (subcarpetas), no en la raiz, asi que este glob no lo toca.
 # `voces` lleva las voces pregeneradas y la detectó el control de completitud de más abajo
 # cuando se me quedó fuera. `demo-voces` y `resources` son material público del sitio.
+# `iconos-modo` (2026-08-22): los 5 PNG de "¿Cómo te mueves?". El control de completitud
+# de más abajo NO la habría detectado si faltara: la ruta se arma en JS por concatenación
+# ('iconos-modo/'+id+'.png'), así que el regex de esa sección nunca ve la ruta completa
+# como un literal. Por eso esta carpeta va explícita acá y no solo confiada a ese control.
 # NO van: worker-ia / worker-auth (código de Workers), scripts, tests, concepts,
 # prototipos, android, COORDINACION-IA. Nada de eso lo sirve el navegador.
 # `.well-known` (2026-08-15): Android App Links necesita `assetlinks.json` servido en
 # `/.well-known/assetlinks.json` — al ser carpeta oculta (empieza con punto) no la agarra
 # ningún glob de arriba, así que va explícita.
-for d in icons img images assets fonts sonidos audio functions voces voces-el demo-voces resources .well-known; do
+for d in icons img images assets fonts sonidos audio functions voces voces-el demo-voces resources iconos-modo .well-known; do
   [ -d "$d" ] && cp -r "$d" "$OUT/"
 done
 cp *.png *.jpg *.jpeg *.svg *.webp *.mp3 *.ogg *.mp4 "$OUT/" 2>/dev/null || true
