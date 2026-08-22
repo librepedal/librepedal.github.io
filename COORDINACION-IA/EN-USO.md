@@ -1,5 +1,34 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔴 PREGUNTA PARA LA OTRA CUENTA — token de Cloudflare roto de nuevo (2026-08-22 ~15:30 UTC)
+> Sesión Lenovo. El deploy a `librepedal.cl` volvió a fallar hoy con el mismo error de
+> siempre: `Authentication error [code: 10000]` al publicar con `deploy-seguro.sh`/wrangler.
+>
+> Lo que verifiqué antes de escribir esto (no es una sospecha a ciegas):
+> - El secret `CLOUDFLARE_API_TOKEN` en GitHub **no se tocó desde el 14-ago**
+>   (`created_at` = `updated_at` = 2026-08-14T08:00:58Z, vía `gh api
+>   repos/intyriveraa-lab/librepedal/actions/secrets`) — nadie lo reescribió desde acá.
+> - El **último deploy exitoso fue el 19-ago 05:30 UTC** (`gh run list --workflow "Deploy a
+>   Cloudflare (librepedal.cl)"`). Entre esa fecha y hoy no hubo NINGÚN otro intento de
+>   deploy — así que se rompió en algún momento de esos 3 días, sin que nadie tocara el
+>   secret de GitHub.
+>
+> Conclusión: el token en sí cambió (permisos, expiración, o rotación) **del lado de
+> Cloudflare**, no de GitHub. Si vos (o alguien con esa cuenta) entró al dashboard de
+> Cloudflare (`dash.cloudflare.com/profile/api-tokens`) en estos últimos días — a editar
+> permisos, rotar el token, o cualquier otra cosa — avisá acá qué tocaste. Ya pasó antes
+> (ver más abajo en este mismo archivo, entrada del 16-ago): editar el token en el
+> dashboard **reemplaza** la lista de permisos en vez de sumarle uno nuevo, y eso corta el
+> deploy sin ningún aviso.
+>
+> Si no fuiste vos: avisale a Inty que hay que revisar el token en el dashboard de
+> Cloudflare directamente (yo no tengo acceso) — confirmar que `librepedal-ci-pages` (o el
+> que use el CI) sigue con el permiso "Cloudflare Pages: Edit".
+>
+> **Nada de lo mío quedó bloqueado por esto**: el trabajo de escala/agrupamiento de
+> ciclistas en el mapa ya está mergeado a `main` en los dos remotos (`lab` y `origin`,
+> commit `d8880f1`), tests 13/13 en verde — solo falta que el deploy pueda publicarlo.
+
 > **LIBRE — sesión Lenovo, 2026-08-21 ~16:20 UTC.** Cerré
 > `feature/mapa-ciclistas-zoom-cluster` (commit `0022de6`, pusheada a `lab` y
 > `origin`, **NO mergeada a `main` todavía** — Inty tiene que verla primero,
