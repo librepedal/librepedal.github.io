@@ -4616,14 +4616,17 @@ let _lastUsersSnapshotDocs=null;
 // 2026-08-21): a escala país/mundo se veían todos igual de grandes que a escala
 // calle, amontonados. Ajusta la var CSS --rider-scale (usada por .helmet-pin svg).
 // Valores calibrados en vivo por Inty con el panel de control del demo
-// (COORDINACION-IA/mapa-navegacion), última vuelta "Asignado" el 2026-08-21: se
-// sumó un escalón "continente" entre mundo y país (antes compartían el mismo
-// valor de mundo).
-function _riderScaleParaZoom(zoom){ if(zoom<2) return 0.51; if(zoom<4) return 0.35; if(zoom<7) return 0.62; if(zoom<10) return 0.80; if(zoom<13) return 0.92; return 1; }
+// (COORDINACION-IA/mapa-navegacion). El valor de "continente" quedó ajustado a
+// mano (0.35->0.56 en tamaño, 50->110px en agrupamiento): el que había asignado
+// Inty hacía que el ciclista se achicara al pasar de mundo a continente y volviera
+// a crecer después — visualmente se veía como que "encogía", así que se corrigió
+// para que crezca parejo en todos los escalones (mundo 0.51 -> continente 0.56 ->
+// país 0.62 -> regional 0.80 -> ciudad 0.92).
+function _riderScaleParaZoom(zoom){ if(zoom<2) return 0.51; if(zoom<4) return 0.56; if(zoom<7) return 0.62; if(zoom<10) return 0.80; if(zoom<13) return 0.92; return 1; }
 // Celda de agrupamiento (en píxeles de pantalla) para juntar ciclistas cercanos en
 // una tarjeta de grupo en vez de superponer cascos idénticos. 0 = sin agrupar
 // (zoom de calle, donde cada ciclista ya se ve suficientemente separado).
-function _celdaClusterParaZoom(zoom){ if(zoom<2) return 154; if(zoom<4) return 50; if(zoom<7) return 66; if(zoom<10) return 48; return 0; }
+function _celdaClusterParaZoom(zoom){ if(zoom<2) return 154; if(zoom<4) return 110; if(zoom<7) return 66; if(zoom<10) return 48; return 0; }
 // Tope del delay aleatorio de parpadeo (para que los ciclistas no parpadeen todos
 // a la vez, ver .lp-parpadeo) y tamaño de la tarjeta de grupo — mismos valores
 // calibrados en vivo.
