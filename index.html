@@ -589,11 +589,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* Rediseño 2026-07-29: FAB uniforme 52px, ícono de línea (sin la etiqueta "REPORTAR" que
    se dibujaba fuera del botón y pisaba el de recentrar). Reportar es el primario naranja y va
    ABAJO de la columna (lo más alcanzable con el pulgar); recentrar va arriba. */
-/* 38px 2026-08-23: antes 52px -> 44px -> 38px. Inty lo siguio viendo grande al
-   lado del recentrar (que ahora es un icono suelto de 34px, sin relleno) -- el
-   contraste entre un circulo solido y un icono desnudo pesa mas que el numero, asi
-   que se achica un poco mas para emparejar el peso visual entre ambos. */
-#fabReportar{position:absolute;right:14px;bottom:20px;width:38px;height:38px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:0.92rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+/* 2026-08-23, vuelta final: Inty seguia viendolo distinto al de recentrar aunque
+   ya median casi lo mismo -- el problema no era el tamano, era el ESTILO: un
+   circulo naranjo solido al lado de un icono desnudo se ve como dos lenguajes
+   visuales distintos. Se le saca el circulo/relleno, mismo tratamiento que
+   .map-recenter-btn (icono suelto + drop-shadow, sin fondo ni borde) -- el
+   naranjo (color:#fc4c02, igual a --p) es lo que lo sigue distinguiendo como la
+   accion principal, no el circulo. Un poco mas grande que el recentrar (38 vs 34)
+   porque sigue siendo el botón mas importante del mapa. */
+#fabReportar{position:absolute;right:14px;bottom:20px;width:38px;height:38px;background:transparent;border:none;color:#fc4c02;font-size:1.55rem;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 #fabReportar:active{transform:scale(0.94)}
 #pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
 #pisteroPeek::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.24) 100%);pointer-events:none}
@@ -1763,7 +1767,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.767'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.768'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
