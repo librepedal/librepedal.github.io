@@ -164,15 +164,18 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 /* min-height 48px: medido el 2026-07-20, estos indicadores quedaban en 36px, la mitad
    del minimo tactil. Ahora que 'mi puesto' y 'viajes' ademas NAVEGAN, tienen que poder
    tocarse sin fallar. */
-.es-ind{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;min-height:48px;background:none;border:none;color:#cfeeff;cursor:pointer}
+/* gap:4px 2026-08-23: antes el valor y la etiqueta ("42.3"/"km") no tenian separacion
+   real, solo el margin-top:2px de .es-ind-l -- mismo amontonamiento que el chip de
+   arriba, mismo pedido de Inty de darle aire. */
+.es-ind{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:52px;min-height:52px;background:none;border:none;color:#cfeeff;cursor:pointer}
 /* Una sola lógica de navegación: el es-bottom es HUD de DATOS, no un segundo menú.
    km / mi puesto / viajes se miran de un vistazo; para ir a esas secciones está la Esfera. */
 /* Auditoria 2026-07-20: 'mi puesto' y 'viajes' navegan pero llevaban cursor:default,
    o sea el usuario no tenia forma visual de saber que eran tocables. */
 .es-dato{cursor:default;user-select:none}
 button.es-dato{cursor:pointer}
-.es-ind-v{font-size:1.05rem;font-weight:800;color:var(--p);text-shadow:0 0 8px rgba(252,76,2,0.6)}
-.es-ind-l{font-size:0.6rem;color:#8fb0c8;text-transform:uppercase;letter-spacing:1px}
+.es-ind-v{font-size:1.15rem;font-weight:800;color:var(--p);text-shadow:0 0 8px rgba(252,76,2,0.6)}
+.es-ind-l{font-size:0.66rem;color:#8fb0c8;text-transform:uppercase;letter-spacing:1px}
 .es-badge{position:relative}
 .es-badge[data-n]:not([data-n="0"])::after{content:attr(data-n);position:absolute;top:-4px;right:2px;background:#ff2d6b;color:#fff;font-size:0.55rem;font-weight:800;min-width:14px;height:14px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
 /* 2026-08-16: sacado el orbe circular con halo (quedó viejo — el mismo rediseño de
@@ -183,7 +186,7 @@ button.es-dato{cursor:pointer}
 /* Mismo criterio que #micBtn: sin círculo ni sombra de caja. El border-radius no hacía
    daño acá (no hay fondo que recortar), pero se saca para que las dos reglas digan lo
    mismo y nadie vuelva a agregarle un fondo creyendo que va dentro de un orbe. */
-.es-mic{position:relative;width:86px;height:86px;border-radius:0;box-shadow:none;border:none;background:transparent;cursor:pointer;padding:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
+.es-mic{position:relative;width:92px;height:92px;border-radius:0;box-shadow:none;border:none;background:transparent;cursor:pointer;padding:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
 .es-mic.listening{filter:drop-shadow(0 0 10px rgba(255,45,107,.75))}
 /* ===== Look premium unificado (glass + neón) en toda la app ===== */
 .bg,.bd,.btrip,.bpdf{border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.2);letter-spacing:0.3px}
@@ -215,7 +218,12 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .speed-display,.performance-bar,.chart-container{border:1px solid rgba(252,76,2,0.28)!important;background:linear-gradient(160deg,rgba(16,24,40,0.6),rgba(8,12,22,0.68))!important}
 .darma-badge{box-shadow:0 0 16px rgba(255,215,0,0.35)}
 #esferaScreen.on{display:block}
-#esferaWrap{position:absolute;left:0;right:0;top:64px;bottom:150px;touch-action:none;cursor:grab;overflow:hidden}
+/* top/bottom 2026-08-23: antes 64/150 -- con el hint de texto afuera y el chip agrandado
+   (ver .es-modo-chip mas abajo) el anillo quedaba pegado al chip (~35-50px de aire,
+   pedido explicito de Inty de separarlo mas). Recalculado y medido con
+   getBoundingClientRect en un mock local antes de tocar esto: deja ~77px libres entre
+   el chip y el primer icono, ~44px entre el ultimo icono y "Menu clasico". */
+#esferaWrap{position:absolute;left:0;right:0;top:146px;bottom:147px;touch-action:none;cursor:grab;overflow:hidden}
 .es-icon{position:absolute;left:0;top:0;width:76px;text-align:center;will-change:transform,opacity}
 /* Nocturno Pro: la caja del ícono deja el degradado café y el glow naranja.
    Superficie limpia + hairline; el color del ícono lo hereda el SVG (currentColor). */
@@ -227,13 +235,16 @@ nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-ba
 .es-lbl{font-size:0.62rem;color:#cfeeff;margin-top:4px;font-weight:700;text-shadow:0 1px 3px #000}
 .es-title{display:none;position:absolute;top:18px;left:0;right:0;text-align:center;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;font-size:1.2rem;text-transform:uppercase;letter-spacing:.03em;text-shadow:0 2px 8px rgba(0,0,0,0.5);pointer-events:none}
 .es-hint{position:absolute;top:44px;left:0;right:0;text-align:center;color:#8fb0c8;font-size:0.72rem;pointer-events:none}
-.es-modo-rapido{position:absolute;top:66px;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;gap:14px;z-index:4;pointer-events:none}
-.es-modo-chip{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;pointer-events:auto}
-.es-modo-chip .es-modo-ico{width:30px;height:30px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
-.es-modo-chip .es-modo-txt{font-size:0.6rem;font-weight:700;letter-spacing:0.02em;color:#8fb0c8;text-shadow:0 1px 3px rgba(0,0,0,0.6);opacity:0.75;transition:color 0.15s,opacity 0.15s}
-.es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.14);box-shadow:0 0 16px -2px var(--chip-c)}
+.es-modo-rapido{position:absolute;top:44px;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;gap:14px;z-index:4;pointer-events:none}
+/* Circulo 30->46, icono 17->26 (ver mas abajo, regla compartida con .modo-ico-svg del
+   login), gap icono-texto 3->8: Inty lo vio "amontonado", el circulo y el texto "Vas en
+   Ruta" practicamente se tocaban. */
+.es-modo-chip{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;pointer-events:auto}
+.es-modo-chip .es-modo-ico{width:46px;height:46px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
+.es-modo-chip .es-modo-txt{font-size:0.72rem;font-weight:700;letter-spacing:0.02em;color:#8fb0c8;text-shadow:0 1px 3px rgba(0,0,0,0.6);opacity:0.75;transition:color 0.15s,opacity 0.15s}
+.es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.1);box-shadow:0 0 18px -2px var(--chip-c)}
 .es-modo-chip.selected .es-modo-txt{color:#fff;opacity:1}
-.es-classic{min-height:48px;display:inline-flex;align-items:center;justify-content:center;position:absolute;bottom:calc(92px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
+.es-classic{min-height:48px;display:inline-flex;align-items:center;justify-content:center;position:absolute;bottom:calc(136px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
 /* Medido: 37x28. El boton Atras llegaba a 22px de alto, menos de la mitad del minimo. */
 .es-globe{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
 #auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:calc(20px + env(safe-area-inset-top,0px)) 20px 40px;text-align:center;overflow-y:auto}
@@ -764,11 +775,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 .lp-logo-wrap{width:100%;max-width:280px;margin:10px auto 6px}
 .lp-logo-video{width:100%;height:auto;display:block;border-radius:10px;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.5))}
 /* Iconos de modo a medida (bici/huellas/auto) — tamaño y color heredado del modo.
-   La grilla de selección (login) usa un ícono grande porque la tarjeta es el foco
-   de esa pantalla; el chip de la esfera es un círculo chico de navegación (30px)
-   y necesita el ícono pequeño para no desbordar — por eso van en reglas separadas. */
+   La grilla de selección (login) usa un ícono aún más grande (58px) porque la tarjeta
+   es el foco de esa pantalla; el chip de la esfera es un círculo de navegación más chico
+   (46px, icono 26px) — por eso van en reglas separadas aunque ambos crecieron. */
 .modo-ico-svg{display:flex;justify-content:center;align-items:center;height:64px}
-.es-modo-ico svg,.es-modo-ico img{width:17px;height:17px;display:block;object-fit:contain}
+.es-modo-ico svg,.es-modo-ico img{width:26px;height:26px;display:block;object-fit:contain}
 .modo-ico-svg svg,.modo-ico-svg img{width:58px;height:58px;display:block;object-fit:contain}
 .modo-ico-svg img,.es-modo-ico img{filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.45))}
 /* Abanico de reporte (v7.29): el botón Reportar del mapa despliega 4 opciones animadas. */
@@ -1014,7 +1025,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div id="esFlash"></div>
 <div id="esLuna" aria-hidden="true" style="position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;width:50px;height:50px;z-index:4;pointer-events:none;opacity:0;transition:opacity 1.4s ease;filter:drop-shadow(0 2px 7px rgba(0,0,0,.5))"></div>
 <div class="es-title"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></div>
-<div class="es-hint">Gira con el dedo · toca un ícono para entrar</div>
+<!-- 2026-08-23: "Gira con el dedo..." sale por pedido directo de Inty ("tampoco va") --
+     mismo criterio que .es-title (ya venia display:none): con el logo y los iconos a la
+     vista el gesto se entiende solo, y sacarla libero espacio real para separar mejor el
+     chip del anillo de abajo. .es-hint queda sin uso en el DOM (la clase CSS se deja por
+     si se reusa, no se borro). -->
 <div class="es-modo-rapido" id="esModoRapido"></div>
 <div id="esferaWrap"></div>
 <button class="es-classic" onclick="cerrarEsfera()"><i class="fas fa-bars"></i> Menú clásico</button>
@@ -2484,7 +2499,7 @@ function renderModoRapidoEsfera(){
   const c=document.getElementById('esModoRapido'); if(!c) return;
   if(!_modoEsferaAbierto){
     const a=_actividadActual();
-    c.innerHTML='<div class="es-modo-chip selected" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="_toggleModoEsfera()" title="Cambiar de modo"><div class="es-modo-ico" style="color:'+a.color.p+'">'+_modoIconHTML(a.id)+'</div><div class="es-modo-txt">Vas en '+a.corto+' · Cambiar</div></div>';
+    c.innerHTML='<div class="es-modo-chip selected" style="--chip-c:'+a.color.p+';--chip-bg:'+a.color.p+'33" onclick="_toggleModoEsfera()" title="Cambiar de modo"><div class="es-modo-ico" style="color:'+a.color.p+'">'+_modoIconHTML(a.id)+'</div><div class="es-modo-txt">Modo Viaje · Cambiar</div></div>';
     return;
   }
   // Desplegado: los 4 modos, cada uno con su color propio. Al elegir, se repliega.
