@@ -38,3 +38,7 @@ MI-SENTRY.txt
 MI-*.txt
 señuelos/
 .deploy-clean/
+
+# Correos reales de testers (datos personales) — nunca al repo público
+worker-auth/testers_kv_bulk.json
+testers_librepedal*.csv

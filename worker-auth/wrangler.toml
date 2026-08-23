@@ -1,3 +1,7 @@
 name = "librepedal-auth"
 main = "worker.js"
 compatibility_date = "2024-11-01"
+
+[[kv_namespaces]]
+binding = "TESTERS_KV"
+id = "7936d9402aa7421aba8f9656bb6de4e0"

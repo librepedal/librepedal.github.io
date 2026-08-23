@@ -88,16 +88,22 @@ export default {
     // testers quedaron afuera sin ninguna vía. Esto les da una: un código único
     // que Inty reparte al grupo, y con el que cada uno entra con SU correo.
     //
-    // FALLA CERRADA a propósito: sin los dos secretos puestos, esta rama no existe.
-    // Desplegar el código no abre ningún agujero por sí solo.
-    //   CODIGO_TESTER        — el código compartido (uno solo, largo y aleatorio).
-    //   TESTERS_PERMITIDOS   — correos autorizados, separados por coma. Van como
-    //                          SECRETO y no en el repo: este repo es PÚBLICO y son
-    //                          datos personales de gente real.
+    // FALLA CERRADA a propósito: sin código + lista de testers puestos, esta rama no
+    // existe. Desplegar el código no abre ningún agujero por sí solo.
+    //   CODIGO_TESTER — el código compartido (uno solo, largo y aleatorio), SECRETO.
+    //   TESTERS_KV    — namespace KV con un correo autorizado por key (2026-08-22:
+    //                   reemplaza el secreto TESTERS_PERMITIDOS de lista plana —
+    //                   ese obligaba a re-pegar los 58+ correos por CLI cada vez que
+    //                   se sumaba un tester nuevo. Con KV, Inty agrega testers desde
+    //                   el dashboard de Cloudflare (Workers → librepedal-auth → KV →
+    //                   TESTERS_KV → Add entry, key = correo en minúsculas, value =
+    //                   "1"), sin tocar código ni depender de una sesión de Claude.
+    //   TESTERS_PERMITIDOS — fallback viejo (secreto, lista separada por comas), solo
+    //                   se usa si TESTERS_KV no está enlazado en este deploy.
     //
     // Es para la prueba cerrada; se quita cuando el login de Google esté arriba.
     if (body && body.modo === 'codigo') {
-      if (!env.CODIGO_TESTER || !env.TESTERS_PERMITIDOS) {
+      if (!env.CODIGO_TESTER || (!env.TESTERS_KV && !env.TESTERS_PERMITIDOS)) {
         return json({ error: 'el ingreso por código no está habilitado' }, 403);
       }
       const codigo = typeof body.codigo === 'string' ? body.codigo.trim() : '';
@@ -112,8 +118,14 @@ export default {
       }
       if (!iguales) return json({ error: 'código incorrecto' }, 401);
 
-      const permitidos = String(env.TESTERS_PERMITIDOS).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      if (permitidos.indexOf(email) === -1) {
+      let permitido = false;
+      if (env.TESTERS_KV) {
+        permitido = (await env.TESTERS_KV.get(email)) !== null;
+      } else {
+        const permitidos = String(env.TESTERS_PERMITIDOS).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        permitido = permitidos.indexOf(email) !== -1;
+      }
+      if (!permitido) {
         return json({ error: 'ese correo no está en la lista de testers de la prueba cerrada' }, 403);
       }
       if (!env.FIREBASE_PRIVATE_KEY_B64 || !env.FIREBASE_CLIENT_EMAIL) {
