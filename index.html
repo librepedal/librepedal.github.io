@@ -1657,7 +1657,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="darma-badge"><i class="fas fa-dharmachakra"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <button class="ab sec" style="margin-bottom:10px" onclick="if(typeof cu!=='undefined'&&cu) verPerfilUsuario(cu,'customize')"><i class="fas fa-id-card"></i> Ver mi perfil de comunidad</button>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
-<style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:12px;padding:6px 4px 5px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:42px;height:35px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.62rem;color:#cdd6e6;margin-top:3px;line-height:1.1}</style>
+<!-- 2026-08-23: swatches mas chicos (pedido de Inty: "las opciones ocupan mucho
+     espacio") -- minmax 58->46px (caben mas por fila), icono 42x35->32x27, padding
+     y label mas ajustados. Medido en Casco (8 opciones): 132px de alto -> bajó al
+     tightening. No se toca la logica de seleccion, solo tamaño. -->
+<style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:10px;padding:4px 3px 4px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:32px;height:27px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.56rem;color:#cdd6e6;margin-top:2px;line-height:1.1}</style>
 <details class="pgrupo" open ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistCascoGrid"></div></div></details>
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-face-smile pg-ic"></i><span class="pg-tt">Piel</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPielGrid"></div></div></details>
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-scissors pg-ic"></i><span class="pg-tt">Pelo</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPeloGrid"></div><div style="font-size:.66rem;color:#9fb3c8;margin:9px 0 4px">Color de pelo</div><div class="pist-swatch-grid" id="pistPeloColGrid"></div></div></details>
@@ -1756,7 +1760,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.765'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.766'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
