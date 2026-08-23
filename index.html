@@ -541,6 +541,19 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* 48px es el minimo tactil: medido el 2026-07-20 estos quedaban en 44 y 46. */
 .map-estilo-btn{position:absolute;right:14px;top:12px;z-index:500;background:rgba(15,20,35,0.92);color:#dfe7ff;border:0.5px solid rgba(255,255,255,0.12);width:48px;height:48px;border-radius:12px;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .map-estilo-btn:active{transform:scale(0.94)}
+/* 2026-08-23: zoom +/- discreto, pedido de Inty ("le falta un botón para zoom y para
+   alejar"). El control nativo de MapLibre (NavigationControl) existe en el código
+   (línea con mp.addControl) pero .maplibregl-ctrl-top-right está en display:none — así
+   que nunca se vio. En vez de mostrar ese control feo (blanco, cuadrado, no combina),
+   se construye uno propio del mismo estilo que .map-estilo-btn, del lado IZQUIERDO
+   porque la derecha ya tiene estilo+recentrar+reportar apilados. */
+/* top:12px, no bottom: medido y encontrado que anclado abajo se superponía con la barra
+   de escala (bottom-left, siempre ahí) -- arriba queda simétrico con .map-estilo-btn
+   (que está top-right) y sin riesgo de chocar con nada. */
+.map-zoom-ctrl{position:absolute;left:14px;top:12px;z-index:500;background:rgba(15,20,35,0.92);border:0.5px solid rgba(255,255,255,0.12);border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.4);display:flex;flex-direction:column;overflow:hidden}
+.map-zoom-ctrl button{width:40px;height:40px;border:none;background:transparent;color:#dfe7ff;font-size:0.95rem;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.map-zoom-ctrl button:first-child{border-bottom:0.5px solid rgba(255,255,255,0.12)}
+.map-zoom-ctrl button:active{background:rgba(255,255,255,0.08)}
 /* Botón flotante de reportar, estilo Waze: a mano sobre el mapa (antes estaba perdido en una
    fila de botones). Pedido de Inty: "botón accesible para reportar policía en el mismo mapa". */
 /* Auditoria severa del 2026-07-20, MEDIDO: la etiqueta 'REPORTAR' se dibujaba FUERA del
@@ -551,7 +564,8 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* Rediseño 2026-07-29: FAB uniforme 52px, ícono de línea (sin la etiqueta "REPORTAR" que
    se dibujaba fuera del botón y pisaba el de recentrar). Reportar es el primario naranja y va
    ABAJO de la columna (lo más alcanzable con el pulgar); recentrar va arriba. */
-#fabReportar{position:absolute;right:14px;bottom:20px;width:52px;height:52px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+/* 44px 2026-08-23: antes 52px, Inty lo vio muy grande junto a los demas controles del mapa. */
+#fabReportar{position:absolute;right:14px;bottom:20px;width:44px;height:44px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.05rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
 #fabReportar:active{transform:scale(0.94)}
 #pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
 #pisteroPeek::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.24) 100%);pointer-events:none}
@@ -629,7 +643,10 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-manoslibres-btn{position:absolute;right:14px;bottom:266px;z-index:550;background:rgba(15,20,35,0.92);color:#7d8ba0;border:2px solid rgba(255,255,255,0.2);width:46px;height:46px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn.on{color:var(--p);border-color:var(--p);background:rgba(252,76,2,0.16)}
 .maplibregl-ctrl-top-right{display:none !important}
-.map-recenter-btn{position:absolute;right:14px;bottom:80px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:52px;height:52px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+/* 2026-08-23: sin circulo, mismo criterio que #micBtn ("sin circulo ni sombra de caja")
+   -- Inty lo vio muy grande y no le veia sentido al circulo. De 52px de boton relleno
+   pasa a un icono suelto de 34px con drop-shadow para que no se pierda contra el mapa. */
+.map-recenter-btn{position:absolute;right:14px;bottom:72px;z-index:550;background:transparent;color:var(--p);border:none;width:34px;height:34px;border-radius:0;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 .nav-end-btn{width:100%;margin-top:8px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:10px 12px;border-radius:12px;font-size:0.85rem;font-weight:800;cursor:pointer}
 .nav-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(10,15,29,0.95);padding:12px;border-top:2px solid var(--p)}
 .nav-eta{display:flex;justify-content:space-around}
@@ -1286,6 +1303,10 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <button id="btnCapaMapa" class="map-estilo-btn" onclick="toggleCapaMapa()" title="Cambiar el estilo del mapa (calles / topográfico / satélite)"><i class="fas fa-mountain"></i> </button>
   <button id="fabReportar" onclick="abrirAbanicoReporte()" title="Reportar algo en el mapa"><i class="fas fa-plus"></i></button>
   <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación"><i class="fas fa-location-crosshairs"></i></button>
+  <div class="map-zoom-ctrl">
+    <button onclick="if(mp)mp.zoomIn()" title="Acercar"><i class="fas fa-plus"></i></button>
+    <button onclick="if(mp)mp.zoomOut()" title="Alejar"><i class="fas fa-minus"></i></button>
+  </div>
 </div>
 <div id="reportes-comunidad"></div>
 </section>
@@ -6072,11 +6093,21 @@ async function im(){
     const _yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
     const _centroInicial=_yo?[_yo.lon,_yo.lat]:[-70.65,-33.45];
     const _zoomInicial=_yo?12:5;
-    mp=new maplibregl.Map({container:'map',style:_estiloDeCapa(capaMapaTipo),center:_centroInicial,zoom:_zoomInicial,attributionControl:true,pitchWithRotate:true});
+    mp=new maplibregl.Map({container:'map',style:_estiloDeCapa(capaMapaTipo),center:_centroInicial,zoom:_zoomInicial,attributionControl:false,pitchWithRotate:true});
     _prepararMapaCompat(mp);
     // Brújula + tilt: rotas el mapa con dos dedos y lo inclinas (vista 3D); la brújula lo vuelve al norte.
+    // El NavigationControl (trae su propio zoom+brújula) y el FullscreenControl quedan en el
+    // código pero nunca se ven: .maplibregl-ctrl-top-right está en display:none porque el control
+    // nativo de MapLibre (blanco, cuadrado) no combinaba con el resto de la app. El zoom real que
+    // usa la gente es el botón propio .map-zoom-ctrl (más abajo, del lado izquierdo).
     mp.addControl(new maplibregl.NavigationControl({showCompass:true, visualizePitch:true}),'top-right');
     mp.addControl(new maplibregl.FullscreenControl(),'top-right');
+    // attributionControl:false arriba + este addControl explícito en 'bottom-left': 2026-08-23,
+    // Inty encontró que el (i) de atribución (que MapLibre pone solo, por defecto en
+    // bottom-right) quedaba tapado por los botones propios (recentrar/reportar, también
+    // bottom-right). Se mueve al mismo rincón que la escala, que ya vive ahí sin problema
+    // (MapLibre apila varios controles en la misma esquina sin que se pisen).
+    mp.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
     mp.addControl(new maplibregl.ScaleControl({maxWidth:110, unit:'metric'}),'bottom-left');
     // Botón "ubícame": lo tocas y el mapa vuela hasta tu posición real con un punto
     // azul que se mueve solo mientras te desplazas (control nativo de MapLibre).
