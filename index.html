@@ -377,6 +377,24 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .stat-card{background:linear-gradient(180deg,#111c30,#0c1422);padding:14px 12px;border-radius:16px;text-align:left;border:0.5px solid rgba(255,255,255,0.08)}
 .stat-value{font-size:1.5rem;font-weight:800;color:#fff;line-height:1.1}
 .stat-label{font-size:0.66rem;color:#6b7688;margin-top:2px;letter-spacing:0.3px}
+/* Mantención preventiva (Taller): una fila compacta por ítem, detalle adentro al
+   tocarla — mismo criterio de "simple por fuera, completo por dentro" que el resto
+   de la app. */
+.mant-item{background:#0f1728;border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:11px 13px;margin-bottom:8px}
+.mant-item summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer}
+.mant-item summary::-webkit-details-marker{display:none}
+.mant-item .mi-ic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.9rem}
+.mant-item .mi-txt{flex:1;min-width:0}
+.mant-item .mi-t{font-weight:700;font-size:0.85rem;color:#fff}
+.mant-item .mi-bar{background:#222;border-radius:6px;height:6px;margin-top:5px;overflow:hidden}
+.mant-item .mi-fill{height:100%;border-radius:6px}
+.mant-item .mi-sub{font-size:0.66rem;color:#7d8ba0;margin-top:3px}
+.mant-item .mi-badge{font-size:0.62rem;font-weight:800;padding:3px 8px;border-radius:8px;flex-shrink:0;white-space:nowrap}
+.mant-item .mi-body{margin-top:11px;padding-top:11px;border-top:0.5px solid rgba(255,255,255,0.08);font-size:0.78rem;color:#d6deea;line-height:1.5}
+.mant-item .mi-hist{margin:8px 0;padding-left:0;list-style:none;font-size:0.72rem;color:#9fb3c8}
+.mant-item .mi-hist li{padding:4px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}
+.mant-item .mi-row{display:flex;gap:6px;margin-top:8px}
+.mant-item .mi-row input{flex:1;margin:0}
 /* Resumen de una línea en Inicio (reemplaza a la grilla de 5 tarjetas + Desempeño,
    sacadas de acá porque ya viven completas en Estadísticas — ver comentario en au()). */
 .stats-link{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(180deg,#111c30,#0c1422);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:13px 16px;margin:12px 0;cursor:pointer;text-align:left}
@@ -1495,8 +1513,21 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 
 <section id="v-mac" class="view">
 <div class="section-info"><h4><i class="fas fa-wrench"></i> Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
-<!-- REDISEÑO Pantalla 06 (prioridad máxima): fuera los tips improvisados ("arregla con lo que tengas"). Ahora TRIAGE: síntoma -> guía real nivel Park Tool O derivación. Frenos/dirección/horquilla SIEMPRE al mecánico (regla dura del Taller: paso a paso técnico real o nada). -->
+<!-- 2026-08-23: Mantención preventiva — pedido de Inty tras "Arregla mi bici" en
+     Pistero: no solo reactivo (síntoma → arreglo), también proactivo por km, como
+     ya hace cualquier bici real. Va COLAPSADO por defecto (mismo <details> que el
+     triage de abajo) para no amontonar la pantalla — el detalle, historial y costo
+     viven adentro de cada fila, no antes. Umbrales por defecto sacados de guías
+     reales (Bike Gremlin / CyclingTrend), no inventados: cadena ~2500km, pastillas
+     ~2000km (freno = SIEMPRE al taller, mismo criterio que el triage de abajo),
+     cables ~5000km, rodamientos ~4000km/6 meses, neumáticos por tiempo (la goma se
+     reseca aunque no la uses). Editable por el usuario. -->
+<details class="soc-group" id="mantGroup" style="margin-bottom:14px">
+  <summary><span class="soc-ic"><i class="fas fa-gauge-high"></i> </span><span><b>Mantención preventiva</b><small id="mantResumen">Cargando…</small></span></summary>
+  <div style="margin-top:9px" id="mantLista"></div>
+</details>
 <div style="display:flex;gap:8px;margin:0 0 10px;font-size:0.72rem;color:#9fb3c8"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#35c46a;display:inline-block"></span>Puedes tú</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#ef4d5a;display:inline-block"></span>Al taller (seguridad)</span></div>
+<!-- REDISEÑO Pantalla 06 (prioridad máxima): fuera los tips improvisados ("arregla con lo que tengas"). Ahora TRIAGE: síntoma -> guía real nivel Park Tool O derivación. Frenos/dirección/horquilla SIEMPRE al mecánico (regla dura del Taller: paso a paso técnico real o nada). -->
 
 <details class="soc-group" open>
   <summary><span class="soc-ic"><i class="fas fa-record-vinyl"></i> </span><span><b>Rueda pinchada <span style="color:#35c46a;font-size:0.7rem">· puedes tú</span></b><small>Cámara/parche + torque de la rueda</small></span></summary>
@@ -1693,7 +1724,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.763'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.764'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5178,7 +5209,7 @@ function ug(p){
   // promedia y cancela justo ese ruido) muestre 0 = estás parado de verdad. Se
   // agrega sp>0 como condición: solo suma kilometraje cuando la propia app ya
   // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
-  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _sumarKmModo(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _sumarKmModo(moved); _sumarKmMantencion(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);
@@ -5812,6 +5843,105 @@ function _sumarKmModo(km){
   const modo=(typeof actividadTipo!=='undefined' && actividadTipo) ? actividadTipo : 'ciclismo';
   us.dm[modo]=(us.dm[modo]||0)+km;
 }
+// ===== Mantención preventiva (2026-08-23, pedido de Inty) =====
+// Umbrales por defecto de guías reales (Bike Gremlin / CyclingTrend), no inventados
+// — esto es seguridad, no se adivina. El usuario los puede editar; se guardan en
+// us.mant junto al resto de sus stats (gd() los persiste solo, es el mismo objeto).
+const MANT_ITEMS={
+  cadena:      {l:'Cadena',             fa:'link',         c:'#f59e0b', umbralKm:2500, umbralMeses:12, taller:false, tip:'Mide el desgaste con un medidor de cadena. Si pasa 0.5–0.75%, cámbiala antes de que gaste también el cassette.'},
+  pastillas:   {l:'Pastillas de freno', fa:'hand',         c:'#ef4444', umbralKm:2000, umbralMeses:12, taller:true,  tip:'Revisa el grosor. Si están al límite, es trabajo de taller — los frenos no son DIY.'},
+  cables:      {l:'Cables y fundas',    fa:'wave-square',  c:'#3b82f6', umbralKm:5000, umbralMeses:12, taller:false, tip:'Si los cambios o los frenos se sienten duros o lentos, puede ser hora de cambiarlos.'},
+  rodamientos: {l:'Rodamientos',        fa:'circle-notch', c:'#8b5cf6', umbralKm:4000, umbralMeses:6,  taller:false, tip:'Revisa juego y ruido en dirección, bujes y pedalier.'},
+  neumaticos:  {l:'Neumáticos',         fa:'circle',       c:'#10b981', umbralKm:null, umbralMeses:24, taller:false, tip:'Revisa el dibujo y busca cortes en la carcasa — la goma se reseca aunque no la uses.'}
+};
+function _mantData(){
+  if(!us.mant || typeof us.mant!=='object') us.mant={};
+  Object.keys(MANT_ITEMS).forEach(function(k){
+    if(!us.mant[k]) us.mant[k]={kmBase:0, fecha:null, umbralKm:MANT_ITEMS[k].umbralKm, umbralMeses:MANT_ITEMS[k].umbralMeses, historial:[], avisado:false};
+  });
+  return us.mant;
+}
+// Clima real durante el viaje (lo pone _climaFxAplicar más abajo): lluvia o nieve
+// gastan cadena, cables y rodamientos mucho más rápido que un km seco — contarlos
+// "más pesado" para la mantención es más honesto que sumar todos los km igual.
+let _climaModoActual='off';
+function _factorDesgasteClima(){ return (_climaModoActual==='lluvia'||_climaModoActual==='nieve')?1.5:1; }
+function _sumarKmMantencion(km){ if(!(km>0)) return; us.mantKm=(us.mantKm||0)+km*_factorDesgasteClima(); }
+function _mantProgreso(key){
+  const d=_mantData()[key], km=(us.mantKm||0)-(d.kmBase||0);
+  let mesesDesde=null;
+  if(d.fecha){ mesesDesde=(Date.now()-new Date(d.fecha).getTime())/(1000*60*60*24*30.44); }
+  const pctKm = d.umbralKm ? Math.min(1, km/d.umbralKm) : 0;
+  const pctMeses = (d.umbralMeses && mesesDesde!=null) ? Math.min(1, mesesDesde/d.umbralMeses) : 0;
+  const pct=Math.max(pctKm, pctMeses);
+  return {km:km, mesesDesde:mesesDesde, pct:pct, vencido:pct>=1, cerca:(pct>=0.85 && pct<1)};
+}
+function renderMantencion(){
+  const cont=document.getElementById('mantLista'); if(!cont) return;
+  const data=_mantData();
+  let vencidos=0, cerca=0;
+  cont.innerHTML=Object.keys(MANT_ITEMS).map(function(key){
+    const info=MANT_ITEMS[key], d=data[key], p=_mantProgreso(key);
+    if(p.vencido) vencidos++; else if(p.cerca) cerca++;
+    const color = p.vencido?'#ef4444':(p.cerca?'#eab308':'#35c46a');
+    const badge = p.vencido?'<span class="mi-badge" style="background:rgba(239,68,68,.16);color:#ef4444">Vencido</span>':(p.cerca?'<span class="mi-badge" style="background:rgba(234,179,8,.16);color:#eab308">Cerca</span>':'<span class="mi-badge" style="background:rgba(53,196,106,.16);color:#35c46a">OK</span>');
+    const histHTML = (d.historial&&d.historial.length) ? ('<ul class="mi-hist">'+d.historial.slice(-5).reverse().map(function(h){ return '<li>'+new Date(h.fecha).toLocaleDateString()+' · '+h.km.toFixed(0)+' km'+(h.costo?' · $'+h.costo:'')+(h.nota?' · '+escapeHTML(h.nota):'')+'</li>'; }).join('')+'</ul>') : '<p class="mi-sub" style="margin:6px 0">Sin historial todavía.</p>';
+    const tallerNota = info.taller ? '<p style="color:#e7a33e;margin:6px 0 0"><i class="fas fa-triangle-exclamation"></i> Cuando toque cambiarlas, es trabajo de taller — no DIY.</p>' : '';
+    return '<details class="mant-item"><summary>'
+      +'<span class="mi-ic" style="background:rgba(255,255,255,.06);color:'+info.c+'"><i class="fas fa-'+info.fa+'"></i></span>'
+      +'<span class="mi-txt"><span class="mi-t">'+info.l+'</span><div class="mi-bar"><div class="mi-fill" style="width:'+Math.round(p.pct*100)+'%;background:'+color+'"></div></div><div class="mi-sub">'+p.km.toFixed(0)+' km desde el último cambio'+(d.umbralKm?(' de '+d.umbralKm):'')+'</div></span>'
+      +badge
+      +'</summary>'
+      +'<div class="mi-body">'
+      +'<p style="margin:0 0 6px">'+info.tip+'</p>'
+      +tallerNota
+      +histHTML
+      +'<div class="mi-row"><input type="number" id="mantCosto_'+key+'" placeholder="Costo (opcional)"><input type="text" id="mantNota_'+key+'" placeholder="Nota (opcional)" maxlength="80"></div>'
+      +'<button type="button" class="ab" style="margin-top:8px" onclick="_mantencionMarcarHecho(\''+key+'\')"><i class="fas fa-check"></i> Ya la cambié / revisé</button>'
+      +'</div></details>';
+  }).join('');
+  const resumen=document.getElementById('mantResumen');
+  if(resumen) resumen.textContent = vencidos ? (vencidos+' vencid'+(vencidos>1?'os':'o')+' — revisa') : (cerca ? (cerca+' por vencer pronto') : 'Todo al día');
+}
+function _mantencionMarcarHecho(key){
+  const d=_mantData()[key]; if(!d) return;
+  const costoEl=document.getElementById('mantCosto_'+key), notaEl=document.getElementById('mantNota_'+key);
+  const costo=(costoEl&&costoEl.value)?parseFloat(costoEl.value):null;
+  const nota=(notaEl&&notaEl.value)?notaEl.value.trim():null;
+  d.historial=d.historial||[];
+  d.historial.push({fecha:new Date().toISOString(), km:(us.mantKm||0)-(d.kmBase||0), costo:costo, nota:nota});
+  d.kmBase=us.mantKm||0;
+  d.fecha=new Date().toISOString();
+  d.avisado=false;
+  gd(); renderMantencion();
+  _ganarDarma(5);
+  try{ _pisteroMood='contento'; }catch(e){} h('¡Buena! Quedó registrado. Cinco de Darma por mantener tu bici al día.');
+}
+// Aviso proactivo: se dispara UNA vez por ítem al cruzar el umbral (no cada vez que
+// abrís la app) — mismo criterio que ya usamos hoy para "ya no está" en los reportes
+// del mapa: la voz repetida molesta, el dato sigue disponible igual en Taller.
+function _mantencionRevisarAvisos(){
+  try{
+    const data=_mantData();
+    Object.keys(MANT_ITEMS).forEach(function(key){
+      const p=_mantProgreso(key), d=data[key];
+      if(p.vencido && !d.avisado){
+        d.avisado=true;
+        const info=MANT_ITEMS[key];
+        h('Che, ya van '+p.km.toFixed(0)+' km desde tu último cambio de '+info.l.toLowerCase()+' — '+(info.taller?'llévala al taller cuando puedas.':'revísala cuando puedas.'));
+      } else if(!p.vencido && d.avisado){ d.avisado=false; }
+    });
+  }catch(e){}
+}
+// Antes de planificar un viaje largo: si algo está vencido o por vencer, avisar ACÁ —
+// pedido de Inty: evitar quedar varado en medio de un viaje de varios días por algo
+// que se veía venir, no solo enterarte cuando ya se cumplió el km.
+function _mantencionAvisoPreViaje(){
+  try{
+    const criticos=Object.keys(MANT_ITEMS).filter(function(key){ const p=_mantProgreso(key); return p.vencido||p.cerca; }).map(function(key){ return MANT_ITEMS[key].l; });
+    if(criticos.length) lpAviso('Antes de un viaje largo: revisa '+criticos.join(', ')+' — está'+(criticos.length>1?'n':'')+' por vencer. Mira Taller para el detalle.');
+  }catch(e){}
+}
 /* El vehículo NO compite: es un rol de apoyo, no una disciplina. Sus kilómetros se
    registran igual (sirven para tus propias estadísticas) pero no entran a ningún ranking. */
 const MODOS_QUE_COMPITEN={ciclismo:'Ruta',mtb:'MTB / Gravel',trekking:'Trekking'};
@@ -5888,6 +6018,7 @@ function au(){
   var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di));
   const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); if(pf){ pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); }
   var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1)+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
+  try{ if(typeof renderMantencion==='function') renderMantencion(); if(typeof _mantencionRevisarAvisos==='function') _mantencionRevisarAvisos(); }catch(e){}
   try{ if(_logrosListo&&typeof _chequearLogros==='function') _chequearLogros(false); }catch(e){} gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
@@ -7624,7 +7755,7 @@ async function likeRecommendation(docId){
     likedBy: yaLeGustaba ? firebase.firestore.FieldValue.arrayRemove(cu) : firebase.firestore.FieldValue.arrayUnion(cu)
   });
 }
-function showNewTripForm(){ addedDests=[]; document.getElementById('trip-name').value=''; document.getElementById('trip-start').value=''; renderAddedDests(); filterDestType('hostel',document.querySelector('#v-newtrip .gtt')); cv('newtrip'); }
+function showNewTripForm(){ addedDests=[]; document.getElementById('trip-name').value=''; document.getElementById('trip-start').value=''; renderAddedDests(); filterDestType('hostel',document.querySelector('#v-newtrip .gtt')); cv('newtrip'); try{ if(typeof _mantencionAvisoPreViaje==='function') _mantencionAvisoPreViaje(); }catch(e){} }
 function filterDestType(type,btn){ currentFilter=type; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); if(type==='hostel') renderHostelOptions(); else { document.getElementById('dest-options').innerHTML=''; document.getElementById('custom-dest-form').style.display='block'; } }
 function renderHostelOptions(){ document.getElementById('custom-dest-form').style.display='none'; const c=document.getElementById('dest-options'); if(allHostels.length===0){ c.innerHTML='<p style="color:#888">Sin hostels guardados</p>'; return; } c.innerHTML=allHostels.map(function(hh,i){ return '<div class="hostel-option" onclick="addHostelDest('+i+')"><div><strong style="font-size:0.85rem">'+escapeHTML(hh.name)+'</strong><div style="font-size:0.7rem;color:#888">'+escapeHTML(hh.location)+'</div></div><i class="fas fa-plus" style="color:var(--p)"></i></div>'; }).join(''); }
 function addHostelDest(idx){ const hh=allHostels[idx]; addedDests.push({name:hh.name,addr:hh.location,lat:hh.lat,lon:hh.lon,type:'hostel'}); renderAddedDests(); h("Agregado: "+hh.name); }
@@ -7858,7 +7989,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
       // Mismo bug real que en ug() (GPS libre): sin exigir speed>0, el ruido normal
       // del GPS estando quieto se colaba de a poco al kilometraje aunque "speed" (ya
       // calculada arriba, con ventana de varios puntos) mostrara 0 = parado de verdad.
-      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _sumarKmModo(dkm); us.c+=dkm*30; au(); }
+      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
       gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
     }
   }
@@ -10150,8 +10281,11 @@ function _climaFxModoDesde(codigo,temp){
   return 'off';
 }
 function _climaFxAplicar(w){
-  if(!window.climaFxSetMode||!w||!w.current) return;
-  try{ window.climaFxSetMode(_climaFxModoDesde(w.current.weather_code,w.current.temperature_2m)); }catch(e){}
+  if(!w||!w.current) return;
+  const modo=_climaFxModoDesde(w.current.weather_code,w.current.temperature_2m);
+  _climaModoActual=modo; // usado por _factorDesgasteClima() en la mantención preventiva
+  if(!window.climaFxSetMode) return;
+  try{ window.climaFxSetMode(modo); }catch(e){}
 }
 /* Cobertura de la pantalla de login (#auth) y de cualquier momento sin viaje activo:
    vigilarClima() solo corre durante un viaje (ver mas abajo), asi que sin esto el clima
