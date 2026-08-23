@@ -6729,6 +6729,7 @@ function _confirmCountsHTML(r){
 // Confirmación comunitaria: "sigue ahí" reinicia el reloj del aviso; "ya no está" suma
 // un desmentido. Con REPORTE_DESMENTIDO_UMBRAL desmentidos el pin desaparece para todos.
 // arrayUnion evita que el mismo usuario cuente dos veces (mismo patrón que las rodadas).
+let _avisoDesmentidoHablado=false; // ver comentario dentro de confirmarReporte()
 async function confirmarReporte(id, sigue){
   if(!id || typeof db==='undefined' || !db) return;
   if(typeof _esCiclistaConfiable==='function' && !_esCiclistaConfiable()){ lpAviso('Para validar reportes de seguridad necesitas haber pedaleado al menos '+LP_KM_CONFIANZA+' km con la app. Así el mapa se protege de cuentas falsas. ¡Sigue sumando km en bici!'); return; }
@@ -6742,7 +6743,13 @@ async function confirmarReporte(id, sigue){
       h('¡Gracias! Confirmado que sigue ahí. Así el mapa se mantiene al día.');
     } else {
       await ref.update({ desmentidoPor: firebase.firestore.FieldValue.arrayUnion(uid) });
-      h('Anotado: ya no está. Gracias por avisar, colega — el resto te lo agradece.');
+      // Solo se HABLA la primera vez por sesión (pedido de Inty: si borras 3 reportes
+      // seguidos — ej. varios avisos de "animal en el camino" que ya pasaste — Pistero
+      // no tiene que repetir la misma frase 3 veces). El cuadro de texto sí se muestra
+      // siempre, para que cada acción tenga su confirmación visual.
+      const _txtDesmentido='Anotado: ya no está. Gracias por avisar, colega — el resto te lo agradece.';
+      if(!_avisoDesmentidoHablado){ _avisoDesmentidoHablado=true; h(_txtDesmentido); }
+      else { mostrarBocadillo(_txtDesmentido); }
     }
     if(!yaVoto){ _ganarDarma(2); au(); if(typeof sincronizarStats==='function') sincronizarStats(); } // +2 Darma solo la 1ª vez, sin farmear
   }catch(e){ lpAviso('No se pudo registrar tu confirmación, intenta de nuevo en un rato.'); }
