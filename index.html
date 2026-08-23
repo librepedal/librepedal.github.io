@@ -1353,7 +1353,12 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <div id="map"></div>
   <button id="btnCapaMapa" class="map-estilo-btn" onclick="toggleCapaMapa()" title="Cambiar el estilo del mapa (calles / topográfico / satélite)"><i class="fas fa-mountain"></i> </button>
   <button id="fabReportar" onclick="abrirAbanicoReporte()" title="Reportar algo en el mapa"><i class="fas fa-plus"></i></button>
-  <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación"><i class="fas fa-location-crosshairs"></i></button>
+  <!-- 2026-08-23: icono propio (rueda de bici con radios) en vez del crosshair
+       generico de Font Awesome -- pedido de Inty: "inventemos uno propio". Los
+       radios convergen al centro, se lee como "apunta aca" por su propia forma,
+       sin copiar el simbolo de Google Maps/Waze. Mismo trazo (1.8px, lucide) que
+       el resto de los iconos propios de la app. -->
+  <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><path d="M12 3.5v5.4M12 20.5v-5.4M3.5 12h5.4M20.5 12h-5.4M6 6l3.8 3.8M18 18l-3.8-3.8M18 6l-3.8 3.8M6 18l3.8-3.8"/></svg></button>
   <div class="map-zoom-ctrl">
     <button onclick="if(mp)mp.zoomIn()" title="Acercar"><i class="fas fa-plus"></i></button>
     <button onclick="if(mp)mp.zoomOut()" title="Alejar"><i class="fas fa-minus"></i></button>
@@ -1767,7 +1772,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.768'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.769'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
