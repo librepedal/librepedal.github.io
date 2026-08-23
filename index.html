@@ -805,7 +805,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 #abanicoReporte .abn-op{opacity:0;transform:translateY(14px) scale(.9);transition:opacity .2s ease,transform .22s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d);background:rgba(10,15,29,.95);color:#fff;border:2px solid #333;border-radius:22px;padding:9px 15px;font-weight:700;font-size:.82rem;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.55)}
 #abanicoReporte.on .abn-op{opacity:1;transform:translateY(0) scale(1)}
 #abanicoReporte .abn-op:active{transform:scale(.94)}
-#abanicoReporte .abn-e{font-size:1.15rem}
+#abanicoReporte .abn-e{display:flex;flex-shrink:0}
 </style>
 <!-- El submit del formulario apunta al ingreso por CÓDIGO, no al link mágico: el botón
      del link mágico está oculto durante la prueba, pero los campos siguen en el DOM y
@@ -11635,14 +11635,21 @@ function abrirAbanicoReporte(){
     var f=document.getElementById('abanicoReporte');
     if(f && f.classList.contains('on')){ _cerrarAbanico(); return; }
     if(!f){
+      // 2026-08-23: los emoji (⚠️👮🏪📸) salen por pedido directo de Inty ("íconos
+      // genéricos") — se reemplazan por SVG propios estilo lucide (mismo trazo de
+      // 1.7px que ya usan los íconos de la esfera), elegidos tras revisar cómo lo
+      // resuelven Waze (triángulo de alerta para peligro, insignia/escudo para
+      // control — no un dibujo literal de policía) y Komoot (set de línea limpia
+      // para los POI de la ruta). Opción A elegida por Inty sobre una alternativa
+      // en placa de color.
       var opts=[
-        {l:'Peligro', e:'⚠️', c:'#ef4444', cat:'critico'},
-        {l:'Control', e:'👮', c:'#3b82f6', cat:'policia'},
-        {l:'Servicio',e:'🏪', c:'#f59e0b', cat:'util'},
-        {l:'Mirador', e:'📸', c:'#3b82f6', cat:'mirador'}
+        {l:'Peligro', i:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>', c:'#ef4444', cat:'critico'},
+        {l:'Control', i:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', c:'#3b82f6', cat:'policia'},
+        {l:'Servicio',i:'<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M9 21v-7h6v7"/>', c:'#f59e0b', cat:'util'},
+        {l:'Mirador', i:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.2"/>', c:'#3b82f6', cat:'mirador'}
       ];
       f=document.createElement('div'); f.id='abanicoReporte';
-      f.innerHTML=opts.map(function(o,i){ return '<button type="button" class="abn-op" style="--d:'+(i*45)+'ms;border-color:'+o.c+'" onclick="_abanicoElegir(\''+o.cat+'\')"><span class="abn-e">'+o.e+'</span>'+o.l+'</button>'; }).join('');
+      f.innerHTML=opts.map(function(o,i){ return '<button type="button" class="abn-op" style="--d:'+(i*45)+'ms;border-color:'+o.c+'" onclick="_abanicoElegir(\''+o.cat+'\')"><span class="abn-e" style="color:'+o.c+'"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+o.i+'</svg></span>'+o.l+'</button>'; }).join('');
       var fab=document.getElementById('fabReportar');
       if(fab && fab.parentNode) fab.parentNode.appendChild(f); else document.body.appendChild(f);
     }
