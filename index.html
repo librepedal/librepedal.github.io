@@ -1434,7 +1434,15 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <section id="v-pistero" class="view">
 <div class="section-info"><h4><svg viewBox="0 0 100 84" width="18" height="15" style="display:inline-block;vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
 <div id="pisteroChips">
-  <button class="pchip" onclick="location.href='/planificador-beta'"><i class="fas fa-compass"></i> Trazar ruta</button><button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')"><i class="fas fa-map"></i> Planifica mi viaje</button>
+  <!-- 2026-08-23: el chip "Trazar ruta" (llevaba a planificador-beta.html) sale por
+       pedido de Inty tras revisar: no usaba a Pistero (era un location.href a una
+       herramienta aparte, sin IA), duplicaba lo que "¿A dónde vamos?" en Inicio ya
+       hace mejor (esa SÍ integra con navegación real, reportes, todo), y encima con
+       un diseño claro que no combinaba con el resto de la app oscura. El archivo
+       planificador-beta.html se borra del repo por la misma razón — ver commit. La
+       única diferencia real que tenía (mover el punto de INICIO, no solo el destino)
+       queda pendiente de evaluar si vale la pena sumarla a Inicio; no se portó todavía. -->
+  <button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')"><i class="fas fa-map"></i> Planifica mi viaje</button>
   <button class="pchip" onclick="pisteroSugerencia('Se me soltó la cadena en plena ruta, ¿cómo la arreglo?')"><i class="fas fa-wrench"></i> Arregla mi bici</button>
   <button class="pchip" onclick="pisteroSugerencia('¿Dónde puedo alojar cerca de mi ruta?')"><i class="fas fa-hotel"></i> ¿Dónde alojo?</button>
   <button class="pchip" onclick="pisteroSugerencia('Recomiéndame una ruta bonita para pedalear hoy')"><i class="fas fa-wand-magic-sparkles"></i> Ruta de hoy</button>
@@ -1685,7 +1693,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.762'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.763'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
