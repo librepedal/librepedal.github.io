@@ -1772,7 +1772,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.769'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.770'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1842,6 +1842,113 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+/* ===== BLINDAJE DE FIRESTORE (2026-08-23) =====
+   Nace de un apagon real: la cuota gratis de Firestore (50.000 lecturas al dia PARA TODO
+   EL PROYECTO) se agoto y la app quedo sin base de datos para los 51 testers de la prueba
+   cerrada... y NADIE se entero. Motivo: hay 278 `catch(e){}` silenciosos alrededor de
+   Firestore y solo 14 reportan a Sentry, asi que un `resource-exhausted` se tragaba entero
+   y el usuario veia pantallas vacias sin ninguna explicacion. Se descubrio de casualidad,
+   sondeando la API con curl.
+   Esto NO toca esos 278 catch: intercepta en UN solo punto (el prototipo del SDK), antes de
+   que el error llegue a ellos. El error se sigue propagando igual — solo queda registrado
+   de paso, asi que ningun comportamiento existente cambia.
+   Todo va dentro de try/catch y con deteccion de prototipos: si el SDK cambia de forma,
+   esto simplemente no se instala y la app sigue funcionando igual que antes. */
+var lpFirestoreEstado = { cuotaAgotada:false, avisado:false, lecturas:{}, total:0 };
+function _lpEsErrorDeCuota(e){
+  if(!e) return false;
+  var c = e.code || '';
+  return c === 'resource-exhausted' || c === 'firestore/resource-exhausted' ||
+         /resource[-_ ]exhausted|quota exceeded/i.test(String(e.message || ''));
+}
+function _lpAnotarErrorFirestore(e){
+  try{
+    if(!_lpEsErrorDeCuota(e)) return;
+    lpFirestoreEstado.cuotaAgotada = true;
+    if(lpFirestoreEstado.avisado) return;      // una sola vez por sesion
+    lpFirestoreEstado.avisado = true;
+    // A Sentry, para enterarnos SIN depender de que un usuario nos avise.
+    // window.Sentry.* explicito (y no el global suelto `Sentry`, como en el resto del
+    // archivo): asi funciona en cualquier ambito y ademas se puede probar de verdad.
+    try{ if(window.Sentry && window.Sentry.captureException) window.Sentry.captureException(e, {tags:{donde:'firestore', motivo:'cuota-agotada'}}); }catch(_){}
+    // Y al usuario, en su idioma: sin esto solo ve pantallas vacias y cree que la app se rompio.
+    try{ if(typeof lpAviso==='function') lpAviso('La base de datos alcanzo su limite diario. Tus kilometros se siguen guardando en el telefono y se suben solos cuando se libere.'); }catch(_){}
+  }catch(_){}
+}
+/* Contador de lecturas por coleccion. Firestore cobra POR DOCUMENTO leido, y desde la app
+   no habia forma de saber cuanto costaba cada pantalla — habia que ir a la consola de
+   Firebase y esperar a que actualizara. Con esto se mide en el momento:
+   escribir  lpLecturas()  en la consola del navegador y sale el desglose. */
+function _lpContarLecturas(coleccion, n){
+  try{
+    if(!(n > 0)) return;
+    lpFirestoreEstado.lecturas[coleccion] = (lpFirestoreEstado.lecturas[coleccion] || 0) + n;
+    lpFirestoreEstado.total += n;
+  }catch(_){}
+}
+function lpLecturas(){
+  var e = lpFirestoreEstado;
+  var filas = Object.keys(e.lecturas).map(function(k){ return {coleccion:k, documentos:e.lecturas[k]}; })
+                    .sort(function(a,b){ return b.documentos - a.documentos; });
+  try{ console.table(filas); }catch(_){ console.log(filas); }
+  console.log('TOTAL de documentos leidos en esta sesion: ' + e.total +
+              (e.cuotaAgotada ? '  ⚠ CUOTA AGOTADA' : ''));
+  return e.total;
+}
+(function _instalarBlindajeFirestore(){
+  try{
+    var FS = firebase.firestore;
+    if(!FS) return;
+    var nombreDe = function(ref){
+      try{ return (ref && ref._query && ref._query.path && ref._query.path.segments && ref._query.path.segments[0]) ||
+                  (ref && ref.path && String(ref.path).split('/')[0]) ||
+                  (ref && ref.parent && ref.parent.id) || (ref && ref.id) || '?'; }catch(_){ return '?'; }
+    };
+    // --- get() de consultas y de documentos sueltos ---
+    [[FS.Query, 'Query'], [FS.CollectionReference, 'CollectionReference'], [FS.DocumentReference, 'DocumentReference']].forEach(function(par){
+      var Clase = par[0];
+      if(!Clase || !Clase.prototype || typeof Clase.prototype.get !== 'function') return;
+      if(Object.prototype.hasOwnProperty.call(Clase.prototype, '_lpParcheado')) return;
+      var original = Clase.prototype.get;
+      Clase.prototype.get = function(){
+        var ref = this;
+        return original.apply(this, arguments).then(function(snap){
+          try{ _lpContarLecturas(nombreDe(ref), snap && (snap.size != null ? snap.size : 1)); }catch(_){}
+          return snap;
+        }, function(e){ _lpAnotarErrorFirestore(e); throw e; });
+      };
+      try{ Object.defineProperty(Clase.prototype, '_lpParcheado', {value:true, enumerable:false}); }catch(_){}
+    });
+    // --- onSnapshot(): los listeners son lo mas caro, y varios no traen manejador de error ---
+    [FS.Query, FS.CollectionReference].forEach(function(Clase){
+      if(!Clase || !Clase.prototype || typeof Clase.prototype.onSnapshot !== 'function') return;
+      if(Clase.prototype._lpOnParcheado) return;
+      var original = Clase.prototype.onSnapshot;
+      Clase.prototype.onSnapshot = function(){
+        var ref = this, args = Array.prototype.slice.call(arguments);
+        // Solo la forma con callbacks: onSnapshot({next,error}) se deja intacta.
+        var funciones = args.filter(function(a){ return typeof a === 'function'; });
+        if(funciones.length === 0) return original.apply(this, args);
+        // Envolver el onNext para contar los documentos que entrega cada entrega.
+        var iNext = args.indexOf(funciones[0]);
+        var onNext = args[iNext];
+        args[iNext] = function(snap){
+          try{ _lpContarLecturas(nombreDe(ref), snap && (snap.size != null ? snap.size : 0)); }catch(_){}
+          return onNext.apply(this, arguments);
+        };
+        if(funciones.length >= 2){
+          var iErr = args.indexOf(funciones[1]);
+          var onError = args[iErr];
+          args[iErr] = function(e){ _lpAnotarErrorFirestore(e); try{ return onError.apply(this, arguments); }catch(_){} };
+        } else {
+          args.splice(iNext + 1, 0, function(e){ _lpAnotarErrorFirestore(e); });
+        }
+        return original.apply(this, args);
+      };
+      try{ Object.defineProperty(Clase.prototype, '_lpOnParcheado', {value:true, enumerable:false}); }catch(_){}
+    });
+  }catch(e){ /* si el SDK cambia de forma, la app sigue igual que antes */ }
+})();
 // Persistencia offline: si te quedas sin señal en plena ruta (lo más probable
 // pedaleando), los datos NO se pierden — quedan guardados en el celular y se
 // suben solos apenas vuelva la conexión. Sin esto, un cierre de la app sin
@@ -2398,7 +2505,12 @@ let lastFraseParadoTime = 0;
 let frasesComunidadAprobadas = [];
 async function cargarFrasesComunidad(){
   try{
-    const snap = await db.collection('frasesComunidad').where('aprobada','==',true).get();
+    // 2026-08-23: `where('aprobada','==',true)` filtra, pero NO acota — si la comunidad
+    // aporta 3.000 frases aprobadas, esto lee 3.000 documentos en CADA inicio de sesión.
+    // Es una colección de la comunidad, no del usuario, así que crece sola. 300 frases ya
+    // son muchísimas para que Pistero no se repita; el tope no le quita nada al usuario y
+    // le pone techo al gasto para siempre.
+    const snap = await db.collection('frasesComunidad').where('aprobada','==',true).limit(300).get();
     frasesComunidadAprobadas = snap.docs.map(function(d){ return d.data().texto; }).filter(Boolean);
     frasesComunidadAprobadas.forEach(function(t){
       if(frasesNormal.indexOf(t)===-1) frasesNormal.push(t);
@@ -2877,7 +2989,27 @@ function limpiarParaVoz(t){
 }
 function cargarVoces(){ try{ const vs=speechSynthesis.getVoices(); vozPref = vs.find(function(v){return /es(-|_)(CL|419|MX)/i.test(v.lang);}) || vs.find(function(v){return (v.lang||'').toLowerCase().indexOf('es')===0;}) || null; }catch(e){} }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
-function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const _av=document.querySelector('.view.on'); if(_av && _av.id!=='v-pistero' && _av.id!=='v-map'){ return; } const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
+/* 2026-08-24: se saca la restriccion "solo se muestra en v-pistero/v-map". Encontrado
+   haciendo QA en vivo: el buscador de destino de INICIO (la pantalla mas usada de toda
+   la app) llama lpAviso("Necesito tu GPS") cuando falla -- y como Inicio no es ninguna
+   de esas dos vistas, el aviso se tragaba en silencio. El usuario tocaba "Iniciar
+   navegacion" y no pasaba absolutamente NADA visible: ni error, ni feedback.
+   No es un caso aislado: lpAviso() se llama 98 veces en todo el archivo, y esta funcion
+   es la UNICA via visual que tiene -- a diferencia de h() (la voz), que SI llega sin
+   importar la pantalla (mostrarBocadillo() es solo la mitad visual de h(), no bloquea
+   la mitad hablada). O sea 98 avisos de error quedaban mudos Y ciegos en 13 de las ~15
+   pantallas de la app.
+   Este limite YA estaba documentado como un problema, no una decision a proposito: existe
+   _lpAvisoLogin() (unas lineas mas arriba) especificamente "porque lpAviso() es MUDO"
+   fuera de esas dos vistas -- pero ese parche cubre SOLO login, con un window.alert()
+   bloqueante que el propio codigo evita a proposito en el resto de la app. El resto de
+   las 98 llamadas nunca tuvo parche.
+   Por que es seguro sacarlo: #pisteroBubble es position:fixed, hijo directo de <body>,
+   z-index:2100 (verificado en vivo) -- no esta anidado dentro de ninguna vista, asi que
+   no hay ninguna razon de DOM/CSS para que solo pudiera mostrarse en dos de ellas. Sacar
+   la restriccion solo AGREGA visibilidad donde hoy no hay ninguna; no le quita nada a
+   las pantallas donde ya funcionaba. */
+function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
 /* Obtiene un plugin nativo de Capacitor. CLAVE: con la web en vivo (server.url) el
    puente inyectado NO tiene registerPlugin; los plugins viven en Capacitor.Plugins. */
 function lpPlugin(nombre){
@@ -3734,7 +3866,10 @@ async function actualizarBadgeAdmin(){
 // piden este mapa aparte y lo cruzan por id de documento (mismo `cu`).
 async function _mapaEmailsPrivados(){
   const map={};
-  try{ const snap=await db.collection('usersPrivate').get(); snap.forEach(function(doc){ map[doc.id]=doc.data().email||''; }); }catch(e){}
+  // 2026-08-23: sin limit() leia TODOS los correos privados. Se acota al mismo tope que
+  // la lista que acompana (300): si algun dia hace falta el padron completo, es un
+  // export paginado, no una lectura de golpe.
+  try{ const snap=await db.collection('usersPrivate').limit(300).get(); snap.forEach(function(doc){ map[doc.id]=doc.data().email||''; }); }catch(e){}
   return map;
 }
 async function mostrarTodosRegistrados(){
@@ -3744,7 +3879,12 @@ async function mostrarTodosRegistrados(){
   c.innerHTML='<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
   try{
-    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    // 2026-08-23: sin limit() esto leia la coleccion ENTERA. Hoy son ~65 usuarios y no
+    // se nota; con 5.000 son 5.000 lecturas de golpe (10% de la cuota diaria gratis de
+    // TODO el proyecto) cada vez que se abre el panel. Se muestran los 300 mas nuevos,
+    // que es para lo que sirve la pantalla; el total real sale de count(), que cuesta
+    // 1 lectura por cada 1.000 documentos en vez de una por documento.
+    const snap=await db.collection('users').orderBy('createdAt','desc').limit(300).get();
     const emails=await _mapaEmailsPrivados();
     let html='<p style="font-size:0.8rem;color:var(--p);margin-bottom:8px">Total: '+snap.size+' registrados</p>';
     snap.forEach(function(doc){
@@ -4461,7 +4601,7 @@ window.onload = async function(){
     document.getElementById('ghostBtn').style.display='block';
     const adminPanel=document.getElementById('admin-panel'); if(adminPanel) adminPanel.style.display=(cu===ADMIN_ID)?'block':'none';
     await im(); au(); rm(MG); fg('todos');
-    loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
+    loadTrips(); loadRoutesList(); cargarFrasesComunidad(); /* 2026-08-23: loadRepairTips/loadHostels/loadRecommendations salieron de aqui -> se enganchan al abrir SU pantalla (_subUnaVez en cv()). loadHostels era el peor: arrastra initVotosHostels() = guiComments limit(500), ~550 documentos por apertura para "Te doy alojo", que ademas esta OCULTO desde el commit 8f2d678. */
     initCustomization();
     // 2026-08-15: antes eran 2 timeouts de tiempo fijo (950ms para abrirEsfera, 3000ms
     // para el mic de manos libres) adivinando cuanto dura el saludo -- con saludos
@@ -4475,7 +4615,7 @@ window.onload = async function(){
       });
     },500);
     if(!ghostMode) subscribeToUsers();
-    subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
+    subscribeToFriendRequests(); /* 2026-08-23: solo este queda al arranque (pinta insignias que se ven fuera de su pantalla y es una query chica, solo TUS solicitudes). chat/comments/reportes/novedades se enganchan al abrir su pantalla -- ver _subUnaVez(). */ revisarRodadasProximas(); revisarRetosCumplidos();
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
@@ -4676,6 +4816,20 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
     if(_prevData.temaUi==='solido'||_prevData.temaUi==='cristal'){ temaUI=_prevData.temaUi; try{localStorage.setItem('lp_tema_ui',temaUI);}catch(e){} if(typeof _aplicarTemaUI==='function') _aplicarTemaUI(); }
     if(_prevData.personalidad) pisteroPersonalidad=_prevData.personalidad;
   }
+  // 2026-08-24: restaura km/darma/kmPorModo/mantención ANTES de la escritura de mas
+  // abajo, con el mismo criterio "gana el mas grande" que sincronizarAlEntrar(). Sin
+  // esto, un primer login por codigo en un dispositivo/navegador nuevo escribia
+  // km:(us.di)||0 SIN haber leido la nube -- en una cuenta con km real de otro
+  // dispositivo, eso lo pisaba con 0 (encontrado en vivo probando esta rama: el campo
+  // `km` de una cuenta real quedo en 0 mientras `kmPorModo.moto` seguia con datos
+  // reales, justo la firma de este bug). Restaurar primero vuelve esa escritura
+  // inofensiva: sube de vuelta el mismo maximo que ya tenia.
+  _restaurarDesdeNube(_prevData);
+  // Se abre la compuerta de mantencion tambien en ESTE camino (antes solo la abria
+  // sincronizarAlEntrar(), que este login nunca llama): sin esto, ganar Darma o marcar
+  // una mantencion como hecha durante la PRIMERA sesion de una cuenta no subia nada
+  // hasta el proximo recargo de pagina.
+  _mantListoParaSubir=true;
   try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
   localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
   localStorage.setItem('lp_lens_'+cu,selectedLens);
@@ -4711,9 +4865,9 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   uj=_lsJSON('lp_j_'+cu, []);
   rh=_lsJSON('lp_r_'+cu, []);
   await im(); au(); rm(MG); fg('todos');
-  loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
+  loadTrips(); loadRoutesList(); cargarFrasesComunidad(); /* 2026-08-23: loadRepairTips/loadHostels/loadRecommendations salieron de aqui -> se enganchan al abrir SU pantalla (_subUnaVez en cv()). loadHostels era el peor: arrastra initVotosHostels() = guiComments limit(500), ~550 documentos por apertura para "Te doy alojo", que ademas esta OCULTO desde el commit 8f2d678. */
   if(!ghostMode) subscribeToUsers();
-  subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
+  subscribeToFriendRequests(); /* 2026-08-23: solo este queda al arranque (pinta insignias que se ven fuera de su pantalla y es una query chica, solo TUS solicitudes). chat/comments/reportes/novedades se enganchan al abrir su pantalla -- ver _subUnaVez(). */
   getCurrentLocation();
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
@@ -4856,6 +5010,39 @@ function _renderMainMapUsers(docs){
   });
 }
 function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } }); }
+/* ===== SUSCRIPCION PEREZOSA (2026-08-23) =====
+   Al iniciar sesion se enganchaban 11 listeners de golpe, sin importar que pantalla
+   estuvieras mirando, y cada uno lee su coleccion ENTERA de arranque: reportes 200,
+   users 150, chat 100, novedades 60, guiComments 50, hostels 50, recommendations 50,
+   repairTips 20... ~700 documentos como piso, antes de que el usuario tocara nada.
+   Firestore cobra por documento leido, y el plan gratis da 50.000 lecturas al dia PARA
+   TODO EL PROYECTO: con ~700 por apertura, bastaban ~70 aperturas para dejar la app sin
+   base de datos. Medido en la consola el 2026-08-23: 73.000 lecturas contra 210
+   escrituras, con maximo 4 conexiones simultaneas. O sea el gasto no venia de tener
+   muchos usuarios sino de que ABRIR la app costaba carisimo -- por eso ya habia
+   reventado con 48 usuarios.
+   Ahora cada pantalla engancha lo suyo la primera vez que se abre. Se suscribe UNA vez
+   por sesion y no se desuscribe: asi el que entra y sale de una pantalla no paga de
+   nuevo, y los datos que ya estaban siguen ahi (desuscribir y volver a enganchar seria
+   peor, cobra la coleccion completa cada vez).
+   Lo que NO se difiere, a proposito:
+     - subscribeToFriendRequests: pinta #solicBadge y #esAvisos, que se ven desde fuera
+       de su pantalla. Ademas es where('to','==',cu): son solo TUS solicitudes.
+     - subscribeToReportes: alimenta el aviso de superficie ANTES de arrancar a pedalear
+       (ver _avisoSuperficieRuta) y los avisos de Pistero en la zona. Se engancha al abrir el
+       mapa, al iniciar navegacion y al empezar a grabar en toggleGPS() (sus DOS caminos: el
+       plugin nativo y watchPosition del navegador).
+     - loadTrips: la global `trips` NO se usa solo en su pantalla -- au() saca de ahi el
+       contador de viajes del panel de Inicio y statViajesCompletados() alimenta los logros.
+       Diferirla dejaba el contador en cero y los logros mal a quien nunca abriera "Mis
+       viajes". Ademas es where('user','==',cu): son solo TUS viajes, sale barato. */
+const _subsHechas={};
+function _subUnaVez(clave, fn){
+  if(_subsHechas[clave]) return;
+  if(typeof fn!=='function') return;
+  _subsHechas[clave]=true;
+  try{ fn(); }catch(e){ _subsHechas[clave]=false; /* que un fallo no deje la pantalla muerta para siempre */ }
+}
 function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ _lastUsersSnapshotDocs=snapshot.docs; _renderMainMapUsers(snapshot.docs); if(_navMapUsersActive) _renderNavMapUsers(snapshot.docs); }); }
 /* ===== CICLISTAS DE LA COMUNIDAD: pelotón demo por todo Chile + usuarios reales al entrar ===== */
 // Al registrarse o entrar, publica tu zona aproximada (~1 km, por privacidad):
@@ -5012,6 +5199,7 @@ function toggleGPS(silencioso){
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
+      _subUnaVez('reportes', subscribeToReportes); /* 2026-08-23: al grabar SI hacen falta aunque no hayas abierto el mapa (avisos de peligro/zona de Pistero) */
       if(!silencioso) _prevueloPistero(true);
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
@@ -5019,6 +5207,7 @@ function toggleGPS(silencioso){
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
+      _subUnaVez('reportes', subscribeToReportes); /* 2026-08-23: al grabar SI hacen falta aunque no hayas abierto el mapa (avisos de peligro/zona de Pistero) */
       if(!silencioso) _prevueloPistero(false);
     } else { lpAviso("Tu dispositivo no soporta GPS"); }
     // Aviso ÚNICO (2026-08, bug ruta = línea recta): en Android el rastreo con la pantalla
@@ -5905,7 +6094,24 @@ const MANT_ITEMS={
 function _mantData(){
   if(!us.mant || typeof us.mant!=='object') us.mant={};
   Object.keys(MANT_ITEMS).forEach(function(k){
-    if(!us.mant[k]) us.mant[k]={kmBase:0, fecha:null, umbralKm:MANT_ITEMS[k].umbralKm, umbralMeses:MANT_ITEMS[k].umbralMeses, historial:[], avisado:false};
+    // fecha:new Date() en vez de null (bug encontrado 2026-08-24): un ítem con
+    // umbralKm:null (neumáticos, 100% por tiempo) dependía de que ALGO le pusiera
+    // fecha para siquiera empezar a contar — sin eso, mesesDesde quedaba null para
+    // siempre y el aviso "la goma se reseca aunque no la uses" nunca se disparaba.
+    // Hoy es la fecha más honesta que tenemos (no sabemos cuándo cambió de verdad),
+    // igual que "última sincronización" en cualquier tracker que arranca de cero.
+    if(!us.mant[k]) us.mant[k]={kmBase:0, fecha:new Date().toISOString(), umbralKm:MANT_ITEMS[k].umbralKm, umbralMeses:MANT_ITEMS[k].umbralMeses, historial:[], avisado:false};
+    // Migracion (2026-08-24): el arreglo de arriba solo alcanza a quien abre Taller por
+    // primera vez. Todo el que lo abrio desde que salio la funcion (23-ago) ya tiene el
+    // objeto guardado con fecha:null, y como este bloque solo corre `if(!us.mant[k])`,
+    // se lo quedaba para siempre: el aviso por tiempo seguia sin dispararse nunca para
+    // ellos. Se rellena la fecha faltante una sola vez, con el mismo criterio honesto
+    // (hoy = cuando empezamos a contar). Tambien se re-sincronizan los umbrales para que
+    // un cambio futuro en MANT_ITEMS llegue a los datos ya guardados.
+    var _mi=us.mant[k];
+    if(!_mi.fecha) _mi.fecha=new Date().toISOString();
+    _mi.umbralKm=MANT_ITEMS[k].umbralKm;
+    _mi.umbralMeses=MANT_ITEMS[k].umbralMeses;
   });
   return us.mant;
 }
@@ -5915,8 +6121,14 @@ function _mantData(){
 let _climaModoActual='off';
 function _factorDesgasteClima(){ return (_climaModoActual==='lluvia'||_climaModoActual==='nieve')?1.5:1; }
 function _sumarKmMantencion(km){ if(!(km>0)) return; us.mantKm=(us.mantKm||0)+km*_factorDesgasteClima(); }
-function _mantProgreso(key){
-  const d=_mantData()[key], km=(us.mantKm||0)-(d.kmBase||0);
+// 2026-08-24: acepta `data` ya calculado (el objeto que devuelve _mantData()) para no
+// volver a recorrer los 5 ítems cada vez — antes cada llamada llamaba a _mantData()
+// de nuevo, y como au() (cada punto de GPS) llama a esto ~10 veces por tick entre
+// renderMantencion()+_mantencionRevisarAvisos(), eran ~10 recorridos redundantes por
+// tick. Sigue funcionando sin el segundo argumento (fallback a _mantData()) por si
+// algo más lo llama suelto.
+function _mantProgreso(key, data){
+  const d=(data||_mantData())[key], km=(us.mantKm||0)-(d.kmBase||0);
   let mesesDesde=null;
   if(d.fecha){ mesesDesde=(Date.now()-new Date(d.fecha).getTime())/(1000*60*60*24*30.44); }
   const pctKm = d.umbralKm ? Math.min(1, km/d.umbralKm) : 0;
@@ -5929,7 +6141,7 @@ function renderMantencion(){
   const data=_mantData();
   let vencidos=0, cerca=0;
   cont.innerHTML=Object.keys(MANT_ITEMS).map(function(key){
-    const info=MANT_ITEMS[key], d=data[key], p=_mantProgreso(key);
+    const info=MANT_ITEMS[key], d=data[key], p=_mantProgreso(key, data);
     if(p.vencido) vencidos++; else if(p.cerca) cerca++;
     const color = p.vencido?'#ef4444':(p.cerca?'#eab308':'#35c46a');
     const badge = p.vencido?'<span class="mi-badge" style="background:rgba(239,68,68,.16);color:#ef4444">Vencido</span>':(p.cerca?'<span class="mi-badge" style="background:rgba(234,179,8,.16);color:#eab308">Cerca</span>':'<span class="mi-badge" style="background:rgba(53,196,106,.16);color:#35c46a">OK</span>');
@@ -5972,7 +6184,7 @@ function _mantencionRevisarAvisos(){
   try{
     const data=_mantData();
     Object.keys(MANT_ITEMS).forEach(function(key){
-      const p=_mantProgreso(key), d=data[key];
+      const p=_mantProgreso(key, data), d=data[key];
       if(p.vencido && !d.avisado){
         d.avisado=true;
         const info=MANT_ITEMS[key];
@@ -5986,7 +6198,8 @@ function _mantencionRevisarAvisos(){
 // que se veía venir, no solo enterarte cuando ya se cumplió el km.
 function _mantencionAvisoPreViaje(){
   try{
-    const criticos=Object.keys(MANT_ITEMS).filter(function(key){ const p=_mantProgreso(key); return p.vencido||p.cerca; }).map(function(key){ return MANT_ITEMS[key].l; });
+    const data=_mantData();
+    const criticos=Object.keys(MANT_ITEMS).filter(function(key){ const p=_mantProgreso(key, data); return p.vencido||p.cerca; }).map(function(key){ return MANT_ITEMS[key].l; });
     if(criticos.length) lpAviso('Antes de un viaje largo: revisa '+criticos.join(', ')+' — está'+(criticos.length>1?'n':'')+' por vencer. Mira Taller para el detalle.');
   }catch(e){}
 }
@@ -6066,7 +6279,16 @@ function au(){
   var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di));
   const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); if(pf){ pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); }
   var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1)+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
-  try{ if(typeof renderMantencion==='function') renderMantencion(); if(typeof _mantencionRevisarAvisos==='function') _mantencionRevisarAvisos(); }catch(e){}
+  // 2026-08-24: renderMantencion() reconstruye el innerHTML de 5 tarjetas — solo
+  // vale la pena si Taller es la pantalla que se está viendo ahora mismo. Antes
+  // corría en CADA punto de GPS sin importar qué pantalla estuviera abierta (mapa,
+  // esfera, lo que sea), gastando batería de más en cada viaje.
+  // _mantencionRevisarAvisos() SÍ sigue corriendo siempre — ese es el punto: avisar
+  // proactivo aunque no estés mirando Taller.
+  try{
+    if(typeof renderMantencion==='function'){ const _vMac=document.getElementById('v-mac'); if(_vMac && _vMac.classList.contains('on')) renderMantencion(); }
+    if(typeof _mantencionRevisarAvisos==='function') _mantencionRevisarAvisos();
+  }catch(e){}
   try{ if(_logrosListo&&typeof _chequearLogros==='function') _chequearLogros(false); }catch(e){} gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
@@ -6369,22 +6591,122 @@ function irAlPuntoYNavegar(lat,lon,name){
 // todo Chile (salteado), y a medida que te acercas terminas viendo todos, sin saltos.
 let pointsUnsub=null, mapPointsData=[], mapPointsRenderTimer=null;
 const MAPPOINTS_MAX_RENDER=350;
+/* Puntos del mapa: caché local + sincronización incremental (2026-08-23).
+   ANTES: `collection('recommendations').onSnapshot(...)` SIN filtro y SIN limit(), o sea
+   la colección ENTERA en cada apertura del mapa. Firestore cobra por documento leído, y
+   esa colección la escriben los usuarios (addRecommendation/agregarPOI): crece para
+   siempre. El comentario original ya hablaba de "~4.000 puntos". Con el plan gratis en
+   50.000 lecturas al día PARA TODO EL PROYECTO, era una bomba de tiempo: no molesta hasta
+   que un día se lleva la cuota de todos.
+   AHORA: los puntos se guardan en el teléfono y solo se le piden a Firestore los que
+   llegaron DESPUÉS de la última sincronización (`where('ts','>', ...)`). El listener sigue
+   siendo en vivo — pero una consulta filtrada solo lee los documentos que casan, así que
+   en régimen cuesta casi cero. De regalo, el mapa se pinta al instante desde la caché en
+   vez de esperar la red.
+   Refresco completo cada 7 días: `likeRecommendation()` actualiza likes/ratings SIN tocar
+   `ts`, así que esos cambios no los trae la consulta incremental. Para el mapa da igual
+   (solo usa lat/lon/cat/título), pero conviene que no se desfase para siempre.
+   No hay borrado de recomendaciones en toda la app — verificado — así que la caché no
+   puede mostrar fantasmas de puntos eliminados. */
+const MAPPOINTS_CACHE_KEY='lp_mappoints_v1';
+const MAPPOINTS_REFRESCO_TOTAL_MS=7*24*60*60*1000;
+function _mapPointsCacheLeer(){
+  try{
+    const c=JSON.parse(localStorage.getItem(MAPPOINTS_CACHE_KEY)||'null');
+    if(!c || !Array.isArray(c.puntos)) return null;
+    if(!(c.ultimaSync>0) || (Date.now()-c.ultimaSync)>MAPPOINTS_REFRESCO_TOTAL_MS) return null; // caché vieja: refresco completo
+    return c;
+  }catch(e){ return null; }
+}
+/* Solo los campos que el mapa usa de verdad (ver _renderizarPuntosVisibles: lat, lon, cat,
+   user para separar los sembrados de OSM, title y desc para el globo).
+   Esto NO es prolijidad: un documento de `recommendations` puede traer `foto`, que es una
+   imagen en base64 (previewFoto usa readAsDataURL). Guardar eso en localStorage —que tiene
+   ~5 MB para TODA la app— reventaba de dos maneras: la escritura fallaba y la caché no
+   servía de nada en silencio, y peor, al llenar el almacenamiento se caían las otras
+   escrituras, incluida gd() con los kilómetros y las rutas del usuario. gd() tiene su
+   propio catch silencioso, así que la pérdida habría sido invisible. */
+function _mapPointNube(d){
+  return {id:d.id, lat:d.lat, lon:d.lon, cat:d.cat, user:d.user,
+          title:d.title, desc:(typeof d.desc==='string'?d.desc.slice(0,200):''), tsMs:d.tsMs||0};
+}
+const MAPPOINTS_CACHE_MAX=6000;          // tope de puntos guardados
+const MAPPOINTS_CACHE_MAX_BYTES=1500000; // ~1,5 MB: deja el resto de localStorage libre
+function _mapPointsCacheGuardar(){
+  try{
+    let maxTs=0;
+    mapPointsData.forEach(function(d){ if(d.tsMs>maxTs) maxTs=d.tsMs; });
+    const payload=JSON.stringify({ultimaSync:Date.now(), maxTs:maxTs,
+                                  puntos:mapPointsData.slice(0,MAPPOINTS_CACHE_MAX).map(_mapPointNube)});
+    // Antes de escribir, no después: si no entra, se descarta la caché entera en vez de
+    // dejar el almacenamiento al borde y hacer fallar a gd() (los km del usuario).
+    if(payload.length>MAPPOINTS_CACHE_MAX_BYTES){ try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){} return; }
+    localStorage.setItem(MAPPOINTS_CACHE_KEY, payload);
+  }catch(e){
+    // Almacenamiento lleno o modo privado: se borra lo propio para no dejar ocupado un
+    // espacio que necesitan los datos del usuario. La app sigue, solo pierde el ahorro.
+    try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){}
+  }
+}
+function _mapPointsAplicar(snap){
+  // Fusión por id: un punto que ya estaba se reemplaza, uno nuevo se agrega. Nunca se
+  // borra nada (la consulta incremental no ve lo viejo, y eso NO significa que no exista).
+  const porId={};
+  mapPointsData.forEach(function(d){ porId[d.id]=d; });
+  snap.forEach(function(doc){
+    const d=doc.data();
+    if(!(d.lat&&d.lon)) return;
+    d.id=doc.id;
+    try{ d.tsMs=(d.ts&&d.ts.toMillis)?d.ts.toMillis():(d.tsMs||0); }catch(e){ d.tsMs=d.tsMs||0; }
+    porId[d.id]=d;
+  });
+  mapPointsData=Object.keys(porId).map(function(k){ return porId[k]; });
+  // Subconjunto para el aviso de voz (solo agua/mirador/hospedaje): se arma UNA vez
+  // acá, no en cada fix de GPS, porque recorrer los puntos completos con cálculo
+  // de distancia incluido en cada actualización de posición era pesado de más para
+  // un celular andando en bici (batería/CPU en un recorrido de varias horas).
+  puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
+  _renderizarPuntosVisibles();
+  _mapPointsCacheGuardar();
+}
 function subscribeToMapPoints(){
-  if(pointsUnsub) return;
-  pointsUnsub=db.collection('recommendations').onSnapshot(function(snap){
-    mapPointsData=[];
-    snap.forEach(function(doc){ const d=doc.data(); if(d.lat&&d.lon){ d.id=doc.id; mapPointsData.push(d); } });
-    // Subconjunto para el aviso de voz (solo agua/mirador/hospedaje): se arma UNA vez
-    // acá, no en cada fix de GPS, porque recorrer los ~4.000 puntos completos cálculo
-    // de distancia incluido en cada actualización de posición era pesado de más para
-    // un celular andando en bici (batería/CPU en un recorrido de varias horas).
-    puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
-    _renderizarPuntosVisibles();
-  }, function(e){});
-  if(mp){
+  // Los handlers del mapa se enganchan ANTES del `return` de abajo, y aparte de la
+  // suscripción. Motivo: esta función también se llama desde avisarPuntosCercanos(), o sea
+  // en pleno viaje y posiblemente SIN haber abierto el mapa todavía (mp === null). En ese
+  // caso quedaba `pointsUnsub` seteado pero los handlers sin poner, y cuando el ciclista
+  // abría el mapa el `return` temprano cortaba antes de engancharlos: los puntos no se
+  // volvían a dibujar al mover ni al hacer zoom en TODA la sesión.
+  if(mp && !subscribeToMapPoints._handlers){
+    subscribeToMapPoints._handlers=true;
     mp.on('moveend', _renderizarPuntosVisiblesThrottled);
     mp.on('zoomend', _renderizarPuntosVisiblesThrottled);
   }
+  if(pointsUnsub) return;
+  const cache=_mapPointsCacheLeer();
+  let consulta=db.collection('recommendations');
+  if(cache){
+    // Pintar YA con lo que hay en el teléfono, sin esperar a la red.
+    mapPointsData=cache.puntos;
+    puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
+    try{ _renderizarPuntosVisibles(); }catch(e){}
+    if(cache.maxTs>0) consulta=consulta.where('ts','>',firebase.firestore.Timestamp.fromMillis(cache.maxTs));
+  }
+  const incremental=!!(cache && cache.maxTs>0);
+  pointsUnsub=consulta.onSnapshot(_mapPointsAplicar, function(e){
+    // Si la consulta incremental falla (p.ej. por un índice que falta), no alcanza con
+    // borrar la caché para la próxima sesión: el mapa se quedaría con los puntos viejos
+    // TODA esta sesión. Se rehace la suscripción completa acá mismo, una sola vez —
+    // `_mapPointsReintento` evita que un error persistente entre en bucle.
+    try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){}
+    if(incremental && !subscribeToMapPoints._reintento){
+      subscribeToMapPoints._reintento=true;
+      try{ if(pointsUnsub) pointsUnsub(); }catch(_){}
+      pointsUnsub=null;
+      mapPointsData=[];
+      subscribeToMapPoints();
+    }
+  });
+  // (el enganche de moveend/zoomend subió al principio de la función, ver la nota de allá)
 }
 function _renderizarPuntosVisiblesThrottled(){
   if(mapPointsRenderTimer) clearTimeout(mapPointsRenderTimer);
@@ -6578,15 +6900,20 @@ async function showAmigosYSolicitudes(){
   c.innerHTML='<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
   try{
-    const snapReq=await db.collection('friendRequests').where('to','==',cu).get();
-    const pend=snapReq.docs.filter(function(d){ return d.data().status==='pending'; });
+    // 2026-08-24: antes pedía 'to'==cu dos veces (una para solicitudes pendientes,
+    // otra adentro del Promise.all para los amigos aceptados) — misma query,
+    // lectura de Firestore duplicada en cada apertura de esta pantalla. Ahora se
+    // pide una sola vez y se reusan esos docs para ambas cosas; las dos queries
+    // que sí son distintas ('from'==cu y 'to'==cu) van en paralelo desde el arranque.
     const res=await Promise.all([
       db.collection('friendRequests').where('from','==',cu).get(),
       db.collection('friendRequests').where('to','==',cu).get()
     ]);
+    const snapTo=res[1];
+    const pend=snapTo.docs.filter(function(d){ return d.data().status==='pending'; });
     const ids={};
     res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; });
-    res[1].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; });
+    snapTo.docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; });
     const friendIds=Object.keys(ids);
     let html='';
     if(pend.length){
@@ -7180,8 +7507,15 @@ function mostrarLogrosComunidad(){
     +'</div>';
   document.getElementById('userModal').classList.add('on');
 }
+// 2026-08-24: _modalVolverA='mostrarLogrosComunidad' (en esta función y en
+// verSegmentos/verRetos/mostrarResumenAnual/verRecomendacionRutas/mostrarFundadores/
+// mostrarComunidad) apuntaba a un menú-hub que ya no existe en Social desde la
+// reorganización del 23-ago — cada una de estas 7 ahora es un botón directo, así
+// que "Volver" quedaba huérfano (el botón "← Volver" llevaba a una pantalla
+// inalcanzable desde ningún otro lado). Pasa a null: sin botón "Volver" propio, el
+// "✕" del modal ya cierra correctamente de vuelta a Social.
 function mostrarLogros(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
   items.forEach(function(it){ const l=it.l;
@@ -7269,11 +7603,59 @@ function _iniciarLogros(){ try{ _chequearLogros(true); _logrosListo=true; }catch
    (permisos, sesión a medio levantar, sin red) NADIE se enteraba — ni el usuario ni
    nosotros. Ahora se reporta a Sentry: un fallo acá significa que a alguien se le están
    quedando los kilómetros guardados solo en el teléfono, y eso hay que verlo. */
+/* Mantencion -> nube (2026-08-24). La mantencion preventiva nacio el 23-ago guardando
+   SOLO en localStorage (gd()), igual que los kilometros antes del arreglo del 20-jul: si
+   el usuario cambia de telefono o limpia los datos, pierde el historial de cada cambio de
+   cadena, pastillas y transmision, con sus costos. Es el mismo tipo de perdida silenciosa
+   que ya nos costo una vez, asi que viaja por el mismo camino que los km.
+   Se sanitiza a proposito: esta carga va en la MISMA escritura que `km`, y un solo valor
+   invalido (undefined/NaN) hace fallar el set() completo — o sea, un historial raro
+   dejaria de subir tambien los kilometros. Preferimos subir el item recortado antes que
+   arriesgar el dato critico. */
+function _mantParaNube(){
+  const out={};
+  try{
+    const src=us.mant; if(!src || typeof src!=='object') return out;
+    const num=function(v){ return (typeof v==='number' && isFinite(v)) ? v : null; };
+    Object.keys(src).forEach(function(k){
+      const d=src[k]; if(!d || typeof d!=='object') return;
+      out[k]={
+        kmBase: num(d.kmBase)||0,
+        fecha: (typeof d.fecha==='string' && d.fecha) ? d.fecha : null,
+        avisado: !!d.avisado,
+        historial: (Array.isArray(d.historial)?d.historial:[]).slice(-30).map(function(h){
+          return {
+            fecha: (h && typeof h.fecha==='string') ? h.fecha : null,
+            km: num(h && h.km)||0,
+            costo: num(h && h.costo),
+            nota: (h && typeof h.nota==='string') ? h.nota : null
+          };
+        })
+      };
+    });
+  }catch(e){}
+  return out;
+}
+/* La mantención NO se sube hasta haber leído la nube. Es la misma trampa que ya costó
+   kilómetros el 2026-07-20, y con la mantención muerde más fuerte: `historial` es un ARRAY,
+   y Firestore con {merge:true} REEMPLAZA arrays enteros (a los mapas los fusiona, a los
+   arrays no). El escenario: teléfono nuevo o datos borrados -> `us.mant` arranca vacío ->
+   salta cualquier logro en los primeros segundos -> _ganarDarma() -> sincronizarStats()
+   sube historiales VACÍOS y borra los de la nube -> cuando sincronizarAlEntrar() corre a
+   los 4 segundos, ya no queda nada que restaurar. Pérdida definitiva y silenciosa.
+   Con esta bandera, los km y el Darma siguen subiendo como siempre (son números, y el
+   criterio de "gana el más grande" los protege), pero la mantención espera a la lectura. */
+let _mantListoParaSubir=false;
 async function sincronizarStats(){
   if(!cu) return;
   const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null;
+  const datos={km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid};
+  if(_mantListoParaSubir){
+    datos.mant=_mantParaNube();
+    datos.mantKm=(typeof us.mantKm==='number'&&isFinite(us.mantKm))?us.mantKm:0;
+  }
   try{
-    await db.collection('users').doc(cu).set({km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true});
+    await db.collection('users').doc(cu).set(datos,{merge:true});
   }catch(e){
     try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarStats'}}); }catch(_){}
   }
@@ -7298,31 +7680,86 @@ async function sincronizarStats(){
    16 usuarios invisibles.
    Ahora manda el número más grande: si la nube tiene más, se RESTAURA al teléfono (que es
    lo que uno espera al reinstalar) y recién entonces se sincroniza. */
+/* Compartida por sincronizarAlEntrar() (recarga / sesión que vuelve) Y por
+   _completarLoginVerificadoOriginal() (PRIMER login interactivo por código de tester,
+   que ya lee `_prevData` para restaurar cosméticas y no necesita otra lectura a
+   Firestore para esto). Nace de una prueba en vivo el 2026-08-24: el login por código
+   NUNCA pasaba por sincronizarAlEntrar(), así que en la primera sesión de cualquier
+   cuenta (incluida una que ya tuviera km/mantención reales en la nube desde otro
+   dispositivo) esos datos no se restauraban — y peor, la escritura de
+   _completarLoginVerificadoOriginal() sube `km:(us&&us.di)||0` SIN haber leído la nube
+   primero, así que en una cuenta existente con km real, un primer login desde un
+   dispositivo/navegador nuevo lo pisaba con 0. Restaurar ANTES de esa escritura la
+   vuelve inofensiva: escribe de vuelta el mismo máximo que ya tenía.
+   "Gana el más grande/avanzado", nunca se pisa lo que ya existe con algo más pobre.
+   Mantención se compara item por item y se copia el objeto ENTERO del ganador, no
+   campo por campo: kmBase, fecha e historial se escriben juntos al marcar "ya la
+   cambié", así que mezclar el kmBase de la nube con la fecha del teléfono daría un
+   ítem incoherente. Criterio de "más avanzado": más cambios registrados; a igualdad,
+   mayor kmBase; a igualdad, fecha más nueva.
+   Devuelve true si algo cambió (para que quien llama decida si avisa/persiste). */
+function _restaurarDesdeNube(nube){
+  if(!nube) return false;
+  let restaurado=false;
+  const kmNube=Number(nube.km)||0, kmLocal=Number(us.di)||0;
+  const daNube=Number(nube.darma)||0, daLocal=Number(us.d)||0;
+  if(kmNube>kmLocal+0.05){ us.di=kmNube; restaurado=true; }
+  if(daNube>daLocal){ us.d=daNube; restaurado=true; }
+  if(nube.kmPorModo && typeof nube.kmPorModo==='object'){
+    if(!us.dm || typeof us.dm!=='object') us.dm={};
+    for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
+  }
+  const kmMantNube=Number(nube.mantKm)||0, kmMantLocal=Number(us.mantKm)||0;
+  if(kmMantNube>kmMantLocal+0.05){ us.mantKm=kmMantNube; restaurado=true; }
+  if(nube.mant && typeof nube.mant==='object'){
+    if(!us.mant || typeof us.mant!=='object') us.mant={};
+    Object.keys(nube.mant).forEach(function(k){
+      const dn=nube.mant[k]; if(!dn || typeof dn!=='object') return;
+      const dl=us.mant[k];
+      const hn=(Array.isArray(dn.historial)?dn.historial.length:0);
+      const hl=(dl&&Array.isArray(dl.historial))?dl.historial.length:0;
+      let nubeGana;
+      if(!dl) nubeGana=true;
+      else if(hn!==hl) nubeGana=hn>hl;
+      else if((Number(dn.kmBase)||0)!==(Number(dl.kmBase)||0)) nubeGana=(Number(dn.kmBase)||0)>(Number(dl.kmBase)||0);
+      else nubeGana=(new Date(dn.fecha||0).getTime()||0)>(new Date(dl.fecha||0).getTime()||0);
+      if(nubeGana){
+        us.mant[k]={kmBase:Number(dn.kmBase)||0, fecha:dn.fecha||null, avisado:!!dn.avisado,
+                    historial:Array.isArray(dn.historial)?dn.historial:[],
+                    umbralKm:(dl&&dl.umbralKm!==undefined)?dl.umbralKm:null,
+                    umbralMeses:(dl&&dl.umbralMeses!==undefined)?dl.umbralMeses:null};
+        restaurado=true;
+      }
+    });
+    // los umbrales los vuelve a fijar _mantData() desde MANT_ITEMS (fuente de verdad
+    // del codigo, no de la nube), asi que no se suben ni se confia en ellos.
+    try{ if(typeof _mantData==='function') _mantData(); }catch(e){}
+  }
+  return restaurado;
+}
 function sincronizarAlEntrar(){
   if(!cu) return;
   setTimeout(async function(){
     try{
       let nube=null;
       try{ const doc=await db.collection('users').doc(cu).get(); if(doc.exists) nube=doc.data(); }catch(e){}
-      if(nube){
-        const kmNube=Number(nube.km)||0, kmLocal=Number(us.di)||0;
-        const daNube=Number(nube.darma)||0, daLocal=Number(us.d)||0;
-        let restaurado=false;
-        if(kmNube>kmLocal+0.05){ us.di=kmNube; restaurado=true; }
-        if(daNube>daLocal){ us.d=daNube; restaurado=true; }
-        if(nube.kmPorModo && typeof nube.kmPorModo==='object'){
-          if(!us.dm || typeof us.dm!=='object') us.dm={};
-          for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
-        }
-        if(restaurado){
-          try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
-          try{ if(typeof au==='function') au(); }catch(e){}
-          try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
-        }
+      if(_restaurarDesdeNube(nube)){
+        try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
+        try{ if(typeof au==='function') au(); }catch(e){}
+        try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
       }
+      // Recién acá se habilita la subida de la mantención: ya se leyó la nube y, si tenía
+      // algo mejor, ya está fusionado en `us.mant`. Antes de este punto una subida habría
+      // pisado el historial de la nube con arrays vacíos (ver nota en sincronizarStats).
+      _mantListoParaSubir=true;
       sincronizarStats(); // recién ahora se sube, con el número correcto
       try{ _iniciarLogros(); }catch(e){} // baseline de logros: registra lo ya ganado SIN anunciar; habilita anuncios reales
     }catch(e){
+      // Si la lectura falló, igual hay que abrir la compuerta: dejarla cerrada para
+      // siempre significaría que a ese usuario la mantención NUNCA le llega a la nube —
+      // que es justo el bug que vinimos a arreglar. Lo que se protege es el orden (leer
+      // antes de escribir), no el éxito de la lectura: acá ya se intentó.
+      _mantListoParaSubir=true;
       try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarAlEntrar'}}); }catch(_){}
     }
   }, 4000); // deja que la sesión termine de levantar
@@ -7653,7 +8090,11 @@ async function verAnaliticasAdmin(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede ver las analíticas.'); return; }
   h('Cargando analíticas de uso...');
   try{
-    const snap=await db.collection('usage').get();
+    // 2026-08-23: sin limit(). La coleccion /usage recien se habilito (su regla no
+    // existia y todo caia al deny por defecto), asi que hoy esta casi vacia — pero pasa
+    // a tener UN documento por usuario y crece con cada registro. Con tope antes de que
+    // duela, no despues.
+    const snap=await db.collection('usage').limit(500).get();
     const pantalla={}, tiempo={}, funcion={}, voz={}; let total=0, activos7d=0; const ahora=Date.now();
     snap.forEach(function(doc){ const d=doc.data(); total++;
       const uu=(d.ultimoUso&&d.ultimoUso.toMillis)?d.ultimoUso.toMillis():0; if(uu && (ahora-uu)<7*86400000) activos7d++;
@@ -7675,7 +8116,12 @@ async function exportarUsuariosAdmin(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede exportar la lista de usuarios.'); return; }
   h('Obteniendo lista de usuarios registrados...');
   try{
-    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    // 2026-08-23: sin limit() esto leia la coleccion ENTERA. Hoy son ~65 usuarios y no
+    // se nota; con 5.000 son 5.000 lecturas de golpe (10% de la cuota diaria gratis de
+    // TODO el proyecto) cada vez que se abre el panel. Se muestran los 300 mas nuevos,
+    // que es para lo que sirve la pantalla; el total real sale de count(), que cuesta
+    // 1 lectura por cada 1.000 documentos en vez de una por documento.
+    const snap=await db.collection('users').orderBy('createdAt','desc').limit(300).get();
     const emails=await _mapaEmailsPrivados();
     const rows=[['Nombre','Email']]; // solo nombre y correo: para tu respaldo de registros
     snap.forEach(function(doc){ const d=doc.data();
@@ -7697,7 +8143,13 @@ function mesesDesdeRegistro(){
   return Math.floor((Date.now()-ts)/(1000*60*60*24*30));
 }
 function requiere6Meses(){ return mesesDesdeRegistro()>=6; }
+/* 2026-08-23: loadHostels() se llamaba al INICIAR SESION, y arrastra initVotosHostels()
+   = guiComments where type=='voto' limit(500). Eran ~550 documentos por cada apertura de
+   la app para una funcion que ni siquiera es alcanzable: "Te doy alojo" quedo OCULTO en el
+   commit 8f2d678 (se saco el boton, pero no la carga de datos). Ahora carga aca, que es el
+   unico lugar desde donde se puede llegar. */
 async function abrirTeDoyAlojo(){
+  _subUnaVez('hostels', loadHostels);
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-house"></i> Te doy alojo';
   const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on');
   const meses=mesesDesdeRegistro();
@@ -8447,6 +8899,10 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   // en vez de perderlo silenciosamente al pisar el estado con la ruta nueva.
   if(document.getElementById('nav-screen').classList.contains('active')) endNavigation();
   _detenerGpsLibreSiActivo();
+  // 2026-08-23: los reportes ya no se enganchan al iniciar sesion. Aca SI hacen falta
+  // aunque no hayas pasado por el mapa: _avisoSuperficieRuta() los usa para avisarte del
+  // ripio ANTES de salir, no en el camino.
+  _subUnaVez('reportes', subscribeToReportes);
   navGuardado=false;
   document.getElementById('nav-screen').classList.add('active');
   _actualizarBtnManosLibres();
@@ -8877,7 +9333,15 @@ function cv(id, _esVolver){
     _registrarPasoEnHistorial(id); // le da al botón atrás del teléfono algo que retroceder
   }
   _viewActual=id; _actualizarBtnAtras();
-  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.body.setAttribute('data-vista', id); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='mac' && typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.body.setAttribute('data-vista', id); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); /* 2026-08-23: cada pantalla engancha SU listener la primera vez que se abre (ver
+     _subUnaVez). Antes se enganchaban los 11 al iniciar sesion aunque nunca entraras. */
+  if(id==='chat')      _subUnaVez('chat', subscribeToChat);
+  if(id==='novedades') _subUnaVez('novedades', subscribeToNovedades);
+  if(id==='rec')       _subUnaVez('recomendaciones', loadRecommendations);
+  if(id==='gui')       _subUnaVez('comentarios', subscribeToComments);
+  if(id==='map')       _subUnaVez('reportes', subscribeToReportes);
+  if(id==='mac')       _subUnaVez('repairTips', loadRepairTips);
+  if(id==='mac'){ if(typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); /* 2026-08-24: renderizar AL ABRIR. renderMantencion() solo se llamaba desde au(), y desde que au() la condiciona a que Taller este visible (para no reconstruir 5 tarjetas en cada punto de GPS), abrir Taller sin estar pedaleando dejaba la lista VACIA: al iniciar la app au() corre con Inicio a la vista, el guard bloquea, y cv('mac') no renderizaba nada. El guard esta bien; lo que faltaba era este render de apertura. */ if(typeof renderMantencion==='function') renderMantencion(); } if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
      inicializar (sin categorias de puntos y sin sincronizar con la nube) porque cv() solo
      hacia cargarDiario() y openDiario() hacia tres cosas mas. La misma pantalla se veia
      distinta segun por donde entraras: eso es exactamente la falta de concordancia que
@@ -9865,7 +10329,7 @@ async function crearSegmentoDesdeRuta(localId){
   }catch(e){ lpAviso('No se pudo crear el segmento.'); }
 }
 async function verSegmentos(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-flag-checkered"></i> Segmentos';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando segmentos...</p>';
@@ -9926,7 +10390,7 @@ async function revisarRetosCumplidos(){
   }catch(e){}
 }
 async function verRetos(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-bullseye"></i> Retos y temporadas';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando retos...</p>';
@@ -10023,7 +10487,7 @@ function mostrarResumenAnual(){
   const anio=new Date().getFullYear();
   const r=calcularResumenAnual(anio);
   if(r.viajes===0){
-    _modalVolverA='mostrarLogrosComunidad';
+    _modalVolverA=null;
     document.getElementById('modalTitle').innerHTML='<i class="fas fa-chart-simple"></i> Mi año en Libre Pedal';
     document.getElementById('modalContent').innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;text-align:center;padding:20px 0">Todavía no tienes viajes registrados este '+anio+'. ¡Sal a pedalear y vuelve más adelante!</p>';
     document.getElementById('userModal').classList.add('on');
@@ -10247,7 +10711,7 @@ function _perfilCiclista(){
   return { avgKm:totalKm/rutas.length, totalViajes:rutas.length };
 }
 async function verRecomendacionRutas(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-compass"></i> Rutas para ti';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Analizando tu historial...</p>';
@@ -10531,16 +10995,33 @@ async function vigilarClima(lat,lon){
   // vozActiva solo bloquea el AVISO hablado — si el modulo de efectos visuales de clima
   // esta cargado, igual necesitamos seguir consultando para mantener el efecto al dia
   // aunque el usuario tenga la voz apagada (son dos features independientes).
-  if(!vozActiva && !window.climaFxSetMode) return;
+  // 2026-08-24: ahora hay un TERCER consumidor del clima que no tiene nada que ver con
+  // la voz ni con los efectos visuales — _climaModoActual alimenta _factorDesgasteClima()
+  // (la mantencion preventiva desgasta 1.5x mas con lluvia/nieve). Con la voz apagada y
+  // el modulo de efectos sin cargar, esta linea cortaba antes de _climaFxAplicar(), asi
+  // que _climaModoActual se quedaba en 'off' y ese 1.5x no se aplicaba NUNCA. El freno
+  // real de consultas a la API es CLIMA_MIN_ENTRE_CHEQUEOS (15 min) unas lineas mas
+  // abajo, que sigue intacto: sacar este corte no agrega trafico, solo deja de saltarse
+  // la actualizacion del modo de clima.
   const ahora=Date.now();
   if(ahora-_climaUltimoChequeo<CLIMA_MIN_ENTRE_CHEQUEOS) return; // freno de CONSULTA: sin esto se llamaba a la API cada segundo
-  if(vozActiva && _climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return; // freno de AVISO
+  // El freno de AVISO (25 min) estaba ACA, antes de _climaFxAplicar(), y frenaba de más:
+  // con la voz ENCENDIDA los efectos visuales y el desgaste por lluvia se actualizaban cada
+  // 25 min, y con la voz apagada cada 15. Al revés de lo razonable, y por la misma causa de
+  // fondo que el arreglo de arriba: un solo guard sirviendo a tres features distintas.
+  // Ahora baja a donde corresponde — justo antes de hablar — y el único freno de tráfico
+  // sigue siendo el de CONSULTA, que no se toca.
   _climaUltimoChequeo=ahora;
   try{
     const w=await climaDeZona(lat,lon);
     if(!w||!w.current) return;
     _climaFxAplicar(w);
     if(!vozActiva) return; // el resto de la funcion es solo para el AVISO hablado
+    // Freno del AVISO, en su lugar: acá ya se aplicaron los efectos y el desgaste, así que
+    // callarse no le quita nada a las otras dos features. `_climaBase` no se toca si se
+    // corta acá, igual que antes: la próxima comparación sigue partiendo de la última foto
+    // que sí se anunció.
+    if(_climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return;
     const horas=w.hourly&&w.hourly.precipitation_probability, tiempos=w.hourly&&w.hourly.time;
     let lluvia=null;
     if(horas&&tiempos){
@@ -10689,7 +11170,7 @@ async function _totalUsuariosSuscritos(){
 }
 var LP_FUNDADORES_CUPO=1000;
 async function mostrarFundadores(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-medal"></i> Socios Fundadores';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
@@ -10718,7 +11199,7 @@ async function mostrarFundadores(){
   c.innerHTML=html;
 }
 async function mostrarComunidad(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-handshake"></i> Comunidad Libre Pedal';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
@@ -10735,9 +11216,34 @@ async function mostrarComunidad(){
   let votos={}; opciones.forEach(function(o){ votos[o.id]=0; });
   let miVoto=null;
   try{
-    const snap=await db.collection('votacionComunidad').get();
-    snap.forEach(function(doc){ const d=doc.data(); if(votos[d.opcion]!=null) votos[d.opcion]++; if(doc.id===cu) miVoto=d.opcion; });
-  }catch(e){}
+    // 2026-08-23: antes se traía la colección ENTERA para contar los votos a mano en el
+    // teléfono. Con 5.000 votantes eran 5.000 lecturas cada vez que alguien abría
+    // Comunidad — y esto lo puede disparar cualquier usuario, no solo el admin.
+    // Ahora: un count() por opción (Firestore cobra 1 lectura por cada 1.000 documentos
+    // contados, no una por documento) + UN solo doc para saber qué votaste vos.
+    // Son ~6 lecturas en vez de N, y deja de crecer con la comunidad.
+    // Mismo patrón que ya usaba el sorteo acá abajo, incluido el respaldo por si count()
+    // no está disponible.
+    // Se cuenta cuántos count() salieron bien: si NINGUNO funciona (p.ej. un SDK sin
+    // agregaciones), hay que caer al respaldo. Con un catch por opción y nada más, los
+    // cinco fallaban en silencio, el catch de afuera no se enteraba y la pantalla mostraba
+    // CERO votos en todo — peor que la lectura cara que estamos evitando.
+    let conteosOk=0;
+    await Promise.all(opciones.map(async function(o){
+      try{
+        const a=await db.collection('votacionComunidad').where('opcion','==',o.id).count().get();
+        votos[o.id]=a.data().count||0; conteosOk++;
+      }catch(e){}
+    }));
+    if(!conteosOk) throw new Error('sin agregaciones');
+    const mio=await db.collection('votacionComunidad').doc(cu).get();
+    if(mio.exists) miVoto=mio.data().opcion;
+  }catch(eCount){
+    try{
+      const snap=await db.collection('votacionComunidad').get();
+      snap.forEach(function(doc){ const d=doc.data(); if(votos[d.opcion]!=null) votos[d.opcion]++; if(doc.id===cu) miVoto=d.opcion; });
+    }catch(e){}
+  }
   const totalVotos=Object.values(votos).reduce(function(a,b){return a+b;},0)||1;
   let sorteoTotal=0, yaParticipo=false;
   try{
