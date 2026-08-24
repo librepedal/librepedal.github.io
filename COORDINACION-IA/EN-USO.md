@@ -1,97 +1,61 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ⛔ ORDEN VIGENTE (Inty, 2026-08-24) — DEPLOYS CONGELADOS hasta el paso 4
-> Detalle completo en la tarea **#80** del hub. Resumen, con dueño y bloqueo:
+> ## 📋 ESTADO ÚNICO — sesión Lenovo, cierre del 2026-08-23 (23:30 hora de Chile)
+> _Este bloque reemplaza a los 3 avisos sueltos que esta sesión fue apilando durante la
+> noche. Es el único al día. Candado de `index.html`: **LIBRE** (árbol limpio, todo en rama)._
 >
-> | # | Quién | Qué | Bloqueado por |
-> |---|---|---|---|
-> | — | todos | **Nadie despliega, nadie pushea a `main`, nadie publica reglas** | — |
-> | 1 | **Tundra** | Pushear su `firestore.rules` (`match /usage/{id}`) a `fix/reglas-usage` | — |
-> | 2 | Lenovo | Fusionar `/usage` + `/resenasApp` en **un** archivo y entregarlo | paso 1 |
-> | 3 | **Inty** | Publicarlo en Firebase Console **una sola vez** | paso 2 |
-> | 4 | Lenovo | Mergear `fix/bugs-revision-2026-08-24` → `main` (esto publica) | visto bueno de Inty |
-> | 5 | — | `wip/modo-conduccion-resena` queda **fuera** de la prueba cerrada | paso 3 |
+> ### 🚦 Regla que sigue vigente: NADIE DESPLIEGA
+> `main` está intacto en `3a8fb8a` en los dos remotos. Y ojo con esto, que no todos lo
+> tenían claro: **mergear a `main` ES publicar** — `.github/workflows/deploy-cloudflare.yml`
+> despliega solo en ~40 s, y `deploy-seguro.sh` se niega a correr fuera de CI justamente
+> para que producción no quede adelante de git. Además `capacitor.config.json` tiene
+> `server.url: https://librepedal.cl`: **la app de Play Store no corre el código del AAB,
+> carga la web en vivo**. O sea el merge le llega a los 51 testers al instante. Inty frenó
+> el deploy y así queda hasta que él diga.
 >
-> **Por qué el congelamiento:** `librepedal.cl` ES la app de los 51 testers
-> (`capacitor.config.json` → `server.url`), la app de Play Store **no corre el código del
-> AAB**. Todo deploy les llega al instante; no hay ensayo posible.
+> ### ✅ Lo único que YA está en producción
+> **Las reglas de Firestore**, publicadas a mano por Inty en Firebase Console: `match
+> /usage/{id}` (Tundra) + `match /resenasApp/{id}` (Lenovo), fusionadas en un solo archivo.
+> Se hizo así porque la Console pega el **archivo entero**: si cada sesión hubiera entregado
+> el suyo, el segundo borraba la regla del primero sin avisar.
 >
-> **Por qué el paso 1 es de Tundra y no de Inty:** ninguna sesión de Claude tiene credencial
-> de Firebase, solo Inty publica. Si cada sesión le pasa **su** `firestore.rules`, el segundo
-> **borra la regla del primero en silencio** — la misma pisada que Tundra describió con
-> `wrangler secret put`, pero en reglas.
+> ### 📦 UNA sola rama para entregar: `fix/bugs-revision-2026-08-24`
+> (Antes eran tres. `fix/reglas-fusionadas` ya está mergeada acá dentro; `fix/reglas-usage`
+> de Tundra también entra por esa vía. Podés borrar esas dos del remoto cuando quieras.)
 >
-> **Reparto:** Tundra en `worker-auth/`, `scripts/`, testers y media. Lenovo en `index.html`
-> y el merge/deploy. `APP_VERSION`/`version.txt` los maneja Lenovo hasta el paso 4 (**8.770**;
-> en `main` están desincronizados: 8.758 vs 8.769, y el build de Android lee `version.txt`
-> DEL REPO para el `versionName`).
+> | Qué trae | Detalle |
+> |---|---|
+> | 6 bugs de la revisión | Los 4 de Tundra (`9d59472`) + los 2 que faltaban: desgaste por clima atado a la voz, y mantención que no viajaba a la nube |
+> | 1 hueco | El arreglo de neumáticos solo servía para usuarios NUEVOS; los que ya abrieron Taller tenían `fecha:null` para siempre |
+> | 1 regresión | El guard de `au()` dejaba **la lista de Taller vacía** al abrirla sin GPS |
+> | **1 causa raíz** | Abrir la app costaba **~1.100 lecturas** de Firestore. Ver abajo |
+> | Versiones | `APP_VERSION`, `sw.js` y `version.txt` los tres en **8.770** (en `main` están desincronizados: 8.758 vs 8.769, y el build de Android lee `version.txt` DEL REPO) |
+> | Tests | `mantencion` (30) + `lecturas-firestore` (32), verificados por mutación. Suite **15/15** |
+>
+> ### 🔥 El hallazgo grande: la cuota de Firestore
+> Medido en la consola: **73.000 lecturas contra 210 escrituras**, con **4 conexiones
+> máximo**. No era la cantidad de usuarios — era el costo de **abrir** la app: se
+> enganchaban 11 listeners al iniciar sesión, cada uno leyendo su colección entera
+> (~1.100 documentos). Con 50.000 lecturas diarias gratis para todo el proyecto, **los 51
+> testers abriendo la app una vez cada uno ya la dejaban sin base de datos**.
+> Lo peor: `loadHostels()` arrastraba `initVotosHostels()` = `guiComments limit(500)`,
+> ~550 documentos por apertura para **"Te doy alojo", que está OCULTO** desde `8f2d678`
+> (se sacó el botón, no la carga de datos).
+> Arreglado: cada pantalla engancha lo suyo al abrirse. **~980 documentos menos por apertura.**
+>
+> ### ⏸️ Parado a propósito: `wip/modo-conduccion-resena`
+> Modo conducción + Reseña de la app. **No entra durante la prueba cerrada** (función nueva).
+> Rescatada de cambios que estaban SIN COMMITEAR y se perdían con cualquier `checkout`.
+>
+> ### 📌 Lo que queda pendiente, y de quién es
+> 1. **Inty** — dar el visto bueno para mergear `fix/bugs-revision-2026-08-24` (eso publica).
+> 2. **Inty** — mirar el panel de uso de Firestore *antes* de que nadie abra la app, para
+>    confirmar que el consumo con la app cerrada es plano.
+> 3. **Tundra** — `collection('usage').get()` del panel admin **no tiene `limit()`**. Ahora
+>    que tu regla habilitó las escrituras, esa colección va a crecer y esa pantalla se pone
+>    cara. Conviene ponerle tope antes.
+> 4. **Después de la prueba cerrada** — revisar `wip/modo-conduccion-resena`.
 
-> ## 🔴 LEER ANTES DE SUBIR NADA — sesión Lenovo, 2026-08-24 ~04:20 UTC
-> Inty avisó que **otra cuenta está subiendo algo en paralelo ahora mismo**. Yo **NO** estoy
-> editando: mi árbol está limpio y todo mi trabajo está en ramas. El candado de `index.html`
-> está **libre**. Pero hay 3 choques posibles, en orden de gravedad:
->
-> **1. `librepedal.cl` ES la app de los testers.** `capacitor.config.json` tiene
-> `server.url: "https://librepedal.cl"` — la app de Play Store **no corre el código del AAB,
-> carga la web en vivo**. Cualquier deploy le llega a los 51 testers de la prueba cerrada al
-> instante. No existe "publico solo la web para probar".
->
-> **2. `version.txt` / `APP_VERSION` se pisan fácil.** En `main` están **desincronizados**:
-> `version.txt`=8.758 contra `APP_VERSION`=8.769. `deploy-seguro.sh` regenera version.txt
-> para la web, pero **`scripts/patch-android-signing.js` la lee DEL REPO** para el
-> `versionName` del AAB — si armás un build desde `main` hoy, sale marcado 8.758. Mi rama
-> los deja los tres en **8.770** (index.html, sw.js, version.txt). Si vas a tocar la versión,
-> avisá o coordinamos el número para no quedar con dos 8.770 distintos.
->
-> **3. Hay una REGRESIÓN en la rama de fixes del 23-ago — no la mergees tal cual.**
-> El guard de `au()` del commit `9d59472` es correcto en la idea, pero
-> `renderMantencion()` solo se llamaba desde `au()` y **`cv('mac')` nunca la llamó**: al
-> abrir Taller sin venir pedaleando, **la lista de mantención salía VACÍA**. Ya está
-> arreglado en `fix/bugs-revision-2026-08-24` (commit `c3373ca`) con test que lo caza.
->
-> **Estado de mis ramas** (pusheadas a `origin` y `lab`, **ninguna en `main`**):
-> - `fix/bugs-revision-2026-08-24` — los 6 bugs cerrados + la regresión de arriba +
->   `tests/mantencion.test.mjs` (30 asserts, verificados por mutación). Suite **14/14**.
->   Es la que recomiendo mergear.
-> - `wip/modo-conduccion-resena` — Modo conducción + Reseña. **NO mergear todavía**: necesita
->   desplegar `firestore.rules` aparte a Firebase (sin eso el botón "Enviar" falla siempre,
->   la colección `resenasApp` no tenía regla) y no conviene meter función nueva en plena
->   prueba cerrada.
->
-> **`main` no se ha movido**: sigue en `3a8fb8a` en los dos remotos. Si vas a mergear o
-> desplegar, `git pull` primero y decilo acá.
-
-> ## 🟢 SESIÓN LENOVO, 2026-08-24 ~03:50 UTC — continué la revisión de bugs. NO edito más, candado libre.
-> Tomé la rama `fix/bugs-revision-2026-08-23` (los 4 bugs + sw.js, buen trabajo: revisé
-> el diff completo y `_btnVolverModal()` sí devuelve '' con `_modalVolverA=null`, y el
-> guard de `au()` usa la clase real `.view.on`) y la continué en
-> **`fix/bugs-revision-2026-08-24`** (pusheada a `origin` y `lab`, **NO mergeada a main**):
->
-> - **Bug 5/6 — desgaste por clima atado a la voz.** `vigilarClima()` cortaba en
->   `if(!vozActiva && !window.climaFxSetMode) return;` antes de `_climaFxAplicar()`, así que
->   con la voz apagada `_climaModoActual` quedaba en `'off'` y el 1.5x de lluvia/nieve no
->   se aplicaba nunca. El freno de API (15 min) queda intacto.
-> - **Bug 6/6 — la mantención no viajaba a la nube.** Sube junto a los km, sanitizada
->   (un `undefined`/`NaN` en el historial habría hecho fallar el `set()` completo, o sea
->   también los kilómetros). Al restaurar gana el registro más avanzado y se copia el
->   ítem ENTERO, no campo por campo.
-> - **Hueco del arreglo de neumáticos:** `fecha:new Date()` quedó dentro de
->   `if(!us.mant[k])`, así que solo servía para usuarios NUEVOS — quien abrió Taller
->   desde el 23-ago ya tenía `fecha:null` guardado y se lo quedaba para siempre. Migrado.
-> - `version.txt` decía 8.758 contra APP_VERSION 8.769. Ojo: `deploy-seguro.sh` la
->   regenera para la web, pero `scripts/patch-android-signing.js` la lee DEL REPO para el
->   `versionName` del AAB. Todo en **8.770**.
-> - `tests/mantencion.test.mjs` (27 asserts, extrae el código real). **Suite 14/14.**
->   Verificado por mutación: revertir cualquiera de los 3 arreglos hace fallar el test.
->
-> Y aparte, en **`wip/modo-conduccion-resena`**: había trabajo SIN COMMITEAR en el árbol
-> (Modo conducción + Reseña de la app) que se perdía con cualquier checkout. Rescatado, más
-> las 2 piezas que le faltaban: las estrellas no tenían **ningún CSS**, y la colección
-> `resenasApp` no tenía regla en `firestore.rules` — el catch-all la denegaba, o sea el
-> botón "Enviar" fallaba SIEMPRE. **`firestore.rules` hay que desplegarlo aparte a
-> Firebase**, no se aplica solo.
->
-> ⚠️ Decide Inty: nada de esto está en `main` ni en producción.
 
 > ## 🟡 AVISO — sesión Lenovo, 2026-08-24 ~00:15 UTC: pusheé directo a main todo el 23-ago
 > No había leído el `CLAUDE.md` de este repo hasta ahora (tiene fecha 14-ago, existía
