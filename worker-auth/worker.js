@@ -149,6 +149,18 @@ export default {
     }
     const cu = cuDeEmail(payload.email);
 
+    // Prueba cerrada: el idToken (Google) prueba QUIÉN es, pero no que esté invitado.
+    // Mismo chequeo que el bloque modo:'codigo' de arriba. FALLA CERRADA a propósito:
+    // sin el secreto puesto, esta vía queda bloqueada entera (igual que el otro modo),
+    // no abierta a cualquier cuenta de Google verificada.
+    if (!env.TESTERS_PERMITIDOS) {
+      return json({ error: 'el ingreso con Google no está habilitado' }, 403);
+    }
+    const permitidos = String(env.TESTERS_PERMITIDOS).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    if (permitidos.indexOf(String(payload.email).toLowerCase()) === -1) {
+      return json({ error: 'ese correo no está en la lista de testers de la prueba cerrada' }, 403);
+    }
+
     if (!env.FIREBASE_PRIVATE_KEY_B64 || !env.FIREBASE_CLIENT_EMAIL) {
       // Deploy de staging sin la llave de firma: confirma la verificación pero no emite token.
       return json({ cu, email: payload.email, staging: true, note: 'verificado OK; sin llave de firma en este deploy' });
