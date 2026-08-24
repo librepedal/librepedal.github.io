@@ -168,5 +168,29 @@ const MES = 1000 * 60 * 60 * 24 * 30.44;
   debe('abrir Taller renderiza la lista (si no, sale vacia sin GPS)', CV.includes('renderMantencion()'));
 }
 
+// ---- 6) ORDEN: no subir la mantencion antes de haber leido la nube ----
+// Es la trampa que ya costo kilometros el 2026-07-20, y con la mantencion muerde mas
+// fuerte: `historial` es un ARRAY y Firestore con {merge:true} REEMPLAZA arrays enteros.
+// Telefono nuevo -> us.mant vacio -> salta un logro en los primeros 4 segundos ->
+// _ganarDarma() -> sincronizarStats() sube historiales VACIOS y borra los de la nube ->
+// cuando sincronizarAlEntrar() corre, ya no queda nada que restaurar.
+{
+  const SS = bloque('async function sincronizarStats()');
+  debe('sincronizarStats arma el payload en una variable, no inline',
+       /const datos=\{/.test(SS));
+  debe('la mantencion solo se agrega si ya se leyo la nube',
+       /if\(_mantListoParaSubir\)\{[\s\S]*?datos\.mant=_mantParaNube\(\)/.test(SS));
+  debe('los km y el Darma SIGUEN subiendo siempre (son numeros, los protege gana-el-mayor)',
+       /const datos=\{km:us\.di\|\|0[\s\S]*?darma:us\.d\|\|0/.test(SS));
+  debe('la bandera arranca cerrada', /let _mantListoParaSubir=false;/.test(HTML));
+
+  const SAE = bloque('function sincronizarAlEntrar()');
+  debe('la compuerta se abre DESPUES de leer la nube y ANTES de subir',
+       SAE.indexOf('_mantListoParaSubir=true;') < SAE.indexOf('sincronizarStats();') &&
+       SAE.indexOf('_mantListoParaSubir=true;') > SAE.indexOf("collection('users').doc(cu).get()"));
+  debe('si la lectura falla, la compuerta igual se abre (si no, esa cuenta nunca sincroniza)',
+       (SAE.match(/_mantListoParaSubir=true;/g) || []).length === 2);
+}
+
 console.log('  mantencion.test.mjs: ' + ok + ' OK' + (fail ? ', ' + fail + ' FALLAN' : ''));
 process.exit(fail ? 1 : 0);

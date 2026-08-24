@@ -7589,11 +7589,26 @@ function _mantParaNube(){
   }catch(e){}
   return out;
 }
+/* La mantención NO se sube hasta haber leído la nube. Es la misma trampa que ya costó
+   kilómetros el 2026-07-20, y con la mantención muerde más fuerte: `historial` es un ARRAY,
+   y Firestore con {merge:true} REEMPLAZA arrays enteros (a los mapas los fusiona, a los
+   arrays no). El escenario: teléfono nuevo o datos borrados -> `us.mant` arranca vacío ->
+   salta cualquier logro en los primeros segundos -> _ganarDarma() -> sincronizarStats()
+   sube historiales VACÍOS y borra los de la nube -> cuando sincronizarAlEntrar() corre a
+   los 4 segundos, ya no queda nada que restaurar. Pérdida definitiva y silenciosa.
+   Con esta bandera, los km y el Darma siguen subiendo como siempre (son números, y el
+   criterio de "gana el más grande" los protege), pero la mantención espera a la lectura. */
+let _mantListoParaSubir=false;
 async function sincronizarStats(){
   if(!cu) return;
   const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null;
+  const datos={km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid};
+  if(_mantListoParaSubir){
+    datos.mant=_mantParaNube();
+    datos.mantKm=(typeof us.mantKm==='number'&&isFinite(us.mantKm))?us.mantKm:0;
+  }
   try{
-    await db.collection('users').doc(cu).set({km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid, mant:_mantParaNube(), mantKm:(typeof us.mantKm==='number'&&isFinite(us.mantKm))?us.mantKm:0},{merge:true});
+    await db.collection('users').doc(cu).set(datos,{merge:true});
   }catch(e){
     try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarStats'}}); }catch(_){}
   }
@@ -7674,9 +7689,18 @@ function sincronizarAlEntrar(){
           try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
         }
       }
+      // Recién acá se habilita la subida de la mantención: ya se leyó la nube y, si tenía
+      // algo mejor, ya está fusionado en `us.mant`. Antes de este punto una subida habría
+      // pisado el historial de la nube con arrays vacíos (ver nota en sincronizarStats).
+      _mantListoParaSubir=true;
       sincronizarStats(); // recién ahora se sube, con el número correcto
       try{ _iniciarLogros(); }catch(e){} // baseline de logros: registra lo ya ganado SIN anunciar; habilita anuncios reales
     }catch(e){
+      // Si la lectura falló, igual hay que abrir la compuerta: dejarla cerrada para
+      // siempre significaría que a ese usuario la mantención NUNCA le llega a la nube —
+      // que es justo el bug que vinimos a arreglar. Lo que se protege es el orden (leer
+      // antes de escribir), no el éxito de la lectura: acá ya se intentó.
+      _mantListoParaSubir=true;
       try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarAlEntrar'}}); }catch(_){}
     }
   }, 4000); // deja que la sesión termine de levantar
