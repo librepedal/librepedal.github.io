@@ -213,5 +213,54 @@ const MES = 1000 * 60 * 60 * 24 * 30.44;
        !/if\(vozActiva && _climaBase && [^\n]*CLIMA_MIN_ENTRE_AVISOS/.test(VC));
 }
 
+// ---- 8) _restaurarDesdeNube(), por su nombre real, con los 4 campos a la vez ----
+// Antes se probaba solo el fragmento inline de sincronizarAlEntrar(); ahora es una
+// función compartida y se prueba llamándola tal cual la llama el código real.
+{
+  const RDN = SRC + '\n' + bloque('function _restaurarDesdeNube(nube){');
+  const api2 = new Function('usRef', RDN + '\nreturn function(nube){ us=usRef; const r=_restaurarDesdeNube(nube); return {r, us}; };');
+
+  const base = () => ({ di: 5, d: 10, dm: { ciclismo: 3 }, mantKm: 0, mant: {} });
+  {
+    const r = api2(base())({ km: 50, darma: 20, kmPorModo: { ciclismo: 8, mtb: 4 }, mantKm: 0 });
+    debe('restaura km si la nube tiene más', r.r === true && r.us.di === 50);
+    debe('restaura darma si la nube tiene más', r.us.d === 20);
+    debe('restaura kmPorModo por modo, no reemplaza el objeto entero', r.us.dm.ciclismo === 8 && r.us.dm.mtb === 4);
+  }
+  {
+    const r = api2(base())({ km: 1, darma: 1, mantKm: 0 });
+    debe('NO restaura si el teléfono ya tiene más (km/darma)', r.r === false && r.us.di === 5 && r.us.d === 10);
+  }
+  {
+    const r = api2(base())(null);
+    debe('nube null: no revienta, no hace nada', r.r === false);
+  }
+}
+
+// ---- 9) El login por código (PRIMERA sesión) también restaura y abre la compuerta ----
+// Encontrado probando la rama EN VIVO el 2026-08-24 con una cuenta real: el login por
+// código de tester nunca pasaba por sincronizarAlEntrar(), así que en la PRIMERA sesión
+// de cualquier cuenta (incluida una que ya tuviera km real en la nube desde otro
+// dispositivo) esos datos no se restauraban -- y la escritura de
+// _completarLoginVerificadoOriginal() subía km:(us.di)||0 SIN haber leído la nube
+// primero, así que en una cuenta EXISTENTE con km real, un primer login desde un
+// dispositivo nuevo lo pisaba con 0.
+{
+  const FN = bloque('async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){');
+  const iCosmeticas = FN.indexOf('if(_prevData.personalidad)');
+  const iRestaurar = FN.indexOf('_restaurarDesdeNube(_prevData);');
+  const iCompuerta = FN.indexOf('_mantListoParaSubir=true;');
+  const iEscritura = FN.indexOf("db.collection('users').doc(cu).set(");
+  debe('la restauración ocurre DESPUÉS de leer las cosméticas (mismo _prevData, sin otra lectura)',
+       iCosmeticas > 0 && iRestaurar > iCosmeticas);
+  debe('...y ANTES de la escritura que sube km/kmPorModo (si no, la escritura sigue siendo ciega)',
+       iRestaurar > 0 && iEscritura > 0 && iRestaurar < iEscritura);
+  debe('la compuerta de mantención se abre en este camino también',
+       iCompuerta > 0);
+  debe('...y también ANTES de esa escritura (aunque esta escritura puntual no suba mant/mantKm,'
+       + ' un _ganarDarma() disparado por el propio login sí depende de la compuerta)',
+       iCompuerta > 0 && iEscritura > 0 && iCompuerta < iEscritura);
+}
+
 console.log('  mantencion.test.mjs: ' + ok + ' OK' + (fail ? ', ' + fail + ' FALLAN' : ''));
 process.exit(fail ? 1 : 0);

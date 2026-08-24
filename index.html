@@ -4796,6 +4796,20 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
     if(_prevData.temaUi==='solido'||_prevData.temaUi==='cristal'){ temaUI=_prevData.temaUi; try{localStorage.setItem('lp_tema_ui',temaUI);}catch(e){} if(typeof _aplicarTemaUI==='function') _aplicarTemaUI(); }
     if(_prevData.personalidad) pisteroPersonalidad=_prevData.personalidad;
   }
+  // 2026-08-24: restaura km/darma/kmPorModo/mantención ANTES de la escritura de mas
+  // abajo, con el mismo criterio "gana el mas grande" que sincronizarAlEntrar(). Sin
+  // esto, un primer login por codigo en un dispositivo/navegador nuevo escribia
+  // km:(us.di)||0 SIN haber leido la nube -- en una cuenta con km real de otro
+  // dispositivo, eso lo pisaba con 0 (encontrado en vivo probando esta rama: el campo
+  // `km` de una cuenta real quedo en 0 mientras `kmPorModo.moto` seguia con datos
+  // reales, justo la firma de este bug). Restaurar primero vuelve esa escritura
+  // inofensiva: sube de vuelta el mismo maximo que ya tenia.
+  _restaurarDesdeNube(_prevData);
+  // Se abre la compuerta de mantencion tambien en ESTE camino (antes solo la abria
+  // sincronizarAlEntrar(), que este login nunca llama): sin esto, ganar Darma o marcar
+  // una mantencion como hecha durante la PRIMERA sesion de una cuenta no subia nada
+  // hasta el proximo recargo de pagina.
+  _mantListoParaSubir=true;
   try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
   localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
   localStorage.setItem('lp_lens_'+cu,selectedLens);
@@ -7646,61 +7660,73 @@ async function sincronizarStats(){
    16 usuarios invisibles.
    Ahora manda el número más grande: si la nube tiene más, se RESTAURA al teléfono (que es
    lo que uno espera al reinstalar) y recién entonces se sincroniza. */
+/* Compartida por sincronizarAlEntrar() (recarga / sesión que vuelve) Y por
+   _completarLoginVerificadoOriginal() (PRIMER login interactivo por código de tester,
+   que ya lee `_prevData` para restaurar cosméticas y no necesita otra lectura a
+   Firestore para esto). Nace de una prueba en vivo el 2026-08-24: el login por código
+   NUNCA pasaba por sincronizarAlEntrar(), así que en la primera sesión de cualquier
+   cuenta (incluida una que ya tuviera km/mantención reales en la nube desde otro
+   dispositivo) esos datos no se restauraban — y peor, la escritura de
+   _completarLoginVerificadoOriginal() sube `km:(us&&us.di)||0` SIN haber leído la nube
+   primero, así que en una cuenta existente con km real, un primer login desde un
+   dispositivo/navegador nuevo lo pisaba con 0. Restaurar ANTES de esa escritura la
+   vuelve inofensiva: escribe de vuelta el mismo máximo que ya tenía.
+   "Gana el más grande/avanzado", nunca se pisa lo que ya existe con algo más pobre.
+   Mantención se compara item por item y se copia el objeto ENTERO del ganador, no
+   campo por campo: kmBase, fecha e historial se escriben juntos al marcar "ya la
+   cambié", así que mezclar el kmBase de la nube con la fecha del teléfono daría un
+   ítem incoherente. Criterio de "más avanzado": más cambios registrados; a igualdad,
+   mayor kmBase; a igualdad, fecha más nueva.
+   Devuelve true si algo cambió (para que quien llama decida si avisa/persiste). */
+function _restaurarDesdeNube(nube){
+  if(!nube) return false;
+  let restaurado=false;
+  const kmNube=Number(nube.km)||0, kmLocal=Number(us.di)||0;
+  const daNube=Number(nube.darma)||0, daLocal=Number(us.d)||0;
+  if(kmNube>kmLocal+0.05){ us.di=kmNube; restaurado=true; }
+  if(daNube>daLocal){ us.d=daNube; restaurado=true; }
+  if(nube.kmPorModo && typeof nube.kmPorModo==='object'){
+    if(!us.dm || typeof us.dm!=='object') us.dm={};
+    for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
+  }
+  const kmMantNube=Number(nube.mantKm)||0, kmMantLocal=Number(us.mantKm)||0;
+  if(kmMantNube>kmMantLocal+0.05){ us.mantKm=kmMantNube; restaurado=true; }
+  if(nube.mant && typeof nube.mant==='object'){
+    if(!us.mant || typeof us.mant!=='object') us.mant={};
+    Object.keys(nube.mant).forEach(function(k){
+      const dn=nube.mant[k]; if(!dn || typeof dn!=='object') return;
+      const dl=us.mant[k];
+      const hn=(Array.isArray(dn.historial)?dn.historial.length:0);
+      const hl=(dl&&Array.isArray(dl.historial))?dl.historial.length:0;
+      let nubeGana;
+      if(!dl) nubeGana=true;
+      else if(hn!==hl) nubeGana=hn>hl;
+      else if((Number(dn.kmBase)||0)!==(Number(dl.kmBase)||0)) nubeGana=(Number(dn.kmBase)||0)>(Number(dl.kmBase)||0);
+      else nubeGana=(new Date(dn.fecha||0).getTime()||0)>(new Date(dl.fecha||0).getTime()||0);
+      if(nubeGana){
+        us.mant[k]={kmBase:Number(dn.kmBase)||0, fecha:dn.fecha||null, avisado:!!dn.avisado,
+                    historial:Array.isArray(dn.historial)?dn.historial:[],
+                    umbralKm:(dl&&dl.umbralKm!==undefined)?dl.umbralKm:null,
+                    umbralMeses:(dl&&dl.umbralMeses!==undefined)?dl.umbralMeses:null};
+        restaurado=true;
+      }
+    });
+    // los umbrales los vuelve a fijar _mantData() desde MANT_ITEMS (fuente de verdad
+    // del codigo, no de la nube), asi que no se suben ni se confia en ellos.
+    try{ if(typeof _mantData==='function') _mantData(); }catch(e){}
+  }
+  return restaurado;
+}
 function sincronizarAlEntrar(){
   if(!cu) return;
   setTimeout(async function(){
     try{
       let nube=null;
       try{ const doc=await db.collection('users').doc(cu).get(); if(doc.exists) nube=doc.data(); }catch(e){}
-      if(nube){
-        const kmNube=Number(nube.km)||0, kmLocal=Number(us.di)||0;
-        const daNube=Number(nube.darma)||0, daLocal=Number(us.d)||0;
-        let restaurado=false;
-        if(kmNube>kmLocal+0.05){ us.di=kmNube; restaurado=true; }
-        if(daNube>daLocal){ us.d=daNube; restaurado=true; }
-        if(nube.kmPorModo && typeof nube.kmPorModo==='object'){
-          if(!us.dm || typeof us.dm!=='object') us.dm={};
-          for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
-        }
-        // Mantencion (2026-08-24), con el MISMO criterio que los km: gana el registro mas
-        // avanzado, nunca se pisa lo que ya existe con algo mas pobre. Se compara item por
-        // item y se copia el objeto ENTERO del ganador, no campo por campo: kmBase, fecha
-        // e historial se escriben juntos cuando marcas "ya la cambie", asi que mezclar el
-        // kmBase de la nube con la fecha del telefono daria un item incoherente (diria que
-        // cambiaste la cadena en una fecha que no corresponde a ese kilometraje).
-        // Criterio de "mas avanzado": mas cambios registrados; a igualdad, mayor kmBase;
-        // a igualdad, fecha mas nueva.
-        const kmMantNube=Number(nube.mantKm)||0, kmMantLocal=Number(us.mantKm)||0;
-        if(kmMantNube>kmMantLocal+0.05){ us.mantKm=kmMantNube; restaurado=true; }
-        if(nube.mant && typeof nube.mant==='object'){
-          if(!us.mant || typeof us.mant!=='object') us.mant={};
-          Object.keys(nube.mant).forEach(function(k){
-            const dn=nube.mant[k]; if(!dn || typeof dn!=='object') return;
-            const dl=us.mant[k];
-            const hn=(Array.isArray(dn.historial)?dn.historial.length:0);
-            const hl=(dl&&Array.isArray(dl.historial))?dl.historial.length:0;
-            let nubeGana;
-            if(!dl) nubeGana=true;
-            else if(hn!==hl) nubeGana=hn>hl;
-            else if((Number(dn.kmBase)||0)!==(Number(dl.kmBase)||0)) nubeGana=(Number(dn.kmBase)||0)>(Number(dl.kmBase)||0);
-            else nubeGana=(new Date(dn.fecha||0).getTime()||0)>(new Date(dl.fecha||0).getTime()||0);
-            if(nubeGana){
-              us.mant[k]={kmBase:Number(dn.kmBase)||0, fecha:dn.fecha||null, avisado:!!dn.avisado,
-                          historial:Array.isArray(dn.historial)?dn.historial:[],
-                          umbralKm:(dl&&dl.umbralKm!==undefined)?dl.umbralKm:null,
-                          umbralMeses:(dl&&dl.umbralMeses!==undefined)?dl.umbralMeses:null};
-              restaurado=true;
-            }
-          });
-          // los umbrales los vuelve a fijar _mantData() desde MANT_ITEMS (fuente de verdad
-          // del codigo, no de la nube), asi que no se suben ni se confia en ellos.
-          try{ if(typeof _mantData==='function') _mantData(); }catch(e){}
-        }
-        if(restaurado){
-          try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
-          try{ if(typeof au==='function') au(); }catch(e){}
-          try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
-        }
+      if(_restaurarDesdeNube(nube)){
+        try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
+        try{ if(typeof au==='function') au(); }catch(e){}
+        try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
       }
       // Recién acá se habilita la subida de la mantención: ya se leyó la nube y, si tenía
       // algo mejor, ya está fusionado en `us.mant`. Antes de este punto una subida habría
