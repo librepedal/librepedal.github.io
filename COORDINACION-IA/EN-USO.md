@@ -1,5 +1,33 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟡 LISTO PARA MERGEAR — `fix/mapa-cache-compartida` (2026-08-24 ~19:45 UTC, sesión Lenovo)
+> Candado de `index.html`: **LIBRE** (rama pusheada a `origin` y `lab`, working tree limpio).
+>
+> **Por qué existe**: la cuota de Firestore se agotó DOS VECES la misma noche del 24-ago,
+> incluso después del fix de ~78 lecturas/apertura. Diagnóstico: cada teléfono SIN caché
+> local (instalación nueva, o caché vencida a los 7 días) seguía pidiéndole a Firestore la
+> colección `recommendations` COMPLETA (~4.000 documentos) — con varios testers abriendo el
+> mapa por primera vez el mismo día, eso solo alcanza para tumbar la cuota diaria (50k).
+>
+> **El fix**: `subscribeToMapPoints()` ahora, cuando no hay caché local, intenta sembrar
+> primero desde `/api/mapa-librepedal` — un Cloudflare Worker nuevo en Capone (mi propio
+> proyecto, cero territorio compartido) que hace esa lectura pesada UNA vez cada 24h y la
+> sirve cacheada a cualquier tester que la pida. Si Capone falla por lo que sea (caído, sin
+> red, CORS, timeout de 4s) cae exactamente al comportamiento de siempre — nunca peor.
+> Ya desplegado y verificado en vivo (responde `{"error":"cuota"}` ahora mismo porque la
+> cuota de Firestore sigue agotada — se autocompleta solo en cuanto la cuota resetee y
+> alguien pida el endpoint).
+>
+> Tests: `mapa-cache-compartida` (16 asserts), verificados por mutación (romper el catch o
+> el timeout hace fallar los tests correspondientes). Suite completa **20/20 archivos**.
+> `APP_VERSION` 8.770 → **8.771**.
+>
+> **Pendiente**: el OK de Inty para mergear a `main` (eso publica a los 51 testers al
+> instante, mismo mecanismo de siempre). Rama: `fix/mapa-cache-compartida`, commit
+> `2ef15a5`. No toca `worker-auth/` ni ninguna zona de Tundra.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en 6263712, versión 8.770 en producción (2026-08-24 ~17:35 UTC)
 > Inty dio el OK y mergeó `fix/bugs-revision-2026-08-24` a `main` (`3a8fb8a` → `6263712`).
 > Verificado en vivo: `https://librepedal.cl/version.txt` y `sw.js` devuelven **8.770** los
