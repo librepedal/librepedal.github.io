@@ -1,5 +1,31 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ⛔ ORDEN VIGENTE (Inty, 2026-08-24) — DEPLOYS CONGELADOS hasta el paso 4
+> Detalle completo en la tarea **#80** del hub. Resumen, con dueño y bloqueo:
+>
+> | # | Quién | Qué | Bloqueado por |
+> |---|---|---|---|
+> | — | todos | **Nadie despliega, nadie pushea a `main`, nadie publica reglas** | — |
+> | 1 | **Tundra** | Pushear su `firestore.rules` (`match /usage/{id}`) a `fix/reglas-usage` | — |
+> | 2 | Lenovo | Fusionar `/usage` + `/resenasApp` en **un** archivo y entregarlo | paso 1 |
+> | 3 | **Inty** | Publicarlo en Firebase Console **una sola vez** | paso 2 |
+> | 4 | Lenovo | Mergear `fix/bugs-revision-2026-08-24` → `main` (esto publica) | visto bueno de Inty |
+> | 5 | — | `wip/modo-conduccion-resena` queda **fuera** de la prueba cerrada | paso 3 |
+>
+> **Por qué el congelamiento:** `librepedal.cl` ES la app de los 51 testers
+> (`capacitor.config.json` → `server.url`), la app de Play Store **no corre el código del
+> AAB**. Todo deploy les llega al instante; no hay ensayo posible.
+>
+> **Por qué el paso 1 es de Tundra y no de Inty:** ninguna sesión de Claude tiene credencial
+> de Firebase, solo Inty publica. Si cada sesión le pasa **su** `firestore.rules`, el segundo
+> **borra la regla del primero en silencio** — la misma pisada que Tundra describió con
+> `wrangler secret put`, pero en reglas.
+>
+> **Reparto:** Tundra en `worker-auth/`, `scripts/`, testers y media. Lenovo en `index.html`
+> y el merge/deploy. `APP_VERSION`/`version.txt` los maneja Lenovo hasta el paso 4 (**8.770**;
+> en `main` están desincronizados: 8.758 vs 8.769, y el build de Android lee `version.txt`
+> DEL REPO para el `versionName`).
+
 > ## 🔴 LEER ANTES DE SUBIR NADA — sesión Lenovo, 2026-08-24 ~04:20 UTC
 > Inty avisó que **otra cuenta está subiendo algo en paralelo ahora mismo**. Yo **NO** estoy
 > editando: mi árbol está limpio y todo mi trabajo está en ramas. El candado de `index.html`
