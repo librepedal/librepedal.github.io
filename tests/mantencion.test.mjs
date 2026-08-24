@@ -147,5 +147,26 @@ const MES = 1000 * 60 * 60 * 24 * 30.44;
        HTML.includes("if(!vozActiva) return; // el resto de la funcion es solo para el AVISO hablado"));
 }
 
+// ---- 5) El guard de au() no puede dejar Taller en blanco ----
+// renderMantencion() se volvio condicional a que Taller este visible (para no reconstruir
+// 5 tarjetas en cada punto de GPS). Eso esta bien, PERO au() corre al iniciar la app con
+// Inicio a la vista: si nadie renderiza al ABRIR Taller, la lista sale vacia para quien no
+// va pedaleando. Estos asserts son justo los que faltaban cuando se introdujo el guard.
+// Se mira la funcion cv() ENTERA (llaves balanceadas, no una ventana de caracteres: cv()
+// vive en una sola linea kilometrica y un regex por tamano se rompe al primer retoque).
+{
+  debe('au() renderiza Taller solo si esta visible (ahorro de bateria)',
+       /if\(typeof renderMantencion==='function'\)\{[^\n]*v-mac[^\n]*\}/.test(HTML));
+
+  // Se borran los comentarios /* */ ANTES de mirar: el comentario que explica este mismo
+  // arreglo menciona `renderMantencion()`, así que sin esto el test pasaba por leerse a sí
+  // mismo aunque la llamada real no estuviera (lo cazó una prueba de mutación).
+  // Solo bloques /* */, no `//`: cv() vive en una sola línea y un `https://` cualquiera
+  // se llevaría por delante todo lo que viene después.
+  const CV = bloque('function cv(id, _esVolver){').replace(/\/\*[\s\S]*?\*\//g, '');
+  debe("cv() abre la vista 'mac'", CV.includes("id==='mac'"));
+  debe('abrir Taller renderiza la lista (si no, sale vacia sin GPS)', CV.includes('renderMantencion()'));
+}
+
 console.log('  mantencion.test.mjs: ' + ok + ' OK' + (fail ? ', ' + fail + ' FALLAN' : ''));
 process.exit(fail ? 1 : 0);
