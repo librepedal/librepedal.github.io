@@ -685,6 +685,35 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-eta-item{text-align:center}
 .nav-eta-item .val{font-size:1.1rem;font-weight:800;color:var(--g)}
 .nav-eta-item .lbl{font-size:0.65rem;color:#888}
+/* Modo conducción (nav-screen.modo-auto, se activa solo si actividadTipo==='moto'):
+   texto/íconos/botones más grandes, criterio de las guías reales de Google "Design for
+   Driving" (targets táctiles grandes, texto legible de un vistazo, sin obligar a mirar
+   fijo la pantalla) — ver calculateAndStartNavigation(). Vuelta/Ver vueltas/Reiniciar se
+   esconden: son de running/ciclismo, no aplican manejando. */
+#nav-screen.modo-auto .nav-instruction{padding:16px 18px;min-height:76px}
+#nav-screen.modo-auto .nav-instruction .icon{font-size:3.1rem;min-width:60px}
+#nav-screen.modo-auto .nav-instruction .text{font-size:1.7rem;line-height:1.25}
+#nav-screen.modo-auto .nav-instruction .dist{font-size:1.15rem;margin-top:5px}
+#nav-screen.modo-auto .nav-stat{padding:10px 16px;min-width:76px}
+#nav-screen.modo-auto .nav-stat .val{font-size:1.6rem}
+#nav-screen.modo-auto .nav-stat .lbl{font-size:0.78rem}
+#nav-screen.modo-auto .nav-eta-item .val{font-size:1.7rem}
+#nav-screen.modo-auto .nav-eta-item .lbl{font-size:0.82rem}
+#nav-screen.modo-auto .nav-end-btn{padding:20px 12px;font-size:1.15rem;min-height:64px}
+#nav-screen.modo-auto .nav-close{width:48px;height:48px;font-size:1.3rem}
+.nav-lap-row{display:flex;gap:8px;margin-top:8px}
+#nav-screen.modo-auto .nav-lap-row{display:none}
+/* Estrellas de la reseña de la app. Reusa a propósito la MISMA convención de color que
+   la valoración que ya existe en el archivo (oro var(--g) encendida, #3a4a5a apagada):
+   es el lenguaje que la app ya habla, no uno nuevo. Van como <button> y no como <span>
+   (el otro caso) porque acá son el control principal del formulario: así entran por
+   teclado y las lee un lector de pantalla. Target de 44px, el mínimo táctil real. */
+.resena-stars{display:flex;gap:2px;margin:6px 0 4px}
+.resena-star{background:none;border:0;padding:0;width:44px;height:44px;line-height:44px;
+  font-size:1.35rem;color:#3a4a5a;cursor:pointer;transition:color 0.15s,transform 0.1s}
+.resena-star.on{color:var(--g)}
+.resena-star:active{transform:scale(0.88)}
+.resena-star:focus-visible{outline:2px solid var(--p);outline-offset:2px;border-radius:6px}
 .speech-bubble{position:absolute;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.95);color:#fff;padding:10px 15px;border-radius:12px;font-size:0.85rem;max-width:280px;text-align:center;border:2px solid var(--p);opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:700;font-weight:700}
 .speech-bubble.show{opacity:1}
 .nav-alert{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);background:rgba(255,215,0,0.95);color:#000;padding:15px 25px;border-radius:15px;font-size:1rem;font-weight:800;z-index:800;opacity:0;transition:opacity 0.3s;pointer-events:none;text-align:center;box-shadow:0 0 25px rgba(255,215,0,0.5)}
@@ -1060,7 +1089,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
       <button class="nav-end-btn" id="btnPausaViaje" onclick="togglePausaViaje()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-pause"></i> Pausar</button>
       <button class="nav-end-btn" onclick="finishTrip()" style="flex:1"><i class="fas fa-circle-check"></i> Terminar</button>
     </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
+    <div class="nav-lap-row">
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="marcarVuelta()"><i class="fas fa-flag-checkered"></i> Vuelta</button>
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="verVueltas()"><i class="fas fa-clipboard"></i> Ver vueltas</button>
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="reiniciarCronometro()"><i class="fas fa-arrows-rotate"></i> Reiniciar</button>
@@ -1268,6 +1297,14 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <button class="ab sec" style="margin:0" onclick="conectarPulsometro()"><i class="fas fa-heart"></i> Conectar pulsómetro</button>
   <button class="ab sec" style="margin:0" onclick="conectarPotenciometro()"><i class="fas fa-bolt"></i> Conectar potenciómetro</button>
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()"><i class="fas fa-plug"></i> Desconectar</button>
+</div>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-star"></i> Ayúdanos a crecer</h4>
+<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Contanos qué tal te va con la app — tu opinión nos ayuda a mejorarla.</p>
+<div class="resena-stars" id="resenaStars"></div>
+<textarea id="resenaComentario" rows="2" placeholder="Comentario (opcional)..." maxlength="500"></textarea>
+<div class="quick-links">
+  <button class="ab sec" style="margin:0" onclick="enviarResenaApp()"><i class="fas fa-paper-plane"></i> Enviar</button>
+  <a href="https://play.google.com/store/apps/details?id=cl.librepedal.app" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fab fa-google-play"></i> Calificar en Play Store</a>
 </div>
 <div class="quick-links" style="margin-top:16px">
   <a href="terminos.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fas fa-file-lines"></i> Términos y Condiciones</a>
@@ -2670,7 +2707,7 @@ function _actualizarBtnCicloCargado(){
 // Aplica el tema y pinta el selector apenas carga el script — así la pantalla de
 // registro (y una sesión que vuelve) ya se ven con el color correcto desde el
 // primer pintado, no recién después de loguearse.
-_aplicarTemaActividad(); _aplicarTemaUI(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
+_aplicarTemaActividad(); _aplicarTemaUI(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado(); _renderResenaStars();
 // ===== Personalidad de Pistero: el tono cambia, la identidad (Pistero, chileno,
 // experto) no. 'cercano' es el default — mismo tono que siempre tuvo la app.
 /* Los arquetipos dejaron de ser rasgos abstractos («relajado», «directo») y pasaron a ser
@@ -6183,6 +6220,40 @@ function toggleBitacoraViajes(){
   _actualizarBtnBitacoraViajes();
   h(bitacoraViajesOn?'Bitácora de viajes activada. Cuando termines una ruta te voy a preguntar si quieres anotar dónde te hospedaste.':'Bitácora de viajes desactivada. Si igual quieres guardarla alguna vez, solo dime "guarda mi bitácora".');
 }
+/* ===== Reseña de la app (2026-08-24, pedido de Inty) =====
+   Cajón propio de estrellas + comentario, guardado en Firestore (colección
+   `resenasApp`) para que Inty lo vea — SEPARADO del botón "Calificar en Play
+   Store" (deep-link directo a la ficha real, sin API nativa). La API oficial de
+   Google ("In-App Review") requeriría un plugin nativo de Capacitor y reconstruir
+   el AAB, que esta sesión tiene prohibido tocar — esto cumple el mismo objetivo
+   100% desde index.html, sin nada nativo. Los dos botones quedan siempre visibles
+   juntos, sin condicionar uno al otro por la nota que se puso (no manipular a
+   quién se le ofrece dejar reseña pública). */
+let _resenaEstrellas=0;
+function _renderResenaStars(){
+  const cont=document.getElementById('resenaStars'); if(!cont) return;
+  let html='';
+  for(let i=1;i<=5;i++){
+    html+='<button type="button" class="resena-star'+(i<=_resenaEstrellas?' on':'')+'" onclick="_resenaSetEstrellas('+i+')" aria-label="'+i+' estrella'+(i>1?'s':'')+'"><i class="fas fa-star"></i></button>';
+  }
+  cont.innerHTML=html;
+}
+function _resenaSetEstrellas(n){ _resenaEstrellas=n; _renderResenaStars(); }
+let _enviandoResena=false;
+async function enviarResenaApp(){
+  if(!_resenaEstrellas){ lpAviso('Toca una estrella para calificar primero.'); return; }
+  if(_enviandoResena) return;
+  _enviandoResena=true;
+  const comentarioEl=document.getElementById('resenaComentario');
+  const comentario=(comentarioEl&&comentarioEl.value)?comentarioEl.value.trim():'';
+  try{
+    await db.collection('resenasApp').add({estrellas:_resenaEstrellas, comentario:comentario, user:cu||null, nombre:nombreUsuario||null, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    if(comentarioEl) comentarioEl.value='';
+    _resenaEstrellas=0; _renderResenaStars();
+    h('¡Gracias por tu opinión! Nos ayuda un montón a mejorar la app.');
+  }catch(e){ lpAviso('No se pudo enviar, intenta de nuevo.'); }
+  finally{ _enviandoResena=false; }
+}
 let gpsAhorro=(function(){ try{ return localStorage.getItem('lp_gps_ahorro')==='1'; }catch(e){ return false; } })();
 function _actualizarBtnAhorroGPS(){ const b=document.getElementById('btnAhorroGPS'); if(b){ b.innerText=gpsAhorro?'🔋 Ahorro GPS: ON':'🔋 Ahorro GPS: OFF'; b.style.background=gpsAhorro?'rgba(16,185,129,0.15)':''; b.style.borderColor=gpsAhorro?'#10b981':''; } }
 async function toggleAhorroGPS(){
@@ -8449,6 +8520,12 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   _detenerGpsLibreSiActivo();
   navGuardado=false;
   document.getElementById('nav-screen').classList.add('active');
+  // Modo conducción (pedido de Inty): si vas en "Motorizado" la pantalla de
+  // navegación se agranda y se simplifica sola — texto/botones más grandes
+  // (criterio real: guías de Google "Design for Driving", targets táctiles
+  // grandes, texto legible de un vistazo) y se esconde la fila de Vuelta/Ver
+  // vueltas/Reiniciar (una función de running/ciclismo que no aplica manejando).
+  document.getElementById('nav-screen').classList.toggle('modo-auto', actividadTipo==='moto');
   _actualizarBtnManosLibres();
   if(navMap) navMap.remove();
   navMap=L.map('nav-map').setView([startLat,startLon],15);
