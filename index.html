@@ -6579,12 +6579,35 @@ function _mapPointsCacheLeer(){
     return c;
   }catch(e){ return null; }
 }
+/* Solo los campos que el mapa usa de verdad (ver _renderizarPuntosVisibles: lat, lon, cat,
+   user para separar los sembrados de OSM, title y desc para el globo).
+   Esto NO es prolijidad: un documento de `recommendations` puede traer `foto`, que es una
+   imagen en base64 (previewFoto usa readAsDataURL). Guardar eso en localStorage —que tiene
+   ~5 MB para TODA la app— reventaba de dos maneras: la escritura fallaba y la caché no
+   servía de nada en silencio, y peor, al llenar el almacenamiento se caían las otras
+   escrituras, incluida gd() con los kilómetros y las rutas del usuario. gd() tiene su
+   propio catch silencioso, así que la pérdida habría sido invisible. */
+function _mapPointNube(d){
+  return {id:d.id, lat:d.lat, lon:d.lon, cat:d.cat, user:d.user,
+          title:d.title, desc:(typeof d.desc==='string'?d.desc.slice(0,200):''), tsMs:d.tsMs||0};
+}
+const MAPPOINTS_CACHE_MAX=6000;          // tope de puntos guardados
+const MAPPOINTS_CACHE_MAX_BYTES=1500000; // ~1,5 MB: deja el resto de localStorage libre
 function _mapPointsCacheGuardar(){
   try{
     let maxTs=0;
     mapPointsData.forEach(function(d){ if(d.tsMs>maxTs) maxTs=d.tsMs; });
-    localStorage.setItem(MAPPOINTS_CACHE_KEY, JSON.stringify({ultimaSync:Date.now(), maxTs:maxTs, puntos:mapPointsData}));
-  }catch(e){ /* almacenamiento lleno o modo privado: la app sigue, solo pierde el ahorro */ }
+    const payload=JSON.stringify({ultimaSync:Date.now(), maxTs:maxTs,
+                                  puntos:mapPointsData.slice(0,MAPPOINTS_CACHE_MAX).map(_mapPointNube)});
+    // Antes de escribir, no después: si no entra, se descarta la caché entera en vez de
+    // dejar el almacenamiento al borde y hacer fallar a gd() (los km del usuario).
+    if(payload.length>MAPPOINTS_CACHE_MAX_BYTES){ try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){} return; }
+    localStorage.setItem(MAPPOINTS_CACHE_KEY, payload);
+  }catch(e){
+    // Almacenamiento lleno o modo privado: se borra lo propio para no dejar ocupado un
+    // espacio que necesitan los datos del usuario. La app sigue, solo pierde el ahorro.
+    try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){}
+  }
 }
 function _mapPointsAplicar(snap){
   // Fusión por id: un punto que ya estaba se reemplaza, uno nuevo se agrega. Nunca se
