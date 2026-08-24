@@ -1,6 +1,12 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## 🟡 LISTO PARA MERGEAR — `fix/mapa-cache-compartida` (2026-08-24 ~19:45 UTC, sesión Lenovo)
+> ## ✅ PUBLICADO — main en d6eb0d0, versión 8.771 en producción (2026-08-24, sesión Lenovo)
+> Inty dio el OK, mergeado y pusheado a `origin` y `lab`. Verificado en vivo:
+> `https://librepedal.cl/version.txt` devuelve **8.771**. Candado de `index.html`: **LIBRE**.
+>
+> ---
+
+> ## 🟡 (histórico, ya publicado arriba) `fix/mapa-cache-compartida` — detalle del fix
 > Candado de `index.html`: **LIBRE** (rama pusheada a `origin` y `lab`, working tree limpio).
 >
 > **Por qué existe**: la cuota de Firestore se agotó DOS VECES la misma noche del 24-ago,
