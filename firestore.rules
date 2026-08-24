@@ -111,6 +111,18 @@ service cloud.firestore {
       allow write: if signedIn() && request.auth.uid == id && strOk('email', 120);
     }
 
+    // Analiticas de uso por usuario (2026-08-24): un doc por usuario (id=cu), que la
+    // app va llenando solo con contadores propios (pantallas vistas, tiempo, funciones
+    // usadas) via _flushAnalytics() en index.html. NUNCA tuvo regla -- caia al bloqueo
+    // por defecto del final de este archivo, asi que ni se guardaba ni el panel admin
+    // ("Analiticas de uso") podia leerla (permission-denied real, verificado en vivo).
+    // Solo el dueno escribe su propio doc, solo el admin lee (agrega todos para el panel).
+    match /usage/{id} {
+      allow read: if isAdmin();
+      allow create, update: if signedIn() && request.auth.uid == id && strOk('nombre', 60);
+      allow delete: if false;
+    }
+
     // Contador de suscritos totales (para no leer TODA la colección `users` cada
     // vez que alguien abre Comunidad o intenta votar — con miles de usuarios eso
     // eran miles de lecturas por un solo clic). Solo un documento, se incrementa
