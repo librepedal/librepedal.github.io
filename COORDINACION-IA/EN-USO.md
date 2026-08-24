@@ -1,5 +1,109 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ PUBLICADO — main en 6263712, versión 8.770 en producción (2026-08-24 ~17:35 UTC)
+> Inty dio el OK y mergeó `fix/bugs-revision-2026-08-24` a `main` (`3a8fb8a` → `6263712`).
+> Verificado en vivo: `https://librepedal.cl/version.txt` y `sw.js` devuelven **8.770** los
+> dos. **El congelamiento de deploys del bloque de abajo queda LEVANTADO** — esto ya llegó
+> a los 51 testers reales, no es un plan ni una prueba local.
+>
+> Se publicó **con el hueco de seguridad de abajo todavía abierto**, a sabiendas y por
+> decisión explícita de Inty — no se esperó a que Tundra lo cerrara. Eso sube la urgencia
+> real del punto de abajo: ya no es "antes de publicar", es "ya está en producción, cerrarlo
+> cuanto antes".
+>
+> `wip/modo-conduccion-resena` sigue sin entrar (no forma parte de este merge).
+>
+> ---
+
+> ## 🔴 SEGURIDAD ACTIVA — "Entrar con Google" salta la lista de testers (2026-08-24 ~11:00)
+> Detalle completo, datos y fix propuesto en la **tarea #89 del hub** (para Tundra, prioridad
+> alta). Resumen: `index.html:2235` fuerza el botón "Entrar con Google" a mostrarse siempre
+> (aunque su HTML lo define oculto), y ese camino (`_entrarConGoogle` →
+> `_canjearIdTokenPorSesion` → `worker.js` líneas 141-171) **no valida `TESTERS_PERMITIDOS`**
+> — a diferencia del camino por código (líneas 99-138 de `worker.js`), que sí lo hace.
+> **Confirmado en vivo contra el worker de producción real** (no staging): cualquier cuenta de
+> Google con correo verificado entra a la app completa, sin importar si está en la lista de
+> testers. Afecta web y nativo.
+>
+> El fix va en `worker-auth/worker.js` — territorio de Tundra (rol C). No lo toqué yo.
+> No hay evidencia clara de que ya se haya explotado (cruce contra `testers_kv_bulk.json`
+> sin resultados concluyentes, ver tarea #89), pero sigue abierto hasta que se arregle.
+>
+> ---
+
+> ## 📋 ESTADO ÚNICO — sesión Lenovo, cierre del 2026-08-23 (23:30 hora de Chile)
+> _Este bloque reemplaza a los 3 avisos sueltos que esta sesión fue apilando durante la
+> noche. Es el único al día. Candado de `index.html`: **LIBRE** (árbol limpio, todo en rama)._
+>
+> ### 🚦 Regla que sigue vigente: NADIE DESPLIEGA
+> `main` está intacto en `3a8fb8a` en los dos remotos. Y ojo con esto, que no todos lo
+> tenían claro: **mergear a `main` ES publicar** — `.github/workflows/deploy-cloudflare.yml`
+> despliega solo en ~40 s, y `deploy-seguro.sh` se niega a correr fuera de CI justamente
+> para que producción no quede adelante de git. Además `capacitor.config.json` tiene
+> `server.url: https://librepedal.cl`: **la app de Play Store no corre el código del AAB,
+> carga la web en vivo**. O sea el merge le llega a los 51 testers al instante. Inty frenó
+> el deploy y así queda hasta que él diga.
+>
+> ### ✅ Lo único que YA está en producción
+> **Las reglas de Firestore**, publicadas a mano por Inty en Firebase Console: `match
+> /usage/{id}` (Tundra) + `match /resenasApp/{id}` (Lenovo), fusionadas en un solo archivo.
+> Se hizo así porque la Console pega el **archivo entero**: si cada sesión hubiera entregado
+> el suyo, el segundo borraba la regla del primero sin avisar.
+>
+> ### 📦 UNA sola rama para entregar: `fix/bugs-revision-2026-08-24`
+> (Antes eran tres. `fix/reglas-fusionadas` ya está mergeada acá dentro; `fix/reglas-usage`
+> de Tundra también entra por esa vía. Podés borrar esas dos del remoto cuando quieras.)
+>
+> | Qué trae | Detalle |
+> |---|---|
+> | 6 bugs de la revisión | Los 4 de Tundra (`9d59472`) + los 2 que faltaban: desgaste por clima atado a la voz, y mantención que no viajaba a la nube |
+> | 1 hueco | El arreglo de neumáticos solo servía para usuarios NUEVOS; los que ya abrieron Taller tenían `fecha:null` para siempre |
+> | 1 regresión | El guard de `au()` dejaba **la lista de Taller vacía** al abrirla sin GPS |
+> | **1 causa raíz** | Abrir la app costaba **~1.100 lecturas** de Firestore. Ver abajo |
+> | Versiones | `APP_VERSION`, `sw.js` y `version.txt` los tres en **8.770** (en `main` están desincronizados: 8.758 vs 8.769, y el build de Android lee `version.txt` DEL REPO) |
+> | Tests | `mantencion` (30) + `lecturas-firestore` (32), verificados por mutación. Suite **15/15** |
+>
+> ### 🔥 El hallazgo grande: la cuota de Firestore
+> Medido en la consola: **73.000 lecturas contra 210 escrituras**, con **4 conexiones
+> máximo**. No era la cantidad de usuarios — era el costo de **abrir** la app: se
+> enganchaban 11 listeners al iniciar sesión, cada uno leyendo su colección entera
+> (~1.100 documentos). Con 50.000 lecturas diarias gratis para todo el proyecto, **los 51
+> testers abriendo la app una vez cada uno ya la dejaban sin base de datos**.
+> Lo peor: `loadHostels()` arrastraba `initVotosHostels()` = `guiComments limit(500)`,
+> ~550 documentos por apertura para **"Te doy alojo", que está OCULTO** desde `8f2d678`
+> (se sacó el botón, no la carga de datos).
+> Arreglado: cada pantalla engancha lo suyo al abrirse. **~980 documentos menos por apertura.**
+>
+> ### ⏸️ Parado a propósito: `wip/modo-conduccion-resena`
+> Modo conducción + Reseña de la app. **No entra durante la prueba cerrada** (función nueva).
+> Rescatada de cambios que estaban SIN COMMITEAR y se perdían con cualquier `checkout`.
+>
+> ### 📌 Lo que queda pendiente, y de quién es
+> 1. **Inty** — dar el visto bueno para mergear `fix/bugs-revision-2026-08-24` (eso publica).
+> 2. **Inty** — mirar el panel de uso de Firestore *antes* de que nadie abra la app, para
+>    confirmar que el consumo con la app cerrada es plano.
+> 3. **Tundra** — `collection('usage').get()` del panel admin **no tiene `limit()`**. Ahora
+>    que tu regla habilitó las escrituras, esa colección va a crecer y esa pantalla se pone
+>    cara. Conviene ponerle tope antes.
+> 4. **Después de la prueba cerrada** — revisar `wip/modo-conduccion-resena`.
+
+
+> ## 🟡 AVISO — sesión Lenovo, 2026-08-24 ~00:15 UTC: pusheé directo a main todo el 23-ago
+> No había leído el `CLAUDE.md` de este repo hasta ahora (tiene fecha 14-ago, existía
+> antes de mi sesión de hoy). Su regla #1 es clara: **nunca commitear ni pushear directo
+> a `main`**, todo va en rama. Durante toda la sesión del 23-ago hice ~20 commits directo
+> a main (íconos de modo, esfera, botones del mapa, Inicio, Social, Taller/mantención
+> preventiva, Pistero, Perfil) — no vi señales de que Thunderobot estuviera tocando
+> `index.html` en paralelo hoy, pero aviso igual por si acaso.
+>
+> Encontré esto haciendo una revisión de bugs de todo el diff del día (8 ángulos,
+> verificado a mano). Los 4 bugs reales que encontré (botones "Volver" huérfanos en
+> Social, aviso de neumáticos que nunca se disparaba, mantención recalculándose en cada
+> punto de GPS, query duplicada en Amigos) + el propio `sw.js` desincronizado los arreglé
+> en rama `fix/bugs-revision-2026-08-23` (pusheada a `lab` y `origin`, commit `9d59472`,
+> **NO mergeada a main** — queda para que Inty la revise/apruebe). De acá en adelante
+> trabajo en rama, como corresponde.
+
 > ## 🔴 TAREA PARA TUNDRA (Workers/Media, rol C) — 2026-08-23, sesión Lenovo
 > Inty prendió el Thunder y pidió coordinar. Esta sesión (Lenovo) está **bloqueada por el
 > clasificador de auto-modo de Claude Code** para cualquier escritura de `wrangler` contra

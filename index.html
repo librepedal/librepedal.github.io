@@ -377,6 +377,31 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .stat-card{background:linear-gradient(180deg,#111c30,#0c1422);padding:14px 12px;border-radius:16px;text-align:left;border:0.5px solid rgba(255,255,255,0.08)}
 .stat-value{font-size:1.5rem;font-weight:800;color:#fff;line-height:1.1}
 .stat-label{font-size:0.66rem;color:#6b7688;margin-top:2px;letter-spacing:0.3px}
+/* Mantención preventiva (Taller): una fila compacta por ítem, detalle adentro al
+   tocarla — mismo criterio de "simple por fuera, completo por dentro" que el resto
+   de la app. */
+.mant-item{background:#0f1728;border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:11px 13px;margin-bottom:8px}
+.mant-item summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer}
+.mant-item summary::-webkit-details-marker{display:none}
+.mant-item .mi-ic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.9rem}
+.mant-item .mi-txt{flex:1;min-width:0}
+.mant-item .mi-t{font-weight:700;font-size:0.85rem;color:#fff}
+.mant-item .mi-bar{background:#222;border-radius:6px;height:6px;margin-top:5px;overflow:hidden}
+.mant-item .mi-fill{height:100%;border-radius:6px}
+.mant-item .mi-sub{font-size:0.66rem;color:#7d8ba0;margin-top:3px}
+.mant-item .mi-badge{font-size:0.62rem;font-weight:800;padding:3px 8px;border-radius:8px;flex-shrink:0;white-space:nowrap}
+.mant-item .mi-body{margin-top:11px;padding-top:11px;border-top:0.5px solid rgba(255,255,255,0.08);font-size:0.78rem;color:#d6deea;line-height:1.5}
+.mant-item .mi-hist{margin:8px 0;padding-left:0;list-style:none;font-size:0.72rem;color:#9fb3c8}
+.mant-item .mi-hist li{padding:4px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}
+.mant-item .mi-row{display:flex;gap:6px;margin-top:8px}
+.mant-item .mi-row input{flex:1;margin:0}
+/* Resumen de una línea en Inicio (reemplaza a la grilla de 5 tarjetas + Desempeño,
+   sacadas de acá porque ya viven completas en Estadísticas — ver comentario en au()). */
+.stats-link{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(180deg,#111c30,#0c1422);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:13px 16px;margin:12px 0;cursor:pointer;text-align:left}
+.stats-link .txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stats-link .t1{font-size:0.86rem;font-weight:700;color:#fff}
+.stats-link .t2{font-size:0.68rem;color:#6b7688;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats-link .arrow{color:var(--p);font-size:1rem;flex:0 0 auto}
 .performance-bar{background:#222;border-radius:10px;height:20px;margin:8px 0;overflow:hidden;position:relative}
 .performance-bar::after{content:attr(data-pct);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.6);pointer-events:none}
 .performance-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:10px;transition:width 0.5s;overflow:hidden;font-size:0;color:transparent}
@@ -564,8 +589,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* Rediseño 2026-07-29: FAB uniforme 52px, ícono de línea (sin la etiqueta "REPORTAR" que
    se dibujaba fuera del botón y pisaba el de recentrar). Reportar es el primario naranja y va
    ABAJO de la columna (lo más alcanzable con el pulgar); recentrar va arriba. */
-/* 44px 2026-08-23: antes 52px, Inty lo vio muy grande junto a los demas controles del mapa. */
-#fabReportar{position:absolute;right:14px;bottom:20px;width:44px;height:44px;border-radius:50%;background:#fc4c02;border:none;color:#fff;font-size:1.05rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+/* 2026-08-23, vuelta final: Inty seguia viendolo distinto al de recentrar aunque
+   ya median casi lo mismo -- el problema no era el tamano, era el ESTILO: un
+   circulo naranjo solido al lado de un icono desnudo se ve como dos lenguajes
+   visuales distintos. Se le saca el circulo/relleno, mismo tratamiento que
+   .map-recenter-btn (icono suelto + drop-shadow, sin fondo ni borde) -- el
+   naranjo (color:#fc4c02, igual a --p) es lo que lo sigue distinguiendo como la
+   accion principal, no el circulo. Un poco mas grande que el recentrar (38 vs 34)
+   porque sigue siendo el botón mas importante del mapa. */
+#fabReportar{position:absolute;right:14px;bottom:20px;width:38px;height:38px;background:transparent;border:none;color:#fc4c02;font-size:1.55rem;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 #fabReportar:active{transform:scale(0.94)}
 #pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
 #pisteroPeek::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.24) 100%);pointer-events:none}
@@ -805,7 +837,26 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 #abanicoReporte .abn-op{opacity:0;transform:translateY(14px) scale(.9);transition:opacity .2s ease,transform .22s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d);background:rgba(10,15,29,.95);color:#fff;border:2px solid #333;border-radius:22px;padding:9px 15px;font-weight:700;font-size:.82rem;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.55)}
 #abanicoReporte.on .abn-op{opacity:1;transform:translateY(0) scale(1)}
 #abanicoReporte .abn-op:active{transform:scale(.94)}
-#abanicoReporte .abn-e{font-size:1.15rem}
+#abanicoReporte .abn-e{display:flex;flex-shrink:0}
+/* 2026-08-23: desplegable chico junto al botón tocado (Peligro/Control/Servicio/
+   Mirador) con los sub-tipos de esa categoría — reemplaza el viaje al modal grande de
+   11 categorías. Pedido directo de Inty: "esto tiene que ser rápido". */
+.rep-drop{position:fixed;z-index:560;width:200px;background:rgba(10,15,29,.97);border:1px solid #2a3147;border-radius:16px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.6);opacity:0;transform:translateX(8px) scale(.96);transition:opacity .16s ease,transform .16s ease}
+.rep-drop.on{opacity:1;transform:translateX(0) scale(1)}
+.rep-drop-item{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;color:#e2e8f0;font-size:.8rem;font-weight:600;padding:9px;border-radius:10px;text-align:left;cursor:pointer;font-family:inherit}
+.rep-drop-item:active{background:rgba(255,255,255,.08)}
+.rep-drop-item .rdi-ic{width:18px;text-align:center;flex-shrink:0}
+/* Tarjeta corta para publicar: reemplaza el modal gigante — solo la categoría ya
+   elegida, ubicación (GPS o marcada a mano), descripción opcional y publicar. */
+.rep-quick{position:fixed;left:14px;right:14px;bottom:20px;z-index:560;max-height:78vh;overflow-y:auto;background:#0f1728;border:1px solid #2a3147;border-radius:18px;padding:16px;box-shadow:0 -10px 30px rgba(0,0,0,.55);opacity:0;transform:translateY(16px);transition:opacity .18s ease,transform .18s ease}
+.rep-quick.on{opacity:1;transform:translateY(0)}
+.rep-quick .rq-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.rep-quick .rq-ic{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rep-quick .rq-t{flex:1;font-weight:800;font-size:.92rem;color:#fff}
+.rep-quick .rq-close{background:none;border:none;color:#6b7688;font-size:1.3rem;line-height:1;cursor:pointer;padding:0 4px}
+.rep-quick .rq-loc{font-size:.7rem;color:#6ee7a8;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rep-quick .rq-hint{font-size:.68rem;color:#7d8ba0;margin:6px 0 0}
+.rep-quick .rq-pub{width:100%;margin-top:10px;background:#fc4c02;border:none;color:#fff;border-radius:12px;padding:12px;font-size:.85rem;font-weight:800;cursor:pointer}
 </style>
 <!-- El submit del formulario apunta al ingreso por CÓDIGO, no al link mágico: el botón
      del link mágico está oculto durante la prueba, pero los campos siguen en el DOM y
@@ -1121,14 +1172,14 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <div class="gps-signal-badge" id="segmentoBadge" style="display:none;background:rgba(255,215,0,0.14);color:var(--g);border-color:rgba(255,215,0,0.4);animation:none"></div>
 </div>
 <button class="ab sec" id="btnGPSLibre" style="margin:8px auto 0;width:auto;min-height:38px;padding:8px 16px;font-size:0.78rem;display:block" onclick="toggleGPS()"><i class="fas fa-location-dot"></i> Grabar un paseo</button>
-<div class="stats-grid">
-  <div class="stat-card"><div class="stat-value" id="dt">0.0</div><div class="stat-label">Km totales</div></div>
-  <div class="stat-card"><div class="stat-value" id="cl">0</div><div class="stat-label">Calorías</div></div>
-  <div class="stat-card"><div class="stat-value" id="avgSpeed">0</div><div class="stat-label">Vel. media</div></div>
-  <div class="stat-card"><div class="stat-value" id="totalTrips">0</div><div class="stat-label">Viajes</div></div>
-  <div class="stat-card"><div class="stat-value" id="co2Dash">0</div><div class="stat-label">CO₂ evitado</div></div>
-</div>
-<div class="section-info"><h4>Desempeño</h4><div class="performance-bar"><div class="performance-fill" id="performanceFill" style="width:0%">0%</div></div></div>
+<!-- 2026-08-23: la grilla de 5 tarjetas + Desempeño salieron de acá (pedido de Inty):
+     duplicaban exactamente lo mismo que ya vive completo en Estadísticas (v-stats) y
+     en el HUD de la esfera. Se reemplaza por un resumen de una línea que lleva directo
+     a Estadísticas — Inicio queda enfocado en "¿a dónde vamos?", no en repetir números. -->
+<button class="stats-link" onclick="cv('stats')">
+  <div class="txt"><div class="t1" id="dashResumenTxt">0.0 km · 0 viajes</div><div class="t2">Toca para ver el resto: calorías, CO₂, velocidad media...</div></div>
+  <i class="fas fa-chevron-right arrow"></i>
+</button>
 <div class="quick-links">
   <button class="btrip" onclick="cv('trips')"><i class="fas fa-map"></i> Mis viajes</button>
 </div>
@@ -1302,7 +1353,12 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <div id="map"></div>
   <button id="btnCapaMapa" class="map-estilo-btn" onclick="toggleCapaMapa()" title="Cambiar el estilo del mapa (calles / topográfico / satélite)"><i class="fas fa-mountain"></i> </button>
   <button id="fabReportar" onclick="abrirAbanicoReporte()" title="Reportar algo en el mapa"><i class="fas fa-plus"></i></button>
-  <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación"><i class="fas fa-location-crosshairs"></i></button>
+  <!-- 2026-08-23: icono propio (rueda de bici con radios) en vez del crosshair
+       generico de Font Awesome -- pedido de Inty: "inventemos uno propio". Los
+       radios convergen al centro, se lee como "apunta aca" por su propia forma,
+       sin copiar el simbolo de Google Maps/Waze. Mismo trazo (1.8px, lucide) que
+       el resto de los iconos propios de la app. -->
+  <button class="map-recenter-btn" onclick="_mapaRecentrar()" title="Volver a mi ubicación"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><path d="M12 3.5v5.4M12 20.5v-5.4M3.5 12h5.4M20.5 12h-5.4M6 6l3.8 3.8M18 18l-3.8-3.8M18 6l-3.8 3.8M6 18l3.8-3.8"/></svg></button>
   <div class="map-zoom-ctrl">
     <button onclick="if(mp)mp.zoomIn()" title="Acercar"><i class="fas fa-plus"></i></button>
     <button onclick="if(mp)mp.zoomOut()" title="Alejar"><i class="fas fa-minus"></i></button>
@@ -1348,8 +1404,23 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 
 <section id="v-chat" class="view">
 <div class="section-info"><h4>Social</h4><p>Amigos, comunidad y aportes — cada cosa en su grupo.</p></div>
-<button class="bg" style="margin:0 0 12px" onclick="mostrarLogrosComunidad()"><i class="fas fa-trophy"></i> Logros, comunidad y votación</button>
-<!-- REDISEÑO Pantalla 03: 9 botones sueltos -> 3 grupos (Ley de Hick). Toca un grupo y se despliega. Nada se pierde: los mismos handlers, agrupados por afinidad. -->
+<!-- REDISEÑO 2026-08-23 (pedido de Inty tras revisar la pantalla real):
+     - El chat global sube ARRIBA de todo: antes quedaba al final, bajo 3 acordeones
+       y el botón de logros — para "lo más vivo de la pantalla" eso lo enterraba.
+     - El botón "Logros, comunidad y votación" desaparece: escondía 9 destinos
+       distintos (logros/ranking/segmentos/retos/año/rutas/tienda/meta/fundadores)
+       detrás de un nombre que no los representaba, y la palabra "comunidad" se
+       repetía con dos significados distintos (el botón Y el grupo de abajo).
+       mostrarLogrosComunidad() queda sin llamar desde acá (no se borra) — cada
+       destino ahora es un botón directo dentro del grupo que le corresponde.
+     - Amigos + Solicitudes se fusionan en un solo botón/vista (showAmigosYSolicitudes,
+       pedido explícito de Inty: "eso debería ir todo junto y se despliega para ver
+       todo el contenido") — showFriendsList()/showFriendRequests() quedan sin
+       llamar desde acá, la lógica se reusa adentro de la función nueva.
+     - "Te doy alojo" OCULTO hasta nuevo aviso (pedido de Inty: "es muy
+       comprometedor, no queremos problemas" — riesgo legal/seguridad de un
+       intercambio de alojamiento entre desconocidos). abrirTeDoyAlojo() y los
+       datos en Firestore quedan intactos, solo se saca el botón que lleva ahí. -->
 <style>
 .soc-group{background:#161b22;border:1px solid #2a3240;border-radius:14px;padding:11px 13px;margin-bottom:10px}
 .soc-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:11px}
@@ -1360,34 +1431,51 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 .soc-group>summary::after{content:'▸';margin-left:auto;color:#8794a5;transition:.2s}
 .soc-group[open]>summary::after{transform:rotate(90deg)}
 </style>
-<details class="soc-group">
-  <summary><span class="soc-ic"><i class="fas fa-users"></i> </span><span><b>Amigos</b><small>Tus amigos · solicitudes · buscar ciclistas · mensajes</small></span><span id="solicBadgeHdr" style="display:none;margin-left:8px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem;font-weight:800"></span></summary>
-  <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" onclick="showFriendsList()"><i class="fas fa-users"></i> Amigos y mensajes</button>
-    <button class="ab sec" style="margin:0" onclick="showFriendRequests()"><i class="fas fa-inbox"></i> Solicitudes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
-    <button class="ab sec" style="margin:0" onclick="showUserListForFriendRequest()"><i class="fas fa-magnifying-glass"></i> Buscar ciclistas</button>
-  </div>
-</details>
-<details class="soc-group">
-  <summary><span class="soc-ic"><i class="fas fa-earth-americas"></i> </span><span><b>Comunidad</b><small>Chat global · rodadas grupales · novedades del ciclismo</small></span></summary>
-  <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" onclick="verRodadas()"><i class="fas fa-person-biking"></i> Rodadas grupales</button>
-    <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')"><i class="fas fa-newspaper"></i> Novedades del ciclismo</button>
-  </div>
-</details>
-<details class="soc-group">
-  <summary><span class="soc-ic"><i class="fas fa-handshake"></i> </span><span><b>Aportar</b><small>Invitar a pedalear · te doy alojo · recomendaciones</small></span></summary>
-  <div class="quick-links" style="margin-top:9px">
-    <button class="ab sec" style="margin:0" onclick="invitarAmigos()"><i class="fas fa-share-from-square"></i> Invita a un amigo</button>
-    <button class="ab sec" style="margin:0;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981" onclick="abrirTeDoyAlojo()"><i class="fas fa-house"></i> Te doy alojo</button>
-    <button class="ab sec" style="margin:0" onclick="cv('rec')"><i class="fas fa-lightbulb"></i> Recomendaciones</button>
-  </div>
-</details>
-<h4 style="margin:14px 0 4px;font-size:0.9rem;color:var(--p)"><i class="fas fa-comment"></i> Chat global de la comunidad</h4>
-<div class="cc">
+<h4 style="margin:0 0 6px;font-size:0.9rem;color:var(--p)"><i class="fas fa-comment"></i> Chat global de la comunidad</h4>
+<div class="cc" style="margin-bottom:14px">
 <div class="cm" id="chm"></div>
 <div class="cia"><input type="text" id="chi" placeholder="Escribe a la comunidad..." onkeypress="if(event.key==='Enter')em()"><button class="ab" onclick="em()"><i class="fas fa-paper-plane"></i></button></div>
 </div>
+<details class="soc-group" open>
+  <summary><span class="soc-ic"><i class="fas fa-users"></i> </span><span><b>Amigos</b><small>Tus amigos, solicitudes y mensajes · buscar ciclistas</small></span><span id="solicBadgeHdr" style="display:none;margin-left:8px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem;font-weight:800"></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0;grid-column:1/3" onclick="showAmigosYSolicitudes()"><i class="fas fa-users"></i> Amigos, solicitudes y mensajes<span id="solicBadge" style="display:none;margin-left:5px;background:var(--r);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:800">0</span></button>
+    <button class="ab sec" style="margin:0;grid-column:1/3" onclick="showUserListForFriendRequest()"><i class="fas fa-magnifying-glass"></i> Buscar ciclistas</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic"><i class="fas fa-chart-line"></i> </span><span><b>Mi progreso</b><small>Logros · ranking · segmentos · retos · mi año</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" onclick="mostrarLogros()"><i class="fas fa-trophy"></i> Mis logros</button>
+    <button class="ab sec" style="margin:0" onclick="mostrarRanking()"><i class="fas fa-medal"></i> Ranking mundial</button>
+    <button class="ab sec" style="margin:0" onclick="verSegmentos()"><i class="fas fa-flag-checkered"></i> Segmentos y líderes</button>
+    <button class="ab sec" style="margin:0" onclick="verRetos()"><i class="fas fa-bullseye"></i> Retos y temporadas</button>
+    <button class="ab sec" style="margin:0;grid-column:1/3" onclick="mostrarResumenAnual()"><i class="fas fa-chart-column"></i> Mi año en Libre Pedal</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic"><i class="fas fa-earth-americas"></i> </span><span><b>Comunidad</b><small>Rodadas · novedades · vota la meta · fundadores</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" onclick="verRodadas()"><i class="fas fa-person-biking"></i> Rodadas grupales</button>
+    <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')"><i class="fas fa-newspaper"></i> Novedades del ciclismo</button>
+    <button class="ab sec" style="margin:0" onclick="mostrarComunidad()"><i class="fas fa-handshake"></i> Meta de la comunidad (vota)</button>
+    <button class="ab sec" style="margin:0" onclick="mostrarFundadores()"><i class="fas fa-medal"></i> Socios Fundadores</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic"><i class="fas fa-compass"></i> </span><span><b>Descubre</b><small>Rutas recomendadas · tienda de Darma</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0" onclick="verRecomendacionRutas()"><i class="fas fa-compass"></i> Rutas para ti</button>
+    <button class="ab sec" style="margin:0" onclick="mostrarTienda(true)"><i class="fas fa-dharmachakra"></i> Tienda de Darma</button>
+  </div>
+</details>
+<details class="soc-group">
+  <summary><span class="soc-ic"><i class="fas fa-handshake"></i> </span><span><b>Aportar</b><small>Invitar a pedalear · recomendaciones</small></span></summary>
+  <div class="quick-links" style="margin-top:9px">
+    <button class="ab sec" style="margin:0;grid-column:1/3" onclick="invitarAmigos()"><i class="fas fa-share-from-square"></i> Invita a un amigo</button>
+    <button class="ab sec" style="margin:0;grid-column:1/3" onclick="cv('rec')"><i class="fas fa-lightbulb"></i> Recomendaciones</button>
+  </div>
+</details>
 </section>
 
 <style>
@@ -1408,7 +1496,15 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <section id="v-pistero" class="view">
 <div class="section-info"><h4><svg viewBox="0 0 100 84" width="18" height="15" style="display:inline-block;vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="62" r="5" fill="#fff"/><circle cx="60" cy="62" r="5" fill="#fff"/><circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/><path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
 <div id="pisteroChips">
-  <button class="pchip" onclick="location.href='/planificador-beta'"><i class="fas fa-compass"></i> Trazar ruta</button><button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')"><i class="fas fa-map"></i> Planifica mi viaje</button>
+  <!-- 2026-08-23: el chip "Trazar ruta" (llevaba a planificador-beta.html) sale por
+       pedido de Inty tras revisar: no usaba a Pistero (era un location.href a una
+       herramienta aparte, sin IA), duplicaba lo que "¿A dónde vamos?" en Inicio ya
+       hace mejor (esa SÍ integra con navegación real, reportes, todo), y encima con
+       un diseño claro que no combinaba con el resto de la app oscura. El archivo
+       planificador-beta.html se borra del repo por la misma razón — ver commit. La
+       única diferencia real que tenía (mover el punto de INICIO, no solo el destino)
+       queda pendiente de evaluar si vale la pena sumarla a Inicio; no se portó todavía. -->
+  <button class="pchip" onclick="pisteroSugerencia('Planifícame un viaje de 2 días desde mi ciudad, con gastos aproximados')"><i class="fas fa-map"></i> Planifica mi viaje</button>
   <button class="pchip" onclick="pisteroSugerencia('Se me soltó la cadena en plena ruta, ¿cómo la arreglo?')"><i class="fas fa-wrench"></i> Arregla mi bici</button>
   <button class="pchip" onclick="pisteroSugerencia('¿Dónde puedo alojar cerca de mi ruta?')"><i class="fas fa-hotel"></i> ¿Dónde alojo?</button>
   <button class="pchip" onclick="pisteroSugerencia('Recomiéndame una ruta bonita para pedalear hoy')"><i class="fas fa-wand-magic-sparkles"></i> Ruta de hoy</button>
@@ -1461,8 +1557,21 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 
 <section id="v-mac" class="view">
 <div class="section-info"><h4><i class="fas fa-wrench"></i> Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
-<!-- REDISEÑO Pantalla 06 (prioridad máxima): fuera los tips improvisados ("arregla con lo que tengas"). Ahora TRIAGE: síntoma -> guía real nivel Park Tool O derivación. Frenos/dirección/horquilla SIEMPRE al mecánico (regla dura del Taller: paso a paso técnico real o nada). -->
+<!-- 2026-08-23: Mantención preventiva — pedido de Inty tras "Arregla mi bici" en
+     Pistero: no solo reactivo (síntoma → arreglo), también proactivo por km, como
+     ya hace cualquier bici real. Va COLAPSADO por defecto (mismo <details> que el
+     triage de abajo) para no amontonar la pantalla — el detalle, historial y costo
+     viven adentro de cada fila, no antes. Umbrales por defecto sacados de guías
+     reales (Bike Gremlin / CyclingTrend), no inventados: cadena ~2500km, pastillas
+     ~2000km (freno = SIEMPRE al taller, mismo criterio que el triage de abajo),
+     cables ~5000km, rodamientos ~4000km/6 meses, neumáticos por tiempo (la goma se
+     reseca aunque no la uses). Editable por el usuario. -->
+<details class="soc-group" id="mantGroup" style="margin-bottom:14px">
+  <summary><span class="soc-ic"><i class="fas fa-gauge-high"></i> </span><span><b>Mantención preventiva</b><small id="mantResumen">Cargando…</small></span></summary>
+  <div style="margin-top:9px" id="mantLista"></div>
+</details>
 <div style="display:flex;gap:8px;margin:0 0 10px;font-size:0.72rem;color:#9fb3c8"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#35c46a;display:inline-block"></span>Puedes tú</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#ef4d5a;display:inline-block"></span>Al taller (seguridad)</span></div>
+<!-- REDISEÑO Pantalla 06 (prioridad máxima): fuera los tips improvisados ("arregla con lo que tengas"). Ahora TRIAGE: síntoma -> guía real nivel Park Tool O derivación. Frenos/dirección/horquilla SIEMPRE al mecánico (regla dura del Taller: paso a paso técnico real o nada). -->
 
 <details class="soc-group" open>
   <summary><span class="soc-ic"><i class="fas fa-record-vinyl"></i> </span><span><b>Rueda pinchada <span style="color:#35c46a;font-size:0.7rem">· puedes tú</span></b><small>Cámara/parche + torque de la rueda</small></span></summary>
@@ -1560,7 +1669,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="darma-badge"><i class="fas fa-dharmachakra"></i> <strong id="darmaDash">0</strong> Darma <small>tu premio por aportar a la comunidad</small></div>
 <button class="ab sec" style="margin-bottom:10px" onclick="if(typeof cu!=='undefined'&&cu) verPerfilUsuario(cu,'customize')"><i class="fas fa-id-card"></i> Ver mi perfil de comunidad</button>
 <div class="character-preview-large"><svg id="customize-preview-svg" viewBox="0 0 200 200"></svg><div class="character-name" id="customizeCharacterName">Tu Personaje</div></div>
-<style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:12px;padding:6px 4px 5px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:42px;height:35px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.62rem;color:#cdd6e6;margin-top:3px;line-height:1.1}</style>
+<!-- 2026-08-23: swatches mas chicos (pedido de Inty: "las opciones ocupan mucho
+     espacio") -- minmax 58->46px (caben mas por fila), icono 42x35->32x27, padding
+     y label mas ajustados. Medido en Casco (8 opciones): 132px de alto -> bajó al
+     tightening. No se toca la logica de seleccion, solo tamaño. -->
+<style>.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:10px;padding:4px 3px 4px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:32px;height:27px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.56rem;color:#cdd6e6;margin-top:2px;line-height:1.1}</style>
 <details class="pgrupo" open ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-helmet-safety pg-ic"></i><span class="pg-tt">Casco</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistCascoGrid"></div></div></details>
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-face-smile pg-ic"></i><span class="pg-tt">Piel</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPielGrid"></div></div></details>
 <details class="pgrupo" ontoggle="if(this.open&&typeof _perfilAcordeon==='function')_perfilAcordeon(this)"><summary><i class="fas fa-scissors pg-ic"></i><span class="pg-tt">Pelo</span><i class="fas fa-chevron-down pg-chev"></i></summary><div class="pg-body"><div class="pist-swatch-grid" id="pistPeloGrid"></div><div style="font-size:.66rem;color:#9fb3c8;margin:9px 0 4px">Color de pelo</div><div class="pist-swatch-grid" id="pistPeloColGrid"></div></div></details>
@@ -1659,7 +1772,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.759'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.770'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1729,6 +1842,113 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+/* ===== BLINDAJE DE FIRESTORE (2026-08-23) =====
+   Nace de un apagon real: la cuota gratis de Firestore (50.000 lecturas al dia PARA TODO
+   EL PROYECTO) se agoto y la app quedo sin base de datos para los 51 testers de la prueba
+   cerrada... y NADIE se entero. Motivo: hay 278 `catch(e){}` silenciosos alrededor de
+   Firestore y solo 14 reportan a Sentry, asi que un `resource-exhausted` se tragaba entero
+   y el usuario veia pantallas vacias sin ninguna explicacion. Se descubrio de casualidad,
+   sondeando la API con curl.
+   Esto NO toca esos 278 catch: intercepta en UN solo punto (el prototipo del SDK), antes de
+   que el error llegue a ellos. El error se sigue propagando igual — solo queda registrado
+   de paso, asi que ningun comportamiento existente cambia.
+   Todo va dentro de try/catch y con deteccion de prototipos: si el SDK cambia de forma,
+   esto simplemente no se instala y la app sigue funcionando igual que antes. */
+var lpFirestoreEstado = { cuotaAgotada:false, avisado:false, lecturas:{}, total:0 };
+function _lpEsErrorDeCuota(e){
+  if(!e) return false;
+  var c = e.code || '';
+  return c === 'resource-exhausted' || c === 'firestore/resource-exhausted' ||
+         /resource[-_ ]exhausted|quota exceeded/i.test(String(e.message || ''));
+}
+function _lpAnotarErrorFirestore(e){
+  try{
+    if(!_lpEsErrorDeCuota(e)) return;
+    lpFirestoreEstado.cuotaAgotada = true;
+    if(lpFirestoreEstado.avisado) return;      // una sola vez por sesion
+    lpFirestoreEstado.avisado = true;
+    // A Sentry, para enterarnos SIN depender de que un usuario nos avise.
+    // window.Sentry.* explicito (y no el global suelto `Sentry`, como en el resto del
+    // archivo): asi funciona en cualquier ambito y ademas se puede probar de verdad.
+    try{ if(window.Sentry && window.Sentry.captureException) window.Sentry.captureException(e, {tags:{donde:'firestore', motivo:'cuota-agotada'}}); }catch(_){}
+    // Y al usuario, en su idioma: sin esto solo ve pantallas vacias y cree que la app se rompio.
+    try{ if(typeof lpAviso==='function') lpAviso('La base de datos alcanzo su limite diario. Tus kilometros se siguen guardando en el telefono y se suben solos cuando se libere.'); }catch(_){}
+  }catch(_){}
+}
+/* Contador de lecturas por coleccion. Firestore cobra POR DOCUMENTO leido, y desde la app
+   no habia forma de saber cuanto costaba cada pantalla — habia que ir a la consola de
+   Firebase y esperar a que actualizara. Con esto se mide en el momento:
+   escribir  lpLecturas()  en la consola del navegador y sale el desglose. */
+function _lpContarLecturas(coleccion, n){
+  try{
+    if(!(n > 0)) return;
+    lpFirestoreEstado.lecturas[coleccion] = (lpFirestoreEstado.lecturas[coleccion] || 0) + n;
+    lpFirestoreEstado.total += n;
+  }catch(_){}
+}
+function lpLecturas(){
+  var e = lpFirestoreEstado;
+  var filas = Object.keys(e.lecturas).map(function(k){ return {coleccion:k, documentos:e.lecturas[k]}; })
+                    .sort(function(a,b){ return b.documentos - a.documentos; });
+  try{ console.table(filas); }catch(_){ console.log(filas); }
+  console.log('TOTAL de documentos leidos en esta sesion: ' + e.total +
+              (e.cuotaAgotada ? '  ⚠ CUOTA AGOTADA' : ''));
+  return e.total;
+}
+(function _instalarBlindajeFirestore(){
+  try{
+    var FS = firebase.firestore;
+    if(!FS) return;
+    var nombreDe = function(ref){
+      try{ return (ref && ref._query && ref._query.path && ref._query.path.segments && ref._query.path.segments[0]) ||
+                  (ref && ref.path && String(ref.path).split('/')[0]) ||
+                  (ref && ref.parent && ref.parent.id) || (ref && ref.id) || '?'; }catch(_){ return '?'; }
+    };
+    // --- get() de consultas y de documentos sueltos ---
+    [[FS.Query, 'Query'], [FS.CollectionReference, 'CollectionReference'], [FS.DocumentReference, 'DocumentReference']].forEach(function(par){
+      var Clase = par[0];
+      if(!Clase || !Clase.prototype || typeof Clase.prototype.get !== 'function') return;
+      if(Object.prototype.hasOwnProperty.call(Clase.prototype, '_lpParcheado')) return;
+      var original = Clase.prototype.get;
+      Clase.prototype.get = function(){
+        var ref = this;
+        return original.apply(this, arguments).then(function(snap){
+          try{ _lpContarLecturas(nombreDe(ref), snap && (snap.size != null ? snap.size : 1)); }catch(_){}
+          return snap;
+        }, function(e){ _lpAnotarErrorFirestore(e); throw e; });
+      };
+      try{ Object.defineProperty(Clase.prototype, '_lpParcheado', {value:true, enumerable:false}); }catch(_){}
+    });
+    // --- onSnapshot(): los listeners son lo mas caro, y varios no traen manejador de error ---
+    [FS.Query, FS.CollectionReference].forEach(function(Clase){
+      if(!Clase || !Clase.prototype || typeof Clase.prototype.onSnapshot !== 'function') return;
+      if(Clase.prototype._lpOnParcheado) return;
+      var original = Clase.prototype.onSnapshot;
+      Clase.prototype.onSnapshot = function(){
+        var ref = this, args = Array.prototype.slice.call(arguments);
+        // Solo la forma con callbacks: onSnapshot({next,error}) se deja intacta.
+        var funciones = args.filter(function(a){ return typeof a === 'function'; });
+        if(funciones.length === 0) return original.apply(this, args);
+        // Envolver el onNext para contar los documentos que entrega cada entrega.
+        var iNext = args.indexOf(funciones[0]);
+        var onNext = args[iNext];
+        args[iNext] = function(snap){
+          try{ _lpContarLecturas(nombreDe(ref), snap && (snap.size != null ? snap.size : 0)); }catch(_){}
+          return onNext.apply(this, arguments);
+        };
+        if(funciones.length >= 2){
+          var iErr = args.indexOf(funciones[1]);
+          var onError = args[iErr];
+          args[iErr] = function(e){ _lpAnotarErrorFirestore(e); try{ return onError.apply(this, arguments); }catch(_){} };
+        } else {
+          args.splice(iNext + 1, 0, function(e){ _lpAnotarErrorFirestore(e); });
+        }
+        return original.apply(this, args);
+      };
+      try{ Object.defineProperty(Clase.prototype, '_lpOnParcheado', {value:true, enumerable:false}); }catch(_){}
+    });
+  }catch(e){ /* si el SDK cambia de forma, la app sigue igual que antes */ }
+})();
 // Persistencia offline: si te quedas sin señal en plena ruta (lo más probable
 // pedaleando), los datos NO se pierden — quedan guardados en el celular y se
 // suben solos apenas vuelva la conexión. Sin esto, un cierre de la app sin
@@ -2285,7 +2505,12 @@ let lastFraseParadoTime = 0;
 let frasesComunidadAprobadas = [];
 async function cargarFrasesComunidad(){
   try{
-    const snap = await db.collection('frasesComunidad').where('aprobada','==',true).get();
+    // 2026-08-23: `where('aprobada','==',true)` filtra, pero NO acota — si la comunidad
+    // aporta 3.000 frases aprobadas, esto lee 3.000 documentos en CADA inicio de sesión.
+    // Es una colección de la comunidad, no del usuario, así que crece sola. 300 frases ya
+    // son muchísimas para que Pistero no se repita; el tope no le quita nada al usuario y
+    // le pone techo al gasto para siempre.
+    const snap = await db.collection('frasesComunidad').where('aprobada','==',true).limit(300).get();
     frasesComunidadAprobadas = snap.docs.map(function(d){ return d.data().texto; }).filter(Boolean);
     frasesComunidadAprobadas.forEach(function(t){
       if(frasesNormal.indexOf(t)===-1) frasesNormal.push(t);
@@ -2764,7 +2989,27 @@ function limpiarParaVoz(t){
 }
 function cargarVoces(){ try{ const vs=speechSynthesis.getVoices(); vozPref = vs.find(function(v){return /es(-|_)(CL|419|MX)/i.test(v.lang);}) || vs.find(function(v){return (v.lang||'').toLowerCase().indexOf('es')===0;}) || null; }catch(e){} }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
-function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const _av=document.querySelector('.view.on'); if(_av && _av.id!=='v-pistero' && _av.id!=='v-map'){ return; } const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
+/* 2026-08-24: se saca la restriccion "solo se muestra en v-pistero/v-map". Encontrado
+   haciendo QA en vivo: el buscador de destino de INICIO (la pantalla mas usada de toda
+   la app) llama lpAviso("Necesito tu GPS") cuando falla -- y como Inicio no es ninguna
+   de esas dos vistas, el aviso se tragaba en silencio. El usuario tocaba "Iniciar
+   navegacion" y no pasaba absolutamente NADA visible: ni error, ni feedback.
+   No es un caso aislado: lpAviso() se llama 98 veces en todo el archivo, y esta funcion
+   es la UNICA via visual que tiene -- a diferencia de h() (la voz), que SI llega sin
+   importar la pantalla (mostrarBocadillo() es solo la mitad visual de h(), no bloquea
+   la mitad hablada). O sea 98 avisos de error quedaban mudos Y ciegos en 13 de las ~15
+   pantallas de la app.
+   Este limite YA estaba documentado como un problema, no una decision a proposito: existe
+   _lpAvisoLogin() (unas lineas mas arriba) especificamente "porque lpAviso() es MUDO"
+   fuera de esas dos vistas -- pero ese parche cubre SOLO login, con un window.alert()
+   bloqueante que el propio codigo evita a proposito en el resto de la app. El resto de
+   las 98 llamadas nunca tuvo parche.
+   Por que es seguro sacarlo: #pisteroBubble es position:fixed, hijo directo de <body>,
+   z-index:2100 (verificado en vivo) -- no esta anidado dentro de ninguna vista, asi que
+   no hay ninguna razon de DOM/CSS para que solo pudiera mostrarse en dos de ellas. Sacar
+   la restriccion solo AGREGA visibilidad donde hoy no hay ninguna; no le quita nada a
+   las pantallas donde ya funcionaba. */
+function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
 /* Obtiene un plugin nativo de Capacitor. CLAVE: con la web en vivo (server.url) el
    puente inyectado NO tiene registerPlugin; los plugins viven en Capacitor.Plugins. */
 function lpPlugin(nombre){
@@ -3621,7 +3866,10 @@ async function actualizarBadgeAdmin(){
 // piden este mapa aparte y lo cruzan por id de documento (mismo `cu`).
 async function _mapaEmailsPrivados(){
   const map={};
-  try{ const snap=await db.collection('usersPrivate').get(); snap.forEach(function(doc){ map[doc.id]=doc.data().email||''; }); }catch(e){}
+  // 2026-08-23: sin limit() leia TODOS los correos privados. Se acota al mismo tope que
+  // la lista que acompana (300): si algun dia hace falta el padron completo, es un
+  // export paginado, no una lectura de golpe.
+  try{ const snap=await db.collection('usersPrivate').limit(300).get(); snap.forEach(function(doc){ map[doc.id]=doc.data().email||''; }); }catch(e){}
   return map;
 }
 async function mostrarTodosRegistrados(){
@@ -3631,7 +3879,12 @@ async function mostrarTodosRegistrados(){
   c.innerHTML='<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
   try{
-    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    // 2026-08-23: sin limit() esto leia la coleccion ENTERA. Hoy son ~65 usuarios y no
+    // se nota; con 5.000 son 5.000 lecturas de golpe (10% de la cuota diaria gratis de
+    // TODO el proyecto) cada vez que se abre el panel. Se muestran los 300 mas nuevos,
+    // que es para lo que sirve la pantalla; el total real sale de count(), que cuesta
+    // 1 lectura por cada 1.000 documentos en vez de una por documento.
+    const snap=await db.collection('users').orderBy('createdAt','desc').limit(300).get();
     const emails=await _mapaEmailsPrivados();
     let html='<p style="font-size:0.8rem;color:var(--p);margin-bottom:8px">Total: '+snap.size+' registrados</p>';
     snap.forEach(function(doc){
@@ -4348,7 +4601,7 @@ window.onload = async function(){
     document.getElementById('ghostBtn').style.display='block';
     const adminPanel=document.getElementById('admin-panel'); if(adminPanel) adminPanel.style.display=(cu===ADMIN_ID)?'block':'none';
     await im(); au(); rm(MG); fg('todos');
-    loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
+    loadTrips(); loadRoutesList(); cargarFrasesComunidad(); /* 2026-08-23: loadRepairTips/loadHostels/loadRecommendations salieron de aqui -> se enganchan al abrir SU pantalla (_subUnaVez en cv()). loadHostels era el peor: arrastra initVotosHostels() = guiComments limit(500), ~550 documentos por apertura para "Te doy alojo", que ademas esta OCULTO desde el commit 8f2d678. */
     initCustomization();
     // 2026-08-15: antes eran 2 timeouts de tiempo fijo (950ms para abrirEsfera, 3000ms
     // para el mic de manos libres) adivinando cuanto dura el saludo -- con saludos
@@ -4362,7 +4615,7 @@ window.onload = async function(){
       });
     },500);
     if(!ghostMode) subscribeToUsers();
-    subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
+    subscribeToFriendRequests(); /* 2026-08-23: solo este queda al arranque (pinta insignias que se ven fuera de su pantalla y es una query chica, solo TUS solicitudes). chat/comments/reportes/novedades se enganchan al abrir su pantalla -- ver _subUnaVez(). */ revisarRodadasProximas(); revisarRetosCumplidos();
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
@@ -4563,6 +4816,20 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
     if(_prevData.temaUi==='solido'||_prevData.temaUi==='cristal'){ temaUI=_prevData.temaUi; try{localStorage.setItem('lp_tema_ui',temaUI);}catch(e){} if(typeof _aplicarTemaUI==='function') _aplicarTemaUI(); }
     if(_prevData.personalidad) pisteroPersonalidad=_prevData.personalidad;
   }
+  // 2026-08-24: restaura km/darma/kmPorModo/mantención ANTES de la escritura de mas
+  // abajo, con el mismo criterio "gana el mas grande" que sincronizarAlEntrar(). Sin
+  // esto, un primer login por codigo en un dispositivo/navegador nuevo escribia
+  // km:(us.di)||0 SIN haber leido la nube -- en una cuenta con km real de otro
+  // dispositivo, eso lo pisaba con 0 (encontrado en vivo probando esta rama: el campo
+  // `km` de una cuenta real quedo en 0 mientras `kmPorModo.moto` seguia con datos
+  // reales, justo la firma de este bug). Restaurar primero vuelve esa escritura
+  // inofensiva: sube de vuelta el mismo maximo que ya tenia.
+  _restaurarDesdeNube(_prevData);
+  // Se abre la compuerta de mantencion tambien en ESTE camino (antes solo la abria
+  // sincronizarAlEntrar(), que este login nunca llama): sin esto, ganar Darma o marcar
+  // una mantencion como hecha durante la PRIMERA sesion de una cuenta no subia nada
+  // hasta el proximo recargo de pagina.
+  _mantListoParaSubir=true;
   try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
   localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
   localStorage.setItem('lp_lens_'+cu,selectedLens);
@@ -4598,9 +4865,9 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   uj=_lsJSON('lp_j_'+cu, []);
   rh=_lsJSON('lp_r_'+cu, []);
   await im(); au(); rm(MG); fg('todos');
-  loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
+  loadTrips(); loadRoutesList(); cargarFrasesComunidad(); /* 2026-08-23: loadRepairTips/loadHostels/loadRecommendations salieron de aqui -> se enganchan al abrir SU pantalla (_subUnaVez en cv()). loadHostels era el peor: arrastra initVotosHostels() = guiComments limit(500), ~550 documentos por apertura para "Te doy alojo", que ademas esta OCULTO desde el commit 8f2d678. */
   if(!ghostMode) subscribeToUsers();
-  subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
+  subscribeToFriendRequests(); /* 2026-08-23: solo este queda al arranque (pinta insignias que se ven fuera de su pantalla y es una query chica, solo TUS solicitudes). chat/comments/reportes/novedades se enganchan al abrir su pantalla -- ver _subUnaVez(). */
   getCurrentLocation();
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
@@ -4743,6 +5010,39 @@ function _renderMainMapUsers(docs){
   });
 }
 function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } }); }
+/* ===== SUSCRIPCION PEREZOSA (2026-08-23) =====
+   Al iniciar sesion se enganchaban 11 listeners de golpe, sin importar que pantalla
+   estuvieras mirando, y cada uno lee su coleccion ENTERA de arranque: reportes 200,
+   users 150, chat 100, novedades 60, guiComments 50, hostels 50, recommendations 50,
+   repairTips 20... ~700 documentos como piso, antes de que el usuario tocara nada.
+   Firestore cobra por documento leido, y el plan gratis da 50.000 lecturas al dia PARA
+   TODO EL PROYECTO: con ~700 por apertura, bastaban ~70 aperturas para dejar la app sin
+   base de datos. Medido en la consola el 2026-08-23: 73.000 lecturas contra 210
+   escrituras, con maximo 4 conexiones simultaneas. O sea el gasto no venia de tener
+   muchos usuarios sino de que ABRIR la app costaba carisimo -- por eso ya habia
+   reventado con 48 usuarios.
+   Ahora cada pantalla engancha lo suyo la primera vez que se abre. Se suscribe UNA vez
+   por sesion y no se desuscribe: asi el que entra y sale de una pantalla no paga de
+   nuevo, y los datos que ya estaban siguen ahi (desuscribir y volver a enganchar seria
+   peor, cobra la coleccion completa cada vez).
+   Lo que NO se difiere, a proposito:
+     - subscribeToFriendRequests: pinta #solicBadge y #esAvisos, que se ven desde fuera
+       de su pantalla. Ademas es where('to','==',cu): son solo TUS solicitudes.
+     - subscribeToReportes: alimenta el aviso de superficie ANTES de arrancar a pedalear
+       (ver _avisoSuperficieRuta) y los avisos de Pistero en la zona. Se engancha al abrir el
+       mapa, al iniciar navegacion y al empezar a grabar en toggleGPS() (sus DOS caminos: el
+       plugin nativo y watchPosition del navegador).
+     - loadTrips: la global `trips` NO se usa solo en su pantalla -- au() saca de ahi el
+       contador de viajes del panel de Inicio y statViajesCompletados() alimenta los logros.
+       Diferirla dejaba el contador en cero y los logros mal a quien nunca abriera "Mis
+       viajes". Ademas es where('user','==',cu): son solo TUS viajes, sale barato. */
+const _subsHechas={};
+function _subUnaVez(clave, fn){
+  if(_subsHechas[clave]) return;
+  if(typeof fn!=='function') return;
+  _subsHechas[clave]=true;
+  try{ fn(); }catch(e){ _subsHechas[clave]=false; /* que un fallo no deje la pantalla muerta para siempre */ }
+}
 function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ _lastUsersSnapshotDocs=snapshot.docs; _renderMainMapUsers(snapshot.docs); if(_navMapUsersActive) _renderNavMapUsers(snapshot.docs); }); }
 /* ===== CICLISTAS DE LA COMUNIDAD: pelotón demo por todo Chile + usuarios reales al entrar ===== */
 // Al registrarse o entrar, publica tu zona aproximada (~1 km, por privacidad):
@@ -4899,6 +5199,7 @@ function toggleGPS(silencioso){
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
+      _subUnaVez('reportes', subscribeToReportes); /* 2026-08-23: al grabar SI hacen falta aunque no hayas abierto el mapa (avisos de peligro/zona de Pistero) */
       if(!silencioso) _prevueloPistero(true);
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
@@ -4906,6 +5207,7 @@ function toggleGPS(silencioso){
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
+      _subUnaVez('reportes', subscribeToReportes); /* 2026-08-23: al grabar SI hacen falta aunque no hayas abierto el mapa (avisos de peligro/zona de Pistero) */
       if(!silencioso) _prevueloPistero(false);
     } else { lpAviso("Tu dispositivo no soporta GPS"); }
     // Aviso ÚNICO (2026-08, bug ruta = línea recta): en Android el rastreo con la pantalla
@@ -5144,7 +5446,7 @@ function ug(p){
   // promedia y cancela justo ese ruido) muestre 0 = estás parado de verdad. Se
   // agrega sp>0 como condición: solo suma kilometraje cuando la propia app ya
   // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
-  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _sumarKmModo(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _sumarKmModo(moved); _sumarKmMantencion(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);
@@ -5778,6 +6080,129 @@ function _sumarKmModo(km){
   const modo=(typeof actividadTipo!=='undefined' && actividadTipo) ? actividadTipo : 'ciclismo';
   us.dm[modo]=(us.dm[modo]||0)+km;
 }
+// ===== Mantención preventiva (2026-08-23, pedido de Inty) =====
+// Umbrales por defecto de guías reales (Bike Gremlin / CyclingTrend), no inventados
+// — esto es seguridad, no se adivina. El usuario los puede editar; se guardan en
+// us.mant junto al resto de sus stats (gd() los persiste solo, es el mismo objeto).
+const MANT_ITEMS={
+  cadena:      {l:'Cadena',             fa:'link',         c:'#f59e0b', umbralKm:2500, umbralMeses:12, taller:false, tip:'Mide el desgaste con un medidor de cadena. Si pasa 0.5–0.75%, cámbiala antes de que gaste también el cassette.'},
+  pastillas:   {l:'Pastillas de freno', fa:'hand',         c:'#ef4444', umbralKm:2000, umbralMeses:12, taller:true,  tip:'Revisa el grosor. Si están al límite, es trabajo de taller — los frenos no son DIY.'},
+  cables:      {l:'Cables y fundas',    fa:'wave-square',  c:'#3b82f6', umbralKm:5000, umbralMeses:12, taller:false, tip:'Si los cambios o los frenos se sienten duros o lentos, puede ser hora de cambiarlos.'},
+  rodamientos: {l:'Rodamientos',        fa:'circle-notch', c:'#8b5cf6', umbralKm:4000, umbralMeses:6,  taller:false, tip:'Revisa juego y ruido en dirección, bujes y pedalier.'},
+  neumaticos:  {l:'Neumáticos',         fa:'circle',       c:'#10b981', umbralKm:null, umbralMeses:24, taller:false, tip:'Revisa el dibujo y busca cortes en la carcasa — la goma se reseca aunque no la uses.'}
+};
+function _mantData(){
+  if(!us.mant || typeof us.mant!=='object') us.mant={};
+  Object.keys(MANT_ITEMS).forEach(function(k){
+    // fecha:new Date() en vez de null (bug encontrado 2026-08-24): un ítem con
+    // umbralKm:null (neumáticos, 100% por tiempo) dependía de que ALGO le pusiera
+    // fecha para siquiera empezar a contar — sin eso, mesesDesde quedaba null para
+    // siempre y el aviso "la goma se reseca aunque no la uses" nunca se disparaba.
+    // Hoy es la fecha más honesta que tenemos (no sabemos cuándo cambió de verdad),
+    // igual que "última sincronización" en cualquier tracker que arranca de cero.
+    if(!us.mant[k]) us.mant[k]={kmBase:0, fecha:new Date().toISOString(), umbralKm:MANT_ITEMS[k].umbralKm, umbralMeses:MANT_ITEMS[k].umbralMeses, historial:[], avisado:false};
+    // Migracion (2026-08-24): el arreglo de arriba solo alcanza a quien abre Taller por
+    // primera vez. Todo el que lo abrio desde que salio la funcion (23-ago) ya tiene el
+    // objeto guardado con fecha:null, y como este bloque solo corre `if(!us.mant[k])`,
+    // se lo quedaba para siempre: el aviso por tiempo seguia sin dispararse nunca para
+    // ellos. Se rellena la fecha faltante una sola vez, con el mismo criterio honesto
+    // (hoy = cuando empezamos a contar). Tambien se re-sincronizan los umbrales para que
+    // un cambio futuro en MANT_ITEMS llegue a los datos ya guardados.
+    var _mi=us.mant[k];
+    if(!_mi.fecha) _mi.fecha=new Date().toISOString();
+    _mi.umbralKm=MANT_ITEMS[k].umbralKm;
+    _mi.umbralMeses=MANT_ITEMS[k].umbralMeses;
+  });
+  return us.mant;
+}
+// Clima real durante el viaje (lo pone _climaFxAplicar más abajo): lluvia o nieve
+// gastan cadena, cables y rodamientos mucho más rápido que un km seco — contarlos
+// "más pesado" para la mantención es más honesto que sumar todos los km igual.
+let _climaModoActual='off';
+function _factorDesgasteClima(){ return (_climaModoActual==='lluvia'||_climaModoActual==='nieve')?1.5:1; }
+function _sumarKmMantencion(km){ if(!(km>0)) return; us.mantKm=(us.mantKm||0)+km*_factorDesgasteClima(); }
+// 2026-08-24: acepta `data` ya calculado (el objeto que devuelve _mantData()) para no
+// volver a recorrer los 5 ítems cada vez — antes cada llamada llamaba a _mantData()
+// de nuevo, y como au() (cada punto de GPS) llama a esto ~10 veces por tick entre
+// renderMantencion()+_mantencionRevisarAvisos(), eran ~10 recorridos redundantes por
+// tick. Sigue funcionando sin el segundo argumento (fallback a _mantData()) por si
+// algo más lo llama suelto.
+function _mantProgreso(key, data){
+  const d=(data||_mantData())[key], km=(us.mantKm||0)-(d.kmBase||0);
+  let mesesDesde=null;
+  if(d.fecha){ mesesDesde=(Date.now()-new Date(d.fecha).getTime())/(1000*60*60*24*30.44); }
+  const pctKm = d.umbralKm ? Math.min(1, km/d.umbralKm) : 0;
+  const pctMeses = (d.umbralMeses && mesesDesde!=null) ? Math.min(1, mesesDesde/d.umbralMeses) : 0;
+  const pct=Math.max(pctKm, pctMeses);
+  return {km:km, mesesDesde:mesesDesde, pct:pct, vencido:pct>=1, cerca:(pct>=0.85 && pct<1)};
+}
+function renderMantencion(){
+  const cont=document.getElementById('mantLista'); if(!cont) return;
+  const data=_mantData();
+  let vencidos=0, cerca=0;
+  cont.innerHTML=Object.keys(MANT_ITEMS).map(function(key){
+    const info=MANT_ITEMS[key], d=data[key], p=_mantProgreso(key, data);
+    if(p.vencido) vencidos++; else if(p.cerca) cerca++;
+    const color = p.vencido?'#ef4444':(p.cerca?'#eab308':'#35c46a');
+    const badge = p.vencido?'<span class="mi-badge" style="background:rgba(239,68,68,.16);color:#ef4444">Vencido</span>':(p.cerca?'<span class="mi-badge" style="background:rgba(234,179,8,.16);color:#eab308">Cerca</span>':'<span class="mi-badge" style="background:rgba(53,196,106,.16);color:#35c46a">OK</span>');
+    const histHTML = (d.historial&&d.historial.length) ? ('<ul class="mi-hist">'+d.historial.slice(-5).reverse().map(function(h){ return '<li>'+new Date(h.fecha).toLocaleDateString()+' · '+h.km.toFixed(0)+' km'+(h.costo?' · $'+h.costo:'')+(h.nota?' · '+escapeHTML(h.nota):'')+'</li>'; }).join('')+'</ul>') : '<p class="mi-sub" style="margin:6px 0">Sin historial todavía.</p>';
+    const tallerNota = info.taller ? '<p style="color:#e7a33e;margin:6px 0 0"><i class="fas fa-triangle-exclamation"></i> Cuando toque cambiarlas, es trabajo de taller — no DIY.</p>' : '';
+    return '<details class="mant-item"><summary>'
+      +'<span class="mi-ic" style="background:rgba(255,255,255,.06);color:'+info.c+'"><i class="fas fa-'+info.fa+'"></i></span>'
+      +'<span class="mi-txt"><span class="mi-t">'+info.l+'</span><div class="mi-bar"><div class="mi-fill" style="width:'+Math.round(p.pct*100)+'%;background:'+color+'"></div></div><div class="mi-sub">'+p.km.toFixed(0)+' km desde el último cambio'+(d.umbralKm?(' de '+d.umbralKm):'')+'</div></span>'
+      +badge
+      +'</summary>'
+      +'<div class="mi-body">'
+      +'<p style="margin:0 0 6px">'+info.tip+'</p>'
+      +tallerNota
+      +histHTML
+      +'<div class="mi-row"><input type="number" id="mantCosto_'+key+'" placeholder="Costo (opcional)"><input type="text" id="mantNota_'+key+'" placeholder="Nota (opcional)" maxlength="80"></div>'
+      +'<button type="button" class="ab" style="margin-top:8px" onclick="_mantencionMarcarHecho(\''+key+'\')"><i class="fas fa-check"></i> Ya la cambié / revisé</button>'
+      +'</div></details>';
+  }).join('');
+  const resumen=document.getElementById('mantResumen');
+  if(resumen) resumen.textContent = vencidos ? (vencidos+' vencid'+(vencidos>1?'os':'o')+' — revisa') : (cerca ? (cerca+' por vencer pronto') : 'Todo al día');
+}
+function _mantencionMarcarHecho(key){
+  const d=_mantData()[key]; if(!d) return;
+  const costoEl=document.getElementById('mantCosto_'+key), notaEl=document.getElementById('mantNota_'+key);
+  const costo=(costoEl&&costoEl.value)?parseFloat(costoEl.value):null;
+  const nota=(notaEl&&notaEl.value)?notaEl.value.trim():null;
+  d.historial=d.historial||[];
+  d.historial.push({fecha:new Date().toISOString(), km:(us.mantKm||0)-(d.kmBase||0), costo:costo, nota:nota});
+  d.kmBase=us.mantKm||0;
+  d.fecha=new Date().toISOString();
+  d.avisado=false;
+  gd(); renderMantencion();
+  _ganarDarma(5);
+  try{ _pisteroMood='contento'; }catch(e){} h('¡Buena! Quedó registrado. Cinco de Darma por mantener tu bici al día.');
+}
+// Aviso proactivo: se dispara UNA vez por ítem al cruzar el umbral (no cada vez que
+// abrís la app) — mismo criterio que ya usamos hoy para "ya no está" en los reportes
+// del mapa: la voz repetida molesta, el dato sigue disponible igual en Taller.
+function _mantencionRevisarAvisos(){
+  try{
+    const data=_mantData();
+    Object.keys(MANT_ITEMS).forEach(function(key){
+      const p=_mantProgreso(key, data), d=data[key];
+      if(p.vencido && !d.avisado){
+        d.avisado=true;
+        const info=MANT_ITEMS[key];
+        h('Che, ya van '+p.km.toFixed(0)+' km desde tu último cambio de '+info.l.toLowerCase()+' — '+(info.taller?'llévala al taller cuando puedas.':'revísala cuando puedas.'));
+      } else if(!p.vencido && d.avisado){ d.avisado=false; }
+    });
+  }catch(e){}
+}
+// Antes de planificar un viaje largo: si algo está vencido o por vencer, avisar ACÁ —
+// pedido de Inty: evitar quedar varado en medio de un viaje de varios días por algo
+// que se veía venir, no solo enterarte cuando ya se cumplió el km.
+function _mantencionAvisoPreViaje(){
+  try{
+    const data=_mantData();
+    const criticos=Object.keys(MANT_ITEMS).filter(function(key){ const p=_mantProgreso(key, data); return p.vencido||p.cerca; }).map(function(key){ return MANT_ITEMS[key].l; });
+    if(criticos.length) lpAviso('Antes de un viaje largo: revisa '+criticos.join(', ')+' — está'+(criticos.length>1?'n':'')+' por vencer. Mira Taller para el detalle.');
+  }catch(e){}
+}
 /* El vehículo NO compite: es un rol de apoyo, no una disciplina. Sus kilómetros se
    registran igual (sirven para tus propias estadísticas) pero no entran a ningún ranking. */
 const MODOS_QUE_COMPITEN={ciclismo:'Ruta',mtb:'MTB / Gravel',trekking:'Trekking'};
@@ -5836,7 +6261,35 @@ function _ganarDarma(n){ var mult=_esFundador?2:1; us.d+=Math.round((n||0)*mult)
 function _kmBiciConfianza(){ var m=(us&&us.dm)||{}; var bike=(Number(m.ciclismo)||0)+(Number(m.cicloviaje)||0)+(Number(m.mtb)||0); if(bike<=0){ var modo=(typeof actividadTipo!=="undefined"&&actividadTipo)?actividadTipo:"ciclismo"; if(modo==="ciclismo"||modo==="cicloviaje"||modo==="mtb") return (us&&us.di)||0; } return bike; }
 var LP_KM_CONFIANZA=10; // km de bici reales para acciones sensibles (anti cuentas falsas)
 function _esCiclistaConfiable(){ return _kmBiciConfianza()>=LP_KM_CONFIANZA; }
-function au(){ document.getElementById('dt').innerText=us.di.toFixed(2); document.getElementById('cl').innerText=Math.round(us.c); if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda"; document.getElementById('nv').innerText=us.n+" ("+us.d+")"; var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d; document.getElementById('avgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0'; document.getElementById('totalTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length; var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di)); const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); try{ if(_logrosListo&&typeof _chequearLogros==='function') _chequearLogros(false); }catch(e){} gd();
+function au(){
+  // 2026-08-23: la grilla de 5 tarjetas (dt/cl/avgSpeed/totalTrips) + la barra de
+  // Desempeño (performanceFill) SALIERON de Inicio (v-dash) por pedido de Inty: duplicaban
+  // exactamente los mismos datos que ya vive completos en Estadísticas (v-stats,
+  // statKm/statCal/statAvgSpeed/etc.) y en el HUD de la esfera. Los ids viejos se dejan
+  // con guarda (if(el)) por si alguna vista vieja en caché todavía los tiene, en vez de
+  // que au() reviente al no encontrarlos — pero el elemento nuevo es #dashResumenTxt,
+  // una sola línea que resume km+viajes y lleva a Estadísticas si tocas ahí.
+  var _dt=document.getElementById('dt'); if(_dt) _dt.innerText=us.di.toFixed(2);
+  var _cl=document.getElementById('cl'); if(_cl) _cl.innerText=Math.round(us.c);
+  if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda";
+  document.getElementById('nv').innerText=us.n+" ("+us.d+")";
+  var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d;
+  var _avgS=document.getElementById('avgSpeed'); if(_avgS) _avgS.innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0';
+  var _tt=document.getElementById('totalTrips'); var _tripsCompletos=trips.filter(function(t){return t.status==='completed';}).length; if(_tt) _tt.innerText=_tripsCompletos;
+  var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di));
+  const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); if(pf){ pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); }
+  var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1)+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
+  // 2026-08-24: renderMantencion() reconstruye el innerHTML de 5 tarjetas — solo
+  // vale la pena si Taller es la pantalla que se está viendo ahora mismo. Antes
+  // corría en CADA punto de GPS sin importar qué pantalla estuviera abierta (mapa,
+  // esfera, lo que sea), gastando batería de más en cada viaje.
+  // _mantencionRevisarAvisos() SÍ sigue corriendo siempre — ese es el punto: avisar
+  // proactivo aunque no estés mirando Taller.
+  try{
+    if(typeof renderMantencion==='function'){ const _vMac=document.getElementById('v-mac'); if(_vMac && _vMac.classList.contains('on')) renderMantencion(); }
+    if(typeof _mantencionRevisarAvisos==='function') _mantencionRevisarAvisos();
+  }catch(e){}
+  try{ if(_logrosListo&&typeof _chequearLogros==='function') _chequearLogros(false); }catch(e){} gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
   // sueltos de Darma o al apagar el GPS libre — quien solo navegaba a un destino
@@ -6138,22 +6591,122 @@ function irAlPuntoYNavegar(lat,lon,name){
 // todo Chile (salteado), y a medida que te acercas terminas viendo todos, sin saltos.
 let pointsUnsub=null, mapPointsData=[], mapPointsRenderTimer=null;
 const MAPPOINTS_MAX_RENDER=350;
+/* Puntos del mapa: caché local + sincronización incremental (2026-08-23).
+   ANTES: `collection('recommendations').onSnapshot(...)` SIN filtro y SIN limit(), o sea
+   la colección ENTERA en cada apertura del mapa. Firestore cobra por documento leído, y
+   esa colección la escriben los usuarios (addRecommendation/agregarPOI): crece para
+   siempre. El comentario original ya hablaba de "~4.000 puntos". Con el plan gratis en
+   50.000 lecturas al día PARA TODO EL PROYECTO, era una bomba de tiempo: no molesta hasta
+   que un día se lleva la cuota de todos.
+   AHORA: los puntos se guardan en el teléfono y solo se le piden a Firestore los que
+   llegaron DESPUÉS de la última sincronización (`where('ts','>', ...)`). El listener sigue
+   siendo en vivo — pero una consulta filtrada solo lee los documentos que casan, así que
+   en régimen cuesta casi cero. De regalo, el mapa se pinta al instante desde la caché en
+   vez de esperar la red.
+   Refresco completo cada 7 días: `likeRecommendation()` actualiza likes/ratings SIN tocar
+   `ts`, así que esos cambios no los trae la consulta incremental. Para el mapa da igual
+   (solo usa lat/lon/cat/título), pero conviene que no se desfase para siempre.
+   No hay borrado de recomendaciones en toda la app — verificado — así que la caché no
+   puede mostrar fantasmas de puntos eliminados. */
+const MAPPOINTS_CACHE_KEY='lp_mappoints_v1';
+const MAPPOINTS_REFRESCO_TOTAL_MS=7*24*60*60*1000;
+function _mapPointsCacheLeer(){
+  try{
+    const c=JSON.parse(localStorage.getItem(MAPPOINTS_CACHE_KEY)||'null');
+    if(!c || !Array.isArray(c.puntos)) return null;
+    if(!(c.ultimaSync>0) || (Date.now()-c.ultimaSync)>MAPPOINTS_REFRESCO_TOTAL_MS) return null; // caché vieja: refresco completo
+    return c;
+  }catch(e){ return null; }
+}
+/* Solo los campos que el mapa usa de verdad (ver _renderizarPuntosVisibles: lat, lon, cat,
+   user para separar los sembrados de OSM, title y desc para el globo).
+   Esto NO es prolijidad: un documento de `recommendations` puede traer `foto`, que es una
+   imagen en base64 (previewFoto usa readAsDataURL). Guardar eso en localStorage —que tiene
+   ~5 MB para TODA la app— reventaba de dos maneras: la escritura fallaba y la caché no
+   servía de nada en silencio, y peor, al llenar el almacenamiento se caían las otras
+   escrituras, incluida gd() con los kilómetros y las rutas del usuario. gd() tiene su
+   propio catch silencioso, así que la pérdida habría sido invisible. */
+function _mapPointNube(d){
+  return {id:d.id, lat:d.lat, lon:d.lon, cat:d.cat, user:d.user,
+          title:d.title, desc:(typeof d.desc==='string'?d.desc.slice(0,200):''), tsMs:d.tsMs||0};
+}
+const MAPPOINTS_CACHE_MAX=6000;          // tope de puntos guardados
+const MAPPOINTS_CACHE_MAX_BYTES=1500000; // ~1,5 MB: deja el resto de localStorage libre
+function _mapPointsCacheGuardar(){
+  try{
+    let maxTs=0;
+    mapPointsData.forEach(function(d){ if(d.tsMs>maxTs) maxTs=d.tsMs; });
+    const payload=JSON.stringify({ultimaSync:Date.now(), maxTs:maxTs,
+                                  puntos:mapPointsData.slice(0,MAPPOINTS_CACHE_MAX).map(_mapPointNube)});
+    // Antes de escribir, no después: si no entra, se descarta la caché entera en vez de
+    // dejar el almacenamiento al borde y hacer fallar a gd() (los km del usuario).
+    if(payload.length>MAPPOINTS_CACHE_MAX_BYTES){ try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){} return; }
+    localStorage.setItem(MAPPOINTS_CACHE_KEY, payload);
+  }catch(e){
+    // Almacenamiento lleno o modo privado: se borra lo propio para no dejar ocupado un
+    // espacio que necesitan los datos del usuario. La app sigue, solo pierde el ahorro.
+    try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){}
+  }
+}
+function _mapPointsAplicar(snap){
+  // Fusión por id: un punto que ya estaba se reemplaza, uno nuevo se agrega. Nunca se
+  // borra nada (la consulta incremental no ve lo viejo, y eso NO significa que no exista).
+  const porId={};
+  mapPointsData.forEach(function(d){ porId[d.id]=d; });
+  snap.forEach(function(doc){
+    const d=doc.data();
+    if(!(d.lat&&d.lon)) return;
+    d.id=doc.id;
+    try{ d.tsMs=(d.ts&&d.ts.toMillis)?d.ts.toMillis():(d.tsMs||0); }catch(e){ d.tsMs=d.tsMs||0; }
+    porId[d.id]=d;
+  });
+  mapPointsData=Object.keys(porId).map(function(k){ return porId[k]; });
+  // Subconjunto para el aviso de voz (solo agua/mirador/hospedaje): se arma UNA vez
+  // acá, no en cada fix de GPS, porque recorrer los puntos completos con cálculo
+  // de distancia incluido en cada actualización de posición era pesado de más para
+  // un celular andando en bici (batería/CPU en un recorrido de varias horas).
+  puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
+  _renderizarPuntosVisibles();
+  _mapPointsCacheGuardar();
+}
 function subscribeToMapPoints(){
-  if(pointsUnsub) return;
-  pointsUnsub=db.collection('recommendations').onSnapshot(function(snap){
-    mapPointsData=[];
-    snap.forEach(function(doc){ const d=doc.data(); if(d.lat&&d.lon){ d.id=doc.id; mapPointsData.push(d); } });
-    // Subconjunto para el aviso de voz (solo agua/mirador/hospedaje): se arma UNA vez
-    // acá, no en cada fix de GPS, porque recorrer los ~4.000 puntos completos cálculo
-    // de distancia incluido en cada actualización de posición era pesado de más para
-    // un celular andando en bici (batería/CPU en un recorrido de varias horas).
-    puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
-    _renderizarPuntosVisibles();
-  }, function(e){});
-  if(mp){
+  // Los handlers del mapa se enganchan ANTES del `return` de abajo, y aparte de la
+  // suscripción. Motivo: esta función también se llama desde avisarPuntosCercanos(), o sea
+  // en pleno viaje y posiblemente SIN haber abierto el mapa todavía (mp === null). En ese
+  // caso quedaba `pointsUnsub` seteado pero los handlers sin poner, y cuando el ciclista
+  // abría el mapa el `return` temprano cortaba antes de engancharlos: los puntos no se
+  // volvían a dibujar al mover ni al hacer zoom en TODA la sesión.
+  if(mp && !subscribeToMapPoints._handlers){
+    subscribeToMapPoints._handlers=true;
     mp.on('moveend', _renderizarPuntosVisiblesThrottled);
     mp.on('zoomend', _renderizarPuntosVisiblesThrottled);
   }
+  if(pointsUnsub) return;
+  const cache=_mapPointsCacheLeer();
+  let consulta=db.collection('recommendations');
+  if(cache){
+    // Pintar YA con lo que hay en el teléfono, sin esperar a la red.
+    mapPointsData=cache.puntos;
+    puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
+    try{ _renderizarPuntosVisibles(); }catch(e){}
+    if(cache.maxTs>0) consulta=consulta.where('ts','>',firebase.firestore.Timestamp.fromMillis(cache.maxTs));
+  }
+  const incremental=!!(cache && cache.maxTs>0);
+  pointsUnsub=consulta.onSnapshot(_mapPointsAplicar, function(e){
+    // Si la consulta incremental falla (p.ej. por un índice que falta), no alcanza con
+    // borrar la caché para la próxima sesión: el mapa se quedaría con los puntos viejos
+    // TODA esta sesión. Se rehace la suscripción completa acá mismo, una sola vez —
+    // `_mapPointsReintento` evita que un error persistente entre en bucle.
+    try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){}
+    if(incremental && !subscribeToMapPoints._reintento){
+      subscribeToMapPoints._reintento=true;
+      try{ if(pointsUnsub) pointsUnsub(); }catch(_){}
+      pointsUnsub=null;
+      mapPointsData=[];
+      subscribeToMapPoints();
+    }
+  });
+  // (el enganche de moveend/zoomend subió al principio de la función, ver la nota de allá)
 }
 function _renderizarPuntosVisiblesThrottled(){
   if(mapPointsRenderTimer) clearTimeout(mapPointsRenderTimer);
@@ -6321,7 +6874,7 @@ function enviarDM(){
   db.collection('dm').doc(dmConvId).collection('messages').add({from:cu, nombre:nombreUsuario, text:text, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
   inp.value='';
 }
-function cerrarChatAmigo(){ if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; showFriendsList(); }
+function cerrarChatAmigo(){ if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; showAmigosYSolicitudes(); }
 async function showFriendsList(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Amigos'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); try{ const res=await Promise.all([ db.collection('friendRequests').where('from','==',cu).get(), db.collection('friendRequests').where('to','==',cu).get() ]); const ids={}; res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; }); res[1].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; }); const friendIds=Object.keys(ids); if(friendIds.length===0){ c.innerHTML='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; return; } let html=''; for(const friendId of friendIds){ const nombre=await getNombreUsuario(friendId); html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1;cursor:pointer" onclick="verPerfilUsuario(\''+friendId+'\',\'showFriendsList\')"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa;text-decoration:underline">Ver perfil</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')"><i class="fas fa-comment"></i> Chat</button></div>'; } c.innerHTML=html+'<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>'; }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los amigos. Intenta de nuevo.</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; } }
 async function showFriendRequests(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Solicitudes'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); const snapshot=await db.collection('friendRequests').where('to','==',cu).get(); const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}); if(pend.length===0){ c.innerHTML='<p style="color:#888">Sin solicitudes</p>'; return; } let html=''; for(const doc of pend){ const data=doc.data(); const nombre=await getNombreUsuario(data.from); html+='<div class="friend-request"><span><strong>'+escapeHTML(nombre)+'</strong></span><div><button class="ab" style="width:auto;padding:6px 10px;margin:2px;font-size:0.75rem" onclick="acceptFriendRequest(\''+doc.id+'\',\''+data.from+'\')">Aceptar</button><button class="ab" style="width:auto;padding:6px 10px;margin:2px;background:#dc2626;font-size:0.75rem" onclick="rejectFriendRequest(\''+doc.id+'\')">Rechazar</button></div></div>'; } c.innerHTML=html; }
 function acceptFriendRequest(reqId,fromUser){
@@ -6330,12 +6883,62 @@ function acceptFriendRequest(reqId,fromUser){
     // Firestore del perfil privado (fotos/relatos) pueda chequear "son amigos" con
     // un exists() simple, sin necesitar una query — ver perfil-comunidad.js.
     try{ const a=cu<fromUser?cu:fromUser, b=cu<fromUser?fromUser:cu; db.collection('amistades').doc(a+'_'+b).set({a:a,b:b}); }catch(e){}
-    h("¡Nuevo amigo agregado!"); showFriendsList();
+    h("¡Nuevo amigo agregado!"); showAmigosYSolicitudes();
   }).catch(function(){ h("No se pudo aceptar, intenta de nuevo."); });
 }
-function rejectFriendRequest(reqId){ db.collection('friendRequests').doc(reqId).update({status:'rejected'}); h("Solicitud rechazada."); showFriendRequests(); }
+// 2026-08-23: Amigos + Solicitudes fusionados en una sola vista (pedido de Inty:
+// "eso debería ir todo junto y se despliega para ver todo el contenido") — antes
+// eran dos botones que llevaban a showFriendsList()/showFriendRequests() por
+// separado. Reusa exactamente la misma lógica de ambas, solo las junta en un mismo
+// c.innerHTML: primero las solicitudes pendientes (si hay), después la lista de
+// amigos. showFriendsList()/showFriendRequests() quedan intactas sin llamar desde
+// acá, por si algo más viejo las necesitara.
+async function showAmigosYSolicitudes(){
+  _modalVolverA=null;
+  document.getElementById('modalTitle').innerText='Amigos';
+  const c=document.getElementById('modalContent');
+  c.innerHTML='<p style="color:#888">Cargando...</p>';
+  document.getElementById('userModal').classList.add('on');
+  try{
+    // 2026-08-24: antes pedía 'to'==cu dos veces (una para solicitudes pendientes,
+    // otra adentro del Promise.all para los amigos aceptados) — misma query,
+    // lectura de Firestore duplicada en cada apertura de esta pantalla. Ahora se
+    // pide una sola vez y se reusan esos docs para ambas cosas; las dos queries
+    // que sí son distintas ('from'==cu y 'to'==cu) van en paralelo desde el arranque.
+    const res=await Promise.all([
+      db.collection('friendRequests').where('from','==',cu).get(),
+      db.collection('friendRequests').where('to','==',cu).get()
+    ]);
+    const snapTo=res[1];
+    const pend=snapTo.docs.filter(function(d){ return d.data().status==='pending'; });
+    const ids={};
+    res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; });
+    snapTo.docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; });
+    const friendIds=Object.keys(ids);
+    let html='';
+    if(pend.length){
+      html+='<h4 style="font-size:0.85rem;color:var(--g);margin:0 0 8px"><i class="fas fa-inbox"></i> Solicitudes ('+pend.length+')</h4>';
+      for(const doc of pend){
+        const data=doc.data(); const nombre=await getNombreUsuario(data.from);
+        html+='<div class="friend-request"><span><strong>'+escapeHTML(nombre)+'</strong></span><div><button class="ab" style="width:auto;padding:6px 10px;margin:2px;font-size:0.75rem" onclick="acceptFriendRequest(\''+doc.id+'\',\''+data.from+'\')">Aceptar</button><button class="ab" style="width:auto;padding:6px 10px;margin:2px;background:#dc2626;font-size:0.75rem" onclick="rejectFriendRequest(\''+doc.id+'\')">Rechazar</button></div></div>';
+      }
+      html+='<h4 style="font-size:0.85rem;color:var(--p);margin:14px 0 8px"><i class="fas fa-users"></i> Tus amigos</h4>';
+    }
+    if(friendIds.length===0){
+      html+='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>';
+    } else {
+      for(const friendId of friendIds){
+        const nombre=await getNombreUsuario(friendId);
+        html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1;cursor:pointer" onclick="verPerfilUsuario(\''+friendId+'\',\'showAmigosYSolicitudes\')"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa;text-decoration:underline">Ver perfil</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')"><i class="fas fa-comment"></i> Chat</button></div>';
+      }
+      html+='<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>';
+    }
+    c.innerHTML=html;
+  }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los amigos. Intenta de nuevo.</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; }
+}
+function rejectFriendRequest(reqId){ db.collection('friendRequests').doc(reqId).update({status:'rejected'}); h("Solicitud rechazada."); showAmigosYSolicitudes(); }
 async function showUserListForFriendRequest(){
-  _modalVolverA='showFriendsList';
+  _modalVolverA='showAmigosYSolicitudes'; // antes 'showFriendsList' -- ver fusión Amigos+Solicitudes más arriba
   document.getElementById('modalTitle').innerText='Ciclistas en la comunidad'; const c=document.getElementById('modalContent'); c.innerHTML=_btnVolverModal()+'<p style="color:#888">Buscando ciclistas en todo el mundo...</p>'; document.getElementById('userModal').classList.add('on');
   // Trae del servidor quiénes ya son amigos o tienen una solicitud pendiente contigo,
   // para no mostrar "Agregar" de nuevo tras recargar la app (evita duplicados).
@@ -6677,8 +7280,10 @@ function seleccionarCatReporte(k){ reporteCatSel=k; document.querySelectorAll('#
 let _enviandoReporte=false;
 async function enviarReporte(){
   if(!reporteCatSel){ lpAviso('Elige primero una categoría'); return; }
+  // 2026-08-23: la descripción pasa a OPCIONAL (pedido de Inty: "esto tiene que ser
+  // rápido" — antes bloqueaba publicar sin escribir nada). Sigue pudiéndose escribir,
+  // solo que ya no es obligatoria.
   const text=document.getElementById('repText').value.trim();
-  if(!text){ lpAviso('Escribe el dato que quieres compartir'); return; }
   // Si marcaste un punto en el mapa (botón "No estoy ahí"), publica AHÍ — no en tu
   // GPS. Antes el reporte siempre usaba tu ubicación actual, sin excepción: no había
   // forma de avisar un control policial o un animal atropellado más adelante, solo
@@ -6702,8 +7307,19 @@ async function enviarReporte(){
     }
     await db.collection('reportes').add(data);
     _ganarDarma(15); au(); sincronizarStats();
-    reporteMapaCoords=null; reporteMapaMarker=null; // el modal se cierra igual; se limpia por prolijidad
-    closeModal();
+    _cerrarReporteRapido();
+    // 2026-08-23: pedido de Inty tras probar en vivo — publicaba bien pero si el mapa
+    // estaba muy alejado (más del umbral de ~30km visibles que ya usan los reportes,
+    // ver renderReporteMarkers) el pin propio quedaba oculto por diseño y parecía que
+    // "no se guardó". Ahora, si estás así de alejado, el mapa se acerca solo hasta un
+    // zoom donde el reporte se ve, centrado en el punto publicado.
+    try{
+      if(mp && typeof _escalaVisibleKm==='function' && _escalaVisibleKm(mp)>30){
+        mp.easeTo({center:[loc.lon,loc.lat], zoom:Math.max(mp.getZoom(),13), duration:700});
+      } else if(mp){
+        mp.easeTo({center:[loc.lon,loc.lat], duration:500});
+      }
+    }catch(e){}
     try{ _pisteroMood='contento'; }catch(e){} h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
   }catch(err){ lpAviso('No se pudo enviar: '+err.message); }
   finally{ _enviandoReporte=false; }
@@ -6891,8 +7507,15 @@ function mostrarLogrosComunidad(){
     +'</div>';
   document.getElementById('userModal').classList.add('on');
 }
+// 2026-08-24: _modalVolverA='mostrarLogrosComunidad' (en esta función y en
+// verSegmentos/verRetos/mostrarResumenAnual/verRecomendacionRutas/mostrarFundadores/
+// mostrarComunidad) apuntaba a un menú-hub que ya no existe en Social desde la
+// reorganización del 23-ago — cada una de estas 7 ahora es un botón directo, así
+// que "Volver" quedaba huérfano (el botón "← Volver" llevaba a una pantalla
+// inalcanzable desde ningún otro lado). Pasa a null: sin botón "Volver" propio, el
+// "✕" del modal ya cierra correctamente de vuelta a Social.
 function mostrarLogros(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
   items.forEach(function(it){ const l=it.l;
@@ -6980,11 +7603,59 @@ function _iniciarLogros(){ try{ _chequearLogros(true); _logrosListo=true; }catch
    (permisos, sesión a medio levantar, sin red) NADIE se enteraba — ni el usuario ni
    nosotros. Ahora se reporta a Sentry: un fallo acá significa que a alguien se le están
    quedando los kilómetros guardados solo en el teléfono, y eso hay que verlo. */
+/* Mantencion -> nube (2026-08-24). La mantencion preventiva nacio el 23-ago guardando
+   SOLO en localStorage (gd()), igual que los kilometros antes del arreglo del 20-jul: si
+   el usuario cambia de telefono o limpia los datos, pierde el historial de cada cambio de
+   cadena, pastillas y transmision, con sus costos. Es el mismo tipo de perdida silenciosa
+   que ya nos costo una vez, asi que viaja por el mismo camino que los km.
+   Se sanitiza a proposito: esta carga va en la MISMA escritura que `km`, y un solo valor
+   invalido (undefined/NaN) hace fallar el set() completo — o sea, un historial raro
+   dejaria de subir tambien los kilometros. Preferimos subir el item recortado antes que
+   arriesgar el dato critico. */
+function _mantParaNube(){
+  const out={};
+  try{
+    const src=us.mant; if(!src || typeof src!=='object') return out;
+    const num=function(v){ return (typeof v==='number' && isFinite(v)) ? v : null; };
+    Object.keys(src).forEach(function(k){
+      const d=src[k]; if(!d || typeof d!=='object') return;
+      out[k]={
+        kmBase: num(d.kmBase)||0,
+        fecha: (typeof d.fecha==='string' && d.fecha) ? d.fecha : null,
+        avisado: !!d.avisado,
+        historial: (Array.isArray(d.historial)?d.historial:[]).slice(-30).map(function(h){
+          return {
+            fecha: (h && typeof h.fecha==='string') ? h.fecha : null,
+            km: num(h && h.km)||0,
+            costo: num(h && h.costo),
+            nota: (h && typeof h.nota==='string') ? h.nota : null
+          };
+        })
+      };
+    });
+  }catch(e){}
+  return out;
+}
+/* La mantención NO se sube hasta haber leído la nube. Es la misma trampa que ya costó
+   kilómetros el 2026-07-20, y con la mantención muerde más fuerte: `historial` es un ARRAY,
+   y Firestore con {merge:true} REEMPLAZA arrays enteros (a los mapas los fusiona, a los
+   arrays no). El escenario: teléfono nuevo o datos borrados -> `us.mant` arranca vacío ->
+   salta cualquier logro en los primeros segundos -> _ganarDarma() -> sincronizarStats()
+   sube historiales VACÍOS y borra los de la nube -> cuando sincronizarAlEntrar() corre a
+   los 4 segundos, ya no queda nada que restaurar. Pérdida definitiva y silenciosa.
+   Con esta bandera, los km y el Darma siguen subiendo como siempre (son números, y el
+   criterio de "gana el más grande" los protege), pero la mantención espera a la lectura. */
+let _mantListoParaSubir=false;
 async function sincronizarStats(){
   if(!cu) return;
   const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null;
+  const datos={km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid};
+  if(_mantListoParaSubir){
+    datos.mant=_mantParaNube();
+    datos.mantKm=(typeof us.mantKm==='number'&&isFinite(us.mantKm))?us.mantKm:0;
+  }
   try{
-    await db.collection('users').doc(cu).set({km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true});
+    await db.collection('users').doc(cu).set(datos,{merge:true});
   }catch(e){
     try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarStats'}}); }catch(_){}
   }
@@ -7009,31 +7680,86 @@ async function sincronizarStats(){
    16 usuarios invisibles.
    Ahora manda el número más grande: si la nube tiene más, se RESTAURA al teléfono (que es
    lo que uno espera al reinstalar) y recién entonces se sincroniza. */
+/* Compartida por sincronizarAlEntrar() (recarga / sesión que vuelve) Y por
+   _completarLoginVerificadoOriginal() (PRIMER login interactivo por código de tester,
+   que ya lee `_prevData` para restaurar cosméticas y no necesita otra lectura a
+   Firestore para esto). Nace de una prueba en vivo el 2026-08-24: el login por código
+   NUNCA pasaba por sincronizarAlEntrar(), así que en la primera sesión de cualquier
+   cuenta (incluida una que ya tuviera km/mantención reales en la nube desde otro
+   dispositivo) esos datos no se restauraban — y peor, la escritura de
+   _completarLoginVerificadoOriginal() sube `km:(us&&us.di)||0` SIN haber leído la nube
+   primero, así que en una cuenta existente con km real, un primer login desde un
+   dispositivo/navegador nuevo lo pisaba con 0. Restaurar ANTES de esa escritura la
+   vuelve inofensiva: escribe de vuelta el mismo máximo que ya tenía.
+   "Gana el más grande/avanzado", nunca se pisa lo que ya existe con algo más pobre.
+   Mantención se compara item por item y se copia el objeto ENTERO del ganador, no
+   campo por campo: kmBase, fecha e historial se escriben juntos al marcar "ya la
+   cambié", así que mezclar el kmBase de la nube con la fecha del teléfono daría un
+   ítem incoherente. Criterio de "más avanzado": más cambios registrados; a igualdad,
+   mayor kmBase; a igualdad, fecha más nueva.
+   Devuelve true si algo cambió (para que quien llama decida si avisa/persiste). */
+function _restaurarDesdeNube(nube){
+  if(!nube) return false;
+  let restaurado=false;
+  const kmNube=Number(nube.km)||0, kmLocal=Number(us.di)||0;
+  const daNube=Number(nube.darma)||0, daLocal=Number(us.d)||0;
+  if(kmNube>kmLocal+0.05){ us.di=kmNube; restaurado=true; }
+  if(daNube>daLocal){ us.d=daNube; restaurado=true; }
+  if(nube.kmPorModo && typeof nube.kmPorModo==='object'){
+    if(!us.dm || typeof us.dm!=='object') us.dm={};
+    for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
+  }
+  const kmMantNube=Number(nube.mantKm)||0, kmMantLocal=Number(us.mantKm)||0;
+  if(kmMantNube>kmMantLocal+0.05){ us.mantKm=kmMantNube; restaurado=true; }
+  if(nube.mant && typeof nube.mant==='object'){
+    if(!us.mant || typeof us.mant!=='object') us.mant={};
+    Object.keys(nube.mant).forEach(function(k){
+      const dn=nube.mant[k]; if(!dn || typeof dn!=='object') return;
+      const dl=us.mant[k];
+      const hn=(Array.isArray(dn.historial)?dn.historial.length:0);
+      const hl=(dl&&Array.isArray(dl.historial))?dl.historial.length:0;
+      let nubeGana;
+      if(!dl) nubeGana=true;
+      else if(hn!==hl) nubeGana=hn>hl;
+      else if((Number(dn.kmBase)||0)!==(Number(dl.kmBase)||0)) nubeGana=(Number(dn.kmBase)||0)>(Number(dl.kmBase)||0);
+      else nubeGana=(new Date(dn.fecha||0).getTime()||0)>(new Date(dl.fecha||0).getTime()||0);
+      if(nubeGana){
+        us.mant[k]={kmBase:Number(dn.kmBase)||0, fecha:dn.fecha||null, avisado:!!dn.avisado,
+                    historial:Array.isArray(dn.historial)?dn.historial:[],
+                    umbralKm:(dl&&dl.umbralKm!==undefined)?dl.umbralKm:null,
+                    umbralMeses:(dl&&dl.umbralMeses!==undefined)?dl.umbralMeses:null};
+        restaurado=true;
+      }
+    });
+    // los umbrales los vuelve a fijar _mantData() desde MANT_ITEMS (fuente de verdad
+    // del codigo, no de la nube), asi que no se suben ni se confia en ellos.
+    try{ if(typeof _mantData==='function') _mantData(); }catch(e){}
+  }
+  return restaurado;
+}
 function sincronizarAlEntrar(){
   if(!cu) return;
   setTimeout(async function(){
     try{
       let nube=null;
       try{ const doc=await db.collection('users').doc(cu).get(); if(doc.exists) nube=doc.data(); }catch(e){}
-      if(nube){
-        const kmNube=Number(nube.km)||0, kmLocal=Number(us.di)||0;
-        const daNube=Number(nube.darma)||0, daLocal=Number(us.d)||0;
-        let restaurado=false;
-        if(kmNube>kmLocal+0.05){ us.di=kmNube; restaurado=true; }
-        if(daNube>daLocal){ us.d=daNube; restaurado=true; }
-        if(nube.kmPorModo && typeof nube.kmPorModo==='object'){
-          if(!us.dm || typeof us.dm!=='object') us.dm={};
-          for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
-        }
-        if(restaurado){
-          try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
-          try{ if(typeof au==='function') au(); }catch(e){}
-          try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
-        }
+      if(_restaurarDesdeNube(nube)){
+        try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
+        try{ if(typeof au==='function') au(); }catch(e){}
+        try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
       }
+      // Recién acá se habilita la subida de la mantención: ya se leyó la nube y, si tenía
+      // algo mejor, ya está fusionado en `us.mant`. Antes de este punto una subida habría
+      // pisado el historial de la nube con arrays vacíos (ver nota en sincronizarStats).
+      _mantListoParaSubir=true;
       sincronizarStats(); // recién ahora se sube, con el número correcto
       try{ _iniciarLogros(); }catch(e){} // baseline de logros: registra lo ya ganado SIN anunciar; habilita anuncios reales
     }catch(e){
+      // Si la lectura falló, igual hay que abrir la compuerta: dejarla cerrada para
+      // siempre significaría que a ese usuario la mantención NUNCA le llega a la nube —
+      // que es justo el bug que vinimos a arreglar. Lo que se protege es el orden (leer
+      // antes de escribir), no el éxito de la lectura: acá ya se intentó.
+      _mantListoParaSubir=true;
       try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarAlEntrar'}}); }catch(_){}
     }
   }, 4000); // deja que la sesión termine de levantar
@@ -7364,7 +8090,11 @@ async function verAnaliticasAdmin(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede ver las analíticas.'); return; }
   h('Cargando analíticas de uso...');
   try{
-    const snap=await db.collection('usage').get();
+    // 2026-08-23: sin limit(). La coleccion /usage recien se habilito (su regla no
+    // existia y todo caia al deny por defecto), asi que hoy esta casi vacia — pero pasa
+    // a tener UN documento por usuario y crece con cada registro. Con tope antes de que
+    // duela, no despues.
+    const snap=await db.collection('usage').limit(500).get();
     const pantalla={}, tiempo={}, funcion={}, voz={}; let total=0, activos7d=0; const ahora=Date.now();
     snap.forEach(function(doc){ const d=doc.data(); total++;
       const uu=(d.ultimoUso&&d.ultimoUso.toMillis)?d.ultimoUso.toMillis():0; if(uu && (ahora-uu)<7*86400000) activos7d++;
@@ -7386,7 +8116,12 @@ async function exportarUsuariosAdmin(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede exportar la lista de usuarios.'); return; }
   h('Obteniendo lista de usuarios registrados...');
   try{
-    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    // 2026-08-23: sin limit() esto leia la coleccion ENTERA. Hoy son ~65 usuarios y no
+    // se nota; con 5.000 son 5.000 lecturas de golpe (10% de la cuota diaria gratis de
+    // TODO el proyecto) cada vez que se abre el panel. Se muestran los 300 mas nuevos,
+    // que es para lo que sirve la pantalla; el total real sale de count(), que cuesta
+    // 1 lectura por cada 1.000 documentos en vez de una por documento.
+    const snap=await db.collection('users').orderBy('createdAt','desc').limit(300).get();
     const emails=await _mapaEmailsPrivados();
     const rows=[['Nombre','Email']]; // solo nombre y correo: para tu respaldo de registros
     snap.forEach(function(doc){ const d=doc.data();
@@ -7408,7 +8143,13 @@ function mesesDesdeRegistro(){
   return Math.floor((Date.now()-ts)/(1000*60*60*24*30));
 }
 function requiere6Meses(){ return mesesDesdeRegistro()>=6; }
+/* 2026-08-23: loadHostels() se llamaba al INICIAR SESION, y arrastra initVotosHostels()
+   = guiComments where type=='voto' limit(500). Eran ~550 documentos por cada apertura de
+   la app para una funcion que ni siquiera es alcanzable: "Te doy alojo" quedo OCULTO en el
+   commit 8f2d678 (se saco el boton, pero no la carga de datos). Ahora carga aca, que es el
+   unico lugar desde donde se puede llegar. */
 async function abrirTeDoyAlojo(){
+  _subUnaVez('hostels', loadHostels);
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-house"></i> Te doy alojo';
   const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on');
   const meses=mesesDesdeRegistro();
@@ -7559,7 +8300,7 @@ async function likeRecommendation(docId){
     likedBy: yaLeGustaba ? firebase.firestore.FieldValue.arrayRemove(cu) : firebase.firestore.FieldValue.arrayUnion(cu)
   });
 }
-function showNewTripForm(){ addedDests=[]; document.getElementById('trip-name').value=''; document.getElementById('trip-start').value=''; renderAddedDests(); filterDestType('hostel',document.querySelector('#v-newtrip .gtt')); cv('newtrip'); }
+function showNewTripForm(){ addedDests=[]; document.getElementById('trip-name').value=''; document.getElementById('trip-start').value=''; renderAddedDests(); filterDestType('hostel',document.querySelector('#v-newtrip .gtt')); cv('newtrip'); try{ if(typeof _mantencionAvisoPreViaje==='function') _mantencionAvisoPreViaje(); }catch(e){} }
 function filterDestType(type,btn){ currentFilter=type; btn.parentElement.querySelectorAll('.gtt').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); if(type==='hostel') renderHostelOptions(); else { document.getElementById('dest-options').innerHTML=''; document.getElementById('custom-dest-form').style.display='block'; } }
 function renderHostelOptions(){ document.getElementById('custom-dest-form').style.display='none'; const c=document.getElementById('dest-options'); if(allHostels.length===0){ c.innerHTML='<p style="color:#888">Sin hostels guardados</p>'; return; } c.innerHTML=allHostels.map(function(hh,i){ return '<div class="hostel-option" onclick="addHostelDest('+i+')"><div><strong style="font-size:0.85rem">'+escapeHTML(hh.name)+'</strong><div style="font-size:0.7rem;color:#888">'+escapeHTML(hh.location)+'</div></div><i class="fas fa-plus" style="color:var(--p)"></i></div>'; }).join(''); }
 function addHostelDest(idx){ const hh=allHostels[idx]; addedDests.push({name:hh.name,addr:hh.location,lat:hh.lat,lon:hh.lon,type:'hostel'}); renderAddedDests(); h("Agregado: "+hh.name); }
@@ -7793,7 +8534,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
       // Mismo bug real que en ug() (GPS libre): sin exigir speed>0, el ruido normal
       // del GPS estando quieto se colaba de a poco al kilometraje aunque "speed" (ya
       // calculada arriba, con ventana de varios puntos) mostrara 0 = parado de verdad.
-      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _sumarKmModo(dkm); us.c+=dkm*30; au(); }
+      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
       gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
     }
   }
@@ -8158,6 +8899,10 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   // en vez de perderlo silenciosamente al pisar el estado con la ruta nueva.
   if(document.getElementById('nav-screen').classList.contains('active')) endNavigation();
   _detenerGpsLibreSiActivo();
+  // 2026-08-23: los reportes ya no se enganchan al iniciar sesion. Aca SI hacen falta
+  // aunque no hayas pasado por el mapa: _avisoSuperficieRuta() los usa para avisarte del
+  // ripio ANTES de salir, no en el camino.
+  _subUnaVez('reportes', subscribeToReportes);
   navGuardado=false;
   document.getElementById('nav-screen').classList.add('active');
   _actualizarBtnManosLibres();
@@ -8588,7 +9333,15 @@ function cv(id, _esVolver){
     _registrarPasoEnHistorial(id); // le da al botón atrás del teléfono algo que retroceder
   }
   _viewActual=id; _actualizarBtnAtras();
-  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.body.setAttribute('data-vista', id); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='mac' && typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.body.setAttribute('data-vista', id); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); /* 2026-08-23: cada pantalla engancha SU listener la primera vez que se abre (ver
+     _subUnaVez). Antes se enganchaban los 11 al iniciar sesion aunque nunca entraras. */
+  if(id==='chat')      _subUnaVez('chat', subscribeToChat);
+  if(id==='novedades') _subUnaVez('novedades', subscribeToNovedades);
+  if(id==='rec')       _subUnaVez('recomendaciones', loadRecommendations);
+  if(id==='gui')       _subUnaVez('comentarios', subscribeToComments);
+  if(id==='map')       _subUnaVez('reportes', subscribeToReportes);
+  if(id==='mac')       _subUnaVez('repairTips', loadRepairTips);
+  if(id==='mac'){ if(typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); /* 2026-08-24: renderizar AL ABRIR. renderMantencion() solo se llamaba desde au(), y desde que au() la condiciona a que Taller este visible (para no reconstruir 5 tarjetas en cada punto de GPS), abrir Taller sin estar pedaleando dejaba la lista VACIA: al iniciar la app au() corre con Inicio a la vista, el guard bloquea, y cv('mac') no renderizaba nada. El guard esta bien; lo que faltaba era este render de apertura. */ if(typeof renderMantencion==='function') renderMantencion(); } if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
      inicializar (sin categorias de puntos y sin sincronizar con la nube) porque cv() solo
      hacia cargarDiario() y openDiario() hacia tres cosas mas. La misma pantalla se veia
      distinta segun por donde entraras: eso es exactamente la falta de concordancia que
@@ -9576,7 +10329,7 @@ async function crearSegmentoDesdeRuta(localId){
   }catch(e){ lpAviso('No se pudo crear el segmento.'); }
 }
 async function verSegmentos(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-flag-checkered"></i> Segmentos';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando segmentos...</p>';
@@ -9637,7 +10390,7 @@ async function revisarRetosCumplidos(){
   }catch(e){}
 }
 async function verRetos(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-bullseye"></i> Retos y temporadas';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando retos...</p>';
@@ -9734,7 +10487,7 @@ function mostrarResumenAnual(){
   const anio=new Date().getFullYear();
   const r=calcularResumenAnual(anio);
   if(r.viajes===0){
-    _modalVolverA='mostrarLogrosComunidad';
+    _modalVolverA=null;
     document.getElementById('modalTitle').innerHTML='<i class="fas fa-chart-simple"></i> Mi año en Libre Pedal';
     document.getElementById('modalContent').innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;text-align:center;padding:20px 0">Todavía no tienes viajes registrados este '+anio+'. ¡Sal a pedalear y vuelve más adelante!</p>';
     document.getElementById('userModal').classList.add('on');
@@ -9958,7 +10711,7 @@ function _perfilCiclista(){
   return { avgKm:totalKm/rutas.length, totalViajes:rutas.length };
 }
 async function verRecomendacionRutas(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-compass"></i> Rutas para ti';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Analizando tu historial...</p>';
@@ -10085,8 +10838,11 @@ function _climaFxModoDesde(codigo,temp){
   return 'off';
 }
 function _climaFxAplicar(w){
-  if(!window.climaFxSetMode||!w||!w.current) return;
-  try{ window.climaFxSetMode(_climaFxModoDesde(w.current.weather_code,w.current.temperature_2m)); }catch(e){}
+  if(!w||!w.current) return;
+  const modo=_climaFxModoDesde(w.current.weather_code,w.current.temperature_2m);
+  _climaModoActual=modo; // usado por _factorDesgasteClima() en la mantención preventiva
+  if(!window.climaFxSetMode) return;
+  try{ window.climaFxSetMode(modo); }catch(e){}
 }
 /* Cobertura de la pantalla de login (#auth) y de cualquier momento sin viaje activo:
    vigilarClima() solo corre durante un viaje (ver mas abajo), asi que sin esto el clima
@@ -10239,16 +10995,33 @@ async function vigilarClima(lat,lon){
   // vozActiva solo bloquea el AVISO hablado — si el modulo de efectos visuales de clima
   // esta cargado, igual necesitamos seguir consultando para mantener el efecto al dia
   // aunque el usuario tenga la voz apagada (son dos features independientes).
-  if(!vozActiva && !window.climaFxSetMode) return;
+  // 2026-08-24: ahora hay un TERCER consumidor del clima que no tiene nada que ver con
+  // la voz ni con los efectos visuales — _climaModoActual alimenta _factorDesgasteClima()
+  // (la mantencion preventiva desgasta 1.5x mas con lluvia/nieve). Con la voz apagada y
+  // el modulo de efectos sin cargar, esta linea cortaba antes de _climaFxAplicar(), asi
+  // que _climaModoActual se quedaba en 'off' y ese 1.5x no se aplicaba NUNCA. El freno
+  // real de consultas a la API es CLIMA_MIN_ENTRE_CHEQUEOS (15 min) unas lineas mas
+  // abajo, que sigue intacto: sacar este corte no agrega trafico, solo deja de saltarse
+  // la actualizacion del modo de clima.
   const ahora=Date.now();
   if(ahora-_climaUltimoChequeo<CLIMA_MIN_ENTRE_CHEQUEOS) return; // freno de CONSULTA: sin esto se llamaba a la API cada segundo
-  if(vozActiva && _climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return; // freno de AVISO
+  // El freno de AVISO (25 min) estaba ACA, antes de _climaFxAplicar(), y frenaba de más:
+  // con la voz ENCENDIDA los efectos visuales y el desgaste por lluvia se actualizaban cada
+  // 25 min, y con la voz apagada cada 15. Al revés de lo razonable, y por la misma causa de
+  // fondo que el arreglo de arriba: un solo guard sirviendo a tres features distintas.
+  // Ahora baja a donde corresponde — justo antes de hablar — y el único freno de tráfico
+  // sigue siendo el de CONSULTA, que no se toca.
   _climaUltimoChequeo=ahora;
   try{
     const w=await climaDeZona(lat,lon);
     if(!w||!w.current) return;
     _climaFxAplicar(w);
     if(!vozActiva) return; // el resto de la funcion es solo para el AVISO hablado
+    // Freno del AVISO, en su lugar: acá ya se aplicaron los efectos y el desgaste, así que
+    // callarse no le quita nada a las otras dos features. `_climaBase` no se toca si se
+    // corta acá, igual que antes: la próxima comparación sigue partiendo de la última foto
+    // que sí se anunció.
+    if(_climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return;
     const horas=w.hourly&&w.hourly.precipitation_probability, tiempos=w.hourly&&w.hourly.time;
     let lluvia=null;
     if(horas&&tiempos){
@@ -10397,7 +11170,7 @@ async function _totalUsuariosSuscritos(){
 }
 var LP_FUNDADORES_CUPO=1000;
 async function mostrarFundadores(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-medal"></i> Socios Fundadores';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
@@ -10426,7 +11199,7 @@ async function mostrarFundadores(){
   c.innerHTML=html;
 }
 async function mostrarComunidad(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-handshake"></i> Comunidad Libre Pedal';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
@@ -10443,9 +11216,34 @@ async function mostrarComunidad(){
   let votos={}; opciones.forEach(function(o){ votos[o.id]=0; });
   let miVoto=null;
   try{
-    const snap=await db.collection('votacionComunidad').get();
-    snap.forEach(function(doc){ const d=doc.data(); if(votos[d.opcion]!=null) votos[d.opcion]++; if(doc.id===cu) miVoto=d.opcion; });
-  }catch(e){}
+    // 2026-08-23: antes se traía la colección ENTERA para contar los votos a mano en el
+    // teléfono. Con 5.000 votantes eran 5.000 lecturas cada vez que alguien abría
+    // Comunidad — y esto lo puede disparar cualquier usuario, no solo el admin.
+    // Ahora: un count() por opción (Firestore cobra 1 lectura por cada 1.000 documentos
+    // contados, no una por documento) + UN solo doc para saber qué votaste vos.
+    // Son ~6 lecturas en vez de N, y deja de crecer con la comunidad.
+    // Mismo patrón que ya usaba el sorteo acá abajo, incluido el respaldo por si count()
+    // no está disponible.
+    // Se cuenta cuántos count() salieron bien: si NINGUNO funciona (p.ej. un SDK sin
+    // agregaciones), hay que caer al respaldo. Con un catch por opción y nada más, los
+    // cinco fallaban en silencio, el catch de afuera no se enteraba y la pantalla mostraba
+    // CERO votos en todo — peor que la lectura cara que estamos evitando.
+    let conteosOk=0;
+    await Promise.all(opciones.map(async function(o){
+      try{
+        const a=await db.collection('votacionComunidad').where('opcion','==',o.id).count().get();
+        votos[o.id]=a.data().count||0; conteosOk++;
+      }catch(e){}
+    }));
+    if(!conteosOk) throw new Error('sin agregaciones');
+    const mio=await db.collection('votacionComunidad').doc(cu).get();
+    if(mio.exists) miVoto=mio.data().opcion;
+  }catch(eCount){
+    try{
+      const snap=await db.collection('votacionComunidad').get();
+      snap.forEach(function(doc){ const d=doc.data(); if(votos[d.opcion]!=null) votos[d.opcion]++; if(doc.id===cu) miVoto=d.opcion; });
+    }catch(e){}
+  }
   const totalVotos=Object.values(votos).reduce(function(a,b){return a+b;},0)||1;
   let sorteoTotal=0, yaParticipo=false;
   try{
@@ -11127,7 +11925,7 @@ function handleVoiceCommand(raw){
   if(/chat|social|mensaje/.test(t)){ cv('chat'); h("Abriendo el chat."); return; }
   // "amistad" (solicitudes de amistad) no comparte raíz con "amigo" como texto —
   // antes se perdía en el mismo bug de destino falso.
-  if(/amigo|amistad/.test(t)){ cv('chat'); showFriendsList(); return; }
+  if(/amigo|amistad/.test(t)){ cv('chat'); showAmigosYSolicitudes(); return; }
   // "Busca ciclistas cerca": antes solo abría el mapa sin decir nada útil — ahora
   // activa el radar de verdad y contesta con nombre y distancia real, no solo
   // "aquí está el mapa" (que dejaba al usuario mirando la pantalla para
@@ -11625,24 +12423,86 @@ function verSobrevueloRuta(id){
    Se cierra solo si no se elige (timeout) o al volver a tocar el botón. */
 var _abnTimer=null;
 function _cerrarAbanico(){ var f=document.getElementById('abanicoReporte'); if(f) f.classList.remove('on'); if(_abnTimer){ clearTimeout(_abnTimer); _abnTimer=null; } }
-function _abanicoElegir(cat){
+// 2026-08-23: cada botón del abanico ya NO abre reportarEnRuta() (el modal de las 11
+// categorías completas) — abre un desplegable chico ahí mismo con solo los sub-tipos
+// de esa categoría. reportarEnRuta()/seleccionarCatReporte() quedan sin usar (no se
+// borran: no rompe nada dejarlas, y documentan cómo era el flujo viejo si hiciera
+// falta revisarlo). Pedido directo de Inty tras probar el flujo real: "esto tiene que
+// ser rápido" — te lleva a otra pantalla con todo para buscar, eso se saca.
+var REP_FAN_GRUPO={critico:'peligro', policia:'control', util:'servicio', mirador:'lugar'};
+function _abanicoElegir(cat, btnEl){
   _cerrarAbanico();
-  try{ reportarEnRuta(); if(cat && typeof seleccionarCatReporte==='function') seleccionarCatReporte(cat); }
-  catch(e){ try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
+  _abrirSubmenuReporte(cat, btnEl);
+}
+function _clickFueraSubmenuReporte(e){ var d=document.getElementById('repSubmenu'); if(d && !d.contains(e.target)) _cerrarSubmenuReporte(); }
+function _cerrarSubmenuReporte(){ var d=document.getElementById('repSubmenu'); if(d) d.remove(); document.removeEventListener('click', _clickFueraSubmenuReporte, true); }
+function _abrirSubmenuReporte(catFan, btnEl){
+  try{
+    _cerrarSubmenuReporte();
+    var grupo=REP_FAN_GRUPO[catFan]; if(!grupo) return;
+    var items=Object.keys(REPORTE_CATS).filter(function(k){ return REPORTE_CATS[k].g===grupo; });
+    var d=document.createElement('div'); d.id='repSubmenu'; d.className='rep-drop';
+    d.innerHTML=items.map(function(k){
+      var c=REPORTE_CATS[k];
+      return '<button type="button" class="rep-drop-item" onclick="_elegirSubcategoriaReporte(\''+k+'\')"><span class="rdi-ic" style="color:'+c.c+'">'+_repIco(c)+'</span>'+c.l+'</button>';
+    }).join('');
+    document.body.appendChild(d);
+    if(btnEl){
+      var r=btnEl.getBoundingClientRect();
+      d.style.right=Math.max(8,(window.innerWidth-r.left+8))+'px';
+      d.style.top=Math.max(8, Math.min(window.innerHeight-d.offsetHeight-8, r.top+r.height/2-d.offsetHeight/2))+'px';
+    } else { d.style.right='14px'; d.style.top='120px'; }
+    requestAnimationFrame(function(){ d.classList.add('on'); });
+    setTimeout(function(){ document.addEventListener('click', _clickFueraSubmenuReporte, true); }, 0);
+  }catch(e){ try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
+}
+function _cerrarReporteRapido(){
+  var q=document.getElementById('repQuick'); if(q) q.remove();
+  reporteMapa=null; reporteMapaCoords=null; reporteMapaMarker=null;
+}
+function _elegirSubcategoriaReporte(key){
+  try{
+    _cerrarSubmenuReporte();
+    reporteCatSel=key;
+    reporteMapa=null; reporteMapaCoords=null; reporteMapaMarker=null; // mismo reset que reportarEnRuta()
+    var c=REPORTE_CATS[key]; if(!c) return;
+    var extra = key==='superficie'
+      ? '<div id="repSuperficieExtra" style="margin-bottom:8px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div>'
+      : '';
+    var html=''
+      +'<div class="rq-head"><span class="rq-ic" style="color:'+c.c+'">'+_repIco(c)+'</span><span class="rq-t">'+c.l+'</span><button type="button" class="rq-close" onclick="_cerrarReporteRapido()" title="Cerrar">&times;</button></div>'
+      +'<div class="rq-loc"><i class="fas fa-location-dot"></i> Publicando en tu ubicación actual</div>'
+      +extra
+      +'<textarea id="repText" rows="2" placeholder="Descripción (opcional)..." maxlength="500" style="width:100%;background:#000;border:1px solid #333;color:#fff;border-radius:10px;padding:9px;font-size:0.85rem"></textarea>'
+      +'<button type="button" class="ab sec" id="btnReporteMapa" style="margin-top:8px" onclick="toggleReporteMapa()"><i class="fas fa-location-dot"></i> No estoy ahí: marcar el punto en el mapa</button>'
+      +'<div id="reporte-mapa-manual" style="display:none;margin-top:8px"><div id="reporte-mapa-manual-inner" style="height:180px;border-radius:10px;overflow:hidden"></div><p id="reporteMapaEstado" class="rq-hint">Toca el mapa donde está el punto exacto — no tiene que ser donde estás parado tú ahora.</p></div>'
+      +'<button type="button" class="rq-pub" onclick="enviarReporte()"><i class="fas fa-paper-plane"></i> Publicar (+15 Darma)</button>';
+    var q=document.getElementById('repQuick');
+    if(!q){ q=document.createElement('div'); q.id='repQuick'; q.className='rep-quick'; document.body.appendChild(q); }
+    q.innerHTML=html;
+    requestAnimationFrame(function(){ q.classList.add('on'); });
+  }catch(e){ try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
 }
 function abrirAbanicoReporte(){
   try{
     var f=document.getElementById('abanicoReporte');
     if(f && f.classList.contains('on')){ _cerrarAbanico(); return; }
     if(!f){
+      // 2026-08-23: los emoji (⚠️👮🏪📸) salen por pedido directo de Inty ("íconos
+      // genéricos") — se reemplazan por SVG propios estilo lucide (mismo trazo de
+      // 1.7px que ya usan los íconos de la esfera), elegidos tras revisar cómo lo
+      // resuelven Waze (triángulo de alerta para peligro, insignia/escudo para
+      // control — no un dibujo literal de policía) y Komoot (set de línea limpia
+      // para los POI de la ruta). Opción A elegida por Inty sobre una alternativa
+      // en placa de color.
       var opts=[
-        {l:'Peligro', e:'⚠️', c:'#ef4444', cat:'critico'},
-        {l:'Control', e:'👮', c:'#3b82f6', cat:'policia'},
-        {l:'Servicio',e:'🏪', c:'#f59e0b', cat:'util'},
-        {l:'Mirador', e:'📸', c:'#3b82f6', cat:'mirador'}
+        {l:'Peligro', i:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>', c:'#ef4444', cat:'critico'},
+        {l:'Control', i:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', c:'#3b82f6', cat:'policia'},
+        {l:'Servicio',i:'<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M9 21v-7h6v7"/>', c:'#f59e0b', cat:'util'},
+        {l:'Mirador', i:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.2"/>', c:'#3b82f6', cat:'mirador'}
       ];
       f=document.createElement('div'); f.id='abanicoReporte';
-      f.innerHTML=opts.map(function(o,i){ return '<button type="button" class="abn-op" style="--d:'+(i*45)+'ms;border-color:'+o.c+'" onclick="_abanicoElegir(\''+o.cat+'\')"><span class="abn-e">'+o.e+'</span>'+o.l+'</button>'; }).join('');
+      f.innerHTML=opts.map(function(o,i){ return '<button type="button" class="abn-op" style="--d:'+(i*45)+'ms;border-color:'+o.c+'" onclick="_abanicoElegir(\''+o.cat+'\',this)"><span class="abn-e" style="color:'+o.c+'"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+o.i+'</svg></span>'+o.l+'</button>'; }).join('');
       var fab=document.getElementById('fabReportar');
       if(fab && fab.parentNode) fab.parentNode.appendChild(f); else document.body.appendChild(f);
     }

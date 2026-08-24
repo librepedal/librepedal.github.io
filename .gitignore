@@ -38,3 +38,9 @@ MI-SENTRY.txt
 MI-*.txt
 señuelos/
 .deploy-clean/
+
+# Datos personales de testers (correos reales de gente). testers_kv_bulk.json se genera
+# para cargar el KV de Cloudflare y NO debe entrar nunca al repo: hoy esta sin trackear,
+# pero un `git add .` distraido publicaria la lista de correos en GitHub.
+worker-auth/testers_kv_bulk.json
+testers_kv_bulk.json
