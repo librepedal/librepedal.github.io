@@ -6641,10 +6641,20 @@ function subscribeToMapPoints(){
     try{ _renderizarPuntosVisibles(); }catch(e){}
     if(cache.maxTs>0) consulta=consulta.where('ts','>',firebase.firestore.Timestamp.fromMillis(cache.maxTs));
   }
+  const incremental=!!(cache && cache.maxTs>0);
   pointsUnsub=consulta.onSnapshot(_mapPointsAplicar, function(e){
-    // Si la consulta incremental falla (p.ej. falta el índice), se vuelve a la completa
-    // UNA vez y se rehace la caché, en vez de dejar el mapa pegado en lo viejo.
+    // Si la consulta incremental falla (p.ej. por un índice que falta), no alcanza con
+    // borrar la caché para la próxima sesión: el mapa se quedaría con los puntos viejos
+    // TODA esta sesión. Se rehace la suscripción completa acá mismo, una sola vez —
+    // `_mapPointsReintento` evita que un error persistente entre en bucle.
     try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){}
+    if(incremental && !subscribeToMapPoints._reintento){
+      subscribeToMapPoints._reintento=true;
+      try{ if(pointsUnsub) pointsUnsub(); }catch(_){}
+      pointsUnsub=null;
+      mapPointsData=[];
+      subscribeToMapPoints();
+    }
   });
   if(mp){
     mp.on('moveend', _renderizarPuntosVisiblesThrottled);
@@ -11121,9 +11131,18 @@ async function mostrarComunidad(){
     // Son ~6 lecturas en vez de N, y deja de crecer con la comunidad.
     // Mismo patrón que ya usaba el sorteo acá abajo, incluido el respaldo por si count()
     // no está disponible.
+    // Se cuenta cuántos count() salieron bien: si NINGUNO funciona (p.ej. un SDK sin
+    // agregaciones), hay que caer al respaldo. Con un catch por opción y nada más, los
+    // cinco fallaban en silencio, el catch de afuera no se enteraba y la pantalla mostraba
+    // CERO votos en todo — peor que la lectura cara que estamos evitando.
+    let conteosOk=0;
     await Promise.all(opciones.map(async function(o){
-      try{ const a=await db.collection('votacionComunidad').where('opcion','==',o.id).count().get(); votos[o.id]=a.data().count||0; }catch(e){}
+      try{
+        const a=await db.collection('votacionComunidad').where('opcion','==',o.id).count().get();
+        votos[o.id]=a.data().count||0; conteosOk++;
+      }catch(e){}
     }));
+    if(!conteosOk) throw new Error('sin agregaciones');
     const mio=await db.collection('votacionComunidad').doc(cu).get();
     if(mio.exists) miVoto=mio.data().opcion;
   }catch(eCount){
