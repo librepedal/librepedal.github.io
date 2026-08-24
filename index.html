@@ -1772,7 +1772,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.769'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.770'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5912,6 +5912,17 @@ function _mantData(){
     // Hoy es la fecha más honesta que tenemos (no sabemos cuándo cambió de verdad),
     // igual que "última sincronización" en cualquier tracker que arranca de cero.
     if(!us.mant[k]) us.mant[k]={kmBase:0, fecha:new Date().toISOString(), umbralKm:MANT_ITEMS[k].umbralKm, umbralMeses:MANT_ITEMS[k].umbralMeses, historial:[], avisado:false};
+    // Migracion (2026-08-24): el arreglo de arriba solo alcanza a quien abre Taller por
+    // primera vez. Todo el que lo abrio desde que salio la funcion (23-ago) ya tiene el
+    // objeto guardado con fecha:null, y como este bloque solo corre `if(!us.mant[k])`,
+    // se lo quedaba para siempre: el aviso por tiempo seguia sin dispararse nunca para
+    // ellos. Se rellena la fecha faltante una sola vez, con el mismo criterio honesto
+    // (hoy = cuando empezamos a contar). Tambien se re-sincronizan los umbrales para que
+    // un cambio futuro en MANT_ITEMS llegue a los datos ya guardados.
+    var _mi=us.mant[k];
+    if(!_mi.fecha) _mi.fecha=new Date().toISOString();
+    _mi.umbralKm=MANT_ITEMS[k].umbralKm;
+    _mi.umbralMeses=MANT_ITEMS[k].umbralMeses;
   });
   return us.mant;
 }
@@ -7303,11 +7314,44 @@ function _iniciarLogros(){ try{ _chequearLogros(true); _logrosListo=true; }catch
    (permisos, sesión a medio levantar, sin red) NADIE se enteraba — ni el usuario ni
    nosotros. Ahora se reporta a Sentry: un fallo acá significa que a alguien se le están
    quedando los kilómetros guardados solo en el teléfono, y eso hay que verlo. */
+/* Mantencion -> nube (2026-08-24). La mantencion preventiva nacio el 23-ago guardando
+   SOLO en localStorage (gd()), igual que los kilometros antes del arreglo del 20-jul: si
+   el usuario cambia de telefono o limpia los datos, pierde el historial de cada cambio de
+   cadena, pastillas y transmision, con sus costos. Es el mismo tipo de perdida silenciosa
+   que ya nos costo una vez, asi que viaja por el mismo camino que los km.
+   Se sanitiza a proposito: esta carga va en la MISMA escritura que `km`, y un solo valor
+   invalido (undefined/NaN) hace fallar el set() completo — o sea, un historial raro
+   dejaria de subir tambien los kilometros. Preferimos subir el item recortado antes que
+   arriesgar el dato critico. */
+function _mantParaNube(){
+  const out={};
+  try{
+    const src=us.mant; if(!src || typeof src!=='object') return out;
+    const num=function(v){ return (typeof v==='number' && isFinite(v)) ? v : null; };
+    Object.keys(src).forEach(function(k){
+      const d=src[k]; if(!d || typeof d!=='object') return;
+      out[k]={
+        kmBase: num(d.kmBase)||0,
+        fecha: (typeof d.fecha==='string' && d.fecha) ? d.fecha : null,
+        avisado: !!d.avisado,
+        historial: (Array.isArray(d.historial)?d.historial:[]).slice(-30).map(function(h){
+          return {
+            fecha: (h && typeof h.fecha==='string') ? h.fecha : null,
+            km: num(h && h.km)||0,
+            costo: num(h && h.costo),
+            nota: (h && typeof h.nota==='string') ? h.nota : null
+          };
+        })
+      };
+    });
+  }catch(e){}
+  return out;
+}
 async function sincronizarStats(){
   if(!cu) return;
   const _authUid=window.lpUID||(firebase.auth().currentUser&&firebase.auth().currentUser.uid)||null;
   try{
-    await db.collection('users').doc(cu).set({km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid},{merge:true});
+    await db.collection('users').doc(cu).set({km:us.di||0, kmPorModo:_kmPorModoParaNube(), darma:us.d||0, nombre:nombreUsuario||'Ciclista', authUid:_authUid, mant:_mantParaNube(), mantKm:(typeof us.mantKm==='number'&&isFinite(us.mantKm))?us.mantKm:0},{merge:true});
   }catch(e){
     try{ if(window.Sentry&&Sentry.captureException) Sentry.captureException(e,{tags:{donde:'sincronizarStats'}}); }catch(_){}
   }
@@ -7347,6 +7391,40 @@ function sincronizarAlEntrar(){
         if(nube.kmPorModo && typeof nube.kmPorModo==='object'){
           if(!us.dm || typeof us.dm!=='object') us.dm={};
           for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
+        }
+        // Mantencion (2026-08-24), con el MISMO criterio que los km: gana el registro mas
+        // avanzado, nunca se pisa lo que ya existe con algo mas pobre. Se compara item por
+        // item y se copia el objeto ENTERO del ganador, no campo por campo: kmBase, fecha
+        // e historial se escriben juntos cuando marcas "ya la cambie", asi que mezclar el
+        // kmBase de la nube con la fecha del telefono daria un item incoherente (diria que
+        // cambiaste la cadena en una fecha que no corresponde a ese kilometraje).
+        // Criterio de "mas avanzado": mas cambios registrados; a igualdad, mayor kmBase;
+        // a igualdad, fecha mas nueva.
+        const kmMantNube=Number(nube.mantKm)||0, kmMantLocal=Number(us.mantKm)||0;
+        if(kmMantNube>kmMantLocal+0.05){ us.mantKm=kmMantNube; restaurado=true; }
+        if(nube.mant && typeof nube.mant==='object'){
+          if(!us.mant || typeof us.mant!=='object') us.mant={};
+          Object.keys(nube.mant).forEach(function(k){
+            const dn=nube.mant[k]; if(!dn || typeof dn!=='object') return;
+            const dl=us.mant[k];
+            const hn=(Array.isArray(dn.historial)?dn.historial.length:0);
+            const hl=(dl&&Array.isArray(dl.historial))?dl.historial.length:0;
+            let nubeGana;
+            if(!dl) nubeGana=true;
+            else if(hn!==hl) nubeGana=hn>hl;
+            else if((Number(dn.kmBase)||0)!==(Number(dl.kmBase)||0)) nubeGana=(Number(dn.kmBase)||0)>(Number(dl.kmBase)||0);
+            else nubeGana=(new Date(dn.fecha||0).getTime()||0)>(new Date(dl.fecha||0).getTime()||0);
+            if(nubeGana){
+              us.mant[k]={kmBase:Number(dn.kmBase)||0, fecha:dn.fecha||null, avisado:!!dn.avisado,
+                          historial:Array.isArray(dn.historial)?dn.historial:[],
+                          umbralKm:(dl&&dl.umbralKm!==undefined)?dl.umbralKm:null,
+                          umbralMeses:(dl&&dl.umbralMeses!==undefined)?dl.umbralMeses:null};
+              restaurado=true;
+            }
+          });
+          // los umbrales los vuelve a fijar _mantData() desde MANT_ITEMS (fuente de verdad
+          // del codigo, no de la nube), asi que no se suben ni se confia en ellos.
+          try{ if(typeof _mantData==='function') _mantData(); }catch(e){}
         }
         if(restaurado){
           try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
@@ -10565,7 +10643,14 @@ async function vigilarClima(lat,lon){
   // vozActiva solo bloquea el AVISO hablado — si el modulo de efectos visuales de clima
   // esta cargado, igual necesitamos seguir consultando para mantener el efecto al dia
   // aunque el usuario tenga la voz apagada (son dos features independientes).
-  if(!vozActiva && !window.climaFxSetMode) return;
+  // 2026-08-24: ahora hay un TERCER consumidor del clima que no tiene nada que ver con
+  // la voz ni con los efectos visuales — _climaModoActual alimenta _factorDesgasteClima()
+  // (la mantencion preventiva desgasta 1.5x mas con lluvia/nieve). Con la voz apagada y
+  // el modulo de efectos sin cargar, esta linea cortaba antes de _climaFxAplicar(), asi
+  // que _climaModoActual se quedaba en 'off' y ese 1.5x no se aplicaba NUNCA. El freno
+  // real de consultas a la API es CLIMA_MIN_ENTRE_CHEQUEOS (15 min) unas lineas mas
+  // abajo, que sigue intacto: sacar este corte no agrega trafico, solo deja de saltarse
+  // la actualizacion del modo de clima.
   const ahora=Date.now();
   if(ahora-_climaUltimoChequeo<CLIMA_MIN_ENTRE_CHEQUEOS) return; // freno de CONSULTA: sin esto se llamaba a la API cada segundo
   if(vozActiva && _climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return; // freno de AVISO
