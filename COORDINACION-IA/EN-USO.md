@@ -1,5 +1,21 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔴 SEGURIDAD ACTIVA — "Entrar con Google" salta la lista de testers (2026-08-24 ~11:00)
+> Detalle completo, datos y fix propuesto en la **tarea #89 del hub** (para Tundra, prioridad
+> alta). Resumen: `index.html:2235` fuerza el botón "Entrar con Google" a mostrarse siempre
+> (aunque su HTML lo define oculto), y ese camino (`_entrarConGoogle` →
+> `_canjearIdTokenPorSesion` → `worker.js` líneas 141-171) **no valida `TESTERS_PERMITIDOS`**
+> — a diferencia del camino por código (líneas 99-138 de `worker.js`), que sí lo hace.
+> **Confirmado en vivo contra el worker de producción real** (no staging): cualquier cuenta de
+> Google con correo verificado entra a la app completa, sin importar si está en la lista de
+> testers. Afecta web y nativo.
+>
+> El fix va en `worker-auth/worker.js` — territorio de Tundra (rol C). No lo toqué yo.
+> No hay evidencia clara de que ya se haya explotado (cruce contra `testers_kv_bulk.json`
+> sin resultados concluyentes, ver tarea #89), pero sigue abierto hasta que se arregle.
+>
+> ---
+
 > ## 📋 ESTADO ÚNICO — sesión Lenovo, cierre del 2026-08-23 (23:30 hora de Chile)
 > _Este bloque reemplaza a los 3 avisos sueltos que esta sesión fue apilando durante la
 > noche. Es el único al día. Candado de `index.html`: **LIBRE** (árbol limpio, todo en rama)._
