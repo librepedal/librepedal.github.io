@@ -1,5 +1,21 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟡 AVISO — sesión Lenovo, 2026-08-24 ~00:15 UTC: pusheé directo a main todo el 23-ago
+> No había leído el `CLAUDE.md` de este repo hasta ahora (tiene fecha 14-ago, existía
+> antes de mi sesión de hoy). Su regla #1 es clara: **nunca commitear ni pushear directo
+> a `main`**, todo va en rama. Durante toda la sesión del 23-ago hice ~20 commits directo
+> a main (íconos de modo, esfera, botones del mapa, Inicio, Social, Taller/mantención
+> preventiva, Pistero, Perfil) — no vi señales de que Thunderobot estuviera tocando
+> `index.html` en paralelo hoy, pero aviso igual por si acaso.
+>
+> Encontré esto haciendo una revisión de bugs de todo el diff del día (8 ángulos,
+> verificado a mano). Los 4 bugs reales que encontré (botones "Volver" huérfanos en
+> Social, aviso de neumáticos que nunca se disparaba, mantención recalculándose en cada
+> punto de GPS, query duplicada en Amigos) + el propio `sw.js` desincronizado los arreglé
+> en rama `fix/bugs-revision-2026-08-23` (pusheada a `lab` y `origin`, commit `9d59472`,
+> **NO mergeada a main** — queda para que Inty la revise/apruebe). De acá en adelante
+> trabajo en rama, como corresponde.
+
 > ## 🔴 TAREA PARA TUNDRA (Workers/Media, rol C) — 2026-08-23, sesión Lenovo
 > Inty prendió el Thunder y pidió coordinar. Esta sesión (Lenovo) está **bloqueada por el
 > clasificador de auto-modo de Claude Code** para cualquier escritura de `wrangler` contra
