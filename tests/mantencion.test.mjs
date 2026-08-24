@@ -192,5 +192,26 @@ const MES = 1000 * 60 * 60 * 24 * 30.44;
        (SAE.match(/_mantListoParaSubir=true;/g) || []).length === 2);
 }
 
+// ---- 7) Un guard por feature: clima != efectos != desgaste != voz ----
+// vigilarClima() alimenta TRES cosas independientes: el aviso hablado, los efectos visuales
+// y el factor de desgaste de la mantencion. Cada vez que un solo guard sirvio a varias, una
+// quedo rota en silencio. Aca se fija el orden correcto de una vez.
+{
+  const VC = bloque('async function vigilarClima(lat,lon){');
+  const iChequeo = VC.indexOf('CLIMA_MIN_ENTRE_CHEQUEOS');
+  const iAplicar = VC.indexOf('_climaFxAplicar(w);');
+  const iVoz     = VC.indexOf('if(!vozActiva) return;');
+  const iAviso   = VC.indexOf('CLIMA_MIN_ENTRE_AVISOS');
+  debe('el freno de CONSULTA a la API sigue primero (es el que limita el trafico)',
+       iChequeo >= 0 && iChequeo < iAplicar);
+  debe('el clima se APLICA antes de cualquier chequeo de voz (efectos + desgaste)',
+       iAplicar >= 0 && iVoz >= 0 && iAplicar < iVoz);
+  debe('el freno de AVISO quedo DESPUES de aplicar el clima, no antes',
+       iAviso >= 0 && iAviso > iAplicar);
+  debe('...y despues del chequeo de voz: solo frena al que habla', iAviso > iVoz);
+  debe('el freno de aviso ya no mira vozActiva (esa condicion ahora esta arriba)',
+       !/if\(vozActiva && _climaBase && [^\n]*CLIMA_MIN_ENTRE_AVISOS/.test(VC));
+}
+
 console.log('  mantencion.test.mjs: ' + ok + ' OK' + (fail ? ', ' + fail + ' FALLAN' : ''));
 process.exit(fail ? 1 : 0);

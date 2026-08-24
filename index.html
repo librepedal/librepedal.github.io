@@ -10954,13 +10954,23 @@ async function vigilarClima(lat,lon){
   // la actualizacion del modo de clima.
   const ahora=Date.now();
   if(ahora-_climaUltimoChequeo<CLIMA_MIN_ENTRE_CHEQUEOS) return; // freno de CONSULTA: sin esto se llamaba a la API cada segundo
-  if(vozActiva && _climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return; // freno de AVISO
+  // El freno de AVISO (25 min) estaba ACA, antes de _climaFxAplicar(), y frenaba de más:
+  // con la voz ENCENDIDA los efectos visuales y el desgaste por lluvia se actualizaban cada
+  // 25 min, y con la voz apagada cada 15. Al revés de lo razonable, y por la misma causa de
+  // fondo que el arreglo de arriba: un solo guard sirviendo a tres features distintas.
+  // Ahora baja a donde corresponde — justo antes de hablar — y el único freno de tráfico
+  // sigue siendo el de CONSULTA, que no se toca.
   _climaUltimoChequeo=ahora;
   try{
     const w=await climaDeZona(lat,lon);
     if(!w||!w.current) return;
     _climaFxAplicar(w);
     if(!vozActiva) return; // el resto de la funcion es solo para el AVISO hablado
+    // Freno del AVISO, en su lugar: acá ya se aplicaron los efectos y el desgaste, así que
+    // callarse no le quita nada a las otras dos features. `_climaBase` no se toca si se
+    // corta acá, igual que antes: la próxima comparación sigue partiendo de la última foto
+    // que sí se anunció.
+    if(_climaBase && ahora-_climaUltimoAviso<CLIMA_MIN_ENTRE_AVISOS) return;
     const horas=w.hourly&&w.hourly.precipitation_probability, tiempos=w.hourly&&w.hourly.time;
     let lluvia=null;
     if(horas&&tiempos){
