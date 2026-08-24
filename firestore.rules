@@ -338,6 +338,25 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Reseñas de la app (estrellas + comentario). Sin esta regla el catch-all de abajo
+    // denegaba la escritura y el boton "Enviar" fallaba SIEMPRE en silencio.
+    //  - read solo admin: es feedback privado, no contenido de comunidad. Con read:true
+    //    cualquiera podria listar lo que opinaron todos los demas junto a su nombre y su
+    //    `user` (el correo transformado) — un volcado de la base de usuarios de regalo.
+    //    Inty las lee desde la consola de Firebase.
+    //  - create de cualquiera autenticado, con el comentario acotado y la nota validada
+    //    de 1 a 5 (si no, se puede inyectar una nota de 10.000 y ensuciar el promedio).
+    //  - inmutable: nadie edita ni borra una reseña ya enviada, ni la propia.
+    match /resenasApp/{id} {
+      allow read: if signedIn() && isAdmin();
+      allow create: if signedIn()
+        && strOk('comentario', 500) && strOk('nombre', 80)
+        && request.resource.data.estrellas is number
+        && request.resource.data.estrellas >= 1
+        && request.resource.data.estrellas <= 5;
+      allow update, delete: if false;
+    }
+
     // Todo lo demás: denegado por defecto
     match /{document=**} {
       allow read, write: if false;
