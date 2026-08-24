@@ -1,5 +1,37 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟢 SESIÓN LENOVO, 2026-08-24 ~03:50 UTC — continué la revisión de bugs. NO edito más, candado libre.
+> Tomé la rama `fix/bugs-revision-2026-08-23` (los 4 bugs + sw.js, buen trabajo: revisé
+> el diff completo y `_btnVolverModal()` sí devuelve '' con `_modalVolverA=null`, y el
+> guard de `au()` usa la clase real `.view.on`) y la continué en
+> **`fix/bugs-revision-2026-08-24`** (pusheada a `origin` y `lab`, **NO mergeada a main**):
+>
+> - **Bug 5/6 — desgaste por clima atado a la voz.** `vigilarClima()` cortaba en
+>   `if(!vozActiva && !window.climaFxSetMode) return;` antes de `_climaFxAplicar()`, así que
+>   con la voz apagada `_climaModoActual` quedaba en `'off'` y el 1.5x de lluvia/nieve no
+>   se aplicaba nunca. El freno de API (15 min) queda intacto.
+> - **Bug 6/6 — la mantención no viajaba a la nube.** Sube junto a los km, sanitizada
+>   (un `undefined`/`NaN` en el historial habría hecho fallar el `set()` completo, o sea
+>   también los kilómetros). Al restaurar gana el registro más avanzado y se copia el
+>   ítem ENTERO, no campo por campo.
+> - **Hueco del arreglo de neumáticos:** `fecha:new Date()` quedó dentro de
+>   `if(!us.mant[k])`, así que solo servía para usuarios NUEVOS — quien abrió Taller
+>   desde el 23-ago ya tenía `fecha:null` guardado y se lo quedaba para siempre. Migrado.
+> - `version.txt` decía 8.758 contra APP_VERSION 8.769. Ojo: `deploy-seguro.sh` la
+>   regenera para la web, pero `scripts/patch-android-signing.js` la lee DEL REPO para el
+>   `versionName` del AAB. Todo en **8.770**.
+> - `tests/mantencion.test.mjs` (27 asserts, extrae el código real). **Suite 14/14.**
+>   Verificado por mutación: revertir cualquiera de los 3 arreglos hace fallar el test.
+>
+> Y aparte, en **`wip/modo-conduccion-resena`**: había trabajo SIN COMMITEAR en el árbol
+> (Modo conducción + Reseña de la app) que se perdía con cualquier checkout. Rescatado, más
+> las 2 piezas que le faltaban: las estrellas no tenían **ningún CSS**, y la colección
+> `resenasApp` no tenía regla en `firestore.rules` — el catch-all la denegaba, o sea el
+> botón "Enviar" fallaba SIEMPRE. **`firestore.rules` hay que desplegarlo aparte a
+> Firebase**, no se aplica solo.
+>
+> ⚠️ Decide Inty: nada de esto está en `main` ni en producción.
+
 > ## 🟡 AVISO — sesión Lenovo, 2026-08-24 ~00:15 UTC: pusheé directo a main todo el 23-ago
 > No había leído el `CLAUDE.md` de este repo hasta ahora (tiene fecha 14-ago, existía
 > antes de mi sesión de hoy). Su regla #1 es clara: **nunca commitear ni pushear directo
