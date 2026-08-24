@@ -1,5 +1,20 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ PUBLICADO — main en 6263712, versión 8.770 en producción (2026-08-24 ~17:35 UTC)
+> Inty dio el OK y mergeó `fix/bugs-revision-2026-08-24` a `main` (`3a8fb8a` → `6263712`).
+> Verificado en vivo: `https://librepedal.cl/version.txt` y `sw.js` devuelven **8.770** los
+> dos. **El congelamiento de deploys del bloque de abajo queda LEVANTADO** — esto ya llegó
+> a los 51 testers reales, no es un plan ni una prueba local.
+>
+> Se publicó **con el hueco de seguridad de abajo todavía abierto**, a sabiendas y por
+> decisión explícita de Inty — no se esperó a que Tundra lo cerrara. Eso sube la urgencia
+> real del punto de abajo: ya no es "antes de publicar", es "ya está en producción, cerrarlo
+> cuanto antes".
+>
+> `wip/modo-conduccion-resena` sigue sin entrar (no forma parte de este merge).
+>
+> ---
+
 > ## 🔴 SEGURIDAD ACTIVA — "Entrar con Google" salta la lista de testers (2026-08-24 ~11:00)
 > Detalle completo, datos y fix propuesto en la **tarea #89 del hub** (para Tundra, prioridad
 > alta). Resumen: `index.html:2235` fuerza el botón "Entrar con Google" a mostrarse siempre
