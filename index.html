@@ -5905,7 +5905,13 @@ const MANT_ITEMS={
 function _mantData(){
   if(!us.mant || typeof us.mant!=='object') us.mant={};
   Object.keys(MANT_ITEMS).forEach(function(k){
-    if(!us.mant[k]) us.mant[k]={kmBase:0, fecha:null, umbralKm:MANT_ITEMS[k].umbralKm, umbralMeses:MANT_ITEMS[k].umbralMeses, historial:[], avisado:false};
+    // fecha:new Date() en vez de null (bug encontrado 2026-08-24): un ítem con
+    // umbralKm:null (neumáticos, 100% por tiempo) dependía de que ALGO le pusiera
+    // fecha para siquiera empezar a contar — sin eso, mesesDesde quedaba null para
+    // siempre y el aviso "la goma se reseca aunque no la uses" nunca se disparaba.
+    // Hoy es la fecha más honesta que tenemos (no sabemos cuándo cambió de verdad),
+    // igual que "última sincronización" en cualquier tracker que arranca de cero.
+    if(!us.mant[k]) us.mant[k]={kmBase:0, fecha:new Date().toISOString(), umbralKm:MANT_ITEMS[k].umbralKm, umbralMeses:MANT_ITEMS[k].umbralMeses, historial:[], avisado:false};
   });
   return us.mant;
 }
@@ -5915,8 +5921,14 @@ function _mantData(){
 let _climaModoActual='off';
 function _factorDesgasteClima(){ return (_climaModoActual==='lluvia'||_climaModoActual==='nieve')?1.5:1; }
 function _sumarKmMantencion(km){ if(!(km>0)) return; us.mantKm=(us.mantKm||0)+km*_factorDesgasteClima(); }
-function _mantProgreso(key){
-  const d=_mantData()[key], km=(us.mantKm||0)-(d.kmBase||0);
+// 2026-08-24: acepta `data` ya calculado (el objeto que devuelve _mantData()) para no
+// volver a recorrer los 5 ítems cada vez — antes cada llamada llamaba a _mantData()
+// de nuevo, y como au() (cada punto de GPS) llama a esto ~10 veces por tick entre
+// renderMantencion()+_mantencionRevisarAvisos(), eran ~10 recorridos redundantes por
+// tick. Sigue funcionando sin el segundo argumento (fallback a _mantData()) por si
+// algo más lo llama suelto.
+function _mantProgreso(key, data){
+  const d=(data||_mantData())[key], km=(us.mantKm||0)-(d.kmBase||0);
   let mesesDesde=null;
   if(d.fecha){ mesesDesde=(Date.now()-new Date(d.fecha).getTime())/(1000*60*60*24*30.44); }
   const pctKm = d.umbralKm ? Math.min(1, km/d.umbralKm) : 0;
@@ -5929,7 +5941,7 @@ function renderMantencion(){
   const data=_mantData();
   let vencidos=0, cerca=0;
   cont.innerHTML=Object.keys(MANT_ITEMS).map(function(key){
-    const info=MANT_ITEMS[key], d=data[key], p=_mantProgreso(key);
+    const info=MANT_ITEMS[key], d=data[key], p=_mantProgreso(key, data);
     if(p.vencido) vencidos++; else if(p.cerca) cerca++;
     const color = p.vencido?'#ef4444':(p.cerca?'#eab308':'#35c46a');
     const badge = p.vencido?'<span class="mi-badge" style="background:rgba(239,68,68,.16);color:#ef4444">Vencido</span>':(p.cerca?'<span class="mi-badge" style="background:rgba(234,179,8,.16);color:#eab308">Cerca</span>':'<span class="mi-badge" style="background:rgba(53,196,106,.16);color:#35c46a">OK</span>');
@@ -5972,7 +5984,7 @@ function _mantencionRevisarAvisos(){
   try{
     const data=_mantData();
     Object.keys(MANT_ITEMS).forEach(function(key){
-      const p=_mantProgreso(key), d=data[key];
+      const p=_mantProgreso(key, data), d=data[key];
       if(p.vencido && !d.avisado){
         d.avisado=true;
         const info=MANT_ITEMS[key];
@@ -5986,7 +5998,8 @@ function _mantencionRevisarAvisos(){
 // que se veía venir, no solo enterarte cuando ya se cumplió el km.
 function _mantencionAvisoPreViaje(){
   try{
-    const criticos=Object.keys(MANT_ITEMS).filter(function(key){ const p=_mantProgreso(key); return p.vencido||p.cerca; }).map(function(key){ return MANT_ITEMS[key].l; });
+    const data=_mantData();
+    const criticos=Object.keys(MANT_ITEMS).filter(function(key){ const p=_mantProgreso(key, data); return p.vencido||p.cerca; }).map(function(key){ return MANT_ITEMS[key].l; });
     if(criticos.length) lpAviso('Antes de un viaje largo: revisa '+criticos.join(', ')+' — está'+(criticos.length>1?'n':'')+' por vencer. Mira Taller para el detalle.');
   }catch(e){}
 }
@@ -6066,7 +6079,16 @@ function au(){
   var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di));
   const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); if(pf){ pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); }
   var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1)+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
-  try{ if(typeof renderMantencion==='function') renderMantencion(); if(typeof _mantencionRevisarAvisos==='function') _mantencionRevisarAvisos(); }catch(e){}
+  // 2026-08-24: renderMantencion() reconstruye el innerHTML de 5 tarjetas — solo
+  // vale la pena si Taller es la pantalla que se está viendo ahora mismo. Antes
+  // corría en CADA punto de GPS sin importar qué pantalla estuviera abierta (mapa,
+  // esfera, lo que sea), gastando batería de más en cada viaje.
+  // _mantencionRevisarAvisos() SÍ sigue corriendo siempre — ese es el punto: avisar
+  // proactivo aunque no estés mirando Taller.
+  try{
+    if(typeof renderMantencion==='function'){ const _vMac=document.getElementById('v-mac'); if(_vMac && _vMac.classList.contains('on')) renderMantencion(); }
+    if(typeof _mantencionRevisarAvisos==='function') _mantencionRevisarAvisos();
+  }catch(e){}
   try{ if(_logrosListo&&typeof _chequearLogros==='function') _chequearLogros(false); }catch(e){} gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,
   // sería un montón de escrituras a Firestore). Antes esto SOLO pasaba en eventos
@@ -6578,15 +6600,20 @@ async function showAmigosYSolicitudes(){
   c.innerHTML='<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
   try{
-    const snapReq=await db.collection('friendRequests').where('to','==',cu).get();
-    const pend=snapReq.docs.filter(function(d){ return d.data().status==='pending'; });
+    // 2026-08-24: antes pedía 'to'==cu dos veces (una para solicitudes pendientes,
+    // otra adentro del Promise.all para los amigos aceptados) — misma query,
+    // lectura de Firestore duplicada en cada apertura de esta pantalla. Ahora se
+    // pide una sola vez y se reusan esos docs para ambas cosas; las dos queries
+    // que sí son distintas ('from'==cu y 'to'==cu) van en paralelo desde el arranque.
     const res=await Promise.all([
       db.collection('friendRequests').where('from','==',cu).get(),
       db.collection('friendRequests').where('to','==',cu).get()
     ]);
+    const snapTo=res[1];
+    const pend=snapTo.docs.filter(function(d){ return d.data().status==='pending'; });
     const ids={};
     res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; });
-    res[1].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; });
+    snapTo.docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; });
     const friendIds=Object.keys(ids);
     let html='';
     if(pend.length){
@@ -7180,8 +7207,15 @@ function mostrarLogrosComunidad(){
     +'</div>';
   document.getElementById('userModal').classList.add('on');
 }
+// 2026-08-24: _modalVolverA='mostrarLogrosComunidad' (en esta función y en
+// verSegmentos/verRetos/mostrarResumenAnual/verRecomendacionRutas/mostrarFundadores/
+// mostrarComunidad) apuntaba a un menú-hub que ya no existe en Social desde la
+// reorganización del 23-ago — cada una de estas 7 ahora es un botón directo, así
+// que "Volver" quedaba huérfano (el botón "← Volver" llevaba a una pantalla
+// inalcanzable desde ningún otro lado). Pasa a null: sin botón "Volver" propio, el
+// "✕" del modal ya cierra correctamente de vuelta a Social.
 function mostrarLogros(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   let desb=0; const items=LOGROS.map(function(l){ const v=l.val()||0; const done=v>=l.meta; if(done)desb++; return {l:l,done:done,pct:Math.min(100,Math.round(v/l.meta*100)),v:v}; });
   let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Has desbloqueado <strong style="color:var(--g)">'+desb+' de '+LOGROS.length+'</strong> logros. Son <strong>gratis</strong> y muestran tu avance en la comunidad. 🚴</p>';
   items.forEach(function(it){ const l=it.l;
@@ -9865,7 +9899,7 @@ async function crearSegmentoDesdeRuta(localId){
   }catch(e){ lpAviso('No se pudo crear el segmento.'); }
 }
 async function verSegmentos(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-flag-checkered"></i> Segmentos';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando segmentos...</p>';
@@ -9926,7 +9960,7 @@ async function revisarRetosCumplidos(){
   }catch(e){}
 }
 async function verRetos(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-bullseye"></i> Retos y temporadas';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando retos...</p>';
@@ -10023,7 +10057,7 @@ function mostrarResumenAnual(){
   const anio=new Date().getFullYear();
   const r=calcularResumenAnual(anio);
   if(r.viajes===0){
-    _modalVolverA='mostrarLogrosComunidad';
+    _modalVolverA=null;
     document.getElementById('modalTitle').innerHTML='<i class="fas fa-chart-simple"></i> Mi año en Libre Pedal';
     document.getElementById('modalContent').innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;text-align:center;padding:20px 0">Todavía no tienes viajes registrados este '+anio+'. ¡Sal a pedalear y vuelve más adelante!</p>';
     document.getElementById('userModal').classList.add('on');
@@ -10247,7 +10281,7 @@ function _perfilCiclista(){
   return { avgKm:totalKm/rutas.length, totalViajes:rutas.length };
 }
 async function verRecomendacionRutas(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-compass"></i> Rutas para ti';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Analizando tu historial...</p>';
@@ -10689,7 +10723,7 @@ async function _totalUsuariosSuscritos(){
 }
 var LP_FUNDADORES_CUPO=1000;
 async function mostrarFundadores(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-medal"></i> Socios Fundadores';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
@@ -10718,7 +10752,7 @@ async function mostrarFundadores(){
   c.innerHTML=html;
 }
 async function mostrarComunidad(){
-  _modalVolverA='mostrarLogrosComunidad';
+  _modalVolverA=null;
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-handshake"></i> Comunidad Libre Pedal';
   const c=document.getElementById('modalContent');
   c.innerHTML=_btnVolverModal()+'<p style="color:#888">Cargando...</p>';
