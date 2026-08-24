@@ -2505,7 +2505,12 @@ let lastFraseParadoTime = 0;
 let frasesComunidadAprobadas = [];
 async function cargarFrasesComunidad(){
   try{
-    const snap = await db.collection('frasesComunidad').where('aprobada','==',true).get();
+    // 2026-08-23: `where('aprobada','==',true)` filtra, pero NO acota — si la comunidad
+    // aporta 3.000 frases aprobadas, esto lee 3.000 documentos en CADA inicio de sesión.
+    // Es una colección de la comunidad, no del usuario, así que crece sola. 300 frases ya
+    // son muchísimas para que Pistero no se repita; el tope no le quita nada al usuario y
+    // le pone techo al gasto para siempre.
+    const snap = await db.collection('frasesComunidad').where('aprobada','==',true).limit(300).get();
     frasesComunidadAprobadas = snap.docs.map(function(d){ return d.data().texto; }).filter(Boolean);
     frasesComunidadAprobadas.forEach(function(t){
       if(frasesNormal.indexOf(t)===-1) frasesNormal.push(t);
