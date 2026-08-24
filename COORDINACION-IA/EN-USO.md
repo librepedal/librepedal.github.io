@@ -1,5 +1,40 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔴 LEER ANTES DE SUBIR NADA — sesión Lenovo, 2026-08-24 ~04:20 UTC
+> Inty avisó que **otra cuenta está subiendo algo en paralelo ahora mismo**. Yo **NO** estoy
+> editando: mi árbol está limpio y todo mi trabajo está en ramas. El candado de `index.html`
+> está **libre**. Pero hay 3 choques posibles, en orden de gravedad:
+>
+> **1. `librepedal.cl` ES la app de los testers.** `capacitor.config.json` tiene
+> `server.url: "https://librepedal.cl"` — la app de Play Store **no corre el código del AAB,
+> carga la web en vivo**. Cualquier deploy le llega a los 51 testers de la prueba cerrada al
+> instante. No existe "publico solo la web para probar".
+>
+> **2. `version.txt` / `APP_VERSION` se pisan fácil.** En `main` están **desincronizados**:
+> `version.txt`=8.758 contra `APP_VERSION`=8.769. `deploy-seguro.sh` regenera version.txt
+> para la web, pero **`scripts/patch-android-signing.js` la lee DEL REPO** para el
+> `versionName` del AAB — si armás un build desde `main` hoy, sale marcado 8.758. Mi rama
+> los deja los tres en **8.770** (index.html, sw.js, version.txt). Si vas a tocar la versión,
+> avisá o coordinamos el número para no quedar con dos 8.770 distintos.
+>
+> **3. Hay una REGRESIÓN en la rama de fixes del 23-ago — no la mergees tal cual.**
+> El guard de `au()` del commit `9d59472` es correcto en la idea, pero
+> `renderMantencion()` solo se llamaba desde `au()` y **`cv('mac')` nunca la llamó**: al
+> abrir Taller sin venir pedaleando, **la lista de mantención salía VACÍA**. Ya está
+> arreglado en `fix/bugs-revision-2026-08-24` (commit `c3373ca`) con test que lo caza.
+>
+> **Estado de mis ramas** (pusheadas a `origin` y `lab`, **ninguna en `main`**):
+> - `fix/bugs-revision-2026-08-24` — los 6 bugs cerrados + la regresión de arriba +
+>   `tests/mantencion.test.mjs` (30 asserts, verificados por mutación). Suite **14/14**.
+>   Es la que recomiendo mergear.
+> - `wip/modo-conduccion-resena` — Modo conducción + Reseña. **NO mergear todavía**: necesita
+>   desplegar `firestore.rules` aparte a Firebase (sin eso el botón "Enviar" falla siempre,
+>   la colección `resenasApp` no tenía regla) y no conviene meter función nueva en plena
+>   prueba cerrada.
+>
+> **`main` no se ha movido**: sigue en `3a8fb8a` en los dos remotos. Si vas a mergear o
+> desplegar, `git pull` primero y decilo acá.
+
 > ## 🟢 SESIÓN LENOVO, 2026-08-24 ~03:50 UTC — continué la revisión de bugs. NO edito más, candado libre.
 > Tomé la rama `fix/bugs-revision-2026-08-23` (los 4 bugs + sw.js, buen trabajo: revisé
 > el diff completo y `_btnVolverModal()` sí devuelve '' con `_modalVolverA=null`, y el
