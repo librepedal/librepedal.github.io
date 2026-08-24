@@ -1842,6 +1842,113 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+/* ===== BLINDAJE DE FIRESTORE (2026-08-23) =====
+   Nace de un apagon real: la cuota gratis de Firestore (50.000 lecturas al dia PARA TODO
+   EL PROYECTO) se agoto y la app quedo sin base de datos para los 51 testers de la prueba
+   cerrada... y NADIE se entero. Motivo: hay 278 `catch(e){}` silenciosos alrededor de
+   Firestore y solo 14 reportan a Sentry, asi que un `resource-exhausted` se tragaba entero
+   y el usuario veia pantallas vacias sin ninguna explicacion. Se descubrio de casualidad,
+   sondeando la API con curl.
+   Esto NO toca esos 278 catch: intercepta en UN solo punto (el prototipo del SDK), antes de
+   que el error llegue a ellos. El error se sigue propagando igual — solo queda registrado
+   de paso, asi que ningun comportamiento existente cambia.
+   Todo va dentro de try/catch y con deteccion de prototipos: si el SDK cambia de forma,
+   esto simplemente no se instala y la app sigue funcionando igual que antes. */
+var lpFirestoreEstado = { cuotaAgotada:false, avisado:false, lecturas:{}, total:0 };
+function _lpEsErrorDeCuota(e){
+  if(!e) return false;
+  var c = e.code || '';
+  return c === 'resource-exhausted' || c === 'firestore/resource-exhausted' ||
+         /resource[-_ ]exhausted|quota exceeded/i.test(String(e.message || ''));
+}
+function _lpAnotarErrorFirestore(e){
+  try{
+    if(!_lpEsErrorDeCuota(e)) return;
+    lpFirestoreEstado.cuotaAgotada = true;
+    if(lpFirestoreEstado.avisado) return;      // una sola vez por sesion
+    lpFirestoreEstado.avisado = true;
+    // A Sentry, para enterarnos SIN depender de que un usuario nos avise.
+    // window.Sentry.* explicito (y no el global suelto `Sentry`, como en el resto del
+    // archivo): asi funciona en cualquier ambito y ademas se puede probar de verdad.
+    try{ if(window.Sentry && window.Sentry.captureException) window.Sentry.captureException(e, {tags:{donde:'firestore', motivo:'cuota-agotada'}}); }catch(_){}
+    // Y al usuario, en su idioma: sin esto solo ve pantallas vacias y cree que la app se rompio.
+    try{ if(typeof lpAviso==='function') lpAviso('La base de datos alcanzo su limite diario. Tus kilometros se siguen guardando en el telefono y se suben solos cuando se libere.'); }catch(_){}
+  }catch(_){}
+}
+/* Contador de lecturas por coleccion. Firestore cobra POR DOCUMENTO leido, y desde la app
+   no habia forma de saber cuanto costaba cada pantalla — habia que ir a la consola de
+   Firebase y esperar a que actualizara. Con esto se mide en el momento:
+   escribir  lpLecturas()  en la consola del navegador y sale el desglose. */
+function _lpContarLecturas(coleccion, n){
+  try{
+    if(!(n > 0)) return;
+    lpFirestoreEstado.lecturas[coleccion] = (lpFirestoreEstado.lecturas[coleccion] || 0) + n;
+    lpFirestoreEstado.total += n;
+  }catch(_){}
+}
+function lpLecturas(){
+  var e = lpFirestoreEstado;
+  var filas = Object.keys(e.lecturas).map(function(k){ return {coleccion:k, documentos:e.lecturas[k]}; })
+                    .sort(function(a,b){ return b.documentos - a.documentos; });
+  try{ console.table(filas); }catch(_){ console.log(filas); }
+  console.log('TOTAL de documentos leidos en esta sesion: ' + e.total +
+              (e.cuotaAgotada ? '  ⚠ CUOTA AGOTADA' : ''));
+  return e.total;
+}
+(function _instalarBlindajeFirestore(){
+  try{
+    var FS = firebase.firestore;
+    if(!FS) return;
+    var nombreDe = function(ref){
+      try{ return (ref && ref._query && ref._query.path && ref._query.path.segments && ref._query.path.segments[0]) ||
+                  (ref && ref.path && String(ref.path).split('/')[0]) ||
+                  (ref && ref.parent && ref.parent.id) || (ref && ref.id) || '?'; }catch(_){ return '?'; }
+    };
+    // --- get() de consultas y de documentos sueltos ---
+    [[FS.Query, 'Query'], [FS.CollectionReference, 'CollectionReference'], [FS.DocumentReference, 'DocumentReference']].forEach(function(par){
+      var Clase = par[0];
+      if(!Clase || !Clase.prototype || typeof Clase.prototype.get !== 'function') return;
+      if(Object.prototype.hasOwnProperty.call(Clase.prototype, '_lpParcheado')) return;
+      var original = Clase.prototype.get;
+      Clase.prototype.get = function(){
+        var ref = this;
+        return original.apply(this, arguments).then(function(snap){
+          try{ _lpContarLecturas(nombreDe(ref), snap && (snap.size != null ? snap.size : 1)); }catch(_){}
+          return snap;
+        }, function(e){ _lpAnotarErrorFirestore(e); throw e; });
+      };
+      try{ Object.defineProperty(Clase.prototype, '_lpParcheado', {value:true, enumerable:false}); }catch(_){}
+    });
+    // --- onSnapshot(): los listeners son lo mas caro, y varios no traen manejador de error ---
+    [FS.Query, FS.CollectionReference].forEach(function(Clase){
+      if(!Clase || !Clase.prototype || typeof Clase.prototype.onSnapshot !== 'function') return;
+      if(Clase.prototype._lpOnParcheado) return;
+      var original = Clase.prototype.onSnapshot;
+      Clase.prototype.onSnapshot = function(){
+        var ref = this, args = Array.prototype.slice.call(arguments);
+        // Solo la forma con callbacks: onSnapshot({next,error}) se deja intacta.
+        var funciones = args.filter(function(a){ return typeof a === 'function'; });
+        if(funciones.length === 0) return original.apply(this, args);
+        // Envolver el onNext para contar los documentos que entrega cada entrega.
+        var iNext = args.indexOf(funciones[0]);
+        var onNext = args[iNext];
+        args[iNext] = function(snap){
+          try{ _lpContarLecturas(nombreDe(ref), snap && (snap.size != null ? snap.size : 0)); }catch(_){}
+          return onNext.apply(this, arguments);
+        };
+        if(funciones.length >= 2){
+          var iErr = args.indexOf(funciones[1]);
+          var onError = args[iErr];
+          args[iErr] = function(e){ _lpAnotarErrorFirestore(e); try{ return onError.apply(this, arguments); }catch(_){} };
+        } else {
+          args.splice(iNext + 1, 0, function(e){ _lpAnotarErrorFirestore(e); });
+        }
+        return original.apply(this, args);
+      };
+      try{ Object.defineProperty(Clase.prototype, '_lpOnParcheado', {value:true, enumerable:false}); }catch(_){}
+    });
+  }catch(e){ /* si el SDK cambia de forma, la app sigue igual que antes */ }
+})();
 // Persistencia offline: si te quedas sin señal en plena ruta (lo más probable
 // pedaleando), los datos NO se pierden — quedan guardados en el celular y se
 // suben solos apenas vuelva la conexión. Sin esto, un cierre de la app sin
@@ -3734,7 +3841,10 @@ async function actualizarBadgeAdmin(){
 // piden este mapa aparte y lo cruzan por id de documento (mismo `cu`).
 async function _mapaEmailsPrivados(){
   const map={};
-  try{ const snap=await db.collection('usersPrivate').get(); snap.forEach(function(doc){ map[doc.id]=doc.data().email||''; }); }catch(e){}
+  // 2026-08-23: sin limit() leia TODOS los correos privados. Se acota al mismo tope que
+  // la lista que acompana (300): si algun dia hace falta el padron completo, es un
+  // export paginado, no una lectura de golpe.
+  try{ const snap=await db.collection('usersPrivate').limit(300).get(); snap.forEach(function(doc){ map[doc.id]=doc.data().email||''; }); }catch(e){}
   return map;
 }
 async function mostrarTodosRegistrados(){
@@ -3744,7 +3854,12 @@ async function mostrarTodosRegistrados(){
   c.innerHTML='<p style="color:#888">Cargando...</p>';
   document.getElementById('userModal').classList.add('on');
   try{
-    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    // 2026-08-23: sin limit() esto leia la coleccion ENTERA. Hoy son ~65 usuarios y no
+    // se nota; con 5.000 son 5.000 lecturas de golpe (10% de la cuota diaria gratis de
+    // TODO el proyecto) cada vez que se abre el panel. Se muestran los 300 mas nuevos,
+    // que es para lo que sirve la pantalla; el total real sale de count(), que cuesta
+    // 1 lectura por cada 1.000 documentos en vez de una por documento.
+    const snap=await db.collection('users').orderBy('createdAt','desc').limit(300).get();
     const emails=await _mapaEmailsPrivados();
     let html='<p style="font-size:0.8rem;color:var(--p);margin-bottom:8px">Total: '+snap.size+' registrados</p>';
     snap.forEach(function(doc){
@@ -6437,18 +6552,77 @@ function irAlPuntoYNavegar(lat,lon,name){
 // todo Chile (salteado), y a medida que te acercas terminas viendo todos, sin saltos.
 let pointsUnsub=null, mapPointsData=[], mapPointsRenderTimer=null;
 const MAPPOINTS_MAX_RENDER=350;
+/* Puntos del mapa: caché local + sincronización incremental (2026-08-23).
+   ANTES: `collection('recommendations').onSnapshot(...)` SIN filtro y SIN limit(), o sea
+   la colección ENTERA en cada apertura del mapa. Firestore cobra por documento leído, y
+   esa colección la escriben los usuarios (addRecommendation/agregarPOI): crece para
+   siempre. El comentario original ya hablaba de "~4.000 puntos". Con el plan gratis en
+   50.000 lecturas al día PARA TODO EL PROYECTO, era una bomba de tiempo: no molesta hasta
+   que un día se lleva la cuota de todos.
+   AHORA: los puntos se guardan en el teléfono y solo se le piden a Firestore los que
+   llegaron DESPUÉS de la última sincronización (`where('ts','>', ...)`). El listener sigue
+   siendo en vivo — pero una consulta filtrada solo lee los documentos que casan, así que
+   en régimen cuesta casi cero. De regalo, el mapa se pinta al instante desde la caché en
+   vez de esperar la red.
+   Refresco completo cada 7 días: `likeRecommendation()` actualiza likes/ratings SIN tocar
+   `ts`, así que esos cambios no los trae la consulta incremental. Para el mapa da igual
+   (solo usa lat/lon/cat/título), pero conviene que no se desfase para siempre.
+   No hay borrado de recomendaciones en toda la app — verificado — así que la caché no
+   puede mostrar fantasmas de puntos eliminados. */
+const MAPPOINTS_CACHE_KEY='lp_mappoints_v1';
+const MAPPOINTS_REFRESCO_TOTAL_MS=7*24*60*60*1000;
+function _mapPointsCacheLeer(){
+  try{
+    const c=JSON.parse(localStorage.getItem(MAPPOINTS_CACHE_KEY)||'null');
+    if(!c || !Array.isArray(c.puntos)) return null;
+    if(!(c.ultimaSync>0) || (Date.now()-c.ultimaSync)>MAPPOINTS_REFRESCO_TOTAL_MS) return null; // caché vieja: refresco completo
+    return c;
+  }catch(e){ return null; }
+}
+function _mapPointsCacheGuardar(){
+  try{
+    let maxTs=0;
+    mapPointsData.forEach(function(d){ if(d.tsMs>maxTs) maxTs=d.tsMs; });
+    localStorage.setItem(MAPPOINTS_CACHE_KEY, JSON.stringify({ultimaSync:Date.now(), maxTs:maxTs, puntos:mapPointsData}));
+  }catch(e){ /* almacenamiento lleno o modo privado: la app sigue, solo pierde el ahorro */ }
+}
+function _mapPointsAplicar(snap){
+  // Fusión por id: un punto que ya estaba se reemplaza, uno nuevo se agrega. Nunca se
+  // borra nada (la consulta incremental no ve lo viejo, y eso NO significa que no exista).
+  const porId={};
+  mapPointsData.forEach(function(d){ porId[d.id]=d; });
+  snap.forEach(function(doc){
+    const d=doc.data();
+    if(!(d.lat&&d.lon)) return;
+    d.id=doc.id;
+    try{ d.tsMs=(d.ts&&d.ts.toMillis)?d.ts.toMillis():(d.tsMs||0); }catch(e){ d.tsMs=d.tsMs||0; }
+    porId[d.id]=d;
+  });
+  mapPointsData=Object.keys(porId).map(function(k){ return porId[k]; });
+  // Subconjunto para el aviso de voz (solo agua/mirador/hospedaje): se arma UNA vez
+  // acá, no en cada fix de GPS, porque recorrer los puntos completos con cálculo
+  // de distancia incluido en cada actualización de posición era pesado de más para
+  // un celular andando en bici (batería/CPU en un recorrido de varias horas).
+  puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
+  _renderizarPuntosVisibles();
+  _mapPointsCacheGuardar();
+}
 function subscribeToMapPoints(){
   if(pointsUnsub) return;
-  pointsUnsub=db.collection('recommendations').onSnapshot(function(snap){
-    mapPointsData=[];
-    snap.forEach(function(doc){ const d=doc.data(); if(d.lat&&d.lon){ d.id=doc.id; mapPointsData.push(d); } });
-    // Subconjunto para el aviso de voz (solo agua/mirador/hospedaje): se arma UNA vez
-    // acá, no en cada fix de GPS, porque recorrer los ~4.000 puntos completos cálculo
-    // de distancia incluido en cada actualización de posición era pesado de más para
-    // un celular andando en bici (batería/CPU en un recorrido de varias horas).
+  const cache=_mapPointsCacheLeer();
+  let consulta=db.collection('recommendations');
+  if(cache){
+    // Pintar YA con lo que hay en el teléfono, sin esperar a la red.
+    mapPointsData=cache.puntos;
     puntosAvisoRelevantes=mapPointsData.filter(function(d){ return CATEGORIAS_AVISO[d.cat]; });
-    _renderizarPuntosVisibles();
-  }, function(e){});
+    try{ _renderizarPuntosVisibles(); }catch(e){}
+    if(cache.maxTs>0) consulta=consulta.where('ts','>',firebase.firestore.Timestamp.fromMillis(cache.maxTs));
+  }
+  pointsUnsub=consulta.onSnapshot(_mapPointsAplicar, function(e){
+    // Si la consulta incremental falla (p.ej. falta el índice), se vuelve a la completa
+    // UNA vez y se rehace la caché, en vez de dejar el mapa pegado en lo viejo.
+    try{ localStorage.removeItem(MAPPOINTS_CACHE_KEY); }catch(_){}
+  });
   if(mp){
     mp.on('moveend', _renderizarPuntosVisiblesThrottled);
     mp.on('zoomend', _renderizarPuntosVisiblesThrottled);
@@ -7800,7 +7974,11 @@ async function verAnaliticasAdmin(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede ver las analíticas.'); return; }
   h('Cargando analíticas de uso...');
   try{
-    const snap=await db.collection('usage').get();
+    // 2026-08-23: sin limit(). La coleccion /usage recien se habilito (su regla no
+    // existia y todo caia al deny por defecto), asi que hoy esta casi vacia — pero pasa
+    // a tener UN documento por usuario y crece con cada registro. Con tope antes de que
+    // duela, no despues.
+    const snap=await db.collection('usage').limit(500).get();
     const pantalla={}, tiempo={}, funcion={}, voz={}; let total=0, activos7d=0; const ahora=Date.now();
     snap.forEach(function(doc){ const d=doc.data(); total++;
       const uu=(d.ultimoUso&&d.ultimoUso.toMillis)?d.ultimoUso.toMillis():0; if(uu && (ahora-uu)<7*86400000) activos7d++;
@@ -7822,7 +8000,12 @@ async function exportarUsuariosAdmin(){
   if(cu!==ADMIN_ID){ lpAviso('Solo el administrador puede exportar la lista de usuarios.'); return; }
   h('Obteniendo lista de usuarios registrados...');
   try{
-    const snap=await db.collection('users').orderBy('createdAt','desc').get();
+    // 2026-08-23: sin limit() esto leia la coleccion ENTERA. Hoy son ~65 usuarios y no
+    // se nota; con 5.000 son 5.000 lecturas de golpe (10% de la cuota diaria gratis de
+    // TODO el proyecto) cada vez que se abre el panel. Se muestran los 300 mas nuevos,
+    // que es para lo que sirve la pantalla; el total real sale de count(), que cuesta
+    // 1 lectura por cada 1.000 documentos en vez de una por documento.
+    const snap=await db.collection('users').orderBy('createdAt','desc').limit(300).get();
     const emails=await _mapaEmailsPrivados();
     const rows=[['Nombre','Email']]; // solo nombre y correo: para tu respaldo de registros
     snap.forEach(function(doc){ const d=doc.data();
@@ -10907,9 +11090,25 @@ async function mostrarComunidad(){
   let votos={}; opciones.forEach(function(o){ votos[o.id]=0; });
   let miVoto=null;
   try{
-    const snap=await db.collection('votacionComunidad').get();
-    snap.forEach(function(doc){ const d=doc.data(); if(votos[d.opcion]!=null) votos[d.opcion]++; if(doc.id===cu) miVoto=d.opcion; });
-  }catch(e){}
+    // 2026-08-23: antes se traía la colección ENTERA para contar los votos a mano en el
+    // teléfono. Con 5.000 votantes eran 5.000 lecturas cada vez que alguien abría
+    // Comunidad — y esto lo puede disparar cualquier usuario, no solo el admin.
+    // Ahora: un count() por opción (Firestore cobra 1 lectura por cada 1.000 documentos
+    // contados, no una por documento) + UN solo doc para saber qué votaste vos.
+    // Son ~6 lecturas en vez de N, y deja de crecer con la comunidad.
+    // Mismo patrón que ya usaba el sorteo acá abajo, incluido el respaldo por si count()
+    // no está disponible.
+    await Promise.all(opciones.map(async function(o){
+      try{ const a=await db.collection('votacionComunidad').where('opcion','==',o.id).count().get(); votos[o.id]=a.data().count||0; }catch(e){}
+    }));
+    const mio=await db.collection('votacionComunidad').doc(cu).get();
+    if(mio.exists) miVoto=mio.data().opcion;
+  }catch(eCount){
+    try{
+      const snap=await db.collection('votacionComunidad').get();
+      snap.forEach(function(doc){ const d=doc.data(); if(votos[d.opcion]!=null) votos[d.opcion]++; if(doc.id===cu) miVoto=d.opcion; });
+    }catch(e){}
+  }
   const totalVotos=Object.values(votos).reduce(function(a,b){return a+b;},0)||1;
   let sorteoTotal=0, yaParticipo=false;
   try{
