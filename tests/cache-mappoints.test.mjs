@@ -160,5 +160,24 @@ const punto = (i, extra = {}) => Object.assign({
        JSON.parse(store.get('lp_mappoints_v1')).maxTs === 1003);
 }
 
+// ---- 7) Los handlers del mapa: el caso "arranco a navegar sin abrir el mapa" ----
+// subscribeToMapPoints() tambien se llama desde avisarPuntosCercanos(), en pleno viaje y
+// posiblemente con mp === null. Antes quedaba pointsUnsub seteado y los handlers sin poner;
+// al abrir despues el mapa, el `return` temprano cortaba antes de engancharlos y los puntos
+// no se volvian a dibujar al mover ni al hacer zoom en TODA la sesion.
+{
+  const fn = bloque('function subscribeToMapPoints()');
+  const iHandlers = fn.indexOf("mp.on('moveend'");
+  const iReturn = fn.indexOf('if(pointsUnsub) return;');
+  debe('subscribeToMapPoints engancha moveend/zoomend', iHandlers >= 0);
+  debe('los engancha ANTES del return temprano (si no, quedan sin poner para siempre)',
+       iHandlers >= 0 && iReturn >= 0 && iHandlers < iReturn);
+  debe('y solo una vez, aunque la funcion se llame varias veces',
+       /subscribeToMapPoints\._handlers=true;/.test(fn));
+  debe('protegido por si el mapa todavia no existe', /if\(mp && !subscribeToMapPoints\._handlers\)/.test(fn));
+  debe('no quedo el bloque viejo duplicando el enganche',
+       (fn.match(/mp\.on\('moveend'/g) || []).length === 1);
+}
+
 console.log('  cache-mappoints.test.mjs: ' + ok + ' OK' + (fail ? ', ' + fail + ' FALLAN' : ''));
 process.exit(fail ? 1 : 0);

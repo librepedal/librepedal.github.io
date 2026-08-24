@@ -6631,6 +6631,17 @@ function _mapPointsAplicar(snap){
   _mapPointsCacheGuardar();
 }
 function subscribeToMapPoints(){
+  // Los handlers del mapa se enganchan ANTES del `return` de abajo, y aparte de la
+  // suscripción. Motivo: esta función también se llama desde avisarPuntosCercanos(), o sea
+  // en pleno viaje y posiblemente SIN haber abierto el mapa todavía (mp === null). En ese
+  // caso quedaba `pointsUnsub` seteado pero los handlers sin poner, y cuando el ciclista
+  // abría el mapa el `return` temprano cortaba antes de engancharlos: los puntos no se
+  // volvían a dibujar al mover ni al hacer zoom en TODA la sesión.
+  if(mp && !subscribeToMapPoints._handlers){
+    subscribeToMapPoints._handlers=true;
+    mp.on('moveend', _renderizarPuntosVisiblesThrottled);
+    mp.on('zoomend', _renderizarPuntosVisiblesThrottled);
+  }
   if(pointsUnsub) return;
   const cache=_mapPointsCacheLeer();
   let consulta=db.collection('recommendations');
@@ -6656,10 +6667,7 @@ function subscribeToMapPoints(){
       subscribeToMapPoints();
     }
   });
-  if(mp){
-    mp.on('moveend', _renderizarPuntosVisiblesThrottled);
-    mp.on('zoomend', _renderizarPuntosVisiblesThrottled);
-  }
+  // (el enganche de moveend/zoomend subió al principio de la función, ver la nota de allá)
 }
 function _renderizarPuntosVisiblesThrottled(){
   if(mapPointsRenderTimer) clearTimeout(mapPointsRenderTimer);
