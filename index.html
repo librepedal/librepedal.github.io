@@ -2989,7 +2989,27 @@ function limpiarParaVoz(t){
 }
 function cargarVoces(){ try{ const vs=speechSynthesis.getVoices(); vozPref = vs.find(function(v){return /es(-|_)(CL|419|MX)/i.test(v.lang);}) || vs.find(function(v){return (v.lang||'').toLowerCase().indexOf('es')===0;}) || null; }catch(e){} }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
-function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const _av=document.querySelector('.view.on'); if(_av && _av.id!=='v-pistero' && _av.id!=='v-map'){ return; } const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
+/* 2026-08-24: se saca la restriccion "solo se muestra en v-pistero/v-map". Encontrado
+   haciendo QA en vivo: el buscador de destino de INICIO (la pantalla mas usada de toda
+   la app) llama lpAviso("Necesito tu GPS") cuando falla -- y como Inicio no es ninguna
+   de esas dos vistas, el aviso se tragaba en silencio. El usuario tocaba "Iniciar
+   navegacion" y no pasaba absolutamente NADA visible: ni error, ni feedback.
+   No es un caso aislado: lpAviso() se llama 98 veces en todo el archivo, y esta funcion
+   es la UNICA via visual que tiene -- a diferencia de h() (la voz), que SI llega sin
+   importar la pantalla (mostrarBocadillo() es solo la mitad visual de h(), no bloquea
+   la mitad hablada). O sea 98 avisos de error quedaban mudos Y ciegos en 13 de las ~15
+   pantallas de la app.
+   Este limite YA estaba documentado como un problema, no una decision a proposito: existe
+   _lpAvisoLogin() (unas lineas mas arriba) especificamente "porque lpAviso() es MUDO"
+   fuera de esas dos vistas -- pero ese parche cubre SOLO login, con un window.alert()
+   bloqueante que el propio codigo evita a proposito en el resto de la app. El resto de
+   las 98 llamadas nunca tuvo parche.
+   Por que es seguro sacarlo: #pisteroBubble es position:fixed, hijo directo de <body>,
+   z-index:2100 (verificado en vivo) -- no esta anidado dentro de ninguna vista, asi que
+   no hay ninguna razon de DOM/CSS para que solo pudiera mostrarse en dos de ellas. Sacar
+   la restriccion solo AGREGA visibilidad donde hoy no hay ninguna; no le quita nada a
+   las pantallas donde ya funcionaba. */
+function mostrarBocadillo(t,ms){ const b=document.getElementById('pisteroBubble'); if(!b) return; const tut=document.getElementById('tutorialOverlay'); if(tut && tut.classList.contains('on')) return; /* en el tutorial solo brillo+voz, sin cuadro de texto */ b.innerText=t; b.classList.add('show'); clearTimeout(b._to); b._to=setTimeout(function(){ b.classList.remove('show'); },ms||4500); }
 /* Obtiene un plugin nativo de Capacitor. CLAVE: con la web en vivo (server.url) el
    puente inyectado NO tiene registerPlugin; los plugins viven en Capacitor.Plugins. */
 function lpPlugin(nombre){
