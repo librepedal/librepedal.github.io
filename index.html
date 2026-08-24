@@ -4461,7 +4461,7 @@ window.onload = async function(){
     document.getElementById('ghostBtn').style.display='block';
     const adminPanel=document.getElementById('admin-panel'); if(adminPanel) adminPanel.style.display=(cu===ADMIN_ID)?'block':'none';
     await im(); au(); rm(MG); fg('todos');
-    loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
+    loadTrips(); loadRoutesList(); cargarFrasesComunidad(); /* 2026-08-23: loadRepairTips/loadHostels/loadRecommendations salieron de aqui -> se enganchan al abrir SU pantalla (_subUnaVez en cv()). loadHostels era el peor: arrastra initVotosHostels() = guiComments limit(500), ~550 documentos por apertura para "Te doy alojo", que ademas esta OCULTO desde el commit 8f2d678. */
     initCustomization();
     // 2026-08-15: antes eran 2 timeouts de tiempo fijo (950ms para abrirEsfera, 3000ms
     // para el mic de manos libres) adivinando cuanto dura el saludo -- con saludos
@@ -4475,7 +4475,7 @@ window.onload = async function(){
       });
     },500);
     if(!ghostMode) subscribeToUsers();
-    subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades(); revisarRodadasProximas(); revisarRetosCumplidos();
+    subscribeToFriendRequests(); /* 2026-08-23: solo este queda al arranque (pinta insignias que se ven fuera de su pantalla y es una query chica, solo TUS solicitudes). chat/comments/reportes/novedades se enganchan al abrir su pantalla -- ver _subUnaVez(). */ revisarRodadasProximas(); revisarRetosCumplidos();
     getCurrentLocation();
     publicarUbicacionInicial();
     solicitarPermisosEsenciales();
@@ -4711,9 +4711,9 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   uj=_lsJSON('lp_j_'+cu, []);
   rh=_lsJSON('lp_r_'+cu, []);
   await im(); au(); rm(MG); fg('todos');
-  loadRepairTips(); loadHostels(); loadRoutesList(); loadRecommendations(); loadTrips(); cargarFrasesComunidad();
+  loadTrips(); loadRoutesList(); cargarFrasesComunidad(); /* 2026-08-23: loadRepairTips/loadHostels/loadRecommendations salieron de aqui -> se enganchan al abrir SU pantalla (_subUnaVez en cv()). loadHostels era el peor: arrastra initVotosHostels() = guiComments limit(500), ~550 documentos por apertura para "Te doy alojo", que ademas esta OCULTO desde el commit 8f2d678. */
   if(!ghostMode) subscribeToUsers();
-  subscribeToChat(); subscribeToComments(); subscribeToFriendRequests(); subscribeToReportes(); subscribeToNovedades();
+  subscribeToFriendRequests(); /* 2026-08-23: solo este queda al arranque (pinta insignias que se ven fuera de su pantalla y es una query chica, solo TUS solicitudes). chat/comments/reportes/novedades se enganchan al abrir su pantalla -- ver _subUnaVez(). */
   getCurrentLocation();
   publicarUbicacionInicial();
   solicitarPermisosEsenciales();
@@ -4856,6 +4856,39 @@ function _renderMainMapUsers(docs){
   });
 }
 function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } }); }
+/* ===== SUSCRIPCION PEREZOSA (2026-08-23) =====
+   Al iniciar sesion se enganchaban 11 listeners de golpe, sin importar que pantalla
+   estuvieras mirando, y cada uno lee su coleccion ENTERA de arranque: reportes 200,
+   users 150, chat 100, novedades 60, guiComments 50, hostels 50, recommendations 50,
+   repairTips 20... ~700 documentos como piso, antes de que el usuario tocara nada.
+   Firestore cobra por documento leido, y el plan gratis da 50.000 lecturas al dia PARA
+   TODO EL PROYECTO: con ~700 por apertura, bastaban ~70 aperturas para dejar la app sin
+   base de datos. Medido en la consola el 2026-08-23: 73.000 lecturas contra 210
+   escrituras, con maximo 4 conexiones simultaneas. O sea el gasto no venia de tener
+   muchos usuarios sino de que ABRIR la app costaba carisimo -- por eso ya habia
+   reventado con 48 usuarios.
+   Ahora cada pantalla engancha lo suyo la primera vez que se abre. Se suscribe UNA vez
+   por sesion y no se desuscribe: asi el que entra y sale de una pantalla no paga de
+   nuevo, y los datos que ya estaban siguen ahi (desuscribir y volver a enganchar seria
+   peor, cobra la coleccion completa cada vez).
+   Lo que NO se difiere, a proposito:
+     - subscribeToFriendRequests: pinta #solicBadge y #esAvisos, que se ven desde fuera
+       de su pantalla. Ademas es where('to','==',cu): son solo TUS solicitudes.
+     - subscribeToReportes: alimenta el aviso de superficie ANTES de arrancar a pedalear
+       (ver _avisoSuperficieRuta) y los avisos de Pistero en la zona. Se engancha al abrir el
+       mapa, al iniciar navegacion y al empezar a grabar en toggleGPS() (sus DOS caminos: el
+       plugin nativo y watchPosition del navegador).
+     - loadTrips: la global `trips` NO se usa solo en su pantalla -- au() saca de ahi el
+       contador de viajes del panel de Inicio y statViajesCompletados() alimenta los logros.
+       Diferirla dejaba el contador en cero y los logros mal a quien nunca abriera "Mis
+       viajes". Ademas es where('user','==',cu): son solo TUS viajes, sale barato. */
+const _subsHechas={};
+function _subUnaVez(clave, fn){
+  if(_subsHechas[clave]) return;
+  if(typeof fn!=='function') return;
+  _subsHechas[clave]=true;
+  try{ fn(); }catch(e){ _subsHechas[clave]=false; /* que un fallo no deje la pantalla muerta para siempre */ }
+}
 function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ _lastUsersSnapshotDocs=snapshot.docs; _renderMainMapUsers(snapshot.docs); if(_navMapUsersActive) _renderNavMapUsers(snapshot.docs); }); }
 /* ===== CICLISTAS DE LA COMUNIDAD: pelotón demo por todo Chile + usuarios reales al entrar ===== */
 // Al registrarse o entrar, publica tu zona aproximada (~1 km, por privacidad):
@@ -5012,6 +5045,7 @@ function toggleGPS(silencioso){
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
+      _subUnaVez('reportes', subscribeToReportes); /* 2026-08-23: al grabar SI hacen falta aunque no hayas abierto el mapa (avisos de peligro/zona de Pistero) */
       if(!silencioso) _prevueloPistero(true);
     } else if("geolocation" in navigator){
       gw=navigator.geolocation.watchPosition(ug,hg,gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000});
@@ -5019,6 +5053,7 @@ function toggleGPS(silencioso){
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);
       tripStartTime=Date.now(); _iniciarCronometroDash();
+      _subUnaVez('reportes', subscribeToReportes); /* 2026-08-23: al grabar SI hacen falta aunque no hayas abierto el mapa (avisos de peligro/zona de Pistero) */
       if(!silencioso) _prevueloPistero(false);
     } else { lpAviso("Tu dispositivo no soporta GPS"); }
     // Aviso ÚNICO (2026-08, bug ruta = línea recta): en Android el rastreo con la pantalla
@@ -7809,7 +7844,13 @@ function mesesDesdeRegistro(){
   return Math.floor((Date.now()-ts)/(1000*60*60*24*30));
 }
 function requiere6Meses(){ return mesesDesdeRegistro()>=6; }
+/* 2026-08-23: loadHostels() se llamaba al INICIAR SESION, y arrastra initVotosHostels()
+   = guiComments where type=='voto' limit(500). Eran ~550 documentos por cada apertura de
+   la app para una funcion que ni siquiera es alcanzable: "Te doy alojo" quedo OCULTO en el
+   commit 8f2d678 (se saco el boton, pero no la carga de datos). Ahora carga aca, que es el
+   unico lugar desde donde se puede llegar. */
 async function abrirTeDoyAlojo(){
+  _subUnaVez('hostels', loadHostels);
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-house"></i> Te doy alojo';
   const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on');
   const meses=mesesDesdeRegistro();
@@ -8559,6 +8600,10 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   // en vez de perderlo silenciosamente al pisar el estado con la ruta nueva.
   if(document.getElementById('nav-screen').classList.contains('active')) endNavigation();
   _detenerGpsLibreSiActivo();
+  // 2026-08-23: los reportes ya no se enganchan al iniciar sesion. Aca SI hacen falta
+  // aunque no hayas pasado por el mapa: _avisoSuperficieRuta() los usa para avisarte del
+  // ripio ANTES de salir, no en el camino.
+  _subUnaVez('reportes', subscribeToReportes);
   navGuardado=false;
   document.getElementById('nav-screen').classList.add('active');
   _actualizarBtnManosLibres();
@@ -8989,7 +9034,15 @@ function cv(id, _esVolver){
     _registrarPasoEnHistorial(id); // le da al botón atrás del teléfono algo que retroceder
   }
   _viewActual=id; _actualizarBtnAtras();
-  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.body.setAttribute('data-vista', id); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); if(id==='mac'){ if(typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); /* 2026-08-24: renderizar AL ABRIR. renderMantencion() solo se llamaba desde au(), y desde que au() la condiciona a que Taller este visible (para no reconstruir 5 tarjetas en cada punto de GPS), abrir Taller sin estar pedaleando dejaba la lista VACIA: al iniciar la app au() corre con Inicio a la vista, el guard bloquea, y cv('mac') no renderizaba nada. El guard esta bien; lo que faltaba era este render de apertura. */ if(typeof renderMantencion==='function') renderMantencion(); } if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); }); el.classList.add('on'); document.body.setAttribute('data-vista', id); document.querySelectorAll('.nb').forEach(function(x){ x.classList.remove('on'); }); const ni=viewNav[id], nbs=document.querySelectorAll('.nb'); if(ni!=null&&nbs[ni]) nbs[ni].classList.add('on'); window.scrollTo(0,0); if(id==='map') setTimeout(function(){ if(mp) mp.resize(); },120); if(id==='routes'){ renderRutas(); setTimeout(function(){ if(mapAllRoutes) mapAllRoutes.invalidateSize(); },120); } if(id==='trips'){ renderRutas(); } if(id==='customize') initCustomization(); if(id==='stats') updateStatsView(); /* 2026-08-23: cada pantalla engancha SU listener la primera vez que se abre (ver
+     _subUnaVez). Antes se enganchaban los 11 al iniciar sesion aunque nunca entraras. */
+  if(id==='chat')      _subUnaVez('chat', subscribeToChat);
+  if(id==='novedades') _subUnaVez('novedades', subscribeToNovedades);
+  if(id==='rec')       _subUnaVez('recomendaciones', loadRecommendations);
+  if(id==='gui')       _subUnaVez('comentarios', subscribeToComments);
+  if(id==='map')       _subUnaVez('reportes', subscribeToReportes);
+  if(id==='mac')       _subUnaVez('repairTips', loadRepairTips);
+  if(id==='mac'){ if(typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); /* 2026-08-24: renderizar AL ABRIR. renderMantencion() solo se llamaba desde au(), y desde que au() la condiciona a que Taller este visible (para no reconstruir 5 tarjetas en cada punto de GPS), abrir Taller sin estar pedaleando dejaba la lista VACIA: al iniciar la app au() corre con Inicio a la vista, el guard bloquea, y cv('mac') no renderizaba nada. El guard esta bien; lo que faltaba era este render de apertura. */ if(typeof renderMantencion==='function') renderMantencion(); } if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
      inicializar (sin categorias de puntos y sin sincronizar con la nube) porque cv() solo
      hacia cargarDiario() y openDiario() hacia tres cosas mas. La misma pantalla se veia
      distinta segun por donde entraras: eso es exactamente la falta de concordancia que
