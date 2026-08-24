@@ -1,8 +1,39 @@
 # Plan para publicar — mañana 2026-08-24
 
-_Escrito la noche del domingo 23-ago por la sesión Lenovo. Todo lo de abajo está listo y
-probado; falta el visto bueno de Inty y una verificación que **solo se puede hacer con la
-cuota de Firestore recuperada** (se reinicia ~03:00 hora de Chile)._
+_Escrito la noche del domingo 23-ago por la sesión Lenovo._
+
+> ## ✅ ACTUALIZACIÓN 2026-08-24 ~05:00 — YA SE PROBÓ EN VIVO, CON DATOS REALES
+> Con la cuota ya recuperada y permiso explícito de Inty, se probó la rama completa contra
+> Firestore de producción real (referrer `localhost:8935` autorizado temporalmente en la
+> API key de Firebase, cuenta de prueba `intyrivera@gmail.com` — una de las 3 de siempre).
+> El **Paso 1** del plan de abajo ya no hace falta como bloqueo: esto es más fuerte que
+> medir con la app cerrada, es la app real funcionando.
+>
+> **Resultados, con números:**
+> - Arrancar la app (login + Inicio): **78 documentos** leídos (antes: ~1.100).
+> - Abrir el mapa la PRIMERA vez: **4.029 puntos reales** en `recommendations` — confirma
+>   que el "~4.000 puntos" del comentario original era exacto, no exagerado.
+> - Abrir el mapa la SEGUNDA vez (cache + consulta incremental): **0 lecturas nuevas**,
+>   los 4.029 puntos se restauran al instante desde `localStorage`.
+> - Taller: se pinta solo con abrirlo (5.261 caracteres de HTML), sin depender de GPS.
+>   Neumáticos ya tiene fecha propia (migración funcionando).
+> - **No se perdió ningún dato real** — verificado con lecturas `{source:'server'}` (sin
+>   caché) antes y después de cada escritura.
+>
+> **Y se encontró + arregló UN bug más gracias a esta prueba** (commit `eb3ed47`, ya
+> pusheado): el login por código de tester nunca pasaba por `sincronizarAlEntrar()`, así
+> que en la PRIMERA sesión de cualquier cuenta no se restauraba nada desde la nube — y la
+> escritura de esa función subía `km` sin haber leído la nube primero. En una cuenta
+> EXISTENTE con km real desde otro dispositivo, un primer login en un dispositivo nuevo lo
+> podía pisar con 0. Arreglado: ahora restaura primero (reusando la misma lectura que ya
+> hacía para las cosméticas, sin costo extra) y recién después escribe.
+>
+> **Con esto, el Paso 1 de abajo es opcional** (se puede seguir haciendo por costumbre,
+> pero ya no es la única forma de confirmar que el arreglo sirve). Los Pasos 2 y 3 siguen
+> en pie tal cual — falta el mergeo real y la medición en producción, que es distinta de
+> probar en local aunque use el mismo Firestore.
+
+---
 
 > **Antes que nada:** mergear a `main` **ES publicar**. `deploy-cloudflare.yml` despliega solo
 > en ~40 s, y `capacitor.config.json` apunta a `server.url: https://librepedal.cl`, así que la
