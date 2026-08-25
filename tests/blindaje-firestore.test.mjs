@@ -45,7 +45,10 @@ function montarEntorno({ getFalla = null, snapSize = 0 } = {}) {
     firebase: { firestore: { Query, CollectionReference, DocumentReference } },
     console: { table() {}, log() {} },
     lpAviso: (m) => avisos.push(m),
-    window: { Sentry: { captureException: (e, ctx) => sentry.push({ e, ctx }) } },
+    window: { Sentry: {
+      captureException: (e, ctx) => sentry.push({ tipo: 'exception', e, ctx }),
+      captureMessage: (m, ctx) => sentry.push({ tipo: 'message', m, ctx }),
+    } },
     avisos, sentry, Query, CollectionReference, DocumentReference,
   };
   // El bloque usa `window`, `firebase`, `lpAviso`, `console`. Se inyectan como parámetros.
@@ -124,7 +127,66 @@ const ERR_OTRO = Object.assign(new Error('Missing or insufficient permissions.')
   debe('y el blindaje igual lo registra', env.api.estado.cuotaAgotada === true);
 }
 
-// ---- 6) Nada de esto puede tumbar la app si el SDK cambia de forma ----
+// ---- 7) Modo ahorro: el tope de SESION protege contra un bug real sin limitar uso normal ----
+{
+  const env = montarEntorno({ snapSize: 100 });
+  for (let i = 0; i < 8; i++) await new env.Query().get(); // 800 documentos, justo en el tope
+  debe('con 800 (el tope) el modo ahorro NO se activa todavía (es ">" estricto)', env.api.estado.modoAhorro === false);
+  await new env.Query().get(); // 900: ahora sí lo cruza
+  debe('al superar el tope se activa el modo ahorro', env.api.estado.modoAhorro === true);
+  debe('se avisa al usuario UNA vez', env.avisos.filter((a) => /usó más datos/.test(a)).length === 1);
+  debe('se reporta a Sentry como mensaje (no hay excepción real que capturar)',
+       env.sentry.some((s) => s.tipo === 'message' && /modo-ahorro/.test(s.m || '')));
+
+  // No debe spamear: seguir leyendo no dispara un segundo aviso.
+  await new env.Query().get();
+  debe('el aviso de modo ahorro no se repite', env.avisos.filter((a) => /usó más datos/.test(a)).length === 1);
+}
+
+// ---- 7b) Con modo ahorro activo, un listener NUEVO a una colección no esencial no se abre ----
+{
+  const env = montarEntorno({ snapSize: 900 });
+  await new env.Query().get(); // activa el modo ahorro
+  debe('modo ahorro activo', env.api.estado.modoAhorro === true);
+
+  const antes = env.api.estado.total;
+  const q = new env.Query();
+  const unsub = q.onSnapshot(function () {}, function () {});
+  debe('NO llega a suscribirse de verdad (el mock nunca guarda _args)', q._args === undefined);
+  debe('devuelve igual una función de unsub (nadie revienta al llamarla)', typeof unsub === 'function');
+  unsub(); // no debe tirar
+
+  debe('no sumó lecturas: nunca se disparó ningún snapshot', env.api.estado.total === antes);
+}
+
+// ---- 7c) Con modo ahorro activo, sosAlertas es la EXCEPCIÓN: sigue funcionando ----
+{
+  const env = montarEntorno({ snapSize: 900 });
+  await new env.Query().get(); // activa el modo ahorro
+
+  const q = new env.Query();
+  q.path = 'sosAlertas'; // el extractor nombreDe() mira ref.path si no hay _query
+  const before = env.api.estado.total;
+  q.onSnapshot(function (snap) {});
+  debe('sosAlertas SÍ llega a suscribirse (seguridad, nunca se pausa)', q._args !== undefined);
+}
+
+// ---- 7d) Un listener que YA estaba abierto ANTES del modo ahorro sigue vivo ----
+{
+  const env = montarEntorno({ snapSize: 10 });
+  const q = new env.Query();
+  let recibido = 0;
+  q.onSnapshot(function (snap) { recibido++; });
+  debe('el listener se abrió normal, antes del modo ahorro', q._args !== undefined);
+
+  for (let i = 0; i < 90; i++) await new env.Query().get(); // 900 documentos: activa el modo ahorro
+  debe('modo ahorro ya activo', env.api.estado.modoAhorro === true);
+
+  q._args[0]({ size: 3 }); // el listener viejo sigue entregando datos
+  debe('un listener ya abierto ANTES del modo ahorro sigue recibiendo actualizaciones', recibido === 1);
+}
+
+// ---- 8) Nada de esto puede tumbar la app si el SDK cambia de forma ----
 {
   let reventó = false;
   try {

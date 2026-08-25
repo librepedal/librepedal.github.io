@@ -1,5 +1,29 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟡 LISTO PARA MERGEAR — `fix/modo-ahorro-y-pausa-fondo` (2026-08-25, sesión Lenovo)
+> Candado de `index.html`: **LIBRE** (rama pusheada a `origin` y `lab`, working tree limpio).
+>
+> **Contexto**: confirmado vía Cloud Monitoring (Firestore Instance → Document Reads) que los
+> picos de lectura de hoy son uso orgánico de los 51 testers a lo largo de todo el día, no
+> nuestro testing — pero la forma de los picos (sube y baja de golpe) sigue siendo la firma
+> del patrón "ráfaga de listeners al abrir la app", ya reducido pero no eliminado. Dos
+> protecciones de código nuevas, complementarias a `fix/mapa-cache-compartida`:
+>
+> 1. **Modo ahorro por tope de SESIÓN** (no de día): 800 lecturas en una sola sesión (~10x lo
+>    normal) deja de abrir listeners en vivo NUEVOS el resto de esa sesión. Blinda contra un
+>    bug puntual sin limitar uso normal. `sosAlertas` excluido a propósito (seguridad).
+> 2. **Pausar `subscribeToUsers()` en segundo plano**: el listener más caro (ciclistas
+>    cercanos) se desuscribe con `visibilitychange` cuando la app no está visible, se retoma
+>    al volver — solo si de verdad estaba activo.
+>
+> Tests: `blindaje-firestore` +4 casos (34 asserts), `pausa-en-fondo` nuevo (6 asserts), ambos
+> verificados por mutación. Suite completa **21/21**. `APP_VERSION` 8.771 → **8.772**.
+>
+> **Pendiente**: OK de Inty para mergear a `main` (publica a los 51 testers al instante).
+> Rama: `fix/modo-ahorro-y-pausa-fondo`, commit `4f66262`.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en d6eb0d0, versión 8.771 en producción (2026-08-24, sesión Lenovo)
 > Inty dio el OK, mergeado y pusheado a `origin` y `lab`. Verificado en vivo:
 > `https://librepedal.cl/version.txt` devuelve **8.771**. Candado de `index.html`: **LIBRE**.
