@@ -1,5 +1,25 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ PUBLICADO — main en a9390fd, versión 8.774 en producción (2026-08-25, sesión Lenovo)
+> Autorizado por Inty antes de dormir (modo autónomo nocturno). Candado: **LIBRE**.
+>
+> **Los 4.028 puntos sembrados de OpenStreetMap (99,98% del mapa) ahora viven empaquetados
+> con la app** en `puntos-osm.json`, mismo origen — costo CERO real, ya no dependen ni de
+> Capone ni de Firestore para el caso normal. Capone queda de respaldo si el estático falla
+> (404, build viejo sin el archivo), Firestore de último respaldo si los dos fallan — misma
+> cadena de seguridad de siempre, nunca peor que antes.
+>
+> Verificado en vivo: `version.txt`=8.774 y `puntos-osm.json` sirven 200 en producción.
+> Tests: `mapa-cache-compartida` reescrito (7 casos, 21 asserts, verificado por mutación).
+> Suite completa **22/22**.
+>
+> **Hallazgo de paso, sin resolver**: hay un punto de prueba huérfano en producción
+> (`user:"demo"`, título "Punto diag") — inofensivo (el filtro incremental lo ignora solo,
+> timestamp en cero), pero es basura de testing en datos reales. Pendiente que Inty confirme
+> si lo borra.
+>
+> ---
+
 > ## ✅ CERRADO — hueco de seguridad idToken (tareas #89/#90), main en c0ac65d (2026-08-25)
 > **worker-auth/worker.js desplegado a producción** (`wrangler deploy`, cuenta 024bc...) —
 > excepción autorizada explícitamente por Inty al protocolo de 3 cuentas: el hueco seguía
