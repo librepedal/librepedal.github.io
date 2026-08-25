@@ -1,5 +1,27 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ CERRADO — hueco de seguridad idToken (tareas #89/#90), main en c0ac65d (2026-08-25)
+> **worker-auth/worker.js desplegado a producción** (`wrangler deploy`, cuenta 024bc...) —
+> excepción autorizada explícitamente por Inty al protocolo de 3 cuentas: el hueco seguía
+> activo en producción y Tundra estaba ocupada en otra tarea. Cherry-pick SOLO del commit
+> `50f9502` de Tundra (el fix de `worker.js`), sin mezclar su otro commit `31ee7cf` (fix de
+> avisos en `index.html`, cambio separado sin revisar por esta sesión — sigue en la rama
+> `fix/auth-idtoken-gate-testers` de Tundra por si ella quiere retomarlo aparte).
+>
+> El bloque idToken ahora valida `TESTERS_PERMITIDOS` igual que el bloque `modo:'codigo'`,
+> falla cerrada (sin el secreto puesto, la vía queda bloqueada entera).
+>
+> **Verificado en vivo tras el deploy**: los caminos existentes (código válido/inválido)
+> siguen funcionando exactamente igual. **No verificado end-to-end** el bloqueo del camino
+> idToken específico contra una cuenta de Google real que NO sea tester — habría necesitado
+> otra cuenta de Google real para probarlo, y no se usó ninguna sin permiso. La lógica es un
+> espejo exacto del bloque `modo:'codigo'`, que sí está probado y confirmado funcionando.
+>
+> No toca `worker-auth/wrangler.toml` (sin bloque `[vars]`, los secretos existentes
+> —`TESTERS_PERMITIDOS`, llaves de Firebase— no se tocaron por el deploy).
+>
+> ---
+
 > ## ✅ PUBLICADO — main en ce581a2, versión 8.773 en producción (2026-08-25, sesión Lenovo)
 > Inty dio el OK, mergeado y pusheado a `origin` y `lab`. Candado de `index.html`: **LIBRE**.
 >
