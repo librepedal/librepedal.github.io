@@ -1,7 +1,7 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## 🟡 LISTO PARA MERGEAR — `fix/rtd-posiciones-ciclistas` (2026-08-25, sesión Lenovo)
-> Candado de `index.html`: **LIBRE** (rama pusheada a `origin` y `lab`, working tree limpio).
+> ## ✅ PUBLICADO — main en ce581a2, versión 8.773 en producción (2026-08-25, sesión Lenovo)
+> Inty dio el OK, mergeado y pusheado a `origin` y `lab`. Candado de `index.html`: **LIBRE**.
 >
 > **Contexto**: la causa estructural del pico de lecturas de Firestore identificado hoy —
 > `subscribeToUsers()` (los puntitos de ciclistas cercanos), el listener más caro de la app,
