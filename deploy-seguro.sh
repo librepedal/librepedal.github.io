@@ -32,7 +32,7 @@ trap 'rm -rf "$OUT"' EXIT
 
 echo "→ armando carpeta limpia..."
 cd "$SRC"
-for f in *.html *.js manifest.json version.txt _headers _redirects robots.txt favicon.ico; do
+for f in *.html *.js manifest.json puntos-osm.json version.txt _headers _redirects robots.txt favicon.ico; do
   [ -f "$f" ] && cp "$f" "$OUT/"
 done
 # `*.js` cubre sw.js + los modulos nuevos que carga index.html (voz-elevenlabs.js,
