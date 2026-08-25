@@ -1,12 +1,14 @@
-// Caché COMPARTIDA del mapa (Capone) — se prueba el COMPORTAMIENTO con el código real.
+// Caché del mapa: ESTÁTICO (OSM) → COMPARTIDO (Capone) → Firestore. Se prueba el
+// COMPORTAMIENTO con el código real.
 //
 // Por qué existe: un teléfono sin caché local (instalación nueva, o caché vencida a los 7
 // días) le pedía a Firestore la colección `recommendations` completa (~4.000 documentos).
-// Con 51 testers eso agotó la cuota gratis dos veces la misma noche del 2026-08-24. La
-// caché compartida (/api/mapa-librepedal en Capone) hace esa lectura pesada UNA vez para
-// todos; este archivo prueba que el teléfono la use bien y, sobre todo, que si esa caché
-// falla por lo que sea, el mapa NUNCA quede peor que antes de este cambio (fallback al
-// full-read directo a Firestore de siempre).
+// Con 51 testers eso agotó la cuota gratis dos veces la misma noche del 2026-08-24.
+// Primer arreglo (24-ago): caché compartida vía Capone. Segundo arreglo (25-ago): de esos
+// 4.029 puntos, 4.028 son sembrados de OpenStreetMap y casi no cambian — ahora viven
+// EMPAQUETADOS con la app en puntos-osm.json, mismo origen, cero red externa. Capone queda
+// de respaldo solo si el archivo estático falla; Firestore queda de último respaldo si
+// ambos fallan. El mapa NUNCA debe quedar peor que antes de cualquiera de estos cambios.
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -45,6 +47,7 @@ const SRC = CONSTS + '\nconst MAPA_CACHE_COMPARTIDO_URL = ' + URL_M[1] + ';\n' +
   bloque('function _mapPointNube(') + '\n' +
   bloque('function _mapPointsCacheGuardar()') + '\n' +
   bloque('function _mapPointsCacheLeer()') + '\n' +
+  bloque('function _mapPointsSemillaEstatica(') + '\n' +
   bloque('function _mapPointsSemillaCompartida(') + '\n' +
   bloque('function subscribeToMapPoints()');
 
@@ -61,22 +64,32 @@ function crearDbMock(registro) {
   return { collection: (nombre) => { registro.colecciones.push(nombre); return hacerQuery([]); } };
 }
 
-function montar({ fetchImpl, setTimeoutImpl, clearTimeoutImpl } = {}) {
+// fetchPorUrl: { estatico: respuesta|fn, compartido: respuesta|fn } — cada entrada puede ser
+// una respuesta fija o una función async(url) para casos con timing/errores.
+function montar({ fetchPorUrl = {}, setTimeoutImpl, clearTimeoutImpl } = {}) {
   const store = new Map();
   const localStorage = {
     getItem: (k) => (store.has(k) ? store.get(k) : null),
     setItem: (k, v) => store.set(k, v),
     removeItem: (k) => store.delete(k),
   };
-  const registro = { colecciones: [], suscripciones: [], unsubLlamado: false, renders: 0 };
+  const registro = { colecciones: [], suscripciones: [], unsubLlamado: false, renders: 0, llamadasEstatico: 0, llamadasCompartido: 0 };
   const db = crearDbMock(registro);
   const firebase = { firestore: { Timestamp: { fromMillis: (ms) => ({ __ts: ms }) } } };
   const CATEGORIAS_AVISO = { agua: true, mirador: true };
+  const fetchImpl = async (url) => {
+    const esEstatico = url === 'puntos-osm.json';
+    if (esEstatico) registro.llamadasEstatico++; else registro.llamadasCompartido++;
+    const resp = esEstatico ? fetchPorUrl.estatico : fetchPorUrl.compartido;
+    if (typeof resp === 'function') return resp(url);
+    if (resp === undefined) return { ok: false }; // por defecto, sin mock: falla limpio
+    return resp;
+  };
   const fn = new Function(
     'localStorage', 'fetch', 'setTimeout', 'clearTimeout', 'db', 'firebase', 'mp', 'CATEGORIAS_AVISO',
     '_renderizarPuntosVisiblesThrottled', '_renderizarPuntosVisibles', '_mapPointsAplicar',
     'let mapPointsData=[], puntosAvisoRelevantes=[], pointsUnsub=null;\n' + SRC +
-    '\nreturn { subscribeToMapPoints, semilla:_mapPointsSemillaCompartida,' +
+    '\nreturn { subscribeToMapPoints, semillaEstatica:_mapPointsSemillaEstatica, semillaCompartida:_mapPointsSemillaCompartida,' +
     ' getMapPointsData:()=>mapPointsData, getPointsUnsub:()=>pointsUnsub };'
   );
   const api = fn(
@@ -89,90 +102,95 @@ function montar({ fetchImpl, setTimeoutImpl, clearTimeoutImpl } = {}) {
 
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 const puntoNube = (i) => ({ id: 'p' + i, lat: -33, lon: -71, cat: 'agua', user: 'osm-data', title: 'P' + i, desc: '', tsMs: 1000 + i });
+const okJson = (obj) => ({ ok: true, json: async () => obj });
 
-// ---- 1) Sin caché local, Capone responde bien: siembra y sigue INCREMENTAL, no full-read ----
+// ---- 1) Sin caché local, el archivo ESTÁTICO responde bien: siembra desde ahí, ni toca Capone ----
 {
   const puntos = [puntoNube(1), puntoNube(2), puntoNube(3)];
-  const { api, registro, store } = montar({
-    fetchImpl: async (url) => {
-      debe('pide la URL de la caché compartida', url.includes('mapa-librepedal'));
-      return { ok: true, json: async () => ({ puntos }) };
-    },
-  });
+  const { api, registro, store } = montar({ fetchPorUrl: { estatico: okJson({ puntos }) } });
   api.subscribeToMapPoints();
   await espera(20);
+  debe('pide el archivo estático primero', registro.llamadasEstatico === 1);
+  debe('nunca llama a la caché compartida de Capone si el estático funcionó', registro.llamadasCompartido === 0);
   debe('terminó suscrito a recommendations (una sola vez)', registro.colecciones.filter((c) => c === 'recommendations').length === 1);
   debe('la suscripción final es INCREMENTAL (trae filtro ts>), no la colección entera',
        registro.suscripciones.length === 1 && registro.suscripciones[0].filtros.length === 1 &&
        registro.suscripciones[0].filtros[0][0] === 'ts');
-  debe('mapPointsData quedó sembrado con los puntos de Capone', api.getMapPointsData().length === 3);
+  debe('mapPointsData quedó sembrado con los puntos del estático', api.getMapPointsData().length === 3);
   debe('la caché local quedó escrita (sembrada) para la próxima apertura', store.has('lp_mappoints_v1'));
   debe('quedó con un unsub real (no colgado en el placeholder)', typeof api.getPointsUnsub() === 'function');
 }
 
-// ---- 2) Sin caché local, Capone falla (network error): NUNCA peor que antes — full read ----
+// ---- 2) Estático falla (404, sin ese archivo en el build), Capone responde bien: siembra desde Capone ----
 {
-  const { api, registro } = montar({ fetchImpl: async () => { throw new Error('sin red'); } });
+  const puntos = [puntoNube(1)];
+  const { api, registro } = montar({ fetchPorUrl: { estatico: { ok: false }, compartido: okJson({ puntos }) } });
   api.subscribeToMapPoints();
   await espera(20);
-  debe('cae al camino de siempre: se suscribe a recommendations', registro.colecciones.includes('recommendations'));
-  debe('SIN filtro (full read, igual que antes de este cambio)',
+  debe('intentó el estático primero', registro.llamadasEstatico === 1);
+  debe('cayó a Capone porque el estático falló', registro.llamadasCompartido === 1);
+  debe('terminó incremental con los datos de Capone', api.getMapPointsData().length === 1 &&
+       registro.suscripciones[0].filtros.length === 1);
+}
+
+// ---- 3) Estático Y Capone fallan: NUNCA peor que antes de cualquiera de los dos cambios — full read ----
+{
+  const { api, registro } = montar({ fetchPorUrl: { estatico: { ok: false }, compartido: { ok: false } } });
+  api.subscribeToMapPoints();
+  await espera(20);
+  debe('probó los dos respaldos', registro.llamadasEstatico === 1 && registro.llamadasCompartido === 1);
+  debe('cae al camino original: se suscribe a recommendations SIN filtro (full read)',
+       registro.colecciones.includes('recommendations') &&
        registro.suscripciones.length === 1 && registro.suscripciones[0].filtros.length === 0);
 }
 
-// ---- 3) Sin caché local, Capone responde pero con error HTTP (503, cuota, etc.) ----
+// ---- 4) Estático con error de red (throw): se comporta igual que un ok:false, prueba con Capone ----
 {
-  const { api, registro } = montar({ fetchImpl: async () => ({ ok: false }) });
+  const { api, registro } = montar({ fetchPorUrl: { estatico: async () => { throw new Error('sin red'); }, compartido: okJson({ puntos: [puntoNube(1)] }) } });
   api.subscribeToMapPoints();
   await espera(20);
-  debe('un ok:false también cae al full read de siempre',
-       registro.suscripciones.length === 1 && registro.suscripciones[0].filtros.length === 0);
+  debe('un throw en el estático no tumba nada, cae a Capone', registro.llamadasCompartido === 1);
+  debe('y Capone lo resuelve bien', api.getMapPointsData().length === 1);
 }
 
-// ---- 4) Sin caché local, Capone responde pero vacío/corrupto (sin .puntos) ----
+// ---- 5) Si YA hay caché local, no se intenta NINGÚN respaldo (ni estático ni Capone) ----
 {
-  const { api, registro } = montar({ fetchImpl: async () => ({ ok: true, json: async () => ({ error: 'cuota' }) }) });
-  api.subscribeToMapPoints();
-  await espera(20);
-  debe('una respuesta sin .puntos también cae al full read', registro.suscripciones[0].filtros.length === 0);
-}
-
-// ---- 5) Sin caché local, Capone nunca contesta: no se cuelga esperando, corta a los 4s ----
-{
-  let venció;
-  const { api, registro } = montar({
-    fetchImpl: () => new Promise(() => {}), // nunca resuelve
-    setTimeoutImpl: (fn, ms) => { venció = ms; fn(); return 1; }, // dispara el vencimiento YA, no hay que esperar 4s reales
-    clearTimeoutImpl: () => {},
-  });
-  api.subscribeToMapPoints();
-  await espera(20);
-  debe('el plazo de espera es razonable (unos segundos, no minutos)', venció >= 1000 && venció <= 10000);
-  debe('vencido el plazo, sigue con el full read de siempre', registro.suscripciones[0].filtros.length === 0);
-}
-
-// ---- 6) Si YA hay caché local, ni se intenta pedir la compartida (no hace falta) ----
-{
-  let fetchLlamado = false;
-  const { api, store, registro } = montar({ fetchImpl: async () => { fetchLlamado = true; return { ok: true, json: async () => ({ puntos: [] }) }; } });
+  const { api, store, registro } = montar({ fetchPorUrl: { estatico: okJson({ puntos: [] }), compartido: okJson({ puntos: [] }) } });
   store.set('lp_mappoints_v1', JSON.stringify({ ultimaSync: Date.now(), maxTs: 5000, puntos: [puntoNube(9)] }));
   api.subscribeToMapPoints();
   await espera(20);
-  debe('con caché local vigente, NO llama a la caché compartida', !fetchLlamado);
+  debe('con caché local vigente, no llama al estático', registro.llamadasEstatico === 0);
+  debe('ni a la caché compartida', registro.llamadasCompartido === 0);
   debe('usa directo la incremental de siempre', registro.suscripciones[0].filtros.length === 1);
 }
 
-// ---- 7) Reentrada: llamar dos veces mientras el fetch está pendiente no duplica nada ----
+// ---- 6) Reentrada: llamar dos veces mientras el fetch está pendiente no duplica nada ----
 {
-  let llamadasFetch = 0;
   const { api, registro } = montar({
-    fetchImpl: async () => { llamadasFetch++; await espera(15); return { ok: true, json: async () => ({ puntos: [puntoNube(1)] }) }; },
+    fetchPorUrl: { estatico: async () => { await espera(15); return okJson({ puntos: [puntoNube(1)] }); } },
   });
   api.subscribeToMapPoints();
   api.subscribeToMapPoints(); // en pleno vuelo del fetch de arriba
   await espera(40);
-  debe('el fetch a la caché compartida se pide UNA sola vez, no dos', llamadasFetch === 1);
+  debe('el fetch al estático se pide UNA sola vez, no dos', registro.llamadasEstatico === 1);
   debe('y termina con una sola suscripción a recommendations', registro.suscripciones.length === 1);
+}
+
+// ---- 7) El respaldo de Capone (probado a fondo antes) sigue teniendo su propio timeout de 4s ----
+{
+  let venció;
+  const { api, registro } = montar({
+    fetchPorUrl: {
+      estatico: { ok: false },
+      compartido: () => new Promise(() => {}), // nunca resuelve
+    },
+    setTimeoutImpl: (fn, ms) => { venció = ms; fn(); return 1; }, // dispara el vencimiento YA
+    clearTimeoutImpl: () => {},
+  });
+  api.subscribeToMapPoints();
+  await espera(20);
+  debe('el plazo de espera de Capone es razonable (unos segundos, no minutos)', venció >= 1000 && venció <= 10000);
+  debe('vencido el plazo, sigue con el full read de siempre', registro.suscripciones[0].filtros.length === 0);
 }
 
 console.log(`\n${ok} ok, ${fail} fallas — mapa-cache-compartida.test.mjs`);

@@ -1773,7 +1773,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.773'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.774'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -6746,11 +6746,29 @@ function _mapPointsAplicar(snap){
   _renderizarPuntosVisibles();
   _mapPointsCacheGuardar();
 }
+// Puntos sembrados de OpenStreetMap (2026-08-25): son 4.028 de los 4.029 puntos del mapa
+// —prácticamente todo— y casi no cambian nunca (dato importado una vez, no algo que la
+// comunidad edite). Viven EMPAQUETADOS con la app en puntos-osm.json, mismo origen: cero
+// llamada a Firestore, cero dependencia de Capone, y el navegador lo cachea solo como
+// cualquier otro archivo estático. Esto deja el "primer open sin caché" en costo CERO para
+// el 99,98% del mapa, no solo barato.
+function _mapPointsSemillaEstatica(cb){
+  let listo=false;
+  const terminar=function(ok){ if(listo) return; listo=true; cb(ok); };
+  fetch('puntos-osm.json').then(function(r){ return r.ok?r.json():null; }).then(function(d){
+    if(!d || !Array.isArray(d.puntos) || !d.puntos.length){ terminar(false); return; }
+    mapPointsData=d.puntos;
+    puntosAvisoRelevantes=mapPointsData.filter(function(x){ return CATEGORIAS_AVISO[x.cat]; });
+    try{ _renderizarPuntosVisibles(); }catch(e){}
+    _mapPointsCacheGuardar();
+    terminar(true);
+  }).catch(function(){ terminar(false); });
+}
 // Caché compartida entre todos los testers (Cloudflare Worker de Capone, cachea la lectura
-// pesada horas enteras) — se usa SOLO para sembrar un teléfono que no tiene caché local
-// todavía (instalación nueva o caché vencida a los 7 días). Si falla por lo que sea (Capone
-// caído, sin red, CORS) se sigue exactamente como antes de este cambio: full read directo a
-// Firestore. Nunca deja al mapa peor de lo que ya estaba.
+// pesada horas enteras) — respaldo SOLO si el archivo estático de arriba falla (404, build
+// viejo sin el archivo, etc.). Si esto TAMBIÉN falla (Capone caído, sin red, CORS) se sigue
+// exactamente como antes de cualquiera de estos dos cambios: full read directo a Firestore.
+// Nunca deja al mapa peor de lo que ya estaba.
 const MAPA_CACHE_COMPARTIDO_URL='https://asistente-inty.pages.dev/api/mapa-librepedal';
 function _mapPointsSemillaCompartida(cb){
   let listo=false;
@@ -6783,7 +6801,10 @@ function subscribeToMapPoints(){
   if(!cache && !subscribeToMapPoints._semillaIntentada){
     subscribeToMapPoints._semillaIntentada=true;
     pointsUnsub=function(){}; // guarda de reentrada mientras se resuelve el fetch async
-    _mapPointsSemillaCompartida(function(){ pointsUnsub=null; subscribeToMapPoints(); });
+    _mapPointsSemillaEstatica(function(ok){
+      if(ok){ pointsUnsub=null; subscribeToMapPoints(); return; }
+      _mapPointsSemillaCompartida(function(){ pointsUnsub=null; subscribeToMapPoints(); });
+    });
     return;
   }
   let consulta=db.collection('recommendations');
