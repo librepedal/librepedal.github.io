@@ -1,0 +1,33 @@
+{
+  "rules": {
+    "posiciones": {
+      ".read": true,
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['lat','lon','visible','ts']) && newData.child('lat').isNumber() && newData.child('lon').isNumber()",
+        "lat": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
+        "lon": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
+        "visible": { ".validate": "newData.isBoolean()" },
+        "ts": { ".validate": "newData.isNumber()" },
+        "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "skin": { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "helmet": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "$other": { ".validate": false }
+      }
+    },
+    "liveTracking": {
+      "$id": {
+        ".read": true,
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['lat','lon','activo','ts'])",
+        "lat": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
+        "lon": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
+        "activo": { ".validate": "newData.isBoolean()" },
+        "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "modo": { ".validate": "newData.isString() && newData.val().length <= 20" },
+        "ts": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

@@ -39,6 +39,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <!-- Google Identity Services (GIS) SACADO el 2026-08-16: estaba desactivado desde hacía
      tiempo (`_initGIS` no se llama desde ningún lado, ver la nota junto a esa función
      por el origin_mismatch persistente), pero el script se seguía descargando en CADA
@@ -1772,7 +1773,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.772'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.773'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1842,6 +1843,14 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+/* Realtime Database (2026-08-25): cuota TOTALMENTE separada de Firestore, medida en datos
+   transferidos en vez de lecturas -- se usa solo para lo mas caro de Firestore: la posicion
+   en vivo de los ciclistas visibles en el mapa (subscribeToUsers). Ese listener se re-dispara
+   con cada movimiento de CUALQUIER ciclista, multiplicado por cuanta gente lo tiene abierto;
+   sacarlo de Firestore quita el mayor consumidor recurrente de lecturas. Firestore SIGUE
+   guardando lat/lon del perfil igual que siempre (lo usa 'buscar cercanos' con un .get()
+   puntual, barato) -- esto no reemplaza esa escritura, se suma. */
+const rtdb = firebase.database();
 /* ===== BLINDAJE DE FIRESTORE (2026-08-23) =====
    Nace de un apagon real: la cuota gratis de Firestore (50.000 lecturas al dia PARA TODO
    EL PROYECTO) se agoto y la app quedo sin base de datos para los 51 testers de la prueba
@@ -4924,7 +4933,7 @@ async function _completarLoginVerificado(cuVal, nombre, e_val){
   }
 }
 async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿Cerrar sesión?")){ try{ await firebase.auth().signOut(); }catch(e){} localStorage.removeItem('lp_session'); location.reload(); } }
-function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
+function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); _rtdOcultarPosicion(); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
 // Ahora vive dentro del menú de la ficha de usuario: sin fondo de píldora, el estado
 // se marca con el cian de Pistero cuando está activo.
 function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText='👻 Modo fantasma: '+(ghostMode?'ON':'OFF'); btn.style.color=ghostMode?'#12b3a6':''; }
@@ -5061,7 +5070,42 @@ function _subUnaVez(clave, fn){
   _subsHechas[clave]=true;
   try{ fn(); }catch(e){ _subsHechas[clave]=false; /* que un fallo no deje la pantalla muerta para siempre */ }
 }
-function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ _lastUsersSnapshotDocs=snapshot.docs; _renderMainMapUsers(snapshot.docs); if(_navMapUsersActive) _renderNavMapUsers(snapshot.docs); }); }
+// Escribe/borra la posicion propia en Realtime Database. Firestore sigue recibiendo la
+// misma escritura donde ya la recibia (no se toca) -- esto solo AGREGA el espejo en RTD,
+// que es lo que ahora lee subscribeToUsers().
+function _rtdPublicarPosicion(lat, lon){
+  if(!cu) return;
+  try{
+    rtdb.ref('posiciones/'+cu).set({
+      lat:lat, lon:lon, visible:true, ts:Date.now(),
+      nombre:(typeof nombreUsuario!=='undefined'&&nombreUsuario)||'Ciclista',
+      skin:(typeof selectedSkin!=='undefined'&&selectedSkin)||'',
+      helmet:(typeof selectedHelmet!=='undefined'&&selectedHelmet)||'',
+    }).catch(function(){});
+  }catch(e){}
+}
+// Se borra el nodo entero (no se pisa con visible:false) para no dejar basura de
+// ciclistas que ya no comparten -- una lectura nunca trae mas de lo que hay de verdad.
+function _rtdOcultarPosicion(){
+  if(!cu) return;
+  try{ rtdb.ref('posiciones/'+cu).remove().catch(function(){}); }catch(e){}
+}
+/* Emula la forma de un snapshot de Firestore ({id, data()}) para que _renderMainMapUsers/
+   _renderNavMapUsers -que ya reciben eso mismo desde siempre- no necesiten cambiar nada. */
+function _rtdSubscribeToUsers(callback){
+  var ref = rtdb.ref('posiciones').orderByChild('ts').limitToLast(150);
+  var handler = function(snap){
+    var val = snap.val() || {};
+    var docs = Object.keys(val).map(function(uid){
+      var d = val[uid];
+      return { id: uid, data: function(){ return d; } };
+    });
+    callback(docs);
+  };
+  ref.on('value', handler, function(){ /* error: sin permiso o RTD caido -- el mapa sigue con lo ultimo que tenia */ });
+  return function(){ ref.off('value', handler); };
+}
+function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=_rtdSubscribeToUsers(function(docs){ _lastUsersSnapshotDocs=docs; _renderMainMapUsers(docs); if(_navMapUsersActive) _renderNavMapUsers(docs); }); }
 /* Este listener es el mas caro de la app: se re-dispara con cada movimiento de CUALQUIER
    ciclista visible, multiplicado por cuanta gente lo tiene abierto. Con la app en segundo
    plano (pantalla apagada, otra pestaña) nadie esta mirando esos puntos, asi que pagar esas
@@ -5084,6 +5128,7 @@ function publicarUbicacionInicial(){
   navigator.geolocation.getCurrentPosition(function(pos){
     const plat=Math.round(pos.coords.latitude*100)/100, plon=Math.round(pos.coords.longitude*100)/100;
     db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}).catch(function(){});
+    _rtdPublicarPosicion(plat, plon);
   },function(){},{enableHighAccuracy:false,timeout:8000,maximumAge:600000});
 }
 function subscribeToChat(){ db.collection('chat').orderBy('ts','asc').limit(100).onSnapshot(function(snapshot){ cm=snapshot.docs.map(function(doc){ const data=doc.data(); return Object.assign({},data,{nombre:data.nombre||data.a}); }); rc(); }); }
@@ -5253,7 +5298,7 @@ function toggleGPS(silencioso){
     if(btn){ btn.innerHTML="<i class='fas fa-location-dot'></i> Grabar un paseo"; btn.style.background=""; btn.style.borderColor=""; btn.style.color=""; }
     if(currentRoute.length>1){ autoGuardarRuta(false,false); }
     sincronizarStats();
-    if(cu&&!ghostMode) db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true});
+    if(cu&&!ghostMode){ db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true}); _rtdOcultarPosicion(); }
   }
 }
 function toggleSaver(){
@@ -5484,7 +5529,7 @@ function ug(p){
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);
   currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
   if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
-  if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ const plat=Math.round(la*100)/100, plon=Math.round(lo*100)/100; /* precisión ~1 km: privacidad, no revela tu ubicación exacta */ db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); lastPos={lat:la,lon:lo}; } }
+  if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ const plat=Math.round(la*100)/100, plon=Math.round(lo*100)/100; /* precisión ~1 km: privacidad, no revela tu ubicación exacta */ db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); _rtdPublicarPosicion(plat, plon); lastPos={lat:la,lon:lo}; } }
   /* (las bromas por velocidad ahora se disparan mas arriba, para todas las velocidades) */
 }
 // ===== ZONAS ROJAS: sectores marcados como inseguros para ciclistas (multi-ciudad).
