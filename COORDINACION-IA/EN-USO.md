@@ -1,5 +1,22 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ DESPLEGADO — tope mensual de voz (worker-ia), main en da1251a (2026-08-25)
+> No toca `index.html`, candado sigue **LIBRE**. `worker-ia/worker.js` (el cerebro IA + voz de
+> Pistero) tenía un tope DIARIO de caracteres para ElevenLabs (120.000, pedido de Inty el
+> 16-ago) pero nada protegía el acumulado del MES. Con el plan real (~US\$20/mes, ~100-121k
+> caracteres/mes), 120.000 en un día es casi todo el plan — un par de disparos del tope diario
+> en el mes dejaban a Pistero sin caracteres y caía a voz robótica en silencio, mismo patrón
+> que la crisis de Firestore pero de voz.
+>
+> Agregado `_presupuestoMensual()` (100.000 caracteres/mes, margen bajo el plan real) en los
+> dos endpoints que pegan a ElevenLabs. El cliente ya maneja el error con cascada de respaldo
+> probada (mp3 pregrabado → Azure → voz nativa), nunca queda mudo. Desplegado y **verificado
+> en vivo contra producción real** (petición con texto nunca antes dicho, confirmado en KV que
+> el contador sube). Tests: `voz-presupuesto-mensual` nuevo (11 asserts, verificado por
+> mutación). Suite completa 23/23.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en a9390fd, versión 8.774 en producción (2026-08-25, sesión Lenovo)
 > Autorizado por Inty antes de dormir (modo autónomo nocturno). Candado: **LIBRE**.
 >
