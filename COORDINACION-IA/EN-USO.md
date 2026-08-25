@@ -1,7 +1,7 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## 🟡 LISTO PARA MERGEAR — `fix/modo-ahorro-y-pausa-fondo` (2026-08-25, sesión Lenovo)
-> Candado de `index.html`: **LIBRE** (rama pusheada a `origin` y `lab`, working tree limpio).
+> ## ✅ PUBLICADO — main en 37df96c, versión 8.772 en producción (2026-08-25, sesión Lenovo)
+> Inty dio el OK, mergeado y pusheado a `origin` y `lab`. Candado de `index.html`: **LIBRE**.
 >
 > **Contexto**: confirmado vía Cloud Monitoring (Firestore Instance → Document Reads) que los
 > picos de lectura de hoy son uso orgánico de los 51 testers a lo largo de todo el día, no
