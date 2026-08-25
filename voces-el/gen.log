@@ -2148,3 +2148,97 @@
 [2026-08-14T03:48:47.598Z] OK   c589dcc0e4c [cercano] Activa el GPS para empezar a grabar tu ruta.
 [2026-08-14T03:48:49.629Z] OK   c84705c22fa [cercano] Dejé de compartir tu ubicación en vivo. Ese link y
 [2026-08-14T03:48:49.998Z] LISTO. ok=368 fallo=0 saltado=560 frases=464 -> voces-el/manifest.json
+[2026-08-25T23:46:19.353Z] Frases a generar: 510 x 2 generos = 1020 archivos
+[2026-08-25T23:46:21.123Z] OK   l159d129be2 [compadre] Ya po, compadre, si esto no es una carrera, es un 
+[2026-08-25T23:46:22.798Z] OK   lb31beff116 [compadre] Al tiro se te nota que andas contento arriba de la
+[2026-08-25T23:46:24.802Z] OK   l36ce69f4e6 [compadre] Métele pata no más, pero sin ahogarte — la raja es
+[2026-08-25T23:46:26.704Z] OK   l6b48967384 [entrenador] Esa cadencia que llevas es la que construye resist
+[2026-08-25T23:46:28.668Z] OK   lead64467ec [entrenador] El progreso no se ve hoy. Se ve en la comparación 
+[2026-08-25T23:46:30.672Z] OK   le6df1f14bd [roquero] ¡Y ahí va, subiendo esa cuesta como quien no quier
+[2026-08-25T23:46:32.917Z] OK   ldd279e75fa [roquero] Kilómetro a kilómetro, esto se está transformando 
+[2026-08-25T23:46:35.130Z] OK   l40f8042880 [profe] ¿Sabías que este tipo de camino se usaba hace más 
+[2026-08-25T23:46:36.844Z] OK   le42bf0d284 [profe] Cada ruta tiene una historia detrás. Esta no es la
+[2026-08-25T23:46:38.863Z] OK   lb5b8f4697c [solitario] Si el día viene difícil, está bien. No hace falta 
+[2026-08-25T23:46:40.729Z] OK   la060cad7c3 [solitario] A veces solo hace falta pedalear un rato para que 
+[2026-08-25T23:46:42.523Z] OK   ldf3535c137 [loco] A que no aguantas este ritmo cinco minutos más. Ya
+[2026-08-25T23:46:44.480Z] OK   le14e0d4811 [loco] Esa subida se ve fácil desde acá abajo. Vamos a ve
+[2026-08-25T23:46:46.094Z] OK   l94747b66d8 [cicletero] Ritmo estable. Sin cambios necesarios.
+[2026-08-25T23:46:47.589Z] OK   lb593a7466c [cicletero] Todo en orden. Sigue así.
+[2026-08-25T23:46:49.573Z] OK   l1230faee67 [sabio] El camino no te enseña nada que no estuvieras disp
+[2026-08-25T23:46:51.713Z] OK   lfa7ae79e27 [sabio] Cada ruta que se repite es distinta, porque tú ya 
+[2026-08-25T23:46:53.249Z] OK   l516122195a [relajado] Vas bien. No hace falta ir más rápido que esto.
+[2026-08-25T23:46:55.097Z] OK   le66b2521e5 [relajado] El camino de vuelta también cuenta. No hay que lle
+[2026-08-25T23:46:57.164Z] OK   l62de1f19d5 [relajado] Ahí vas, campeón del pedal, y ni falta que te diga
+[2026-08-25T23:46:58.981Z] OK   l7e9fdcd760 [aventurero] Ese camino que no conoces es exactamente el que va
+[2026-08-25T23:47:01.113Z] OK   l20a5378284 [aventurero] Lo épico no está al final de la ruta. Está pasando
+[2026-08-25T23:47:02.779Z] OK   l022444075d [maternal] ¿Ya tomaste agua? No te lo pregunto por preguntar.
+[2026-08-25T23:47:04.541Z] OK   ld54351b89d [maternal] Cuídate en esa bajada, mi amor, que después me cue
+[2026-08-25T23:47:06.571Z] OK   l7089290b01 [seductor] Hay algo elegante en cómo pedaleas sin apuro, como
+[2026-08-25T23:47:08.786Z] OK   lcb1b1eec30 [seductor] Ese esfuerzo tuyo tiene su encanto, ¿sabías? No to
+[2026-08-25T23:47:10.714Z] OK   lb36a9f5f5e [seductor] Permíteme decirlo así no más: vas dejando una huel
+[2026-08-25T23:47:12.829Z] OK   l523c786842 [otaku] ¡Sugoi! Esta ruta se puso interesante, como cuando
+[2026-08-25T23:47:14.584Z] OK   l52166ab7d5 [otaku] Cada subida es un jefe final distinto, y tú ya vas
+[2026-08-25T23:47:16.519Z] OK   lda4ad8a702 [otaku] Nani, ¿ya llevas tanto pedaleando? Ni lo sentiste,
+[2026-08-25T23:47:18.425Z] OK   l9886195847 [cercano] No hace falta que sea perfecto. Hoy saliste, y eso
+[2026-08-25T23:47:20.358Z] OK   l01a97ce719 [cercano] A veces lo mejor de pedalear es que nadie te está 
+[2026-08-25T23:47:22.151Z] OK   l9664cade0a [relajado] Entre el tráfico también se puede ir tranquilo. Na
+[2026-08-25T23:47:23.926Z] OK   l6ffbdb24d9 [relajado] Mira tú, viajero urbano, ni el semáforo tiene tant
+[2026-08-25T23:47:26.318Z] OK   l51613f4730 [relajado] Suelta un poco. La bajada hace el trabajo, tú solo
+[2026-08-25T23:47:28.035Z] OK   l0a9ca6a1ad [relajado] Ahí va, así, dejando que el camino baje solo, sin 
+[2026-08-25T23:47:29.703Z] OK   laed9f29254 [relajado] Está bien quedarse un rato más aquí. No hay nada u
+[2026-08-25T23:47:31.332Z] OK   l832af7fbc4 [relajado] Esta pausa también es parte del viaje, no una inte
+[2026-08-25T23:47:32.968Z] OK   lb9e07a787b [relajado] Este ritmo está bien. No hace falta cambiarlo por 
+[2026-08-25T23:47:34.642Z] OK   l46e66723a5 [relajado] Vas como tienes que ir, compañero de camino, y eso
+[2026-08-25T23:47:36.304Z] OK   lb1010846f7 [relajado] No hace falta subir rápido. Solo hace falta subir.
+[2026-08-25T23:47:38.030Z] OK   la10450bf6b [relajado] Bájale un cambio, guerrero de las dos ruedas, la c
+[2026-08-25T23:47:39.614Z] OK   l57d01d63f4 [relajado] Se puede ir rápido sin sentirse apurado.
+[2026-08-25T23:47:41.442Z] OK   lc0896be6fd [relajado] Si el cuerpo pide más, dale — pero sin perder esto
+[2026-08-25T23:47:43.149Z] OK   la958cb0753 [relajado] Este paso también cuenta como avanzar.
+[2026-08-25T23:47:44.938Z] OK   l1e210ccc41 [relajado] No hay ningún premio por llegar antes de lo que ne
+[2026-08-25T23:47:46.723Z] OK   c159d129be2 [compadre] Ya po, compadre, si esto no es una carrera, es un 
+[2026-08-25T23:47:48.376Z] OK   cb31beff116 [compadre] Al tiro se te nota que andas contento arriba de la
+[2026-08-25T23:47:50.180Z] OK   c36ce69f4e6 [compadre] Métele pata no más, pero sin ahogarte — la raja es
+[2026-08-25T23:47:52.136Z] OK   c6b48967384 [entrenador] Esa cadencia que llevas es la que construye resist
+[2026-08-25T23:47:53.877Z] OK   cead64467ec [entrenador] El progreso no se ve hoy. Se ve en la comparación 
+[2026-08-25T23:47:55.706Z] OK   ce6df1f14bd [roquero] ¡Y ahí va, subiendo esa cuesta como quien no quier
+[2026-08-25T23:47:57.421Z] OK   cdd279e75fa [roquero] Kilómetro a kilómetro, esto se está transformando 
+[2026-08-25T23:47:59.556Z] OK   c40f8042880 [profe] ¿Sabías que este tipo de camino se usaba hace más 
+[2026-08-25T23:48:01.233Z] OK   ce42bf0d284 [profe] Cada ruta tiene una historia detrás. Esta no es la
+[2026-08-25T23:48:03.304Z] OK   cb5b8f4697c [solitario] Si el día viene difícil, está bien. No hace falta 
+[2026-08-25T23:48:05.136Z] OK   ca060cad7c3 [solitario] A veces solo hace falta pedalear un rato para que 
+[2026-08-25T23:48:07.084Z] OK   cdf3535c137 [loco] A que no aguantas este ritmo cinco minutos más. Ya
+[2026-08-25T23:48:08.974Z] OK   ce14e0d4811 [loco] Esa subida se ve fácil desde acá abajo. Vamos a ve
+[2026-08-25T23:48:10.700Z] OK   c94747b66d8 [cicletero] Ritmo estable. Sin cambios necesarios.
+[2026-08-25T23:48:12.293Z] OK   cb593a7466c [cicletero] Todo en orden. Sigue así.
+[2026-08-25T23:48:14.118Z] OK   c1230faee67 [sabio] El camino no te enseña nada que no estuvieras disp
+[2026-08-25T23:48:16.247Z] OK   cfa7ae79e27 [sabio] Cada ruta que se repite es distinta, porque tú ya 
+[2026-08-25T23:48:17.956Z] OK   c516122195a [relajado] Vas bien. No hace falta ir más rápido que esto.
+[2026-08-25T23:48:19.816Z] OK   ce66b2521e5 [relajado] El camino de vuelta también cuenta. No hay que lle
+[2026-08-25T23:48:22.122Z] OK   c62de1f19d5 [relajado] Ahí vas, campeón del pedal, y ni falta que te diga
+[2026-08-25T23:48:23.832Z] OK   c7e9fdcd760 [aventurero] Ese camino que no conoces es exactamente el que va
+[2026-08-25T23:48:25.506Z] OK   c20a5378284 [aventurero] Lo épico no está al final de la ruta. Está pasando
+[2026-08-25T23:48:27.166Z] OK   c022444075d [maternal] ¿Ya tomaste agua? No te lo pregunto por preguntar.
+[2026-08-25T23:48:28.938Z] OK   cd54351b89d [maternal] Cuídate en esa bajada, mi amor, que después me cue
+[2026-08-25T23:48:30.961Z] OK   c7089290b01 [seductor] Hay algo elegante en cómo pedaleas sin apuro, como
+[2026-08-25T23:48:33.521Z] OK   ccb1b1eec30 [seductor] Ese esfuerzo tuyo tiene su encanto, ¿sabías? No to
+[2026-08-25T23:48:35.777Z] OK   cb36a9f5f5e [seductor] Permíteme decirlo así no más: vas dejando una huel
+[2026-08-25T23:48:37.721Z] OK   c523c786842 [otaku] ¡Sugoi! Esta ruta se puso interesante, como cuando
+[2026-08-25T23:48:39.773Z] OK   c52166ab7d5 [otaku] Cada subida es un jefe final distinto, y tú ya vas
+[2026-08-25T23:48:42.125Z] OK   cda4ad8a702 [otaku] Nani, ¿ya llevas tanto pedaleando? Ni lo sentiste,
+[2026-08-25T23:48:43.920Z] OK   c9886195847 [cercano] No hace falta que sea perfecto. Hoy saliste, y eso
+[2026-08-25T23:48:45.783Z] OK   c01a97ce719 [cercano] A veces lo mejor de pedalear es que nadie te está 
+[2026-08-25T23:48:47.752Z] OK   c9664cade0a [relajado] Entre el tráfico también se puede ir tranquilo. Na
+[2026-08-25T23:48:49.850Z] OK   c6ffbdb24d9 [relajado] Mira tú, viajero urbano, ni el semáforo tiene tant
+[2026-08-25T23:48:51.596Z] OK   c51613f4730 [relajado] Suelta un poco. La bajada hace el trabajo, tú solo
+[2026-08-25T23:48:53.507Z] OK   c0a9ca6a1ad [relajado] Ahí va, así, dejando que el camino baje solo, sin 
+[2026-08-25T23:48:55.244Z] OK   caed9f29254 [relajado] Está bien quedarse un rato más aquí. No hay nada u
+[2026-08-25T23:48:56.936Z] OK   c832af7fbc4 [relajado] Esta pausa también es parte del viaje, no una inte
+[2026-08-25T23:48:58.737Z] OK   cb9e07a787b [relajado] Este ritmo está bien. No hace falta cambiarlo por 
+[2026-08-25T23:49:00.474Z] OK   c46e66723a5 [relajado] Vas como tienes que ir, compañero de camino, y eso
+[2026-08-25T23:49:02.201Z] OK   cb1010846f7 [relajado] No hace falta subir rápido. Solo hace falta subir.
+[2026-08-25T23:49:04.139Z] OK   ca10450bf6b [relajado] Bájale un cambio, guerrero de las dos ruedas, la c
+[2026-08-25T23:49:05.794Z] OK   c57d01d63f4 [relajado] Se puede ir rápido sin sentirse apurado.
+[2026-08-25T23:49:07.728Z] OK   cc0896be6fd [relajado] Si el cuerpo pide más, dale — pero sin perder esto
+[2026-08-25T23:49:09.304Z] OK   ca958cb0753 [relajado] Este paso también cuenta como avanzar.
+[2026-08-25T23:49:10.982Z] OK   c1e210ccc41 [relajado] No hay ningún premio por llegar antes de lo que ne
+[2026-08-25T23:49:11.362Z] LISTO. ok=92 fallo=0 saltado=928 frases=510 -> voces-el/manifest.json
