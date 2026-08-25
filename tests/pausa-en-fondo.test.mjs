@@ -44,29 +44,38 @@ function bloqueParentesis(desde) {
   console.log('  FALLA: no pude balancear paréntesis -> ' + desde); process.exit(1);
 }
 
-const SRC = "var ulp=null, ghostMode=false;\n" +
+const SRC = "var ulp=null, ghostMode=false, cu=null;\n" +
+  bloqueLlaves('function _rtdSubscribeToUsers(callback)') + '\n' +
   bloqueLlaves('function subscribeToUsers()') + '\n' +
   "var _lpUsersPausadoPorFondo = false;\n" +
   bloqueParentesis("document.addEventListener('visibilitychange'");
 
 // new Function no tiene closure sobre el scope externo: los contadores y el registro de
 // listeners se pasan COMO PARÁMETROS, no se capturan de afuera.
+// El mock de rtdb solo necesita distinguir "hay un listener .on() activo" de "no hay" —
+// no simula datos reales, eso ya lo prueba mapa-cache-compartida y compañía.
 function montar() {
   const listeners = {};
-  const suscripciones = [];
+  const registro = { activo: false };
   const document = { hidden: false, addEventListener: (ev, f) => { listeners[ev] = f; } };
-  const db = { collection: () => ({ where: () => ({ limit: () => ({
-    onSnapshot: (f) => { suscripciones.push(f); return () => { suscripciones.pop(); }; },
-  }) }) }) };
-  const fn = new Function('document', 'db', '_renderMainMapUsers', '_navMapUsersActive', '_renderNavMapUsers',
+  function refPos() {
+    return {
+      orderByChild: () => refPos(),
+      limitToLast: () => refPos(),
+      on: () => { registro.activo = true; },
+      off: () => { registro.activo = false; },
+    };
+  }
+  const rtdb = { ref: () => refPos() };
+  const fn = new Function('document', 'rtdb', '_renderMainMapUsers', '_navMapUsersActive', '_renderNavMapUsers',
     SRC + '\nreturn {subscribeToUsers:(typeof subscribeToUsers==="function"?subscribeToUsers:null), getUlp:()=>ulp, setGhost:(v)=>{ghostMode=v;}};');
-  const api = fn(document, db, () => {}, false, () => {});
+  const api = fn(document, rtdb, () => {}, false, () => {});
   return {
     subscribeToUsers: api.subscribeToUsers,
     getUlp: api.getUlp,
     setGhost: api.setGhost,
     disparar: (ev) => listeners[ev](),
-    activos: () => suscripciones.length,
+    activos: () => (registro.activo ? 1 : 0),
     document,
   };
 }

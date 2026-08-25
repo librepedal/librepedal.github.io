@@ -1,5 +1,34 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟡 LISTO PARA MERGEAR — `fix/rtd-posiciones-ciclistas` (2026-08-25, sesión Lenovo)
+> Candado de `index.html`: **LIBRE** (rama pusheada a `origin` y `lab`, working tree limpio).
+>
+> **Contexto**: la causa estructural del pico de lecturas de Firestore identificado hoy —
+> `subscribeToUsers()` (los puntitos de ciclistas cercanos), el listener más caro de la app,
+> se re-dispara con cada movimiento de CUALQUIER ciclista visible multiplicado por cuánta
+> gente lo tiene abierto — quedó movida a **Firebase Realtime Database**, que tiene cuota
+> TOTALMENTE separada de Firestore (datos transferidos, no lecturas). Firestore sigue
+> recibiendo la misma escritura de lat/lon de siempre (no se toca), esto solo agrega un
+> espejo en RTD del que ahora lee el mapa en vivo.
+>
+> **Nueva infraestructura**: base creada en `librepedal-cb983-default-rtdb` (us-central1),
+> reglas en `database.rules.json` (ya publicadas en consola — lectura pública, escritura solo
+> del dueño autenticado, validación de tipos/rangos). `_rtdSubscribeToUsers()` transforma los
+> datos de RTD a la misma forma `{id,data()}` que ya devolvía Firestore, así
+> `_renderMainMapUsers`/`_renderNavMapUsers` no cambiaron ni una línea.
+>
+> **Verificado EN VIVO contra la base real** (no solo mocks): login real de tester, escritura,
+> lectura por el listener, y borrado al modo fantasma — los 4 pasos confirmados leyendo RTD
+> directo por REST antes/después de cada uno.
+>
+> Tests: `rtd-posiciones` nuevo (23 asserts, 4 mutaciones verificadas), `pausa-en-fondo`
+> adaptado al nuevo mock. Suite completa **22/22**. `APP_VERSION` 8.772 → **8.773**.
+>
+> **Pendiente**: OK de Inty para mergear a `main` (publica a los 51 testers al instante).
+> Rama: `fix/rtd-posiciones-ciclistas`, commit `66bf511`.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en 37df96c, versión 8.772 en producción (2026-08-25, sesión Lenovo)
 > Inty dio el OK, mergeado y pusheado a `origin` y `lab`. Candado de `index.html`: **LIBRE**.
 >
