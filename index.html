@@ -1772,7 +1772,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.771'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.772'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1854,7 +1854,14 @@ const db = firebase.firestore();
    de paso, asi que ningun comportamiento existente cambia.
    Todo va dentro de try/catch y con deteccion de prototipos: si el SDK cambia de forma,
    esto simplemente no se instala y la app sigue funcionando igual que antes. */
-var lpFirestoreEstado = { cuotaAgotada:false, avisado:false, lecturas:{}, total:0 };
+var lpFirestoreEstado = { cuotaAgotada:false, avisado:false, lecturas:{}, total:0, modoAhorro:false };
+/* Tope de lecturas por SESION (no por dia): protege contra un bug puntual -un loop, una
+   pantalla que se re-suscribe mal- que por si solo se coma la cuota compartida de los 51
+   testers. 800 es a proposito muy por encima de lo normal (~78 lecturas por apertura desde
+   el fix del 2026-08-24): esto no limita el uso normal de nadie, es un blindaje para cuando
+   algo ya salio mal. sosAlertas nunca se pausa: es seguridad, no contenido. */
+var MODO_AHORRO_TOPE = 800;
+var MODO_AHORRO_EXCLUSIONES = {sosAlertas:true};
 function _lpEsErrorDeCuota(e){
   if(!e) return false;
   var c = e.code || '';
@@ -1884,6 +1891,11 @@ function _lpContarLecturas(coleccion, n){
     if(!(n > 0)) return;
     lpFirestoreEstado.lecturas[coleccion] = (lpFirestoreEstado.lecturas[coleccion] || 0) + n;
     lpFirestoreEstado.total += n;
+    if(!lpFirestoreEstado.modoAhorro && lpFirestoreEstado.total > MODO_AHORRO_TOPE){
+      lpFirestoreEstado.modoAhorro = true;
+      try{ if(typeof lpAviso==='function') lpAviso('Esta sesión usó más datos de lo normal: se pausó el contenido en vivo no esencial para cuidar la base de datos compartida.'); }catch(_){}
+      try{ if(window.Sentry && window.Sentry.captureMessage) window.Sentry.captureMessage('modo-ahorro activado (tope de sesion)', {level:'warning', tags:{donde:'firestore'}}); }catch(_){}
+    }
   }catch(_){}
 }
 function lpLecturas(){
@@ -1926,6 +1938,12 @@ function lpLecturas(){
       var original = Clase.prototype.onSnapshot;
       Clase.prototype.onSnapshot = function(){
         var ref = this, args = Array.prototype.slice.call(arguments);
+        // Modo ahorro activo (tope de sesion superado): no se abren listeners NUEVOS salvo
+        // los de seguridad. Los que ya estaban abiertos antes de activarse siguen igual —
+        // esto no le corta al usuario nada que ya estuviera mirando, solo evita sumar mas.
+        if(lpFirestoreEstado.modoAhorro && !MODO_AHORRO_EXCLUSIONES[nombreDe(ref)]){
+          return function(){};
+        }
         // Solo la forma con callbacks: onSnapshot({next,error}) se deja intacta.
         var funciones = args.filter(function(a){ return typeof a === 'function'; });
         if(funciones.length === 0) return original.apply(this, args);
@@ -5044,6 +5062,20 @@ function _subUnaVez(clave, fn){
   try{ fn(); }catch(e){ _subsHechas[clave]=false; /* que un fallo no deje la pantalla muerta para siempre */ }
 }
 function subscribeToUsers(){ if(ulp){ try{ulp();}catch(e){} ulp=null; } ulp=db.collection('users').where('visible','==',true).limit(150).onSnapshot(function(snapshot){ _lastUsersSnapshotDocs=snapshot.docs; _renderMainMapUsers(snapshot.docs); if(_navMapUsersActive) _renderNavMapUsers(snapshot.docs); }); }
+/* Este listener es el mas caro de la app: se re-dispara con cada movimiento de CUALQUIER
+   ciclista visible, multiplicado por cuanta gente lo tiene abierto. Con la app en segundo
+   plano (pantalla apagada, otra pestaña) nadie esta mirando esos puntos, asi que pagar esas
+   lecturas es puro desperdicio. Se pausa al ocultarse y se retoma al volver -si de verdad
+   estaba activo, no si el mapa nunca se habia abierto-. */
+var _lpUsersPausadoPorFondo = false;
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){
+    if(ulp){ try{ ulp(); }catch(e){} ulp=null; _lpUsersPausadoPorFondo=true; }
+  } else if(_lpUsersPausadoPorFondo){
+    _lpUsersPausadoPorFondo = false;
+    if(typeof subscribeToUsers==='function' && !ghostMode) subscribeToUsers();
+  }
+});
 /* ===== CICLISTAS DE LA COMUNIDAD: pelotón demo por todo Chile + usuarios reales al entrar ===== */
 // Al registrarse o entrar, publica tu zona aproximada (~1 km, por privacidad):
 // así apareces al tiro en el mapa sin esperar a pedalear.
