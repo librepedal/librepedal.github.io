@@ -1,6 +1,35 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ DESPLEGADO — tope mensual de voz (worker-ia), main en da1251a (2026-08-25)
+> ## ✅ PUBLICADO — main en f1e6e84, versión 8.775 en producción (2026-08-25, sesión Lenovo)
+> Autorizado por Inty (sesión de trabajo de voz, cada frase aprobada individualmente por
+> audio real). Candado: **LIBRE**.
+>
+> **46 frases nuevas para las 12 personalidades de Pistero**, cada una escrita con
+> investigación real de la psicología del arquetipo (no al azar): `relajado` recalibrado con
+> inspiración en Crush (Buscando a Nemo, investigado el personaje real — apodos en medio de
+> la frase, oraciones largas y fluidas); `compadre` con vocabulario chileno tomado del propio
+> `TONOS` del worker (no inventado); 10 arquetipos fundamentados en sus definiciones ya
+> existentes en `worker-ia/worker.js` (incluidos 5 renombres viejos: roquero←relator,
+> profe←guía, solitario←sensible, loco←pícaro, cicletero←directo); `otaku` y `seductor` sin
+> definición previa en ningún lado — investigados desde cero (jerga otaku real: sugoi/nani;
+> seductor calibrado con los descriptores de las voces ElevenLabs asignadas, tono de galán
+> clásico).
+>
+> Audio generado con `scripts/gen-voces-elevenlabs.js` (resumible — solo generó lo nuevo: 92
+> archivos, 0 fallos, 928 ya existentes saltados). **Costo real verificado: 6.652 caracteres,
+> 6,65% del presupuesto mensual** (calculado antes de generar, no a ojo). Manifest en
+> producción: 510 frases totales, confirmado en vivo.
+>
+> **Incidente durante el trabajo**: el primer intento de commit escribió un blob corrupto de
+> `index.html` (objeto vacío en `.git/objects`, causa no determinada — posible interrupción de
+> I/O). Diagnosticado con `git fsck`, confirmado que el working tree estaba intacto (tests
+> 23/23 verde), se descartó el commit corrupto (`reset --soft`) y se rehizo limpio sin
+> pérdida de nada. Mencionado por si alguien ve un commit `b484059` huérfano en el reflog —
+> es ese, seguro ignorarlo.
+>
+> ---
+
+> ## ✅ (anterior) DESPLEGADO — tope mensual de voz (worker-ia), main en da1251a (2026-08-25)
 > No toca `index.html`, candado sigue **LIBRE**. `worker-ia/worker.js` (el cerebro IA + voz de
 > Pistero) tenía un tope DIARIO de caracteres para ElevenLabs (120.000, pedido de Inty el
 > 16-ago) pero nada protegía el acumulado del MES. Con el plan real (~US\$20/mes, ~100-121k
