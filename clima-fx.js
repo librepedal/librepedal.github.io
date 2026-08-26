@@ -20,10 +20,13 @@
 (function(){
 'use strict';
 
-if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  window.climaFxSetMode = function(){};
-  return;
-}
+/* 25-ago-2026: antes, con prefers-reduced-motion activo, esto no montaba nada — el
+   clima quedaba invisible para cualquier dispositivo con esa preferencia (frecuente en
+   Android por ahorro de batería, no solo por sensibilidad real al movimiento). Ahora en
+   ese caso se sigue dibujando el clima real, pero como UN solo frame quieto por cambio
+   de modo (sin requestAnimationFrame de por medio) — nadie se queda sin ver el clima, y
+   igual no hay ninguna animación continua para quien de verdad la necesita evitar. */
+var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 var canvas=document.createElement('canvas');
 canvas.id='climaFxCanvas';
@@ -40,7 +43,7 @@ var frostSegs=[],frostMaxGen=1,frostLevel=0,frostUnlocked=-1,frostDirty=true;
 var frostCanvas=document.createElement('canvas'),fctx=frostCanvas.getContext('2d');
 var fogP=[];
 
-function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=canvas.width=Math.round(window.innerWidth*DPR);H=canvas.height=Math.round(window.innerHeight*DPR);spotsDirty=true;frostDirty=true;}
+function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=canvas.width=Math.round(window.innerWidth*DPR);H=canvas.height=Math.round(window.innerHeight*DPR);spotsDirty=true;frostDirty=true;if(reducedMotion&&mode!=='off')drawFrame();}
 window.addEventListener('resize',resize);
 resize();
 
@@ -301,13 +304,15 @@ ctx.strokeStyle='rgba(20,26,40,.55)';for(var b=0;b<birds.length;b++){var bd=bird
 meatTimer--;if(!meat&&meatTimer<=0){meat={x:26*DPR+Math.random()*(W-52*DPR),y:-26*DPR,vy:1.5*DPR,rot:(Math.random()-0.5)*0.4,vr:(Math.random()-0.5)*0.05,scale:1.3+Math.random()*0.5};}
 if(meat){meat.y+=meat.vy;meat.rot+=meat.vr;var op=meat.y>H-34*DPR?Math.max(0,1-(meat.y-(H-34*DPR))/(34*DPR)):1;drawMeat(meat.x,meat.y,meat.rot,op,meat.scale);if(meat.y>H+28*DPR){meat=null;meatTimer=110+Math.random()*180;}}
 }
-function loop(){if(mode==='lluvia')drawRain();else if(mode==='nieve')drawSnow();else if(mode==='neblina')drawFog();else if(mode==='nubes')drawClouds();else if(mode==='sol')drawSun();else ctx.clearRect(0,0,W,H);requestAnimationFrame(loop);}
+function drawFrame(){if(mode==='lluvia')drawRain();else if(mode==='nieve')drawSnow();else if(mode==='neblina')drawFog();else if(mode==='nubes')drawClouds();else if(mode==='sol')drawSun();else ctx.clearRect(0,0,W,H);}
+function loop(){if(reducedMotion)return;drawFrame();requestAnimationFrame(loop);}
 
 var validModes={lluvia:1,nieve:1,neblina:1,nubes:1,sol:1,off:1};
 window.climaFxSetMode=function(m){
 if(!validModes[m]||m===mode)return;
 mode=m;
 if(m==='lluvia')seedRain();else if(m==='nieve')seedSnow();else if(m==='neblina')seedFog();else if(m==='nubes')seedClouds();else if(m==='sol')seedSun();
+if(reducedMotion)drawFrame();
 };
 
 loop();

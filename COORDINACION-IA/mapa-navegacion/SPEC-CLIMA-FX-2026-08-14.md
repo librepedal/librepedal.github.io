@@ -84,9 +84,13 @@ pantalla de login):
    "Entrar con Google" devuelve el botón real, no el canvas — los clics/toques de la
    app SIGUEN funcionando con el overlay encima. El gesto de limpiar escucha en
    `document`, no en el canvas, por la misma razón (no bloquear scroll/tap).
-6. Respeta `prefers-reduced-motion: reduce` (no monta nada si el sistema operativo lo
-   pide) — confirmado que el guard funciona (se activó solo durante la prueba porque el
-   navegador de prueba trae esa preferencia).
+6. **ACTUALIZADO 25-ago-2026** — Respeta `prefers-reduced-motion: reduce`, pero YA NO
+   monta nada en cero: se detectó en producción que esa preferencia está activada por
+   defecto en varios Android (ahorro de batería, no solo accesibilidad real) y dejaba el
+   clima invisible para esos testers sin forma de saberlo. Ahora con reduced-motion activo
+   se sigue dibujando el clima real, pero como UN frame quieto por cambio de modo (sin
+   `requestAnimationFrame`) — sigue sin haber ninguna animación continua, pero nadie se
+   queda sin ver el clima. Ver `clima-fx.js` función `drawFrame()`/`loop()`.
 
 ## 🔴 Problema real encontrado (no cosmético, hay que resolverlo al integrar)
 **El canvas queda TAPADO por overlays reales de la app.** `#auth` (pantalla de login)
