@@ -15,20 +15,26 @@ const SRC = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'ic
 // y se exponen las funciones internas reemplazando el final del archivo.
 const SRC_EXPUESTO = SRC.replace(
   /if\(document\.body\) arrancar\(\); else document\.addEventListener\('DOMContentLoaded', arrancar\);\n\}\)\(\);/,
-  "if(document.body) arrancar(); else document.addEventListener('DOMContentLoaded', arrancar);\nwindow.__test={nombreIconoDe:nombreIconoDe, migrar:migrar, ICONOS_LUCIDE:ICONOS_LUCIDE};\n})();"
+  "if(document.body) arrancar(); else document.addEventListener('DOMContentLoaded', arrancar);\nwindow.__test={nombreIconoDe:nombreIconoDe, migrar:migrar, ICONOS_LUCIDE:ICONOS_LUCIDE, inyectarEstiloSupresion:inyectarEstiloSupresion};\n})();"
 );
 
 function montarEntorno() {
-  const window = { document: { body: null, addEventListener() {} } };
+  const head = { hijos: [], appendChild(el) { this.hijos.push(el); } };
+  const elementosPorId = {};
   const document = {
     body: null,
+    head,
     addEventListener() {},
     querySelectorAll: () => [],
+    getElementById: (id) => elementosPorId[id] || null,
+    createElement: () => ({ id: '', textContent: '' }),
   };
-  window.document = document;
+  const window = { document };
   const ctx = { window, document, MutationObserver: class { observe() {} }, console };
   vm.createContext(ctx);
   vm.runInContext(SRC_EXPUESTO, ctx);
+  ctx.window.__test._elementosPorId = elementosPorId;
+  ctx.window.__test._head = head;
   return ctx.window.__test;
 }
 
@@ -62,6 +68,24 @@ debe('un elemento sin clase fa- no es un ícono', T.nombreIconoDe(elementoFalso(
   const primeraVez = el.innerHTML;
   T.migrar(el); // reprocesar el mismo elemento, mismo ícono
   debe('no reprocesa un ícono ya migrado al mismo nombre (evita trabajo repetido)', el.innerHTML === primeraVez);
+}
+
+// Bug real capturado por Inty en producción (26-ago, pantalla Social): Font
+// Awesome dibuja su glifo con ::before, que un innerHTML nunca toca -- el ícono
+// viejo quedaba pegado ENCIMA del SVG nuevo (dos íconos superpuestos por fila).
+// inyectarEstiloSupresion() agrega la regla que lo apaga solo para lo migrado.
+{
+  const T2 = montarEntorno();
+  T2.inyectarEstiloSupresion();
+  const estilo = T2._head.hijos[0];
+  debe('inyecta un <style> con la regla que apaga el ::before de lo migrado', T2._head.hijos.length === 1 && estilo.id === 'lucideSupresionFA' && /\[data-lucide\]::before\s*\{\s*content:\s*none\s*!important/.test(estilo.textContent));
+}
+{
+  const T3 = montarEntorno();
+  T3.inyectarEstiloSupresion();
+  T3._elementosPorId['lucideSupresionFA'] = T3._head.hijos[0]; // simula que el <style> ya quedó en el documento
+  T3.inyectarEstiloSupresion(); // segunda llamada, no debería duplicar
+  debe('no inyecta el <style> dos veces si ya existe', T3._head.hijos.length === 1);
 }
 
 // Integridad del diccionario generado: cada valor debe ser SVG bien formado (tags

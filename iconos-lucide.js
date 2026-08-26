@@ -210,7 +210,22 @@ function migrarSubarbol(nodo){
   }
 }
 
+/* BUG REAL encontrado en vivo (26-ago, capturado por Inty en la pantalla Social):
+   Font Awesome dibuja el glifo con un pseudo-elemento ::before (content:"\fXXX"),
+   NO como contenido real del <i>. Reemplazar innerHTML nunca lo toca -- por eso
+   el ícono viejo se quedaba pegado ENCIMA del SVG nuevo (dos íconos superpuestos
+   en cada fila). Se suprime ese ::before solo para lo ya migrado (data-lucide),
+   así lo que todavía no está en el diccionario sigue mostrando su glifo FA normal. */
+function inyectarEstiloSupresion(){
+  if(document.getElementById('lucideSupresionFA')) return;
+  var estilo=document.createElement('style');
+  estilo.id='lucideSupresionFA';
+  estilo.textContent='[data-lucide]::before{content:none !important}';
+  (document.head||document.documentElement).appendChild(estilo);
+}
+
 function arrancar(){
+  inyectarEstiloSupresion();
   migrarSubarbol(document.body);
   var obs=new MutationObserver(function(mutaciones){
     for(var i=0;i<mutaciones.length;i++){
