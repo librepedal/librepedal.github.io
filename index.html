@@ -9,6 +9,7 @@
 <script src="voz-elevenlabs.js"></script>
 <script src="perfil-comunidad.js"></script>
 <script src="pistero-memoria.js"></script>
+<script src="iconos-lucide.js" defer></script>
 <script src="clima-fx.js" defer></script>
 <meta name="theme-color" content="#0a0f1d">
 <meta name="description" content="Tu copiloto en cada pedaleo: navegación tipo Waze, rutas y Pistero, tu compañero ciclista.">
@@ -1780,7 +1781,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.782'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.783'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
