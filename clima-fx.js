@@ -42,6 +42,12 @@ var streaks=[],runners=[],splashes=[],motes=[],birds=[],wisps=[],flakes=[],cloud
 var COLS=18,ROWS=34,accum=new Float32Array(COLS*ROWS);
 var accumCanvas=document.createElement('canvas');accumCanvas.width=COLS;accumCanvas.height=ROWS;var actx=accumCanvas.getContext('2d');var accumImg=actx.createImageData(COLS,ROWS);
 var spots=[],spotsCanvas=document.createElement('canvas'),sctx=spotsCanvas.getContext('2d'),spotsDirty=true,spotCap=110;
+/* Gotas suaves SIN pagar el costo de blur en cada frame: ctx.filter en un canvas 2D
+   encarece cada figura que se dibuja mientras está activo (aquí serían ~110 figuras
+   por frame, carísimo). En vez de eso, se dibuja nítido y se difumina UNA sola vez
+   -- solo cuando la lista de gotas realmente cambia (spotsDirty), no en cada frame --
+   a un segundo canvas que es el que se compone cada frame sin filtro. */
+var spotsBlurCanvas=document.createElement('canvas'),sbctx=spotsBlurCanvas.getContext('2d');
 var frostSegs=[],frostMaxGen=1,frostLevel=0,frostUnlocked=-1,frostDirty=true;
 var frostCanvas=document.createElement('canvas'),fctx=frostCanvas.getContext('2d');
 var fogP=[];
@@ -111,7 +117,13 @@ g2.lineWidth=Math.max(0.4,sp.r*0.09);g2.strokeStyle='rgba(18,28,46,'+(0.28*sp.op
 g2.restore();
 g2.save();g2.beginPath();g2.ellipse(x-sp.r*0.3,y-sp.r*0.32,sp.r*0.24,sp.r*0.15,-0.5,0,6.28);g2.fillStyle='rgba(255,255,255,'+(0.7*sp.op)+')';g2.fill();g2.restore();
 }
-function renderSpots(){spotsCanvas.width=W;spotsCanvas.height=H;sctx.filter='blur('+(0.5*DPR)+'px)';for(var i=0;i<spots.length;i++)drawSpotShape(sctx,spots[i]);sctx.filter='none';spotsDirty=false;}
+function renderSpots(){
+spotsCanvas.width=W;spotsCanvas.height=H;
+for(var i=0;i<spots.length;i++)drawSpotShape(sctx,spots[i]);
+spotsBlurCanvas.width=W;spotsBlurCanvas.height=H;
+sbctx.filter='blur('+(0.5*DPR)+'px)';sbctx.drawImage(spotsCanvas,0,0);sbctx.filter='none';
+spotsDirty=false;
+}
 
 function genFrostBranch(x,y,angle,len,depth,gen){
 if(depth<=0||len<2*DPR)return;
@@ -204,7 +216,7 @@ d.y+=d.speed;d.x-=d.drift*0.3+windGust*d.speed*0.4;if(d.y-d.len>H||d.x<-60*DPR)O
 spawnTick++;
 if(spawnTick%5===0&&spots.length<spotCap&&Math.random()<0.7){spots.push(mkSpot());spotsDirty=true;}
 if(spotsDirty)renderSpots();
-ctx.drawImage(spotsCanvas,0,0);
+ctx.drawImage(spotsBlurCanvas,0,0);
 
 for(var k=0;k<runners.length;k++){var rn=runners[k];
 if(rn.resting>0)rn.resting--;else{
@@ -333,26 +345,21 @@ meatTimer--;if(!meat&&meatTimer<=0){meat={x:26*DPR+Math.random()*(W-52*DPR),y:-2
 if(meat){meat.y+=meat.vy;meat.rot+=meat.vr;var op=meat.y>H-34*DPR?Math.max(0,1-(meat.y-(H-34*DPR))/(34*DPR)):1;drawMeat(meat.x,meat.y,meat.rot,op,meat.scale);if(meat.y>H+28*DPR){meat=null;meatTimer=110+Math.random()*180;}}
 }
 function drawFrame(){if(mode==='lluvia')drawRain();else if(mode==='nieve')drawSnow();else if(mode==='neblina')drawFog();else if(mode==='nubes')drawClouds();else if(mode==='sol')drawSun();else ctx.clearRect(0,0,W,H);}
+window.CLIMA_FX_DEBUG_DRAWFRAME=drawFrame; /* solo para medir costo real por frame desde el simulador -- inofensivo, no se llama solo */
 function loop(){if(reducedMotion)return;drawFrame();requestAnimationFrame(loop);}
 
-/* Fondo desenfocado: la referencia real (fotografía de lluvia en vidrio, guía técnica de
-   Codrops) coincide en que sin esto el efecto se ve "pegado encima" en vez de fotográfico
-   -- el ojo espera que lo que está detrás de las gotas quede fuera de foco. backdrop-filter
-   desenfoca la app real detrás del canvas (no el dibujo del canvas mismo); costo bajo
-   porque es un valor CSS fijo por cambio de modo, no algo que se anime cada frame -- mismo
-   mecanismo que ya usa el tema Cristal en #auth en esta misma app.*/
-var BLUR_POR_MODO={lluvia:'1.6px',nieve:'1.1px'};
-function aplicarDesenfoqueFondo(m){
-var b=BLUR_POR_MODO[m];
-canvas.style.backdropFilter=b?'blur('+b+')':'';
-canvas.style.webkitBackdropFilter=b?'blur('+b+')':'';
-}
+/* 25-ago-2026: se probó backdrop-filter para desenfocar el fondo (look de vidrio
+   mojado real, referencia Codrops) pero se midió en vivo: congela el render incluso
+   en una laptop -- backdrop-filter sobre pantalla completa recalculado en cada frame
+   de animación es de las operaciones CSS más caras que hay, y los testers reales
+   andan con Android de gama media/baja, peor parados que esta laptop. Revertido.
+   Si se retoma, tiene que ser sobre un área chica o con la animación pausada, nunca
+   sobre el canvas completo mientras loop() sigue corriendo. */
 
 var validModes={lluvia:1,nieve:1,neblina:1,nubes:1,sol:1,off:1};
 window.climaFxSetMode=function(m){
 if(!validModes[m]||m===mode)return;
 mode=m;
-aplicarDesenfoqueFondo(m);
 if(m==='lluvia')seedRain();else if(m==='nieve')seedSnow();else if(m==='neblina')seedFog();else if(m==='nubes')seedClouds();else if(m==='sol')seedSun();
 if(reducedMotion)drawFrame();
 };
