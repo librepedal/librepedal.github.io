@@ -448,6 +448,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .ab:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,0.09),0 8px 22px rgba(0,0,0,0.5)}
 .ab:active{transform:scale(0.965);box-shadow:inset 0 2px 6px rgba(0,0,0,0.5)}
 .ab.sec{background:linear-gradient(180deg,#1a2438,#151d30);color:#dfe7ff;border-color:rgba(255,255,255,0.08)}
+/* Jerarquía de botones (SPEC-PULIDO-UI-2026-08-14.md #1): faltaba el "peligro" --
+   rojo sobrio, mismo lenguaje visual que .ab (relieve+presión), para acciones
+   destructivas (eliminar cuenta, borrar ruta, etc.). Clase nueva, no toca ningún
+   botón existente -- se usa donde haga falta, cuando haga falta. */
+.ab.danger{background:linear-gradient(180deg,#3a1620,#2a0f18);color:#ffb4b4;border-color:rgba(255,120,120,0.28)}
+.ab.danger:hover{background:linear-gradient(180deg,#451a26,#33121c);border-color:rgba(255,120,120,0.4)}
 .bg,.bd,.bpdf,.btrip{width:100%;font-size:0.85rem;padding:10px;border:none;border-radius:8px;font-weight:800;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.35)}
 .bg::before,.bd::before,.bpdf::before,.btrip::before{content:'';position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.06) 40%,rgba(0,0,0,0.16) 100%);pointer-events:none}
 .bg{background:#fc4c02;color:#fff}
@@ -1774,7 +1780,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.781'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.782'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
