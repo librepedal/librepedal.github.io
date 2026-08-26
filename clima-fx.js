@@ -69,8 +69,18 @@ document.addEventListener('pointerdown',function(e){dragging=true;wipeAt(toCanva
 document.addEventListener('pointermove',function(e){if(!dragging)return;wipeAt(toCanvasPos(e));},{passive:true});
 document.addEventListener('pointerup',function(){dragging=false;},{passive:true});
 
+/* Viento constante: lluvia real casi nunca cae perfectamente vertical (referencia:
+   fotografía de lluvia con obturador rápido, gotas en vidrio de auto/tren siempre
+   arrastradas hacia un lado). Un solo valor compartido, no por partícula, para que
+   todo el aguacero se incline igual — si cada gota tuviera su propio ángulo se vería
+   como ruido random, no como viento real. */
+var windGust=0.55+Math.random()*0.3;
 function mkStreak(fresh,layer){var d=layer===0?{sp:[15,24],ln:[28,46],w:[1,1.5],op:[.14,.26]}:{sp:[6,11],ln:[12,20],w:[.5,.8],op:[.06,.13]};var sp=d.sp[0]+Math.random()*(d.sp[1]-d.sp[0]);var tint=0.9+Math.random()*0.2;return{x:Math.random()*W,y:fresh?Math.random()*H:-40*DPR,len:(d.ln[0]+Math.random()*(d.ln[1]-d.ln[0]))*DPR,speed:sp*DPR,drift:(0.35+Math.random()*0.3)*DPR,op:d.op[0]+Math.random()*(d.op[1]-d.op[0]),w:(d.w[0]+Math.random()*(d.w[1]-d.w[0]))*DPR,layer:layer,tint:tint};}
-function mkRunner(){return{x:Math.random()*W,y:-10,r:(3+Math.random()*5)*DPR,vy:0,trail:[],resting:40+Math.random()*160,wob:Math.random()*6.28};}
+/* Gotas en vidrio real: no serpentean con un seno limpio, meandran por la rugosidad
+   microscópica de la superficie (empujón aleatorio ocasional, no oscilación regular) y
+   SOLO empiezan a correr al superar un peso crítico (referencia: Physics of raindrops
+   on windows). rMasa acumula "peso" absorbido de otras gotas -> crece y acelera más. */
+function mkRunner(){return{x:Math.random()*W,y:-10,r:(2.2+Math.random()*3.4)*DPR,vy:0,trail:[],resting:40+Math.random()*160,meandro:0,meandroObjetivo:(Math.random()-0.5)*0.5};}
 function mkFlake(fresh){return{x:Math.random()*W,y:fresh?Math.random()*H:-14*DPR,r:(1.2+Math.random()*3.2)*DPR,sp:(0.45+Math.random()*1.2)*DPR,sway:1+Math.random()*2,ph:Math.random()*6.28,rot:Math.random()*6.28,vrot:(Math.random()-.5)*.02,big:Math.random()<0.22,op:.45+Math.random()*.5};}
 function mkFogP(depth){var r=(depth===0?46+Math.random()*54:20+Math.random()*30)*DPR;return{x:Math.random()*W,y:H*(0.3+Math.random()*0.8),r:r,vx:(Math.random()-0.5)*(depth===0?0.14:0.26)*DPR,ph:Math.random()*6.28,op:(depth===0?.02+Math.random()*.02:.026+Math.random()*.024),blur:depth===0?9:4,depth:depth};}
 function mkWisp(fresh){var len=(80+Math.random()*100)*DPR,n=6+Math.floor(Math.random()*4),puffs=[];
@@ -98,7 +108,7 @@ g2.lineWidth=Math.max(0.4,sp.r*0.09);g2.strokeStyle='rgba(18,28,46,'+(0.28*sp.op
 g2.restore();
 g2.save();g2.beginPath();g2.ellipse(x-sp.r*0.3,y-sp.r*0.32,sp.r*0.24,sp.r*0.15,-0.5,0,6.28);g2.fillStyle='rgba(255,255,255,'+(0.7*sp.op)+')';g2.fill();g2.restore();
 }
-function renderSpots(){spotsCanvas.width=W;spotsCanvas.height=H;for(var i=0;i<spots.length;i++)drawSpotShape(sctx,spots[i]);spotsDirty=false;}
+function renderSpots(){spotsCanvas.width=W;spotsCanvas.height=H;sctx.filter='blur('+(0.5*DPR)+'px)';for(var i=0;i<spots.length;i++)drawSpotShape(sctx,spots[i]);sctx.filter='none';spotsDirty=false;}
 
 function genFrostBranch(x,y,angle,len,depth,gen){
 if(depth<=0||len<2*DPR)return;
@@ -185,8 +195,8 @@ ctx.clearRect(0,0,W,H);
 stepAccum(0.0009,0.34);
 drawAccumWet();
 ctx.lineCap='round';
-for(var i=0;i<streaks.length;i++){var d=streaks[i];var gr=ctx.createLinearGradient(d.x,d.y-d.len,d.x-d.drift*2,d.y);var b=Math.round(200*d.tint),c=Math.round(222*d.tint);gr.addColorStop(0,'rgba('+b+','+c+',255,0)');gr.addColorStop(0.55,'rgba('+b+','+c+',255,'+d.op+')');gr.addColorStop(1,'rgba(225,238,255,'+(d.op*0.7)+')');ctx.strokeStyle=gr;ctx.lineWidth=d.w;ctx.beginPath();ctx.moveTo(d.x,d.y-d.len);ctx.lineTo(d.x-d.drift*2,d.y);ctx.stroke();
-d.y+=d.speed;d.x-=d.drift*0.3;if(d.y-d.len>H)Object.assign(d,mkStreak(false,d.layer));}
+for(var i=0;i<streaks.length;i++){var d=streaks[i];var dx0=d.drift*2+windGust*d.len*0.55;var gr=ctx.createLinearGradient(d.x,d.y-d.len,d.x-dx0,d.y);var b=Math.round(200*d.tint),c=Math.round(222*d.tint);gr.addColorStop(0,'rgba('+b+','+c+',255,0)');gr.addColorStop(0.55,'rgba('+b+','+c+',255,'+d.op+')');gr.addColorStop(1,'rgba(225,238,255,'+(d.op*0.7)+')');ctx.strokeStyle=gr;ctx.lineWidth=d.w;ctx.beginPath();ctx.moveTo(d.x,d.y-d.len);ctx.lineTo(d.x-dx0,d.y);ctx.stroke();
+d.y+=d.speed;d.x-=d.drift*0.3+windGust*d.speed*0.4;if(d.y-d.len>H||d.x<-60*DPR)Object.assign(d,mkStreak(false,d.layer));}
 
 spawnTick++;
 if(spawnTick%5===0&&spots.length<spotCap&&Math.random()<0.7){spots.push(mkSpot());spotsDirty=true;}
@@ -194,12 +204,27 @@ if(spotsDirty)renderSpots();
 ctx.drawImage(spotsCanvas,0,0);
 
 for(var k=0;k<runners.length;k++){var rn=runners[k];
-if(rn.resting>0)rn.resting--;else{rn.vy=Math.min(rn.vy+0.15*DPR,3.4*DPR);rn.y+=rn.vy;rn.x+=Math.sin(t*2+rn.wob)*0.12*DPR;rn.trail.push({x:rn.x,y:rn.y});if(rn.trail.length>18)rn.trail.shift();accum[cellAt(rn.x,rn.y)]=Math.min(0.4,accum[cellAt(rn.x,rn.y)]+0.004);
-var before=spots.length;spots=spots.filter(function(sp){var dx=sp.x-rn.x,dy=sp.y-rn.y;return Math.sqrt(dx*dx+dy*dy)>rn.r*1.25;});if(spots.length!==before)spotsDirty=true;}
+if(rn.resting>0)rn.resting--;else{
+rn.vy=Math.min(rn.vy+0.15*DPR*(1+rn.r/(6*DPR)),3.4*DPR+windGust*DPR);rn.y+=rn.vy;
+// Meandro real: empujón aleatorio ocasional hacia un objetivo, no oscilación regular.
+if(Math.random()<0.02)rn.meandroObjetivo=(Math.random()-0.5)*0.7;
+rn.meandro+=(rn.meandroObjetivo-rn.meandro)*0.04;
+rn.x+=rn.meandro*DPR+windGust*0.18*DPR;
+rn.trail.push({x:rn.x,y:rn.y});if(rn.trail.length>18)rn.trail.shift();accum[cellAt(rn.x,rn.y)]=Math.min(0.4,accum[cellAt(rn.x,rn.y)]+0.004);
+// Absorbe gotas estáticas a su paso -> gana masa real (crece y por eso acelera más arriba).
+var absorbidas=0;spots=spots.filter(function(sp){var dx=sp.x-rn.x,dy=sp.y-rn.y;var cerca=Math.sqrt(dx*dx+dy*dy)<=rn.r*1.25;if(cerca)absorbidas++;return!cerca;});
+if(absorbidas>0){rn.r=Math.min(rn.r+absorbidas*0.5*DPR,9*DPR);spotsDirty=true;}}
 drawDropletTrail(rn);
 drawDroplet(rn);
-if(rn.y>H+20||(rn.vy>=3.3*DPR&&Math.random()<0.012)){splashes.push({x:rn.x,y:Math.min(rn.y,H-4),r:1,op:0.42});Object.assign(rn,mkRunner());}}
-for(var s=splashes.length-1;s>=0;s--){var sp=splashes[s];ctx.strokeStyle='rgba(210,228,255,'+sp.op+')';ctx.lineWidth=1*DPR;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r*DPR,0,6.28);ctx.stroke();sp.r+=0.6;sp.op-=0.02;if(sp.op<=0)splashes.splice(s,1);}
+if(rn.y>H+20||(rn.vy>=3.3*DPR&&Math.random()<0.012)){
+var nSplash=3+Math.floor(rn.r/(2*DPR));
+for(var sm=0;sm<nSplash;sm++){var ang=-1.57+(Math.random()-0.5)*2.4;var spd=(0.8+Math.random()*1.6)*DPR;splashes.push({x:rn.x,y:Math.min(rn.y,H-4),r:0.4*DPR,op:0.5+Math.random()*0.3,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd*1.4,mote:true});}
+splashes.push({x:rn.x,y:Math.min(rn.y,H-4),r:1,op:0.42});
+Object.assign(rn,mkRunner());}}
+for(var s=splashes.length-1;s>=0;s--){var sp=splashes[s];
+if(sp.mote){ctx.fillStyle='rgba(215,232,255,'+sp.op+')';ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r,0,6.28);ctx.fill();sp.x+=sp.vx;sp.y+=sp.vy;sp.vy+=0.08*DPR;sp.op-=0.035;}
+else{ctx.strokeStyle='rgba(210,228,255,'+sp.op+')';ctx.lineWidth=1*DPR;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r*DPR,0,6.28);ctx.stroke();sp.r+=0.6;sp.op-=0.02;}
+if(sp.op<=0)splashes.splice(s,1);}
 }
 function drawFlake(f){ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.rot);ctx.globalAlpha=f.op;
 if(f.big){ctx.strokeStyle='#fff';ctx.lineWidth=0.55*DPR;ctx.lineCap='round';for(var a=0;a<3;a++){ctx.save();ctx.rotate(a*2.094);ctx.beginPath();ctx.moveTo(0,-f.r*1.8);ctx.lineTo(0,f.r*1.8);ctx.moveTo(0,-f.r*1.1);ctx.lineTo(f.r*.55,-f.r*1.6);ctx.moveTo(0,-f.r*1.1);ctx.lineTo(-f.r*.55,-f.r*1.6);ctx.moveTo(0,f.r*1.1);ctx.lineTo(f.r*.55,f.r*1.6);ctx.moveTo(0,f.r*1.1);ctx.lineTo(-f.r*.55,f.r*1.6);ctx.stroke();ctx.restore();}}
@@ -307,10 +332,24 @@ if(meat){meat.y+=meat.vy;meat.rot+=meat.vr;var op=meat.y>H-34*DPR?Math.max(0,1-(
 function drawFrame(){if(mode==='lluvia')drawRain();else if(mode==='nieve')drawSnow();else if(mode==='neblina')drawFog();else if(mode==='nubes')drawClouds();else if(mode==='sol')drawSun();else ctx.clearRect(0,0,W,H);}
 function loop(){if(reducedMotion)return;drawFrame();requestAnimationFrame(loop);}
 
+/* Fondo desenfocado: la referencia real (fotografía de lluvia en vidrio, guía técnica de
+   Codrops) coincide en que sin esto el efecto se ve "pegado encima" en vez de fotográfico
+   -- el ojo espera que lo que está detrás de las gotas quede fuera de foco. backdrop-filter
+   desenfoca la app real detrás del canvas (no el dibujo del canvas mismo); costo bajo
+   porque es un valor CSS fijo por cambio de modo, no algo que se anime cada frame -- mismo
+   mecanismo que ya usa el tema Cristal en #auth en esta misma app.*/
+var BLUR_POR_MODO={lluvia:'1.6px',nieve:'1.1px'};
+function aplicarDesenfoqueFondo(m){
+var b=BLUR_POR_MODO[m];
+canvas.style.backdropFilter=b?'blur('+b+')':'';
+canvas.style.webkitBackdropFilter=b?'blur('+b+')':'';
+}
+
 var validModes={lluvia:1,nieve:1,neblina:1,nubes:1,sol:1,off:1};
 window.climaFxSetMode=function(m){
 if(!validModes[m]||m===mode)return;
 mode=m;
+aplicarDesenfoqueFondo(m);
 if(m==='lluvia')seedRain();else if(m==='nieve')seedSnow();else if(m==='neblina')seedFog();else if(m==='nubes')seedClouds();else if(m==='sol')seedSun();
 if(reducedMotion)drawFrame();
 };
