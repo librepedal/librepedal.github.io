@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Simulador clima-fx — LibrePedal</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#0a0f1d;font-family:system-ui,sans-serif;overflow:hidden}
+  #escena{position:fixed;inset:0;background-size:cover;background-position:center;transition:background-image .3s}
+  .bg-dia{background-image:linear-gradient(180deg,#8ec9f0 0%,#bfe3f5 35%,#cfead0 60%,#5f8f52 62%,#3c6b3a 100%)}
+  .bg-noche{background-image:linear-gradient(180deg,#050a16 0%,#0d1a30 45%,#132238 70%,#0a1220 100%)}
+  .bg-ciudad{background-image:linear-gradient(180deg,#3a4a63 0%,#5c6d85 40%,#7c8ba0 55%,#41485a 58%,#262b36 100%)}
+  .bg-atardecer{background-image:linear-gradient(180deg,#2a2350 0%,#a44a6b 30%,#e8875a 55%,#f4b860 62%,#3d3320 100%)}
+  #panel{position:fixed;left:0;right:0;bottom:0;z-index:99990;background:rgba(8,12,20,.88);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.12);padding:14px 16px calc(14px + env(safe-area-inset-bottom));color:#fff;box-sizing:border-box}
+  #panel h1{font-size:13px;margin:0 0 10px;opacity:.7;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+  .fila{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .fila:last-child{margin-bottom:0}
+  button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;padding:9px 14px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:500}
+  button:active{transform:scale(.96)}
+  button.on{background:#fc4c02;border-color:#fc4c02}
+  button.sec{opacity:.85}
+  #estado{position:fixed;top:12px;left:12px;z-index:99990;background:rgba(8,12,20,.75);backdrop-filter:blur(8px);color:#cfe0ff;font:12px/1.5 ui-monospace,monospace;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);white-space:pre;pointer-events:none}
+  .etiqueta{font-size:11px;opacity:.55;margin-right:4px;align-self:center}
+</style>
+</head>
+<body>
+<div id="escena" class="bg-dia"></div>
+<div id="estado">modo: off</div>
+
+<div id="panel">
+  <h1>Fondo de prueba</h1>
+  <div class="fila">
+    <button class="sec on" data-bg="bg-dia">Día / montaña</button>
+    <button class="sec" data-bg="bg-noche">Noche</button>
+    <button class="sec" data-bg="bg-ciudad">Ciudad</button>
+    <button class="sec" data-bg="bg-atardecer">Atardecer</button>
+  </div>
+  <h1>Efecto de clima</h1>
+  <div class="fila" id="modos">
+    <button data-modo="off" class="on">Off</button>
+    <button data-modo="lluvia">Lluvia</button>
+    <button data-modo="nieve">Nieve</button>
+    <button data-modo="neblina">Neblina</button>
+    <button data-modo="nubes">Nubes</button>
+    <button data-modo="solsuave">Sol suave</button>
+    <button data-modo="sol">Sol (calor)</button>
+  </div>
+  <h1>Animación</h1>
+  <div class="fila">
+    <span class="etiqueta">Cómo se ve en:</span>
+    <button data-anim="full" class="on">Teléfono normal (animado)</button>
+    <button data-anim="reducida">Con "reducir movimiento" activo (como la mayoría de Android)</button>
+  </div>
+</div>
+
+<script>
+// Tiene que resolverse ANTES de cargar clima-fx.js: ese archivo lee
+// prefers-reduced-motion una sola vez, al cargar, no en cada llamada.
+(function(){
+  var animParam = new URLSearchParams(location.search).get('anim');
+  window.CLIMA_FX_FORZAR_ANIMACION = animParam !== 'reducida';
+})();
+</script>
+<script src="../../clima-fx.js"></script>
+<script>
+(function(){
+  var estado = document.getElementById('estado');
+  var escena = document.getElementById('escena');
+  var modoActual = 'off';
+
+  document.querySelectorAll('[data-bg]').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('[data-bg]').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      escena.className = b.dataset.bg;
+    });
+  });
+
+  document.querySelectorAll('[data-modo]').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('[data-modo]').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      modoActual = b.dataset.modo;
+      if (window.climaFxSetMode) window.climaFxSetMode(modoActual);
+      actualizarEstado();
+    });
+  });
+
+  document.querySelectorAll('[data-anim]').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('[data-anim]').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      // Recargar con el flag correcto: el guard de reduced-motion se evalúa una sola
+      // vez al cargar el script, así que la única forma limpia de simular el caso real
+      // es recargar la página completa con el flag distinto.
+      var url = new URL(location.href);
+      url.searchParams.set('anim', b.dataset.anim);
+      url.searchParams.set('modo', modoActual);
+      url.searchParams.set('bg', escena.className);
+      location.href = url.toString();
+    });
+  });
+
+  function actualizarEstado(){
+    var c = document.getElementById('climaFxCanvas');
+    estado.textContent = 'modo: ' + modoActual +
+      '\ncanvas: ' + (c ? 'montado' : 'NO montado') +
+      '\nbackdrop-filter: ' + (c ? (getComputedStyle(c).backdropFilter || 'ninguno') : '-') +
+      '\nanimación: ' + (window.CLIMA_FX_FORZAR_ANIMACION ? 'completa' : 'frame estático (reduced-motion)');
+  }
+
+  // Restaurar estado desde la URL tras el reload del toggle de animación (el flag
+  // CLIMA_FX_FORZAR_ANIMACION ya se resolvió arriba, antes de cargar clima-fx.js).
+  var params = new URLSearchParams(location.search);
+  var animParam = params.get('anim');
+  var bgParam = params.get('bg');
+  var modoParam = params.get('modo');
+  if (bgParam) { escena.className = bgParam; document.querySelectorAll('[data-bg]').forEach(function(x){x.classList.toggle('on', x.dataset.bg===bgParam);}); }
+  if (animParam) { document.querySelectorAll('[data-anim]').forEach(function(x){x.classList.toggle('on', x.dataset.anim===animParam);}); }
+  if (modoParam) {
+    modoActual = modoParam;
+    document.querySelectorAll('[data-modo]').forEach(function(x){x.classList.toggle('on', x.dataset.modo===modoParam);});
+    if (window.climaFxSetMode) window.climaFxSetMode(modoParam);
+  }
+
+  setInterval(actualizarEstado, 500);
+})();
+</script>
+</body>
+</html>

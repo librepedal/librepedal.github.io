@@ -26,7 +26,10 @@
    ese caso se sigue dibujando el clima real, pero como UN solo frame quieto por cambio
    de modo (sin requestAnimationFrame de por medio) — nadie se queda sin ver el clima, y
    igual no hay ninguna animación continua para quien de verdad la necesita evitar. */
-var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+/* window.CLIMA_FX_FORZAR_ANIMACION: hook de depuracion SOLO para el simulador de
+   COORDINACION-IA/mapa-navegacion/simulador-clima.html -- no lo usa la app real, sirve
+   para previsualizar la animacion completa sin depender de la config real del sistema. */
+var reducedMotion = window.CLIMA_FX_FORZAR_ANIMACION ? false : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 var canvas=document.createElement('canvas');
 canvas.id='climaFxCanvas';
