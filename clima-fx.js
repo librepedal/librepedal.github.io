@@ -66,9 +66,11 @@ if(spots.length!==before)spotsDirty=true;
 var wr2=34*DPR,beforeF=frostSegs.length;
 frostSegs=frostSegs.filter(function(s){var mx=(s.x1+s.x2)/2,my=(s.y1+s.y2)/2,dx=mx-p.x,dy=my-p.y;return Math.sqrt(dx*dx+dy*dy)>wr2;});
 if(frostSegs.length!==beforeF)frostDirty=true;
-var wr3=38*DPR;
-for(var wi=0;wi<wisps.length;wi++){var w=wisps[wi];
-w.puffs=w.puffs.filter(function(pp){var px=w.x+pp.dx,py=w.y+pp.dy;var dx=px-p.x,dy=py-p.y;return Math.sqrt(dx*dx+dy*dy)>wr3;});}
+/* La niebla ya no guarda sus puffs sueltos (ver mkWisp/crearSpriteNiebla, 25-ago) --
+   se hornea una sola vez a un sprite por costo de rendimiento, así que ya no se puede
+   "limpiar" puff por puff con el dedo como antes. Se pierde ese detalle menor a cambio
+   de no pagar blur por figura en cada frame; el gesto de limpiar sigue funcionando
+   igual que siempre para lluvia (spots) y escarcha (frostSegs), arriba. */
 }
 // Escucha en document (no en el canvas: pointer-events:none), así el gesto de limpiar
 // convive con el scroll/tap normal de la app real sin bloquear nada.
@@ -92,12 +94,71 @@ function mkStreak(fresh,layer){var d=layer===0?{sp:[15,24],ln:[28,46],w:[1,1.5],
 function mkRunner(){return{x:Math.random()*W,y:-10,r:(2.2+Math.random()*3.4)*DPR,vy:0,trail:[],resting:40+Math.random()*160,meandro:0,meandroObjetivo:(Math.random()-0.5)*0.5};}
 function mkFlake(fresh){return{x:Math.random()*W,y:fresh?Math.random()*H:-14*DPR,r:(1.2+Math.random()*3.2)*DPR,sp:(0.45+Math.random()*1.2)*DPR,sway:1+Math.random()*2,ph:Math.random()*6.28,rot:Math.random()*6.28,vrot:(Math.random()-.5)*.02,big:Math.random()<0.22,op:.45+Math.random()*.5};}
 function mkFogP(depth){var r=(depth===0?46+Math.random()*54:20+Math.random()*30)*DPR;return{x:Math.random()*W,y:H*(0.3+Math.random()*0.8),r:r,vx:(Math.random()-0.5)*(depth===0?0.14:0.26)*DPR,ph:Math.random()*6.28,op:(depth===0?.02+Math.random()*.02:.026+Math.random()*.024),blur:depth===0?9:4,depth:depth};}
-function mkWisp(fresh){var len=(80+Math.random()*100)*DPR,n=6+Math.floor(Math.random()*4),puffs=[];
+/* 25-ago-2026: nubes y niebla rediseñadas contra referencia real (cauliflower top +
+   base PLANA en cumulus reales, luz cálida arriba/sombra fría abajo con bordes más
+   definidos -- ScienceInsights/whatsthiscloud; niebla real da sensación de PROFUNDIDAD
+   por capas, near/far, más densa cerca del suelo -- guías de fotografía de niebla).
+   Antes: nubes con lóbulos en círculo completo (se veía como un globo, no una nube de
+   verdad) y niebla sin ninguna noción de capas. Además, el blur ya NO se aplica figura
+   por figura en cada frame (carísimo, causó el lag reportado) -- se hornea UNA sola vez
+   a un sprite offscreen cuando la partícula nace, y cada frame solo se traslada esa
+   imagen ya lista con drawImage sin filtro. */
+var SOL_DIR={x:-0.5,y:-0.8}; // luz consistente arriba-izquierda para toda la escena
+function crearSpriteNube(lobes,s){
+var maxExt=1;
+for(var i=0;i<lobes.length;i++){var l=lobes[i];maxExt=Math.max(maxExt,Math.abs(l.dx)*s*DPR+l.r*s*DPR*1.4,Math.abs(l.dy)*s*DPR+l.r*s*DPR*1.4);}
+var size=Math.ceil(maxExt*2)+6,spr=document.createElement('canvas');spr.width=size;spr.height=size;
+var sc=spr.getContext('2d'),cx=size/2,cy=size/2;
+sc.filter='blur('+(2.1*DPR)+'px)';
+for(var j=0;j<lobes.length;j++){var l2=lobes[j],lx=cx+l2.dx*s*DPR,ly=cy+l2.dy*s*DPR,r=l2.r*s*DPR;
+var g=sc.createRadialGradient(lx,ly,r*0.1,lx,ly,r);
+g.addColorStop(0,'rgba(200,208,220,0.9)');g.addColorStop(1,'rgba(200,208,220,0)');
+sc.fillStyle=g;sc.beginPath();sc.ellipse(lx,ly,r,r*0.76,0,0,6.28);sc.fill();}
+for(var k=0;k<lobes.length;k++){var l3=lobes[k];if(l3.base)continue;
+var lx2=cx+l3.dx*s*DPR+SOL_DIR.x*l3.r*s*DPR*0.45,ly2=cy+l3.dy*s*DPR+SOL_DIR.y*l3.r*s*DPR*0.45,r2=l3.r*s*DPR*0.68;
+var g2=sc.createRadialGradient(lx2,ly2,0,lx2,ly2,r2);
+g2.addColorStop(0,'rgba(255,253,247,0.8)');g2.addColorStop(1,'rgba(255,253,247,0)');
+sc.fillStyle=g2;sc.beginPath();sc.arc(lx2,ly2,r2,0,6.28);sc.fill();}
+sc.filter='none';
+return{canvas:spr,cx:cx,cy:cy};
+}
+function mkCloud(fresh){
+var s=0.6+Math.random()*1.4,lobes=[];
+// Copete: arco superior (no círculo completo) con un lóbulo dominante al centro.
+var nTop=3+Math.floor(Math.random()*3);
+for(var i=0;i<nTop;i++){var tpos=nTop===1?0.5:i/(nTop-1);var ang=Math.PI*(1.12+tpos*0.76);
+var central=Math.abs(tpos-0.5)<(0.55/nTop);var rr=(central?24:12)+Math.random()*14;
+lobes.push({dx:Math.cos(ang)*rr,dy:Math.sin(ang)*rr*0.55-4,r:rr});}
+// Base plana: varios lóbulos achatados sobre una misma línea -> silueta cumulus real.
+var nBase=2+Math.floor(Math.random()*2),baseY=15+Math.random()*4,ancho=26+Math.random()*14;
+for(var j=0;j<nBase;j++){lobes.push({dx:(j-(nBase-1)/2)*ancho,dy:baseY,r:14+Math.random()*7,base:true});}
+var sprite=crearSpriteNube(lobes,s);
+return{x:fresh?Math.random()*W:-sprite.canvas.width,y:H*(0.04+Math.random()*0.24),sp:(0.09+Math.random()*0.16)*DPR,sprite:sprite,op:.82+Math.random()*.16,ph:Math.random()*6.28};
+}
+function crearSpriteNiebla(puffs,near){
+var maxR=1;
+for(var i=0;i<puffs.length;i++){var p=puffs[i];maxR=Math.max(maxR,Math.abs(p.dx)+p.r,Math.abs(p.dy)+p.r);}
+var size=Math.ceil(maxR*2)+16,spr=document.createElement('canvas');spr.width=size;spr.height=size;
+var sc=spr.getContext('2d'),cx=size/2,cy=size/2;
+sc.filter='blur('+((near?5:8.5)*DPR)+'px)';
+for(var j=0;j<puffs.length;j++){var p2=puffs[j],px=cx+p2.dx,py=cy+p2.dy;
+var g=sc.createRadialGradient(px,py,0,px,py,p2.r);
+g.addColorStop(0,'rgba(202,211,224,'+(near?0.55:0.32)+')');g.addColorStop(1,'rgba(202,211,224,0)');
+sc.fillStyle=g;sc.beginPath();sc.arc(px,py,p2.r,0,6.28);sc.fill();}
+sc.filter='none';
+return{canvas:spr,cx:cx,cy:cy};
+}
+function mkWisp(fresh){
+// Capa cercana vs lejana -> sensación de profundidad real, no todo a la misma distancia.
+var near=Math.random()<0.55;
+var len=(80+Math.random()*100)*DPR*(near?1.15:0.85),n=6+Math.floor(Math.random()*4),puffs=[];
 for(var i=0;i<n;i++){var tpos=n===1?0.5:i/(n-1);var bell=Math.sin(tpos*Math.PI);puffs.push({dx:(tpos-0.5)*len,dy:(Math.random()-0.5)*9*DPR,r:(9+bell*20+Math.random()*7)*DPR});}
-return{x:fresh?Math.random()*W:-len,y:H*(0.12+Math.random()*0.82),len:len,puffs:puffs,vx:(0.09+Math.random()*0.16)*DPR,op:0.055+Math.random()*0.05,ph:Math.random()*6.28,blur:5+Math.random()*4};}
-function mkCloud(fresh){var s=0.55+Math.random()*1.5;var lobes=[];var n=4+Math.floor(Math.random()*4);for(var i=0;i<n;i++){var ang=(i/n)*6.28+Math.random()*0.6;var rr=18+Math.random()*22;lobes.push({dx:Math.cos(ang)*rr*(0.5+Math.random()*0.7),dy:Math.sin(ang)*rr*0.32*(0.4+Math.random()*0.6)-Math.random()*6,r:12+Math.random()*20});}
-lobes.push({dx:0,dy:0,r:16+Math.random()*10});
-return{x:fresh?Math.random()*W:-160*DPR*s,y:H*(0.04+Math.random()*0.24),s:s,sp:(0.09+Math.random()*0.16)*DPR,op:.13+Math.random()*.12,ph:Math.random()*6.28,lobes:lobes,puff:0.8+Math.random()*0.3};}
+var sprite=crearSpriteNiebla(puffs,near);
+// Niebla real se pega al suelo: sesgo hacia la mitad inferior, más marcado en la capa cercana.
+var yBase=Math.pow(Math.random(),near?0.55:1.3);
+return{x:fresh?Math.random()*W:-sprite.canvas.width,y:H*(0.35+yBase*0.6),sprite:sprite,near:near,
+vx:(near?0.13+Math.random()*0.09:0.06+Math.random()*0.06)*DPR,op:near?0.7+Math.random()*0.2:0.38+Math.random()*0.2,ph:Math.random()*6.28};
+}
 
 function mkSpotPts(r){var n=7+Math.floor(Math.random()*3),pts=[];for(var i=0;i<n;i++){var ang=(i/n)*6.28;var rr=r*(0.72+Math.random()*0.45);pts.push({x:Math.cos(ang)*rr,y:Math.sin(ang)*rr*(0.85+Math.random()*0.3)});}return pts;}
 function mkSpot(){var r=(1.3+Math.pow(Math.random(),1.7)*5.2)*DPR;var yw=Math.pow(Math.random(),0.55);return{x:Math.random()*W,y:yw*H,r:r,pts:mkSpotPts(r),op:0.5+Math.random()*0.45};}
@@ -259,35 +320,24 @@ f.y+=f.sp;f.x+=Math.sin(t*0.6+f.ph)*f.sway*0.16;f.rot+=f.vrot;if(f.y>H+10)Object
 }
 function drawFog(){
 ctx.clearRect(0,0,W,H);
-var groups={};for(var i=0;i<wisps.length;i++){var w=wisps[i];var bk=Math.round(w.blur);(groups[bk]=groups[bk]||[]).push(w);}
-Object.keys(groups).forEach(function(bl){ctx.filter='blur('+(bl*DPR)+'px)';groups[bl].forEach(function(w){
-w.x+=w.vx;if(w.x-w.len>W)Object.assign(w,mkWisp(false));
-var wob=Math.sin(t*0.35+w.ph)*5*DPR;
-for(var i2=0;i2<w.puffs.length;i2++){var p=w.puffs[i2];var cx=w.x+p.dx,cy=w.y+p.dy+wob;
-var g=ctx.createRadialGradient(cx,cy,0,cx,cy,p.r);
-g.addColorStop(0,'rgba(200,209,224,'+w.op+')');g.addColorStop(1,'rgba(200,209,224,0)');
-ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,p.r,0,6.28);ctx.fill();}
-});});
-ctx.filter='none';
-spawnTick++;
-if(spawnTick%40===0){for(var wj=0;wj<wisps.length;wj++){if(wisps[wj].puffs.length<3&&Math.random()<0.3)Object.assign(wisps[wj],mkWisp(false));}}
+// Lejos primero, cerca encima -> orden de profundidad real (no una sola capa plana).
+wisps.sort(function(a,b){return(a.near?1:0)-(b.near?1:0);});
+for(var i=0;i<wisps.length;i++){var w=wisps[i];
+w.x+=w.vx;if(w.x-w.sprite.cx>W)Object.assign(w,mkWisp(false));
+var wob=Math.sin(t*0.35+w.ph)*(w.near?6:3)*DPR;
+ctx.globalAlpha=w.op;
+ctx.drawImage(w.sprite.canvas,w.x-w.sprite.cx,w.y-w.sprite.cy+wob);}
+ctx.globalAlpha=1;
 }
-function drawCloudShape(c){
-ctx.save();ctx.filter='blur('+(3*DPR)+'px)';
-for(var i=0;i<c.lobes.length;i++){var l=c.lobes[i];var cx=c.x+l.dx*c.s*DPR,cy=c.y+l.dy*c.s*DPR,r=l.r*c.s*DPR;
-var g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,'rgba(232,236,242,'+(c.op*c.puff)+')');g.addColorStop(1,'rgba(232,236,242,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(cx,cy,r,r*0.72,0,0,6.28);ctx.fill();
-ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,r,r*0.72,0,0,6.28);ctx.clip();
-var shadow=ctx.createRadialGradient(cx+r*0.4,cy+r*0.32,0,cx+r*0.4,cy+r*0.32,r*1.0);
-shadow.addColorStop(0,'rgba(118,130,152,'+(c.op*c.puff*0.6)+')');shadow.addColorStop(1,'rgba(118,130,152,0)');
-ctx.fillStyle=shadow;ctx.fillRect(cx-r*1.3,cy-r*1.3,r*2.6,r*2.6);
-var hi=ctx.createRadialGradient(cx-r*0.38,cy-r*0.4,0,cx-r*0.38,cy-r*0.4,r*0.85);
-hi.addColorStop(0,'rgba(255,252,244,'+(c.op*c.puff*0.7)+')');hi.addColorStop(1,'rgba(255,252,244,0)');
-ctx.fillStyle=hi;ctx.fillRect(cx-r*1.3,cy-r*1.3,r*2.6,r*2.6);
-ctx.restore();}
-ctx.restore();
+function drawClouds(){
+ctx.clearRect(0,0,W,H);
+for(var i=0;i<clouds.length;i++){var c=clouds[i];c.x+=c.sp;
+if(c.x-c.sprite.cx>W)Object.assign(c,mkCloud(false));
+var respira=0.92+Math.sin(t*0.15+c.ph)*0.08; // sutil, casi gratis (globalAlpha, no filtro)
+ctx.globalAlpha=c.op*respira;
+ctx.drawImage(c.sprite.canvas,c.x-c.sprite.cx,c.y-c.sprite.cy);}
+ctx.globalAlpha=1;
 }
-function drawClouds(){ctx.clearRect(0,0,W,H);
-for(var i=0;i<clouds.length;i++){var c=clouds[i];c.x+=c.sp;if(c.x>W+160*c.s*DPR)Object.assign(c,mkCloud(false));drawCloudShape(c);}}
 function drawMeat(x,y,rot,op,scale){
 scale=scale||1;var s=13*DPR*scale;
 ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=op;
