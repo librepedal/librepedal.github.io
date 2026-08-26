@@ -68,6 +68,20 @@ fi
 printf '%s' "$_VER" > "$OUT/version.txt"
 echo "  ✓ version.txt generada desde APP_VERSION = $_VER"
 
+# El nombre de caché de sw.js (CACHE) también SE GENERA desde APP_VERSION, no se
+# copia tal cual. Motivo real (26-ago-2026): quedó pegado en 'librepedal-v8770'
+# durante ~15 versiones porque nadie lo tocaba a mano en cada deploy. Como
+# iconos-lucide.js y el resto de los recursos propios se sirven cache-first (ver
+# fetch() de sw.js), CUALQUIER visitante que ya había cargado la app quedaba
+# sirviendo JS viejo PARA SIEMPRE, sin importar cuántos fixes se publicaran
+# después -- el activate() de sw.js SÍ borra cualquier caché con nombre distinto
+# al actual, pero eso nunca se disparaba porque el nombre nunca cambiaba.
+# Generándolo acá, cada deploy fuerza un nombre nuevo y el propio sw.js limpia
+# solo la caché vieja de cada visitante en su próxima visita.
+_VERCACHE="$(echo "$_VER" | tr -d '.')"
+sed -i "s/const CACHE = 'librepedal-v[0-9]*';/const CACHE = 'librepedal-v${_VERCACHE}';/" "$OUT/sw.js"
+echo "  ✓ sw.js: caché renombrada a librepedal-v${_VERCACHE} (fuerza limpieza de la caché vieja en cada visitante)"
+
 echo "→ control de secretos..."
 if find "$OUT" \( -iname "MI-*" -o -iname "*.rules" -o -iname "*.keystore" -o -iname "*.jks" -o -iname ".env*" \) | grep -q .; then
   echo "✗ ABORTADO: hay archivos de credenciales en la carpeta de deploy."; exit 1
