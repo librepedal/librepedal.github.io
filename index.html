@@ -8,6 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <script src="voz-elevenlabs.js"></script>
 <script src="perfil-comunidad.js"></script>
+<script src="pistero-memoria.js"></script>
 <script src="clima-fx.js" defer></script>
 <meta name="theme-color" content="#0a0f1d">
 <meta name="description" content="Tu copiloto en cada pedaleo: navegación tipo Waze, rutas y Pistero, tu compañero ciclista.">
@@ -1773,7 +1774,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.780'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.781'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -4135,6 +4136,9 @@ const FRASES_ARQ={
 function obtenerFraseUnica(categoria){
   const ahora=Date.now();
   if(ahora-lastFraseTime < MIN_INTERVALO) return null;
+  // Aprender de ser callado (VISION-MAESTRA.md): si esta categoría se silencia seguido,
+  // se retira sola -- ver pistero-memoria.js. Sin muestra suficiente no suprime nada.
+  if(window.PisteroMemoria && !PisteroMemoria.categoriaPermitida(categoria)) return null;
   // 2026-08-20: FRASES_ARQ (el banco por personalidad) es todo sabor bicicleta ("pedalea",
   // cambios, etc.) y antes se consultaba SIEMPRE primero — así que un viaje en moto o
   // trekking terminaba escuchando frases de ciclismo, porque casi nunca faltaba banco de
@@ -4156,6 +4160,7 @@ function obtenerFraseUnica(categoria){
   if(disp.length===0){ frasesUsadas[clave]=[]; const idx=Math.floor(Math.random()*pool.length); frasesUsadas[clave].push(idx); frase=pool[idx]; }
   else { frase=disp[Math.floor(Math.random()*disp.length)]; frasesUsadas[clave].push(pool.indexOf(frase)); }
   lastFraseTime=ahora;
+  try{ if(window.PisteroMemoria) PisteroMemoria.registrarOferta(categoria); }catch(e){}
   return frase;
 }
 /* Umbrales realistas de ciclismo: <7 subida/tranco lento · 7-18 ritmo de paseo/ruta · 18+ ya es volar (bajada o viento a favor). */
@@ -4334,9 +4339,13 @@ async function preguntarPistero(){
       return {name:hh.name, tipo:hh.tipo, location:hh.location, desc:(hh.desc||'').toString().slice(0,120)};
     });
     const gustos=(typeof selectedHelmet!=='undefined'&&selectedHelmet)?('estilo/casco '+selectedHelmet):'';
+    // Perfil que aprende de verdad (VISION-MAESTRA.md "Conocer al usuario de verdad"):
+    // hora de salida, si para mucho, esfuerzo real en subidas -- observado, no preguntado.
+    // Solo llega texto si hay muestra suficiente (ver pistero-memoria.js), si no va vacío.
+    const preferencias=(window.PisteroMemoria?PisteroMemoria.resumenTexto():'');
     const payload={
       mensaje:msg,
-      usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos, personalidad:pisteroPersonalidad, actividad:actividadTipo },
+      usuario:{ nombre:nombreUsuario||'Ciclista', pais:paisUsuario||'Chile', kmTotal:Math.round((us&&us.di)||0), nivel:(us&&us.n)||'Novato', darma:(us&&us.d)||0, gustos:gustos, preferencias:preferencias, personalidad:pisteroPersonalidad, actividad:actividadTipo },
       contexto:_pisteroContexto(),
       hospedajes:hosp,
       historial:pisteroHistorial.slice(-12)
@@ -5269,6 +5278,7 @@ function toggleGPS(silencioso){
     puntosAvisados=new Set(); reportesAvisados=new Set();
     _avisoLluviaHecho=false; _ultimoChequeoLluvia=0; _fatigaBuffer=[]; _avisoFatigaHecho=false; _velPromInicioFatiga=null;
     segmentosCargados=false; segmentosActivos=[]; segmentosEstado={};
+    try{ if(window.PisteroMemoria) PisteroMemoria.registrarInicioViaje(); }catch(e){}
     iniciarDeteccionCaidas();
     if(lpBackgroundGeo.disponible()){
       lpBackgroundGeo.start(); ig=true;
@@ -5393,6 +5403,7 @@ function comentarPendiente(buffer, sp){
   if(sp===0) return; // parado no hay pendiente que comentar
   const pend=calcularPendienteActual(buffer);
   if(pend==null) return;
+  try{ if(window.PisteroMemoria) PisteroMemoria.registrarEsfuerzoSubida(sp, pend); }catch(e){}
   const umbral=_umbralPendiente(), salida=umbral/2; // salir de la zona con la mitad del umbral de entrada (histéresis)
   let zonaNueva=zonaPendienteActual;
   if(zonaPendienteActual==='subida'){ if(pend<salida) zonaNueva='plano'; }
@@ -5499,6 +5510,7 @@ function ug(p){
   // Al DETENERTE (pasar de moverte a 0), guarda automáticamente la ruta hecha (checkpoint).
   if(sp===0 && spAnterior>0 && currentRoute.length>=2 && currentRoute.length>puntosGuardados){ autoGuardarRuta(true,true); }
   if(sp>0){ ultimoMovimientoTime=Date.now(); rutaSegCerrada=false; }
+  try{ if(window.PisteroMemoria) PisteroMemoria.registrarParada(sp, spAnterior); }catch(e){}
   spAnterior=sp;
   // Bromas segun velocidad: se disparan para TODAS las velocidades (parado, lento,
   // normal, rapido). El throttle interno de obtenerFraseUnica evita el spam.
@@ -11977,7 +11989,7 @@ function handleVoiceCommand(raw){
   // callarse, Pistero armaba un viaje falso a "callate por favor" (mismo bug que
   // pendiente/mapa/rutas más abajo, pero en el comando que más urge que funcione:
   // silenciar la voz mientras vas pedaleando).
-  if(/^(detente|para|ya)\.?$/.test(t) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(t)){ pararVoz(); vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
+  if(/^(detente|para|ya)\.?$/.test(t) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(t)){ try{ if(window.PisteroMemoria) PisteroMemoria.registrarSilencio(); }catch(e){} pararVoz(); vozActiva=false; localStorage.setItem('lp_voz','off'); const b=document.getElementById('vozBtn'); if(b) b.innerHTML='<i class="fas fa-volume-xmark"></i> Voz: OFF'; return; }
   // Las preguntas ("qué es...", "cómo...", "cada cuánto...") se resuelven ANTES que
   // los comandos sueltos de más abajo: si no, por ejemplo "qué hace el botón SOS" caía
   // en el comando de emergencia real solo por contener la palabra "sos".
