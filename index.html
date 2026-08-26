@@ -370,6 +370,37 @@ main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
 .logro-toast__b{display:flex;flex-direction:column;line-height:1.2}
 .logro-toast__b b{color:var(--g);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em}
 .logro-toast__b span{color:#eaf0ff;font-weight:700;font-size:0.9rem}
+/* Resumen de viaje: pantalla de cierre al terminar de pedalear (pedido de Inty
+   2026-08-26 -- hoy terminar un viaje quedaba mudo, sin ningún cierre). Reusa el
+   MISMO lenguaje visual de medalla que .lg-medal (Logros), solo más grande y con
+   una entrada especial -- no un componente nuevo desde cero. */
+.rv-overlay{position:fixed;inset:0;z-index:9500;background:rgba(4,7,14,0.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s ease;padding:20px;box-sizing:border-box}
+.rv-overlay.on{opacity:1;pointer-events:auto}
+.rv-card{background:linear-gradient(180deg,#141f33,#0c1422);border:1px solid rgba(255,255,255,0.10);border-radius:22px;padding:26px 22px 22px;width:min(92vw,380px);max-height:86vh;overflow-y:auto;box-shadow:0 30px 80px -20px rgba(0,0,0,0.7);position:relative;transform:scale(.9);transition:transform .35s cubic-bezier(.34,1.4,.6,1)}
+.rv-overlay.on .rv-card{transform:scale(1)}
+.rv-cerrar{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,0.08);color:#cfd8e6;display:grid;place-items:center;cursor:pointer;font-size:0.85rem}
+.rv-h{margin:0 0 18px;text-align:center;color:#fff;font-size:1.2rem}
+.rv-stats{display:flex;justify-content:space-around;gap:8px}
+.rv-stat{display:flex;flex-direction:column;align-items:center}
+.rv-stat b{font-size:1.5rem;color:var(--p);font-variant-numeric:tabular-nums;line-height:1.1}
+.rv-stat span{font-size:0.63rem;color:#8695aa;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.rv-titulo-logros{text-align:center;color:#ffe793;font-size:0.85rem;margin:20px 0 14px;font-weight:800}
+.rv-medallas{display:flex;flex-wrap:wrap;justify-content:center;gap:16px}
+.rv-medalla{display:flex;flex-direction:column;align-items:center;gap:7px;width:78px}
+.rv-medalla-ic-wrap{position:relative;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 36% 30%,#fff3c4,var(--g) 62%,#e88b00);box-shadow:0 6px 18px -5px rgba(255,215,0,0.55),inset 0 2px 4px rgba(255,255,255,0.6),inset 0 -3px 6px rgba(150,90,0,0.4);opacity:0;transform:scale(0) rotate(-35deg)}
+.rv-medalla-ic{font-size:1.7rem;color:#5a3c00;position:relative;z-index:2}
+.rv-medalla-nombre{font-size:0.68rem;color:#eaf0ff;text-align:center;font-weight:700;line-height:1.2}
+.rv-overlay.on .rv-medalla-ic-wrap{animation:rvMedallaReveal .7s cubic-bezier(.34,1.56,.64,1) forwards;animation-delay:var(--rv-d,0ms)}
+@keyframes rvMedallaReveal{0%{opacity:0;transform:scale(0) rotate(-35deg)}60%{opacity:1;transform:scale(1.15) rotate(8deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.rv-medalla-ic-wrap::after{content:'';position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,transparent,rgba(255,255,255,0.95),transparent 30%);opacity:0;animation:rvBrillo 1.3s ease-out forwards;animation-delay:calc(var(--rv-d,0ms) + 550ms)}
+@keyframes rvBrillo{0%{opacity:0;transform:rotate(0deg)}18%{opacity:.95}100%{opacity:0;transform:rotate(300deg)}}
+/* Mismo criterio que clima-fx.js (25-ago): nunca dejar el resultado invisible por
+   respetar reduced-motion -- las medallas igual se ven, solo sin la animación. */
+@media (prefers-reduced-motion: reduce){
+  .rv-card{transition:none}
+  .rv-medalla-ic-wrap{animation:none !important;opacity:1;transform:scale(1) rotate(0)}
+  .rv-medalla-ic-wrap::after{display:none}
+}
 /* Tarjeta hero de Inicio + la firma visual ciclista (perfil de ruta al fondo) */
 .hero-viaje{position:relative;overflow:hidden;background:#0f1728;border:0.5px solid rgba(255,255,255,0.07);border-radius:18px;padding:16px;margin-bottom:14px}
 .hero-ruta{position:absolute;top:10px;left:0;width:100%;height:46px;opacity:0.42;pointer-events:none}
@@ -1781,7 +1812,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.783'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.784'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -5274,6 +5305,7 @@ function toggleGPS(silencioso){
   const btn=document.getElementById('btnGPSLibre');
   if(!ig){
     rutaDocId=null; puntosGuardados=0; spAnterior=0;
+    _logrosDelViaje=[]; _kmEsteViaje=0; // arranca el conteo del resumen de este viaje
     ultimoMovimientoTime=Date.now(); rutaSegCerrada=true; rutaSegDistIni=us.di;
     // Reinicia el reloj de "parado" al prender el GPS: si no, como este reloj
     // arranca en 0 en una sesión nueva, el aviso de "revisa la bici/pinchazo"
@@ -5316,6 +5348,8 @@ function toggleGPS(silencioso){
     if(currentRoute.length>1){ autoGuardarRuta(false,false); }
     sincronizarStats();
     if(cu&&!ghostMode){ db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true}); _rtdOcultarPosicion(); }
+    try{ if(_logrosListo) _chequearLogros(false); }catch(e){} // por si algo cruzó el umbral justo con el último dato sincronizado
+    try{ _mostrarResumenViaje(); }catch(e){}
   }
 }
 function toggleSaver(){
@@ -5542,7 +5576,7 @@ function ug(p){
   // promedia y cancela justo ese ruido) muestre 0 = estás parado de verdad. Se
   // agrega sp>0 como condición: solo suma kilometraje cuando la propia app ya
   // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
-  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _sumarKmModo(moved); _sumarKmMantencion(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _kmEsteViaje+=moved; _sumarKmModo(moved); _sumarKmMantencion(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);
@@ -7719,9 +7753,44 @@ function _toastLogro(l){
     setTimeout(function(){ el.classList.remove('on'); setTimeout(function(){ try{ el.remove(); }catch(e){} }, 450); }, 4600);
   }catch(e){}
 }
+// Logros conseguidos y km recorridos DURANTE el viaje activo -- se resetean al
+// empezar un viaje (toggleGPS/iniciarNavegacion) y se leen/vacían al terminarlo
+// (_mostrarResumenViaje). us.di es el total HISTÓRICO del usuario, no sirve para
+// saber cuánto anduvo en ESTE viaje puntual.
+var _logrosDelViaje=[], _kmEsteViaje=0;
 function _anunciarLogro(l){
   try{ _toastLogro(l); }catch(e){}
   try{ if(typeof h==='function') h(_fraseLogro(l)); }catch(e){}
+  try{ _logrosDelViaje.push(l); }catch(e){}
+}
+// Cierre del viaje (pedido de Inty 2026-08-26: "hoy terminar la ruta queda mudo,
+// sin ningún resumen"). Reusa el look de medalla de Logros (.lg-medal), con una
+// entrada especial -- no es un componente nuevo, es la misma medalla en grande.
+function _mostrarResumenViaje(){
+  var logros=_logrosDelViaje.slice(); _logrosDelViaje=[];
+  var kmViaje=_kmEsteViaje; _kmEsteViaje=0;
+  if(kmViaje<0.05 && !logros.length) return; // viaje nulo (se tocó el botón sin pedalear nada): no hay nada que celebrar
+  var duracionMs=tripStartTime?Math.max(0,Date.now()-tripStartTime):0;
+  var minutos=Math.max(0,Math.round(duracionMs/60000));
+  var velMedia=duracionMs>0?(kmViaje/(duracionMs/3600000)):0;
+  var medallasHTML=logros.map(function(l,i){
+    return '<div class="rv-medalla"><div class="rv-medalla-ic-wrap" style="--rv-d:'+(i*180)+'ms"><span class="rv-medalla-ic">'+l.e+'</span></div><div class="rv-medalla-nombre">'+escapeHTML(l.t)+'</div></div>';
+  }).join('');
+  var html=''
+    +'<div class="rv-stats">'
+    +'<div class="rv-stat"><b>'+kmViaje.toFixed(2)+'</b><span>km</span></div>'
+    +'<div class="rv-stat"><b>'+minutos+'</b><span>min</span></div>'
+    +'<div class="rv-stat"><b>'+velMedia.toFixed(1)+'</b><span>km/h prom.</span></div>'
+    +'</div>'
+    +(logros.length?('<h4 class="rv-titulo-logros">¡'+logros.length+' logro'+(logros.length>1?'s':'')+' nuevo'+(logros.length>1?'s':'')+'!</h4><div class="rv-medallas">'+medallasHTML+'</div>'):'');
+  var modal=document.getElementById('resumenViajeModal');
+  if(!modal){
+    modal=document.createElement('div'); modal.id='resumenViajeModal'; modal.className='rv-overlay';
+    modal.innerHTML='<div class="rv-card"><button class="rv-cerrar" onclick="document.getElementById(\'resumenViajeModal\').classList.remove(\'on\')"><i class="fas fa-xmark"></i></button><h3 class="rv-h">¡Viaje terminado!</h3><div id="rvContenido"></div></div>';
+    document.body.appendChild(modal);
+  }
+  document.getElementById('rvContenido').innerHTML=html;
+  requestAnimationFrame(function(){ modal.classList.add('on'); });
 }
 var _logrosListo=false;
 function _logrosDesbKey(){ return 'lp_logros_desb_'+(cu||'anon'); }
@@ -8677,7 +8746,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
       // Mismo bug real que en ug() (GPS libre): sin exigir speed>0, el ruido normal
       // del GPS estando quieto se colaba de a poco al kilometraje aunque "speed" (ya
       // calculada arriba, con ventana de varios puntos) mostrara 0 = parado de verdad.
-      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
+      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _kmEsteViaje+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
       gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
     }
   }
@@ -9101,6 +9170,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     if(helmetMarker) navMap.removeLayer(helmetMarker);
     helmetMarker=L.marker([startLat,startLon],{icon:L.divIcon({className:'',html:riderMarkerHTML(selectedHelmet,skinColor(selectedSkin),true),iconSize:[50,34],iconAnchor:[25,17]})}).addTo(navMap);
     tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon,t:Date.now()}; totalDistance=0;
+    _logrosDelViaje=[]; _kmEsteViaje=0; // arranca el conteo del resumen de este viaje (navegación a destino)
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
     if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop();
     lpWakeLock.enable();
@@ -9244,7 +9314,12 @@ function checkNavigationSteps(lat,lon,speed){
 function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSteps[i]; document.getElementById('navIcon').innerText=getStepIcon(step.maneuver.type,step.maneuver.modifier); document.getElementById('navText').innerText=step.instruction; document.getElementById('navDist').innerText=formatDistance(step.distance); showAlert(step.instruction); hCorta(step.instruction); lastSpokenStep=i; /* marca el paso como YA dicho: evita que checkNavigationSteps repita el arranque ("Comienza el recorrido") por estar parado en el origen — redundancia real reportada por Inty */ }
 function getStepIcon(type,modifier){ switch(type){ case 'depart':return '🚴'; case 'arrive':return '🏁'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return '⬅️'; if(modifier&&modifier.indexOf('right')!==-1) return '➡️'; return '🔄'; case 'roundabout': case 'rotary': return '🔁'; case 'fork': return '🔱'; case 'continue': return '⬆️'; default: return '➡️'; } }
 function showAlert(text){ const a=document.getElementById('navAlert'); a.innerText=text; a.classList.add('show'); setTimeout(function(){ a.classList.remove('show'); },3000); }
-function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); try{ _pisteroMood='contento'; }catch(e){} h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada(); setTimeout(endNavigation,2500); }
+function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); try{ _pisteroMood='contento'; }catch(e){} h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada();
+  // El resumen de viaje va SOLO acá (llegada real) -- endNavigation() también se
+  // llama al cancelar con la X o si falla el cálculo de ruta, y ahí no hay nada
+  // que festejar.
+  setTimeout(function(){ endNavigation(); try{ if(_logrosListo) _chequearLogros(false); }catch(e){} try{ _mostrarResumenViaje(); }catch(e){} }, 2500);
+}
 async function guardarRutaNavegada(){
   if(!cu||gpsPoints.length<2) return;
   navGuardado=true;
