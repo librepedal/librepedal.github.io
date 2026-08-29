@@ -8177,6 +8177,11 @@ async function navegarAPuntoMapaElegido(){
   if(!currentUserLocation){ lpAviso("Necesito tu GPS"); return; }
   currentTrip=null;
   const lat=puntoViajeCoords.lat, lon=puntoViajeCoords.lon;
+  // Esta es la señal más confiable que existe para el mapa propio: un ciclista real
+  // marcó el punto exacto con su GPS porque el buscador no lo encontró. Si el campo de
+  // búsqueda todavía tiene el texto que escribió, queda asociado para la próxima vez.
+  const qb=document.getElementById('quick-dest'); const textoBuscado=qb?qb.value.trim():'';
+  if(textoBuscado) _guardarDireccionPropia(textoBuscado, lat, lon, textoBuscado, 'manual');
   const cont=document.getElementById('punto-mapa-viaje'); if(cont) cont.style.display='none';
   if(puntoViajeMarker){ puntoViajeMarker.remove(); puntoViajeMarker=null; }
   puntoViajeCoords=null;
@@ -8524,7 +8529,7 @@ function loadTrips(){ db.collection('trips').where('user','==',cu).onSnapshot(fu
 function renderTrips(){ const c=document.getElementById('trips-list'); if(!c) return; if(trips.length===0){ c.innerHTML='<p style="color:#888;text-align:center;padding:15px">Aún no tienes viajes</p>'; return; } let html=''; for(let t=0;t<trips.length;t++){ const trip=trips[t]; let dests=''; for(let d=0;d<trip.destinations.length;d++){ dests+='<div>'+(d+1)+'. '+escapeHTML(trip.destinations[d].name)+'</div>'; } const badge=trip.status==='completed'?'(completado)':trip.status==='active'?'(en curso)':'(pendiente)'; html+='<div class="trip-card"><h3>'+escapeHTML(trip.name)+' <span style="font-size:0.7rem;color:#888">'+badge+'</span></h3><div class="meta">Desde: '+escapeHTML(trip.start)+' · '+trip.destinations.length+' destinos</div>'; if(trip.gpsData&&trip.gpsData.distance){ html+='<div style="color:var(--p);font-size:0.8rem;margin-bottom:8px">'+trip.gpsData.distance.toFixed(2)+' km · '+trip.gpsData.duration+'</div>'; } html+='<div class="dest-list">'+dests+'</div><div class="actions">'; if(trip.status!=='completed'){ html+='<button class="btn btn-start" onclick="startNavigation(\''+trip.id+'\')">Iniciar</button>'; } else { html+='<button class="btn btn-view" onclick="viewCompletedTrip(\''+trip.id+'\')">Ver</button>'; } html+='<button class="btn btn-delete" onclick="deleteTrip(\''+trip.id+'\')">Borrar</button></div></div>'; } c.innerHTML=html; }
 async function deleteTrip(id){ if(await lpConfirmar("¿Eliminar este viaje?")){ db.collection('trips').doc(id).delete(); } }
 function viewCompletedTrip(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip||!trip.gpsData||!trip.gpsData.points) return lpAviso("Este viaje no tiene ruta grabada"); currentTrip=trip; gpsPoints=trip.gpsData.points; totalDistance=trip.gpsData.distance||0; document.getElementById('nav-screen').classList.add('active'); if(navMap) navMap.remove(); navMap=L.map('nav-map').setView([gpsPoints[0].lat,gpsPoints[0].lon],15); L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(navMap); showHostelsOnNavMap(); drawGpsRoute(); document.getElementById('navText').innerText="Ruta completada"; document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2); document.getElementById('navTime').innerText=trip.gpsData.duration||'0 min'; document.getElementById('navSpeed').innerText='0'; document.getElementById('etaDist').innerText=totalDistance.toFixed(2)+' km'; document.getElementById('etaDuration').innerText=trip.gpsData.duration||'0 min'; document.getElementById('etaTime').innerText='--:--'; showSpeechBubble("Recorriste "+totalDistance.toFixed(2)+" km"); }
-async function startNavigation(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip) return; currentTrip=trip; showLoading("Obteniendo ubicación..."); await getCurrentLocation(); /* 2026-08-20: siempre fresco, ver navegarAPuntoMapaElegido */ if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS para navegar"); return; } const dest=trip.destinations[trip.destinations.length-1]; let dLat=dest.lat, dLon=dest.lon, geoAproximado=false; if(!dLat||!dLon){ showLoading("Buscando "+dest.name+"..."); try{ const r=await geocodeDestino(dest.addr||dest.name); if(r){ dLat=r.lat; dLon=r.lon; geoAproximado=!!r.aproximado; } }catch(e){} hideLoading(); } if(!dLat||!dLon){ lpAviso('No pude ubicar "'+(dest.name||'el destino')+'". Escríbelo con más detalle (ciudad o región), o usa 📍 "elegir en el mapa" para marcarlo tú.'); return; } if(geoAproximado){ const seguir=await lpConfirmar('No encontré el número exacto de "'+(dest.name||'el destino')+'", pero sí la calle. ¿Uso este punto aproximado igual?'); if(!seguir) return; } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dLat,dLon,dest.name); }
+async function startNavigation(tripId){ const trip=trips.find(function(t){return t.id===tripId;}); if(!trip) return; currentTrip=trip; showLoading("Obteniendo ubicación..."); await getCurrentLocation(); /* 2026-08-20: siempre fresco, ver navegarAPuntoMapaElegido */ if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS para navegar"); return; } const dest=trip.destinations[trip.destinations.length-1]; let dLat=dest.lat, dLon=dest.lon, geoAproximado=false; if(!dLat||!dLon){ showLoading("Buscando "+dest.name+"..."); try{ const r=await geocodeDestino(dest.addr||dest.name); if(r){ dLat=r.lat; dLon=r.lon; geoAproximado=!!r.aproximado; } }catch(e){} hideLoading(); } if(!dLat||!dLon){ lpAviso('No pude ubicar "'+(dest.name||'el destino')+'". Escríbelo con más detalle (ciudad o región), o usa 📍 "elegir en el mapa" para marcarlo tú.'); return; } if(geoAproximado){ const seguir=await lpConfirmar('No encontré el número exacto de "'+(dest.name||'el destino')+'", pero sí la calle. ¿Uso este punto aproximado igual?'); if(!seguir) return; _guardarDireccionPropia(dest.addr||dest.name, dLat, dLon, dest.name, 'confirmado-aproximado'); } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dLat,dLon,dest.name); }
 // Geocodificador global e inteligente: reconoce cualquier punto del mundo, pero
 // si conocemos tu ubicación, prefiere los resultados cercanos (para términos
 // genéricos como "la plaza", "farmacia", "supermercado"). Sigue siendo global:
@@ -8676,7 +8681,41 @@ function _quitarNumeroDireccion(q){
   partes[0]=calle;
   return partes.join(',').trim();
 }
+// Mapa propio de direcciones: Nominatim/Photon casi no tienen números de casa cargados
+// en Chile fuera del centro de Santiago, y eso no lo arregla ningún reintento — falta el
+// dato, no falta buscar mejor. La solución real y gratis es que LibrePedal construya su
+// propio catastro con lo que sus propios ciclistas van confirmando: cada vez que alguien
+// llega a una dirección exacta (geocode limpio), acepta un punto aproximado a sabiendas,
+// o la marca a mano en el mapa porque no se encontró, ESE punto queda guardado. La
+// próxima persona que busque lo mismo lo encuentra al instante, sin depender de nadie
+// externo, y con el uso real de la app se cubre justo lo que la comunidad necesita — no
+// hace falta mapear Chile entero, solo las direcciones que los ciclistas realmente piden.
+function _keyDireccion(q){
+  return String(q||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,200);
+}
+async function _buscarDireccionPropia(query){
+  const key=_keyDireccion(query);
+  if(!key || typeof db==='undefined') return null;
+  try{
+    const doc=await db.collection('direccionesGeo').doc(key).get();
+    if(doc.exists){ const d=doc.data(); if(d && d.lat!=null && d.lon!=null) return {lat:d.lat, lon:d.lon, name:d.name||query}; }
+  }catch(e){}
+  return null;
+}
+function _guardarDireccionPropia(query, lat, lon, name, origen){
+  const key=_keyDireccion(query);
+  if(!key || typeof db==='undefined' || typeof cu==='undefined' || !cu) return;
+  try{
+    db.collection('direccionesGeo').doc(key).set({
+      q: String(query||'').slice(0,200), lat: lat, lon: lon, name: String(name||query||'').slice(0,300),
+      origen: origen||'geocoder', creadoPor: cu, creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+    }, {merge:true}).catch(function(){});
+  }catch(e){}
+}
 async function geocodeDestino(query){
+  const propia=await _buscarDireccionPropia(query);
+  if(propia) return propia;
   const cc=await paisDelUsuario();
   async function intentar(q){
     const baseUrl='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=es&limit=8&q='+encodeURIComponent(q);
@@ -8703,18 +8742,19 @@ async function geocodeDestino(query){
     return {lat:parseFloat(best.lat), lon:parseFloat(best.lon), name:best.display_name};
   }
   let r=await intentar(query);
-  if(r) return r;
+  if(r){ _guardarDireccionPropia(query, r.lat, r.lon, r.name, 'geocoder'); return r; }
   // No se encontró tal cual: la voz suele escribir "ki/ka" donde va "qui/ca". Reintenta.
-  for(const v of _variantesFoneticas(query)){ r=await intentar(v); if(r) return r; }
+  for(const v of _variantesFoneticas(query)){ r=await intentar(v); if(r){ _guardarDireccionPropia(query, r.lat, r.lon, r.name, 'geocoder'); return r; } }
   // Último respaldo: si la dirección traía número de casa, probamos sin él. OSM en Chile
   // casi nunca tiene el número exacto mapeado fuera del centro de Santiago, pero la calle
   // sola sí suele existir. Se marca "aproximado" para que quien llama avise al usuario en
-  // vez de navegar en silencio a un punto que no es el número pedido.
+  // vez de navegar en silencio a un punto que no es el número pedido — y solo se guarda
+  // en el mapa propio si esa persona lo confirma (ver startQuickTrip/startNavigation).
   const sinNumero=_quitarNumeroDireccion(query);
   if(sinNumero){ r=await intentar(sinNumero); if(r){ r.aproximado=true; return r; } }
   return null;
 }
-async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ lpAviso("Escribe un destino"); return; } currentTrip=null; showLoading("Obteniendo ubicación..."); await getCurrentLocation(); /* 2026-08-20: siempre fresco, ver navegarAPuntoMapaElegido */ if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS"); return; } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); lpAviso('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); if(dest.aproximado){ const seguir=await lpConfirmar('No encontré el número exacto de "'+destInput+'", pero sí la calle. ¿Uso este punto aproximado igual?'); if(!seguir) return; } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'Estás sin señal para buscar el destino. Prueba de nuevo con internet, o marca el punto en el mapa.' : 'No pude buscar ese destino ahora. Inténtalo otra vez.'); } }
+async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ lpAviso("Escribe un destino"); return; } currentTrip=null; showLoading("Obteniendo ubicación..."); await getCurrentLocation(); /* 2026-08-20: siempre fresco, ver navegarAPuntoMapaElegido */ if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS"); return; } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); lpAviso('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); if(dest.aproximado){ const seguir=await lpConfirmar('No encontré el número exacto de "'+destInput+'", pero sí la calle. ¿Uso este punto aproximado igual?'); if(!seguir) return; _guardarDireccionPropia(destInput, dest.lat, dest.lon, dest.name, 'confirmado-aproximado'); } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'Estás sin señal para buscar el destino. Prueba de nuevo con internet, o marca el punto en el mapa.' : 'No pude buscar ese destino ahora. Inténtalo otra vez.'); } }
 function _tileXY(lat,lon,zoom){ const n=Math.pow(2,zoom); const x=Math.floor((lon+180)/360*n); const latRad=lat*Math.PI/180; const y=Math.floor((1-Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n); return {x:x,y:y}; }
 async function descargarMapaRuta(){
   const btn=document.getElementById('btnDescargarMapa');

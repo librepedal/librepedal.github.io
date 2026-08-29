@@ -357,6 +357,26 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Mapa propio de direcciones (2026-08-29): caché comunitaria de direcciones ya
+    // confirmadas por un ciclista real (geocode exacto, aproximado aceptado a sabiendas,
+    // o marcado a mano en el mapa) — Nominatim/OSM casi no tiene números de casa en
+    // Chile fuera del centro de Santiago, y esto evita repetir la misma búsqueda fallida.
+    // id del doc = clave normalizada de la dirección (ver _keyDireccion en index.html),
+    // así que create Y update válidos son la MISMA operación (set con merge:true) —
+    // cualquiera puede reafirmar/mejorar una entrada ya existente, no solo crearla.
+    // Lectura pública a propósito: el punto de esto es que TODOS se beneficien, incluso
+    // antes de loguearse. Inmutable a delete: si una entrada queda mal, se sobreescribe
+    // con una mejor, no se borra (evita vandalismo silencioso).
+    match /direccionesGeo/{id} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && strOk('q', 200) && strOk('name', 300) && strOk('origen', 40) && strOk('creadoPor', 120)
+        && request.resource.data.lat is number && request.resource.data.lon is number
+        && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+        && request.resource.data.lon >= -180 && request.resource.data.lon <= 180;
+      allow delete: if false;
+    }
+
     // Todo lo demás: denegado por defecto
     match /{document=**} {
       allow read, write: if false;
