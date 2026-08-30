@@ -8765,7 +8765,13 @@ function _guardarDireccionPropia(query, lat, lon, name, origen){
 // configurada en Google Cloud Console (solo funciona desde librepedal.cl y *.pages.dev),
 // así que aunque cualquiera la vea con "Ver código fuente", no le sirve de nada fuera de
 // nuestro dominio.
-// Se despliega vacía a propósito: mientras GOOGLE_GEOCODING_API_KEY sea '', esta función
+// OJO (2026-08-30, probado en vivo): NO se puede llamar a Geocoding API directo desde el
+// cliente con una key restringida por referrer HTTP -- Google la rechaza en seco
+// ("API keys with referer restrictions cannot be used with this API"). Ese tipo de
+// restricción solo es válida para Maps JavaScript API, no para la API REST que se llama
+// por fetch. La única forma correcta de usar Geocoding es a través de un backend propio
+// (proxy en worker-ia, con la key como secreto de Cloudflare, nunca expuesta al cliente)
+// -- pendiente de construir. Hasta entonces, vacía a propósito: sin esto, esta función
 // nunca se activa y el comportamiento de la app no cambia en nada.
 const GOOGLE_GEOCODING_API_KEY='';
 // Freno de gasto (el que de verdad importa): Google Cloud NO ofrece corte automático
