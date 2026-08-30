@@ -161,6 +161,25 @@ async function _presupuestoMensual(env, chars) {
     return true;
   } catch (e) { return true; } // si KV falla, no bloqueamos voz por un problema nuestro
 }
+// Tope MENSUAL propio para "leer respuestas largas de Claude a Inty" (herramienta nueva,
+// 2026-08-27, protocolo obligatorio en PROTOCOLO-DE-TRABAJO-INTY.md §9). Usa la MISMA
+// llave de ElevenLabs que Pistero, pero un contador de KV APARTE: si comparte el balde de
+// MAX_CHARS_MES y esta herramienta se usa mucho un mes, Pistero se queda mudo para los
+// ciclistas reales sin aviso -- el mismo patrón de falla silenciosa que ya pasó con
+// Firestore y con la voz. Tope conservador: es lectura personal de Inty, no una feature
+// de la app con miles de usuarios.
+const MAX_CHARS_MES_LECTOR = 30000;
+async function _presupuestoMensualLector(env, chars) {
+  if (!env.VOZ_CUOTA) return true;
+  const mes = new Date().toISOString().slice(0, 7);
+  const key = "presupuesto-mes-lector:" + mes;
+  try {
+    const usado = parseInt((await env.VOZ_CUOTA.get(key)) || "0", 10);
+    if (usado + chars > MAX_CHARS_MES_LECTOR) return false;
+    await env.VOZ_CUOTA.put(key, String(usado + chars), { expirationTtl: 2764800 });
+    return true;
+  } catch (e) { return true; }
+}
 async function _limiteIP(env, ip) {
   if (!env.VOZ_CUOTA || !ip) return true;
   const minuto = Math.floor(Date.now() / 60000);
@@ -298,9 +317,18 @@ export default {
     // Uso: ?eltts=<texto>&voz=<voiceId>  (voz opcional si defines ELEVENLABS_VOICE_DEFAULT). Devuelve MP3. =====
     const elText = url.searchParams.get("eltts") || (body && body.eltts);
     if (elText) {
+      // "lector=1": llamada de la herramienta de lectura de respuestas largas (no de la
+      // app de ciclismo) -- usa presupuesto mensual APARTE (ver _presupuestoMensualLector)
+      // para que nunca le saque cupo de voz a Pistero. El límite diario SÍ se comparte:
+      // es el freno anti-abuso general del worker, no algo específico de los ciclistas.
+      const esLector = url.searchParams.get("lector") === "1" || (body && body.lector === true);
       if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
       if (!(await _presupuestoDiario(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_diario_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
-      if (!(await _presupuestoMensual(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_mensual_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+      if (esLector) {
+        if (!(await _presupuestoMensualLector(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_mensual_lector_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+      } else {
+        if (!(await _presupuestoMensual(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_mensual_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+      }
       const key = env.ELEVENLABS_API_KEY;
       if (!key) return new Response(JSON.stringify({ error: "sin_llave_elevenlabs" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       // Par neutro-latino por defecto: Miguel G (masc) / Ninoska (fem). Se elige por ?g=c (femenina)
