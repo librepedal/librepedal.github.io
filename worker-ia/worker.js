@@ -354,8 +354,14 @@ export default {
       // y tráfico, la claridad vale más que la agilidad. Rango permitido por ElevenLabs.
       const velRaw = parseFloat(url.searchParams.get("vel") || (body && body.vel));
       const vel = (isFinite(velRaw) && velRaw >= 0.7 && velRaw <= 1.2) ? velRaw : 0.92;
+      // El lector (2026-08-27) EMBEBE el mp3 completo como base64 en una página estática
+      // (los artifacts no pueden hacer fetch en vivo a un host externo) -- a 128kbps
+      // default, una respuesta larga de ~2000 caracteres pesa varios MB en base64, y el
+      // límite total de la página es 16MB. 32kbps es de sobra para voz hablada (no música)
+      // y corta el peso a un cuarto. Pistero en la app (no-lector) sigue igual, sin tocar.
+      const formatoSalida = esLector ? "mp3_22050_32" : "mp3_44100_128";
       try {
-        const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
+        const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId + "?output_format=" + formatoSalida, {
           method: "POST",
           headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" },
           body: JSON.stringify({ text: t, model_id: modelo, voice_settings: { stability: stab, similarity_boost: 0.8, style: style, use_speaker_boost: true, speed: vel } })

@@ -90,5 +90,15 @@ function montar() {
   debe('cuando NO es lector, sigue llamando a _presupuestoMensual (comportamiento de Pistero intacto)', /else\s*\{[\s\S]*_presupuestoMensual\(env/.test(bloqueHandler));
 }
 
+// ---- 6) El lector pide un mp3 más liviano (32kbps) -- Pistero sigue en 128kbps ----
+// Motivo: el lector embebe el audio como base64 en una página estática (16MB de tope
+// total), a diferencia de Pistero que solo lo reproduce en la app -- sin esto, unas
+// pocas respuestas largas llenarían la página entera.
+{
+  const bloqueHandler = bloque('const elText = url.searchParams.get("eltts")');
+  debe('define un formato de salida más liviano cuando esLector', /esLector\s*\?\s*"mp3_22050_32"\s*:\s*"mp3_44100_128"/.test(bloqueHandler));
+  debe('el formato se manda a ElevenLabs como output_format en la URL', /output_format=["'`]\s*\+\s*formatoSalida/.test(bloqueHandler));
+}
+
 console.log(`\n${ok} ok, ${fail} fallas — voz-presupuesto-lector.test.mjs`);
 if (fail > 0) process.exit(1);
