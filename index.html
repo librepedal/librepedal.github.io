@@ -8681,6 +8681,50 @@ function _quitarNumeroDireccion(q){
   partes[0]=calle;
   return partes.join(',').trim();
 }
+// Interpolación por número (2026-08-30): cuando Nominatim encuentra la calle pero no el
+// número exacto, muchas veces OSM SÍ tiene otros números reales mapeados en esa misma
+// calle (verificado: "Los Militares" en Las Condes tiene 37 números en OSM, aunque
+// Nominatim no los use para una búsqueda con número que no calza exacto). Overpass (los
+// datos crudos de OSM, gratis y sin límite real de uso) permite consultarlos: se toman
+// los dos números ya mapeados más cercanos al pedido, uno menor y uno mayor, y se
+// interpola la posición proporcionalmente — igual que hacen los geocodificadores
+// profesionales cuando falta el punto exacto. Mucho más preciso que plantarse en el
+// centro de toda la calle, que es lo único que había antes. Solo se intenta como último
+// recurso (ya falló Nominatim con el número, y con las variantes fonéticas).
+function _extraerNumeroDireccion(q){
+  const m=String(q||'').split(',')[0].match(/\d{1,6}/);
+  return m ? parseInt(m[0],10) : null;
+}
+async function _interpolarPorNumero(query){
+  const num=_extraerNumeroDireccion(query);
+  const calle=_quitarNumeroDireccion(query);
+  if(!num || !calle) return null;
+  const partes=calle.split(',');
+  const nombreCalle=partes[0].trim();
+  const comuna=(partes[1]||'').trim();
+  if(!nombreCalle || !comuna) return null;
+  const escOverpass=s=>String(s).replace(/["\\^$.*+?()[\]{}|]/g,'\\$&');
+  try{
+    const ql='[out:json][timeout:12];area["name"="'+escOverpass(comuna)+'"]["boundary"="administrative"]->.a;'
+      +'node["addr:housenumber"]["addr:street"~"^'+escOverpass(nombreCalle)+'$",i](area.a);out body 80;';
+    const r=await _fetchT('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(ql), 10000);
+    const j=await r.json();
+    const pts=(j.elements||[]).map(function(e){
+      const hn=parseInt((e.tags&&e.tags['addr:housenumber'])||'',10);
+      return (isNaN(hn)||e.lat==null||e.lon==null) ? null : {n:hn, lat:e.lat, lon:e.lon};
+    }).filter(Boolean);
+    if(!pts.length) return null;
+    pts.sort(function(a,b){ return a.n-b.n; });
+    let below=null, above=null;
+    for(const p of pts){ if(p.n<=num) below=p; if(p.n>=num && !above) above=p; }
+    if(below && above && below.n!==above.n){
+      const f=(num-below.n)/(above.n-below.n);
+      return {lat: below.lat+(above.lat-below.lat)*f, lon: below.lon+(above.lon-below.lon)*f};
+    }
+    const nearest=(below||above);
+    return nearest ? {lat:nearest.lat, lon:nearest.lon} : null;
+  }catch(e){ return null; }
+}
 // Mapa propio de direcciones: Nominatim/Photon casi no tienen números de casa cargados
 // en Chile fuera del centro de Santiago, y eso no lo arregla ningún reintento — falta el
 // dato, no falta buscar mejor. La solución real y gratis es que LibrePedal construya su
@@ -8739,19 +8783,42 @@ async function geocodeDestino(query){
     } else {
       best = localBest;
     }
-    return {lat:parseFloat(best.lat), lon:parseFloat(best.lon), name:best.display_name};
+    // OJO (2026-08-30): Nominatim casi nunca devuelve 0 resultados solo porque el número
+    // de casa no calza — su búsqueda libre suele ignorar el número silenciosamente y
+    // devolver la calle igual, como si hubiera "encontrado" la dirección completa. Antes
+    // este código confiaba en cualquier resultado no-nulo como si fuera exacto, así que la
+    // interpolación por Overpass casi nunca llegaba a usarse. `houseMatch` distingue los
+    // dos casos comparando el número pedido contra `address.house_number` (el único campo
+    // donde Nominatim confirma que sí encontró ESE número, no solo la calle).
+    const numPedido=_extraerNumeroDireccion(q);
+    const numEncontrado=best.address && best.address.house_number ? parseInt(best.address.house_number,10) : null;
+    const houseMatch = (numPedido==null) || (numEncontrado!=null && numEncontrado===numPedido);
+    return {lat:parseFloat(best.lat), lon:parseFloat(best.lon), name:best.display_name, houseMatch:houseMatch};
   }
   let r=await intentar(query);
-  if(r){ _guardarDireccionPropia(query, r.lat, r.lon, r.name, 'geocoder'); return r; }
+  if(r && r.houseMatch){ _guardarDireccionPropia(query, r.lat, r.lon, r.name, 'geocoder'); return r; }
+  let candidato = r; // "encontró algo" pero sin confirmar el número — respaldo si nada mejor aparece
   // No se encontró tal cual: la voz suele escribir "ki/ka" donde va "qui/ca". Reintenta.
-  for(const v of _variantesFoneticas(query)){ r=await intentar(v); if(r){ _guardarDireccionPropia(query, r.lat, r.lon, r.name, 'geocoder'); return r; } }
+  for(const v of _variantesFoneticas(query)){
+    r=await intentar(v);
+    if(r && r.houseMatch){ _guardarDireccionPropia(query, r.lat, r.lon, r.name, 'geocoder'); return r; }
+    if(r && !candidato) candidato=r;
+  }
   // Último respaldo: si la dirección traía número de casa, probamos sin él. OSM en Chile
   // casi nunca tiene el número exacto mapeado fuera del centro de Santiago, pero la calle
-  // sola sí suele existir. Se marca "aproximado" para que quien llama avise al usuario en
-  // vez de navegar en silencio a un punto que no es el número pedido — y solo se guarda
-  // en el mapa propio si esa persona lo confirma (ver startQuickTrip/startNavigation).
+  // sola sí suele existir.
   const sinNumero=_quitarNumeroDireccion(query);
-  if(sinNumero){ r=await intentar(sinNumero); if(r){ r.aproximado=true; return r; } }
+  if(sinNumero){ const rStreet=await intentar(sinNumero); if(rStreet && !candidato) candidato=rStreet; }
+  if(candidato){
+    candidato.aproximado=true;
+    // Refinamiento: si Overpass tiene otros números reales en esta calle, se usa esa
+    // posición interpolada en vez del centro de toda la calle (ver _interpolarPorNumero).
+    // Se marca "aproximado" para que quien llama avise al usuario en vez de navegar en
+    // silencio a un punto que no es el número pedido — y solo se guarda en el mapa propio
+    // si esa persona lo confirma (ver startQuickTrip/startNavigation).
+    try{ const interp=await _interpolarPorNumero(query); if(interp){ candidato.lat=interp.lat; candidato.lon=interp.lon; } }catch(e){}
+    return candidato;
+  }
   return null;
 }
 async function startQuickTrip(){ const destInput=document.getElementById('quick-dest').value.trim(); if(!destInput){ lpAviso("Escribe un destino"); return; } currentTrip=null; showLoading("Obteniendo ubicación..."); await getCurrentLocation(); /* 2026-08-20: siempre fresco, ver navegarAPuntoMapaElegido */ if(!currentUserLocation){ hideLoading(); lpAviso("Necesito tu GPS"); return; } const box=document.getElementById('sugerencias-dest'); if(box){ box.classList.remove('show'); } showLoading("Buscando: "+destInput); try{ const dest=(destinoElegido && destinoElegido.name && destInput===destinoElegido.name) ? destinoElegido : await geocodeDestino(destInput); if(!dest){ hideLoading(); lpAviso('No encontré "'+destInput+'". Los nombres poco comunes a veces no están en el buscador. Escríbelo con más detalle (agrega la ciudad o región), o toca 📍 "No lo encuentro: elegir en el mapa" para marcar el punto exacto tú.'); return; } hideLoading(); if(dest.aproximado){ const seguir=await lpConfirmar('No encontré el número exacto de "'+destInput+'", pero sí la calle. ¿Uso este punto aproximado igual?'); if(!seguir) return; _guardarDireccionPropia(destInput, dest.lat, dest.lon, dest.name, 'confirmado-aproximado'); } await calculateAndStartNavigation(currentUserLocation.lat,currentUserLocation.lon,dest.lat,dest.lon,dest.name); }catch(err){ hideLoading(); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'Estás sin señal para buscar el destino. Prueba de nuevo con internet, o marca el punto en el mapa.' : 'No pude buscar ese destino ahora. Inténtalo otra vez.'); } }
