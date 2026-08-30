@@ -184,6 +184,33 @@ async function _presupuestoDiario(env, chars) {
   } catch (e) { return true; }
 }
 
+// ===== Freno de gasto para Geocoding (Google), 2026-08-30. Google mismo NO ofrece corte
+// automático duro para esta API (verificado en la consola: el "límite de inversión" que
+// pausa el servicio solo está disponible para Cloud Run/Functions/Gemini/Vertex, no para
+// Maps Platform) -- este contador reemplaza al corte que Google no da. Reusa el mismo KV
+// de cuotas que la voz (VOZ_CUOTA) con prefijo "geo-": es un almacén de contadores
+// genérico, no algo específico de voz, y evita provisionar un namespace KV nuevo.
+// Tope deliberadamente muy por debajo del presupuesto real fijado en Google Cloud
+// Billing (CLP 10.000/mes con alerta), para frenar acá con margen de sobra antes de que
+// el gasto real se acerque a ese límite.
+const GEO_MAX_MES = 300; // ~300 consultas/mes, dentro del tramo 100% gratis de Google
+async function _geoPresupuestoMensual(env) {
+  // Sin KV no hay forma de saber cuánto se ha gastado -- a diferencia del presupuesto de
+  // voz (que falla abierto, un criterio ya aceptado para ese caso), acá se falla CERRADO
+  // a propósito: sin poder confirmar que queda cupo, no se llama a Google. Es la diferencia
+  // entre "se cae la voz" (molesto) y "se dispara gasto sin control" (inaceptable).
+  if (!env.VOZ_CUOTA) return false;
+  const mes = new Date().toISOString().slice(0, 7);
+  const key = "geo-mes:" + mes;
+  try {
+    const usado = parseInt((await env.VOZ_CUOTA.get(key)) || "0", 10);
+    const tope = parseInt(env.GEO_MAX_MES || "", 10) || GEO_MAX_MES;
+    if (usado >= tope) return false;
+    await env.VOZ_CUOTA.put(key, String(usado + 1), { expirationTtl: 2764800 });
+    return true;
+  } catch (e) { return false; }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const cors = {
@@ -312,6 +339,44 @@ export default {
         return resp;
       } catch (e) {
         return new Response(JSON.stringify({ error: "eltts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    }
+
+    // ===== GEOCODING (Google), 2026-08-30. Proxy seguro: la llave vive en el secreto
+    // GOOGLE_GEOCODING_API_KEY, NUNCA en la app ni en el repo -- probado en vivo que Google
+    // rechaza en seco cualquier key restringida por referrer HTTP para esta API ("API keys
+    // with referer restrictions cannot be used with this API"), así que llamarla directo
+    // desde el navegador no es una opción real; tiene que pasar por acá. Solo se activa
+    // como ÚLTIMO recurso, después de que el mapa propio, Nominatim, Photon e interpolación
+    // Overpass ya fallaron (ver geocodeDestino en index.html) -- el 99% de las búsquedas
+    // nunca llegan a tocar esto. Blindaje en capas, ninguna confía en lo que declare el
+    // cliente: 1) límite por IP (mismo que la voz); 2) presupuesto mensual de CONSULTAS,
+    // que falla CERRADO si no se puede verificar (ver _geoPresupuestoMensual); 3) el
+    // resultado se recorta a solo lo que el cliente necesita, nunca se reenvía la key ni
+    // metadata de más. Uso: ?geo=<direccion>. =====
+    const geoQ = url.searchParams.get("geo") || (body && body.geo);
+    if (geoQ) {
+      if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      if (!(await _geoPresupuestoMensual(env))) return new Response(JSON.stringify({ status: "PRESUPUESTO_AGOTADO" }), { headers: { ...cors, "Content-Type": "application/json" } });
+      const key = env.GOOGLE_GEOCODING_API_KEY;
+      if (!key) return new Response(JSON.stringify({ error: "sin_llave_google" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      try {
+        const gurl = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodeURIComponent(String(geoQ).slice(0, 200)) + "&region=cl&key=" + key;
+        const r = await fetch(gurl);
+        const j = await r.json();
+        if (j.status !== "OK" || !j.results || !j.results.length) {
+          return new Response(JSON.stringify({ status: j.status || "ERROR" }), { headers: { ...cors, "Content-Type": "application/json" } });
+        }
+        const best = j.results[0];
+        return new Response(JSON.stringify({
+          status: "OK",
+          lat: best.geometry.location.lat,
+          lon: best.geometry.location.lng,
+          name: best.formatted_address,
+          address_components: best.address_components
+        }), { headers: { ...cors, "Content-Type": "application/json" } });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "geo", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       }
     }
 

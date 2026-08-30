@@ -8757,67 +8757,28 @@ function _guardarDireccionPropia(query, lat, lon, name, origen){
     }, {merge:true}).catch(function(){});
   }catch(e){}
 }
-// Google Geocoding (2026-08-30): último recurso PAGADO, solo cuando ya falló todo lo
-// gratis (mapa propio, Nominatim, Photon, interpolación Overpass). La key va directo en
-// el JS del cliente a propósito -- así es como se usan SIEMPRE las keys de Maps
-// Platform, no hay forma de evitarlo sin un backend propio. La protección real no es
-// ocultarla (imposible en una web pública), es la restricción por referrer HTTP
-// configurada en Google Cloud Console (solo funciona desde librepedal.cl y *.pages.dev),
-// así que aunque cualquiera la vea con "Ver código fuente", no le sirve de nada fuera de
-// nuestro dominio.
-// OJO (2026-08-30, probado en vivo): NO se puede llamar a Geocoding API directo desde el
-// cliente con una key restringida por referrer HTTP -- Google la rechaza en seco
-// ("API keys with referer restrictions cannot be used with this API"). Ese tipo de
-// restricción solo es válida para Maps JavaScript API, no para la API REST que se llama
-// por fetch. La única forma correcta de usar Geocoding es a través de un backend propio
-// (proxy en worker-ia, con la key como secreto de Cloudflare, nunca expuesta al cliente)
-// -- pendiente de construir. Hasta entonces, vacía a propósito: sin esto, esta función
-// nunca se activa y el comportamiento de la app no cambia en nada.
-const GOOGLE_GEOCODING_API_KEY='';
-// Freno de gasto (el que de verdad importa): Google Cloud NO ofrece corte automático
-// duro para Geocoding API (solo para Cloud Run/Functions/Gemini/Vertex, verificado en la
-// consola) -- el único límite real posible ahí es una ALERTA por correo, no un corte. Por
-// eso el corte de verdad vive acá: un contador mensual en Firestore que se revisa ANTES
-// de cada llamada. El tope está deliberadamente muy por debajo del presupuesto real
-// fijado en Google Cloud (CLP 10.000/mes), para frenar la app con margen de sobra antes
-// de que el gasto real se acerque a ese límite.
-const LIMITE_MENSUAL_GOOGLE_GEOCODING=300; // ~300 llamadas ≈ USD 1.5 ≈ CLP 1.500 al mes
-function _mesActualStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
-async function _puedeUsarGoogleGeocoding(){
-  if(!GOOGLE_GEOCODING_API_KEY || typeof db==='undefined') return false;
-  try{
-    const doc=await db.collection('meta').doc('googleGeocodingUso').get();
-    const d=doc.exists?doc.data():null;
-    const usados=(d&&d.mes===_mesActualStr())?(d.llamadas||0):0;
-    return usados<LIMITE_MENSUAL_GOOGLE_GEOCODING;
-  }catch(e){ return false; } // si Firestore falla, no se arriesga gasto: no se usa Google
-}
-function _registrarUsoGoogleGeocoding(){
-  if(typeof db==='undefined') return;
-  const ref=db.collection('meta').doc('googleGeocodingUso'), mes=_mesActualStr();
-  db.runTransaction(function(tx){
-    return tx.get(ref).then(function(doc){
-      const d=doc.exists?doc.data():null;
-      const usados=(d&&d.mes===mes)?(d.llamadas||0):0;
-      tx.set(ref, {mes:mes, llamadas:usados+1}, {merge:true});
-    });
-  }).catch(function(){});
-}
+// Google Geocoding vía proxy propio (2026-08-30): último recurso PAGADO, solo cuando ya
+// falló todo lo gratis (mapa propio, Nominatim, Photon, interpolación Overpass). Probado
+// en vivo: Google rechaza en seco cualquier key restringida por referrer HTTP para esta
+// API ("API keys with referer restrictions cannot be used with this API") -- llamarla
+// directo desde el navegador no es opción real. La llave vive SOLO como secreto de
+// Cloudflare en worker-ia (GOOGLE_GEOCODING_API_KEY), nunca en este archivo ni en el
+// repo. El freno de gasto real (Google no ofrece corte automático duro para esta API,
+// verificado en la consola) también vive del lado del servidor -- ver
+// _geoPresupuestoMensual en worker-ia/worker.js, falla CERRADO si no puede confirmar
+// cupo. El cliente no necesita (ni puede) verificar presupuesto por su cuenta: solo
+// pregunta, y confía en lo que responda el Worker.
 async function _geocodeGoogle(query){
-  if(!GOOGLE_GEOCODING_API_KEY) return null;
   try{
-    const url='https://maps.googleapis.com/maps/api/geocode/json?address='+encodeURIComponent(query)+'&region=cl&key='+GOOGLE_GEOCODING_API_KEY;
-    const r=await _fetchT(url, 10000);
+    const r=await _fetchT(IA_URL+'/?geo='+encodeURIComponent(query), 10000);
     const j=await r.json();
-    if(j.status!=='OK' || !j.results || !j.results.length) return null;
-    const best=j.results[0];
+    if(j.status!=='OK' || j.lat==null || j.lon==null) return null;
     const numPedido=_extraerNumeroDireccion(query);
-    const comp=best.address_components||[];
+    const comp=j.address_components||[];
     const hnComp=comp.find(function(c){ return c.types && c.types.indexOf('street_number')>=0; });
     const numEncontrado=hnComp?parseInt(hnComp.long_name,10):null;
     const houseMatch=(numPedido==null)||(numEncontrado!=null && numEncontrado===numPedido);
-    _registrarUsoGoogleGeocoding();
-    return {lat:best.geometry.location.lat, lon:best.geometry.location.lng, name:best.formatted_address, houseMatch:houseMatch};
+    return {lat:j.lat, lon:j.lon, name:j.name, houseMatch:houseMatch};
   }catch(e){ return null; }
 }
 async function geocodeDestino(query){
@@ -8868,15 +8829,15 @@ async function geocodeDestino(query){
     if(r && !candidato) candidato=r;
   }
   // Último intento con datos reales antes de resignarse a un punto aproximado: Google
-  // Geocoding (pago), solo si queda presupuesto este mes (ver _puedeUsarGoogleGeocoding).
-  // Deliberadamente lo ÚLTIMO que se prueba, no lo primero — todo lo gratis ya falló acá.
-  if(await _puedeUsarGoogleGeocoding()){
-    try{
-      const rg=await _geocodeGoogle(query);
-      if(rg && rg.houseMatch){ _guardarDireccionPropia(query, rg.lat, rg.lon, rg.name, 'google'); return rg; }
-      if(rg && !candidato) candidato=rg;
-    }catch(e){}
-  }
+  // Geocoding vía proxy propio (pago, freno de gasto real del lado del servidor -- ver
+  // _geocodeGoogle). Deliberadamente lo ÚLTIMO que se prueba, no lo primero — todo lo
+  // gratis ya falló acá. Si el Worker rechaza por presupuesto agotado, simplemente
+  // devuelve null y seguimos al respaldo de abajo, sin romper nada.
+  try{
+    const rg=await _geocodeGoogle(query);
+    if(rg && rg.houseMatch){ _guardarDireccionPropia(query, rg.lat, rg.lon, rg.name, 'google'); return rg; }
+    if(rg && !candidato) candidato=rg;
+  }catch(e){}
   // Último respaldo: si la dirección traía número de casa, probamos sin él. OSM en Chile
   // casi nunca tiene el número exacto mapeado fuera del centro de Santiago, pero la calle
   // sola sí suele existir.
