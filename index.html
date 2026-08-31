@@ -2955,6 +2955,7 @@ function previsualizarPersonalidad(id, ev){
     const fid=(typeof VOCES_MANIFEST_EL!=='undefined') && VOCES_MANIFEST_EL && VOCES_MANIFEST_EL.map && VOCES_MANIFEST_EL.map[frase];
     if(!fid) return;
     if(_vozPreviewAudio){ try{ _vozPreviewAudio.pause(); }catch(e){} }
+    pararVoz(); // si Pistero venía hablando, que no se encime con el preview de la voz
     const a=new Audio('voces-el/'+pisteroGenero+fid+'.mp3');
     _vozPreviewAudio=a;
     a.play().catch(function(){});
@@ -3594,6 +3595,15 @@ function _vozNeural(item, durEst){
     .catch(function(){ clearTimeout(to); fallback(); });
 }
 function _vozSiguiente(){
+  // Corta cualquier audio que siga sonando/cargando de la frase anterior antes de avanzar.
+  // Bug real (2026-08-30, reporte de Inty "se cuelan las voces, unas sobre otras"): cuando
+  // este avance lo dispara el timer de seguridad de 12s de _reproducirVoz() (la voz en vivo
+  // -Azure/ElevenLabs- tarda en cargar por señal débil, típico pedaleando), el <audio> viejo
+  // seguía vivo de fondo sin pausar y podía terminar de cargar y arrancar a sonar TARDE,
+  // superpuesto con la frase siguiente que este mismo _vozSiguiente() ya puso a sonar.
+  try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){}
+  try{ speechSynthesis.cancel(); }catch(e){}
+  try{ lpTTS.stop(); }catch(e){}
   vozHablando=false; vozPrioActual=0;
   // saca el de MÁS prioridad (no el primero): un aviso importante no espera detrás de uno menor
   let idx=-1, mejor=-1;
@@ -5517,6 +5527,15 @@ function ug(p){
   _gpsBadgeToggle('gpsSignalBadge', false);
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
   const _msDesdeUltimoFix=lastFixTime?(Date.now()-lastFixTime):0; // para el chequeo de velocidad plausible más abajo
+  // Bug real (2026-08-30, reporte de Inty "marcó mi posición superlejos de donde estaba"):
+  // este chequeo de plausibilidad SOLO protegía el kilometraje sumado (más abajo) — el
+  // marcador visual, el track guardado y la posición publicada para otros ciclistas se
+  // actualizaban con el fix crudo SIN pasar por ningún filtro, así que un solo glitch del
+  // chip GPS (multipath/rebote de señal, con accuracy reportada igual <=65m) teletransportaba
+  // el punto azul en el mapa. us.la/us.lo se siguen re-anclando SIEMPRE más abajo (para que
+  // el próximo fix compare bien), así que si el salto es real y sostenido el marcador se pone
+  // al día solo, con un atraso de un único fix (1-2s) — no se queda pegado.
+  const _saltoPosOK = !us.la || _saltoEsPlausible(moved*1000, _msDesdeUltimoFix);
   // VELOCIDAD VERIFICADA POR DESPLAZAMIENTO REAL (ventana ~10s). Es la fuente de
   // verdad para saber SI te estás moviendo: promedia el ruido del GPS. Si en 10s no
   // nos desplazamos de verdad, estamos QUIETOS aunque el GPS reporte velocidad
@@ -5544,7 +5563,7 @@ function ug(p){
   { const _sv=document.getElementById('saverSpd'); if(_sv) _sv.innerText=Math.round(sp); }
   updateSpeedStatus(sp);
   _actualizarPausaViaje(sp, 'dashPausaBadge');
-  _actualizarLiveTrack(la,lo);
+  if(_saltoPosOK) _actualizarLiveTrack(la,lo);
   if(!segmentosCargados){ segmentosCargados=true; iniciarSeguimientoSegmentos(la,lo); } else { _verificarSegmentos(la,lo); }
   if(sp>maxSpeed) maxSpeed=sp;
   speedReadings.push(sp);
@@ -5576,13 +5595,17 @@ function ug(p){
   // promedia y cancela justo ese ruido) muestre 0 = estás parado de verdad. Se
   // agrega sp>0 como condición: solo suma kilometraje cuando la propia app ya
   // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
-  if(us.la && sp>0 && _saltoEsPlausible(moved*1000, _msDesdeUltimoFix)){ us.di+=moved; _kmEsteViaje+=moved; _sumarKmModo(moved); _sumarKmMantencion(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  if(us.la && sp>0 && _saltoPosOK){ us.di+=moved; _kmEsteViaje+=moved; _sumarKmModo(moved); _sumarKmMantencion(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);
-  currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
-  if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
-  if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ const plat=Math.round(la*100)/100, plon=Math.round(lo*100)/100; /* precisión ~1 km: privacidad, no revela tu ubicación exacta */ db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); _rtdPublicarPosicion(plat, plon); lastPos={lat:la,lon:lo}; } }
+  // Todo lo visual/publicado (track guardado, marcador, posición que ven otros ciclistas)
+  // solo se mueve con fixes plausibles — el glitch descartado no entra al historial.
+  if(_saltoPosOK){
+    currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
+    if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
+    if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ const plat=Math.round(la*100)/100, plon=Math.round(lo*100)/100; /* precisión ~1 km: privacidad, no revela tu ubicación exacta */ db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); _rtdPublicarPosicion(plat, plon); lastPos={lat:la,lon:lo}; } }
+  }
   /* (las bromas por velocidad ahora se disparan mas arriba, para todas las velocidades) */
 }
 // ===== ZONAS ROJAS: sectores marcados como inseguros para ciclistas (multi-ciudad).
@@ -8909,24 +8932,36 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   const _velHWNav=_velocidadHardware(speedMs);
   const speed=(_speedBase>0 && _velHWNav!=null && _velHWNav<=_velMaxPlausibleKmh()) ? _velHWNav : _speedBase;
   _actualizarPausaViaje(speed, 'navPausaBadge');
-  _actualizarLiveTrack(lat,lon);
   _verificarSegmentos(lat,lon);
   // jitter: no suma distancia/calorías si el salto es < 12 m (deriva del GPS quieto),
   // pero el punto igual queda registrado arriba para la velocidad real.
+  // Bug real (2026-08-30, reporte de Inty "marcó mi posición superlejos de donde estaba"):
+  // igual que en ug() (GPS libre), este chequeo de plausibilidad solo protegía el
+  // kilometraje — el marcador (helmetMarker+panTo), _actualizarLiveTrack y el track
+  // dibujado (gpsPoints) se actualizaban con el fix crudo sin ningún filtro, así que un
+  // glitch del chip GPS (multipath/rebote de señal) teletransportaba al ciclista en el
+  // mapa de navegación. lastGpsPoint se sigue re-anclando SIEMPRE (si no, un salto real y
+  // sostenido se quedaría pegado en vez de ponerse al día en el fix siguiente).
+  let _saltoPosOKNav=true;
   if(lastGpsPoint){
     const dist=calculateDistance(lastGpsPoint.lat,lastGpsPoint.lon,lat,lon);
     if(dist>=12){
-      // Salto implausible (glitch del GPS): no suma al kilometraje, pero re-ancla la
-      // posición igual para que el próximo fix se calcule contra el punto correcto.
-      // Mismo bug real que en ug() (GPS libre): sin exigir speed>0, el ruido normal
-      // del GPS estando quieto se colaba de a poco al kilometraje aunque "speed" (ya
-      // calculada arriba, con ventana de varios puntos) mostrara 0 = parado de verdad.
-      if(speed>0 && _saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now))){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _kmEsteViaje+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
-      gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now};
+      _saltoPosOKNav=_saltoEsPlausible(dist, _now-(lastGpsPoint.t||_now));
+      // Salto implausible (glitch del GPS): no suma al kilometraje ni mueve nada visual,
+      // pero re-ancla lastGpsPoint igual para que el próximo fix se calcule contra el
+      // punto correcto. Mismo bug real que en ug() (GPS libre): sin exigir speed>0, el
+      // ruido normal del GPS estando quieto se colaba de a poco al kilometraje aunque
+      // "speed" (ya calculada arriba, con ventana de varios puntos) mostrara 0 = parado.
+      if(speed>0 && _saltoPosOKNav){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _kmEsteViaje+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
+      if(_saltoPosOKNav) gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)});
+      lastGpsPoint={lat:lat,lon:lon,t:_now};
     }
   }
   else { gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now}; }
-  if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); if(navAutoFollow) navMap.panTo([lat,lon]); }
+  if(_saltoPosOKNav){
+    _actualizarLiveTrack(lat,lon);
+    if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); if(navAutoFollow) navMap.panTo([lat,lon]); }
+  }
   L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
   document.getElementById('navSpeed').innerText=Math.round(speed);
   document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2);
