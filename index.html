@@ -3174,8 +3174,17 @@ function _bocaIniciarCiclo(){
   })();
 }
 function _bocaDetener(){ clearTimeout(window._bocaTO); _bocaAplicar(0); }
-function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); try{ if(typeof _setExprPistero==='function'){ var _mm=(typeof _pisteroMood==='string'&&_pisteroMood)?('hablando_'+_pisteroMood):'hablando'; _setExprPistero(_mm); } }catch(e){} try{ if(typeof _pausarManosLibres==='function') _pausarManosLibres(); }catch(e){} _bocaIniciarCiclo(); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
-function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} try{ if(typeof _reanudarManosLibres==='function') _reanudarManosLibres(); }catch(e){} try{ _pisteroMood=null; }catch(e){} try{ if(typeof _setExprPistero==='function') _setExprPistero((typeof micOn!=='undefined'&&micOn)?'escuchando':'feliz'); }catch(e){} }
+// Bug real (2026-08-31, reporte de Inty: "no reacciona al cállate"): _pisteroHabla() pausaba
+// AQUÍ el reconocimiento continuo de manos libres (_pausarManosLibres, que hace stop() real
+// del reconocimiento) mientras Pistero hablaba, y recién lo reanudaba 400ms después de que
+// terminara. Pero "cállate" es exactamente la orden que alguien dice MIENTRAS él está
+// hablando -para cortarlo-, así que caía justo en la ventana donde el micrófono estaba
+// apagado del todo: nunca llegaba a escucharse. Se deja de pausar acá — el mic de manos
+// libres se mantiene abierto todo el tiempo; el filtro de "no confundir su propio audio con
+// un comando" ahora vive en el handler de resultados (_iniciarEscuchaContinua) y en
+// _procesarFraseManosLibres, que mientras vozHablando es true solo dejan pasar el silencio.
+function _pisteroHabla(ms){ document.body.classList.add('pistero-hablando'); try{ if(typeof _setExprPistero==='function'){ var _mm=(typeof _pisteroMood==='string'&&_pisteroMood)?('hablando_'+_pisteroMood):'hablando'; _setExprPistero(_mm); } }catch(e){} _bocaIniciarCiclo(); try{ lpMusic.duck(); }catch(e){} clearTimeout(window._phTO); window._phTO=setTimeout(function(){ document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} }, ms||3000); }
+function _pisteroCalla(){ clearTimeout(window._phTO); document.body.classList.remove('pistero-hablando'); _bocaDetener(); try{ lpMusic.unduck(); }catch(e){} try{ _pisteroMood=null; }catch(e){} try{ if(typeof _setExprPistero==='function') _setExprPistero((typeof micOn!=='undefined'&&micOn)?'escuchando':'feliz'); }catch(e){} }
 
 /* ===== REPRODUCTOR LIBRE PEDAL: radios gratis + música propia, con auto-volumen cuando Pistero habla ===== */
 const lpMusic=(function(){
@@ -10146,6 +10155,10 @@ function _procesarFraseManosLibres(t){
   // El silencio funciona SIEMPRE, sin necesitar el nombre — es la orden más
   // urgente y no puede depender de que Pistero "te haya escuchado bien" el nombre.
   if(/^(detente|para|ya)\.?$/.test(norm) || /c[aá]llate|\bcalla\b|silencio|no hables m[aá]s|deja(te)? de hablar|quiero silencio|no digas nada|basta ya/.test(norm)){ _manosLibresUltimoUso=Date.now(); handleVoiceCommand(t); return; }
+  // Mientras Pistero habla (mic nativo Android, sin el buffer del camino web) solo el
+  // silencio -ya resuelto arriba- se procesa; el resto se ignora para no confundir su
+  // propio audio con una orden real.
+  if(typeof vozHablando!=='undefined' && vozHablando) return;
   const m=t.match(/pistero[,:.]?\s*(.*)$/i);
   if(!m) return; // no te dirigiste a él por su nombre: sigue escuchando en silencio, no interrumpe
   _manosLibresUltimoUso=Date.now(); // te dirigiste a él: sigue despierto
@@ -10164,16 +10177,20 @@ function _iniciarEscuchaContinua(){
   r.lang='es-CL'; r.continuous=true; r.interimResults=true; r.maxAlternatives=1;
   r.onresult=function(e){
     let huboVoz=false;
+    // Pistero ya no pausa este mic mientras habla (ver _pisteroHabla). Mientras está
+    // hablando, cualquier resultado que NO sea el comando de silencio se ignora del todo
+    // -ni se ejecuta ni se acumula al buffer de la idea en curso- para no confundir su
+    // propio audio saliendo por el parlante con una orden real del usuario.
+    const _pisteroHablandoAhora=(typeof vozHablando!=='undefined') && vozHablando;
     for(let i=e.resultIndex;i<e.results.length;i++){
       const seg=e.results[i][0].transcript;
       if(!seg) continue;
+      const esFinal=e.results[i].isFinal;
+      const t=esFinal?(quitarEcoPistero(seg)||seg):null;
+      if(esFinal && t && _esSilencioCmd(t)){ clearTimeout(_flSilTimer); _flSilTimer=null; _flBuffer=''; _manosLibresUltimoUso=Date.now(); handleVoiceCommand(t); continue; }
+      if(_pisteroHablandoAhora) continue;
       huboVoz=true;
-      if(e.results[i].isFinal){
-        const t=quitarEcoPistero(seg)||seg;
-        if(!t) continue;
-        if(_esSilencioCmd(t)){ clearTimeout(_flSilTimer); _flSilTimer=null; _flBuffer=''; _manosLibresUltimoUso=Date.now(); handleVoiceCommand(t); continue; }
-        _flBuffer=(_flBuffer+' '+t).trim();
-      }
+      if(esFinal && t) _flBuffer=(_flBuffer+' '+t).trim();
     }
     if(huboVoz){ clearTimeout(_flSilTimer); _flSilTimer=setTimeout(_flCerrarIdea, _FL_FIN_IDEA); }
   };
