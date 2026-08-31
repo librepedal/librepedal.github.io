@@ -1,5 +1,38 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ PUBLICADO — main en 4f4669a, versión 8.788 en producción (2026-08-31, sesión Lenovo)
+> Pedido de Inty: "no quiero nada generico y quiero todo funcional no rompa nada y audita".
+> Candado de `index.html`: **LIBRE**.
+>
+> **Popups del mapa (ciclista + puntos estratégicos) dejan de ser la caja blanca genérica.**
+> Se le había mostrado a Inty 2 modelos en un Artifact (Ficha de Ruta / Insignia Expandida)
+> pero no eligió uno — pedido explícito de "no genérico + funcional + auditado" en su lugar,
+> así que se implementó directo (tarjeta oscura tipo `.stat-card`, sin preguntar de nuevo).
+>
+> - Contenedor del popup (`.maplibregl-popup-content` / `.leaflet-popup-content-wrapper`)
+>   restyleado GLOBALMENTE — afecta a TODOS los popups del mapa, no solo los 2 rediseñados.
+> - Ciclista: mismo Pistero real del pin (mismo casco/color, sin leer nada nuevo de
+>   Firestore) en vez de `<b>nombre</b>` + emoji 🚴.
+> - Puntos estratégicos (agua/comida/mirador/camping/taller/hostel/seguridad): ícono Font
+>   Awesome a color por categoría, mismo patrón que `REPORTE_CATS`/`_repIco()` ya
+>   establecido — reusa el mismo ícono/color de mirador y taller para que el mismo concepto
+>   no se vea distinto según de qué lista salió el punto. Reemplaza 💧🍔📸⛺🔧🏠🛡️.
+> - `lpBadgeHTML()`: el fondo tintado del pin era SIEMPRE rojizo sin importar el color real
+>   pasado (bug preexistente — ej. taller naranja en COLABORADORES quedaba con fondo rojo);
+>   ahora el tinte sale del propio color.
+> - Popup de "punto elegido" (clic derecho) tenía `color:#222` fijo asumiendo fondo blanco
+>   — con el fondo oscuro nuevo hubiera quedado invisible; pasado a la misma tarjeta.
+>
+> **Auditoría**: se revisó cada `bindPopup()`/`Popup()` del archivo (zona de riesgo, resumen
+> de rutas, reportes de comunidad, colaboradores, hospedajes) contra el cambio de fondo —
+> ninguno tenía texto oscuro fijo que dependiera del blanco de la librería, no se rompió
+> ninguno. Verificado instanciando MapLibre y Leaflet REALES en el navegador (no solo el
+> HTML aislado) — capturas de los 2 popups rediseñados + 2 de los que no se tocaron (zona de
+> riesgo, colaboradores) confirmando que siguen legibles. Tests 27/28 (el que falla,
+> `mantencion.test.mjs`, es preexistente). Sintaxis de los 6 `<script>` validada.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en 509b1b7, versión 8.787 en producción (2026-08-31, sesión Lenovo)
 > Umbrales confirmados por Inty en el momento (6 meses + 50 Darma). Candado de
 > `index.html`: **LIBRE**.
