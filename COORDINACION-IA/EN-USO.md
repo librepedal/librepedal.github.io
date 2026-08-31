@@ -1,5 +1,26 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟡 EN REVISIÓN (no toca index.html) — commit local 36c2170, 2026-08-31, sesión Lenovo
+> No requirió candado: solo `perfil-comunidad.js` (módulo aparte) + su test nuevo. Candado
+> de `index.html` sigue **LIBRE**.
+>
+> **Oficio, trueque y voluntariado** — nueva sección en el perfil de comunidad de cada
+> ciclista (pedido de Inty 2026-08-31: "un espacio que se desbloquea con darma y tiempo en
+> la app"). Se desbloquea con 6 meses en la comunidad (mismo umbral que "Te doy alojo") MAS
+> 50 de Darma. Campos públicos en `users/{id}` (oficio/trueque/voluntariado), mismo criterio
+> que `bio`. Test nuevo `tests/trueque-comunidad.test.mjs` corriendo contra el bloque real
+> (23/23 verde), suite completa 27/28 (el que falla, `mantencion.test.mjs`, ya fallaba en
+> `main` antes de este cambio — no es de esto). Verificado en navegador local contra el
+> flujo real del modal (bloqueado/formulario), sin tocar `index.html`.
+>
+> **NO empujado a `main` todavía** — commiteado local, esperando que Inty confirme los
+> umbrales (6 meses / 50 Darma) y el nombre de la sección antes de publicar.
+>
+> Pendiente aparte, todavía sin decidir: rediseño visual de los popups del mapa (ciclista
+> y puntos estratégicos) — 2 modelos mostrados en Artifact, Inty no eligió cuál seguir.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en f1e6e84, versión 8.775 en producción (2026-08-25, sesión Lenovo)
 > Autorizado por Inty (sesión de trabajo de voz, cada frase aprobada individualmente por
 > audio real). Candado: **LIBRE**.
