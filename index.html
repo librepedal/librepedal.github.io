@@ -776,6 +776,14 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 #micBtn.listening{opacity:1;filter:drop-shadow(0 0 10px rgba(252,76,2,.75))}
 body.pistero-hablando #micBtn{filter:drop-shadow(0 0 10px rgba(47,176,255,.75))}
 body.lp-typing #micBtn{opacity:0;pointer-events:none}
+/* Bug real (2026-08-31, Inty: "el botón que ha tapado" al registrar un punto/alojamiento):
+   #micBtn flota FIJO en el centro-abajo de la pantalla en TODAS las vistas (ver la regla de
+   arriba, bottom+left:50%). Con scroll normal, cualquier botón real de la página (ej.
+   "Publicar" en Nuevo alojamiento) puede terminar pasando justo por esa franja fija — el mic,
+   con z-index 2200, intercepta el toque antes de que llegue al botón de abajo, tapándolo de
+   verdad. Misma solución que ya existía para "escribiendo" (lp-typing, arriba): atenuar y
+   dejar pasar el toque, detectado en vivo por JS (ver _revisarMicTapaBoton). */
+body.mic-tapando-boton #micBtn{opacity:.22;pointer-events:none}
 .nav-manoslibres-btn{display:none!important}
 body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
 /* Animaciones de la cara (compartidas mapa+esfera) */
@@ -10122,6 +10130,41 @@ document.addEventListener('pointerdown', function _lpArrancaOrbe(){ document.rem
 // El orbe se esconde mientras se escribe, para no tapar inputs de chat/Pistero.
 document.addEventListener('focusin', function(e){ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) document.body.classList.add('lp-typing'); });
 document.addEventListener('focusout', function(e){ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) document.body.classList.remove('lp-typing'); });
+// Bug real (2026-08-31, reporte de Inty: "el botón que ha tapado" al registrar un punto/
+// alojamiento). #micBtn flota FIJO (bottom+left:50%) en TODAS las vistas, con z-index 2200 —
+// más alto que cualquier botón normal de la página. Al scrollear una pantalla larga (ej.
+// "Nuevo alojamiento": Marcar con GPS → mapa → Publicar), el botón "Publicar" pasa, en algún
+// punto del scroll, justo por la franja fija donde vive el orbe — y en ESE instante el toque
+// le llega al orbe, no al botón de abajo: el botón queda tapado de verdad, no solo visualmente.
+// Se detecta en vivo (con requestAnimationFrame, sin recalcular en cada evento de scroll) si
+// hay un <button>/<a> real justo debajo del orbe en ese momento; si lo hay, se atenúa y deja
+// pasar el toque (mismo mecanismo ya usado para "escribiendo", arriba) hasta que deje de haber
+// solapamiento. No cambia nada del tamaño/posición/comportamiento normal del orbe.
+(function(){
+  let _raf=null;
+  function revisar(){
+    _raf=null;
+    try{
+      const mic=document.getElementById('micBtn');
+      if(!mic) return;
+      const cs=getComputedStyle(mic);
+      if(cs.display==='none'||cs.visibility==='hidden'){ document.body.classList.remove('mic-tapando-boton'); return; }
+      const r=mic.getBoundingClientRect();
+      if(r.width<2||r.height<2){ document.body.classList.remove('mic-tapando-boton'); return; }
+      const pts=[[r.left+6,r.top+6],[r.right-6,r.top+6],[r.left+6,r.bottom-6],[r.right-6,r.bottom-6],[(r.left+r.right)/2,(r.top+r.bottom)/2]];
+      let tapando=false;
+      for(let i=0;i<pts.length && !tapando;i++){
+        const els=document.elementsFromPoint(pts[i][0],pts[i][1]);
+        const debajo=els.find(function(el){ return el!==mic && !mic.contains(el); });
+        if(debajo && (debajo.tagName==='BUTTON'||debajo.tagName==='A'||debajo.closest('button')||debajo.closest('a'))) tapando=true;
+      }
+      document.body.classList.toggle('mic-tapando-boton', tapando);
+    }catch(e){}
+  }
+  function programar(){ if(_raf) return; _raf=requestAnimationFrame(revisar); }
+  window.addEventListener('scroll', programar, {passive:true, capture:true});
+  window.addEventListener('resize', programar, {passive:true});
+})();
 let _reconocimientoContinuo=null, _manosLibresPausado=false, _tocandoNativoContinuo=false;
 // v7.66: fin-de-idea por silencio. El micro continuo se corta y reinicia solo
 // (limite del navegador); antes eso PARTIA la frase. Ahora acumulamos lo dicho en
