@@ -136,13 +136,41 @@ body.tema-cristal .auth-box{
   box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 10px 30px -12px rgba(0,0,0,.6)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);color:#fff;overflow-x:hidden;padding-bottom:70px;min-height:100vh;display:flex;flex-direction:column}
-/* Los popups del mapa (MapLibre y Leaflet, se usan ambos según la pantalla) traen
-   fondo blanco por defecto de su propia librería, pero nunca fijan un color de
-   texto propio — heredaban el blanco del body, texto blanco sobre fondo blanco:
-   un "recuadro en blanco" con la info invisible (nombre del ciclista, título del
-   punto, etc). Los links que sí traían color inline (naranja) seguían viéndose,
-   por eso el recuadro no se veía TOTALMENTE vacío, solo sin la info principal. */
-.maplibregl-popup-content,.leaflet-popup-content{color:#1a1a2e}
+/* Los popups del mapa (MapLibre y Leaflet, se usan ambos según la pantalla) traían el
+   recuadro blanco genérico de su propia librería (antes solo se les había arreglado el
+   color de texto — ver commit viejo — pero el fondo seguía siendo la caja blanca por
+   defecto, "genérica", queja real de Inty 2026-08-31). Ahora el CONTENEDOR se restylea acá
+   para TODOS los popups del mapa por igual — aunque su contenido no se haya reescrito en
+   una tarjeta `.lp-pop` (ver más abajo), nada queda en blanco-sobre-oscuro ni oscuro-sobre-
+   oscuro. Autitado contra cada bindPopup()/Popup() del archivo (usuario, puntos
+   sembrados/comunidad, zona de riesgo, punto elegido con clic derecho, colaboradores,
+   hospedajes, resumen de rutas) — ninguno tenía texto claro fijo que dependiera del blanco
+   de la librería, así que el cambio de fondo no rompe ninguno. */
+.maplibregl-popup-content,.leaflet-popup-content-wrapper{
+  background:linear-gradient(180deg,#111c30,#0c1422);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+  box-shadow:0 14px 30px rgba(0,0,0,.5)
+}
+.maplibregl-popup-tip{border-top-color:#0c1422;border-bottom-color:#0c1422}
+.leaflet-popup-tip{background:#0c1422;box-shadow:none}
+.maplibregl-popup-close-button{color:#8fa3c4;font-size:18px}
+.maplibregl-popup-close-button:hover{color:#fff;background:transparent}
+.leaflet-popup-close-button{color:#8fa3c4 !important}
+.leaflet-popup-close-button:hover{color:#fff !important}
+.maplibregl-popup-content,.leaflet-popup-content{color:#dfe7ff}
+/* Tarjeta propia para el CONTENIDO de un popup (ciclista / punto estratégico / punto
+   elegido a mano) — reemplaza "<b>nombre</b><br><a>link</a>" por algo con ícono, color
+   por categoría y botón real. `--cc` (color de la categoría) lo fija cada popup inline. */
+.lp-pop{display:flex;gap:10px;align-items:center;min-width:170px}
+.lp-pop .lp-ic{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1.5px solid var(--cc,var(--p))}
+.lp-pop .lp-ic i{font-size:15px;color:var(--cc,var(--p))}
+.lp-pop .lp-ic.lp-av{background:#16233c;padding:2px;overflow:hidden}
+.lp-pop .lp-ic.lp-av svg{width:100%;height:100%;display:block}
+.lp-pop .lp-body{flex:1;min-width:0}
+.lp-pop .lp-t{font-weight:800;font-size:.85rem;color:#fff;line-height:1.25}
+.lp-pop .lp-d{font-size:.74rem;color:#9fb3c8;margin-top:4px;line-height:1.4}
+.lp-pop .lp-cta{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:7px 8px;border-radius:8px;background:var(--cc,var(--p));color:#0a0f1d;font-weight:700;font-size:.74rem;text-decoration:none}
 /* Fondo tipo GTA: postal del lugar + capa oscura + malla metálica con brillos */
 #fondoPostal{position:fixed;inset:0;z-index:-3;background:#0a0f1d center/cover no-repeat;filter:contrast(1.12) saturate(1.3) brightness(0.5);transition:opacity 0.9s ease;opacity:0}
 #fondoPostal.on{opacity:1}
@@ -1820,7 +1848,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.787'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.788'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -3679,6 +3707,19 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
 function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
+// Popup de un ciclista en el mapa (2026-08-31, pedido de Inty: "no quiero nada generico").
+// Reusa EXACTAMENTE el mismo color de casco que ya pinta riderMarkerHTML() para el pin
+// (busca en helmetDesigns por helmetId) y dibuja el mismo Pistero, más grande, adentro del
+// popup -- cero datos nuevos, cero lecturas extra a Firestore.
+function _lpAvatarSVG(helmetId){
+  var cc = ((typeof helmetDesigns!=='undefined' && helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color || '#00aaff';
+  var svg = (typeof _pisteroExprSVG==='function') ? _pisteroExprSVG('feliz', cc, '#f4c9a0', '', '', '', {casco:helmetId,piel:'claro',lentes:''}) : '';
+  return {cc:cc, svg:svg};
+}
+function _lpPopupCiclista(nombre, helmetId, userId){
+  var av = _lpAvatarSVG(helmetId);
+  return '<div class="lp-pop" style="--cc:'+av.cc+'"><div class="lp-ic lp-av">'+av.svg+'</div><div class="lp-body"><div class="lp-t">'+escapeHTML(nombre)+'</div><a href="#" class="lp-cta" onclick="verPerfilUsuario(\''+userId+'\');return false"><i class="fas fa-id-card"></i> Ver perfil</a></div></div>';
+}
 
 // ===== Cara expresiva de Pistero (casco + ojos kawaii + expresiones + mirada) =====
 function _bigoteSVG(id){ if(id==='bigote') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/>'; if(id==='candado') return '<path d="M40 70 Q45 67.5 50 70.5 Q55 67.5 60 70 Q56 73.5 50 72 Q44 73.5 40 70 Z" fill="#5a3a1a"/><path d="M46.5 77 Q50 81.5 53.5 77 Q51.5 78.7 50 78.7 Q48.5 78.7 46.5 77 Z" fill="#5a3a1a"/>'; if(id==='barba') return '<path d="M27 65 Q29 81 50 83 Q71 81 73 65 Q63 73 50 72 Q37 73 27 65 Z" fill="#5a3a1a" opacity="0.92"/>'; return ''; }
@@ -5083,7 +5124,7 @@ function _actualizarVisibilidadCiclistas(){
   if(typeof renderReporteMarkers==='function') renderReporteMarkers();
   if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas();
 }
-function _pintarUnCiclista(u){ const marker=mlMarker([u.lat,u.lon],{icon:{html:riderMarkerHTML(u.helmet,u.jersey,false)}}).addTo(mp).bindPopup('<b>'+escapeHTML(u.nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+u.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); sm.push(marker); }
+function _pintarUnCiclista(u){ const marker=mlMarker([u.lat,u.lon],{icon:{html:riderMarkerHTML(u.helmet,u.jersey,false)}}).addTo(mp).bindPopup(_lpPopupCiclista(u.nombre,u.helmet,u.id)); sm.push(marker); }
 function _renderMainMapUsers(docs){
   if(!mp) return;
   sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; usuariosCercanosData=[];
@@ -5110,7 +5151,7 @@ function _renderMainMapUsers(docs){
     sm.push(marker);
   });
 }
-function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(nombre)+'</b><br><a href="#" onclick="verPerfilUsuario(\''+doc.id+'\');return false" style="color:#fc4c02;font-weight:700">Ver perfil 🚴</a>'); navUserMarkers.push(marker); } }); }
+function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup(_lpPopupCiclista(nombre,data.helmet||'giro',doc.id)); navUserMarkers.push(marker); } }); }
 /* ===== SUSCRIPCION PEREZOSA (2026-08-23) =====
    Al iniciar sesion se enganchaban 11 listeners de golpe, sin importar que pantalla
    estuvieras mirando, y cada uno lee su coleccion ENTERA de arranque: reportes 200,
@@ -6507,9 +6548,19 @@ function mlLatLngBounds(arr){
 // Insignia discreta y consistente para casi todos los puntos del mapa (mismo tono
 // translúcido, mismo tamaño). Solo lo que de verdad necesita saltar a la vista
 // (ej. un punto crítico/peligro) recibe un anillo de color propio.
+// 2026-08-31: el fondo tintado antes era SIEMPRE rojizo (rgba(226,84,74,...)) sin
+// importar qué ringColor de verdad se pasara -- funcionaba por casualidad para peligro
+// (rojo real) pero quedaba desalineado para cualquier otro color (ej. taller naranja en
+// COLABORADORES, l.7655 de esta versión). Ahora el tinte SALE del propio ringColor.
+function _lpHexA(hex, a){
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex||'');
+  if(!m) return null;
+  const n = parseInt(m[1], 16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
 function lpBadgeHTML(icon, ringColor){
   const ring = ringColor || 'rgba(255,255,255,.35)';
-  const bg = ringColor ? 'rgba(226,84,74,.18)' : 'rgba(14,18,28,.85)';
+  const bg = ringColor ? (_lpHexA(ringColor,.18) || 'rgba(226,84,74,.18)') : 'rgba(14,18,28,.85)';
   return '<div style="width:28px;height:28px;border-radius:50%;background:'+bg+';border:1.5px solid '+ring+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4)"><span style="font-size:13px;filter:saturate(.75) brightness(1.05)">'+icon+'</span></div>';
 }
 function mlMarker(latlng, opts){
@@ -6752,7 +6803,7 @@ async function im(){
     // azul que se mueve solo mientras te desplazas (control nativo de MapLibre).
     mp.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true,showAccuracyCircle:true}),'top-right');
     // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
-    mp.on('contextmenu', function(e){ try{ new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div style="font-size:0.78rem;font-weight:700;margin-bottom:6px;color:#222"><i class="fas fa-location-dot"></i> Punto elegido</div><button onclick="irAlPuntoYNavegar('+e.lngLat.lat.toFixed(6)+','+e.lngLat.lng.toFixed(6)+',\'este punto\')" style="background:#fc4c02;color:#2a0e02;border:none;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer"><i class="fas fa-compass"></i> Navegar aquí</button>').addTo(mp); }catch(_){} });
+    mp.on('contextmenu', function(e){ try{ const _lat=e.lngLat.lat.toFixed(6), _lon=e.lngLat.lng.toFixed(6); new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div class="lp-pop"><div class="lp-ic"><i class="fas fa-location-dot"></i></div><div class="lp-body"><div class="lp-t">Punto elegido</div><a href="#" class="lp-cta" onclick="irAlPuntoYNavegar('+_lat+','+_lon+',\'este punto\');return false"><i class="fas fa-compass"></i> Navegar aquí</a></div></div>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
     mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); mp.on('zoomend', _actualizarVisibilidadCiclistas); _actualizarVisibilidadCiclistas(); });
     mp.on('style.load', _aplicarTemaMapa); // aplica el tema de mapa (aventura/neón/arcade) en cada carga de estilo, y resetea (plano) en calles/topo/sat
@@ -6970,6 +7021,24 @@ function _maxRenderParaZoom(zoom){
 // mapa a ~30 km de escala visible o más cerca — más alejado que eso se ven
 // amontonados y ensucian el mapa. Los ciclistas NO tienen este límite, se ven
 // siempre sin importar la escala.
+// Categorías de los puntos del mapa (agua/comida/mirador/etc, sembrados de OSM +
+// comunidad). Mismo patrón que REPORTE_CATS/_repIco (Font Awesome a color, no emoji) --
+// reusa el mismo ícono y color de "mirador"/"taller" que REPORTE_CATS ya usa para que un
+// mismo concepto no se vea distinto según de qué lista salió el punto.
+const LP_PUNTO_CAT={
+  agua:{fa:'droplet',c:'#38bdf8',l:'Agua'},
+  comida:{fa:'utensils',c:'#f59e0b',l:'Comida'},
+  vista:{fa:'mountain-sun',c:'#3b82f6',l:'Vista'},
+  mirador:{fa:'mountain-sun',c:'#3b82f6',l:'Mirador'},
+  camping:{fa:'campground',c:'#10b981',l:'Camping'},
+  taller:{fa:'screwdriver-wrench',c:'#22d3ee',l:'Taller'},
+  hostel:{fa:'house',c:'#ffd700',l:'Hospedaje'},
+  seguridad:{fa:'shield-halved',c:'#ff4d4d',l:'Seguridad'}
+};
+function _lpPopupPunto(titulo,desc,cat,lat,lon){
+  const x=LP_PUNTO_CAT[cat]||{fa:'location-dot',c:'#fc4c02'};
+  return '<div class="lp-pop" style="--cc:'+x.c+'"><div class="lp-ic"><i class="fas fa-'+x.fa+'"></i></div><div class="lp-body"><div class="lp-t">'+escapeHTML(titulo||'Punto')+'</div>'+(desc?'<div class="lp-d">'+escapeHTML(desc)+'</div>':'')+'<a href="#" class="lp-cta" onclick="irAlPuntoYNavegar('+lat+','+lon+');return false"><i class="fas fa-compass"></i> Ir aquí</a></div></div>';
+}
 function _renderizarPuntosVisibles(){
   if(!mp) return;
   if(mp._pts){ mp._pts.forEach(function(m){ mp.removeLayer(m); }); }
@@ -6982,11 +7051,10 @@ function _renderizarPuntosVisibles(){
   const sembrados=enVista.filter(function(d){ return d.user==='osm-data'; });
   const maxSembrados=_maxRenderParaZoom(mp.getZoom());
   const paso=Math.max(1, Math.ceil(sembrados.length/Math.max(1,maxSembrados)));
-  const iconos={agua:'💧',comida:'🍔',vista:'📸',mirador:'📸',camping:'⛺',taller:'🔧',hostel:'🏠',seguridad:'🛡️'};
   const pintar=function(d){
-    const ic=iconos[d.cat]||'📍';
-    const m=mlMarker([d.lat,d.lon],{icon:{html:lpBadgeHTML(ic)}}).addTo(mp);
-    m.bindPopup('<b>'+escapeHTML(d.title||'Punto')+'</b><br><small>'+escapeHTML(d.desc||'')+'</small><br><a href="#" onclick="irAlPuntoYNavegar('+d.lat+','+d.lon+');return false" style="color:#fc4c02;font-weight:700"><i class="fas fa-compass"></i> Ir aquí</a>');
+    const cat=LP_PUNTO_CAT[d.cat]||{fa:'location-dot',c:'#fc4c02'};
+    const m=mlMarker([d.lat,d.lon],{icon:{html:lpBadgeHTML('<i class="fas fa-'+cat.fa+'"></i>',cat.c)}}).addTo(mp);
+    m.bindPopup(_lpPopupPunto(d.title,d.desc,d.cat,d.lat,d.lon));
     mp._pts.push(m);
   };
   comunidad.forEach(pintar);
