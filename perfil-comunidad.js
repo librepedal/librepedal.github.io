@@ -10,6 +10,13 @@
    Modelo de datos:
    - users/{id}.bio        -> PUBLICA (la coleccion users ya es de
      lectura publica). Presentacion corta del ciclista.
+   - users/{id}.oficio, .trueque, .voluntariado -> PUBLICAS, mismo
+     criterio que bio. Seccion "Oficio, trueque y voluntariado":
+     editable solo cuando _truequeDesbloqueado() da true (6 meses en
+     la comunidad, mismo umbral que "Te doy alojo" en index.html, MAS
+     50 de Darma -- pedido explicito de Inty 2026-08-31: "un espacio
+     que se desbloquea con darma y tiempo en la app"). Visible para
+     cualquiera que vea el perfil (como bio), no requiere amistad.
    - perfilPrivado/{id}    -> PRIVADA. fotos[] (base64, via el mismo
      comprimirFoto() que ya usan hostales/recomendaciones) y
      relatos[] ({texto,fecha}). Solo el dueno o sus AMIGOS aceptados
@@ -23,17 +30,57 @@
 (function(){
   'use strict';
   const MAX_FOTOS = 9;
+  const TRUEQUE_MESES_MIN = 6;   // mismo umbral que requiere6Meses() (Te doy alojo)
+  const TRUEQUE_DARMA_MIN = 50;  // nivel "Explorador" -- primer escalon real de aporte
+
+  // meses/darma reales del ciclista dueño de la sesión (mesesDesdeRegistro() y `us`
+  // viven en index.html, cargado antes de que esto se invoque -- ver nota de arriba).
+  function _mesesActuales(){ return (typeof mesesDesdeRegistro==='function') ? mesesDesdeRegistro() : 0; }
+  function _darmaActual(){ return (typeof us!=='undefined' && us && us.d) || 0; }
+  function _truequeDesbloqueado(){ return _mesesActuales()>=TRUEQUE_MESES_MIN && _darmaActual()>=TRUEQUE_DARMA_MIN; }
+
+  function _htmlTruequeLocked(){
+    const faltanMeses = Math.max(0, TRUEQUE_MESES_MIN - _mesesActuales());
+    const faltanDarma = Math.max(0, TRUEQUE_DARMA_MIN - _darmaActual());
+    const req = [];
+    if(faltanMeses>0) req.push('<strong style="color:var(--g)">'+faltanMeses+' mes'+(faltanMeses!==1?'es':'')+'</strong>');
+    if(faltanDarma>0) req.push('<strong style="color:var(--g)">'+faltanDarma+' Darma</strong>');
+    return '<div style="text-align:center;padding:10px 4px">'
+      + '<div style="font-size:1.8rem;color:var(--p)"><i class="fas fa-lock"></i></div>'
+      + '<p style="color:#9fb3c8;font-size:0.8rem;margin:6px 0 0">Se desbloquea con <strong>'+TRUEQUE_MESES_MIN+' meses</strong> en la comunidad y <strong>'+TRUEQUE_DARMA_MIN+' de Darma</strong>.'
+      + (req.length ? '<br>Te falta'+(req.length>1?'n':'')+' '+req.join(' y ')+'.' : '')
+      + '</p></div>';
+  }
+
+  function _htmlTruequeForm(d){
+    const oficio=(d&&d.oficio)||'', trueque=(d&&d.trueque)||'', volunt=(d&&d.voluntariado)||'';
+    return '<input id="oficioInput" type="text" maxlength="60" placeholder="Tu oficio (ej: mecánico, guía, fotógrafo...)" value="'+escapeHTML(oficio)+'" style="width:100%;background:var(--gl);color:#fff;border:1px solid #2a3147;border-radius:8px;padding:8px;font-family:inherit;margin-bottom:6px">'
+      + '<textarea id="truequeInput" maxlength="300" placeholder="Qué ofreces en trueque: reparaciones, alojo, comida..." style="width:100%;min-height:56px;background:var(--gl);color:#fff;border:1px solid #2a3147;border-radius:8px;padding:8px;font-family:inherit;margin-bottom:6px">'+escapeHTML(trueque)+'</textarea>'
+      + '<textarea id="voluntariadoInput" maxlength="300" placeholder="En qué puedes ser voluntario: primeros auxilios, traducción, guía local..." style="width:100%;min-height:56px;background:var(--gl);color:#fff;border:1px solid #2a3147;border-radius:8px;padding:8px;font-family:inherit">'+escapeHTML(volunt)+'</textarea>'
+      + '<button class="ab sec" style="margin-top:6px" onclick="guardarTruequeComunidad()"><i class="fas fa-check"></i> Guardar</button>';
+  }
+
+  function _htmlTruequeView(d){
+    const oficio=(d&&d.oficio)||'', trueque=(d&&d.trueque)||'', volunt=(d&&d.voluntariado)||'';
+    if(!oficio && !trueque && !volunt) return '<p style="color:#c7d4e6;font-size:0.85rem">Este ciclista todavía no compartió en qué puede ayudar a la comunidad.</p>';
+    let html='';
+    if(oficio) html+='<p style="margin:0 0 6px"><span style="color:#7d8ba0;font-size:0.68rem;text-transform:uppercase;letter-spacing:.4px">Oficio</span><br><span style="color:#dfe7ff;font-size:0.85rem;font-weight:700">'+escapeHTML(oficio)+'</span></p>';
+    if(trueque) html+='<p style="margin:0 0 6px"><span style="color:#7d8ba0;font-size:0.68rem;text-transform:uppercase;letter-spacing:.4px">Trueque</span><br><span style="color:#c7d4e6;font-size:0.85rem">'+escapeHTML(trueque)+'</span></p>';
+    if(volunt) html+='<p style="margin:0"><span style="color:#7d8ba0;font-size:0.68rem;text-transform:uppercase;letter-spacing:.4px">Voluntariado</span><br><span style="color:#c7d4e6;font-size:0.85rem">'+escapeHTML(volunt)+'</span></p>';
+    return html;
+  }
 
   window.renderPerfilComunidad = async function(userId, esPropio){
     const slot = document.getElementById('perfilComunidadSlot');
     if(!slot) return;
     slot.innerHTML = '<p style="color:#888;font-size:0.8rem">Cargando presentación...</p>';
 
-    let bio = '';
+    let d = {};
     try{
       const doc = await db.collection('users').doc(userId).get();
-      bio = (doc.exists && doc.data().bio) || '';
+      d = (doc.exists && doc.data()) || {};
     }catch(e){}
+    const bio = d.bio || '';
 
     let html = '<div class="section-info" style="margin-top:12px"><h4><i class="fas fa-id-card"></i> Presentación</h4>';
     if(esPropio){
@@ -42,9 +89,26 @@
     } else {
       html += '<p style="color:#c7d4e6;font-size:0.85rem">'+(bio?escapeHTML(bio):'Este ciclista todavía no se ha presentado.')+'</p>';
     }
-    html += '</div><div id="perfilPrivadoBox" style="margin-top:10px"></div>';
+    html += '</div>';
+
+    html += '<div class="section-info" style="margin-top:12px"><h4><i class="fas fa-handshake"></i> Oficio, trueque y voluntariado</h4>';
+    html += esPropio ? (_truequeDesbloqueado() ? _htmlTruequeForm(d) : _htmlTruequeLocked()) : _htmlTruequeView(d);
+    html += '</div>';
+
+    html += '<div id="perfilPrivadoBox" style="margin-top:10px"></div>';
     slot.innerHTML = html;
     _cargarPerfilPrivado(userId, esPropio);
+  };
+
+  window.guardarTruequeComunidad = async function(){
+    if(!cu || !_truequeDesbloqueado()) return;
+    const oficio=(document.getElementById('oficioInput')||{}).value||'';
+    const trueque=(document.getElementById('truequeInput')||{}).value||'';
+    const volunt=(document.getElementById('voluntariadoInput')||{}).value||'';
+    try{
+      await db.collection('users').doc(cu).set({oficio:oficio.trim().slice(0,60), trueque:trueque.trim().slice(0,300), voluntariado:volunt.trim().slice(0,300)}, {merge:true});
+      if(typeof h==='function') h('Guardado.');
+    }catch(e){ if(typeof h==='function') h('No se pudo guardar, intenta de nuevo.'); }
   };
 
   async function _cargarPerfilPrivado(userId, esPropio){
