@@ -32,12 +32,17 @@ trap 'rm -rf "$OUT"' EXIT
 
 echo "→ armando carpeta limpia..."
 cd "$SRC"
-for f in *.html *.js manifest.json puntos-osm.json version.txt _headers _redirects robots.txt favicon.ico; do
+for f in *.html *.js *.css manifest.json puntos-osm.json version.txt _headers _redirects robots.txt favicon.ico; do
   [ -f "$f" ] && cp "$f" "$OUT/"
 done
 # `*.js` cubre sw.js + los modulos nuevos que carga index.html (voz-elevenlabs.js,
 # perfil-comunidad.js). El codigo de Workers NO va: vive en worker-auth/ y worker-ia/
 # (subcarpetas), no en la raiz, asi que este glob no lo toca.
+# `*.css` (2026-09-02): estilos.css, el primer CSS que vive suelto en la raiz --
+# antes todo el CSS estaba inline en index.html, asi que este glob nunca lo habia
+# necesitado. El control de completitud de mas abajo lo habria detectado igual
+# (referenciado en index.html, ausente en la carpeta limpia) y abortado el deploy,
+# pero mejor cubrirlo directo en vez de depender solo de ese control.
 # `voces` lleva las voces pregeneradas y la detectó el control de completitud de más abajo
 # cuando se me quedó fuera. `demo-voces` y `resources` son material público del sitio.
 # `iconos-modo` (2026-08-22): los 5 PNG de "¿Cómo te mueves?". El control de completitud
