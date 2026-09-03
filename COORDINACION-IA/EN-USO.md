@@ -1,5 +1,61 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔴 HALLAZGO DE SEGURIDAD CERRADO (parcial) + WORKER NUEVO PENDIENTE DE DEPLOY — sesión Lenovo, 2026-09-03
+> Candado de `index.html`: **LIBRE**. No es un refactor en curso, son 2 fixes puntuales ya
+> en `main`, más una pieza de servidor nueva que falta desplegar.
+>
+> **Hallazgo real (no hipotético), a partir de un pedido de Inty de restringir la ubicación
+> en vivo a gente de confianza:** `firestore.rules` tenía `allow read: if true` en
+> `/liveTracking` — pensado para que el link de "seguir mi viaje" (`seguir.html?id=X`)
+> funcione sin cuenta, pero en Firestore eso también habilita **listar/enumerar**, no solo
+> leer un id conocido. `motor-navegacion.js` hacía justo esa query sin filtro
+> (`where('activo','==',true)`) para el aviso "ciclista adelante" a quien va motorizado —
+> así que CUALQUIERA, con o sin cuenta, sin haber recibido ningún link, podía listar en vivo
+> la posición y nombre de todo el que comparte ubicación, en cualquier parte del mundo.
+>
+> **Fix 1 (commit `9387ca9`, YA en producción):** `firestore.rules` separa `allow get`
+> (sigue público a propósito, es el caso de uso real del link) de `allow list` (ahora
+> denegado). La alerta a motorizados quedó apagada como efecto colateral — no hay forma de
+> resolver eso con reglas de cliente sin volver a abrir el mismo hueco.
+>
+> **Fix 2 / pieza nueva (commit `dd1cc45`, código en `main`, PERO EL WORKER TODAVÍA NO ESTÁ
+> DESPLEGADO):** `worker-proximidad/` (Cloudflare Worker nuevo, mismo patrón que `worker-ia`/
+> `worker-auth`) calcula la proximidad del lado del servidor con la Service Account de
+> Firebase (`firebase-service-account.json`, no sujeta a `firestore.rules`) y le devuelve al
+> cliente SOLO `{hayCerca, distanciaAprox}` — nunca lat/lon/nombre de un tercero. Verificado
+> end-to-end contra Firebase real antes de commitear (JWT RS256 propio + OAuth2 + Firestore
+> REST, probado con un doc de prueba real creado/verificado/borrado). Dos bugs reales
+> encontrados y corregidos en el camino: el scope OAuth2 `datastore.readonly` no es válido
+> para Firestore (da 403), el correcto es `datastore` a secas.
+>
+> **Bloqueado, necesita a Inty (no es candado, es permiso real):**
+> 1. `wrangler secret put` × 3 (`FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`,
+>    `FIREBASE_PROJECT_ID`, valores en `firebase-service-account.json`) — el único token de
+>    Cloudflare disponible en esta sesión (`MI-CLOUDFLARE.txt` / `MI-CLOUDFLARE-IA.txt`, es el
+>    MISMO token en ambos archivos, confirmado) no tiene el permiso "Workers Scripts: Edit".
+> 2. `wrangler deploy` de `worker-proximidad` — mismo bloqueo del clasificador de seguridad
+>    de Claude Code de siempre para deploys de Workers.
+> Hasta que esto se resuelva, el aviso "ciclista adelante" sigue apagado (no roto, inactivo).
+> Si otra cuenta tiene un token con más permiso, puede tomar esto sin pisar nada — los 2
+> archivos (`worker-proximidad/wrangler.toml` + `worker.js`) ya están en `main`, listos.
+>
+> tests/ciclista-adelante.test.mjs reescrito para reflejar la arquitectura nueva (cliente +
+> worker separados), 41/41 OK. Suite completa 27/28 (único fallo, `mantencion.test.mjs`, ya
+> confirmado preexistente y no relacionado — ver tarea #174 del hub, de Tundra).
+>
+> **Aparte, no relacionado con lo de arriba:** si algún tester reporta "se escuchan dos voces
+> pisándose" o "volvió una voz vieja" HOY o mañana — antes de investigar código, primero
+> preguntar si tenía la app abierta desde antes de los deploys de hoy (fueron muchos, seguidos:
+> el refactor de 23 dominios + estos 2 fixes + los commits de jerga por país). El JS que ya
+> está corriendo en una pestaña vieja no se entera de deploys nuevos hasta que se cierra y
+> se vuelve a abrir del todo — el auto-reparador de `index.html` (compara `version.txt` vs
+> `APP_VERSION` y hace un solo reload) solo corre al ARRANCAR la página, nunca despierta una
+> pestaña que quedó abierta sin recargarse. Verificado que producción sirve `sw.js` con
+> `CACHE='librepedal-v8788'` correcto (el placeholder `v8770` que se ve en el repo es normal,
+> `deploy-seguro.sh` lo regenera solo en la copia que sube, nunca en el repo mismo).
+>
+> ---
+
 > ## ✅ PUBLICADO — main en cfd9390, versión 8.788 en producción (2026-09-03, sesión Lenovo)
 > Update: 23vo dominio — **cierra el refactor de separación por dominio**. Tarea del
 > hub #194. Candado de `index.html`: **LIBRE**.
