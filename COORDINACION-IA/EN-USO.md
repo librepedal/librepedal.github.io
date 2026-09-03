@@ -1,8 +1,25 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 49d3057, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 20vo dominio. Tarea del hub #191. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en 0d774f0, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 21vo dominio. Tarea del hub #192. Candado de `index.html`: **LIBRE**.
 >
+> 2 archivos (entre `auth-vinculo.js` y `auth-sesion.js`, bloque que se me había
+> quedado sin mapear): `ubicacion-carga.js` (`getCurrentLocation`, `showLoading`/
+> `hideLoading`) y `sonido-cadena.js` (síntesis Web Audio del trinquete).
+>
+> Verificado: diff exacto, reconstrucción byte a byte, tests 27/28 (falla
+> preexistente), en vivo (`cadenaIniciar` cruza correctamente con `_ac()`/`_reverb()`
+> de `voz-motor.js`), producción (200 OK en ambos).
+>
+> `index.html`: 1.632 → **1.557 líneas** (13.208 original, **-88%**).
+>
+> **Sigue pendiente** el bloque más crítico que queda (entre `auth-sesion.js` y
+> `novedades.js`, ~196 líneas): suscripción perezosa (`_subUnaVez`, el fix real de
+> la crisis de cuota de Firestore), clustering de ciclistas en el mapa, posiciones
+> en Realtime Database, y `escapeHTML` (anti-XSS, usado en TODA la app). Se aborda
+> con el mismo rigor que `app-estado-global.js`.
+>
+> ---
 > 1 archivo: `planificador-presupuesto.js` (`mostrarPlanificadorPresupuesto()` +
 > `buscarPlanPresupuesto()` — plan de referencia con opciones reales de hostales y
 > recomendaciones de la comunidad cerca del destino).
