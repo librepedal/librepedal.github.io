@@ -14,8 +14,10 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+// El catálogo de opciones (cascos/lentes/piel/ojos/etc.) vive en
+// pistero-personalizacion-datos.js desde que se separó de index.html (2026-09).
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(join(raiz, 'index.html'), 'utf8');
+const html = readFileSync(join(raiz, 'pistero-personalizacion-datos.js'), 'utf8');
 
 // hex -> tono (0-360), saturación y luminosidad en %
 function hsl(hex) {
