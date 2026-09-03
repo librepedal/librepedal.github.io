@@ -364,29 +364,32 @@ function _reproducirVoz(item){
   if(vozMejorada){
     // v7.80: voz por ARQUETIPO (clips SLR71 chilenos en voces/<arq>/<id>.mp3).
     // v8.06: DESACTIVADA la capa de voces por arquetipo (SLR71) — se colaban voces distintas por frase.
-    // v8.48 (2026-08-14, decision nueva de Inty, reemplaza la nota de "vuelve a los 1000 usuarios"):
-    // REACTIVADA con proveedor distinto — ElevenLabs (voces-el/), un mp3 FIJO pregenerado por
-    // frase+género+arquetipo (no elección de voz en vivo), así que no hereda el bug de mezcla de
-    // SLR71. Tiene prioridad; si la frase no está en el catálogo, cae al viejo Azure (voces/) como
-    // respaldo. Ver voz-elevenlabs.js.
-    // LA VOZ ELEGIDA MANDA EN TODA LA APP (2026-08-16, pedido de Inty).
-    //
-    // Antes los mp3 pregrabados tenían prioridad y se llevaban puesta la voz elegida. El
-    // comentario de arriba decía que estaban indexados "por frase+género+arquetipo", pero el
-    // manifiesto solo tiene frase+género — la dimensión de arquetipo NO existe. Resultado:
-    // unas frases sonaban con la voz del catálogo y otras con la voz en vivo, y Pistero
-    // cambiaba de timbre a mitad de conversación. Eso es lo que Inty describía como
-    // "voces diferentes en las frases".
-    //
-    // Ahora se genera SIEMPRE en vivo con la voz elegida (ver _vozELid), y los pregrabados
-    // quedan de respaldo para cuando no hay red. No sale caro: el worker cachea en Cloudflare,
-    // así que una frase repetida no vuelve a pegarle a ElevenLabs.
-    //
-    // Sin candado `navigator.onLine` (trampa quitada 2026-08-13: miente seguido; los runtimes
-    // ya caen solos por su onerror/catch). Tampoco hay reparto por país: Azure quedó sin
-    // suscripción y ElevenLabs ya tiene voces chilenas reales.
+    // v8.48 (2026-08-14): REACTIVADA con ElevenLabs (voces-el/), un mp3 FIJO pregenerado por
+    // frase+género+arquetipo. Ver voz-elevenlabs.js.
+    // 2026-08-16 (pedido de Inty, "la voz elegida manda en TODA la app"): se bajó la
+    // prioridad del pregrabado a "respaldo" porque el catálogo de ENTONCES no cubría el
+    // banco genérico (poolPais: motivacional, frases por modo, etc.) — esas frases sin
+    // pregrabado sonaban con Azure/voz nativa mientras las de FRASES_ARQ sonaban con el
+    // pregrabado, mezclando timbre a mitad de conversación.
+    // 2026-09-03 (costo real, pedido de Inty): recalentar en vivo TODO el catálogo de
+    // FRASES_ARQ+FRASES_SISTEMA cada vez que el caché de 24h expira (Cache-Control:
+    // max-age=86400 en worker-ia/worker.js) proyecta gastar varias veces el presupuesto
+    // MENSUAL completo de voz (ver COORDINACION-IA/EN-USO.md, análisis con números
+    // reales). El pregrabado de esas dos fuentes SÍ está indexado por arquetipo real
+    // (scripts/gen-voces-elevenlabs.js genera cada mp3 con el voice_id del arquetipo
+    // exacto de esa frase — el MISMO mapa VOZ_ARQ que usa el worker en vivo), así que
+    // usarlo primero no reintroduce el bug de 2026-08-16: no hay mezcla porque ambas
+    // fuentes (pregrabado y en vivo) usan la voz del mismo arquetipo. Vuelve a tener
+    // prioridad SOLO si la frase está en el manifest -- lo que no está ahí (motivacional,
+    // frases por modo, tips de ruta, banco por país) sigue generándose en vivo exactamente
+    // igual que hoy, sin cambio de comportamiento ni riesgo de mezcla.
     const _idEL = (typeof VOCES_MANIFEST_EL!=='undefined') && VOCES_MANIFEST_EL && VOCES_MANIFEST_EL.map && VOCES_MANIFEST_EL.map[item.t];
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
+    if(_idEL && typeof _vozArchivoEL==='function'){
+      vozTimerFin=setTimeout(_vozSiguiente, 12000);
+      _vozArchivoEL(item, durEst, _idEL, miGen);
+      return;
+    }
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
     _vozElevenRuntime(item, durEst, miGen, false, { idEL:_idEL, idAz:_id });
     return;

@@ -24,14 +24,19 @@
   }catch(e){}
 
   // Mismo patron que _vozArchivo() en index.html (linea ~2407), pero apuntando a
-  // voces-el/ en vez de voces/. Si falla, cae a la voz chilena EN VIVO (no a la
-  // nativa del navegador directo), igual que el resto de la cadena de respaldos.
+  // voces-el/ en vez de voces/. Si el pregrabado falla (404 real, archivo corrupto),
+  // cae a ElevenLabs EN VIVO -- NO a Azure: la clave de Azure murio (expiro, da 401)
+  // desde antes de que voces-el/ existiera, asi que mandar el respaldo ahi es un
+  // callejon sin salida silencioso. 2026-09-03: desde que voces-el/ volvio a tener
+  // prioridad (ver voz-motor.js, _reproducirVoz), este es el UNICO respaldo real de
+  // la voz mejorada -- tiene que aterrizar en algo que funcione.
   window._vozArchivoEL = function(item, durEst, id, miGen){
     let cayo = false;
     const fallback = function(){
       if(cayo || miGen !== vozGen) return;
       cayo = true;
-      _vozAzureRuntime(item, durEst, miGen);
+      if(typeof _vozElevenRuntime==='function') _vozElevenRuntime(item, durEst, miGen, true, {});
+      else _vozNativaOWeb(item, durEst);
     };
     try{
       const a = new Audio('voces-el/' + pisteroGenero + id + '.mp3');
