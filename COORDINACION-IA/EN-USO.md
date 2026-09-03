@@ -1,5 +1,42 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 💰 Costo REAL de voz resuelto de raíz — sesión Lenovo, 2026-09-03 (noche)
+> Candado: **LIBRE**. Sin tocar `index.html`. worker-ia YA DESPLEGADO en producción
+> (no solo commiteado): `wrangler deploy` exitoso, Version ID `2c00a8cf-5d9c-441a-855f-1d685e06e320`.
+>
+> **Pedido real de Inty**: analizar el costo de voz y resolverlo de raíz, no solo bajar
+> frecuencia. Medí el catálogo real (script ad-hoc, no supuestos): 1.150 frases de
+> "bromas"/tips, 55.626 caracteres. Con el modelo de ENTONCES (generación en vivo,
+> `Cache-Control: max-age=86400` = **24h** en `worker-ia/worker.js`), proyecté con
+> supuestos explícitos (20 usuarios activos/día × 15 frases/día, hoy) un gasto de
+> **~US$80/mes SOLO en bromas — 380% del presupuesto MENSUAL completo** (~US$21, plan
+> Creator ElevenLabs, 100.000 caracteres). A escala (500+ usuarios) se estabiliza en
+> ~US$347/mes porque el catálogo entero se "recalienta" cada día. Detalle del cálculo
+> (fórmula del coupon collector) disponible si alguien quiere revisar los supuestos.
+>
+> **Dos fixes reales, ambos YA en producción, CERO gasto nuevo de ElevenLabs:**
+> 1. **Commit `2ae90a2`**: vuelve la prioridad al catálogo pregrabado (`voces-el/`, 497
+>    frases FRASES_ARQ + 42 FRASES_SISTEMA, ~48% del catálogo). Se había bajado a
+>    "respaldo" el 2026-08-16 por un bug real (el catálogo de entonces no cubría el
+>    banco genérico, mezclaba timbre) — NO se reintroduce: `scripts/gen-voces-elevenlabs.js`
+>    genera cada mp3 con el voice_id EXACTO del arquetipo de esa frase, mismo mapa que
+>    el worker en vivo. De paso, el fallback de `_vozArchivoEL` apuntaba a Azure (muerto,
+>    da 401) — ahora cae a ElevenLabs en vivo.
+> 2. **Commit `74b0f40`**: caché PERMANENTE en el KV `VOZ_CUOTA` (ya vinculado al worker,
+>    sin aprovisionar nada nuevo). Antes de llamar a ElevenLabs, chequea el KV por la
+>    clave exacta texto+voz+modelo+parámetros; si existe, sirve gratis SIN contar contra
+>    el presupuesto; si no, genera y lo guarda SIN `expirationTtl` (a diferencia de las
+>    otras claves de ese KV, que son contadores con TTL). Cada combinación se paga UNA
+>    vez para siempre, no cada 24h. Esto cubre TODO lo dinámico (motivacional, frases
+>    por modo, tips de ruta, chat) sin tener que pre-generar ni decidir de antemano qué
+>    vale la pena gastar en generar — el sistema se auto-completa con el uso real.
+>
+> **Pendiente, sin resolver, requiere decisión de Inty:** el "acceso progresivo al
+> catálogo" que pidió (desbloqueo gradual por km/progreso) queda como mejora de
+> EXPERIENCIA (ya no es crítica de costo, los dos fixes de arriba resuelven eso) —
+> tocaría el corazón de `obtenerFraseUnica()` en `pistero-frases-pais.js`, no se
+> implementó todavía a la espera de que Inty confirme si lo sigue queriendo.
+
 > ## ✅ Pistero explica solo por qué no cuenta bromas + CI en verde de nuevo — sesión Lenovo, 2026-09-03 (tarde)
 > Candado: **LIBRE**. Sin tocar `index.html`. 4 commits en `main`, CI confirmado en verde
 > (run `33791761736`).
