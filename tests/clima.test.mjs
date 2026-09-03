@@ -16,11 +16,11 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(join(raiz, 'index.html'), 'utf8');
+const html = readFileSync(join(raiz, 'clima-datos.js'), 'utf8');
 
 const fuente = html.match(/function _cambioClimaRelevante\(base, actual\)\{[\s\S]*?\n\}/);
 if (!fuente) {
-  console.log('✗ No pude extraer _cambioClimaRelevante desde index.html');
+  console.log('✗ No pude extraer _cambioClimaRelevante desde clima-datos.js');
   console.log('  (si le cambiaron el nombre este test quedaría verde sin probar nada: falla a propósito)');
   process.exit(1);
 }

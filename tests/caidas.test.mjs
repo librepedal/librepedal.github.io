@@ -12,20 +12,20 @@
 //      en 0 -> creía que estabas quieto y disparaba la alarma sin motivo.
 //
 // Ahora manda el acelerómetro, que no tiene retardo. Este test extrae la función
-// REAL desde index.html (no una copia) para que no puedan divergir.
+// REAL desde seguridad-sensores.js (no una copia) para que no puedan divergir.
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(join(raiz, 'index.html'), 'utf8');
+const html = readFileSync(join(raiz, 'seguridad-sensores.js'), 'utf8');
 
-// Saca del index la constante y la función tal cual están en producción.
+// Saca de seguridad-sensores.js la constante y la función tal cual están en producción.
 const umbral = html.match(/const CRASH_MOV_QUIETO\s*=\s*([\d.]+)/);
 const fuente = html.match(/function _decidirQuietudCaida\(muestrasMov, velocidadGps\)\{[\s\S]*?\n\}/);
 if (!umbral || !fuente) {
-  console.log('✗ No pude extraer _decidirQuietudCaida / CRASH_MOV_QUIETO de index.html');
+  console.log('✗ No pude extraer _decidirQuietudCaida / CRASH_MOV_QUIETO de seguridad-sensores.js');
   console.log('  (¿les cambiaron el nombre? este test quedaría verde sin probar nada, así que falla a propósito)');
   process.exit(1);
 }
@@ -81,7 +81,7 @@ eq('justo en el mínimo de muestras (5) ya usa el acelerómetro',
 const umbralVel = html.match(/const CRASH_VEL_MINIMA\s*=\s*([\d.]+)/);
 const fuenteVel = html.match(/function _impactoEsDeCiclista\(velPrevia\)\{[\s\S]*?\n\}/);
 if (!umbralVel || !fuenteVel) {
-  console.log('\n✗ No pude extraer _impactoEsDeCiclista / CRASH_VEL_MINIMA de index.html');
+  console.log('\n✗ No pude extraer _impactoEsDeCiclista / CRASH_VEL_MINIMA de seguridad-sensores.js');
   process.exit(1);
 }
 const CRASH_VEL_MINIMA = parseFloat(umbralVel[1]);

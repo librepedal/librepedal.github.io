@@ -1,0 +1,893 @@
+:root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
+/* ── Temas de UI app-wide (Sólido / Cristal) · ver COORDINACION-IA/SPEC-TEMAS-APP-WIDE-2026-08-14.md
+   Sólido = DEFAULT = look actual (cero cambio). Cristal solo se activa con la clase
+   body.tema-cristal, que enciende el usuario en Preferencias. TODO esto es aditivo e
+   inerte por defecto: si nadie enciende Cristal, no cambia ni un pixel de la app. ── */
+:root{--surf:#141a2b;--surf-2:#0f1524;--surf-br:rgba(255,255,255,0.09);--surf-blur:0px}
+body.tema-cristal{--surf:rgba(255,255,255,0.055);--surf-2:rgba(255,255,255,0.03);--surf-br:rgba(255,255,255,0.13);--surf-blur:14px}
+/* Fallback: navegadores sin backdrop-filter → superficies semi-opacas sólidas (texto legible). */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  body.tema-cristal{--surf:rgba(22,28,45,0.92);--surf-2:rgba(15,21,36,0.92);--surf-blur:0px}
+}
+/* Mini-preview del acabado en el selector de tema (Preferencias). */
+.tema-prev{width:46px;height:28px;margin:0 auto 6px;border-radius:7px;display:flex;flex-direction:column;gap:3px;padding:5px;justify-content:center}
+.tema-prev span{height:5px;border-radius:3px;display:block}
+.tema-prev--solido{background:#141a2b;border:1px solid rgba(255,255,255,.09)}
+.tema-prev--solido span{background:#2a3350}
+.tema-prev--solido span:first-child{background:var(--p)}
+.tema-prev--cristal{background:linear-gradient(135deg,rgba(252,76,2,.28),rgba(30,107,255,.24));border:1px solid rgba(255,255,255,.22)}
+.tema-prev--cristal span{background:rgba(255,255,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.tema-prev--cristal span:first-child{background:rgba(255,150,90,.72)}
+/* ===== TEMA CRISTAL — revestimiento de superficies (solo activo con body.tema-cristal;
+   en Sólido no cambia nada). Contenedores en vidrio translúcido sobre el fondo. ===== */
+body.tema-cristal .trip-card{
+  background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.03))!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 10px 30px -12px rgba(0,0,0,.6)}
+body.tema-cristal .hero-viaje{
+  background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.13);
+  -webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 10px 30px -12px rgba(0,0,0,.55)}
+body.tema-cristal .stat-card{
+  background:rgba(255,255,255,.06);border:.5px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 20px -10px rgba(0,0,0,.5)}
+body.tema-cristal .speed-display,
+body.tema-cristal .performance-bar,
+body.tema-cristal .chart-container{
+  background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.03))!important;
+  border:1px solid rgba(255,255,255,.13)!important;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+body.tema-cristal .tab-pill{
+  background:rgba(255,255,255,.06);border:.5px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.tema-cristal nav{
+  background:rgba(20,27,46,.55);border-top:1px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3)}
+body.tema-cristal .umenu{
+  background:rgba(26,35,60,.72);border:1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3)}
+body.tema-cristal .user-list-modal{
+  background:rgba(10,15,26,.80);
+  -webkit-backdrop-filter:blur(20px) saturate(1.2);backdrop-filter:blur(20px) saturate(1.2)}
+/* Cristal — lote 2: botones y Darma en vidrio (texto claro para conservar legibilidad). */
+body.tema-cristal .ab{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#eef3ff;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 14px rgba(0,0,0,.26)}
+body.tema-cristal .ab:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.22);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 22px rgba(0,0,0,.4)}
+body.tema-cristal .darma-badge{
+  background:linear-gradient(150deg,rgba(255,231,147,.22),rgba(232,139,0,.15));
+  border:1px solid rgba(255,215,0,.36);color:#ffe9a8;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 8px 22px -10px rgba(255,180,0,.4)}
+body.tema-cristal .darma-badge strong{text-shadow:none}
+/* Cristal — pantalla de login (#auth), único hueco real que quedaba sin revestir:
+   mismo tratamiento que .trip-card (Lote 1) para que el primer contacto con la app
+   ya sea consistente, no solo las pantallas internas. */
+body.tema-cristal #auth{background:rgba(6,9,15,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+body.tema-cristal .auth-box{
+  background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.14)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 10px 30px -12px rgba(0,0,0,.6)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--d);color:#fff;overflow-x:hidden;padding-bottom:70px;min-height:100vh;display:flex;flex-direction:column}
+/* Los popups del mapa (MapLibre y Leaflet, se usan ambos según la pantalla) traían el
+   recuadro blanco genérico de su propia librería (antes solo se les había arreglado el
+   color de texto — ver commit viejo — pero el fondo seguía siendo la caja blanca por
+   defecto, "genérica", queja real de Inty 2026-08-31). Ahora el CONTENEDOR se restylea acá
+   para TODOS los popups del mapa por igual — aunque su contenido no se haya reescrito en
+   una tarjeta `.lp-pop` (ver más abajo), nada queda en blanco-sobre-oscuro ni oscuro-sobre-
+   oscuro. Autitado contra cada bindPopup()/Popup() del archivo (usuario, puntos
+   sembrados/comunidad, zona de riesgo, punto elegido con clic derecho, colaboradores,
+   hospedajes, resumen de rutas) — ninguno tenía texto claro fijo que dependiera del blanco
+   de la librería, así que el cambio de fondo no rompe ninguno. */
+.maplibregl-popup-content,.leaflet-popup-content-wrapper{
+  background:linear-gradient(180deg,#111c30,#0c1422);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+  box-shadow:0 14px 30px rgba(0,0,0,.5)
+}
+.maplibregl-popup-tip{border-top-color:#0c1422;border-bottom-color:#0c1422}
+.leaflet-popup-tip{background:#0c1422;box-shadow:none}
+.maplibregl-popup-close-button{color:#8fa3c4;font-size:18px}
+.maplibregl-popup-close-button:hover{color:#fff;background:transparent}
+.leaflet-popup-close-button{color:#8fa3c4 !important}
+.leaflet-popup-close-button:hover{color:#fff !important}
+.maplibregl-popup-content,.leaflet-popup-content{color:#dfe7ff}
+/* Tarjeta propia para el CONTENIDO de un popup (ciclista / punto estratégico / punto
+   elegido a mano) — reemplaza "<b>nombre</b><br><a>link</a>" por algo con ícono, color
+   por categoría y botón real. `--cc` (color de la categoría) lo fija cada popup inline. */
+.lp-pop{display:flex;gap:10px;align-items:center;min-width:170px}
+.lp-pop .lp-ic{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1.5px solid var(--cc,var(--p))}
+.lp-pop .lp-ic i{font-size:15px;color:var(--cc,var(--p))}
+.lp-pop .lp-ic.lp-av{background:#16233c;padding:2px;overflow:hidden}
+.lp-pop .lp-ic.lp-av svg{width:100%;height:100%;display:block}
+.lp-pop .lp-body{flex:1;min-width:0}
+.lp-pop .lp-t{font-weight:800;font-size:.85rem;color:#fff;line-height:1.25}
+.lp-pop .lp-d{font-size:.74rem;color:#9fb3c8;margin-top:4px;line-height:1.4}
+.lp-pop .lp-cta{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:7px 8px;border-radius:8px;background:var(--cc,var(--p));color:#0a0f1d;font-weight:700;font-size:.74rem;text-decoration:none}
+/* Fondo tipo GTA: postal del lugar + capa oscura + malla metálica con brillos */
+#fondoPostal{position:fixed;inset:0;z-index:-3;background:#0a0f1d center/cover no-repeat;filter:contrast(1.12) saturate(1.3) brightness(0.5);transition:opacity 0.9s ease;opacity:0}
+#fondoPostal.on{opacity:1}
+body::before{content:'';position:fixed;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(8,12,20,0.55) 0%,rgba(6,9,15,0.8) 55%,rgba(5,8,14,0.93) 100%)}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle at 50% -5%,rgba(252,76,2,0.08),transparent 55%),repeating-linear-gradient(0deg,rgba(150,172,205,0.022) 0 1px,transparent 1px 32px),repeating-linear-gradient(90deg,rgba(150,172,205,0.022) 0 1px,transparent 1px 32px)}
+@keyframes metalShine{0%,74%{background-position:-60% -60%,0 0,0 0}94%,100%{background-position:160% 160%,0 0,0 0}}
+/* La boca al hablar ya no es un CSS keyframe (estirar una curva fija se veía plano
+   y robótico) — ver _bocaFrames / _iniciarBocaHablando: cicla por JS entre formas
+   de vocalización reales con timing irregular. */
+/* Esfera de aplicaciones 3D (lanzador tipo DNA Launcher) */
+#esferaScreen{position:fixed;inset:0;z-index:4500;display:none;background:radial-gradient(circle at 50% 42%,#04060b 0%,#000 62%)}
+#esStars{position:absolute;inset:0;display:none}
+#esStars.on{display:block}
+#esPostales{position:absolute;inset:0;overflow:hidden;display:none}
+#esPostales.on{display:block}
+.es-post-layer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 2.2s cubic-bezier(.42,0,.58,1);filter:brightness(0.5) saturate(1.15) contrast(1.05)}
+.es-post-layer.on{opacity:1}
+#esFlash{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 44%,rgba(255,255,255,0.98) 0%,rgba(252,76,2,0.55) 18%,rgba(180,0,255,0.3) 34%,transparent 60%)}
+#esFlash.boom{animation:supernova 1.05s ease-out forwards}
+@keyframes supernova{0%{opacity:0;transform:scale(0.05)}10%{opacity:1}55%{opacity:0.8}100%{opacity:0;transform:scale(2.8)}}
+.es-bottom{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;display:flex;align-items:center;justify-content:center;gap:14px;z-index:3}
+/* min-height 48px: medido el 2026-07-20, estos indicadores quedaban en 36px, la mitad
+   del minimo tactil. Ahora que 'mi puesto' y 'viajes' ademas NAVEGAN, tienen que poder
+   tocarse sin fallar. */
+/* gap:4px 2026-08-23: antes el valor y la etiqueta ("42.3"/"km") no tenian separacion
+   real, solo el margin-top:2px de .es-ind-l -- mismo amontonamiento que el chip de
+   arriba, mismo pedido de Inty de darle aire. */
+.es-ind{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:52px;min-height:52px;background:none;border:none;color:#cfeeff;cursor:pointer}
+/* Una sola lógica de navegación: el es-bottom es HUD de DATOS, no un segundo menú.
+   km / mi puesto / viajes se miran de un vistazo; para ir a esas secciones está la Esfera. */
+/* Auditoria 2026-07-20: 'mi puesto' y 'viajes' navegan pero llevaban cursor:default,
+   o sea el usuario no tenia forma visual de saber que eran tocables. */
+.es-dato{cursor:default;user-select:none}
+button.es-dato{cursor:pointer}
+.es-ind-v{font-size:1.15rem;font-weight:800;color:var(--p);text-shadow:0 0 8px rgba(252,76,2,0.6)}
+.es-ind-l{font-size:0.66rem;color:#8fb0c8;text-transform:uppercase;letter-spacing:1px}
+.es-badge{position:relative}
+.es-badge[data-n]:not([data-n="0"])::after{content:attr(data-n);position:absolute;top:-4px;right:2px;background:#ff2d6b;color:#fff;font-size:0.55rem;font-weight:800;min-width:14px;height:14px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+/* 2026-08-16: sacado el orbe circular con halo (quedó viejo — el mismo rediseño de
+   "sin círculo, sombra fina" que ya se aplicó a la carita de Pistero del sobrevuelo de
+   ruta, ver reproducirSobrevuelo()). Ahora es solo la carita, más grande, con una
+   sombra sutil para que se lea bien sobre cualquier fondo. La forma circular se
+   mantiene invisible (radio + sin fondo) solo como área de toque, no como diseño visible. */
+/* Mismo criterio que #micBtn: sin círculo ni sombra de caja. El border-radius no hacía
+   daño acá (no hay fondo que recortar), pero se saca para que las dos reglas digan lo
+   mismo y nadie vuelva a agregarle un fondo creyendo que va dentro de un orbe. */
+.es-mic{position:relative;width:92px;height:92px;border-radius:0;box-shadow:none;border:none;background:transparent;cursor:pointer;padding:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
+.es-mic.listening{filter:drop-shadow(0 0 10px rgba(255,45,107,.75))}
+/* ===== Look premium unificado (glass + neón) en toda la app ===== */
+.bg,.bd,.btrip,.bpdf{border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.2);letter-spacing:0.3px}
+/* Nocturno Pro: .stat-card SALE de esta lista — los tiles de dato ya no llevan
+   degradado ni borde naranja (tienen su regla limpia más abajo). El resto de
+   tarjetas conserva el tratamiento anterior hasta que les toque su fase. */
+/* FASE 3 Nocturno Pro — todas las tarjetas de la app (Mapa, Social, Guía, Taller, Perfil…).
+   Antes: degradado + borde naranja en TODAS = ruido, y el naranja perdía su significado.
+   Ahora: superficie sobria + hairline. El naranja queda reservado a la ACCIÓN. */
+.cd,.hostel-card,.rec-card,.route-history-item,.repair-tip,.global-comment,.gi,.chat-user-item,.nearby-user,.hostel-option,.added-dest-item{border:0.5px solid rgba(255,255,255,0.09)!important;background:linear-gradient(180deg,#111c30,#0c1422)!important;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,0.34)}
+.trip-card{border:1px solid rgba(252,76,2,0.4)!important;background:linear-gradient(160deg,rgba(18,26,44,0.62),rgba(9,13,24,0.7))!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+/* FASE 3: el encabezado de cada pantalla deja de gritar naranja. Es contexto, no acción. */
+.section-info{background:transparent!important;border:none!important;border-bottom:0.5px solid rgba(255,255,255,0.10)!important;border-radius:0!important;padding:9px 2px 10px!important;margin-bottom:12px}
+.section-info h4{display:flex;align-items:center;gap:8px;font-size:1rem}
+.section-info p{display:none;margin:8px 0 0;color:#9fb3c8}
+.section-info.open p{display:block}
+.section-info .vinfo{margin-left:auto;width:22px;height:22px;line-height:1;border-radius:50%;border:1px solid rgba(255,255,255,0.20);background:none;color:#8b97ad;font-size:0.72rem;font-style:italic;cursor:pointer;flex:0 0 auto;padding:0}
+.section-info.open .vinfo{border-color:var(--p);color:var(--p)}
+/* Nocturno Pro: los números se leen por jerarquía, no por glow de neón. */
+.stat-value,.speed-value{text-shadow:none}
+/* Chips: el borde naranja los hacía competir con la acción. Hairline neutro. */
+.gtt{background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.09)}
+.gtt.on{box-shadow:0 0 12px rgba(252,76,2,0.45)}
+/* FASE 3: los campos usan hairline neutro; el naranja aparece solo al enfocar (foco = acción). */
+input,select,textarea{background:#0a1120!important;border:0.5px solid rgba(255,255,255,0.12)!important;border-radius:13px!important;padding:12px 13px!important}
+input:focus,select:focus,textarea:focus{border-color:rgba(252,76,2,0.75)!important;outline:none;box-shadow:0 0 0 3px rgba(252,76,2,0.14)!important}
+header{background:linear-gradient(180deg,rgba(11,16,28,0.9),rgba(6,10,18,0.5))!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(252,76,2,0.28)}
+nav{background:rgba(6,10,18,0.7)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(252,76,2,0.24)}
+.speed-display,.performance-bar,.chart-container{border:1px solid rgba(252,76,2,0.28)!important;background:linear-gradient(160deg,rgba(16,24,40,0.6),rgba(8,12,22,0.68))!important}
+.darma-badge{box-shadow:0 0 16px rgba(255,215,0,0.35)}
+#esferaScreen.on{display:block}
+/* top/bottom 2026-08-23: antes 64/150 -- con el hint de texto afuera y el chip agrandado
+   (ver .es-modo-chip mas abajo) el anillo quedaba pegado al chip (~35-50px de aire,
+   pedido explicito de Inty de separarlo mas). Recalculado y medido con
+   getBoundingClientRect en un mock local antes de tocar esto: deja ~77px libres entre
+   el chip y el primer icono, ~44px entre el ultimo icono y "Menu clasico". */
+#esferaWrap{position:absolute;left:0;right:0;top:146px;bottom:147px;touch-action:none;cursor:grab;overflow:hidden}
+.es-icon{position:absolute;left:0;top:0;width:76px;text-align:center;will-change:transform,opacity}
+/* Nocturno Pro: la caja del ícono deja el degradado café y el glow naranja.
+   Superficie limpia + hairline; el color del ícono lo hereda el SVG (currentColor). */
+.es-ico{width:60px;height:60px;margin:0 auto;border-radius:20px;display:flex;align-items:center;justify-content:center;color:var(--p);background:linear-gradient(180deg,#141f33,#0c1422);border:0.5px solid rgba(252,76,2,0.4);animation:esPulse 2.6s ease-in-out infinite;will-change:transform;position:relative;overflow:hidden}
+.es-ico::before{display:none}
+@keyframes esPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+#esCanvas{position:absolute;left:0;top:0;pointer-events:none;z-index:0}
+.es-icon{z-index:1}
+.es-lbl{font-size:0.62rem;color:#cfeeff;margin-top:4px;font-weight:700;text-shadow:0 1px 3px #000}
+.es-title{display:none;position:absolute;top:18px;left:0;right:0;text-align:center;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;font-size:1.2rem;text-transform:uppercase;letter-spacing:.03em;text-shadow:0 2px 8px rgba(0,0,0,0.5);pointer-events:none}
+.es-hint{position:absolute;top:44px;left:0;right:0;text-align:center;color:#8fb0c8;font-size:0.72rem;pointer-events:none}
+.es-modo-rapido{position:absolute;top:44px;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;gap:14px;z-index:4;pointer-events:none}
+/* Circulo 30->46, icono 17->26 (ver mas abajo, regla compartida con .modo-ico-svg del
+   login), gap icono-texto 3->8: Inty lo vio "amontonado", el circulo y el texto "Vas en
+   Ruta" practicamente se tocaban. */
+.es-modo-chip{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;pointer-events:auto}
+.es-modo-chip .es-modo-ico{width:46px;height:46px;border-radius:50%;background:rgba(10,18,30,0.85);border:2px solid var(--chip-c);opacity:0.5;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s,background-color 0.15s,box-shadow 0.15s}
+.es-modo-chip .es-modo-txt{font-size:0.72rem;font-weight:700;letter-spacing:0.02em;color:#8fb0c8;text-shadow:0 1px 3px rgba(0,0,0,0.6);opacity:0.75;transition:color 0.15s,opacity 0.15s}
+.es-modo-chip.selected .es-modo-ico{opacity:1;background-color:var(--chip-bg);transform:scale(1.1);box-shadow:0 0 18px -2px var(--chip-c)}
+.es-modo-chip.selected .es-modo-txt{color:#fff;opacity:1}
+.es-classic{min-height:48px;display:inline-flex;align-items:center;justify-content:center;position:absolute;bottom:calc(136px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:3;background:rgba(10,18,30,0.82);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 16px;border-radius:22px;font-weight:700;font-size:0.8rem;cursor:pointer}
+/* Medido: 37x28. El boton Atras llegaba a 22px de alto, menos de la mitad del minimo. */
+.es-globe{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--p);font-size:1.15rem;cursor:pointer;padding:2px 6px;filter:drop-shadow(0 0 6px var(--p))}
+#auth{position:fixed;inset:0;background:var(--d);z-index:5000;display:none;flex-direction:column;justify-content:flex-start;align-items:center;padding:calc(20px + env(safe-area-inset-top,0px)) 20px 40px;text-align:center;overflow-y:auto}
+/* Sin sesión guardada -> el login se ve DESDE EL PRIMER DIBUJADO, sin que asome la
+   Esfera antes (ver el script de arranque en el <head>). window.onload sigue haciendo
+   lo suyo después; esto solo adelanta la decisión para que no haya destello. */
+html.lp-sin-sesion #auth{display:flex}
+.auth-box{background:#151b2e;padding:20px;border-radius:20px;border:1px solid var(--p);width:100%;max-width:400px}
+.auth-box h1{color:var(--p);margin:10px 0;font-size:1.3rem}
+.auth-box input{width:100%;padding:10px;margin-bottom:8px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:16px;outline:none}
+.auth-box button{width:100%;padding:12px;background:var(--p);color:#000;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:0.95rem}
+.character-preview-large{background:linear-gradient(160deg,#141f33,#0c1422);border:0.5px solid rgba(252,76,2,0.35);border-radius:18px;padding:16px;margin:10px 0;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.4)}
+.character-preview-large svg{width:110px;height:110px;filter:drop-shadow(0 0 15px rgba(252,76,2,0.5));animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.character-name{font-size:1rem;font-weight:800;color:var(--g);margin-top:10px}
+.customization-section{margin:22px 0}
+.customization-section h3{color:var(--g);font-size:0.95rem;margin-bottom:12px}
+.helmet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
+.accessory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
+/* "Perfil y personaje" por pestañas: antes eran ~8 secciones apiladas visibles a
+   la vez (mucho scroll para elegir cosas chicas) — ahora se ve UNA categoría por
+   vez, con el personaje siempre fijo arriba. */
+.tabs-personalizar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent 100%)}
+.tabs-personalizar::-webkit-scrollbar{display:none}
+/* Pestañas de Perfil: eran 32px de alto. Suben a 38 para el dedo (van en tira scrolleable). */
+#tabsPersonalizar{flex-wrap:wrap !important;overflow-x:visible !important}
+.tab-pill{flex:0 0 auto;min-height:48px;padding:9px 14px;border-radius:20px;background:var(--gl);border:0.5px solid rgba(255,255,255,0.09);color:#9fb3c8;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab-pill.active{background:linear-gradient(135deg,var(--p),#ff7a3c);color:#03121a;border-color:transparent;box-shadow:0 4px 12px -4px rgba(252,76,2,0.5)}
+.pgrupo{background:var(--gl);border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.pgrupo>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:15px;cursor:pointer}
+.pgrupo>summary::-webkit-details-marker{display:none}
+.pgrupo>summary::marker{content:''}
+.pgrupo>summary .pg-ic{width:22px;text-align:center;color:var(--p);font-size:1.05rem;flex:0 0 auto}
+.pgrupo>summary .pg-tt{flex:1;color:#e7ecf5;font-size:0.98rem;font-weight:700}
+.pgrupo>summary .pg-sub{color:#7d8ba0;font-size:0.7rem;font-weight:400;margin-right:8px;max-width:42%;text-align:right}
+.pgrupo>summary .pg-chev{color:#7d8ba0;font-size:0.8rem;flex:0 0 auto;transition:transform .2s}
+.pgrupo[open]>summary .pg-chev{transform:rotate(180deg)}
+.pgrupo[open]>summary{border-bottom:0.5px solid rgba(255,255,255,0.06)}
+.pgrupo .pg-body{padding:4px 15px 16px}
+.pg-sublabel{color:var(--g);font-size:0.82rem;font-weight:700;margin:16px 0 9px}
+.pg-sublabel:first-child{margin-top:6px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.skin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
+.custom-option{background:var(--gl);border:2px solid #333;border-radius:10px;padding:8px 6px;cursor:pointer;text-align:center;transition:all 0.3s;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.35);min-height:96px;display:flex;flex-direction:column;justify-content:center}
+/* Personalidad de Pistero (2026-07-14): #personalidadGrid no tenía NINGUNA
+   clase de grilla — a diferencia de estilosGrid/fondosEsferaGrid/actividadGrid
+   (todas .accessory-grid), los 12 arquetipos se apilaban uno debajo del otro a
+   96px+ cada uno (la altura mínima de .custom-option, pensada para tarjetas con
+   ícono grande) — más de 1000px de scroll solo para elegir personalidad. Acá
+   son puras tarjetas de texto, así que van en 2 columnas con una altura mucho
+   más chica. Clase aparte de .accessory-grid a propósito: esa la usan otras
+   grillas de esta pestaña y no quiero tocar su tamaño de columna. */
+.personalidad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.personalidad-grid .custom-option{min-height:auto;padding:10px 12px}
+.custom-option::before{display:none}
+.custom-option.selected{border-color:var(--g);box-shadow:0 0 15px var(--g);background:rgba(255,215,0,0.14)}
+.custom-option svg{width:100%;height:44px;margin-bottom:6px}
+.custom-option .label{font-size:0.74rem;color:#cdd6e6;font-weight:600;line-height:1.3;margin-top:3px}
+.custom-option .check{position:absolute;top:4px;right:4px;background:var(--g);color:#000;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;font-weight:bold}
+.custom-option.selected .check{display:flex}
+.custom-option.locked{opacity:0.6}
+.custom-option.locked .lock-badge{position:static;display:block;margin-bottom:4px;background:rgba(0,0,0,0.8);color:var(--g);font-size:0.55rem;font-weight:800;padding:2px 5px;border-radius:8px;border:1px solid var(--g);z-index:2;width:fit-content;margin-left:auto;margin-right:auto}
+.skin-swatch{width:100%;height:42px;border-radius:8px;margin-bottom:4px}
+/* El padding de arriba suma env(safe-area-inset-top): la app dibuja de borde a borde
+   (viewport-fit=cover en el meta viewport), así que sin esto el encabezado se mete
+   DEBAJO de la barra de estado del teléfono y el título queda encima de la hora y los
+   íconos del sistema — ilegible. El margen de abajo ya se respetaba desde siempre
+   (ver .view y el overlay del final); el de arriba nunca se había puesto. 17-ago-2026. */
+header{padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:rgba(10,15,29,0.98);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;position:sticky;top:0;z-index:1000}
+header h2{margin:0;font-size:1rem;font-weight:800}
+.ulvl{background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;padding:4px 10px;border-radius:12px;font-weight:800;font-size:0.7rem}
+main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
+/* 2026-07-20 — causa de fondo del "abajo se pierde y está en negro" que reportó Inty.
+   Ninguna vista reservaba espacio para la barra inferior (fija, 69px), así que el ÚLTIMO
+   elemento de CADA pantalla quedaba tapado por ella — no era solo el mapa. Se agrega el
+   colchón aquí, una vez, en lugar de parchear pantalla por pantalla. env() cubre el
+   gesto de inicio del iPhone y los Android con barra por gestos. */
+.view{display:none;animation:su 0.3s;min-height:100%;padding-bottom:calc(148px + env(safe-area-inset-bottom,0px))}
+.view.on{display:block}
+@keyframes su{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.speed-display{background:#0f1728;border:0.5px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px}
+.speed-value{font-size:2.5rem;font-weight:800;color:var(--p);line-height:1}
+.speed-label{font-size:0.8rem;color:#888;margin-top:3px}
+.speed-status{font-size:0.75rem;color:var(--g);margin-top:6px;font-weight:700}
+.gps-signal-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,152,0,0.14);color:#ff9800;border:1px solid rgba(255,152,0,0.4);border-radius:20px;padding:4px 11px;font-size:0.68rem;font-weight:700;margin-top:8px;animation:gpsPulse 1.6s ease-in-out infinite}
+@keyframes gpsPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+#navGpsSignalBadge{margin:0 0 6px}
+.pausa-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(96,165,250,0.14);color:#60a5fa;border:1px solid rgba(96,165,250,0.4);border-radius:20px;padding:4px 11px;font-size:0.68rem;font-weight:700;margin-top:8px}
+#navPausaBadge{margin:0 0 6px}
+.darma-badge{display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(150deg,#ffe793,#f6c445 42%,#e88b00);color:#2c1a00;font-weight:800;padding:11px 14px;border-radius:14px;margin-bottom:10px;cursor:default;font-size:0.95rem;box-shadow:0 8px 22px -8px rgba(255,180,0,0.5),inset 0 1px 0 rgba(255,255,255,0.62),inset 0 -2px 6px rgba(150,80,0,0.32);position:relative;overflow:hidden}
+.darma-badge i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 35% 30%,#fff6d5,#e0980e 70%,#b56b00);color:#3a2400;font-size:0.95rem;box-shadow:inset 0 1px 2px rgba(255,255,255,0.7),inset 0 -2px 3px rgba(120,60,0,0.5),0 1px 3px rgba(0,0,0,0.2)}
+.darma-badge strong{font-size:1.15rem;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 1px 0 rgba(255,255,255,0.35)}
+.darma-badge small{font-weight:700;opacity:0.72;font-size:0.62rem}
+/* Logros como MEDALLA: medallon circular + arco de progreso (pulido 2026-08-14) */
+.lg-item{display:flex;gap:13px;align-items:center;padding:12px;border-radius:15px;margin-bottom:10px;background:linear-gradient(180deg,#131c2f,#0f1830);border:1px solid rgba(255,255,255,0.06)}
+.lg-done{background:linear-gradient(180deg,rgba(255,215,0,0.10),rgba(255,215,0,0.02));border-color:rgba(255,215,0,0.32)}
+.lg-medal{position:relative;width:50px;height:50px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,0.03)}
+.lg-ic{position:relative;z-index:2;font-size:1.35rem;color:#5a6478;display:grid;place-items:center;line-height:1}
+.lg-prog{position:absolute;inset:0;width:50px;height:50px;transform:rotate(-90deg)}
+.lg-prog-bg{fill:none;stroke:rgba(255,255,255,0.10);stroke-width:3}
+.lg-prog-fg{fill:none;stroke:var(--p);stroke-width:3;stroke-linecap:round;stroke-dasharray:125.66;transition:stroke-dashoffset .8s ease}
+.lg-done .lg-medal{background:radial-gradient(circle at 36% 30%,#fff3c4,var(--g) 62%,#e88b00);box-shadow:0 6px 18px -5px rgba(255,215,0,0.55),inset 0 2px 4px rgba(255,255,255,0.6),inset 0 -3px 6px rgba(150,90,0,0.4)}
+.lg-done .lg-ic{color:#5a3c00}
+.lg-glow{position:absolute;inset:-6px;border-radius:50%;box-shadow:0 0 20px 2px rgba(255,215,0,0.28);pointer-events:none}
+.lg-body{flex:1;min-width:0}
+.lg-title{font-weight:800;font-size:0.86rem;color:#cfd8e6;display:flex;align-items:center;gap:7px}
+.lg-done .lg-title{color:#fff3c4}
+.lg-check{width:18px;height:18px;border-radius:50%;background:var(--g);color:#5a3c00;display:grid;place-items:center;font-size:0.55rem;flex:0 0 auto}
+.lg-desc{font-size:0.7rem;color:#8695aa;margin-top:1px}
+.lg-meta{font-size:0.63rem;color:#7d8ba0;margin-top:5px;font-variant-numeric:tabular-nums}
+/* Logro OCULTO (misterio + pista) */
+.lg-mystery .lg-ic.lg-q{font-size:1.5rem;font-weight:800;color:#5a6478;line-height:1}
+.lg-mystery .lg-title{color:#7d8ba0}
+.lg-mystery .lg-desc{color:#66768f;font-style:italic}
+/* Toast de logro desbloqueado (Pistero anuncia) */
+.logro-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);z-index:9999;display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,rgba(255,215,0,0.16),rgba(16,22,36,0.97));border:1px solid rgba(255,215,0,0.5);border-radius:15px;padding:11px 15px;box-shadow:0 12px 32px -8px rgba(0,0,0,0.65);opacity:0;transition:opacity .35s ease,transform .35s cubic-bezier(.34,1.4,.6,1);max-width:88vw;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.logro-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.logro-toast__ic{width:40px;height:40px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;font-size:1.2rem;color:#5a3c00;background:radial-gradient(circle at 36% 30%,#fff3c4,var(--g) 62%,#e88b00);box-shadow:0 4px 12px -3px rgba(255,215,0,0.6),inset 0 2px 4px rgba(255,255,255,0.6)}
+.logro-toast__b{display:flex;flex-direction:column;line-height:1.2}
+.logro-toast__b b{color:var(--g);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em}
+.logro-toast__b span{color:#eaf0ff;font-weight:700;font-size:0.9rem}
+/* Resumen de viaje: pantalla de cierre al terminar de pedalear (pedido de Inty
+   2026-08-26 -- hoy terminar un viaje quedaba mudo, sin ningún cierre). Reusa el
+   MISMO lenguaje visual de medalla que .lg-medal (Logros), solo más grande y con
+   una entrada especial -- no un componente nuevo desde cero. */
+.rv-overlay{position:fixed;inset:0;z-index:9500;background:rgba(4,7,14,0.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s ease;padding:20px;box-sizing:border-box}
+.rv-overlay.on{opacity:1;pointer-events:auto}
+.rv-card{background:linear-gradient(180deg,#141f33,#0c1422);border:1px solid rgba(255,255,255,0.10);border-radius:22px;padding:26px 22px 22px;width:min(92vw,380px);max-height:86vh;overflow-y:auto;box-shadow:0 30px 80px -20px rgba(0,0,0,0.7);position:relative;transform:scale(.9);transition:transform .35s cubic-bezier(.34,1.4,.6,1)}
+.rv-overlay.on .rv-card{transform:scale(1)}
+.rv-cerrar{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,0.08);color:#cfd8e6;display:grid;place-items:center;cursor:pointer;font-size:0.85rem}
+.rv-h{margin:0 0 18px;text-align:center;color:#fff;font-size:1.2rem}
+.rv-stats{display:flex;justify-content:space-around;gap:8px}
+.rv-stat{display:flex;flex-direction:column;align-items:center}
+.rv-stat b{font-size:1.5rem;color:var(--p);font-variant-numeric:tabular-nums;line-height:1.1}
+.rv-stat span{font-size:0.63rem;color:#8695aa;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.rv-titulo-logros{text-align:center;color:#ffe793;font-size:0.85rem;margin:20px 0 14px;font-weight:800}
+.rv-medallas{display:flex;flex-wrap:wrap;justify-content:center;gap:16px}
+.rv-medalla{display:flex;flex-direction:column;align-items:center;gap:7px;width:78px}
+.rv-medalla-ic-wrap{position:relative;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 36% 30%,#fff3c4,var(--g) 62%,#e88b00);box-shadow:0 6px 18px -5px rgba(255,215,0,0.55),inset 0 2px 4px rgba(255,255,255,0.6),inset 0 -3px 6px rgba(150,90,0,0.4);opacity:0;transform:scale(0) rotate(-35deg)}
+.rv-medalla-ic{font-size:1.7rem;color:#5a3c00;position:relative;z-index:2}
+.rv-medalla-nombre{font-size:0.68rem;color:#eaf0ff;text-align:center;font-weight:700;line-height:1.2}
+.rv-overlay.on .rv-medalla-ic-wrap{animation:rvMedallaReveal .7s cubic-bezier(.34,1.56,.64,1) forwards;animation-delay:var(--rv-d,0ms)}
+@keyframes rvMedallaReveal{0%{opacity:0;transform:scale(0) rotate(-35deg)}60%{opacity:1;transform:scale(1.15) rotate(8deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.rv-medalla-ic-wrap::after{content:'';position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,transparent,rgba(255,255,255,0.95),transparent 30%);opacity:0;animation:rvBrillo 1.3s ease-out forwards;animation-delay:calc(var(--rv-d,0ms) + 550ms)}
+@keyframes rvBrillo{0%{opacity:0;transform:rotate(0deg)}18%{opacity:.95}100%{opacity:0;transform:rotate(300deg)}}
+/* Mismo criterio que clima-fx.js (25-ago): nunca dejar el resultado invisible por
+   respetar reduced-motion -- las medallas igual se ven, solo sin la animación. */
+@media (prefers-reduced-motion: reduce){
+  .rv-card{transition:none}
+  .rv-medalla-ic-wrap{animation:none !important;opacity:1;transform:scale(1) rotate(0)}
+  .rv-medalla-ic-wrap::after{display:none}
+}
+/* Tarjeta hero de Inicio + la firma visual ciclista (perfil de ruta al fondo) */
+.hero-viaje{position:relative;overflow:hidden;background:#0f1728;border:0.5px solid rgba(255,255,255,0.07);border-radius:18px;padding:16px;margin-bottom:14px}
+.hero-ruta{position:absolute;top:10px;left:0;width:100%;height:46px;opacity:0.42;pointer-events:none}
+.hero-t{position:relative;margin:0 0 12px 0;font-size:1.05rem;font-weight:700;color:#fff;letter-spacing:-0.2px}
+.hero-viaje input,.hero-viaje button,.hero-viaje > div{position:relative}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+/* Tiles de dato: sin borde, superficie sutil — se leen de un vistazo. */
+.stat-card{background:linear-gradient(180deg,#111c30,#0c1422);padding:14px 12px;border-radius:16px;text-align:left;border:0.5px solid rgba(255,255,255,0.08)}
+.stat-value{font-size:1.5rem;font-weight:800;color:#fff;line-height:1.1}
+.stat-label{font-size:0.66rem;color:#6b7688;margin-top:2px;letter-spacing:0.3px}
+/* Mantención preventiva (Taller): una fila compacta por ítem, detalle adentro al
+   tocarla — mismo criterio de "simple por fuera, completo por dentro" que el resto
+   de la app. */
+.mant-item{background:#0f1728;border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:11px 13px;margin-bottom:8px}
+.mant-item summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer}
+.mant-item summary::-webkit-details-marker{display:none}
+.mant-item .mi-ic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.9rem}
+.mant-item .mi-txt{flex:1;min-width:0}
+.mant-item .mi-t{font-weight:700;font-size:0.85rem;color:#fff}
+.mant-item .mi-bar{background:#222;border-radius:6px;height:6px;margin-top:5px;overflow:hidden}
+.mant-item .mi-fill{height:100%;border-radius:6px}
+.mant-item .mi-sub{font-size:0.66rem;color:#7d8ba0;margin-top:3px}
+.mant-item .mi-badge{font-size:0.62rem;font-weight:800;padding:3px 8px;border-radius:8px;flex-shrink:0;white-space:nowrap}
+.mant-item .mi-body{margin-top:11px;padding-top:11px;border-top:0.5px solid rgba(255,255,255,0.08);font-size:0.78rem;color:#d6deea;line-height:1.5}
+.mant-item .mi-hist{margin:8px 0;padding-left:0;list-style:none;font-size:0.72rem;color:#9fb3c8}
+.mant-item .mi-hist li{padding:4px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}
+.mant-item .mi-row{display:flex;gap:6px;margin-top:8px}
+.mant-item .mi-row input{flex:1;margin:0}
+/* Resumen de una línea en Inicio (reemplaza a la grilla de 5 tarjetas + Desempeño,
+   sacadas de acá porque ya viven completas en Estadísticas — ver comentario en au()). */
+.stats-link{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(180deg,#111c30,#0c1422);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:13px 16px;margin:12px 0;cursor:pointer;text-align:left}
+.stats-link .txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stats-link .t1{font-size:0.86rem;font-weight:700;color:#fff}
+.stats-link .t2{font-size:0.68rem;color:#6b7688;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats-link .arrow{color:var(--p);font-size:1rem;flex:0 0 auto}
+.performance-bar{background:#222;border-radius:10px;height:20px;margin:8px 0;overflow:hidden;position:relative}
+.performance-bar::after{content:attr(data-pct);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.6);pointer-events:none}
+.performance-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:10px;transition:width 0.5s;overflow:hidden;font-size:0;color:transparent}
+.chart-container{background:var(--gl);padding:10px;border-radius:10px;margin:8px 0;border:1px solid #222}
+.chart-bar{display:flex;align-items:flex-end;gap:4px;height:100px;margin-top:8px}
+.chart-bar-item{flex:1;background:var(--p);border-radius:4px 4px 0 0;min-height:5px;transition:height 0.5s}
+/* 2026-07-20 — Inty: "abajo se pierde el mapa y está en negro". Eran dos cosas juntas:
+   el mapa medía 280 px FIJOS (un sello de correo en un teléfono) y debajo quedaba el
+   panel muerto #route-alerts, que nadie llenaba, pintando una franja negra. El panel se
+   eliminó; acá el mapa pasa a ocupar el alto real disponible. Se descuenta el header,
+   los chips de capas y la barra inferior, con dvh (no vh) para que la barra del
+   navegador móvil al aparecer/desaparecer no deje ese vacío negro abajo. */
+#map-all-routes,#map-hostel-select{height:280px;width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222}
+#map{width:100%;border-radius:12px;margin-bottom:12px;border:2px solid #222;
+  height:calc(100dvh - 350px); min-height:240px; max-height:none; background:#e9eef3}
+@supports not (height: 100dvh){ #map{ height:calc(100vh - 350px); } }
+/* Offset medido: header + section-info + barra de capas + barra inferior (69px) + respiro.
+   Rediseño 2026-07-29: las 4 capas pasaron a UN botón "Capas" (la barra ya no envuelve en
+   varias filas), así que la barra encoge ~50px y el mapa recupera ese alto (el mapa manda). */
+#map-hostel-select.show{display:block}
+.cd{background:#0f1728;padding:14px;border-radius:14px;margin-bottom:10px;border:0.5px solid rgba(255,255,255,0.07)}
+#sugerencias-dest{position:absolute;top:100%;left:0;right:0;z-index:1500;background:#0d1426;border:1px solid var(--p);border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;display:none;box-shadow:0 8px 18px rgba(0,0,0,0.5)}
+#sugerencias-dest.show{display:block}
+#sugerencias-dest .sug{padding:9px 11px;border-bottom:1px solid #1a2740;cursor:pointer;font-size:0.82rem;color:#dfe7ff;line-height:1.3}
+#sugerencias-dest .sug:active{background:rgba(252,76,2,0.14)}
+#sugerencias-dest .sug small{color:#7d8ba0;font-size:0.68rem}
+nav{position:fixed;bottom:0;width:100%;background:rgba(10,15,29,0.99);display:flex;justify-content:space-around;padding:6px 0 calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid #222;z-index:1000}
+/* Auditoria 2026-07-20: los 5 botones de la barra inferior median 38px de alto y ~35 de
+   ancho. Es el control mas usado de la app y estaba 10px bajo el minimo tactil. */
+.nb{min-height:48px;min-width:48px;background:none;border:none;color:#666;cursor:pointer;transition:0.3s;padding:4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nb i{font-size:1.2rem}
+.nb span{font-size:0.55rem;font-weight:700}
+/* FASE 3: el activo se marca por COLOR, no por glow de neón. */
+.nb.on{color:var(--p);background:rgba(252,76,2,0.12);border-radius:12px}
+input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:16px;outline:none}
+/* Nocturno Pro — sistema de botones: UN secundario (este) y UN primario (.bg).
+   Sin glows ni degradados: el color se reserva para la acción, no para decorar. */
+.ab{width:100%;min-height:44px;padding:12px 14px;background:linear-gradient(180deg,#182444,#131c2f);color:#dfe7ff;border:1px solid rgba(255,255,255,0.10);border-radius:13px;font-weight:650;cursor:pointer;margin-top:8px;font-size:0.85rem;letter-spacing:0.2px;transition:background .18s ease,border-color .18s ease,box-shadow .2s ease,transform .13s cubic-bezier(.34,1.4,.6,1);position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 2px 8px rgba(0,0,0,0.34)}
+.ab:hover{background:linear-gradient(180deg,#1c2a50,#16203a);border-color:rgba(255,255,255,0.20)}
+.ab:active{transform:scale(0.985)}
+.ab::before{display:none}
+.ab:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,0.09),0 8px 22px rgba(0,0,0,0.5)}
+.ab:active{transform:scale(0.965);box-shadow:inset 0 2px 6px rgba(0,0,0,0.5)}
+.ab.sec{background:linear-gradient(180deg,#1a2438,#151d30);color:#dfe7ff;border-color:rgba(255,255,255,0.08)}
+/* Jerarquía de botones (SPEC-PULIDO-UI-2026-08-14.md #1): faltaba el "peligro" --
+   rojo sobrio, mismo lenguaje visual que .ab (relieve+presión), para acciones
+   destructivas (eliminar cuenta, borrar ruta, etc.). Clase nueva, no toca ningún
+   botón existente -- se usa donde haga falta, cuando haga falta. */
+.ab.danger{background:linear-gradient(180deg,#3a1620,#2a0f18);color:#ffb4b4;border-color:rgba(255,120,120,0.28)}
+.ab.danger:hover{background:linear-gradient(180deg,#451a26,#33121c);border-color:rgba(255,120,120,0.4)}
+.bg,.bd,.bpdf,.btrip{width:100%;font-size:0.85rem;padding:10px;border:none;border-radius:8px;font-weight:800;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.35)}
+.bg::before,.bd::before,.bpdf::before,.btrip::before{content:'';position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.06) 40%,rgba(0,0,0,0.16) 100%);pointer-events:none}
+.bg{background:#fc4c02;color:#fff}
+.bd{background:#1c2740;color:#ffd166;border-color:rgba(255,209,102,0.35)}
+.bpdf{background:#2a1418;color:#ff8a8a;border-color:rgba(255,90,90,0.35)}
+.btrip{background:#131c2f;color:#dfe7ff}
+.gt{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px}
+.gtt{background:rgba(255,255,255,0.05);padding:6px 11px;border-radius:14px;white-space:nowrap;cursor:pointer;border:0.5px solid rgba(255,255,255,0.12);font-size:0.7rem}
+.gtt.on{background:var(--p);color:#000;border-color:var(--p);font-weight:bold}
+.gi{background:rgba(252,76,2,0.05);padding:10px;border-radius:8px;margin-bottom:6px;border-left:3px solid var(--p);cursor:pointer}
+.hdr-right{display:flex;align-items:center;gap:6px}
+.logout-btn{background:rgba(255,0,0,0.3);border:1px solid #ff3333;color:#fff;padding:5px 9px;border-radius:8px;font-size:0.68rem;font-weight:700;cursor:pointer;display:none;white-space:nowrap}
+/* Rediseño Nocturno Pro — ficha de usuario con menú (reemplaza las 3 píldoras del top bar) */
+.uchip-wrap{position:relative}
+.uchip{min-height:44px;display:inline-flex;align-items:center;gap:7px;background:rgba(252,76,2,0.14);border:0.5px solid rgba(252,76,2,0.45);border-radius:20px;padding:3px 8px 3px 3px;cursor:pointer;color:#ffd9c6;font-weight:700;font-size:0.72rem;white-space:nowrap}
+.uchip:hover{background:rgba(252,76,2,0.2)}
+.uchip-av{width:26px;height:26px;border-radius:50%;background:#fc4c02;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;flex:none}
+.uchip-caret{font-size:0.55rem;color:#ffab8a;opacity:0.85}
+.umenu{position:absolute;right:0;top:calc(100% + 8px);background:#0f1728;border:0.5px solid rgba(255,255,255,0.13);border-radius:12px;padding:6px;min-width:190px;display:none;flex-direction:column;gap:2px;z-index:1200;box-shadow:0 12px 34px rgba(0,0,0,0.55)}
+.umenu.on{display:flex}
+.umenu button{background:none;border:none;color:#dfe7ff;text-align:left;padding:10px 12px;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.umenu button:hover{background:rgba(255,255,255,0.07)}
+.umenu .umenu-danger{color:#ff7a7a}
+.ghost-toggle{background:rgba(155,89,182,0.85);border:1px solid #9b59b6;color:#fff;padding:5px 9px;border-radius:10px;font-size:0.68rem;font-weight:700;cursor:pointer;display:none;white-space:nowrap}
+.map-controls{position:absolute;bottom:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.map-btn{background:rgba(10,18,30,0.72);color:#cfefff;border:1px solid rgba(252,76,2,0.5);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:0.75rem;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.route-alert{background:rgba(255,51,51,0.2);border:1px solid var(--r);padding:8px;border-radius:8px;margin:6px 0}
+.hostel-card,.rec-card{background:rgba(255,255,255,0.05);padding:12px;border-radius:10px;margin-bottom:10px;border:1px solid #333}
+.hostel-card h4,.rec-card h4{margin:0 0 6px 0;color:var(--p);font-size:0.9rem}
+.repair-tip{background:rgba(0,255,100,0.1);border:1px solid #00ff64;padding:10px;border-radius:8px;margin:6px 0}
+.global-comment{background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;margin:6px 0;border-left:3px solid var(--p)}
+.global-comment .author{color:var(--g);font-weight:bold;font-size:0.8rem}
+.novedad-card{background:rgba(255,255,255,0.05);border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:10px}
+.novedad-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.novedad-badge{background:rgba(255,215,0,0.12);color:var(--g);border:1px solid rgba(255,215,0,0.4);border-radius:10px;padding:2px 9px;font-size:0.65rem;font-weight:700;white-space:nowrap}
+.novedad-fecha{color:#7d8ba0;font-size:0.68rem;white-space:nowrap}
+.novedad-card h4{margin:0 0 5px;color:#fff;font-size:0.88rem}
+.novedad-card p{margin:0 0 8px;color:#b8c4d4;font-size:0.78rem;line-height:1.4}
+.novedad-bottom{display:flex;justify-content:space-between;align-items:center}
+.novedad-bottom a{color:var(--p);font-size:0.78rem;font-weight:700;text-decoration:none}
+.novedad-del{background:none;border:none;cursor:pointer;font-size:0.85rem;opacity:0.7;padding:0 4px}
+.global-comment .time{color:#888;font-size:0.7rem}
+.global-comment .text{margin:4px 0;line-height:1.3;font-size:0.85rem}
+/* Antes: height:calc(100vh - 210px) — un número mágico que NO reservaba la barra
+   inferior (60px) ni contaba el alto real del encabezado, así que en móvil la fila
+   de entrada (micrófono/enviar) se iba DEBAJO de la pantalla. Ahora flex-fill dentro
+   de la vista (que es flex column), y el área de mensajes scrollea sola. */
+.cc{display:flex;flex-direction:column;flex:1;min-height:0}
+/* La vista de chat se acota a la pantalla (menos barra superior ~51 + barra inferior 60
+   + respiro). Así .cc (flex:1) llena el resto y la fila de entrada queda SIEMPRE visible
+   sobre la barra, sin scroll de página. dvh corrige la barra dinámica del navegador móvil. */
+#v-pistero.view.on,#v-chat.view.on{display:flex;flex-direction:column;height:calc(100vh - 130px);height:calc(100dvh - 130px);padding-bottom:8px}
+.cm{flex:1;overflow-y:auto;padding:8px;background:#0b1120;border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:6px}
+.ms{margin-bottom:8px;max-width:85%}.ms.sf{margin-left:auto;text-align:right}
+.mb{display:inline-block;padding:6px 10px;border-radius:12px;line-height:1.2;font-size:0.85rem}
+.ms.sf .mb{background:var(--p);color:#000}
+.ms.ot .mb{background:rgba(255,255,255,0.1);color:#fff}
+.ma{font-size:0.6rem;color:#888;margin-bottom:2px}
+.cia{display:flex;gap:4px}.cia input{flex:1;margin:0}.cia button{width:auto;padding:8px 12px;margin:0}
+.route-history-item{background:var(--gl);padding:12px;border-radius:12px;margin:8px 0;display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.route-item-info{flex:1}.route-item-actions{display:flex;gap:8px;flex-wrap:wrap}
+.route-btn{background:var(--p);color:#000;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:0.7rem}
+.route-btn.delete{background:var(--r);color:#fff}
+/* Iconos de acción de "Mis Rutas" (2026-07-14): antes eran 6 botones con texto
+   ("Ver","📈 Perfil","🎬 Video","🏁 Segmento","📤 GPX","Borrar") apretados junto
+   al texto de la ruta — se veía saturado en pantallas chicas. Ahora la tarjeta
+   entera es el botón "Ver" (toque directo), y el resto son iconos compactos y
+   circulares en una fila que se ajusta sola (flex-wrap). Clase aparte de
+   .route-btn a propósito: esa sigue usándose en otros lados con texto (SOS,
+   agregar amigo) y no debe volverse circular ahí. */
+.route-icon-btn{background:rgba(255,255,255,0.07);color:#dfeaf5;border:1px solid rgba(255,255,255,0.16);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;padding:0;flex:none}
+.route-icon-btn.delete{background:rgba(239,68,68,0.14);border-color:rgba(239,68,68,0.4);margin-left:auto}
+.music-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:6px}
+.music-btn{padding:8px 0;border-radius:8px;text-decoration:none;color:#fff;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;font-size:0.9rem}
+.lp-player{background:linear-gradient(160deg,rgba(252,76,2,0.07),rgba(10,14,25,0.85));border:1px solid rgba(252,76,2,0.35);border-radius:14px;padding:10px 12px;margin-top:6px;backdrop-filter:blur(6px)}
+.lp-player-top{display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cfe9ff;min-height:20px}
+#lpTrackName{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+#lpDuckBadge{display:none;color:var(--g);font-size:0.68rem;font-weight:800;animation:esPulse 1s ease-in-out infinite}
+.lp-player.ducking #lpDuckBadge{display:inline}
+.lp-player-controls{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:8px}
+/* Controles de Música: eran los últimos con el turquesa viejo (#0c7a93), borde naranja y glow.
+   Al sistema: superficie sobria, hairline, 44px de área táctil. */
+.lp-player-controls button,.lp-file-btn{background:#131c2f;border:0.5px solid rgba(255,255,255,0.10);color:#dfe7ff;border-radius:50%;width:44px;height:44px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s ease,border-color .18s ease;position:relative;overflow:hidden}
+.lp-player-controls button:hover,.lp-file-btn:hover{background:#1a2438;border-color:rgba(255,255,255,0.18)}
+.lp-player-controls button::before,.lp-file-btn::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.4) 0%,rgba(255,255,255,0.05) 40%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.22) 100%);pointer-events:none}
+/* Play = la acción principal del reproductor, así que le toca el naranja sólido del sistema (sin glow). */
+.lp-player-controls .lp-play{width:52px;height:52px;font-size:1.25rem;background:#fc4c02;border-color:transparent;color:#fff;box-shadow:none}
+.lp-player-controls .lp-play:hover{background:#ff5f1c}
+.lp-player-controls button:active,.lp-file-btn:active{transform:scale(0.9)}
+.lp-player-note{font-size:0.62rem;color:#7d8ba0;margin-top:8px;line-height:1.4;text-align:center}
+.lp-player-eq{display:none;align-items:flex-end;gap:2px;height:14px}
+.lp-player.playing .lp-player-eq{display:inline-flex}
+.lp-player-eq i{width:3px;background:var(--p);border-radius:2px;animation:lpEq .7s ease-in-out infinite alternate}
+.lp-player-eq i:nth-child(2){animation-delay:.2s}.lp-player-eq i:nth-child(3){animation-delay:.4s}
+@keyframes lpEq{0%{height:4px}100%{height:14px}}
+/* Pistero travieso: llevaba el turquesa viejo + borde naranja + glow. En Nocturno Pro el
+   cian ES la identidad de Pistero (lo distingue del naranja de acción), así que le corresponde. */
+/* Capas del mapa (pedido de Inty: "un solo mapa para todo", botones con lógica clara).
+   Chips que MUESTRAN/OCULTAN lo que ves: ciclistas, pacos/peligros, puntos, miradores.
+   Encendida = cian (identidad de la comunidad); apagada = gris neutro. */
+/* Los filtros del mapa se ENVUELVEN, no se deslizan.
+   Medido el 2026-07-20 en pantalla de 375 px: la fila mide 511 px, así que "Puntos útiles"
+   y "Miradores" quedaban fuera de la pantalla. Técnicamente se alcanzaban deslizando, pero
+   la barra de desplazamiento está oculta (`scrollbar-width:none`) y no había ninguna pista
+   visual: en la práctica, la mitad de los filtros del mapa no existía para el usuario.
+   Envolviendo caben los cuatro a la vista en dos filas. Y la altura sube de 34 a 48 px,
+   que es el mínimo para tocar con el dedo sin fallar. */
+.mapcapas{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 8px}
+.capachip{flex:0 0 auto;min-height:48px;display:inline-flex;align-items:center;background:#131c2f;border:0.5px solid rgba(255,255,255,0.10);color:#8b97ad;border-radius:999px;padding:8px 13px;font-size:0.78rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+/* Rediseño 2026-07-29: acento único naranja de marca (antes teal suelto). */
+.capachip.on{background:rgba(252,76,2,0.16);border-color:#fc4c02;color:#ff9d6b}
+/* Hoja compacta de capas detrás del botón "Capas" (despeja el mapa, estilo Google Maps · Layers). */
+.capas-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:600;flex-direction:column;gap:6px;background:rgba(13,18,32,0.98);border:0.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px;box-shadow:0 8px 26px rgba(0,0,0,0.5);min-width:210px}
+.capas-panel.show{display:flex}
+.capachip:active{transform:scale(.96)}
+/* Estilo del mapa (calles/topo/satélite): control flotante en el mapa, no un botón suelto
+   que se confunde con las capas. Es un ajuste de VISTA, no una capa de datos. */
+/* 48px es el minimo tactil: medido el 2026-07-20 estos quedaban en 44 y 46. */
+.map-estilo-btn{position:absolute;right:14px;top:12px;z-index:500;background:rgba(15,20,35,0.92);color:#dfe7ff;border:0.5px solid rgba(255,255,255,0.12);width:48px;height:48px;border-radius:12px;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.map-estilo-btn:active{transform:scale(0.94)}
+/* 2026-08-23: zoom +/- discreto, pedido de Inty ("le falta un botón para zoom y para
+   alejar"). El control nativo de MapLibre (NavigationControl) existe en el código
+   (línea con mp.addControl) pero .maplibregl-ctrl-top-right está en display:none — así
+   que nunca se vio. En vez de mostrar ese control feo (blanco, cuadrado, no combina),
+   se construye uno propio del mismo estilo que .map-estilo-btn, del lado IZQUIERDO
+   porque la derecha ya tiene estilo+recentrar+reportar apilados. */
+/* top:12px, no bottom: medido y encontrado que anclado abajo se superponía con la barra
+   de escala (bottom-left, siempre ahí) -- arriba queda simétrico con .map-estilo-btn
+   (que está top-right) y sin riesgo de chocar con nada. */
+.map-zoom-ctrl{position:absolute;left:14px;top:12px;z-index:500;background:rgba(15,20,35,0.92);border:0.5px solid rgba(255,255,255,0.12);border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.4);display:flex;flex-direction:column;overflow:hidden}
+.map-zoom-ctrl button{width:40px;height:40px;border:none;background:transparent;color:#dfe7ff;font-size:0.95rem;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.map-zoom-ctrl button:first-child{border-bottom:0.5px solid rgba(255,255,255,0.12)}
+.map-zoom-ctrl button:active{background:rgba(255,255,255,0.08)}
+/* Botón flotante de reportar, estilo Waze: a mano sobre el mapa (antes estaba perdido en una
+   fila de botones). Pedido de Inty: "botón accesible para reportar policía en el mismo mapa". */
+/* Auditoria severa del 2026-07-20, MEDIDO: la etiqueta 'REPORTAR' se dibujaba FUERA del
+   boton (bottom:-17px) y caia justo encima del boton de 'volver a mi ubicacion'. Solape de
+   45x9 px, y elementFromPoint sobre la palabra devolvia .map-recenter-btn: o sea, TOCAR LA
+   PALABRA REPORTAR RECENTRABA EL MAPA. Un ciclista que ve un peligro y toca el unico texto
+   que dice reportar, no reporta nada. Se sube el boton para dejar aire real entre ambos. */
+/* Rediseño 2026-07-29: FAB uniforme 52px, ícono de línea (sin la etiqueta "REPORTAR" que
+   se dibujaba fuera del botón y pisaba el de recentrar). Reportar es el primario naranja y va
+   ABAJO de la columna (lo más alcanzable con el pulgar); recentrar va arriba. */
+/* 2026-08-23, vuelta final: Inty seguia viendolo distinto al de recentrar aunque
+   ya median casi lo mismo -- el problema no era el tamano, era el ESTILO: un
+   circulo naranjo solido al lado de un icono desnudo se ve como dos lenguajes
+   visuales distintos. Se le saca el circulo/relleno, mismo tratamiento que
+   .map-recenter-btn (icono suelto + drop-shadow, sin fondo ni borde) -- el
+   naranjo (color:#fc4c02, igual a --p) es lo que lo sigue distinguiendo como la
+   accion principal, no el circulo. Un poco mas grande que el recentrar (38 vs 34)
+   porque sigue siendo el botón mas importante del mapa. */
+#fabReportar{position:absolute;right:14px;bottom:20px;width:38px;height:38px;background:transparent;border:none;color:#fc4c02;font-size:1.55rem;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+#fabReportar:active{transform:scale(0.94)}
+#pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
+#pisteroPeek::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.24) 100%);pointer-events:none}
+#pisteroPeek.peek{right:12px}
+.music-btn span{display:none}
+.music-spotify{background:#1DB954}.music-youtube{background:#FF0000}.music-apple{background:#FA243C}
+.music-deezer{background:#A2C2E0;color:#000}.music-soundcloud{background:#FF5500}.music-amazon{background:#25D1DA;color:#000}
+/* FASE 3: bg/borde/radio los fija la regla Nocturno Pro de arriba (con !important). Aquí solo
+   queda el espaciado y el texto. El h4 deja de ser naranja: el encabezado es CONTEXTO, no acción. */
+.section-info{padding:12px 14px;margin-bottom:12px;font-size:0.8rem;line-height:1.45}
+.section-info h4{margin:0 0 5px 0;color:#eaf1fb;font-size:0.92rem;font-weight:700}
+.section-info p{color:#9fb3c8;margin:0}
+/* Área táctil: era 31px de alto a lo ancho de la pantalla — difícil de acertar pedaleando.
+   Estándar táctil = 44px (mismo que .ab del sistema). */
+.secret-btn{background:var(--g);color:#000;border:none;min-height:44px;padding:12px;border-radius:12px;cursor:pointer;font-weight:700;width:100%;margin-top:8px;font-size:0.85rem}
+.secret-form{background:rgba(255,215,0,0.1);padding:10px;border-radius:8px;margin-top:8px;display:none}
+.secret-form.show{display:block}
+/* Mismo caso: 31px de alto a lo ancho. Se sube al estándar táctil de 44px. */
+.gps-btn{background:#fc4c02;color:#fff;border:none;min-height:44px;padding:12px;border-radius:12px;cursor:pointer;font-weight:700;width:100%;margin-top:6px;font-size:0.85rem}
+.gps-status{background:rgba(255,102,0,0.2);padding:6px;border-radius:6px;margin-top:6px;font-size:0.75rem;text-align:center;display:none}
+.gps-status.show{display:block}
+.user-list-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:4000;display:none;flex-direction:column;padding:15px;overflow-y:auto}
+.user-list-modal.on{display:flex}
+.lp-dialog{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:4500;display:none;align-items:center;justify-content:center;padding:20px}
+.lp-dialog.on{display:flex}
+.lp-dialog-box{background:linear-gradient(135deg,#151b2e,#0a0f1d);border:2px solid var(--p);border-radius:14px;padding:18px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
+.lp-dialog-box p{color:#fff;font-size:0.92rem;line-height:1.4;margin:0 0 14px;white-space:pre-line}
+.lp-dialog-box input{margin-bottom:14px}
+.lp-dialog-btns{display:flex;gap:8px}
+.lp-dialog-btns button{flex:1}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.close-modal{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer}
+.chat-user-item{background:var(--gl);padding:12px;border-radius:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.friend-request{background:rgba(252,76,2,0.1);border:1px solid var(--p);padding:10px;border-radius:8px;margin:6px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.rec-actions{display:flex;gap:8px;align-items:center;margin-top:8px}
+.rec-btn{background:none;border:1px solid #555;color:#fff;padding:4px 8px;border-radius:12px;cursor:pointer;font-size:0.75rem}
+.rec-btn.active{background:var(--p);color:#000;border-color:var(--p)}
+.trip-card{background:linear-gradient(135deg,#151b2e,#0a0f1d);border:2px solid var(--p);padding:12px;border-radius:12px;margin-bottom:10px}
+.trip-card h3{margin:0 0 6px 0;color:var(--g);font-size:0.95rem}
+.trip-card .meta{font-size:0.75rem;color:#888;margin-bottom:8px}
+.trip-card .dest-list{font-size:0.8rem;margin-bottom:8px}
+.trip-card .dest-list div{padding:3px 0;border-bottom:1px solid #222}
+.trip-card .actions{display:flex;gap:6px}
+.trip-card .btn{flex:1;padding:8px;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.8rem}
+.btn-start{background:#10b981;color:#fff}.btn-view{background:#3b82f6;color:#fff}.btn-delete{background:#dc2626;color:#fff}
+.hostel-option{background:var(--gl);padding:10px;border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid #333;display:flex;justify-content:space-between;align-items:center}
+.added-dest-item{display:flex;align-items:center;gap:8px;padding:6px;background:var(--gl);border-radius:6px;margin-bottom:4px;font-size:0.85rem}
+#nav-screen{position:fixed;inset:0;background:#000;z-index:4000;display:none}
+#nav-screen.active{display:block}
+#nav-map{width:100%;height:100%}
+#nav-map .leaflet-top{top:150px}/* baja el zoom para que no lo tape la tarjeta de instrucciones */
+#nav-map .leaflet-control-zoom a{width:38px;height:38px;line-height:38px;font-size:22px;font-weight:800}
+#video-screen{position:fixed;inset:0;background:#000;z-index:4200;display:none}
+#video-screen.active{display:block}
+#video-map{width:100%;height:100%}
+#video-canvas-out{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.video-top-bar{position:absolute;top:0;left:0;right:0;padding:16px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(0,0,0,.6),transparent);z-index:2}
+.video-close{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.3);color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.1rem;cursor:pointer}
+.video-bottom-bar{position:absolute;bottom:0;left:0;right:0;padding:18px 16px 22px;display:flex;flex-direction:column;gap:10px;align-items:center;background:linear-gradient(0deg,rgba(0,0,0,.7),transparent);z-index:2}
+.video-progress{width:100%;max-width:420px;height:5px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden}
+.video-progress-fill{height:100%;width:0%;background:var(--p);transition:width .1s linear}
+#video-status{color:#fff;font-size:0.8rem;text-align:center}
+.nav-top{position:absolute;top:0;left:0;right:0;z-index:500;background:linear-gradient(180deg,rgba(0,0,0,0.95),rgba(0,0,0,0.7) 70%,transparent);padding:12px}
+.nav-instruction{background:rgba(252,76,2,0.95);color:#000;padding:12px 15px;border-radius:12px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:flex;align-items:center;gap:12px;min-height:60px}
+.nav-instruction .icon{font-size:2rem;min-width:40px;text-align:center}
+.nav-instruction .text-container{flex:1}
+.nav-instruction .text{font-size:0.95rem;font-weight:800;line-height:1.2}
+.nav-instruction .dist{font-size:0.8rem;color:#000;opacity:0.9;margin-top:2px}
+.nav-stats{display:flex;gap:8px;margin-top:8px;justify-content:center;flex-wrap:wrap}
+.nav-stat{background:rgba(0,0,0,0.7);padding:6px 10px;border-radius:8px;text-align:center;min-width:60px}
+.nav-stat .val{font-size:1rem;font-weight:800;color:var(--p)}
+.nav-stat .lbl{font-size:0.6rem;color:#888}
+.nav-close{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;border:none;width:35px;height:35px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:600}
+.nav-recenter-btn{position:absolute;right:14px;bottom:210px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:48px;height:48px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.nav-manoslibres-btn{position:absolute;right:14px;bottom:266px;z-index:550;background:rgba(15,20,35,0.92);color:#7d8ba0;border:2px solid rgba(255,255,255,0.2);width:46px;height:46px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.nav-manoslibres-btn.on{color:var(--p);border-color:var(--p);background:rgba(252,76,2,0.16)}
+.maplibregl-ctrl-top-right{display:none !important}
+/* 2026-08-23: sin circulo, mismo criterio que #micBtn ("sin circulo ni sombra de caja")
+   -- Inty lo vio muy grande y no le veia sentido al circulo. De 52px de boton relleno
+   pasa a un icono suelto de 34px con drop-shadow para que no se pierda contra el mapa. */
+.map-recenter-btn{position:absolute;right:14px;bottom:72px;z-index:550;background:transparent;color:var(--p);border:none;width:34px;height:34px;border-radius:0;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.nav-end-btn{width:100%;margin-top:8px;background:rgba(16,185,129,0.9);color:#fff;border:none;padding:10px 12px;border-radius:12px;font-size:0.85rem;font-weight:800;cursor:pointer}
+.nav-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(10,15,29,0.95);padding:12px;border-top:2px solid var(--p)}
+.nav-eta{display:flex;justify-content:space-around}
+.nav-eta-item{text-align:center}
+.nav-eta-item .val{font-size:1.1rem;font-weight:800;color:var(--g)}
+.nav-eta-item .lbl{font-size:0.65rem;color:#888}
+.speech-bubble{position:absolute;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.95);color:#fff;padding:10px 15px;border-radius:12px;font-size:0.85rem;max-width:280px;text-align:center;border:2px solid var(--p);opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:700;font-weight:700}
+.speech-bubble.show{opacity:1}
+.nav-alert{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);background:rgba(255,215,0,0.95);color:#000;padding:15px 25px;border-radius:15px;font-size:1rem;font-weight:800;z-index:800;opacity:0;transition:opacity 0.3s;pointer-events:none;text-align:center;box-shadow:0 0 25px rgba(255,215,0,0.5)}
+.nav-alert.show{opacity:1}
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:6000;display:none;justify-content:center;align-items:center;flex-direction:column}
+.loading-overlay.show{display:flex}
+.spinner{width:40px;height:40px;border:3px solid rgba(252,76,2,0.3);border-top-color:var(--p);border-radius:50%;animation:spin 1s linear infinite}
+.bikewheel{width:84px;height:84px;animation:spin 1.9s linear infinite;filter:drop-shadow(0 0 10px rgba(252,76,2,0.45))}
+@keyframes spin{to{transform:rotate(360deg)}}
+.helmet-pin{filter:drop-shadow(0 2px 3px rgba(0,0,0,0.6))}
+/* La animación y el escalado van en .hp-in (adentro), NUNCA en .helmet-pin: ese es
+   el mismo elemento que le pasamos como "element" a maplibregl.Marker, que le
+   reescribe el transform en cada frame para posicionarlo en el mapa — una
+   animación CSS de transform ahí pisaría esa posición (el marker se iría a la
+   esquina). Por eso el bob/tamaño vive en el hijo, no en el elemento del marker. */
+.helmet-pin .hp-in{position:relative;animation:helmBob 2.6s ease-in-out infinite}
+.helmet-pin svg{width:calc(44px * var(--rider-scale, 1));height:calc(30px * var(--rider-scale, 1));display:block;position:relative;z-index:1}
+.helmet-pin.mine{filter:drop-shadow(0 0 8px var(--p))}
+.helmet-pin.mine .hp-in{animation:helmBob 1.1s ease-in-out infinite}
+@keyframes helmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+/* Tarjeta de grupo: pila de cascos reales (no un número pelado) — pedido de Inty
+   tras ver el diseño anterior ("no quiero mostrar grupos de ciclistas esa
+   manera"). RIDER_STACK_MAX/RIDER_STACK_AV_PX (más abajo) controlan cuántos
+   cascos se ven antes del "+N" y su tamaño. */
+.rider-cluster{display:flex;align-items:center;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
+.rc-stack{display:flex}
+.rc-av{border-radius:7px;background:#0e1420;border:1.5px solid rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+.rc-av svg{width:88%;height:76%;display:block}
+.rc-more{margin-left:3px;background:var(--p);color:#1a0900;font-weight:800;font-size:10px;padding:2px 6px;border-radius:8px;border:1.5px solid rgba(255,255,255,.9);white-space:nowrap}
+.fab{position:fixed;right:14px;width:56px;height:56px;border-radius:50%;border:none;color:#fff;font-size:1.3rem;cursor:pointer;z-index:2200;box-shadow:0 4px 14px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center}
+/* Orbe Pistero (v7.65): un solo control de voz = cara con casco + anillo que gira
+   siempre (estilo Kimi). Morado=reposo, naranja=escuchando, azul=Pistero habla.
+   Abajo-centro, chico, semitransparente en reposo: no pisa los FAB de la derecha.
+   Se oculta al escribir (lp-typing) para no tapar inputs de chat/Pistero. */
+/* Orbe Pistero v7.84: cara con casco + expresiones por estado + ojos que siguen al
+   usuario (mirada). Halo: reposo morado, naranja escuchando, azul hablando. */
+/* Mismo criterio que .es-mic de arriba: sin orbe/halo circular, solo la carita más
+   grande con sombra sutil. El estado (reposo/escuchando/hablando) ahora se lee en el
+   drop-shadow de color, no en un círculo detrás. */
+/* box-shadow:none + border-radius:0 anulan lo que hereda de `.fab` (50% + sombra de
+   caja). Con el fondo ya transparente, esa sombra circular seguía dibujando un halo
+   redondo detrás de la carita de Pistero — el resto del "orbe" que Inty pidió sacar.
+   La sombra buena es el drop-shadow de acá abajo, que sigue el contorno del dibujo.
+   Solo afecta a ESTE botón: los demás `.fab` de la app mantienen su círculo. */
+#micBtn{bottom:calc(78px + env(safe-area-inset-bottom,0px));left:50%;right:auto;transform:translateX(-50%);width:80px;height:80px;border:none;padding:0;overflow:visible;opacity:.97;background:transparent;box-shadow:none;border-radius:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
+#micBtn i{display:none}
+#micBtn .orb-cara,.es-mic .orb-cara{display:block;width:100%;height:100%;position:relative;z-index:2}
+#micBtn .orb-cara svg,.es-mic .orb-cara svg{width:100%;height:100%;display:block}
+#micBtn.listening{opacity:1;filter:drop-shadow(0 0 10px rgba(252,76,2,.75))}
+body.pistero-hablando #micBtn{filter:drop-shadow(0 0 10px rgba(47,176,255,.75))}
+body.lp-typing #micBtn{opacity:0;pointer-events:none}
+/* Bug real (2026-08-31, Inty: "el botón que ha tapado" al registrar un punto/alojamiento):
+   #micBtn flota FIJO en el centro-abajo de la pantalla en TODAS las vistas (ver la regla de
+   arriba, bottom+left:50%). Con scroll normal, cualquier botón real de la página (ej.
+   "Publicar" en Nuevo alojamiento) puede terminar pasando justo por esa franja fija — el mic,
+   con z-index 2200, intercepta el toque antes de que llegue al botón de abajo, tapándolo de
+   verdad. Misma solución que ya existía para "escribiendo" (lp-typing, arriba): atenuar y
+   dejar pasar el toque, detectado en vivo por JS (ver _revisarMicTapaBoton). */
+body.mic-tapando-boton #micBtn{opacity:.22;pointer-events:none}
+.nav-manoslibres-btn{display:none!important}
+body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
+/* Animaciones de la cara (compartidas mapa+esfera) */
+.lp-eye{transform-box:fill-box;transform-origin:center}
+/* --blink-delay: por defecto 0s (esfera/mic, un solo personaje, sin cambios). Los
+   marcadores del mapa (riderMarkerHTML) lo pisan con un valor al azar por ciclista
+   para que no parpadeen todos al mismo tiempo — ver ahí el porqué. */
+.lp-parpadeo{animation:lpParp 4.4s ease-in-out infinite;animation-delay:var(--blink-delay, 0s)}
+@keyframes lpParp{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
+.lp-iris{transform-box:fill-box;transition:transform .18s ease-out}
+.lp-boca{transform-box:fill-box;transform-origin:center;animation:lpBoca .45s ease-in-out infinite}
+@keyframes lpBoca{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1.15)}}
+/* Rediseño mapa 2026-07-29 (SPEC): antes era un GLOBO grande naranja arriba-derecha que
+   duplicaba lo que Pistero decía y tapaba el mapa. Ahora es una FRANJA FINA tipo subtítulo,
+   centrada abajo: transcripción en vivo + respuesta, sin ruido. pointer-events:none deja
+   tocar los FAB que quedan debajo. */
+#pisteroBubble{position:fixed;bottom:76px;left:12px;right:12px;max-width:560px;margin:0 auto;background:rgba(10,15,29,0.9);border:0.5px solid rgba(255,255,255,0.12);border-left:2px solid var(--p);color:#eaf1ff;padding:8px 13px;border-radius:10px;font-size:0.8rem;font-weight:600;z-index:2100;opacity:0;transform:translateY(6px);transition:0.22s;pointer-events:none;line-height:1.3;text-align:left;box-shadow:0 4px 16px rgba(0,0,0,0.42);backdrop-filter:blur(4px)}
+#pisteroBubble.show{opacity:1;transform:translateY(0)}
+#tutorialOverlay{position:fixed;inset:0;z-index:7000;display:none;pointer-events:none}
+#tutorialOverlay.on{display:block}
+.tut-dim{position:fixed;background:rgba(5,8,18,0.86);z-index:7000;pointer-events:auto}
+#tutRing{position:fixed;z-index:7001;border:3px solid var(--p);border-radius:12px;box-shadow:0 0 18px 3px var(--p);pointer-events:none;display:none;animation:tutPulse 1.3s ease-in-out infinite}
+@keyframes tutPulse{0%,100%{box-shadow:0 0 14px 2px var(--p)}50%{box-shadow:0 0 26px 7px var(--p)}}
+.tut-banner{position:fixed;top:14px;left:14px;right:14px;z-index:7003;background:linear-gradient(135deg,var(--p),#0aa6c9);color:#021;padding:11px 14px;border-radius:13px;font-weight:800;font-size:0.82rem;text-align:center;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,0.5);line-height:1.35;transition:opacity 0.5s ease;opacity:1}
+.tut-banner.hide{opacity:0;pointer-events:none}
+.tut-bar{position:fixed;bottom:18px;left:12px;right:12px;z-index:7003;display:flex;align-items:center;gap:8px;justify-content:center;pointer-events:auto}
+.tut-bar button{padding:12px 14px;border:none;border-radius:11px;font-weight:800;font-size:0.85rem;cursor:pointer}
+#tutPrev{background:#2a3147;color:#fff}#tutNext{background:var(--p);color:#000;flex:1}
+#tutProgress{color:#fff;font-weight:800;font-size:0.78rem;background:rgba(0,0,0,0.65);padding:10px 10px;border-radius:9px;white-space:nowrap}
+.tut-skip{background:#3a1f2a;color:#ff8a8a;border:none;border-radius:11px;padding:12px;font-weight:800;font-size:0.85rem;cursor:pointer}
+.quick-links{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+#saver{position:fixed;inset:0;background:#000;z-index:6000;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;-webkit-tap-highlight-color:transparent;cursor:pointer}
+#saver.on{display:flex}
+.saver-spd{font-size:4.2rem;font-weight:800;color:#0c5a68;line-height:1}
+.saver-spd small{display:block;font-size:1rem;color:#073d47;font-weight:700;margin-top:4px}
+.saver-km{margin-top:18px;font-size:1.15rem;color:#0c5a68;font-weight:700}
+.saver-hint{position:absolute;bottom:42px;left:0;right:0;font-size:0.72rem;color:#15323a;line-height:1.5}
+
+/* ===== REFINAMIENTO SOBRIO + INTERACTIVO (se agrega por encima, no reemplaza nada) ===== */
+/* Interacción táctil en TODO lo clickeable: se hunde al tocar (acción → reacción) */
+.ab,.bg,.bd,.bpdf,.btrip,.gtt,.route-btn,.rec-btn,.gps-btn,.btn,.music-btn,.es-ind,.helmet-option{transition:transform .13s cubic-bezier(.34,1.35,.6,1),filter .2s,box-shadow .2s,background .2s,border-color .2s,color .2s}
+.ab:active,.bg:active,.bd:active,.bpdf:active,.btrip:active,.route-btn:active,.rec-btn:active,.gps-btn:active,.btn:active,.music-btn:active{transform:scale(.95)}
+@media(hover:hover){.ab:hover,.bg:hover,.bd:hover,.bpdf:hover,.btrip:hover{filter:brightness(1.08);box-shadow:0 6px 18px rgba(0,0,0,.5)}}
+/* Paleta sobria y coherente para los botones de acción (colores apagados, elegantes) */
+/* PRIMARIO único: naranja = acción. Sin degradado. */
+/* El primario se usa SIN .ab (class="bg" a secas), así que no heredaba el tamaño del sistema:
+   quedaba en 40px mientras el secundario medía 44. Al revés de lo que corresponde. */
+.bg{background:linear-gradient(165deg,#ff7a3c,#fc4c02 62%,#e23f00)!important;color:#fff!important;border-color:transparent!important;font-weight:750!important;min-height:44px;padding:12px 14px;border-radius:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.4),0 9px 24px -8px rgba(252,76,2,0.72)!important}
+.bg:hover{background:linear-gradient(165deg,#ff8a4f,#ff5514 62%,#e23f00)!important}
+/* Restos del tema viejo: estos !important resucitaban los degradados dorado/rojo/morado y
+   pisaban el sistema Nocturno Pro (por eso .btrip seguía saliendo morado). Ahora son
+   variantes sobrias del MISMO sistema: superficie + color solo en el texto. */
+.bd{background:#1c2740!important;color:#ffd166!important;border-color:rgba(255,209,102,0.3)!important}
+.bpdf{background:#2a1418!important;color:#ff8a8a!important;border-color:rgba(255,90,90,0.3)!important}
+.btrip{background:#131c2f!important;color:#dfe7ff!important;border-color:rgba(255,255,255,0.10)!important}
+.bd,.bpdf,.btrip{border:1px solid rgba(255,255,255,0.10)!important;border-radius:12px!important;box-shadow:0 4px 14px rgba(0,0,0,0.4)!important;letter-spacing:.3px}
+.bg{border:none!important;letter-spacing:.3px}
+/* Nav inferior sobria con indicador elegante del activo */
+.nb{position:relative;transition:color .2s,transform .12s}
+.nb:active{transform:scale(.88)}
+.nb.on{color:var(--p)}
+.nb.on::after{content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--p);box-shadow:0 0 8px var(--p)}
+/* Tarjetas: leve profundidad al tocar */
+.cd,.stat-card,.hostel-card,.rec-card,.route-history-item,.gi,.repair-tip{transition:transform .15s,box-shadow .2s}
+.cd:active,.hostel-card:active,.rec-card:active,.route-history-item:active,.gi:active{transform:translateY(1px)}
+/* Chips de filtro: activo claro, con feedback */
+.gtt{transition:transform .12s,background .2s,border-color .2s,color .2s}
+.gtt:active{transform:scale(.93)}
+.gtt.on{background:rgba(252,76,2,0.16)!important;border-color:var(--p)!important;color:var(--p)!important}
+
+@font-face{font-family:'LibrePedalLogo';src:url(data:font/woff2;base64,d09GMgABAAAAAAW4AA8AAAAACgwAAAVeAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG4FkHDQGYD9TVEFUKgBkEQgKiBCGOQsWAAE2AiQDKAQgBYQKByAMBxsZCMjE4HHOv/eSWopLsCBeTItLgTmuE+3m6VyssC+u+WM/VyfWd+uicQt1q+WLv5k6oqETiiUaR3KpJK2kTsiVFd0mbp1DwRuOR18NAoBDIkrAZmQVVEBoaBzSwEnm1V7ZUTvQBQEsALwhtCw/mYA2tPYPwKy9sa+LpX4igElnsVBBCYoecP1eoAQhk07LQSJkYADpLzYK2IRCU6ESuOkJGehfCeQKqIBhhRSUWwAWxZZzMhvICUyiBFaHhtXiVPoYn0IDjWU3zkmiceG5Eb3K8JClqUirWVt+XCPjoCEHTDoL2zFrZir4qeUbMvMrsnAdPMrY6P9+ZSZYJ2rCg6xqT5PHdBSPsE6TQ8PwY2y3C+jE5paB47JRdEUiY3iUwIDsDDjMokSOWsCibZxHGjKRiwIJyg59Fw8tMmqPSB9JN6Tr0hXpknReOnfuVjjDBESSYH72iauidARInp9sBDnZAwHqgoxH2AtYCzacZcPMbFRCWaFSqc3ljzVVqcWrhNFfU5saroDOuszVqRmumVv/+rVLxfrNm9fbrN7NiU+JfpPzphHW1HnfiNpgdDxh/DSP1ec58aqbTrd1eLi6Sl3ZDI5UVhmMRsx6zYl3h4WHhNEf8j03+O2Y9fo1pzNcIvqLnHjahq45ozY8I/qLzcN+76wds26f2mA0VuqHhznxdeTu/aCzcs8Y1YaRkdFquvo0J74kVRyjf6U2nLGtJqZrtmDWYW5CImkiTcFV2bpzV1zBaDWtEF+SSmmbrhFb/fCrnLjbpoY7REfdDES3tafX66oO3LhxxXHzY068GgCd3+az0fsb740+XfG/k++cj/UfI+Wh3GCrtc/Za9tTPk8/M/nWH3YaK3ezqWkz3RuEAaHbvXpAlWnpqSl02WbltzBgte/iLy7/5BFeoncYb9201jrbMvV4eMb8d23mY0rPlKdTlk1mx1b3+8RnR9WtGr/I/hctd6Ah8pXtkODcxEXNFHU1msS0br5Qlh3Y7e78LNi8dkfbq5vWfqleHo9wM6haV5VhSneM+eiGWWiGn0/xqdhO3eKNGS3CeOURYcj2VWTDjAaVZ+ParPIlSL1w8PTONQ6BloEHsg5OCLQMdFizs6BhYUjbDlufH12Yn8Witl22Pj+6eI0symvbYevzkwtSLxy7sNPoELk65OiCY0tOfG6nORGO1AvHTpcqAy0Dx4xZEtN2ytbnF5dLxmNLTnxupzkRju8zwvz9BOHLYIvUHfFeX7XaDgnOYzmfRSsHG7UpE/qjYvKPKXYaHSJXh+C7HE2AThDkUabhO9Kdfqq1HRKca7gI0TBQl5Qxvi+6XdjqPvatea7LV2R6BN4JiX18TLHT6BC5OgQAAOLfcSqiZEB3b7x54m9KhvnyOcm8u2P9h9y9720ff/p/xX+/Kv9gowHIHyCcLAmCOLYy4n/FnxHKPx7Ln+PoYZTgPkD7YU/boaUboaXe0JJwaCmBlmZCS2uhJbjqLzDFCdJd4djZHm4GebhZFR/fiJ9zHYEnnusozHBTxyAai7ez/ToZnNDHySmOZLVmiIRbHwFMYMWzMum9QCYmYQB9qEUautGBBlShEa1oRgsG/PYB9CAeodJp/ahHH1rRgwGeDTER9vUdCEE3+tCMUBQjCwVIQy060G3spEHw0nwd9E07vRtd4BGOEMQgjFuWmicgE/moQNaGluKXHd2MQXSgFn1Alpet8d3p6EYPJqMgEGIgbOPpOPCoQAsaSXuVJc4rQR+60YZG1IOjWgyeGwx3sx88/M6TvV+ONqO1NzyIOuNv69GNToQiE+2owGT0oBGhDPi/LlD1IGkzNHA6zxNp3nF2CQAA) format('woff2');font-weight:800;font-display:swap}
+
+/* Presentación de logo en video (reemplaza la rueda animada en CSS — Inty la dio por
+   mala a tamaño real, ver COORDINACION-IA/EN-USO.md "DELEGO ESTO" 2026-08-14). El
+   video (logo-presentacion.mp4) es el original de Inty recortado a solo el reveal del
+   logo, cortado justo antes de que entre la maqueta con botones — ver commit de esta
+   sesión. autoplay+muted+playsinline: única combinación que autorreproduce en
+   Android/iOS sin gesto del usuario; loop porque el login puede quedarse un rato
+   abierto. poster=logo-transparent.png: se ve de inmediato mientras el video carga,
+   y es el fallback si el navegador no puede reproducir mp4. */
+.lp-logo-wrap{width:100%;max-width:280px;margin:10px auto 6px}
+.lp-logo-video{width:100%;height:auto;display:block;border-radius:10px;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.5))}
+/* Iconos de modo a medida (bici/huellas/auto) — tamaño y color heredado del modo.
+   La grilla de selección (login) usa un ícono aún más grande (58px) porque la tarjeta
+   es el foco de esa pantalla; el chip de la esfera es un círculo de navegación más chico
+   (46px, icono 26px) — por eso van en reglas separadas aunque ambos crecieron. */
+.modo-ico-svg{display:flex;justify-content:center;align-items:center;height:64px}
+.es-modo-ico svg,.es-modo-ico img{width:26px;height:26px;display:block;object-fit:contain}
+.modo-ico-svg svg,.modo-ico-svg img{width:58px;height:58px;display:block;object-fit:contain}
+.modo-ico-svg img,.es-modo-ico img{filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.45))}
+/* Abanico de reporte (v7.29): el botón Reportar del mapa despliega 4 opciones animadas. */
+#abanicoReporte{position:absolute;right:14px;bottom:170px;z-index:501;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+#abanicoReporte.on{pointer-events:auto}
+#abanicoReporte .abn-op{opacity:0;transform:translateY(14px) scale(.9);transition:opacity .2s ease,transform .22s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d);background:rgba(10,15,29,.95);color:#fff;border:2px solid #333;border-radius:22px;padding:9px 15px;font-weight:700;font-size:.82rem;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.55)}
+#abanicoReporte.on .abn-op{opacity:1;transform:translateY(0) scale(1)}
+#abanicoReporte .abn-op:active{transform:scale(.94)}
+#abanicoReporte .abn-e{display:flex;flex-shrink:0}
+/* 2026-08-23: desplegable chico junto al botón tocado (Peligro/Control/Servicio/
+   Mirador) con los sub-tipos de esa categoría — reemplaza el viaje al modal grande de
+   11 categorías. Pedido directo de Inty: "esto tiene que ser rápido". */
+.rep-drop{position:fixed;z-index:560;width:200px;background:rgba(10,15,29,.97);border:1px solid #2a3147;border-radius:16px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.6);opacity:0;transform:translateX(8px) scale(.96);transition:opacity .16s ease,transform .16s ease}
+.rep-drop.on{opacity:1;transform:translateX(0) scale(1)}
+.rep-drop-item{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;color:#e2e8f0;font-size:.8rem;font-weight:600;padding:9px;border-radius:10px;text-align:left;cursor:pointer;font-family:inherit}
+.rep-drop-item:active{background:rgba(255,255,255,.08)}
+.rep-drop-item .rdi-ic{width:18px;text-align:center;flex-shrink:0}
+/* Tarjeta corta para publicar: reemplaza el modal gigante — solo la categoría ya
+   elegida, ubicación (GPS o marcada a mano), descripción opcional y publicar. */
+.rep-quick{position:fixed;left:14px;right:14px;bottom:20px;z-index:560;max-height:78vh;overflow-y:auto;background:#0f1728;border:1px solid #2a3147;border-radius:18px;padding:16px;box-shadow:0 -10px 30px rgba(0,0,0,.55);opacity:0;transform:translateY(16px);transition:opacity .18s ease,transform .18s ease}
+.rep-quick.on{opacity:1;transform:translateY(0)}
+.rep-quick .rq-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.rep-quick .rq-ic{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rep-quick .rq-t{flex:1;font-weight:800;font-size:.92rem;color:#fff}
+.rep-quick .rq-close{background:none;border:none;color:#6b7688;font-size:1.3rem;line-height:1;cursor:pointer;padding:0 4px}
+.rep-quick .rq-loc{font-size:.7rem;color:#6ee7a8;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rep-quick .rq-hint{font-size:.68rem;color:#7d8ba0;margin:6px 0 0}
+.rep-quick .rq-pub{width:100%;margin-top:10px;background:#fc4c02;border:none;color:#fff;border-radius:12px;padding:12px;font-size:.85rem;font-weight:800;cursor:pointer}
+
+.soc-group{background:#161b22;border:1px solid #2a3240;border-radius:14px;padding:11px 13px;margin-bottom:10px}
+.soc-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:11px}
+.soc-group>summary::-webkit-details-marker{display:none}
+.soc-group>summary .soc-ic{font-size:1.35rem;width:36px;height:36px;display:grid;place-items:center;background:#1f2734;border-radius:11px;flex:none}
+.soc-group>summary b{display:block;font-size:0.95rem;line-height:1.2}
+.soc-group>summary small{display:block;color:#8794a5;font-size:0.72rem;margin-top:2px}
+.soc-group>summary::after{content:'▸';margin-left:auto;color:#8794a5;transition:.2s}
+.soc-group[open]>summary::after{transform:rotate(90deg)}
+
+#pisteroMsgs{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;min-height:0;padding:6px 2px}
+.pmsg{max-width:86%;padding:9px 13px;border-radius:15px;margin:5px 0;font-size:0.87rem;line-height:1.45;word-wrap:break-word;white-space:pre-wrap}
+.pmsg-yo{background:var(--p);color:#2a0e02;align-self:flex-end;border-bottom-right-radius:5px;font-weight:600}
+.pmsg-pistero{background:rgba(18,179,166,0.08);border:1px solid rgba(18,179,166,0.4);color:#e9edf3;align-self:flex-start;border-bottom-left-radius:5px}
+.pmsg-pistero.pensando{opacity:0.65;font-style:italic}
+#pisteroMic.grabando{background:#dc2626;color:#fff}
+#pisteroChips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px;margin-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#pisteroChips::-webkit-scrollbar{display:none}
+.pchip{flex:0 0 auto;background:rgba(252,76,2,0.12);border:1px solid rgba(252,76,2,0.4);color:var(--p);border-radius:999px;padding:7px 12px;font-size:0.78rem;font-weight:700;white-space:nowrap;cursor:pointer}
+.pchip:active{transform:scale(.96)}
+.pmsg-acciones{display:flex;flex-direction:column;gap:6px;margin:0 0 8px;align-items:flex-start}
+.pacc{background:var(--p);color:#2a0e02;border:none;border-radius:10px;padding:9px 13px;font-size:0.82rem;font-weight:800;cursor:pointer}
+.pacc:active{transform:scale(.97)}
+
+.pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:10px;padding:4px 3px 4px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:32px;height:27px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.56rem;color:#cdd6e6;margin-top:2px;line-height:1.1}

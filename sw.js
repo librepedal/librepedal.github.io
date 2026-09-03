@@ -10,6 +10,10 @@ const TILES_CACHE = 'librepedal-tiles';
 const CORE = [
   './',
   './index.html',
+  './estilos.css',
+  './esfera.js',
+  './seguridad-sensores.js',
+  './clima-datos.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',

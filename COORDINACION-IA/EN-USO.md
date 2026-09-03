@@ -1,5 +1,43 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔒 EN CURSO — Lenovo (2026-09-02/03), candado TOMADO — refactor estructural, SIN COMMIT aún
+> Pedido directo de Inty: separar el monolito de `index.html` en archivos por dominio para
+> auditar/leer mejor el código (cero cambio funcional, solo reorganización). Nada de esto se
+> pushea ni se despliega todavía — todo local, sin commit.
+>
+> **Ya extraído (verificado: diff exacto, checksum, sintaxis, tests 27/28, prueba en vivo en
+> navegador):**
+> - `estilos.css` — los 6 bloques `<style>` que estaban dispersos.
+> - `esfera.js` — Esfera 3D (lanzador) + audio sintetizado.
+> - `seguridad-sensores.js` — SOS, detección de caídas, Bluetooth (pulsómetro/potenciómetro).
+> - `clima-datos.js` — pronóstico, aviso de lluvia/viento, fatiga (NO es lo mismo que
+>   `clima-fx.js`, que ya existía y es solo el efecto visual).
+>
+> `index.html` bajó de 13.208 a ~11.500 líneas. `sw.js` actualizado (precache) y 3 tests
+> (`caidas`, `clima`, `mantencion`) actualizados porque leían el código viejo como texto
+> directo de `index.html`.
+>
+> **Si sos la cuenta B (Frontend) y ves esto:** avisame por el hub antes de tocar `index.html`
+> — hay ediciones grandes sin commitear en esta copia local. Nada en `main`/origin cambió.
+>
+> **🔴 INCIDENTE 2026-09-02 ~22:48, ya resuelto:** un commit tuyo (`abefc24`, "doble
+> diálogo en la pantalla de Pistero") se hizo sobre esta misma copia local mientras yo
+> tenía el refactor de arriba sin commitear — el commit quedó con 1966 líneas de más
+> (mi refactor mezclado con tu fix). Algo (¿vos misma, al notarlo?) hizo despues un
+> `git reset` que devolvió el HEAD hasta `9ee7c39`, dejando el commit huérfano y
+> arrastrando también `72e9b76` (que SÍ era tuyo, limpio, y ya estaba en origin).
+> **Nada se perdió:** tu fix de sinBocadillo seguía completo en el árbol de trabajo sin
+> commitear, lo verifiqué línea por línea. Recuperé el commit huérfano en la rama
+> `respaldo-abefc24-recuperado` (por si acaso) y sincronicé mi copia con `origin/main`
+> (fast-forward limpio a `fc386dd`, tu fix de voces de Argentina). Todo tu trabajo real
+> sigue intacto, solo que ahora vive sin commitear junto con mi refactor — cuando yo
+> entregue mis archivos, tu fix de sinBocadillo va a ir incluido y hay que separarlo en
+> su propio commit al mergear. **Esto pasó porque las dos estábamos editando la misma
+> copia local a la vez — probablemente conviene que trabajes en tu propio clone/carpeta
+> en vez de esta, para que esto no se repita.**
+>
+> ---
+
 > ## ✅ PUBLICADO — main en 4f4669a, versión 8.788 en producción (2026-08-31, sesión Lenovo)
 > Pedido de Inty: "no quiero nada generico y quiero todo funcional no rompa nada y audita".
 > Candado de `index.html`: **LIBRE**.

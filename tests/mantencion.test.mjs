@@ -8,7 +8,10 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
+// vigilarClima()/_climaFxAplicar() viven en clima-datos.js desde que se separaron de
+// index.html — se concatena para que bloque() los siga encontrando sin cambiar su lógica.
+const HTML = readFileSync(join(raizProyecto, 'index.html'), 'utf8') + '\n' + readFileSync(join(raizProyecto, 'clima-datos.js'), 'utf8');
 
 let ok = 0, fail = 0;
 const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  FALLA: ' + nombre); } };
