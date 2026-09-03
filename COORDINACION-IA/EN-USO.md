@@ -1,8 +1,26 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 0d774f0, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 21vo dominio. Tarea del hub #192. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en 9f6b8d1, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 22vo dominio — el bloque más crítico de todo el refactor. Tarea del hub
+> #193. Candado de `index.html`: **LIBRE**.
 >
+> 3 archivos (entre `auth-sesion.js` y `novedades.js`): `ciclistas-mapa-clustering.js`
+> (clustering de ciclistas por zoom en el mapa), `suscripcion-perezosa-rtd.js`
+> (`_subUnaVez()` — **el fix real de la crisis de cuota de Firestore del 23-ago**,
+> 73.000 lecturas contra 210 escrituras — + posiciones en Realtime Database),
+> `suscripciones-comunidad.js` (`escapeHTML()` — **la única defensa anti-XSS de toda
+> la app**).
+>
+> Verificado con el máximo rigor de todo el refactor: diff exacto, reconstrucción
+> byte a byte, tests 27/28 (falla preexistente). En vivo, local Y producción real:
+> `escapeHTML('<script>alert(1)</script> & "comillas"')` escapa correctamente sin
+> ejecutar nada; `_subUnaVez` llamado dos veces con la misma clave solo ejecuta la
+> función una vez (el mecanismo anti-cuota sigue intacto); `riderClusterHTML` agrupa
+> correctamente.
+>
+> `index.html`: 1.557 → **1.370 líneas** (13.208 original, **-90%**).
+>
+> ---
 > 2 archivos (entre `auth-vinculo.js` y `auth-sesion.js`, bloque que se me había
 > quedado sin mapear): `ubicacion-carga.js` (`getCurrentLocation`, `showLoading`/
 > `hideLoading`) y `sonido-cadena.js` (síntesis Web Audio del trinquete).
