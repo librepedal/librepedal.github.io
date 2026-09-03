@@ -130,16 +130,28 @@ function toggleSaver(){
 }
 // Bromas/comentarios del camino. Se llama en AMBOS modos: GPS libre (ug) y navegación a destino (_navPosUpdate).
 // Si Pistero está ocupado, NO gasta la broma: se reintenta en el próximo fix (no se pierden).
-function bromasDelCamino(sp){
+// kmRutaTotal: SOLO lo manda quien navega a un destino trazado (funciones-mapa-viajes.js
+// pasa routeTotalDistance, conocido desde que OSRM traza la ruta A->B). En GPS libre no
+// se conoce de antemano cuánto se va a andar, así que se omite y el intervalo queda fijo.
+// Por qué existe (2026-09-03, reporte de Inty: "no quiero que esté bromeando todo el
+// tiempo... hay que considerar la cantidad de frases según los km que se recorran"): con
+// el intervalo fijo de 1.5 km, una ruta de 120 km (caso real de un tester) permitía hasta
+// 80 disparos de broma en carretera -- se sentía como charla constante. BROMAS_OBJETIVO_RUTA
+// fija cuántas bromas "de ritmo" tiene sentido para una ruta ENTERA, sin importar qué tan
+// larga sea, y de ahí se deriva el espaciado real: rutas cortas ya quedaban bien con el
+// mínimo de 1.5 km (nunca da tiempo a exagerar), rutas largas ahora se espacian de verdad.
+const BROMAS_OBJETIVO_RUTA=10;
+function bromasDelCamino(sp, kmRutaTotal){
   if(!vozActiva) return;
   if(vozOcupada()||vozCola.length) return;
   const _cm=(typeof _charlaMult==='function')?_charlaMult():1; // "cuánto habla Pistero" (Ajustes): escala la cadencia
+  const _kmEntreFrases=(typeof kmRutaTotal==='number' && kmRutaTotal>0) ? Math.max(1.5, kmRutaTotal/BROMAS_OBJETIVO_RUTA) : 1.5;
   if(sp===0){
     if(Date.now()-lastFraseParadoTime>=1200000*_cm){ const _fr=obtenerFraseUnica('parado'); if(_fr){ h(_fr); lastFraseParadoTime=Date.now(); } } // parado
   } else if(zonaActual==='ciudad'){
     if(Date.now()-tFraseCiudad>=240000*_cm){ const _fr=(Math.random()<0.25)?obtenerFraseUnica('profunda'):obtenerFraseUnica('ciudad'); if(_fr){ h(_fr); tFraseCiudad=Date.now(); } } // ciudad
   } else {
-    if(us.di-kmUltimaFrase>=1.5*_cm){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera
+    if(us.di-kmUltimaFrase>=_kmEntreFrases*_cm){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera
   }
   /* Auditoria 2026-07-20: el banco `motivacional` estaba escrito y traducido a 4 paises
      (cl/ar/mx/es/co) y NADIE lo pedia nunca -> frases que el usuario jamas iba a oir.

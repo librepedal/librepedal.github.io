@@ -835,7 +835,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   _detectarModoEquivocado(speed);
   checkFuel(totalDistance);
   actualizarZona(lat,lon); // detecta comuna + cuenta anécdota de la IA
-  bromasDelCamino(speed); // bromas también al navegar a un destino (antes solo salían en el GPS libre)
+  bromasDelCamino(speed, routeTotalDistance); // bromas también al navegar a un destino (antes solo salían en el GPS libre); manda el total de la ruta para espaciarlas según lo largo del viaje (ver comentario en motor-gps.js)
   if(rutaPerfil.length) avisarPendienteAnticipada(lat,lon); else comentarPendiente(navPendienteHistory, speed);
   avisarPuntosCercanos(lat,lon,speed);
   avisarReportesCercanos(lat,lon,speed);
