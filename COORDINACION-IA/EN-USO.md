@@ -1,8 +1,30 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 92813f7, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 14vo dominio — el más grande de todo el refactor (2.195 líneas). Tarea del
-> hub #185. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en 7ab3ae2, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 15vo dominio. Tarea del hub #186. Candado de `index.html`: **LIBRE**.
+>
+> 3 archivos nuevos, no contiguos (`rutas.js` quedaba en medio del bloque original):
+> `motor-gps.js` (`ug()`, el callback de GPS más crítico de la app — corre en cada fix
+> mientras se graba un viaje —, `toggleGPS()`, GPS nativo en segundo plano, pendiente
+> en vivo, velocidad rigurosa, zonas rojas, cofres ocultos), `motor-gps-velocidad.js`
+> (helpers `gd2`/`velocidadVentana`/`_sumarKmModo` que quedaron al otro lado de
+> `rutas.js`), `mantencion-preventiva.js` (`MANT_ITEMS` y todo lo de mantención +
+> `MODOS_QUE_COMPITEN`/CO2 contiguos al final).
+>
+> Verificado: diff exacto, reconstrucción byte a byte, tests 27/28 (falla preexistente
+> no relacionada). En vivo: `ug()` simulado con 3 fixes de GPS sucesivos acumuló
+> kilometraje correctamente (10 → 10.14 km) cruzando los 3 archivos nuevos +
+> `app-estado-global.js`, `renderMantencion()` OK. Se repitió el mismo error no
+> determinista de Firestore del pase anterior — esta vez con causa raíz identificada:
+> `ug()` escribe a Firestore sin `.catch()` (línea preexistente, no tocada por este
+> corte), que falla al simular sin auth real. Confirmado que no es una regresión.
+>
+> `index.html`: 3.284 → **2.656 líneas** (13.208 original, **-80%**).
+>
+> Quedan bloques chicos sueltos: Charla casual + idioma de ruta, SOS comunitario, y
+> otros huecos pequeños entre archivos ya extraídos aún sin mapear en detalle.
+>
+> ---
 >
 > 2 archivos nuevos: `funciones-mapa-viajes.js` (863 líneas — POI, Diario, admin,
 > "Te doy alojo", Taller/Comunidad, hostales, recomendaciones, destinos de viaje,
