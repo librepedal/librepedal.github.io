@@ -1,5 +1,28 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ PUBLICADO — main en c3e29da, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 13vo dominio separado. Tarea del hub #184. Candado de `index.html`: **LIBRE**.
+>
+> Cierra el bloque que abrió el commit anterior (estado global + Pistero). 3 archivos
+> nuevos, cada uno en su posición original exacta: `pistero-apariencia.js` (SVG de la
+> cara de Pistero + tienda de Darma + selección de personalización + 3 funciones de
+> panel admin arrastradas por estar contiguas — reclasificar cuando toque Admin),
+> `pistero-frases-pais.js` (jerga de 14 países + `FRASES_ARQ` + detección de zona
+> ciudad/carretera), `pistero-chat-ia.js` (chat de Pistero + anécdotas del lugar vía
+> Wikipedia). `scripts/gen-voces-elevenlabs.js` actualizado (leía `FRASES_ARQ` de
+> `index.html` por scraping de texto, ahora lee `pistero-frases-pais.js`).
+>
+> Verificado: diff exacto, reconstrucción byte a byte de `index.html`, tests 27/28
+> (falla preexistente no relacionada), en vivo en navegador (`obtenerFraseUnica` y
+> `_pisteroExprSVG` cruzando archivos sin error). `index.html`: 6.424 → **5.473
+> líneas** (13.208 original).
+>
+> Queda pendiente el bloque más grande y de más riesgo: el **motor de navegación**
+> (~2.196 líneas, código usado en vivo por ciclistas en ruta) + Charla casual/idioma
+> de ruta + Reportes de riesgo + Mantención preventiva + SOS comunitario.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en 0f77658, versión 8.788 en producción (2026-09-03, sesión Lenovo)
 > Update: 12vo dominio separado — el más riesgoso hasta ahora. Tarea del hub #183.
 > Candado de `index.html`: **LIBRE**.
