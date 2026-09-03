@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Genera el catalogo de voces ElevenLabs para los 12 arquetipos VIVOS de Pistero/Pistera
 // (los mismos ids que PERSONALIDADES en index.html, no los viejos de gen-voces.py/Azure).
-// Lee FRASES_ARQ directo de index.html (fuente de verdad real, evita catalogos
-// desincronizados). Sale a voces-el/ con su propio manifest.json — NO toca voces/
+// Lee FRASES_ARQ directo de pistero-frases-pais.js (fuente de verdad real, evita
+// catalogos desincronizados; vivio en index.html hasta que se separo por dominio en
+// 2026-09). Sale a voces-el/ con su propio manifest.json — NO toca voces/
 // (catalogo Azure viejo, se deja intacto como respaldo).
 'use strict';
 const fs = require('fs');
@@ -174,7 +175,7 @@ const FRASES_SISTEMA = [
 ];
 
 async function main() {
-  const html = fs.readFileSync(path.join(BASE, 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(BASE, 'pistero-frases-pais.js'), 'utf8');
   const FRASES_ARQ = extraerFrasesArq(html);
 
   // ID estable por CONTENIDO (hash de la frase), no por posición en la iteración.

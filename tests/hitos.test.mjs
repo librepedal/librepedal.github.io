@@ -6,7 +6,11 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+// _ultimoHitoKm y el banco "motivacional" viven en pistero-frases-pais.js desde que
+// se separó de index.html (2026-09); el resto (la lógica del hito, el reseteo) sigue
+// en index.html.
+const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
+const HTML = readFileSync(join(raiz, 'index.html'), 'utf8') + '\n' + readFileSync(join(raiz, 'pistero-frases-pais.js'), 'utf8');
 
 let ok = 0, fail = 0;
 function t(nombre, cond) {
