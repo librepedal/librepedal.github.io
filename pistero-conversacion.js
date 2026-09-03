@@ -15,6 +15,12 @@ const FAQ_APP=[
   {r:/qu[eé] es la esfera/, a:"La esfera es el lanzador de aplicaciones de Libre Pedal: gira con el dedo y toca un ícono para entrar a cualquier sección."},
   {r:/en qu[eé] puesto (voy|estoy)|cu[aá]l es mi (puesto|posici[oó]n|ranking)/, a:"Entra a Estadísticas y ahí te muestro tu puesto actual en el ranking general."},
   {r:/qu[eé] (funciones tiene|puedes hacer|hace) (la app|libre pedal)|para qu[eé] sirve (esta app|libre pedal)/, a:"Te guío por voz como Waze, grabo tu ruta sola, te conecto con la comunidad de ciclistas, te aviso peligros y pendientes, y llevo tus estadísticas. Pregúntame por cualquier función y te explico."},
+  // Reporte real de Inty (2026-09-03): "de hace rato no escucho alguna broma".
+  // En vez de contestar algo fijo (podría no ser cierto en su caso puntual), esto
+  // dispara el diagnóstico real de por qué -- ver _pisteroExplicarBromas() en
+  // pistero-diag.js. Necesitaba ser hablado, no de consola: no hay forma de pedirle
+  // a alguien que abra devtools en su celular sin cable y compu al lado.
+  {r:/no (me )?(cuentas?|dices?|tiras?|has dicho) (ninguna |alguna )?(broma|bromas|talla|tallas|chiste|chistes)\b|por qu[eé] (ya )?no (cuentas|dices|tiras) (bromas|tallas|chistes)|dejaste de (tirar tallas|contar (bromas|chistes))|hace rato no (escucho|oigo).{0,15}(broma|talla|chiste)/, a:function(){ if(typeof _pisteroExplicarBromas==='function') _pisteroExplicarBromas(); else h('Dame un segundo, ese diagnóstico no cargó bien todavía.'); }},
 ];
 const FAQ_CICLISMO=[
   {r:/cada cu[aá]nto (debo|hay que|tengo que) (hidratarme|tomar agua|beber agua)/, a:"Lo ideal es hidratarte cada quince a veinte minutos, unos quinientos a setecientos cincuenta mililitros por hora. Yo te lo recuerdo solo durante la ruta."},
@@ -66,7 +72,9 @@ const FAQ_CHARLA=[
 ];
 function responderPreguntaGeneral(t){
   for(let i=0;i<FAQ_CHARLA.length;i++){ if(FAQ_CHARLA[i].r.test(t)){ const arr=FAQ_CHARLA[i].a; h(arr[Math.floor(Math.random()*arr.length)]); return true; } }
-  for(let i=0;i<FAQ_APP.length;i++){ if(FAQ_APP[i].r.test(t)){ h(FAQ_APP[i].a); return true; } }
+  // FAQ_APP.a puede ser un string fijo o una función (respuesta que depende de
+  // estado real, ej. el diagnóstico de bromas -- ver pistero-diag.js).
+  for(let i=0;i<FAQ_APP.length;i++){ if(FAQ_APP[i].r.test(t)){ const a=FAQ_APP[i].a; if(typeof a==='function') a(); else h(a); return true; } }
   for(let i=0;i<FAQ_CICLISMO.length;i++){ if(FAQ_CICLISMO[i].r.test(t)){ h(FAQ_CICLISMO[i].a); return true; } }
   return false;
 }

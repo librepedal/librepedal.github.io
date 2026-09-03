@@ -46,3 +46,34 @@ function pisteroDiagBromas(){
   return estado;
 }
 window.pisteroDiagBromas = pisteroDiagBromas;
+
+/* Misma info que pisteroDiagBromas(), pero HABLADA -- para que Inty no tenga que
+   tocar la consola de desarrollador (imposible en el celular sin cable+compu).
+   Se dispara por voz/texto ("hace rato no escucho ninguna broma", etc.) desde
+   pistero-conversacion.js. Prioriza la explicación más probable: primero si
+   alguna categoría quedó auto-suprimida (la causa que más se presta a confundir,
+   porque no se nota desde afuera), después si está ocupado ahora mismo, después
+   si la voz está apagada, y si nada de eso, cuánto falta de verdad. */
+function _pisteroExplicarBromas(){
+  const d=pisteroDiagBromas();
+  const NOMBRES={parado:'cuando estás detenido', ciudad:'en la ciudad', lento:'cuando vas lento', normal:'a ritmo normal', rapido:'cuando vas rápido', profunda:'las reflexiones', motivacional:'los hitos cada diez kilómetros', subida:'en las subidas', bajada:'en las bajadas'};
+  const cats=d.categoriasAprendidas;
+  const suprimidas=(cats && typeof cats==='object') ? Object.keys(cats).filter(function(c){ return cats[c].permitida===false; }) : [];
+  if(suprimidas.length){
+    const nombres=suprimidas.map(function(c){ return NOMBRES[c]||c; });
+    h('Ojo: dejé de comentar '+nombres.join(' y ')+' porque últimamente me callabas seguido justo después de esas frases, y aprendí a no insistir ahí. No es fijo, se me olvida solo con el tiempo. Si quieres que vuelva antes, dime "activa la voz" la próxima vez que suene algo así.');
+    return;
+  }
+  if(!d.config.vozActiva){
+    h('Tengo la voz apagada ahora mismo, por eso no me escuchas ni bromear ni nada más. Dime "activa la voz" y vuelvo.');
+    return;
+  }
+  if(d.colaDeVoz.vozOcupada || d.colaDeVoz.largoCola){
+    h('Ahora mismo tengo algo más sonando o esperando turno, por eso no te he tirado ninguna talla todavía. Apenas se libere, retomo.');
+    return;
+  }
+  const f=d.zonaYFaltaParaLaProximaBroma;
+  const cuando = (f.zonaActual==='ciudad') ? ('en ciudad me faltan '+f.siEstasEnCiudad) : ('en carretera me faltan '+f.siEstasEnCarretera);
+  h('No hay nada raro: '+cuando+', o '+f.siEstasParado+' si te detienes. Voy espaciando los comentarios para no marearte a cada rato, pero ahí sigo.');
+}
+window._pisteroExplicarBromas = _pisteroExplicarBromas;
