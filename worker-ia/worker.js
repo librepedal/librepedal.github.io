@@ -298,6 +298,30 @@ export default {
       }
     }
 
+    // ===== BUSCAR en el Voice Library público de ElevenLabs (para encontrar acentos
+    // reales por país al expandir, ej. Argentina/rioplatense) — SOLO lectura, no cambia
+    // nada del comportamiento existente. Uso: ?voces-lib=1&accent=argentine&lang=es
+    // (2026-09-03, investigación expansión Argentina). Requiere plan pago (no gratis). =====
+    if (url.searchParams.get("voces-lib")) {
+      const key = env.ELEVENLABS_API_KEY;
+      if (!key) return new Response(JSON.stringify({ error: "sin_llave_elevenlabs" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      const qp = new URLSearchParams();
+      const search = url.searchParams.get("search"); if (search) qp.set("search", search);
+      const accent = url.searchParams.get("accent"); if (accent) qp.set("accent", accent);
+      const lang = url.searchParams.get("lang"); if (lang) qp.set("language", lang);
+      const gender = url.searchParams.get("gender"); if (gender) qp.set("gender", gender);
+      qp.set("page_size", "20");
+      try {
+        const r = await fetch("https://api.elevenlabs.io/v1/shared-voices?" + qp.toString(), { headers: { "xi-api-key": key } });
+        const j = await r.json();
+        if (!r.ok) return new Response(JSON.stringify({ error: "voces-lib", code: r.status, detalle: j }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        const lista = (j.voices || []).map(function (v) { return { name: v.name, voice_id: v.voice_id, gender: v.gender, accent: v.accent, description: v.description, preview_url: v.preview_url }; });
+        return new Response(JSON.stringify({ count: lista.length, voces: lista }, null, 2), { headers: { ...cors, "Content-Type": "application/json" } });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "voces-lib", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    }
+
     // ===== LISTAR VOCES de la cuenta (para elegir Voice ID). Usa el secreto, no expone la llave. =====
     if (url.searchParams.get("voces")) {
       const key = env.ELEVENLABS_API_KEY;
