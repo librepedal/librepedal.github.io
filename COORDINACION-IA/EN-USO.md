@@ -1,5 +1,31 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ Pistero explica solo por qué no cuenta bromas + CI en verde de nuevo — sesión Lenovo, 2026-09-03 (tarde)
+> Candado: **LIBRE**. Sin tocar `index.html`. 4 commits en `main`, CI confirmado en verde
+> (run `33791761736`).
+>
+> **1) Reporte real de Inty ("de hace rato no escucho alguna broma"):** investigado
+> `bromasDelCamino()`, la cola de prioridad de voz y `pistero-memoria.js` sin adivinar.
+> Encontré un **bug real** en `categoriaPermitida()`: una vez que una categoría de frase
+> ambiental se suprimía (por callarla seguido), quedaba muda **para siempre** — el propio
+> comentario prometía "se recupera sola con el tiempo" pero eso era imposible tal como
+> estaba escrito (`obtenerFraseUnica()` corta ANTES de `registrarOferta()` cuando está
+> suprimida, así que el historial nunca volvía a recibir muestras nuevas). Fix: `PROBING_SUPRIMIDA`
+> deja pasar 1 de cada 6 veces igual, así el historial puede seguir avanzando y de verdad
+> recuperarse si el patrón cambió. Commit `076a7a6`.
+> Además, Pistero ahora puede explicar esto por voz/texto en vivo (sin devtools): preguntale
+> "hace rato no escucho ninguna broma" y responde con la causa real priorizada. Ver
+> `pistero-diag.js` (`pisteroDiagBromas()` / `_pisteroExplicarBromas()`) + entrada nueva en
+> `FAQ_APP` (`pistero-conversacion.js`). Commits `df24233` y `6743c63`.
+>
+> **2) CI en rojo "desde hace horas" (tarea hub #174, reportada por Tundra) — CERRADA:**
+> no era un bug de código. `sincronizarStats()` (`gamificacion-logros.js`) ya tenía el fix
+> correcto (2026-08-31): la garantía vieja "km/Darma siempre suben, los protege gana-el-mayor"
+> era falsa (ese criterio solo vive en la LECTURA, no en la escritura — ver el comentario ahí
+> mismo). `tests/mantencion.test.mjs` nunca se actualizó tras ese fix real y seguía
+> verificando la garantía vieja ya sabida incorrecta. Corregido el test, no el código.
+> Commit `b422262`. Suite 30/30, estable en 3 corridas.
+
 > ## 🔴 HALLAZGO DE SEGURIDAD CERRADO (parcial) + WORKER NUEVO PENDIENTE DE DEPLOY — sesión Lenovo, 2026-09-03
 > Candado de `index.html`: **LIBRE**. No es un refactor en curso, son 2 fixes puntuales ya
 > en `main`, más una pieza de servidor nueva que falta desplegar.
