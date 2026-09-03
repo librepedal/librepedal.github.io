@@ -55,6 +55,7 @@ const CORE = [
   './sos-comunitario.js',
   './pistero-ciclistas-cerca.js',
   './dialogos-genericos.js',
+  './idioma-de-la-ruta.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',
