@@ -1,0 +1,8 @@
+name = "librepedal-proximidad"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Secretos requeridos (nunca en este archivo, se configuran con `wrangler secret put`):
+#   FIREBASE_CLIENT_EMAIL  -- de firebase-service-account.json, campo "client_email"
+#   FIREBASE_PRIVATE_KEY   -- de firebase-service-account.json, campo "private_key" (con los \n literales)
+#   FIREBASE_PROJECT_ID    -- de firebase-service-account.json, campo "project_id" (hoy: librepedal-cb983)

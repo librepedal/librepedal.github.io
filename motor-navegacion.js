@@ -925,9 +925,13 @@ function generarPDFBromas(){ const {jsPDF}=window.jspdf; const doc=new jsPDF(); 
 const CICLISTA_AVISO_SEG=25;          // avisar ~25 s antes de alcanzarlo
 const CICLISTA_AVISO_MIN_M=150;       // nunca menos de 150 m: más cerca ya no da tiempo a nada
 const CICLISTA_AVISO_MAX_M=800;       // más lejos de 800 m el aviso es ruido
-const CICLISTA_AVISO_ARCO=50;         // grados a cada lado del rumbo: solo lo que está ADELANTE
-const CICLISTA_AVISO_REPETIR_MS=180000; // no repetir por el mismo ciclista antes de 3 min
-let _ciclistasCerca=[], _ciclistaAvisado={}, _ciclistaSub=null;
+const CICLISTA_AVISO_REPETIR_MS=180000; // no repetir aviso antes de 3 min
+// 2026-09-03: el proximo al servidor no manda mas seguido que esto -- son metros, no
+// milisegundos, lo que limita es la frecuencia de fix de GPS real, pero igual se pone
+// un piso propio para no golpear el worker (y gastar cuota de Firestore) en cada punto.
+const CICLISTA_PROXIMIDAD_CONSULTA_MIN_MS=8000;
+const CICLISTA_PROXIMIDAD_URL='https://librepedal-proximidad.librepedal.workers.dev';
+let _ultimaConsultaProximidad=0, _ultimoAvisoCiclista=0;
 
 /* La distancia de aviso sale de la velocidad real, igual que las cuestas: a 100 km/h
    alcanzas a un ciclista mucho antes que a 40, y el aviso tiene que llegar con el mismo
@@ -936,50 +940,35 @@ function _metrosAvisoCiclista(velKmh){
   const m=(velKmh||0)/3.6*CICLISTA_AVISO_SEG;
   return Math.max(CICLISTA_AVISO_MIN_M, Math.min(CICLISTA_AVISO_MAX_M, m));
 }
-/* ¿Está adelante? Se compara el rumbo hacia el ciclista con el rumbo en que voy.
-   Un ciclista que ya pasé, o que va por la otra pista en sentido contrario a 300 m,
-   no se avisa: sería un aviso inútil que enseña a ignorar los avisos. */
-function _vaAdelante(rumboMio, rumboAlCiclista){
-  if(rumboMio===null || rumboMio===undefined) return true; // sin rumbo confiable, mejor avisar
-  let d=Math.abs(((rumboAlCiclista-rumboMio+540)%360)-180);
-  return d<=CICLISTA_AVISO_ARCO;
-}
-function _revisarCiclistasAdelante(miLat,miLon,miRumbo,velKmh){
+/* 2026-09-03: esta funcion llamaba antes a Firestore DIRECTO desde el cliente para ver
+   quien esta cerca -- ver el hallazgo de privacidad en firestore.rules (commit 9387ca9):
+   esa lectura publica dejaba que cualquiera enumerara en vivo la posicion y nombre de
+   TODO el que comparte ubicacion, con o sin cuenta, sin haber recibido ningun link.
+   Ahora consulta al worker-proximidad (credenciales de servidor, fuera del alcance de
+   las reglas de cliente), que calcula distancia Y si esta "adelante" (mismo filtro de
+   rumbo/arco de siempre, portado alla porque necesita lat/lon reales que este cliente
+   ya no recibe) y devuelve SOLO si hay alguien cerca + una distancia redondeada -- nunca
+   la posicion ni el nombre de un tercero. Sin ID de por medio, el anti-repeticion de 3
+   min ahora es global (no "no repitas a Juan"), es la unica forma honesta de respetarlo
+   sin identificar a nadie. */
+async function _revisarCiclistasAdelante(miLat,miLon,miRumbo,velKmh){
   if(typeof actividadTipo==='undefined' || actividadTipo!=='moto') return; // solo para el que va motorizado
-  if(!_ciclistasCerca.length) return;
-  const umbral=_metrosAvisoCiclista(velKmh);
   const ahora=Date.now();
-  for(let i=0;i<_ciclistasCerca.length;i++){
-    const c=_ciclistasCerca[i];
-    if(!c || !c.lat || !c.lon) continue;
-    const m=calculateDistance(miLat,miLon,c.lat,c.lon)*1000;
-    if(m>umbral) continue;
-    const rumbo=_bearingEntrePuntos({lat:miLat,lon:miLon},{lat:c.lat,lon:c.lon});
-    if(!_vaAdelante(miRumbo,rumbo)) continue;
-    if(ahora-(_ciclistaAvisado[c.id]||0) < CICLISTA_AVISO_REPETIR_MS) continue;
-    _ciclistaAvisado[c.id]=ahora;
-    h('Ciclista adelante, a unos '+Math.round(m/10)*10+' metros. Dale su metro y medio al pasar.', PRIO_VOZ.SEGURIDAD);
-    return; // uno por vez: dos avisos encimados no se entienden
-  }
+  if(ahora-_ultimaConsultaProximidad < CICLISTA_PROXIMIDAD_CONSULTA_MIN_MS) return;
+  _ultimaConsultaProximidad=ahora;
+  if(ahora-_ultimoAvisoCiclista < CICLISTA_AVISO_REPETIR_MS) return; // ya avisé hace poco, ni consultar hace falta
+  try{
+    const r=await _fetchT(CICLISTA_PROXIMIDAD_URL, 6000, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({lat:miLat, lon:miLon, rumbo:miRumbo, radioM:_metrosAvisoCiclista(velKmh)})});
+    const data=await r.json();
+    if(!data || !data.hayCerca) return;
+    _ultimoAvisoCiclista=Date.now();
+    h('Ciclista adelante, a unos '+Math.round(data.distanciaAprox/10)*10+' metros. Dale su metro y medio al pasar.', PRIO_VOZ.SEGURIDAD);
+  }catch(e){ /* sin conexión o el worker no respondió a tiempo: no avisar es más seguro que fallar ruidoso */ }
 }
-/* Solo se suscribe si vas motorizado. Al que pedalea no le sirve y le gastaría datos.
-   2026-09-03: la query where('activo','==',true) de acá abajo quedó DESHABILITADA a
-   propósito -- las reglas de Firestore ahora niegan "list" sobre liveTracking (solo
-   permiten "get" de un id conocido, para el link de seguimiento en seguir.html) porque
-   esta misma query, sin ningún filtro, dejaba que cualquiera (con o sin cuenta, sin
-   haber recibido ningún link) enumerara en vivo la posición y nombre de TODA persona
-   compartiendo ubicación en cualquier parte del mundo -- hallazgo real de privacidad,
-   no hipotético. El aviso "ciclista adelante" a quien va motorizado queda apagado
-   hasta que exista una función de servidor (con credenciales de administrador, fuera
-   del alcance de las reglas de cliente) que reciba la posición de quien pregunta y
-   devuelva SOLO "hay alguien cerca" sin exponer lat/lon/nombre de terceros a nadie
-   que no se lo haya compartido. No se intenta la query igual porque fallaría con
-   permission-denied en cada apertura -- eso ensuciaría los reportes de error (Sentry)
-   sin ningún beneficio real. */
-function suscribirCiclistasCerca(){
-  if(_ciclistaSub){ _ciclistaSub(); _ciclistaSub=null; }
-  _ciclistasCerca=[];
-}
+// Vestigial a propósito: id/nombre que llamaban a esto ya no existen en ningún lado del
+// código -- se deja como no-op para no tener que tocar pistero-tipo-actividad.js, que
+// sigue invocándola al cambiar de modo.
+function suscribirCiclistasCerca(){}
 function calculateDistance(lat1,lon1,lat2,lon2){ const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1000; }
 /* Taller: derivar al usuario a un taller de bicicletas REAL, no una busqueda a ciegas.
    Antes el boton "Buscar taller cercano" abria una busqueda de texto sin ubicacion —

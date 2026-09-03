@@ -1,40 +1,61 @@
 // Aviso de ciclista adelante para el que va motorizado.
-// Lógica replicada del bloque "AVISO DE CICLISTA ADELANTE" de index.html.
+// 2026-09-03: la lógica se partió en dos piezas reales (hallazgo de privacidad, ver
+// firestore.rules commit 9387ca9 -- la query pública a liveTracking dejaba que
+// CUALQUIERA, con o sin cuenta, sin haber recibido ningún link, enumerara en vivo la
+// posición y nombre de todo el que comparte ubicación):
+//   - motor-navegacion.js (cliente): decide CUÁNDO consultar (throttle) y CUÁNTO avisar
+//     (distancia/hora), pero ya no tiene lat/lon de ningún tercero.
+//   - worker-proximidad/worker.js (servidor, credenciales de administrador): lee
+//     liveTracking, calcula distancia + si está adelante, y devuelve SOLO un booleano +
+//     una distancia redondeada -- nunca la posición ni el nombre de nadie.
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-// El bloque "AVISO DE CICLISTA ADELANTE" vive en motor-navegacion.js desde que se
-// separó de index.html (2026-09).
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'motor-navegacion.js'), 'utf8');
+const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
+const CLIENTE = readFileSync(join(RAIZ, 'motor-navegacion.js'), 'utf8');
+const WORKER = readFileSync(join(RAIZ, 'worker-proximidad', 'worker.js'), 'utf8');
 
 let ok = 0, fail = 0;
 const t = (n, c) => { if (c) ok++; else { fail++; console.log('  FALLA: ' + n); } };
 
-// --- El código está y las constantes son las que este test asume ---
-t('el bloque existe', /AVISO DE CICLISTA ADELANTE/.test(HTML));
-t('el aviso es de prioridad SEGURIDAD', /PRIO_VOZ\.SEGURIDAD\)/.test(HTML));
+// --- El cliente ya no tiene forma de leer datos de terceros ---
+t('el bloque existe en el cliente', /AVISO DE CICLISTA ADELANTE/.test(CLIENTE));
+t('el aviso es de prioridad SEGURIDAD', /PRIO_VOZ\.SEGURIDAD\)/.test(CLIENTE));
+t('el cliente ya no hace NINGUNA query (.where) sobre liveTracking -- el único uso que queda es escribir/actualizar el propio link de "seguir mi viaje" (get individual, sigue público a propósito, ver firestore.rules)',
+  !/liveTracking'\)\s*\.where/.test(CLIENTE));
+t('el cliente consulta al worker-proximidad, no a Firestore directo',
+  /CICLISTA_PROXIMIDAD_URL\s*=\s*'https:\/\/librepedal-proximidad\.librepedal\.workers\.dev'/.test(CLIENTE));
+t('el cliente manda lat/lon/rumbo/radioM al worker (el worker calcula, el cliente no)',
+  /body:JSON\.stringify\(\{lat:miLat, lon:miLon, rumbo:miRumbo, radioM:_metrosAvisoCiclista\(velKmh\)\}\)/.test(CLIENTE));
+t('el cliente solo actúa sobre data.hayCerca / data.distanciaAprox, nunca lat/lon/nombre',
+  /data\.hayCerca/.test(CLIENTE) && !/data\.(lat|lon|nombre)\b/.test(CLIENTE));
+t('el aviso recuerda el metro y medio', /metro y medio/.test(CLIENTE));
+t('el aviso NO exige que el ciclista tenga la app', !/si el ciclista (no )?(tiene|usa) la app/i.test(CLIENTE));
+t('hay un throttle real antes de golpear al worker (no un fetch por cada fix de GPS)',
+  /CICLISTA_PROXIMIDAD_CONSULTA_MIN_MS/.test(CLIENTE) && /ahora-_ultimaConsultaProximidad < CICLISTA_PROXIMIDAD_CONSULTA_MIN_MS\) return/.test(CLIENTE));
 
-// --- 2026-09-03: suscribirCiclistasCerca() dejó de hacer la query real a propósito
-//   (hallazgo de privacidad -- ver firestore.rules y el comentario junto a la función:
-//   sin ningún filtro, CUALQUIERA podía listar en vivo la posición de todo el que
-//   comparte ubicación, con o sin cuenta, sin haber recibido ningún link). El cálculo
-//   de cuándo avisar (distancia/ángulo/antirepetición, probado más abajo) sigue intacto
-//   para cuando exista una función de servidor que traiga los datos sin exponerlos ---
-t('suscribirCiclistasCerca ya NO hace la query pública insegura (where activo sin filtro por servidor)',
-  !/collection\('liveTracking'\)\.where\('activo','==',true\)\s*\n\s*\.onSnapshot/.test(HTML));
-t('el aviso a motorizados queda documentado como deshabilitado a propósito, no un olvido',
-  /DESHABILITADA a\s*\n\s*propósito/.test(HTML));
-t('el aviso recuerda el metro y medio', /metro y medio/.test(HTML));
-t('el aviso NO exige que el ciclista tenga la app', !/si el ciclista (no )?(tiene|usa) la app/i.test(HTML));
+// --- El worker: SÍ tiene lat/lon (es su trabajo, con credenciales de servidor), pero
+//   nunca las devuelve en la respuesta ---
+t('el worker existe y lee liveTracking con credenciales de servicio', /liveTracking/.test(WORKER) && /FIREBASE_PRIVATE_KEY/.test(WORKER));
+t('el worker NUNCA incluye lat/lon/nombre como CAMPO en la respuesta al cliente (solo hayCerca/distanciaAprox)',
+  /hayCerca:\s*(true|false)/.test(WORKER) && !/JSON\.stringify\([^)]*\b(lat|lon|nombre)\s*:/.test(WORKER));
+t('el scope de Firestore es el correcto (datastore, NO datastore.readonly -- da 403 real)',
+  /auth\/datastore'/.test(WORKER) && !/auth\/datastore\.readonly/.test(WORKER));
+t('un motorizado no le avisa a otro motorizado', /modo === 'moto'\) continue/.test(WORKER));
+t('el radio nunca pasa de 800m aunque el cliente pida más', /Math\.min\(Number\(body\.radioM\) \|\| 800, 800\)/.test(WORKER));
+t('se queda con el MÁS cercano entre los que califican, no con cualquiera en orden arbitrario',
+  /if \(!masCerca \|\| m < masCerca\) masCerca = m;/.test(WORKER));
 
+// --- Constantes: SEG/MIN/MAX siguen en el cliente (definen radioM); ARCO se movió al
+//   worker (necesita lat/lon reales para calcular rumbo, que el cliente ya no tiene) ---
 const C = { SEG: 25, MIN: 150, MAX: 800, ARCO: 50 };
-t('SEG=25', new RegExp('CICLISTA_AVISO_SEG=' + C.SEG).test(HTML));
-t('MIN=150', new RegExp('CICLISTA_AVISO_MIN_M=' + C.MIN).test(HTML));
-t('MAX=800', new RegExp('CICLISTA_AVISO_MAX_M=' + C.MAX).test(HTML));
-t('ARCO=50', new RegExp('CICLISTA_AVISO_ARCO=' + C.ARCO).test(HTML));
+t('SEG=25 (cliente)', new RegExp('CICLISTA_AVISO_SEG=' + C.SEG).test(CLIENTE));
+t('MIN=150 (cliente)', new RegExp('CICLISTA_AVISO_MIN_M=' + C.MIN).test(CLIENTE));
+t('MAX=800 (cliente)', new RegExp('CICLISTA_AVISO_MAX_M=' + C.MAX).test(CLIENTE));
+t('ARCO=50 (worker, ya no en el cliente)', new RegExp('CICLISTA_AVISO_ARCO = ' + C.ARCO).test(WORKER));
 
-// --- Distancia de aviso según velocidad ---
+// --- Distancia de aviso según velocidad (fórmula pura, cliente decide el radio a pedir) ---
 const metros = v => Math.max(C.MIN, Math.min(C.MAX, (v || 0) / 3.6 * C.SEG));
 t('parado usa el mínimo', metros(0) === 150);
 t('a 20 km/h usa el mínimo (139m < 150)', metros(20) === 150);
@@ -43,7 +64,7 @@ t('a 100 km/h avisa a ~694 m', Math.round(metros(100)) === 694);
 t('a 200 km/h se topa en 800 m', metros(200) === 800);
 t('nunca avisa más lejos que el máximo', metros(500) <= C.MAX);
 
-// --- ¿Va adelante? ---
+// --- ¿Va adelante? (fórmula pura, vive ahora en el worker) ---
 const adelante = (mio, alCiclista) => {
   if (mio === null || mio === undefined) return true;
   const d = Math.abs(((alCiclista - mio + 540) % 360) - 180);
@@ -59,18 +80,19 @@ t('a 90°, cruzando: NO avisa', adelante(0, 90) === false);
 t('cruce del norte (350->10): avisa', adelante(350, 10) === true);
 t('cruce del norte (10->350): avisa', adelante(10, 350) === true);
 t('sin rumbo confiable: avisa igual (mejor de más)', adelante(null, 123) === true);
+t('la fórmula del test está de verdad en el worker (no solo en la cabeza de quien escribió el test)',
+  /const d = Math\.abs\(\(\(\(rumboAlCiclista - rumboMio \+ 540\) % 360\) - 180\)\);/.test(WORKER));
 
-// --- Antirepetición ---
+// --- Antirepetición: sin ID de por medio (el worker nunca devuelve quién), el bloqueo
+//   pasó de "no le repitas a ESTE ciclista" a "no avises de nuevo tan pronto", global ---
 const REPETIR = 180000;
 const puede = (ahora, ult) => (ahora - (ult || 0)) >= REPETIR;
-t('el bloqueo es de 3 minutos', /CICLISTA_AVISO_REPETIR_MS=180000/.test(HTML));
-t('no repite al mismo ciclista al toque', puede(5000, 1000) === false);
+t('el bloqueo sigue siendo de 3 minutos (cliente)', /CICLISTA_AVISO_REPETIR_MS=180000/.test(CLIENTE));
+t('el anti-repetición es global ahora, no por id (nunca hubo id que guardar)',
+  /_ultimoAvisoCiclista=Date\.now\(\)/.test(CLIENTE) && !/_ciclistaAvisado\[/.test(CLIENTE));
+t('no repite al toque', puede(5000, 1000) === false);
 t('a los 3 min puede repetir', puede(185000, 1000) === true);
-// Ojo: con marcas de reloj REALES (Date.now() ≈ 1.7e12) un ciclista nunca visto tiene
-// último-aviso 0, así que la resta es enorme y siempre pasa. La versión anterior de este
-// caso usaba tiempos falsos de 4 dígitos y por eso "fallaba" — el equivocado era el test.
 t('primer encuentro siempre avisa', puede(Date.now(), 0) === true);
-t('avisa de uno por vez', /return; \/\/ uno por vez/.test(HTML));
 
 console.log('  ciclista-adelante.test.mjs: ' + ok + ' OK' + (fail ? ', ' + fail + ' FALLAN' : ''));
 process.exit(fail ? 1 : 0);
