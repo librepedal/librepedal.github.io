@@ -1,8 +1,33 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 7ab3ae2, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 15vo dominio. Tarea del hub #186. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en 9dcaee3, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 16vo dominio — cierra la cola final del monolito original (806 líneas que
+> quedaban tras `esfera.js`). Tarea del hub #187. Candado de `index.html`: **LIBRE**.
 >
+> 7 archivos nuevos: `pistero-conversacion.js` (FAQ + `handleVoiceCommand()`, el
+> enrutador de comandos de voz más denso de la app, con años de bugs reales
+> documentados en sus propios comentarios — orden SOS vs. reporte de accidente,
+> destinos falsos — + sistema de Tutorial), `pwa-wakelock.js` (Service Worker + Wake
+> Lock), `avisos-viaje.js` (`TIPS_RUTA` + `lpSalud`), `pwa-instalacion.js` (banner
+> "Agregar a inicio"), `sobrevuelo-viaje.js` (animación de recorrido, incluye un
+> envoltorio de `toggleGPS` — IIFE de nivel superior verificada segura), `abanico-
+> reporte.js` (menú radial del botón Reportar), `prevuelo-intro-pistero.js`.
+>
+> Verificado: diff exacto, reconstrucción byte a byte, tests 27/28 (falla preexistente
+> no relacionada). En vivo: `handleVoiceCommand('llevame al mapa')` invoca `cv('map')`
+> correctamente cruzando archivos; `'como estas'` responde con charla real (el bug
+> histórico que reportó Inty sigue arreglado); `'que hace el botón sos'` responde el
+> FAQ sin disparar el SOS real (el orden crítico interno se preservó exacto).
+>
+> `index.html`: 2.656 → **1.875 líneas** (13.208 original, **-86%**).
+>
+> **Con esto se cierra el inventario de dominios grandes** identificado al arrancar
+> el refactor. Lo que queda son huecos chicos sueltos entre archivos ya extraídos
+> (visible con `grep -n "^<script src=" index.html` — cualquier gap de más de ~15
+> líneas entre dos `<script src>` es candidato) — nada del tamaño o riesgo de lo ya
+> hecho, pero sin mapear en detalle todavía.
+>
+> ---
 > 3 archivos nuevos, no contiguos (`rutas.js` quedaba en medio del bloque original):
 > `motor-gps.js` (`ug()`, el callback de GPS más crítico de la app — corre en cada fix
 > mientras se graba un viaje —, `toggleGPS()`, GPS nativo en segundo plano, pendiente
