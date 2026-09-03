@@ -230,6 +230,26 @@ async function _geoPresupuestoMensual(env) {
   } catch (e) { return false; }
 }
 
+// ===== Caché PERMANENTE de audio en KV (2026-09-03, costo real medido). El caché de
+// Cloudflare de arriba (Cache API) solo dura 24h (Cache-Control: max-age=86400) -- con
+// un catálogo de frases del tamaño real de Pistero (más de mil combinaciones únicas de
+// texto+voz), eso significa que gran parte del catálogo se "recalienta" (se vuelve a
+// pagar a ElevenLabs) todos los días con el uso agregado de todos los usuarios. La
+// proyección con el uso real estimado de los testers actuales ya supera varias veces el
+// presupuesto MENSUAL completo de voz (ver análisis con números en
+// COORDINACION-IA/EN-USO.md). Esto no se resuelve pre-generando un catálogo fijo de
+// antemano (se paga por combinaciones que tal vez nadie pide nunca) -- se resuelve
+// haciendo que el caché no expire: la MISMA combinación exacta de texto+voz+parámetros
+// se paga una sola vez, la primera vez que CUALQUIER usuario la pide, y queda gratis
+// para siempre después (mientras no se borre el KV). El costo total tiende al mismo
+// límite (~el tamaño del catálogo realmente usado), pero sin repetirse cada día.
+async function _claveCachePermanente(texto, voiceId, modelo, stab, style, vel) {
+  const data = new TextEncoder().encode(JSON.stringify([texto, voiceId, modelo, stab, style, vel]));
+  const hashBuf = await crypto.subtle.digest("SHA-1", data);
+  const hashHex = Array.from(new Uint8Array(hashBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return "audiokv:" + hashHex.slice(0, 24);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const cors = {
@@ -347,14 +367,6 @@ export default {
       // es el freno anti-abuso general del worker, no algo específico de los ciclistas.
       const esLector = url.searchParams.get("lector") === "1" || (body && body.lector === true);
       if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
-      if (!(await _presupuestoDiario(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_diario_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
-      if (esLector) {
-        if (!(await _presupuestoMensualLector(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_mensual_lector_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
-      } else {
-        if (!(await _presupuestoMensual(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_mensual_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
-      }
-      const key = env.ELEVENLABS_API_KEY;
-      if (!key) return new Response(JSON.stringify({ error: "sin_llave_elevenlabs" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       // Par neutro-latino por defecto: Miguel G (masc) / Ninoska (fem). Se elige por ?g=c (femenina)
       // o ?g=... (masculina), o se fuerza un id puntual con ?voz=. Configurable por vars del entorno.
       const VOZ_M = env.ELEVENLABS_VOICE_M || "k8cFOyAg7B9qwBlDDNTC"; // Miguel G — masculina latina
@@ -384,6 +396,31 @@ export default {
       // límite total de la página es 16MB. 32kbps es de sobra para voz hablada (no música)
       // y corta el peso a un cuarto. Pistero en la app (no-lector) sigue igual, sin tocar.
       const formatoSalida = esLector ? "mp3_22050_32" : "mp3_44100_128";
+
+      // Caché PERMANENTE en KV -- ver _claveCachePermanente arriba. Va ANTES de tocar el
+      // presupuesto: si ya está en KV, no se llama a ElevenLabs, así que no cuenta como
+      // gasto nuevo. Si KV falla por cualquier motivo, sigue de largo al camino normal
+      // (try/catch silencioso, mismo patrón que el resto del anti-abuso).
+      const cacheKeyKV = await _claveCachePermanente(t, voiceId, modelo, stab, style, vel);
+      if (env.VOZ_CUOTA) {
+        try {
+          const cachedBuf = await env.VOZ_CUOTA.get(cacheKeyKV, "arrayBuffer");
+          if (cachedBuf) {
+            const respCache = new Response(cachedBuf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+            ctx.waitUntil(cache.put(request, respCache.clone())); // también alimenta el caché rápido de 24h
+            return respCache;
+          }
+        } catch (e) {}
+      }
+
+      if (!(await _presupuestoDiario(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_diario_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+      if (esLector) {
+        if (!(await _presupuestoMensualLector(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_mensual_lector_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+      } else {
+        if (!(await _presupuestoMensual(env, String(elText).length))) return new Response(JSON.stringify({ error: "presupuesto_mensual_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+      const key = env.ELEVENLABS_API_KEY;
+      if (!key) return new Response(JSON.stringify({ error: "sin_llave_elevenlabs" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       try {
         const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId + "?output_format=" + formatoSalida, {
           method: "POST",
@@ -394,6 +431,7 @@ export default {
         const buf = await r.arrayBuffer();
         const resp = new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
         ctx.waitUntil(cache.put(request, resp.clone()));
+        if (env.VOZ_CUOTA) ctx.waitUntil(env.VOZ_CUOTA.put(cacheKeyKV, buf).catch(function () {}));
         return resp;
       } catch (e) {
         return new Response(JSON.stringify({ error: "eltts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
