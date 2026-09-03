@@ -54,6 +54,7 @@ let _mlLineSeq=0;
 function mlPolyline(latlngs, opts){
   opts=opts||{};
   const id='mlline_'+(++_mlLineSeq);
+  const haloId=id+'_halo';
   const coords=(latlngs||[]).map(function(p){ return Array.isArray(p)?[p[1],p[0]]:[p.lon,p.lat]; });
   return {
     _id:id, _map:null, _coords:coords,
@@ -63,14 +64,20 @@ function mlPolyline(latlngs, opts){
       const add=function(){
         if(map.getSource(id)) return;
         map.addSource(id,{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}});
-        map.addLayer({id:id,type:'line',source:id,layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':opts.color||'#fc4c02','line-width':opts.weight||4,'line-opacity':opts.opacity!=null?opts.opacity:0.85}});
+        const w=opts.weight||4;
+        // Halo oscuro debajo de la línea (mismo source, layer aparte agregado primero): sin
+        // esto, el dorado de "tu ruta" (#ffd700) se camuflaba contra las avenidas principales
+        // del estilo "calles", pintadas en un amarillo/naranja casi igual -- la importación
+        // y el trazado funcionaban bien, pero a simple vista parecía que no había pasado nada.
+        map.addLayer({id:haloId,type:'line',source:id,layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#0a0f1d','line-width':w+4,'line-opacity':0.6}});
+        map.addLayer({id:id,type:'line',source:id,layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':opts.color||'#fc4c02','line-width':w,'line-opacity':opts.opacity!=null?opts.opacity:0.85}});
       };
       if(map.isStyleLoaded()) add(); else map.once('idle',add);
       return this;
     },
     addLatLng:function(ll){ this._coords.push([ll[1],ll[0]]); if(this._map&&this._map.getSource(id)) this._map.getSource(id).setData({type:'Feature',geometry:{type:'LineString',coordinates:this._coords}}); return this; },
     getBounds:function(){ return mlLatLngBounds(this._coords.map(function(c){return {lat:c[1],lon:c[0]};})); },
-    remove:function(){ if(this._map){ if(this._map.getLayer(id)) this._map.removeLayer(id); if(this._map.getSource(id)) this._map.removeSource(id); } }
+    remove:function(){ if(this._map){ if(this._map.getLayer(haloId)) this._map.removeLayer(haloId); if(this._map.getLayer(id)) this._map.removeLayer(id); if(this._map.getSource(id)) this._map.removeSource(id); } }
   };
 }
 function _prepararMapaCompat(map){
