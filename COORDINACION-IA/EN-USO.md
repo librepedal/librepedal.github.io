@@ -1,7 +1,7 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en e342535, versión 8.788 en producción (2026-09-02/03, sesión Lenovo)
-> Update: 8vo dominio separado, `mapa-render.js` (MapLibre GL, capas, puntos OSM). Candado LIBRE. (Render de ciclistas/clustering queda pendiente, esta interleaved con mini-dominios sin relacion.)
+> ## ✅ PUBLICADO — main en b468217, versión 8.788 en producción (2026-09-02/03, sesión Lenovo)
+> Update: 9no dominio separado, Auth/login (3 archivos: `auth.js`/`auth-vinculo.js`/`auth-sesion.js`, no contiguo en el original). Candado LIBRE. (Render de ciclistas/clustering sigue pendiente.)
 > Detalle completo abajo (versión anterior de esta nota, sigue vigente para los otros 4).
 > Pedido directo de Inty (orden confirmada vía Tundra, tarea #173): separar el monolito de
 > `index.html` en archivos por dominio para auditar/leer mejor el código. Candado LIBRE.
