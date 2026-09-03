@@ -1,8 +1,20 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 0027712, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 17vo dominio. Tarea del hub #188. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en 3e0a26d, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 18vo dominio. Tarea del hub #189. Candado de `index.html`: **LIBRE**.
 >
+> 2 archivos chicos: `dialogos-genericos.js` (`lpAviso`/`lpConfirmar`/`lpPedirTexto`,
+> usado en prácticamente TODA la app — mismo clúster identificado como utilidad
+> app-wide durante el dominio Social) y `pistero-ciclistas-cerca.js`.
+>
+> Verificado: diff exacto, reconstrucción byte a byte, tests locales 27/28 (falla
+> preexistente), en vivo (`lpAviso()` renderiza OK). El workflow de tests de CI quedó
+> en cola por saturación de runners de GitHub (no relacionado al código) — deploy ya
+> confirmado exitoso, ambos archivos sirven 200 en producción.
+>
+> `index.html`: 1.764 → **1.708 líneas** (13.208 original, **-87%**).
+>
+> ---
 > 2 archivos nuevos (entre `rodadas.js` y `clima-datos.js`): `sos-comunitario.js`
 > (`enviarSOS()`, `_broadcastSOS()`, `_iniciarEscuchaSOS()` — el sistema SOS completo,
 > incluido el fix del ciclista inconsciente implementado al comienzo de esta sesión) y
