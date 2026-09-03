@@ -1,8 +1,20 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 3e0a26d, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 18vo dominio. Tarea del hub #189. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en e01fa8c, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 19vo dominio. Tarea del hub #190. Candado de `index.html`: **LIBRE**.
 >
+> 1 archivo: `idioma-de-la-ruta.js` (`mostrarIdiomaRuta()` — señas de convivencia
+> vial: cambio de luces, un metro y medio, apertura holandesa). Deja un comentario
+> huérfano sobre ranking por disciplina en `index.html` (sin código debajo,
+> pertenecería a `gamificacion-ranking.js`, adyacente en el original) — inofensivo.
+>
+> Verificado: diff exacto, reconstrucción byte a byte, tests 27/28 (falla
+> preexistente), en vivo (`mostrarIdiomaRuta()` abre el modal con el contenido real),
+> producción (200 OK).
+>
+> `index.html`: 1.708 → **1.683 líneas** (13.208 original, **-87%**).
+>
+> ---
 > 2 archivos chicos: `dialogos-genericos.js` (`lpAviso`/`lpConfirmar`/`lpPedirTexto`,
 > usado en prácticamente TODA la app — mismo clúster identificado como utilidad
 > app-wide durante el dominio Social) y `pistero-ciclistas-cerca.js`.
