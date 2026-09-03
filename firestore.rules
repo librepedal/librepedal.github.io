@@ -292,9 +292,19 @@ service cloud.firestore {
     }
 
     // Seguimiento en vivo: comparte tu ubicación con un link (quien lo abre no
-    // necesita cuenta ni la app instalada). Lectura pública a propósito.
+    // necesita cuenta ni la app instalada) -- seguir.html lee el documento por su
+    // id exacto (un get, nunca una query), así que "quien tiene el link, ve" solo
+    // necesita permitir GET. Antes esto era "allow read: if true", que en las
+    // reglas de Firestore cubre TANTO get como list -- cualquiera, sin tener
+    // ningún link, podía hacer where('activo','==',true) y listar en tiempo real
+    // la posición y nombre de TODA persona compartiendo ubicación en cualquier
+    // parte del mundo, sin haber recibido el link de nadie (hallazgo real,
+    // 2026-09-03, confirmado leyendo el código: motor-navegacion.js hacía
+    // exactamente esa query sin ningún filtro). "list: false" cierra ese hueco sin
+    // tocar el caso de uso real del link -- get sigue público a propósito.
     match /liveTracking/{id} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow create, update: if signedIn() && strOk('nombre', 60);
       allow delete: if signedIn();
     }

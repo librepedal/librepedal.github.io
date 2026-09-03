@@ -962,24 +962,23 @@ function _revisarCiclistasAdelante(miLat,miLon,miRumbo,velKmh){
     return; // uno por vez: dos avisos encimados no se entienden
   }
 }
-/* Solo se suscribe si vas motorizado. Al que pedalea no le sirve y le gastaría datos. */
+/* Solo se suscribe si vas motorizado. Al que pedalea no le sirve y le gastaría datos.
+   2026-09-03: la query where('activo','==',true) de acá abajo quedó DESHABILITADA a
+   propósito -- las reglas de Firestore ahora niegan "list" sobre liveTracking (solo
+   permiten "get" de un id conocido, para el link de seguimiento en seguir.html) porque
+   esta misma query, sin ningún filtro, dejaba que cualquiera (con o sin cuenta, sin
+   haber recibido ningún link) enumerara en vivo la posición y nombre de TODA persona
+   compartiendo ubicación en cualquier parte del mundo -- hallazgo real de privacidad,
+   no hipotético. El aviso "ciclista adelante" a quien va motorizado queda apagado
+   hasta que exista una función de servidor (con credenciales de administrador, fuera
+   del alcance de las reglas de cliente) que reciba la posición de quien pregunta y
+   devuelva SOLO "hay alguien cerca" sin exponer lat/lon/nombre de terceros a nadie
+   que no se lo haya compartido. No se intenta la query igual porque fallaría con
+   permission-denied en cada apertura -- eso ensuciaría los reportes de error (Sentry)
+   sin ningún beneficio real. */
 function suscribirCiclistasCerca(){
-  if(_ciclistaSub){ _ciclistaSub(); _ciclistaSub=null; _ciclistasCerca=[]; }
-  if(typeof actividadTipo==='undefined' || actividadTipo!=='moto') return;
-  try{
-    _ciclistaSub=db.collection('liveTracking').where('activo','==',true)
-      .onSnapshot(function(snap){
-        const arr=[];
-        snap.forEach(function(d){
-          const x=d.data();
-          if(!x || !x.lat || !x.lon) return;
-          if(x.modo==='moto') return;          // otro auto no se avisa
-          if(d.id===liveTrackId) return;        // no me aviso de mí mismo
-          arr.push({id:d.id, lat:x.lat, lon:x.lon, nombre:x.nombre});
-        });
-        _ciclistasCerca=arr;
-      }, function(){ _ciclistasCerca=[]; });
-  }catch(e){ _ciclistasCerca=[]; }
+  if(_ciclistaSub){ _ciclistaSub(); _ciclistaSub=null; }
+  _ciclistasCerca=[];
 }
 function calculateDistance(lat1,lon1,lat2,lon2){ const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1000; }
 /* Taller: derivar al usuario a un taller de bicicletas REAL, no una busqueda a ciegas.

@@ -13,10 +13,18 @@ const t = (n, c) => { if (c) ok++; else { fail++; console.log('  FALLA: ' + n); 
 
 // --- El código está y las constantes son las que este test asume ---
 t('el bloque existe', /AVISO DE CICLISTA ADELANTE/.test(HTML));
-t('solo se activa en modo moto', /actividadTipo!=='moto'\) return/.test(HTML));
-t('descarta a otros motorizados', /x\.modo==='moto'\) return/.test(HTML));
-t('no se avisa de sí mismo', /d\.id===liveTrackId\) return/.test(HTML));
 t('el aviso es de prioridad SEGURIDAD', /PRIO_VOZ\.SEGURIDAD\)/.test(HTML));
+
+// --- 2026-09-03: suscribirCiclistasCerca() dejó de hacer la query real a propósito
+//   (hallazgo de privacidad -- ver firestore.rules y el comentario junto a la función:
+//   sin ningún filtro, CUALQUIERA podía listar en vivo la posición de todo el que
+//   comparte ubicación, con o sin cuenta, sin haber recibido ningún link). El cálculo
+//   de cuándo avisar (distancia/ángulo/antirepetición, probado más abajo) sigue intacto
+//   para cuando exista una función de servidor que traiga los datos sin exponerlos ---
+t('suscribirCiclistasCerca ya NO hace la query pública insegura (where activo sin filtro por servidor)',
+  !/collection\('liveTracking'\)\.where\('activo','==',true\)\s*\n\s*\.onSnapshot/.test(HTML));
+t('el aviso a motorizados queda documentado como deshabilitado a propósito, no un olvido',
+  /DESHABILITADA a\s*\n\s*propósito/.test(HTML));
 t('el aviso recuerda el metro y medio', /metro y medio/.test(HTML));
 t('el aviso NO exige que el ciclista tenga la app', !/si el ciclista (no )?(tiene|usa) la app/i.test(HTML));
 
