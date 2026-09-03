@@ -3396,7 +3396,18 @@ function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHabland
 function _cortarActual(){ vozGen++; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){} }
 function h(t, prio){
   prio = prio || PRIO_VOZ.INFO;
-  mostrarBocadillo(t);
+  // 3er argumento posicional a propósito, sin nombrarlo en la firma (arguments[2], no
+  // "opts"): tests/aviso-visual.test.mjs extrae este bloque buscando el texto exacto
+  // "function h(t, prio){" -- cambiar la firma rompe ese extractor. opts.sinBocadillo
+  // (2026-09-03, reporte de Inty: "doble diálogo" en la pantalla de Pistero) deja que el
+  // llamador se salte el subtítulo flotante cuando el mismo texto YA quedó escrito en el
+  // historial de chat visible (#pisteroMsgs) -- ahí el bocadillo es pura redundancia, dos
+  // cajas mostrando lo mismo, una encima de otra. Se decide en el punto de llamada (ver
+  // preguntarPistero), NUNCA aquí por vista activa: h() no sabe ni debe saber qué pantalla
+  // hay al frente -- eso lo sigue resolviendo mostrarBocadillo() igual que siempre para
+  // cualquier otro llamador (voz por manos libres, avisos, tutorial).
+  const opts = arguments[2];
+  if(!(opts && opts.sinBocadillo)) mostrarBocadillo(t);
   if(!vozActiva) return;
   const limpio = limpiarParaVoz(t);
   if(!limpio) return;
@@ -4446,7 +4457,7 @@ async function preguntarPistero(){
         const _destinoConsultaMsg=_extraerDestinoConsulta(_msgNorm);
         if(_destinoConsultaMsg || CONSULTA_RUTA_OPENER_RE.test(_msgNorm)){
           const _respConsulta=await consultarPeligrosEnRuta(_catConsultaMsg, _destinoConsultaMsg);
-          _pisteroBurbuja(_respConsulta,'pistero'); try{ h(_respConsulta); }catch(e){}
+          _pisteroBurbuja(_respConsulta,'pistero'); try{ h(_respConsulta, null, {sinBocadillo:true}); }catch(e){}
           return;
         }
       }
@@ -4455,7 +4466,7 @@ async function preguntarPistero(){
     // taco, accidente): se resuelven aquí mismo, sin gastar una llamada a la IA —
     // son datos concretos para el mapa, no una conversación.
     const _catReporte=_detectarReporteVoz(_msgNorm);
-    if(_catReporte){ const _conf=await reportarPorVozRapido(_catReporte); _pisteroBurbuja(_conf,'pistero'); try{ h(_conf); }catch(e){} return; }
+    if(_catReporte){ const _conf=await reportarPorVozRapido(_catReporte); _pisteroBurbuja(_conf,'pistero'); try{ h(_conf, null, {sinBocadillo:true}); }catch(e){} return; }
     const pensando=_pisteroBurbuja('Pistero está pensando…','pistero',true);
     const hosp=(typeof allHostels!=='undefined'&&allHostels?allHostels:[]).slice(0,12).map(function(hh){
       return {name:hh.name, tipo:hh.tipo, location:hh.location, desc:(hh.desc||'').toString().slice(0,120)};
@@ -4494,7 +4505,7 @@ async function preguntarPistero(){
       pisteroHistorial.push({role:'user',content:msg}); pisteroHistorial.push({role:'pistero',content:resp});
       if(pisteroHistorial.length>40) pisteroHistorial=pisteroHistorial.slice(-40);
       _pisteroGuardar();
-      try{ h(resp); }catch(e){}
+      try{ h(resp, null, {sinBocadillo:true}); }catch(e){}
       _pisteroObedecer(acciones, msg);
       if(!acciones.length) _pisteroPintarAcciones(msg);
     }catch(e){
