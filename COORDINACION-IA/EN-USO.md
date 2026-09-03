@@ -1,5 +1,40 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ PUBLICADO — main en 92813f7, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 14vo dominio — el más grande de todo el refactor (2.195 líneas). Tarea del
+> hub #185. Candado de `index.html`: **LIBRE**.
+>
+> 2 archivos nuevos: `funciones-mapa-viajes.js` (863 líneas — POI, Diario, admin,
+> "Te doy alojo", Taller/Comunidad, hostales, recomendaciones, destinos de viaje,
+> geocoding) y `motor-navegacion.js` (1.332 líneas — navegación turn-by-turn real:
+> `calculateAndStartNavigation`, `avisarPendienteAnticipada`,
+> `_analizarTerrenoAdelante`, `recalcularRuta`, alternativas de ruta, manos libres —
+> MAS `cv()`, el router de pantallas de TODA la app, que quedó contiguo).
+>
+> 6 tests actualizados (mismo patrón de scraping ya establecido). Chequeo proactivo
+> cruzado de 162 nombres de función contra los 28 tests, sin más hallazgos reales.
+>
+> **Investigación de un hallazgo no determinista**: al verificar en vivo apareció una
+> vez `FirebaseError: Missing or insufficient permissions` que no había salido antes
+> en 13 dominios. Se reprodujo el mismo flujo 3 veces más (2 en el código nuevo, 1 en
+> el código pre-corte vía swap temporal de `index.html`) y no volvió a aparecer —
+> concluido como ruido del entorno de prueba local (sesión falsa sin auth real de
+> Firebase, ya documentado como limitación), no una regresión. Si algún día se ve
+> este mismo error en producción real, no asumir que es esto — investigar de nuevo
+> con datos reales.
+>
+> Verificado: diff exacto, reconstrucción byte a byte de `index.html`, tests 27/28
+> (falla preexistente no relacionada), en vivo en navegador local Y en producción
+> real (`cv()` cambia de vista correctamente cruzando archivos,
+> `_analizarTerrenoAdelante` reproduce el caso exacto del bug histórico de
+> bajada+recta). `index.html`: 5.473 → **3.284 líneas** (13.208 original, **-75%**).
+>
+> Quedan bloques chicos y de menor riesgo: Charla casual + idioma de ruta, Reportes
+> de riesgo (velocidad rigurosa, zonas rojas, cofres ocultos), Mantención preventiva,
+> SOS comunitario.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en c3e29da, versión 8.788 en producción (2026-09-03, sesión Lenovo)
 > Update: 13vo dominio separado. Tarea del hub #184. Candado de `index.html`: **LIBRE**.
 >
