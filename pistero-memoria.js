@@ -46,10 +46,23 @@ function _guardar(){ try{ localStorage.setItem(_key(), JSON.stringify(perfil)); 
 // en una ventana de las últimas VENTANA_SILENCIO ofertas, así que si el patrón cambia
 // (otro humor del día, se corrigió lo que molestaba) se recupera sola con el tiempo. =====
 var _ultimaOfrecida=null; // {cat, t} -- para correlacionar con el próximo "cállate"
+// PROBING_SUPRIMIDA: bug real encontrado 2026-09-03 (reporte de Inty, "de hace rato
+// no escucho alguna broma"). Antes, una vez suprimida, categoriaPermitida() SIEMPRE
+// devolvía false -- y como obtenerFraseUnica() corta ANTES de llamar registrarOferta()
+// cuando esto pasa (ver pistero-frases-pais.js), el historial de esa categoría dejaba
+// de recibir muestras nuevas Y NUNCA MÁS SE VOLVÍA A EVALUAR: quedaba congelada para
+// siempre con la misma tasa de silencios que la suprimió. La promesa del comentario de
+// arriba ("se recupera sola con el tiempo") era falsa tal como estaba escrito -- una
+// categoría suprimida una vez quedaba muda de por vida, no por una ventana de tiempo.
+// Con esto, 1 de cada PROBING_SUPRIMIDA veces se deja pasar igual: si el usuario ya no
+// la calla, esa muestra entra "limpia" al historial y la tasa baja sola; si la sigue
+// callando, se mantiene mayormente suprimida pero sigue midiendo de verdad.
+var PROBING_SUPRIMIDA=6;
 function categoriaPermitida(categoria){
   var p=_cargar(), c=p.categorias[categoria];
   if(!c || c.ofertas<MIN_OFERTAS_SILENCIO) return true; // sin muestra suficiente: no suprime, no inventa
-  return (c.silencios/c.ofertas) < TASA_SILENCIO_SUPRIME;
+  if((c.silencios/c.ofertas) < TASA_SILENCIO_SUPRIME) return true;
+  return Math.random() < (1/PROBING_SUPRIMIDA);
 }
 function registrarOferta(categoria){
   if(!categoria) return;

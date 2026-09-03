@@ -31,14 +31,18 @@ function crearRelojFalso(inicialMs) {
   return { FakeDate, avanzar: (ms) => { actual += ms; } };
 }
 
-function montarEntorno(cuVal, RelojDate) {
+function montarEntorno(cuVal, RelojDate, MathObj) {
   const window = {};
   const localStorage = montarLocalStorage();
-  const ctx = { window, localStorage, cu: cuVal, Date: RelojDate || Date, Math, JSON, console };
+  const ctx = { window, localStorage, cu: cuVal, Date: RelojDate || Date, Math: MathObj || Math, JSON, console };
   vm.createContext(ctx);
   vm.runInContext(SRC, ctx);
   return { window, localStorage };
 }
+// Math.random controlado -- necesario desde el fix del "candado eterno" (ver más
+// abajo): categoriaPermitida() ahora es probabilística cuando una categoría está
+// suprimida (probing), así que sin fijar el dado el test sería flaky.
+function mathConRandom(valorFijo) { return Object.assign(Object.create(Math), { random: () => valorFijo }); }
 
 let ok = 0, fail = 0;
 const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  FALLA: ' + nombre); } };
@@ -50,10 +54,34 @@ const leer = (localStorage, cuVal) => { const r = localStorage.getItem('lp_perfi
   debe('sin muestra suficiente, la categoría está permitida (no inventa supresión)', window.PisteroMemoria.categoriaPermitida('subida') === true);
 }
 {
-  const { window } = montarEntorno('u2');
+  const { window } = montarEntorno('u2', null, mathConRandom(0.5)); // 0.5 >= 1/6: nunca cae en el probing
   const M = window.PisteroMemoria;
   for (let i = 0; i < 5; i++) { M.registrarOferta('subida'); if (i < 2) M.registrarSilencio(); }
   debe('se suprime con 5+ ofertas y 40%+ de silencios', M.categoriaPermitida('subida') === false);
+}
+{
+  // Bug real encontrado 2026-09-03 (reporte de Inty: "de hace rato no escucho
+  // alguna broma"): antes, una vez suprimida, la categoría quedaba muda PARA
+  // SIEMPRE -- obtenerFraseUnica() corta antes de llamar registrarOferta(), así
+  // que el historial nunca volvía a recibir muestras y categoriaPermitida()
+  // seguía dando false eternamente, contradiciendo la promesa del propio
+  // comentario ("no es un castigo permanente... se recupera sola con el
+  // tiempo"). Con PROBING_SUPRIMIDA, 1 de cada 6 veces se deja pasar igual --
+  // forzamos Math.random a 0 (siempre "gana" el probing) para probarlo.
+  const { window } = montarEntorno('u2b', null, mathConRandom(0));
+  const M = window.PisteroMemoria;
+  for (let i = 0; i < 5; i++) { M.registrarOferta('subida'); if (i < 2) M.registrarSilencio(); }
+  debe('la supresión NO es eterna: el probing la deja pasar de vez en cuando', M.categoriaPermitida('subida') === true);
+}
+{
+  // Y si en esos intentos de probing el usuario YA NO la calla, la muestra entra
+  // "limpia" al historial y la tasa de silencio baja sola -- así se cumple de
+  // verdad "se recupera con el tiempo", no solo de palabra en el comentario.
+  const { window } = montarEntorno('u2c');
+  const M = window.PisteroMemoria;
+  for (let i = 0; i < 5; i++) { M.registrarOferta('subida'); if (i < 2) M.registrarSilencio(); } // 2/5 = 40%: suprimida
+  for (let i = 0; i < 3; i++) M.registrarOferta('subida'); // 3 ofertas limpias más (simula probes sin rechazo)
+  debe('tras varias ofertas limpias, la tasa baja y se vuelve a permitir del todo', M.categoriaPermitida('subida') === true);
 }
 {
   const { window } = montarEntorno('u3');
@@ -72,7 +100,7 @@ const leer = (localStorage, cuVal) => { const r = localStorage.getItem('lp_perfi
   debe('un silencio fuera de la ventana de correlación no se cuenta', leer(localStorage, 'u4').categorias.parado.silencios === 0);
 }
 {
-  const { window } = montarEntorno('u5');
+  const { window } = montarEntorno('u5', null, mathConRandom(0.5)); // 0.5 >= 1/6: fuera del probing
   const M = window.PisteroMemoria;
   // Categorías separadas: silenciar "profunda" no debe afectar a "ciudad".
   for (let i = 0; i < 5; i++) { M.registrarOferta('profunda'); M.registrarSilencio(); }
