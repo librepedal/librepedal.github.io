@@ -56,6 +56,7 @@ const CORE = [
   './pistero-ciclistas-cerca.js',
   './dialogos-genericos.js',
   './idioma-de-la-ruta.js',
+  './planificador-presupuesto.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',
