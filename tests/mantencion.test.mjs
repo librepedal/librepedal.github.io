@@ -175,20 +175,30 @@ const MES = 1000 * 60 * 60 * 24 * 30.44;
   debe('abrir Taller renderiza la lista (si no, sale vacia sin GPS)', CV.includes('renderMantencion()'));
 }
 
-// ---- 6) ORDEN: no subir la mantencion antes de haber leido la nube ----
+// ---- 6) ORDEN: no subir NADA de estadisticas antes de haber leido la nube ----
 // Es la trampa que ya costo kilometros el 2026-07-20, y con la mantencion muerde mas
 // fuerte: `historial` es un ARRAY y Firestore con {merge:true} REEMPLAZA arrays enteros.
 // Telefono nuevo -> us.mant vacio -> salta un logro en los primeros 4 segundos ->
 // _ganarDarma() -> sincronizarStats() sube historiales VACIOS y borra los de la nube ->
 // cuando sincronizarAlEntrar() corre, ya no queda nada que restaurar.
+// Bug real ENCONTRADO Y CORREGIDO el 2026-08-31 (ver comentario en gamificacion-logros.js,
+// justo arriba de sincronizarStats): esta MISMA seccion de test antes daba por buena la
+// garantia vieja ("km y Darma siempre suben, los protege gana-el-mayor al RESTAURAR") --
+// esa garantia era FALSA. Gana-el-mayor vive SOLO en la LECTURA (_restaurarDesdeNube);
+// la ESCRITURA mandaba `km:us.di||0` sin condicion. En un telefono nuevo (us.di local=0),
+// esa subida temprana (au() corre sincrono en el login, antes de leer la nube) pisaba el
+// km/Darma real de la nube con 0 -- perdida definitiva, el mismo patron que ya tenia mant.
+// Ahora km/kmPorModo/darma esperan la MISMA compuerta que mant/mantKm. Este test quedo
+// desactualizado tras ese fix (por eso fallaba "preexistente" en CI) -- se corrige aca
+// para reflejar la garantia REAL y no una vieja que ya se sabe que era incorrecta.
 {
   const SS = bloque('async function sincronizarStats()');
   debe('sincronizarStats arma el payload en una variable, no inline',
        /const datos=\{/.test(SS));
-  debe('la mantencion solo se agrega si ya se leyo la nube',
-       /if\(_mantListoParaSubir\)\{[\s\S]*?datos\.mant=_mantParaNube\(\)/.test(SS));
-  debe('los km y el Darma SIGUEN subiendo siempre (son numeros, los protege gana-el-mayor)',
-       /const datos=\{km:us\.di\|\|0[\s\S]*?darma:us\.d\|\|0/.test(SS));
+  debe('TODO lo numerico/objeto que depende de estado remoto (km, kmPorModo, darma, mant, mantKm) espera la misma compuerta -- ninguno se sube antes de leer la nube',
+       /if\(_mantListoParaSubir\)\{[\s\S]*?datos\.km=us\.di\|\|0[\s\S]*?datos\.kmPorModo=[\s\S]*?datos\.darma=us\.d\|\|0[\s\S]*?datos\.mant=_mantParaNube\(\)[\s\S]*?datos\.mantKm=/.test(SS));
+  debe('nombre/authUid, que NO tienen riesgo de pisar nada remoto, se mandan siempre (fuera de la compuerta)',
+       SS.indexOf('datos={nombre:') < SS.indexOf('if(_mantListoParaSubir)'));
   debe('la bandera arranca cerrada', /let _mantListoParaSubir=false;/.test(HTML));
 
   const SAE = bloque('function sincronizarAlEntrar()');
