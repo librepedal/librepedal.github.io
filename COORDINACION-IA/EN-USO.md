@@ -1,9 +1,13 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## 🔒 EN CURSO — Lenovo (2026-09-02/03), candado TOMADO — refactor estructural, SIN COMMIT aún
+> ## ✅ COMMITEADO LOCAL — Lenovo (2026-09-02/03), candado LIBRE — refactor estructural, SIN PUSH aún
 > Pedido directo de Inty: separar el monolito de `index.html` en archivos por dominio para
-> auditar/leer mejor el código (cero cambio funcional, solo reorganización). Nada de esto se
-> pushea ni se despliega todavía — todo local, sin commit.
+> auditar/leer mejor el código. **2 commits en `main` local** (`856d618` tu fix de
+> sinBocadillo, aislado y limpio; `335a2e0` el refactor + un fix real de comportamiento
+> en el SOS, detalle abajo) — **todavía NO pusheados a origin**, así que `main` remoto
+> sigue en `fc386dd` y no se disparó ningún deploy. Candado LIBRE: podés tocar
+> `index.html` de nuevo, hacé `git pull` primero para no perder mis 2 commits locales
+> (no van a chocar con nada tuyo, `git log` los muestra).
 >
 > **Ya extraído (verificado: diff exacto, checksum, sintaxis, tests 27/28, prueba en vivo en
 > navegador):**
