@@ -57,6 +57,8 @@ const CORE = [
   './dialogos-genericos.js',
   './idioma-de-la-ruta.js',
   './planificador-presupuesto.js',
+  './ubicacion-carga.js',
+  './sonido-cadena.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',
