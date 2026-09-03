@@ -139,6 +139,19 @@ function resumenTexto(){
   return partes.length ? (partes.join('; ')+'.') : '';
 }
 
+// Solo lectura -- para pistero-diag.js. No expone nada que no exista ya en
+// localStorage; existe porque "¿por qué dejó de sonar esta categoría?" no se
+// puede responder desde afuera sin ver ofertas/silencios crudos, no solo el
+// booleano de categoriaPermitida().
+function debugCategorias(){
+  var p=_cargar(), out={};
+  Object.keys(p.categorias).forEach(function(cat){
+    var c=p.categorias[cat];
+    out[cat]={ofertas:c.ofertas, silencios:c.silencios, tasa:c.ofertas?+(c.silencios/c.ofertas).toFixed(2):0, permitida:categoriaPermitida(cat)};
+  });
+  return out;
+}
+
 window.PisteroMemoria={
   categoriaPermitida: categoriaPermitida,
   registrarOferta: registrarOferta,
@@ -146,6 +159,7 @@ window.PisteroMemoria={
   registrarInicioViaje: registrarInicioViaje,
   registrarParada: registrarParada,
   registrarEsfuerzoSubida: registrarEsfuerzoSubida,
-  resumenTexto: resumenTexto
+  resumenTexto: resumenTexto,
+  debugCategorias: debugCategorias
 };
 })();
