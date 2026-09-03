@@ -16,8 +16,10 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+// _sumarKmModo vive en motor-gps-velocidad.js, MODOS_QUE_COMPITEN/_modoCompite en
+// mantencion-preventiva.js, desde que se separaron de index.html (2026-09).
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(join(raiz, 'index.html'), 'utf8');
+const html = readFileSync(join(raiz, 'index.html'), 'utf8') + '\n' + readFileSync(join(raiz, 'motor-gps-velocidad.js'), 'utf8') + '\n' + readFileSync(join(raiz, 'mantencion-preventiva.js'), 'utf8');
 
 const fnSumar = html.match(/function _sumarKmModo\(km\)\{[\s\S]*?\n\}/);
 const mapa = html.match(/const MODOS_QUE_COMPITEN=\{[^}]*\};/);
