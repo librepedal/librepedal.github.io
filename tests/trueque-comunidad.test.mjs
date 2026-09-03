@@ -9,7 +9,8 @@ import { dirname, join } from 'path';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const JS = readFileSync(join(raiz, 'perfil-comunidad.js'), 'utf8');
-const HTML = readFileSync(join(raiz, 'index.html'), 'utf8');
+// escapeHTML vive en suscripciones-comunidad.js desde que se separó de index.html (2026-09).
+const HTML = readFileSync(join(raiz, 'suscripciones-comunidad.js'), 'utf8');
 
 let ok = 0, fail = 0;
 const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  FALLA: ' + nombre); } };

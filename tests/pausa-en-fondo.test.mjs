@@ -8,7 +8,12 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+// subscribeToUsers/_rtdSubscribeToUsers viven en suscripcion-perezosa-rtd.js, y
+// _renderMainMapUsers/_renderNavMapUsers en ciclistas-mapa-clustering.js, desde que
+// se separaron de index.html (2026-09).
+const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
+const HTML = ['index.html', 'ciclistas-mapa-clustering.js', 'suscripcion-perezosa-rtd.js']
+  .map((f) => readFileSync(join(raiz, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;
 const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  FALLA: ' + nombre); } };

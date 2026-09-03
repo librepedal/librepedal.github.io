@@ -18,9 +18,10 @@ import { dirname, join } from 'path';
 // auth-sesion.js desde que se separaron de index.html -- se concatenan para no perder cobertura.
 // cv() (el router de pantallas, con las ramas que enganchan cada listener al abrir su
 // pantalla) vive en motor-navegacion.js, abrirTeDoyAlojo() en funciones-mapa-viajes.js,
-// y toggleGPS() en motor-gps.js, todos desde 2026-09.
+// toggleGPS() en motor-gps.js, y _subUnaVez()/subscribeToChat/Comments/FriendRequests
+// en suscripcion-perezosa-rtd.js/suscripciones-comunidad.js, todos desde 2026-09.
 const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
-const HTML = ['index.html', 'auth-vinculo.js', 'auth-sesion.js', 'motor-navegacion.js', 'funciones-mapa-viajes.js', 'motor-gps.js']
+const HTML = ['index.html', 'auth-vinculo.js', 'auth-sesion.js', 'motor-navegacion.js', 'funciones-mapa-viajes.js', 'motor-gps.js', 'suscripcion-perezosa-rtd.js', 'suscripciones-comunidad.js']
   .map((f) => readFileSync(join(raizProyecto, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;
