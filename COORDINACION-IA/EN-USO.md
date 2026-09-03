@@ -1,8 +1,21 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 9dcaee3, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 16vo dominio — cierra la cola final del monolito original (806 líneas que
-> quedaban tras `esfera.js`). Tarea del hub #187. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en 0027712, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 17vo dominio. Tarea del hub #188. Candado de `index.html`: **LIBRE**.
+>
+> 2 archivos nuevos (entre `rodadas.js` y `clima-datos.js`): `sos-comunitario.js`
+> (`enviarSOS()`, `_broadcastSOS()`, `_iniciarEscuchaSOS()` — el sistema SOS completo,
+> incluido el fix del ciclista inconsciente implementado al comienzo de esta sesión) y
+> `recomendacion-rutas.js` (heurística de rutas sugeridas por historial).
+>
+> Verificado: diff exacto, reconstrucción byte a byte, tests 27/28 (falla preexistente
+> no relacionada). En vivo: `enviarSOS()` ejecuta sin error, abre el modal y muestra
+> los 3 números de emergencia (133/131/132) — confirma que el fix crítico de
+> seguridad sigue intacto tras el corte.
+>
+> `index.html`: 1.875 → **1.764 líneas** (13.208 original, **-87%**).
+>
+> ---
 >
 > 7 archivos nuevos: `pistero-conversacion.js` (FAQ + `handleVoiceCommand()`, el
 > enrutador de comandos de voz más denso de la app, con años de bugs reales
