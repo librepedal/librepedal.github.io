@@ -13,7 +13,8 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+// La caché de puntos del mapa vive en mapa-render.js desde que se separó de index.html.
+const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'mapa-render.js'), 'utf8');
 
 let ok = 0, fail = 0;
 const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  FALLA: ' + nombre); } };

@@ -21,7 +21,13 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const CRUDO = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+// Este guardián escanea TODO el código en busca de lecturas de Firestore sin techo -- así
+// que tiene que leer TODOS los archivos que salieron de index.html al separarlo por dominio
+// (2026-09), no solo index.html. Si agregás un archivo nuevo con `db.collection(...)`,
+// sumalo a esta lista o el guardián deja de verlo.
+const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
+const ARCHIVOS_JS = ['index.html', 'esfera.js', 'seguridad-sensores.js', 'clima-datos.js', 'voz-motor.js', 'reportes.js', 'rutas.js', 'mapa-render.js'];
+const CRUDO = ARCHIVOS_JS.map((f) => readFileSync(join(raizProyecto, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;
 const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  FALLA: ' + nombre); } };

@@ -17,6 +17,7 @@ const CORE = [
   './voz-motor.js',
   './reportes.js',
   './rutas.js',
+  './mapa-render.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',
