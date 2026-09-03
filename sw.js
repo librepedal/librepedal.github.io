@@ -53,6 +53,8 @@ const CORE = [
   './prevuelo-intro-pistero.js',
   './recomendacion-rutas.js',
   './sos-comunitario.js',
+  './pistero-ciclistas-cerca.js',
+  './dialogos-genericos.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',
