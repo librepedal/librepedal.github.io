@@ -12,8 +12,9 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+// _frasePresumir vive en motor-navegacion.js desde que se separó de index.html (2026-09).
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(join(raiz, 'index.html'), 'utf8');
+const html = readFileSync(join(raiz, 'motor-navegacion.js'), 'utf8');
 
 const fuente = html.match(/function _frasePresumir\(km\)\{[\s\S]*?\n\}/);
 if (!fuente) {

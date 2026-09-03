@@ -4,7 +4,9 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+// El bloque "AVISO DE CICLISTA ADELANTE" vive en motor-navegacion.js desde que se
+// separó de index.html (2026-09).
+const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'motor-navegacion.js'), 'utf8');
 
 let ok = 0, fail = 0;
 const t = (n, c) => { if (c) ok++; else { fail++; console.log('  FALLA: ' + n); } };

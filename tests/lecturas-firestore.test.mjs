@@ -16,8 +16,11 @@ import { dirname, join } from 'path';
 
 // Las 2 ramas de arranque (registro nuevo y sesión que vuelve) viven en auth-vinculo.js y
 // auth-sesion.js desde que se separaron de index.html -- se concatenan para no perder cobertura.
+// cv() (el router de pantallas, con las ramas que enganchan cada listener al abrir su
+// pantalla) vive en motor-navegacion.js, y abrirTeDoyAlojo() en funciones-mapa-viajes.js,
+// ambos desde 2026-09.
 const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
-const HTML = ['index.html', 'auth-vinculo.js', 'auth-sesion.js']
+const HTML = ['index.html', 'auth-vinculo.js', 'auth-sesion.js', 'motor-navegacion.js', 'funciones-mapa-viajes.js']
   .map((f) => readFileSync(join(raizProyecto, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;

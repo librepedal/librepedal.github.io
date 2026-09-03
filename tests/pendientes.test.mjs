@@ -21,8 +21,10 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+// _analizarTerrenoAdelante/_metrosAMirar/PEND_MIN_DESNIVEL viven en motor-navegacion.js
+// desde que se separó de index.html (2026-09).
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(join(raiz, 'index.html'), 'utf8');
+const html = readFileSync(join(raiz, 'motor-navegacion.js'), 'utf8');
 
 const fnTerreno = html.match(/function _analizarTerrenoAdelante\(perfil, iNow, metros, umbral, minDesnivel\)\{[\s\S]*?\n\}/);
 const fnMetros = html.match(/function _metrosAMirar\(velKmh\)\{[\s\S]*?\n\}/);

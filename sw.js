@@ -39,6 +39,8 @@ const CORE = [
   './pistero-apariencia.js',
   './pistero-frases-pais.js',
   './pistero-chat-ia.js',
+  './funciones-mapa-viajes.js',
+  './motor-navegacion.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',

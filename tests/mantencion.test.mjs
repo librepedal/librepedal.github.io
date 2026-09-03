@@ -14,7 +14,7 @@ const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
 // sincronizarStats()/_restaurarDesdeNube()/sincronizarAlEntrar() en gamificacion-logros.js
 // desde que se separaron de index.html — se concatenan para que bloque() los siga
 // encontrando sin cambiar su lógica.
-const HTML = ['index.html', 'clima-datos.js', 'auth-sesion.js', 'gamificacion-darma.js', 'gamificacion-logros.js']
+const HTML = ['index.html', 'clima-datos.js', 'auth-sesion.js', 'gamificacion-darma.js', 'gamificacion-logros.js', 'motor-navegacion.js']
   .map((f) => readFileSync(join(raizProyecto, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;
