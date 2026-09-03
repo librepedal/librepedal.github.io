@@ -1,5 +1,53 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ PUBLICADO — main en 0f77658, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 12vo dominio separado — el más riesgoso hasta ahora. Tarea del hub #183.
+> Candado de `index.html`: **LIBRE**.
+>
+> Este bloque (1178-1903) había sido descartado en un primer intento por mezclar el
+> **estado central de TODA la app** (`cu`, `mp`, `trips`, `navMap`, `gpsPoints`,
+> `radarActive`, `allHostels`, etc. — usado por mapa-render.js, rutas.js, auth*.js y
+> casi todos los demás dominios ya extraídos) con personalización de Pistero y varias
+> secciones más. Se retomó tras un hallazgo que lo hizo seguro:
+>
+> **`let`/`const` de nivel superior en un `<script>` SÍ son visibles por identificador
+> simple desde otro `<script>` (inline o `src`) del mismo documento** — solo
+> `window.X` explícito falla con `let`. Verificado en vivo contra producción real
+> (`radarActive`, un `let` de index.html, leído y escrito correctamente desde la
+> consola sin pasar por `window`). Grep exhaustivo confirmó que ninguna de las ~70
+> variables de este bloque se accede vía `window.X` en todo el código — por eso NO
+> hizo falta convertir nada a `var`, el corte en la posición exacta bastó (mismo
+> mecanismo de los 11 dominios anteriores).
+>
+> **6 archivos nuevos**, cada uno cortado en su posición original exacta:
+> `blindaje-firestore.js` (parche de resiliencia onSnapshot), `pistero-personalizacion-
+> datos.js` (catálogo casco/lentes/piel/ojos/etc., datos puros), `app-estado-global.js`
+> (el estado central + cronómetro/vueltas/pausa + charla + frases de comunidad),
+> `pistero-tipo-actividad.js` (5 modos + tema visual + cicloCargado — se preservó el
+> orden interno exacto: el propio código documentaba un bug real de "cannot access
+> before initialization" si se reordenaba), `pistero-personalidad.js` (14 arquetipos +
+> prosodia + bancos de frases por ritmo), `pistero-vocabulario-modo.js` (vocabulario
+> por modo + MG/CG, que se reclasificarán cuando toque Mantención/Reportes-Comunidad).
+>
+> Verificado: diff exacto de los 6 archivos, reconstrucción byte a byte de todo
+> `index.html` contra el original, sintaxis válida en los 6 + los 19 fragmentos
+> inline restantes, tests 27/28 (falla preexistente `mantencion.test.mjs`, no
+> relacionada) tras arreglar 2 tests de scraping de texto (`colores-honestos`,
+> `voz-prosodia`) que apuntaban a `index.html`. Verificación en vivo, la más
+> exhaustiva de todo el refactor: `toggleRadarOnMap()` (mapa-render.js, archivo
+> externo) lee y escribe `radarActive` (app-estado-global.js) sin error, tanto en
+> local como contra producción real; `elegirPersonalidad()`/`elegirActividad()` mutan
+> estado correctamente cruzando archivos.
+>
+> `index.html`: 7.125 → **6.424 líneas**. Quedan pendientes: motor de navegación
+> (~2.196 líneas, el bloque más grande y de más riesgo — código usado en vivo por
+> ciclistas en ruta), Frases por país + Chat con Pistero IA (contiene `FRASES_ARQ`,
+> del que depende `scripts/gen-voces-elevenlabs.js` vía scraping de texto — hay que
+> actualizar ese script también cuando se toque), Charla casual + idioma de ruta,
+> Reportes de riesgo, Mantención preventiva, SOS comunitario.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en 0b897af, versión 8.788 en producción (2026-09-03, sesión Lenovo)
 > Update: 11vo dominio separado, Social (4 archivos, no contiguo: `novedades.js`,
 > `social.js` [chat+amigos], `segmentos.js`, `rodadas.js`). Candado de `index.html`:
