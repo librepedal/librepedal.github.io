@@ -62,6 +62,7 @@ const CORE = [
   './ciclistas-mapa-clustering.js',
   './suscripcion-perezosa-rtd.js',
   './suscripciones-comunidad.js',
+  './diario.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',
