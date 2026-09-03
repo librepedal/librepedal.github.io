@@ -9,9 +9,11 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
-// vigilarClima()/_climaFxAplicar() viven en clima-datos.js desde que se separaron de
-// index.html — se concatena para que bloque() los siga encontrando sin cambiar su lógica.
-const HTML = readFileSync(join(raizProyecto, 'index.html'), 'utf8') + '\n' + readFileSync(join(raizProyecto, 'clima-datos.js'), 'utf8');
+// vigilarClima()/_climaFxAplicar() viven en clima-datos.js y _completarLoginVerificadoOriginal()
+// en auth-sesion.js desde que se separaron de index.html — se concatenan para que bloque()
+// los siga encontrando sin cambiar su lógica.
+const HTML = ['index.html', 'clima-datos.js', 'auth-sesion.js']
+  .map((f) => readFileSync(join(raizProyecto, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;
 const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  FALLA: ' + nombre); } };

@@ -14,7 +14,11 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+// Las 2 ramas de arranque (registro nuevo y sesión que vuelve) viven en auth-vinculo.js y
+// auth-sesion.js desde que se separaron de index.html -- se concatenan para no perder cobertura.
+const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
+const HTML = ['index.html', 'auth-vinculo.js', 'auth-sesion.js']
+  .map((f) => readFileSync(join(raizProyecto, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;
 const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  FALLA: ' + nombre); } };
