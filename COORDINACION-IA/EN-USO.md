@@ -1,5 +1,44 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 📦 Free/pago + almacén de voces clonadas — DECISIÓN DE PRODUCTO, no bloqueada — sesión Lenovo, 2026-09-03 (noche)
+> Sin candado, sin código nuevo todavía. Registro de una conversación de producto con Inty
+> para que no se pierda entre sesiones.
+>
+> **Contexto real medido (KV worker-ia + Firestore, no supuestos):** 72 usuarios registrados,
+> 19 con `km>0` (actividad real). Gasto agosto: 45.815 caracteres (~US$9,62) = **~US$0,51/usuario
+> real/mes**. Con eso, el plan actual (~US$21/mes) alcanza para ~41 usuarios activos al ritmo de
+> agosto. Con 72 registrados yendo todos a "reales", el gasto rondaría ~US$37/mes -- por encima
+> del plan.
+>
+> **Idea de Inty para resolver la viabilidad**: usuarios FREE reciben texto+mapa sin voz premium
+> (o voz nativa/edge-tts, sin costo variable); usuarios PAGOS reciben ElevenLabs con arquetipo.
+> Preguntó si "voces clonadas" (local, sin costo por caracter) pueden cubrir la demanda free.
+>
+> **Respuesta con lo que ya se sabía + verificado hoy:**
+> - El motor de clonación elegido en su momento fue **Chatterbox** (MIT, con emoción) --
+>   ver [[voz-chatterbox-thunder]] (memoria de hace ~44 días, puede estar desactualizada):
+>   bloqueado porque el Thunder (kpone) no ejecuta procesos por SSH de forma confiable.
+>   El droplet del hub (961MB RAM) NO puede correrlo -- solo el Thunder con su GPU.
+> - Aunque se resuelva el Thunder, sigue siendo UNA GPU de consumidor sirviendo en vivo --
+>   no hay medición real de cuántas voces/segundo aguanta, así que no es una solución que
+>   escala sola a "toda la demanda free" sin más trabajo.
+> - **Dónde ALMACENAR un catálogo de voces ya clonadas** (verificado hoy contra la
+>   documentación real de Cloudflare, no de memoria): R2 (10GB gratis, egress gratis sin
+>   límite, ~140.000 archivos de 70KB) le gana por lejos a KV (1GB total, límite de 1.000
+>   escrituras/día -- el caché permanente de hoy vive ahí, para el volumen actual alcanza,
+>   pero NO para un catálogo masivo nuevo de golpe).
+>
+> **Bloqueado, necesita a Inty (mismo patrón que worker-proximidad, tarea #195):** el token
+> de Cloudflare disponible no tiene permiso para crear buckets R2 nuevos (sí puede editar
+> Workers/KV existentes -- por eso el deploy de hoy SÍ funcionó). Dos caminos: Inty crea el
+> bucket `librepedal-voces` a mano en el dashboard (30 segundos), o pasa un token con
+> "Workers R2 Storage: Edit".
+>
+> **Nada de esto está bloqueando nada más** -- es una decisión de producto (modelo free/pago)
+> más una pieza de infraestructura que se prepara cuando haga falta, no un problema urgente
+> hoy. Sin resolver todavía: si Inty confirma que quiere retomar el diagnóstico del Thunder,
+> o si se conforma con edge-tts/nativa para el tier free sin depender de eso.
+
 > ## 💰 Costo REAL de voz resuelto de raíz — sesión Lenovo, 2026-09-03 (noche)
 > Candado: **LIBRE**. Sin tocar `index.html`. worker-ia YA DESPLEGADO en producción
 > (no solo commiteado): `wrangler deploy` exitoso, Version ID `2c00a8cf-5d9c-441a-855f-1d685e06e320`.
