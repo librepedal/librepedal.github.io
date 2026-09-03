@@ -51,6 +51,8 @@ const CORE = [
   './sobrevuelo-viaje.js',
   './abanico-reporte.js',
   './prevuelo-intro-pistero.js',
+  './recomendacion-rutas.js',
+  './sos-comunitario.js',
   './como-funciona.html',
   './manifest.json',
   './icon-192.png',
