@@ -1,7 +1,7 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 770c17d, versión 8.788 en producción (2026-09-02/03, sesión Lenovo)
-> Update: 5to dominio separado, `voz-motor.js` (TTS/cola de prioridad/música). Candado LIBRE.
+> ## ✅ PUBLICADO — main en 00d4e2f, versión 8.788 en producción (2026-09-02/03, sesión Lenovo)
+> Update: 6to dominio separado, `reportes.js` (mapa comunitario, categorías, confirmaciones). Candado LIBRE.
 > Detalle completo abajo (versión anterior de esta nota, sigue vigente para los otros 4).
 > Pedido directo de Inty (orden confirmada vía Tundra, tarea #173): separar el monolito de
 > `index.html` en archivos por dominio para auditar/leer mejor el código. Candado LIBRE.
