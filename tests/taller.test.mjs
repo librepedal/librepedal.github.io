@@ -4,7 +4,9 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+// handleVoiceCommand() (donde vive este patrón) se separó a pistero-conversacion.js
+// en 2026-09.
+const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'pistero-conversacion.js'), 'utf8');
 
 // Saca el regex tal cual está en el archivo: si alguien lo cambia, el test lo evalúa.
 const m = HTML.match(/if\((\/taller\|arregl[^/]*\/)\.test\(t\)\)\{ cv\('mac'\)/);
