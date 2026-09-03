@@ -1,5 +1,37 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ PUBLICADO — main en 0b897af, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 11vo dominio separado, Social (4 archivos, no contiguo: `novedades.js`,
+> `social.js` [chat+amigos], `segmentos.js`, `rodadas.js`). Candado de `index.html`:
+> **LIBRE**. Tarea del hub #182 cerrada.
+>
+> `segmentosActivos`/`segmentosEstado`/`segmentosCargados` → `var` (compartidas entre
+> `index.html` y `segmentos.js`).
+>
+> **Hallazgo durante la extracción**: el clúster de diálogos genéricos de toda la app
+> (`lpAviso`, `_lpDialogCerrar`, `lpConfirmar`, `lpPedirTexto`) había quedado arrastrado
+> dentro del rango de Chat+Amigos por error de rango al recortar — no son cosa de
+> social, cualquier pantalla los usa. Se sacaron de `social.js` y volvieron a
+> `index.html` en su posición relativa original, verificado por reconstrucción exacta
+> contra `git show HEAD:index.html` antes de commitear.
+>
+> `tests/canal-rodada.test.mjs` leía `index.html` como texto (scraping) — redirigido a
+> `rodadas.js`, su ubicación real nueva. `tests/lecturas-sin-techo.test.mjs`:
+> `ARCHIVOS_JS` suma los 4 archivos nuevos.
+>
+> Verificado: los 4 archivos sirven 200 en `librepedal.cl`, `node --check` OK en los 4,
+> prueba en vivo en navegador (`lpAviso` renderiza desde su nueva posición, las 3
+> variables compartidas accesibles cross-file, sin errores de consola nuevos frente a
+> los 2 ya conocidos de entorno local). Tests 27/28 (la 1 falla es
+> `mantencion.test.mjs`, preexistente, tarea #174 del hub, no relacionada).
+>
+> Quedan pendientes de dominios anteriores (documentado, no perdido): el código de
+> clustering de ciclistas en el mapa (`_riderScaleParaZoom` y afines), y clústeres
+> chicos sueltos — Diario, idioma-de-ruta, POI-desde-bitácora, recomendación-de-rutas,
+> planificador-presupuesto.
+>
+> ---
+
 > ## ✅ PUBLICADO — main en 6f197ad, versión 8.788 en producción (2026-09-02/03, sesión Lenovo)
 > Update: 10mo dominio separado, Gamificacion (5 archivos: darma/logros/ranking/retos/comunidad, no contiguo). Candado LIBRE. (Social/chat, render de ciclistas siguen pendientes.)
 > Detalle completo abajo (versión anterior de esta nota, sigue vigente para los otros 4).
