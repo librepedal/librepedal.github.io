@@ -1588,7 +1588,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="cc">
   <div class="cm" id="pisteroMsgs"></div>
   <div class="cia">
-    <input type="text" id="pisteroInput" placeholder="Pregúntale lo que quieras..." onkeypress="if(event.key==='Enter')preguntarPistero()">
+    <input type="text" id="pisteroInput" placeholder="Pregúntale lo que quieras..." onkeydown="if(event.key==='Enter')preguntarPistero()">
     <button class="ab" id="pisteroMic" onclick="pisteroPorVoz()" title="Preguntar hablando"><i class="fas fa-microphone"></i></button>
     <button class="ab" onclick="preguntarPistero()"><i class="fas fa-paper-plane"></i></button>
   </div>
@@ -3380,9 +3380,15 @@ function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHabland
 function _cortarActual(){ vozGen++; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){} }
 function h(t, prio){
   prio = prio || PRIO_VOZ.INFO;
-  mostrarBocadillo(t);
-  if(!vozActiva) return;
   const limpio = limpiarParaVoz(t);
+  // El subtítulo visual (bocadillo) duraba SIEMPRE 4.5s fijos (default de
+  // mostrarBocadillo), sin importar el largo del texto -- en una respuesta larga de
+  // Pistero (varios párrafos) el audio seguía sonando decenas de segundos después de
+  // que el subtítulo ya había desaparecido de la pantalla. Ahora dura lo mismo que
+  // el audio estimado (misma fórmula que usa _reproducirVoz), con un piso de 4.5s para
+  // que un texto corto no parpadee.
+  mostrarBocadillo(t, (vozActiva && limpio) ? Math.max(4500, _durEstVoz(limpio)) : undefined);
+  if(!vozActiva) return;
   if(!limpio) return;
   const item = {t:t, limpio:limpio, prio:prio};
   const q = decidirVoz(vozPrioActual, prio);
@@ -4916,7 +4922,14 @@ async function _reenviarLinkMagico(email){
 }
 // Paso 2: se llama al volver del correo, con la sesión YA verificada y el token uid==cu listo.
 async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
-  cu=cuVal; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador(); if(typeof _mostrarBienvenidaFundador==='function') setTimeout(_mostrarBienvenidaFundador,900);
+  cu=cuVal; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador();
+  // Guard movido AQUÍ (antes vivía solo dentro de _mostrarBienvenidaFundador, que corre
+  // 900ms después): si el login se dispara dos veces casi seguidas (doble tap real del
+  // usuario, o el propio SDK de auth reemitiendo el evento), se agendaban dos setTimeout
+  // antes de que cualquiera alcanzara a escribir el flag en localStorage — ambos pasaban
+  // el chequeo y el modal de bienvenida aparecía dos veces. Marcar el flag AQUÍ, de forma
+  // síncrona antes de agendar, cierra esa ventana de carrera.
+  if(typeof _mostrarBienvenidaFundador==='function' && cuVal && !localStorage.getItem('lp_onboard_'+cuVal)){ localStorage.setItem('lp_onboard_'+cuVal,'1'); setTimeout(_mostrarBienvenidaFundador,900); }
   nombreUsuario=nombre;
   const paisSel=localStorage.getItem('lp_pending_pais')||'auto';
   if(paisSel!=='auto'){ paisUsuario=paisSel; } else { paisUsuario=null; }
@@ -5764,6 +5777,14 @@ function updateSpeedStatus(speed){
 function _rutasKey(){ return 'lp_rutas_'+(cu||'anon'); }
 function rutasLocales(){ try{ return JSON.parse(localStorage.getItem(_rutasKey()))||[]; }catch(e){ return []; } }
 function rutasLocalesSet(arr){ try{ localStorage.setItem(_rutasKey(), JSON.stringify(arr.slice(-120))); }catch(e){} }
+// Cuenta única de "viajes completados" que TODA la app debe usar (esfera, resumen de
+// Inicio, Estadísticas). Antes cada pantalla tenía su propia cuenta a mano: la esfera
+// sumaba rutasLocales()+trips de la nube, pero Inicio y Estadísticas solo contaban los
+// trips de la nube -- así un ciclista que sale a pedalear con "Iniciar navegación"
+// directo (sin pasar por el planificador, que es como sale la mayoría) veía 6 viajes en
+// la esfera y 0 en las otras dos pantallas, mismo usuario, misma carga de página. Un
+// solo lugar para esta cuenta evita que un cuarto contador futuro repita el mismo hueco.
+function _totalViajesCompletos(){ return rutasLocales().length + trips.filter(function(t){return t.status==='completed';}).length; }
 function guardarRutaLocalObj(data){ const arr=rutasLocales(); const i=arr.findIndex(function(r){return r.localId===data.localId;}); if(i>=0){ arr[i]=Object.assign(arr[i],data); } else { arr.push(data); } rutasLocalesSet(arr); return arr; }
 /* Respaldo best-effort en Firebase; enlaza firebaseId a la ruta local para no duplicar. */
 function _subirRutaNube(localId, fb){ try{ fb.authUid=window.lpUID||null; const it=rutasLocales().find(function(r){return r.localId===localId;}); const fid=it&&it.firebaseId; if(fid){ db.collection('routes').doc(fid).update(fb).catch(function(){}); } else { db.collection('routes').add(fb).then(function(ref){ const a=rutasLocales(); const x=a.find(function(r){return r.localId===localId;}); if(x){ x.firebaseId=ref.id; rutasLocalesSet(a); } }).catch(function(){}); } }catch(e){} }
@@ -6457,8 +6478,10 @@ var _esFundador=false, _miNumFundador=null;
 function _cerrarBienvenida(){ try{ document.getElementById('userModal').classList.remove('on'); }catch(e){} }
 async function _mostrarBienvenidaFundador(){
   try{
-    if(!cu || localStorage.getItem('lp_onboard_'+cu)) return;
-    localStorage.setItem('lp_onboard_'+cu,'1');
+    // El guard de "solo una vez" ya se marcó de forma síncrona en el punto donde se
+    // agenda este setTimeout (ver cu=cuVal más arriba) -- aquí solo queda validar que
+    // seguimos con sesión.
+    if(!cu) return;
     var CUPO=(typeof LP_FUNDADORES_CUPO!=='undefined'?LP_FUNDADORES_CUPO:1000);
     var num=(typeof _miNumFundador!=='undefined'&&_miNumFundador)?_miNumFundador:null;
     var es=(typeof _esFundador!=='undefined')?_esFundador:false;
@@ -6502,7 +6525,7 @@ function au(){
   document.getElementById('nv').innerText=us.n+" ("+us.d+")";
   var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d;
   var _avgS=document.getElementById('avgSpeed'); if(_avgS) _avgS.innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0';
-  var _tt=document.getElementById('totalTrips'); var _tripsCompletos=trips.filter(function(t){return t.status==='completed';}).length; if(_tt) _tt.innerText=_tripsCompletos;
+  var _tt=document.getElementById('totalTrips'); var _tripsCompletos=_totalViajesCompletos(); if(_tt) _tt.innerText=_tripsCompletos;
   var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di));
   const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); if(pf){ pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); }
   var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1)+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
@@ -9913,7 +9936,7 @@ async function actualizarMiPuesto(){
 }
 function updateStatsView(){
   document.getElementById('statKm').innerText=us.di.toFixed(1);
-  document.getElementById('statTrips').innerText=trips.filter(function(t){return t.status==='completed';}).length;
+  document.getElementById('statTrips').innerText=_totalViajesCompletos();
   document.getElementById('statCal').innerText=Math.round(us.c);
   document.getElementById('statDarma').innerText=us.d;
   document.getElementById('statAvgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0';
@@ -10224,7 +10247,16 @@ document.addEventListener('focusout', function(e){ const t=e.target; if(t&&(t.ta
       for(let i=0;i<pts.length && !tapando;i++){
         const els=document.elementsFromPoint(pts[i][0],pts[i][1]);
         const debajo=els.find(function(el){ return el!==mic && !mic.contains(el); });
-        if(debajo && (debajo.tagName==='BUTTON'||debajo.tagName==='A'||debajo.closest('button')||debajo.closest('a'))) tapando=true;
+        if(!debajo) continue;
+        // El fix original (2026-08-31) solo protegía <button>/<a> porque ahí el problema
+        // era doble (visual Y funcional: el toque no llegaba). Pero el mismo orbe fijo tapa
+        // igual de seguido párrafos de texto explicativo largos (ej. "Manos libres" en
+        // Ajustes) -- ahí no hay nada que tocar, pero el usuario tampoco puede leer esa
+        // línea mientras el orbe está encima. Un <p> con texto real (no una etiqueta corta)
+        // cuenta también como "tapando", con el mismo umbral simple que ya usa
+        // limpiarParaVoz-style: 20+ caracteres para no reaccionar a labels cortos sueltos.
+        const esTextoLargo=debajo.tagName==='P' && (debajo.textContent||'').trim().length>20;
+        if(debajo.tagName==='BUTTON'||debajo.tagName==='A'||debajo.closest('button')||debajo.closest('a')||esTextoLargo) tapando=true;
       }
       document.body.classList.toggle('mic-tapando-boton', tapando);
     }catch(e){}
@@ -12345,7 +12377,7 @@ function abrirEsfera(){
   // Antes solo contaba viajes PLANIFICADOS completados — para la mayoría, que sale a
   // pedalear con "Iniciar navegación" directo (sin pasar por el planificador), este
   // número siempre marcaba 0 aunque llevara varias rutas grabadas de verdad.
-  const v=document.getElementById('esViajes'); if(v) v.innerText=(rutasLocales().length + trips.filter(function(t){return t.status==='completed';}).length);
+  const v=document.getElementById('esViajes'); if(v) v.innerText=_totalViajesCompletos();
   actualizarMiPuesto();
   if(!esRAF) esLoop();
 }
