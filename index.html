@@ -2661,13 +2661,25 @@ function _vozArchivoArq(item, durEst, arq, id, miGen){
 // Azure, Pistero pasa a hablar SIEMPRE por ElevenLabs, con voces chilenas de verdad:
 //   Pistera -> Victoria (chilena profesional)
 //   Pistero -> Cristian Cornejo (chileno)
-// Se mandan por `&voz=` en la petición, así no hay que tocar el worker de la otra
-// cuenta (librepedal-ia-sudamerica vive en otra cuenta de Cloudflare, sin acceso).
+// Se mandan por `&voz=` en la petición, así no hay que tocar el worker (es UNO solo,
+// `librepedal-ia`, sirve Chile y el resto de la región — no existe un worker
+// "-sudamerica" separado, ver git log de worker-ia/wrangler.toml, commit 90114fb).
 // Para cambiar de voz alcanza con reemplazar el id de acá: el catálogo completo se
 // consulta en `<worker>/?voces=1`.
 const VOZ_EL_F = 'Fd38GRHtJllY0CuguAy9'; // Victoria — Chilean Professional Fresh
 const VOZ_EL_M = 'ClNifCEVq1smkl4M3aTk'; // Cristian Cornejo — Spanish Chilean
-function _vozELid(){ return (pisteroGenero==='l') ? VOZ_EL_M : VOZ_EL_F; }
+// Voz EN VIVO con acento propio por país (expansión, 2026-09-03). Hoy vacío a propósito:
+// todo país sin entrada acá cae al par chileno de arriba, mismo comportamiento de
+// siempre (Argentina y el resto ya tienen jerga propia en frasesFlavor, pero se habla
+// con acento chileno hasta que haya un voice_id real — ver investigación en
+// LibrePedal-privado/PLAN-LANZAMIENTO-<PAIS>.md). Agregar {m:'id_masc', c:'id_fem'} acá
+// con la clave del país (paisFrases(), ej. 'ar') apenas haya un voice_id confirmado.
+const VOZ_EL_POR_PAIS = {};
+function _vozELid(){
+  const par = VOZ_EL_POR_PAIS[paisFrases()];
+  if (par) return (pisteroGenero==='l') ? par.m : par.c;
+  return (pisteroGenero==='l') ? VOZ_EL_M : VOZ_EL_F;
+}
 // Velocidad de habla del arquetipo elegido, traducida al parámetro de ElevenLabs.
 // La base es 0.92 y no 1.0 a propósito: Pistero le habla a alguien pedaleando, con
 // viento y ruido de calle — se entiende mejor un poco más pausado. Sobre esa base se
