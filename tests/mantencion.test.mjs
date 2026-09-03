@@ -9,10 +9,12 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
-// vigilarClima()/_climaFxAplicar() viven en clima-datos.js y _completarLoginVerificadoOriginal()
-// en auth-sesion.js desde que se separaron de index.html — se concatenan para que bloque()
-// los siga encontrando sin cambiar su lógica.
-const HTML = ['index.html', 'clima-datos.js', 'auth-sesion.js']
+// vigilarClima()/_climaFxAplicar() viven en clima-datos.js, _completarLoginVerificadoOriginal()
+// en auth-sesion.js, y au()/_ganarDarma() en gamificacion-darma.js y _mantParaNube()/
+// sincronizarStats()/_restaurarDesdeNube()/sincronizarAlEntrar() en gamificacion-logros.js
+// desde que se separaron de index.html — se concatenan para que bloque() los siga
+// encontrando sin cambiar su lógica.
+const HTML = ['index.html', 'clima-datos.js', 'auth-sesion.js', 'gamificacion-darma.js', 'gamificacion-logros.js']
   .map((f) => readFileSync(join(raizProyecto, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;

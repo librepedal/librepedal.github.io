@@ -8,7 +8,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import vm from 'vm';
 
-const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
+// _mostrarResumenViaje() vive en gamificacion-logros.js desde que se separó de index.html.
+const HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'gamificacion-logros.js'), 'utf8');
 
 function bloque(desde) {
   const i = HTML.indexOf(desde);

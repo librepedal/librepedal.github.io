@@ -26,7 +26,7 @@ import { dirname, join } from 'path';
 // (2026-09), no solo index.html. Si agregás un archivo nuevo con `db.collection(...)`,
 // sumalo a esta lista o el guardián deja de verlo.
 const raizProyecto = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ARCHIVOS_JS = ['index.html', 'esfera.js', 'seguridad-sensores.js', 'clima-datos.js', 'voz-motor.js', 'reportes.js', 'rutas.js', 'mapa-render.js', 'auth.js', 'auth-vinculo.js', 'auth-sesion.js'];
+const ARCHIVOS_JS = ['index.html', 'esfera.js', 'seguridad-sensores.js', 'clima-datos.js', 'voz-motor.js', 'reportes.js', 'rutas.js', 'mapa-render.js', 'auth.js', 'auth-vinculo.js', 'auth-sesion.js', 'gamificacion-darma.js', 'gamificacion-logros.js', 'gamificacion-ranking.js', 'gamificacion-retos.js', 'gamificacion-comunidad.js'];
 const CRUDO = ARCHIVOS_JS.map((f) => readFileSync(join(raizProyecto, f), 'utf8')).join('\n');
 
 let ok = 0, fail = 0;
