@@ -1508,7 +1508,16 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 .soc-group[open]>summary::after{transform:rotate(90deg)}
 </style>
 <h4 style="margin:0 0 6px;font-size:0.9rem;color:var(--p)"><i class="fas fa-comment"></i> Chat global de la comunidad</h4>
-<div class="cc" style="margin-bottom:14px">
+<!-- .cc trae flex:1 pensado para v-pistero, donde el chat es el UNICO contenido de
+     la vista (altura fija por #v-pistero.view.on, ver CSS) y flex:1 llena toda esa
+     altura sin problema. Este chat comunitario vive en la MISMA vista con altura fija
+     (#v-chat.view.on) pero apilado ARRIBA de mucho más contenido (Amigos, Mi progreso,
+     Comunidad, Descubre...) que nunca existía cuando se copió la clase -- ese contenido
+     de abajo ya ocupa mucho mas que el espacio disponible, así que el único hijo con
+     flex-basis:0% (este chat) se comprime a 0 para dejarles sitio a los demás: el chat
+     queda invisible, con el título arriba y "Amigos" pegado justo debajo. Flex:none +
+     altura fija saca a este chat de esa pelea por el espacio sobrante. -->
+<div class="cc" style="margin-bottom:14px;flex:none;height:280px">
 <div class="cm" id="chm"></div>
 <div class="cia"><input type="text" id="chi" placeholder="Escribe a la comunidad..." onkeypress="if(event.key==='Enter')em()"><button class="ab" onclick="em()"><i class="fas fa-paper-plane"></i></button></div>
 </div>
