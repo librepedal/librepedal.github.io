@@ -1,8 +1,29 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en e01fa8c, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 19vo dominio. Tarea del hub #190. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en 49d3057, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 20vo dominio. Tarea del hub #191. Candado de `index.html`: **LIBRE**.
 >
+> 1 archivo: `planificador-presupuesto.js` (`mostrarPlanificadorPresupuesto()` +
+> `buscarPlanPresupuesto()` — plan de referencia con opciones reales de hostales y
+> recomendaciones de la comunidad cerca del destino).
+>
+> Verificado: diff exacto, reconstrucción byte a byte, tests 27/28 (falla
+> preexistente), en vivo (`buscarPlanPresupuesto()` ejecuta la lectura real a
+> Firestore y renderiza sin error), producción (200 OK).
+>
+> `index.html`: 1.683 → **1.632 líneas** (13.208 original, **-88%**).
+>
+> **Corrección de mi propia nota anterior**: dije acá mismo que los huecos restantes
+> ya eran chicos — medí mal. Quedan al menos 2 bloques grandes sin tocar: uno con
+> ubicación/carga/sonido de cadena (~85 líneas, entre `auth-vinculo.js` y
+> `auth-sesion.js`), y otro con el sistema de **suscripción perezosa** (`_subUnaVez`,
+> el fix real de la crisis de cuota de Firestore), clustering de ciclistas en el
+> mapa, posiciones en RTD y `escapeHTML` (~196 líneas, entre `auth-sesion.js` y
+> `novedades.js`) — este último es núcleo crítico (cuota + anti-XSS), se sigue con
+> el mismo rigor que `app-estado-global.js`. Ver el archivo real
+> (`grep -n "^<script src=" index.html`) antes de asumir cuánto queda.
+>
+> ---
 > 1 archivo: `idioma-de-la-ruta.js` (`mostrarIdiomaRuta()` — señas de convivencia
 > vial: cambio de luces, un metro y medio, apertura holandesa). Deja un comentario
 > huérfano sobre ranking por disciplina en `index.html` (sin código debajo,
