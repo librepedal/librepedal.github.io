@@ -1,8 +1,24 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ PUBLICADO — main en 9f6b8d1, versión 8.788 en producción (2026-09-03, sesión Lenovo)
-> Update: 22vo dominio — el bloque más crítico de todo el refactor. Tarea del hub
-> #193. Candado de `index.html`: **LIBRE**.
+> ## ✅ PUBLICADO — main en cfd9390, versión 8.788 en producción (2026-09-03, sesión Lenovo)
+> Update: 23vo dominio — **cierra el refactor de separación por dominio**. Tarea del
+> hub #194. Candado de `index.html`: **LIBRE**.
+>
+> 1 archivo: `diario.js` (`DIARIO_ESTADOS`/`_fechaLocalYMD`/`diarioHoyKey`, el
+> leftover de "Mi Diario" que no se llevó `funciones-mapa-viajes.js`).
+>
+> `index.html`: 1.371 → **1.363 líneas** (13.208 original, **-90%**).
+>
+> **Esta vez sí, verificado con `node` contra el archivo real (no a ojo, ver el
+> hallazgo del propio dominio 20)**: los únicos `<script src>` gaps que quedan por
+> arriba de 8 líneas son (a) 3 tramos de puro HTML/markup — `<meta>`/`<link>` del
+> `<head>`, y el body/formulario de login (líneas 89-1177, 1.087 líneas) — que no son
+> extraíbles con esta técnica (cortar `<script>...</script>`, no HTML), y (b) un
+> comentario huérfano de 9 líneas sin código debajo (pertenece a
+> `gamificacion-ranking.js`, ya documentado). El refactor de 23 dominios que arrancó
+> con `index.html` en 13.208 líneas termina acá.
+>
+> ---
 >
 > 3 archivos (entre `auth-sesion.js` y `novedades.js`): `ciclistas-mapa-clustering.js`
 > (clustering de ciclistas por zoom en el mapa), `suscripcion-perezosa-rtd.js`
