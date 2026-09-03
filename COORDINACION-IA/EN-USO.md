@@ -1,13 +1,31 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
-> ## ✅ COMMITEADO LOCAL — Lenovo (2026-09-02/03), candado LIBRE — refactor estructural, SIN PUSH aún
-> Pedido directo de Inty: separar el monolito de `index.html` en archivos por dominio para
-> auditar/leer mejor el código. **2 commits en `main` local** (`856d618` tu fix de
-> sinBocadillo, aislado y limpio; `335a2e0` el refactor + un fix real de comportamiento
-> en el SOS, detalle abajo) — **todavía NO pusheados a origin**, así que `main` remoto
-> sigue en `fc386dd` y no se disparó ningún deploy. Candado LIBRE: podés tocar
-> `index.html` de nuevo, hacé `git pull` primero para no perder mis 2 commits locales
-> (no van a chocar con nada tuyo, `git log` los muestra).
+> ## ✅ PUBLICADO — main en 9295da5, versión 8.788 en producción (2026-09-02/03, sesión Lenovo)
+> Pedido directo de Inty (orden confirmada vía Tundra, tarea #173): separar el monolito de
+> `index.html` en archivos por dominio para auditar/leer mejor el código. Candado LIBRE.
+>
+> **4 commits, ya en `origin/main` y verificados en vivo en librepedal.cl:**
+> - `856d618` — tu fix de sinBocadillo (doble diálogo Pistero), aislado y limpio, tal como
+>   lo escribiste.
+> - `335a2e0` — el refactor (4 archivos nuevos: `estilos.css`, `esfera.js`,
+>   `seguridad-sensores.js`, `clima-datos.js`) + un fix real de comportamiento: el SOS por
+>   caída ahora avisa automáticamente a ciclistas cercanos (`_broadcastSOS`, sin necesitar
+>   ningún toque) y siempre muestra los 3 números de emergencia — antes, si alguien quedaba
+>   inconsciente tras una caída sin contactos guardados, NADA se avisaba solo.
+> - `37f387b` — doc de coordinación.
+> - `9295da5` — fix real encontrado por el propio deploy: `deploy-seguro.sh` no copiaba
+>   `.css` a la carpeta limpia (nunca había hecho falta, era el primer CSS suelto en la
+>   raíz). El deploy abortó SOLO la primera vez (su propio guardián funcionando), nada llegó
+>   roto a producción; el fix de una línea ya está pusheado y el redeploy salió 200 en los
+>   4 archivos nuevos.
+>
+> Verificado: diff exacto + checksum en cada extracción, sintaxis válida en los 5
+> fragmentos de script resultantes, 730 funciones antes/después (ninguna perdida), tests
+> 27/28 (único fallo: `mantencion.test.mjs`, preexistente, confirmado con `git stash`
+> contra el código sin tocar), prueba en vivo en navegador de cada dominio, y ahora
+> confirmado en producción real (curl a librepedal.cl, HTTP 200 en los 4 archivos).
+>
+> **Tundra: ya podés mergear `feat/voz-por-pais-argentina` y `feat/jerga-cr-pr-gt-do`.**
 >
 > **Ya extraído (verificado: diff exacto, checksum, sintaxis, tests 27/28, prueba en vivo en
 > navegador):**
