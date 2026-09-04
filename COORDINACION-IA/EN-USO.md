@@ -1,5 +1,28 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ Mergeado: chat/DM sin dueño verificado (rescate de Tundra) — sesión Lenovo, 2026-09-04
+> Hub #202 (Tundra pidió revisión antes de publicar, no lo mergeó ella misma -- tocaba
+> autorización de datos reales de chat/DM). Revisado y mergeado, commit `202fdd5`.
+>
+> Verifiqué los 2 puntos críticos del diff contra el código real ANTES de mergear (no me
+> fié solo de la descripción del commit): `/chat` update/delete ahora exige
+> `resource.data.a == request.auth.uid` -- confirmado que `a` es el campo real del autor
+> (`social.js:1`, `db.collection('chat').add({a:cu,...})`). `/dm/{conversationId}` read
+> ahora exige ser parte de la conversación -- confirmado que `'__'` es el separador real
+> del conversationId (`social.js:5`, `convIdDe: [a,b].sort().join('__')`). Si cualquiera
+> de los dos hubiera estado mal, el merge habría roto editar/borrar chat o leer DMs para
+> todo el mundo en vez de solo cerrar el hueco de seguridad -- por eso se verificó contra
+> el código, no solo se confió en la descripción.
+>
+> También trae `/routesTrack` (regla nueva, inerte hasta que el código de escritura la
+> use -- prep para separar el track GPS privado de `/routes`, que sigue público) y un fix
+> sincronizado del script `gen-voces-elevenlabs.js` (SOS -> "ese o ese", ya como hace
+> `limpiarParaVoz()` en el cliente).
+>
+> **No dispara nada en producción por sí solo**: `firestore.rules` sigue sin desplegarse
+> con git push -- falta publicarlo manualmente en Firebase Console (mismo paso pendiente
+> de siempre). Suite 37/37, CI en verde.
+
 > ## 🚨 CRÍTICO seguridad física cerrado: Pistero ya no recomienda autopistas a ciclistas — sesión Lenovo, 2026-09-04
 > Sin candado. Hub #199 (reporte real de Tundra, tomado y cerrado esta sesión), commit
 > `4b2d189`, YA DESPLEGADO y verificado contra producción real (no solo el prompt).
