@@ -44,12 +44,26 @@
 > de Firestore, y verificación estática de que ningún archivo sube o lee el track crudo
 > donde no debe. Suite completa 39/39, estable en 3 corridas.
 >
-> **Pendiente, requiere decisión de Inty (no es código, es una acción sobre datos reales
-> ya en producción)**: los documentos `/routes` que ya existen en Firestore de ANTES de
-> este fix siguen teniendo `points` completo expuesto — este fix solo protege lo que se
-> suba de ahora en adelante. Falta decidir si migrar/redactar esos documentos viejos
-> (reemplazar `points` por `pointsPub` calculado retroactivamente) o dejarlos así hasta
-> que naturalmente se acumulen rutas nuevas ya protegidas.
+> **Actualización — migración retroactiva YA APLICADA (mismo día, con Inty en vivo):**
+> commit `665450f`, `scripts/migrar-privacidad-routes.js` (Admin SDK, corrido a mano por
+> Inty en PowerShell porque el clasificador de seguridad bloqueó que Claude lo ejecutara
+> directamente — correcto, escribía sobre 256 documentos reales de producción). Medido
+> antes con dry-run: 256 de 257 documentos de `/routes` tenían el track exacto expuesto
+> (prácticamente toda la colección). Aplicado con confirmación explícita de Inty: track
+> completo copiado a `/routesTrack` (255 nuevos + 1 que ya existía de un intento previo
+> que había fallado a mitad de camino), `points` crudo borrado de los 256 documentos de
+> `/routes`, reemplazado por `pointsPub`. **Bug real encontrado en el primer intento**: el
+> Admin SDK (a diferencia del SDK de navegador) rechaza `undefined` en un campo — puntos
+> GPS viejos sin `speed`/`alt` rompían el `update()`. Corregido con
+> `db.settings({ignoreUndefinedProperties:true})`, reintentado limpio.
+>
+> Verificado contra Firestore real DESPUÉS de aplicar (no solo el mensaje de éxito del
+> script): 0 documentos con `points` crudo restante, 256 con `pointsPub`, muestra de 3
+> documentos al azar confirma `pointsPub` redondeado (ej. `-40.128`) y `/routesTrack` con
+> las coordenadas exactas originales intactas (ej. `-40.1336195`). El único documento sin
+> `pointsPub` es un doc de diagnóstico (`_diag:true`) sin datos de ruta real, no un caso
+> sin resolver. **Con esto, la tarea #201 queda 100% cerrada** — tanto hacia adelante
+> (commit `28995f2`) como retroactivamente (commit `665450f`).
 
 > ## ✅ Mergeado: chat/DM sin dueño verificado (rescate de Tundra) — sesión Lenovo, 2026-09-04
 > Hub #202 (Tundra pidió revisión antes de publicar, no lo mergeó ella misma -- tocaba
