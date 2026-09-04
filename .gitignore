@@ -44,3 +44,10 @@ señuelos/
 # pero un `git add .` distraido publicaria la lista de correos en GitHub.
 worker-auth/testers_kv_bulk.json
 testers_kv_bulk.json
+
+# BLINDAJE (2026-09-04): documentos confidenciales sueltos en la raiz, encontrados SIN
+# ignorar mientras `origin` de esta copia es un repo PUBLICO (librepedal/librepedal.github.io)
+# -- un `git add -A`/`git add .` los habria subido a internet. Ver el incidente ya documentado
+# mas abajo en el historial (PROMPTS-GEMINI-VIDEO-PISTERO.md) para la misma clase de hueco.
+INVERSIONISTA-*
+confidencial/
