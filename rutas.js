@@ -11,8 +11,46 @@ function rutasLocalesSet(arr){ try{ localStorage.setItem(_rutasKey(), JSON.strin
 // solo lugar para esta cuenta evita que un cuarto contador futuro repita el mismo hueco.
 function _totalViajesCompletos(){ return rutasLocales().length + trips.filter(function(t){return t.status==='completed';}).length; }
 function guardarRutaLocalObj(data){ const arr=rutasLocales(); const i=arr.findIndex(function(r){return r.localId===data.localId;}); if(i>=0){ arr[i]=Object.assign(arr[i],data); } else { arr.push(data); } rutasLocalesSet(arr); return arr; }
-/* Respaldo best-effort en Firebase; enlaza firebaseId a la ruta local para no duplicar. */
-function _subirRutaNube(localId, fb){ try{ fb.authUid=window.lpUID||null; const it=rutasLocales().find(function(r){return r.localId===localId;}); const fid=it&&it.firebaseId; if(fid){ db.collection('routes').doc(fid).update(fb).catch(function(){}); } else { db.collection('routes').add(fb).then(function(ref){ const a=rutasLocales(); const x=a.find(function(r){return r.localId===localId;}); if(x){ x.firebaseId=ref.id; rutasLocalesSet(a); } }).catch(function(){}); } }catch(e){} }
+// PRIVACIDAD real (hub #201, 2026-09-04): /routes es pública a propósito (alimenta
+// "Rutas para ti" -- ver recomendacion-rutas.js), pero hasta hoy guardaba `points`
+// completo -- lat/lon EXACTO, sin redondear. Cualquiera podía leer /routes y sacar el
+// track GPS preciso de cualquier tester, suficiente para inferir domicilio/trabajo
+// (confirmado leyendo el código real en producción, no era teórico). Decisión de diseño
+// de Inty (auditoría 2026-08-30): /routes se queda pública pero solo con `pointsPub`
+// difuminado -- recorta el inicio/fin (donde vive el domicilio/destino real) y redondea
+// el resto a ~100m. El track EXACTO va a /routesTrack, colección nueva de solo lectura
+// del dueño (regla ya en firestore.rules). RECORTE deja hasta 3 puntos de cada punta sin
+// comerse rutas cortas (mínimo la mitad de los puntos, nunca menos).
+function _puntosPublicos(pts){
+  if(!pts || pts.length<3) return [];
+  const RECORTE=Math.min(3, Math.floor(pts.length/4));
+  const medio=RECORTE>0 ? pts.slice(RECORTE, pts.length-RECORTE) : pts;
+  const base=(medio && medio.length) ? medio : pts;
+  return base.map(function(p){ return { t:p.t, lat:Math.round(p.lat*1000)/1000, lon:Math.round(p.lon*1000)/1000, speed:p.speed, alt:p.alt }; });
+}
+// Trae el track EXACTO de una ruta que no está en caché local (otro dispositivo, o
+// abierta desde "Rutas para ti"): /routesTrack primero (privado, solo el dueño puede
+// leerlo -- si es de otro ciclista, Firestore deniega el permiso y cae al catch solo).
+// Si no existe (ruta vieja, de antes de este fix, o ruta ajena) cae al pointsPub
+// difuminado de /routes -- pierde algo de detalle, pero sigue funcionando.
+function _traerPuntosRuta(id, cb){
+  const conFallback=function(){
+    db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ const dd=doc.data(); cb(dd.points||dd.pointsPub||[], dd); } else { cb(null, null); } }).catch(function(){ cb(null, null); });
+  };
+  db.collection('routesTrack').doc(id).get().then(function(trackDoc){
+    if(trackDoc.exists && trackDoc.data().points && trackDoc.data().points.length){
+      db.collection('routes').doc(id).get().then(function(doc){ cb(trackDoc.data().points, doc.exists?doc.data():null); }).catch(function(){ cb(trackDoc.data().points, null); });
+      return;
+    }
+    conFallback();
+  }).catch(conFallback);
+}
+/* Respaldo best-effort en Firebase; enlaza firebaseId a la ruta local para no duplicar.
+   ptsCompletos (track exacto, SIN difuminar) va aparte a /routesTrack -- mismo id de
+   documento que /routes, así se pueden relacionar sin guardar una referencia extra. */
+function _subirRutaNube(localId, fb, ptsCompletos){ try{ fb.authUid=window.lpUID||null; const it=rutasLocales().find(function(r){return r.localId===localId;}); const fid=it&&it.firebaseId;
+    const subirTrack=function(id){ if(!ptsCompletos || !ptsCompletos.length) return; db.collection('routesTrack').doc(id).set({user:cu, authUid:window.lpUID||null, points:ptsCompletos}, {merge:true}).catch(function(){}); };
+    if(fid){ db.collection('routes').doc(fid).update(fb).catch(function(){}); subirTrack(fid); } else { db.collection('routes').add(fb).then(function(ref){ const a=rutasLocales(); const x=a.find(function(r){return r.localId===localId;}); if(x){ x.firebaseId=ref.id; rutasLocalesSet(a); } subirTrack(ref.id); }).catch(function(){}); } }catch(e){} }
 // Adjunta hospedaje/notas a una ruta YA guardada (localId). Busca el registro FRESCO
 // (no uno viejo capturado antes) porque _subirRutaNube recién le agrega el firebaseId
 // de forma asíncrona — para cuando el usuario terminó de contestar el diálogo de
@@ -89,7 +127,7 @@ async function nombreDeLugar(lat,lon){
     return nombre;
   }catch(e){ return 'punto sin nombre'; }
 }
-function saveRouteToHistory(route){ if(!cu||!route||route.length<2) return; const localId='l'+route[0].t; const data={localId:localId,user:cu,nombre:nombreUsuario,points:route.slice(),startTime:route[0].t,endTime:route[route.length-1].t,distance:us.di,calories:us.c,savedAt:Date.now()}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,points:data.points,startTime:data.startTime,endTime:data.endTime,distance:us.di,calories:us.c,savedAt:firebase.firestore.FieldValue.serverTimestamp()}); }
+function saveRouteToHistory(route){ if(!cu||!route||route.length<2) return; const localId='l'+route[0].t; const data={localId:localId,user:cu,nombre:nombreUsuario,points:route.slice(),startTime:route[0].t,endTime:route[route.length-1].t,distance:us.di,calories:us.c,savedAt:Date.now()}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,pointsPub:_puntosPublicos(data.points),startTime:data.startTime,endTime:data.endTime,distance:us.di,calories:us.c,savedAt:firebase.firestore.FieldValue.serverTimestamp()}, data.points); }
 // Auto-guardado: SIEMPRE queda en el celular (sí o sí); la nube es respaldo. El id estable
 // es el timestamp del 1er punto, así se ACTUALIZA la misma ruta y no se duplica.
 // El nombre "Origen → Destino" solo se calcula (pide geocoding real) en los guardados
@@ -102,7 +140,7 @@ async function autoGuardarRuta(conVoz, esCheckpoint){
   const _miSegmento=currentRoute; // referencia vigente al entrar -- ver el guard de más abajo
   const pts=currentRoute.slice(), localId='l'+pts[0].t;
   const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:us.di,calories:us.c,savedAt:Date.now()};
-  const fb={user:cu,nombre:nombreUsuario,points:pts,startTime:data.startTime,endTime:data.endTime,distance:us.di,calories:us.c,savedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  const fb={user:cu,nombre:nombreUsuario,pointsPub:_puntosPublicos(pts),startTime:data.startTime,endTime:data.endTime,distance:us.di,calories:us.c,savedAt:firebase.firestore.FieldValue.serverTimestamp()};
   if(!esCheckpoint){
     const origenNombre=await nombreDeLugar(pts[0].lat,pts[0].lon);
     const destinoNombre=await nombreDeLugar(pts[pts.length-1].lat,pts[pts.length-1].lon);
@@ -117,7 +155,7 @@ async function autoGuardarRuta(conVoz, esCheckpoint){
   // checkpoint hasta que lo superara de nuevo. Solo se toca si currentRoute sigue siendo el
   // mismo array con el que se entró a esta función.
   if(currentRoute===_miSegmento) puntosGuardados=currentRoute.length;
-  _subirRutaNube(localId,fb);
+  _subirRutaNube(localId,fb,pts);
   revisarRetosCumplidos();
   /* guardado silencioso */
   return data;
@@ -150,13 +188,21 @@ function renderRutas(){
 // Muestra al toque lo local (garantizado) y fusiona rutas viejas que estén SOLO en la nube.
 function loadRoutesList(){ if(!cu) return; renderRutas();
   try{ db.collection('routes').where('user','==',cu).limit(100).get().then(function(snapshot){ const arr=rutasLocales(); let changed=false;
-    snapshot.forEach(function(doc){ const d=doc.data(); const dup=arr.some(function(r){ return r.firebaseId===doc.id || r.startTime===d.startTime; }); if(!dup){ arr.push({localId:'fb'+doc.id,firebaseId:doc.id,user:cu,nombre:d.nombre,points:d.points||[],startTime:d.startTime,endTime:d.endTime,distance:d.distance||0,calories:d.calories||0,savedAt:(d.savedAt&&d.savedAt.seconds?d.savedAt.seconds*1000:(d.startTime||Date.now()))}); changed=true; } });
+    snapshot.forEach(function(doc){ const d=doc.data(); const dup=arr.some(function(r){ return r.firebaseId===doc.id || r.startTime===d.startTime; }); if(!dup){ arr.push({localId:'fb'+doc.id,firebaseId:doc.id,user:cu,nombre:d.nombre,points:d.points||d.pointsPub||[],startTime:d.startTime,endTime:d.endTime,distance:d.distance||0,calories:d.calories||0,savedAt:(d.savedAt&&d.savedAt.seconds?d.savedAt.seconds*1000:(d.startTime||Date.now()))}); changed=true; } });
     if(changed){ rutasLocalesSet(arr); renderRutas(); }
   }).catch(function(){}); }catch(e){}
 }
 function _rutaPorId(id){ return rutasLocales().find(function(x){return x.localId===id;}); }
-function showSingleRoute(id){ const r=_rutaPorId(id); function pintar(points){ if(!points||!points.length){ h("Esta ruta no tiene puntos guardados."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=mlPolyline(points,{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Aquí está tu ruta."); },300); } if(r&&r.points&&r.points.length){ pintar(r.points.map(function(p){return [p.lat,p.lon];})); return; } db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ pintar((doc.data().points||[]).map(function(p){return [p.lat,p.lon];})); } }).catch(function(){ h("No pude abrir esa ruta."); }); }
-async function deleteRoute(id){ if(!await lpConfirmar("¿Eliminar esta ruta?")) return; const it=_rutaPorId(id); rutasLocalesSet(rutasLocales().filter(function(x){return x.localId!==id;})); if(it&&it.firebaseId){ db.collection('routes').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ db.collection('routes').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
+function showSingleRoute(id){ const r=_rutaPorId(id); function pintar(points){ if(!points||!points.length){ h("Esta ruta no tiene puntos guardados."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=mlPolyline(points,{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Aquí está tu ruta."); },300); } if(r&&r.points&&r.points.length){ pintar(r.points.map(function(p){return [p.lat,p.lon];})); return; }
+  // _traerPuntosRuta intenta /routesTrack (track exacto) primero -- si es tuya, lo trae
+  // completo; si es de otro ciclista (ej. desde "Rutas para ti"), Firestore deniega el
+  // permiso en silencio y cae solo al pointsPub difuminado de /routes (privacidad, #201).
+  _traerPuntosRuta(id, function(pts){ if(pts&&pts.length) pintar(pts.map(function(p){return [p.lat,p.lon];})); else h("No pude abrir esa ruta."); });
+}
+async function deleteRoute(id){ if(!await lpConfirmar("¿Eliminar esta ruta?")) return; const it=_rutaPorId(id); rutasLocalesSet(rutasLocales().filter(function(x){return x.localId!==id;}));
+  // Borra también /routesTrack (privacidad, hub #201): si no, el track EXACTO queda
+  // huérfano en la nube aunque el usuario crea que borró su ruta.
+  if(it&&it.firebaseId){ db.collection('routes').doc(it.firebaseId).delete().catch(function(){}); db.collection('routesTrack').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ db.collection('routes').doc(id).delete().catch(function(){}); db.collection('routesTrack').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
 
 /* ===== PERFIL DE ELEVACIÓN: usa la altitud que reporta el GPS del celular (gratis,
    sin servicios externos). Es más ruidosa que un DEM profesional, por eso se suaviza
@@ -282,7 +328,7 @@ function verPerfilElevacion(id){
   }
   const r=_rutaPorId(id);
   if(r&&r.points&&r.points.length){ conPuntos(r.points, r.firebaseId, r.elevDEM); return; }
-  db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ const dd=doc.data(); conPuntos(dd.points||[], id, dd.elevDEM); } else { h("No pude abrir esa ruta."); } }).catch(function(){ h("No pude abrir esa ruta."); });
+  _traerPuntosRuta(id, function(pts, doc){ if(pts) conPuntos(pts, id, doc&&doc.elevDEM); else h("No pude abrir esa ruta."); });
 }
 
 /* ===== VIDEO 3D DE LA RUTA (estilo Relive): vuelo de cámara sobre terreno 3D real
@@ -309,7 +355,7 @@ function abrirVideoRuta(id){
     setTimeout(initVideoMap,50);
   }
   if(r&&r.points&&r.points.length){ conPuntos(r.points, r); return; }
-  db.collection('routes').doc(id).get().then(function(doc){ if(doc.exists){ const d=doc.data(); conPuntos(d.points||[], d); } else { h("No pude abrir esa ruta."); } }).catch(function(){ h("No pude abrir esa ruta."); });
+  _traerPuntosRuta(id, function(pts, doc){ if(pts&&pts.length) conPuntos(pts, doc||{}); else h("No pude abrir esa ruta."); });
 }
 // SVG chico de Pistero en bici, vista de lado, mirando hacia +x (derecha) por
 // defecto — el marcador lo rota según el rumbo real de la ruta. Trazos

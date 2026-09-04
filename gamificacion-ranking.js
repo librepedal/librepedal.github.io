@@ -92,7 +92,9 @@ async function mostrarRutasDe(userId,nombreEnc){
     const rs=await db.collection('routes').where('user','==',userId).limit(40).get();
     if(rs.empty){ h(nombre+' aún no tiene rutas grabadas.'); return; }
     if(!mp) return; let bounds=[];
-    rs.forEach(function(doc){ const r=doc.data(); if(r.points&&r.points.length){ const latlngs=r.points.map(function(p){return [p.lat,p.lon];}); mlPolyline(latlngs,{color:'#ff9800',weight:3,opacity:0.85}).addTo(mp); bounds=bounds.concat(latlngs); } });
+    // pointsPub (privacidad, hub #201): son rutas de OTRO ciclista, siempre el track
+    // difuminado -- nunca el exacto, aunque .points (rutas viejas) siga existiendo.
+    rs.forEach(function(doc){ const r=doc.data(); const pts=r.pointsPub||r.points; if(pts&&pts.length){ const latlngs=pts.map(function(p){return [p.lat,p.lon];}); mlPolyline(latlngs,{color:'#ff9800',weight:3,opacity:0.85}).addTo(mp); bounds=bounds.concat(latlngs); } });
     if(bounds.length){ mp.fitBounds(mlLatLngBounds(bounds.map(function(p){return {lat:p[0],lon:p[1]};})).pad(0.2)); }
     h('Estas son las rutas de '+nombre+', marcadas en naranja. 🧡');
   }catch(e){ h('No pude cargar sus rutas.'); }
