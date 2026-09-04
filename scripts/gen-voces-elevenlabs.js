@@ -55,8 +55,13 @@ const VOZ = {
 };
 const LIVE_ARQ = Object.keys(VOZ.l);
 
+// Debe reflejar EXACTO lo que limpiarParaVoz() hace en index.html antes de hablar en vivo
+// (bug real encontrado 2026-08-31: esta funcion solo sacaba emojis, asi que las 2 frases de
+// FRASES_SISTEMA con "SOS" se grabaron con ElevenLabs diciendo la palabra literal en vez de
+// deletrearla "ese o ese" -- el mp3 pregrabado tiene prioridad sobre la voz en vivo, asi que
+// el fix de limpiarParaVoz nunca alcanzaba a aplicarse en produccion para esas 2 frases).
 function limpia(txt) {
-  return txt.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').replace(/\s+/g, ' ').trim();
+  return txt.replace(/SOS/g, 'ese o ese').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').replace(/\s+/g, ' ').trim();
 }
 
 function extraerFrasesArq(html) {

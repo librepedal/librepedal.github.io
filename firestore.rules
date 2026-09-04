@@ -147,11 +147,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Chat global de la comunidad
+    // Chat global de la comunidad. Auditoría 2026-08-30: update/delete estaba
+    // abierto a CUALQUIER signedIn() sin verificar dueño — cualquiera podía
+    // editar o borrar el mensaje de otro llamando la API directo (a diferencia
+    // de /reportes, /recommendations, /hostels, que sí documentan por qué su
+    // update abierto es intencional). Acá no había razón documentada. OJO: este
+    // documento guarda el autor en el campo `a` (no `user`/`authUid` como el
+    // resto del archivo), así que isOwnerOrLegacy() NO sirve — su "grandfather"
+    // (autoriza a cualquiera cuando falta `authUid`) habría dejado esto abierto
+    // igual, sin arreglar nada. Se compara directo contra `a`.
     match /chat/{id} {
       allow read: if true;
       allow create: if signedIn() && strOk('t', 500) && strOk('nombre', 60);
-      allow update, delete: if signedIn();
+      allow update, delete: if signedIn() && resource.data.a == request.auth.uid;
     }
 
     // Mapa comunitario "Reportar en Ruta". Nadie lo edita/borra salvo quien lo creó
@@ -219,6 +227,22 @@ service cloud.firestore {
       allow update, delete: if signedIn() && isOwnerOrLegacy() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000);
     }
 
+    // Track GPS completo (sin difuminar) de una ruta. Auditoría 2026-08-30: /routes
+    // era pública Y guardaba el track exacto sin redondear — cualquiera que supiera
+    // tu correo podía descargar tu historial GPS completo (domicilio/trabajo
+    // inferibles). Pero /routes también alimenta una función real de la app
+    // ("Rutas para ti": recomienda y muestra en el mapa rutas de otros ciclistas
+    // cercanos), así que cerrarla del todo mataba esa función. Solución elegida por
+    // Inty: /routes se queda pública pero ahora solo guarda `pointsPub` (recorta el
+    // inicio/fin y redondea coordenadas — ver _puntosPublicos() en index.html); el
+    // track EXACTO vive acá, separado, solo para el dueño real.
+    match /routesTrack/{id} {
+      allow read: if signedIn() && isOwnerOrLegacy();
+      allow create: if signedIn() && request.resource.data.user == request.auth.uid;
+      allow update: if signedIn() && isOwnerOrLegacy();
+      allow delete: if signedIn() && isOwnerOrLegacy();
+    }
+
     // Viajes planificados (el usuario gestiona los suyos desde la app)
     match /trips/{id} {
       allow read: if true;
@@ -255,9 +279,18 @@ service cloud.firestore {
       allow delete: if signedIn() && isOwnerByCu();
     }
 
-    // Mensajes privados entre amigos. Solo quien lo escribió puede editarlo/borrarlo.
+    // Mensajes privados entre amigos. Auditoría 2026-08-30: el read solo exigía
+    // signedIn() (incluida la sesión anónima con la que arranca la app) sin
+    // verificar que fueras parte de la conversación — el conversationId es
+    // predecible ([cu_a,cu_b].sort().join('__'), ver convIdDe() en index.html),
+    // así que cualquiera que supiera los correos de dos personas podía leer
+    // TODA su conversación llamando la API directo. Mismo patrón de bug ya
+    // corregido antes en /diarios, replicado acá: exigir ser uno de los dos
+    // participantes reales (uid de Firebase Auth, que es tu `cu` una vez que tu
+    // sesión sube al token personalizado). Solo quien lo escribió puede
+    // editarlo/borrarlo.
     match /dm/{conversationId}/messages/{msgId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && conversationId.split('__').hasAny([request.auth.uid]);
       allow create: if signedIn() && strOk('text', 1000);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
@@ -313,6 +346,9 @@ service cloud.firestore {
     // 2026-09-03, confirmado leyendo el código: motor-navegacion.js hacía
     // exactamente esa query sin ningún filtro). "list: false" cierra ese hueco sin
     // tocar el caso de uso real del link -- get sigue público a propósito.
+    // (El worker-proximidad que reemplaza la alerta "ciclista adelante" sobre esta
+    // misma base -- ver tarea #195 del hub -- ya está construido y en main, solo
+    // falta desplegarlo con un token de Cloudflare con más permiso.)
     match /liveTracking/{id} {
       allow get: if true;
       allow list: if false;
