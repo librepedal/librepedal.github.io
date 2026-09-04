@@ -1,5 +1,24 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔧 Plan B de voz arreglado + interruptor premium apagado — sesión Lenovo, 2026-09-04
+> Sin candado. Dos fixes rápidos tras probar el gating de ayer en vivo:
+>
+> 1. **`05c5fae`**: el fallback de `_vozElevenRuntime()` intentaba Azure antes de la voz
+>    nativa -- pero Azure lleva semanas muerto (401 siempre), así que ese paso era un
+>    salto inútil que terminaba en la robótica igual. Ahora cae a Edge TTS (real, ya
+>    construido) antes de la nativa -- mejora el fallback para TODOS, premium incluido,
+>    sin depender del sistema de pago.
+> 2. **`e40d267`**: Inty probó la app y reportó "esta sonando robótico" -- causa real: con
+>    el gating de ayer activo, NADIE podía tener `premium=true` (el endpoint de compras
+>    no existe), así que los 19 testers reales cayeron de golpe a Edge TTS, perdiendo el
+>    arquetipo que ya conocían. Fix: `GATE_PREMIUM_ACTIVO=false` en `voz-motor.js` (junto
+>    a `_esPremium()`) -- mientras esté apagado, TODOS son premium sin importar
+>    `us.premium`. **Para activar el gating real cuando exista el pago: cambiar ese ÚNICO
+>    flag a `true`**, nada más -- el resto (worker edgetts, firestore.rules, el cliente)
+>    ya está listo y probado, solo esperando ese momento.
+>
+> Suite 36/36, estable en 3 corridas. CI en verde.
+
 > ## 💳 Sistema free/premium: CÓDIGO LISTO, falta un paso de Inty en Play Console — sesión Lenovo, 2026-09-03/04 (madrugada)
 > Sin candado, sin tocar `index.html`. Decidido con Inty: plan **mensual US$2,99**, tier
 > free = voz gratis (Edge TTS), premium = los 14 arquetipos ElevenLabs de siempre, sin
