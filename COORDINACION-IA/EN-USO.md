@@ -1,5 +1,56 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ Privacidad real de /routes cerrada — sesión Lenovo, 2026-09-04
+> Sin candado, sin tocar `index.html`. Hub #201 (Tundra, prioridad alta), commit
+> `28995f2`, en `main`, CI en verde (tests + deploy Cloudflare a librepedal.cl) y ya
+> desplegado en producción.
+>
+> **El hallazgo (de Tundra)**: `/routes` es una colección pública (usada por "Rutas para
+> ti" y el ranking) y venía subiendo el track GPS COMPLETO de cada ciclista SIN redondear
+> — cualquier tester podía abrir la ruta de otro y ver dónde arranca y dónde termina cada
+> pedaleada, prácticamente domicilio y trabajo reales. El diseño correcto ya lo había
+> decidido Inty el 30-ago (`/routes` público solo con `pointsPub` difuminado; track exacto
+> en `/routesTrack`, colección ya protegida en `firestore.rules` desde el merge de #202),
+> pero el código (`_puntosPublicos`, `_subirTrackCompleto`, etc.) se perdió en el refactor
+> de 23 dominios y nunca se portó a `rutas.js` — confirmado con `git log -S` que genuinamente
+> no existe en ningún commit accesible, así que se reimplementó desde cero.
+>
+> **Fix, en `rutas.js` + 3 archivos que leen rutas de terceros:**
+> - `_puntosPublicos(pts)`: recorta 3 puntos de cada punta (menos si la ruta es corta,
+>   `floor(largo/4)`) y redondea lat/lon a 3 decimales (~100m) — nunca el punto exacto.
+> - `_traerPuntosRuta(id, cb)`: intenta `/routesTrack` primero (si sos el dueño, Firestore
+>   te lo entrega completo); si es ruta ajena o vieja, Firestore deniega el permiso en
+>   silencio y cae a `pointsPub` de `/routes`. Centraliza la lectura — la usan
+>   `showSingleRoute`, el perfil de elevación, el video 3D y `exportarRutaGPX`.
+> - `_subirRutaNube` ahora también sube el track completo a `/routesTrack/{mismoId}`;
+>   `saveRouteToHistory`/`autoGuardarRuta` suben `pointsPub` (nunca `points` crudo) a
+>   `/routes`.
+> - `deleteRoute` ahora borra `/routesTrack` junto con `/routes` — si no, el track exacto
+>   quedaba huérfano en la nube aunque el usuario creyera que había borrado su ruta.
+> - `recomendacion-rutas.js`, `gamificacion-ranking.js` (`mostrarRutasDe`) y
+>   `motor-navegacion.js` (`exportarRutaGPX`) actualizados a preferir `pointsPub` para
+>   rutas de terceros.
+>
+> Revisé con grep TODO punto de lectura de `.points` que quedaba en el repo antes de dar
+> por cerrado: los que siguen usando `r.points` sin `pointsPub` (`showSingleRoute` para
+> ruta local propia, `segmentos.js`, `sobrevuelo-viaje.js`, `funciones-mapa-viajes.js`
+> import/export) son todos datos LOCALES del propio usuario (`rutasLocales()` o respaldo
+> JSON), nunca lectura directa de un documento `/routes` ajeno — confirmado uno por uno,
+> no por descarte.
+>
+> 19 tests nuevos (`tests/rutas-privacidad-gps.test.mjs`): `_puntosPublicos` con casos
+> límite (ruta corta, recorte proporcional, redondeo), `_traerPuntosRuta` con los 4 casos
+> reales (dueño, ruta ajena sin permiso, ruta vieja sin track, ruta inexistente) vía mocks
+> de Firestore, y verificación estática de que ningún archivo sube o lee el track crudo
+> donde no debe. Suite completa 39/39, estable en 3 corridas.
+>
+> **Pendiente, requiere decisión de Inty (no es código, es una acción sobre datos reales
+> ya en producción)**: los documentos `/routes` que ya existen en Firestore de ANTES de
+> este fix siguen teniendo `points` completo expuesto — este fix solo protege lo que se
+> suba de ahora en adelante. Falta decidir si migrar/redactar esos documentos viejos
+> (reemplazar `points` por `pointsPub` calculado retroactivamente) o dejarlos así hasta
+> que naturalmente se acumulen rutas nuevas ya protegidas.
+
 > ## ✅ Mergeado: chat/DM sin dueño verificado (rescate de Tundra) — sesión Lenovo, 2026-09-04
 > Hub #202 (Tundra pidió revisión antes de publicar, no lo mergeó ella misma -- tocaba
 > autorización de datos reales de chat/DM). Revisado y mergeado, commit `202fdd5`.
