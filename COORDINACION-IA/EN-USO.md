@@ -1,5 +1,54 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 💳 Sistema free/premium: CÓDIGO LISTO, falta un paso de Inty en Play Console — sesión Lenovo, 2026-09-03/04 (madrugada)
+> Sin candado, sin tocar `index.html`. Decidido con Inty: plan **mensual US$2,99**, tier
+> free = voz gratis (Edge TTS), premium = los 14 arquetipos ElevenLabs de siempre, sin
+> agregar voces nuevas por ahora. Tres commits, todo en `main` y desplegado donde aplica:
+>
+> 1. **`cf1d4d0`** (firestore.rules): `premiumSinTocar()` bloquea que el CLIENTE escriba o
+>    modifique el campo `premium` de su propio documento -- sin esto, cualquier usuario se
+>    haría premium gratis con un `update({premium:{activo:true}})` desde la consola del
+>    navegador. Mismo patrón que el hallazgo de `liveTracking` (commit `9387ca9`).
+>    **PENDIENTE MANUAL**: este archivo no se despliega solo por git push -- hay que
+>    pegarlo en Firebase Console → Firestore Database → Reglas → Publicar (lo dice el
+>    propio comentario de cabecera del archivo).
+> 2. **`bad0c1c`** (worker-ia, YA DESPLEGADO con `wrangler deploy`, verificado end-to-end
+>    con curl real): endpoint `?edgetts=texto&g=l|c`, Microsoft Edge TTS gratis, sin key,
+>    voces `es-CL-LorenzoNeural`/`es-CL-CatalinaNeural`. Protocolo portado de
+>    github.com/DIYgod/cloudflare-edge-tts (no reinventado). Mismo caché permanente en KV
+>    que ya protege el gasto de ElevenLabs.
+> 3. **`e6f7b93`** (cliente): `_esPremium()` en voz-motor.js decide el motor de voz ANTES
+>    de la escalera de ElevenLabs -- free va a Edge TTS, premium sigue exactamente igual
+>    que siempre. `_restaurarDesdeNube()` copia `us.premium` tal cual llega de la nube,
+>    SIN disparar el aviso hablado "Recuperé tus kilómetros" (hubiera gastado voz de más
+>    en cada apertura de sesión de un usuario premium -- justo lo opuesto de lo que se
+>    viene optimizando).
+>
+> **Nota de seguridad real evaluada y descartada**: Inty preguntó si clonar el audio YA
+> generado por ElevenLabs en otro motor (Chatterbox, que corre en el Thunder) sería
+> viable/legal para tener voces "gratis". Verificado contra la Prohibited Use Policy real
+> de ElevenLabs (elevenlabs.io/use-policy): prohíbe explícitamente usar su Output como
+> input para entrenar/clonar modelos de IA o para desarrollar servicios competidores --
+> pagar por generarlas o modificarlas después NO cambia esa restricción. Se descartó esa
+> vía; Edge TTS (gratis, sin restricción de ToS con este proyecto) la reemplazó.
+>
+> **Bloqueado, necesita a Inty (no es candado, es cuenta/decisión real):**
+> 1. Crear el producto de suscripción mensual (US$2,99) en Play Console.
+> 2. Vincular la Service Account de Firebase con permiso de Android Publisher API, para
+>    poder verificar compras del lado servidor (evita que alguien falsifique una compra
+>    modificando el cliente).
+> 3. Un endpoint nuevo (worker, similar a worker-auth) que reciba el purchase token del
+>    cliente, lo verifique contra Google, y recién ahí escriba `users/{uid}.premium` vía
+>    Admin SDK -- este endpoint es el ÚNICO paso de código que falta, y depende de que 1-2
+>    ya existan para poder probarse de verdad. El gating del cliente ya está listo
+>    esperándolo.
+>
+> También pendiente sin resolver, aparte: el almacén R2 para un futuro catálogo de voces
+> clonadas (bloqueado por permisos del token, mismo patrón que worker-proximidad -- ver
+> entrada más abajo) y el diagnóstico del Thunder (Chatterbox YA corre ahí, ver
+> `voz-chatterbox-thunder.md` en memoria, pero solo clona la voz de Inty, no los 14
+> arquetipos -- pausado a pedido explícito de Inty, no retomar sin que lo pida).
+
 > ## 📦 Free/pago + almacén de voces clonadas — DECISIÓN DE PRODUCTO, no bloqueada — sesión Lenovo, 2026-09-03 (noche)
 > Sin candado, sin código nuevo todavía. Registro de una conversación de producto con Inty
 > para que no se pierda entre sesiones.
