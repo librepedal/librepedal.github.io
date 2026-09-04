@@ -293,6 +293,13 @@ let _vozNeuralAudio = null;
 var pisteroGenero = localStorage.getItem('lp_genero')||'l'; // var a propósito: leida/escrita desde fuera de este archivo (avatar, voz por archivo, botón de UI). 'l'=Pistero (Lorenzo) / 'c'=Pistera (Catalina)
 let VOCES_MANIFEST = null; // índice de frases fijas pre-generadas en voz chilena (Azure), se carga de voces/manifest.json
 (function(){ try{ fetch('voces/manifest.json').then(function(r){return r.ok?r.json():null;}).then(function(m){ VOCES_MANIFEST=m; }).catch(function(){}); }catch(e){} })();
+// Premium (2026-09-04): true solo si us.premium.activo Y no expiró. us.premium lo
+// escribe UNICAMENTE el worker de verificacion de compras via Admin SDK -- el cliente
+// nunca puede tocarlo (ver firestore.rules, premiumSinTocar()), asi que confiar en este
+// campo tal cual llega de la nube es seguro.
+function _esPremium(){
+  return !!(typeof us!=='undefined' && us.premium && us.premium.activo && (!us.premium.expira || us.premium.expira > Date.now()));
+}
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }
 function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
 // Como pararVoz pero SIN borrar la cola: para cuando algo más importante interrumpe pero lo pendiente debe seguir sonando después.
@@ -361,6 +368,16 @@ function _reproducirVoz(item){
      internet. Solo la voz EN VIVO lo necesita, y solo ella debe depender de la red.
      Además `navigator.onLine` miente seguido (dice que no hay red cuando sí, y al revés),
      así que mientras menos cosas cuelguen de él, mejor. */
+  // Gating free/premium (2026-09-04, decision de producto de Inty tras medir el costo
+  // real de ElevenLabs -- ~US$0,51/usuario/mes en agosto): free = Microsoft Edge TTS,
+  // gratis, dos voces genericas (Lorenzo/Catalina) SIN arquetipo/personalidad; premium =
+  // los 14 arquetipos ElevenLabs de siempre. us.premium lo escribe SOLO el worker de
+  // verificacion de compras (nunca el cliente -- ver firestore.rules, premiumSinTocar()).
+  if(vozMejorada && !_esPremium()){
+    vozTimerFin=setTimeout(_vozSiguiente, 12000);
+    _vozEdgeRuntime(item, durEst, miGen);
+    return;
+  }
   if(vozMejorada){
     // v7.80: voz por ARQUETIPO (clips SLR71 chilenos en voces/<arq>/<id>.mp3).
     // v8.06: DESACTIVADA la capa de voces por arquetipo (SLR71) — se colaban voces distintas por frase.
@@ -552,6 +569,24 @@ function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure, _respaldo){
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
+    a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
+    a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
+    const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
+  }catch(e){ fallback(); }
+}
+// Tier FREE (2026-09-04): Microsoft Edge TTS, gratis, sin key -- dos voces chilenas
+// genericas (es-CL-LorenzoNeural/CatalinaNeural segun pisteroGenero), SIN arquetipo ni
+// personalidad (eso es lo que diferencia al premium). Mismo patron que _vozElevenRuntime
+// (audio completo via <audio>, no streaming), pero sin escalera de pregrabado/Azure --
+// no aplica, ya es gratis siempre. Si Microsoft no responde, cae directo a la nativa.
+function _vozEdgeRuntime(item, durEst, miGen){
+  let cayo=false;
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
+  try{
+    const a=new Audio(IA_URL+'/?edgetts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
+    _vozNeuralAudio=a;
+    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onplaying=function(){ cayo=true; };
     a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
     a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });

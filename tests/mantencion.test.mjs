@@ -230,7 +230,8 @@ const MES = 1000 * 60 * 60 * 24 * 30.44;
        !/if\(vozActiva && _climaBase && [^\n]*CLIMA_MIN_ENTRE_AVISOS/.test(VC));
 }
 
-// ---- 8) _restaurarDesdeNube(), por su nombre real, con los 4 campos a la vez ----
+// ---- 8) _restaurarDesdeNube(), por su nombre real, con los campos reales (2026-09-04:
+//   +premium, que sigue una regla distinta a los demás -- ver casos al final) ----
 // Antes se probaba solo el fragmento inline de sincronizarAlEntrar(); ahora es una
 // función compartida y se prueba llamándola tal cual la llama el código real.
 {
@@ -251,6 +252,20 @@ const MES = 1000 * 60 * 60 * 24 * 30.44;
   {
     const r = api2(base())(null);
     debe('nube null: no revienta, no hace nada', r.r === false);
+  }
+  // premium (2026-09-04): SOLO la nube lo escribe (worker de verificación de compras,
+  // ver firestore.rules premiumSinTocar()) -- se copia tal cual, sin "gana el mayor".
+  {
+    const r = api2(base())({ km: 1, darma: 1, mantKm: 0, premium: { activo: true, expira: 1234567890 } });
+    debe('copia el estado premium de la nube tal cual', r.us.premium && r.us.premium.activo === true && r.us.premium.expira === 1234567890);
+  }
+  {
+    const r = api2(base())({ km: 1, darma: 1, mantKm: 0, premium: { activo: true, expira: 1 } });
+    debe('confirmar premium NO marca "restaurado" (no debe disparar el aviso hablado de "recuperé tus kilómetros" -- ver sincronizarAlEntrar)', r.r === false);
+  }
+  {
+    const r = api2(base())({ km: 1, darma: 1, mantKm: 0 });
+    debe('sin campo premium en la nube: no revienta, no inventa el campo', r.us.premium === undefined);
   }
 }
 

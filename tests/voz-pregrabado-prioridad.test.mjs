@@ -50,6 +50,10 @@ function correr(overrides) {
     itemTexto: 'Hola, esto es una prueba.',
   }, overrides || {});
   const llamadas = [];
+  // _esPremium=true fijo: este archivo prueba específicamente la escalera premium
+  // (pregrabado vs en vivo de ElevenLabs) -- el gating free/premium en sí se prueba
+  // aparte en tests/voz-gating-premium.test.mjs.
+  const _esPremium = () => true;
   const _vozArchivoEL = (item, durEst, id, miGen) => llamadas.push({ fn: 'archivoEL', id });
   const _vozElevenRuntime = (item, durEst, miGen, yaProboAzure, respaldo) => llamadas.push({ fn: 'enVivo', respaldo });
   let vozGen = 0, vozHablando = false, vozPrioActual = 0, vozTimerFin = null;
@@ -60,13 +64,13 @@ function correr(overrides) {
 
   const _vozSiguiente = () => {};
   const fn = new Function(
-    'vozMejorada', 'VOCES_MANIFEST_EL', 'VOCES_MANIFEST', '_vozArchivoEL', '_vozElevenRuntime',
+    '_esPremium', 'vozMejorada', 'VOCES_MANIFEST_EL', 'VOCES_MANIFEST', '_vozArchivoEL', '_vozElevenRuntime',
     'vozGen', 'vozHablando', 'vozPrioActual', 'vozTimerFin', 'PRIO_VOZ', '_durEstVoz',
     'mostrarBocadillo', '_pisteroHabla', '_vozSiguiente', 'setTimeout', 'clearTimeout',
     REPRODUCIR + '\nreturn _reproducirVoz;'
   );
   const _reproducirVoz = fn(
-    o.vozMejorada, o.VOCES_MANIFEST_EL, o.VOCES_MANIFEST, _vozArchivoEL, _vozElevenRuntime,
+    _esPremium, o.vozMejorada, o.VOCES_MANIFEST_EL, o.VOCES_MANIFEST, _vozArchivoEL, _vozElevenRuntime,
     vozGen, vozHablando, vozPrioActual, vozTimerFin, PRIO_VOZ, _durEstVoz,
     mostrarBocadillo, _pisteroHabla, _vozSiguiente, setTimeout, clearTimeout
   );

@@ -283,6 +283,14 @@ async function sincronizarStats(){
 function _restaurarDesdeNube(nube){
   if(!nube) return false;
   let restaurado=false;
+  // premium (2026-09-04): NO usa el criterio "gana el mayor" del resto de esta función --
+  // no tiene sentido comparar, la nube es la ÚNICA fuente de verdad real (la escribe el
+  // worker de verificación de compras, nunca el cliente; ver firestore.rules,
+  // premiumSinTocar()). Se copia tal cual, siempre que venga en el payload -- SIN marcar
+  // `restaurado` (eso dispara "Recuperé tus kilómetros" hablado en sincronizarAlEntrar();
+  // confirmar el estado de suscripción no es "recuperar kilómetros" y NO debe generar una
+  // frase hablada en cada apertura de sesión de un usuario premium).
+  if(nube.premium && typeof nube.premium==='object'){ us.premium=nube.premium; }
   const kmNube=Number(nube.km)||0, kmLocal=Number(us.di)||0;
   const daNube=Number(nube.darma)||0, daLocal=Number(us.d)||0;
   if(kmNube>kmLocal+0.05){ us.di=kmNube; restaurado=true; }
