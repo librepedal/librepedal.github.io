@@ -250,6 +250,105 @@ async function _claveCachePermanente(texto, voiceId, modelo, stab, style, vel) {
   return "audiokv:" + hashHex.slice(0, 24);
 }
 
+// ===== Voz GRATIS para el tier free (2026-09-03, decision de producto: free = texto+mapa
+// con voz digna pero SIN el costo de ElevenLabs; pago = los 14 arquetipos ElevenLabs de
+// siempre). Usa el TTS neuronal de Microsoft Edge (gratis, sin key, protocolo no oficial
+// pero ampliamente usado -- portado de github.com/DIYgod/cloudflare-edge-tts, que ya lo
+// probo funcionando en el runtime real de Cloudflare Workers). Dos voces chilenas reales
+// de Microsoft: es-CL-LorenzoNeural (masculina) / es-CL-CatalinaNeural (femenina) -- los
+// MISMOS nombres que ya usa Pistero/Pistera, coincidencia util. NO reemplaza ElevenLabs
+// para pagos: es la voz del tier gratuito, sin arquetipo/personalidad. =====
+const EDGE_TRUSTED_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
+const EDGE_SYNTHESIS_URL = "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1";
+const EDGE_VOZ = { l: "es-CL-LorenzoNeural", c: "es-CL-CatalinaNeural" };
+
+function _edgeHex(bytes) {
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+async function _edgeSecMsGec() {
+  const WIN_EPOCH = 11644473600;
+  let ticks = Date.now() / 1000 + WIN_EPOCH;
+  ticks -= ticks % 300; // redondea a bloques de 5 min, como exige el protocolo real
+  ticks *= 1e9 / 100;
+  const payload = ticks.toFixed(0) + EDGE_TRUSTED_TOKEN;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+  return _edgeHex(new Uint8Array(digest));
+}
+function _edgeEscapeXml(t) {
+  return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+}
+function _edgeTimestamp() {
+  return new Date().toISOString().replace(/[-:.]/g, "").slice(0, -1);
+}
+
+// Conecta al TTS de Edge por WebSocket (Workers puede actuar de cliente WS via fetch +
+// Upgrade), manda la config + el SSML, y junta los frames binarios de audio hasta
+// "turn.end". Sin streaming al cliente (la voz de Pistero siempre se sirve completa,
+// igual que ElevenLabs arriba) -- mas simple y consistente con el resto del worker.
+async function _edgeSynth(text, voiceName) {
+  const secMsGec = await _edgeSecMsGec();
+  const connectionId = crypto.randomUUID().replace(/-/g, "");
+  const url = EDGE_SYNTHESIS_URL + "?TrustedClientToken=" + EDGE_TRUSTED_TOKEN +
+    "&Sec-MS-GEC=" + secMsGec + "&Sec-MS-GEC-Version=1-143.0.3650.75&ConnectionId=" + connectionId;
+  const muidBytes = new Uint8Array(16);
+  crypto.getRandomValues(muidBytes);
+  const resp = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Sec-WebSocket-Version": "13",
+      Upgrade: "websocket",
+      Cookie: "muid=" + _edgeHex(muidBytes) + ";",
+    },
+  });
+  if (resp.status !== 101 || !resp.webSocket) throw new Error("edge_ws_upgrade_failed_" + resp.status);
+  const ws = resp.webSocket;
+  ws.accept();
+
+  return await new Promise((resolve, reject) => {
+    const chunks = [];
+    let gotAudio = false;
+    const timeout = setTimeout(() => { try { ws.close(); } catch (e) {} reject(new Error("edge_timeout")); }, 15000);
+    ws.addEventListener("message", (ev) => {
+      if (typeof ev.data === "string") {
+        if (ev.data.indexOf("Path:turn.end") >= 0) { try { ws.close(); } catch (e) {} }
+        return;
+      }
+      const data = new Uint8Array(ev.data instanceof ArrayBuffer ? ev.data : ev.data.buffer);
+      if (data.length < 2) return;
+      const headerLen = (data[0] << 8) | data[1];
+      const headerText = new TextDecoder().decode(data.slice(2, 2 + headerLen));
+      if (headerText.indexOf("Path:audio") >= 0) {
+        const body = data.slice(2 + headerLen);
+        if (body.length) { chunks.push(body); gotAudio = true; }
+      }
+    });
+    ws.addEventListener("close", () => {
+      clearTimeout(timeout);
+      if (!gotAudio) { reject(new Error("edge_sin_audio")); return; }
+      let total = 0; for (const c of chunks) total += c.length;
+      const out = new Uint8Array(total); let off = 0;
+      for (const c of chunks) { out.set(c, off); off += c.length; }
+      resolve(out.buffer);
+    });
+    ws.addEventListener("error", (e) => { clearTimeout(timeout); reject(e); });
+
+    const speechConfig = "X-Timestamp:" + _edgeTimestamp() + "\r\n" +
+      "Content-Type:application/json; charset=utf-8\r\n" +
+      "Path:speech.config\r\n\r\n" +
+      '{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}\r\n';
+    const reqId = crypto.randomUUID().replace(/-/g, "");
+    const ssml = "X-RequestId:" + reqId + "\r\n" +
+      "Content-Type:application/ssml+xml\r\n" +
+      "X-Timestamp:" + _edgeTimestamp() + "Z\r\n" +
+      "Path:ssml\r\n\r\n" +
+      "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='es-CL'>" +
+      "<voice name='" + voiceName + "'><prosody pitch='+0Hz' rate='+0%' volume='+0%'>" + _edgeEscapeXml(text) + "</prosody></voice></speak>";
+    ws.send(speechConfig);
+    ws.send(ssml);
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const cors = {
@@ -435,6 +534,40 @@ export default {
         return resp;
       } catch (e) {
         return new Response(JSON.stringify({ error: "eltts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    }
+
+    // ===== VOZ GRATIS (tier free), Microsoft Edge TTS -- ver _edgeSynth arriba.
+    // Uso: ?edgetts=<texto>&g=l|c. Sin presupuesto de caracteres (no le pega a ElevenLabs,
+    // no cuesta plata) -- solo el limite por IP de siempre, para no abusar del servicio de
+    // Microsoft. Mismo cache permanente en KV que la voz paga, mismo Cache-Control 24h. =====
+    const edgeText = url.searchParams.get("edgetts") || (body && body.edgetts);
+    if (edgeText) {
+      if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      const gEdge = (url.searchParams.get("g") === "c") ? "c" : "l";
+      const voiceName = EDGE_VOZ[gEdge];
+      const tEdge = String(edgeText).slice(0, 480);
+
+      const cacheKeyEdge = await _claveCachePermanente(tEdge, voiceName, "edge-tts", 0, 0, 0);
+      if (env.VOZ_CUOTA) {
+        try {
+          const cachedBuf = await env.VOZ_CUOTA.get(cacheKeyEdge, "arrayBuffer");
+          if (cachedBuf) {
+            const respCache = new Response(cachedBuf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+            ctx.waitUntil(cache.put(request, respCache.clone()));
+            return respCache;
+          }
+        } catch (e) {}
+      }
+
+      try {
+        const buf = await _edgeSynth(tEdge, voiceName);
+        const resp = new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+        ctx.waitUntil(cache.put(request, resp.clone()));
+        if (env.VOZ_CUOTA) ctx.waitUntil(env.VOZ_CUOTA.put(cacheKeyEdge, buf).catch(function () {}));
+        return resp;
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "edgetts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
       }
     }
 
