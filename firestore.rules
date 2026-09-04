@@ -56,13 +56,24 @@ service cloud.firestore {
       return request.auth.uid == 'intyrivera_a_gmail_com';
     }
 
+    // `premium` (2026-09-04): estado de suscripcion paga, escrito SOLO por el
+    // worker de verificacion de compras via Admin SDK (que no pasa por estas
+    // reglas -- por eso alcanza con bloquear al CLIENTE). Sin esto, cualquier
+    // usuario se haria premium gratis con un `update({premium:{activo:true}})`
+    // desde la consola del navegador -- mismo patron de hallazgo que el resto
+    // de la auditoria de este proyecto (ver liveTracking, commit 9387ca9).
+    function premiumSinTocar() {
+      return !('premium' in request.resource.data)
+        || ('premium' in resource.data && request.resource.data.premium == resource.data.premium);
+    }
+
     // Perfiles de ciclistas. update restringido al dueño real: antes cualquier
     // usuario autenticado podía sobrescribir el perfil de OTRO (nombre, casco,
     // skin) con solo saber su `cu`.
     match /users/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300);
-      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && isOwnerOrLegacy();
+      allow create: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && !('premium' in request.resource.data);
+      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && isOwnerOrLegacy() && premiumSinTocar();
       allow delete: if false;
     }
 
