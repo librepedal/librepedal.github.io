@@ -1,5 +1,33 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🚨 CRÍTICO seguridad física cerrado: Pistero ya no recomienda autopistas a ciclistas — sesión Lenovo, 2026-09-04
+> Sin candado. Hub #199 (reporte real de Tundra, tomado y cerrado esta sesión), commit
+> `4b2d189`, YA DESPLEGADO y verificado contra producción real (no solo el prompt).
+>
+> **El hallazgo**: preguntarle a Pistero (chat IA) la ruta más segura Santiago-Valparaíso
+> en modo ciclista devolvió la Ruta 68 en tono de conducción ("mantén velocidad prudente",
+> 120km en 1h30 = 80km/h) -- una autopista donde las bicicletas NO pueden circular. La
+> regla 9 del prompt YA lo prohibía explícitamente (reforzada por mí mismo hace 2 días,
+> commit `9ee7c39`) -- pero el modelo gratis (Llama 3.3 70b) no la obedeció. Mismo patrón
+> que el blindaje anti-prompt-injection de hoy (commit `fff83d0`, ver entrada de abajo):
+> con un modelo abierto/gratis, la instrucción de texto sola no alcanza.
+>
+> **Fix**: `recomiendaViaProhibida()` en `worker-ia/worker.js` -- si la respuesta menciona
+> el nombre de una autopista prohibida (Ruta 68, Costanera Norte, Vespucio Norte/Sur, Ruta
+> 78, etc.) y la actividad no es moto, se descarta ENTERA y se reemplaza por una respuesta
+> segura fija. **Ojo con el primer intento**: la versión inicial solo bloqueaba si no había
+> ninguna palabra de advertencia ("prohibido", etc.) en el texto -- probado en vivo contra
+> producción, el modelo generó una respuesta real donde "prohibido" aparecía en una frase
+> genérica lejos de la mención específica de "Ruta 68" ("evita vías prohibidas... toma la
+> Ruta 68, pero no la autopista, sino la paralela") -- técnicamente matizada, pero ambigua
+> para un ciclista leyendo rápido. Se endureció para bloquear SIEMPRE que aparezca el
+> nombre, sin intentar distinguir "la recomienda" de "advierte que está prohibida" -- en
+> seguridad física un falso positivo sale mucho más barato que un falso negativo.
+>
+> Verificado con curl real contra el worker desplegado: la pregunta original (ciclista) ->
+> bloqueada; la misma pregunta en modo moto -> sigue recomendando la autopista con
+> normalidad (el filtro no rompe el caso legítimo). 8 tests nuevos, suite 37/37.
+
 > ## 🛡️ Blindaje anti prompt-injection de Pistero + fuga de docs confidenciales cerrada — sesión Lenovo, 2026-09-04
 > Sin candado, sin tocar `index.html`. Commit `fff83d0`, en `main` (lab Y origin), `worker-ia`
 > YA DESPLEGADO (`wrangler deploy`, Version ID `e6d3fc17-2d1c-488b-a610-00f17c89a0b2`) y
