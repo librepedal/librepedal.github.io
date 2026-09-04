@@ -293,11 +293,21 @@ let _vozNeuralAudio = null;
 var pisteroGenero = localStorage.getItem('lp_genero')||'l'; // var a propósito: leida/escrita desde fuera de este archivo (avatar, voz por archivo, botón de UI). 'l'=Pistero (Lorenzo) / 'c'=Pistera (Catalina)
 let VOCES_MANIFEST = null; // índice de frases fijas pre-generadas en voz chilena (Azure), se carga de voces/manifest.json
 (function(){ try{ fetch('voces/manifest.json').then(function(r){return r.ok?r.json():null;}).then(function(m){ VOCES_MANIFEST=m; }).catch(function(){}); }catch(e){} })();
+// GATE_PREMIUM_ACTIVO (2026-09-04): false hasta que exista de verdad el sistema de pago
+// (Play Console + el endpoint que verifica la compra -- ver "Bloqueado, necesita a Inty"
+// en COORDINACION-IA/EN-USO.md). Reporte real de Inty probando la app apenas se activó
+// el gating: TODOS los usuarios -- los 19 testers reales incluidos -- cayeron de golpe a
+// la voz free (Edge TTS), porque nadie tenía (ni podía tener) premium=true todavía.
+// Mientras este flag sea false, _esPremium() siempre da true: nadie pierde lo que ya
+// tenía. Cuando el endpoint de compras exista de verdad, cambiar esto a true activa el
+// gating real (basado en us.premium) sin tocar nada más.
+var GATE_PREMIUM_ACTIVO = false;
 // Premium (2026-09-04): true solo si us.premium.activo Y no expiró. us.premium lo
 // escribe UNICAMENTE el worker de verificacion de compras via Admin SDK -- el cliente
 // nunca puede tocarlo (ver firestore.rules, premiumSinTocar()), asi que confiar en este
 // campo tal cual llega de la nube es seguro.
 function _esPremium(){
+  if(!GATE_PREMIUM_ACTIVO) return true;
   return !!(typeof us!=='undefined' && us.premium && us.premium.activo && (!us.premium.expira || us.premium.expira > Date.now()));
 }
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }

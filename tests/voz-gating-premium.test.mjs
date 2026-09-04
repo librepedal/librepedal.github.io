@@ -33,21 +33,35 @@ function bloque(desde) {
 
 // --- _esPremium(): prueba la función real con distintos estados de us.premium ---
 {
-  const bloquePremium = bloque('function _esPremium(){');
-  const fn = new Function('us', 'Date', bloquePremium + '\nreturn _esPremium;');
+  // GATE_PREMIUM_ACTIVO se inyecta como literal (no como parámetro): es un `var` de
+  // módulo que _esPremium() lee por closure, así que tiene que existir en el mismo
+  // scope léxico del `new Function(...)`, no venir de afuera.
+  const fn = (gate, us, Date) => new Function('us', 'Date',
+    'var GATE_PREMIUM_ACTIVO=' + gate + ';\n' + bloque('function _esPremium(){') + '\nreturn _esPremium;'
+  )(us, Date);
 
-  t('sin campo premium: NO es premium (default seguro)', fn({}, Date)() === false);
-  t('premium.activo=false: NO es premium', fn({ premium: { activo: false } }, Date)() === false);
-  t('premium.activo=true sin fecha de expiración: SÍ es premium', fn({ premium: { activo: true } }, Date)() === true);
+  // Estado REAL de hoy (GATE_PREMIUM_ACTIVO=false, ver comentario junto a la constante):
+  // reporte real de Inty probando la app -- al activar el gating, TODOS los usuarios
+  // (los 19 testers reales incluidos) cayeron a la voz free de golpe, porque nadie tenía
+  // (ni podía tener) premium=true todavía. Mientras el gate esté apagado, es premium
+  // pase lo que pase -- nadie pierde lo que ya tenía.
+  t('gate APAGADO (hoy): premium=true aunque no exista el campo en absoluto', fn(false, {}, Date)() === true);
+  t('gate APAGADO (hoy): premium=true aunque us.premium.activo sea false', fn(false, { premium: { activo: false } }, Date)() === true);
+
+  // Comportamiento real cuando Inty active el gate (cambiar la constante a true) -- debe
+  // seguir funcionando la lógica de siempre, sin tener que tocar nada más.
+  t('gate ACTIVO: sin campo premium, NO es premium (default seguro)', fn(true, {}, Date)() === false);
+  t('gate ACTIVO: premium.activo=false, NO es premium', fn(true, { premium: { activo: false } }, Date)() === false);
+  t('gate ACTIVO: premium.activo=true sin fecha de expiración, SÍ es premium', fn(true, { premium: { activo: true } }, Date)() === true);
   {
     const DateFuturo = { now: () => 1000 };
-    t('premium.activo=true, expira en el futuro: SÍ es premium',
-      fn({ premium: { activo: true, expira: 5000 } }, DateFuturo)() === true);
+    t('gate ACTIVO: premium.activo=true, expira en el futuro, SÍ es premium',
+      fn(true, { premium: { activo: true, expira: 5000 } }, DateFuturo)() === true);
   }
   {
     const DatePasado = { now: () => 9999 };
-    t('premium.activo=true, YA expiró: NO es premium (vuelve a free solo)',
-      fn({ premium: { activo: true, expira: 5000 } }, DatePasado)() === false);
+    t('gate ACTIVO: premium.activo=true, YA expiró, NO es premium (vuelve a free solo)',
+      fn(true, { premium: { activo: true, expira: 5000 } }, DatePasado)() === false);
   }
 }
 
