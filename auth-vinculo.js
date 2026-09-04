@@ -89,6 +89,17 @@ window.onload = async function(){
     await im(); au(); rm(MG); fg('todos');
     loadTrips(); loadRoutesList(); cargarFrasesComunidad(); /* 2026-08-23: loadRepairTips/loadHostels/loadRecommendations salieron de aqui -> se enganchan al abrir SU pantalla (_subUnaVez en cv()). loadHostels era el peor: arrastra initVotosHostels() = guiComments limit(500), ~550 documentos por apertura para "Te doy alojo", que ademas esta OCULTO desde el commit 8f2d678. */
     initCustomization();
+    // Perfil compartido (?perfil=<id>, ver compartirPerfilComunidad() en perfil-comunidad.js):
+    // bug real encontrado 2026-08-15, nunca se rescató tras el refactor de 23 dominios --
+    // el link se generaba (Web Share / portapapeles) pero nada lo leía al abrir la app,
+    // quien lo abría solo veía la app normal, nunca el perfil compartido. Solo en esta
+    // rama (logueada) a propósito: #auth tiene z-index 5000 vs 4000 del modal, sin sesión
+    // el modal quedaría tapado por la pantalla de login -- abrirlo ahí sería un cambio
+    // más grande (ver perfiles sin loguearse), fuera de alcance de este fix puntual.
+    try{
+      const _pid=new URLSearchParams(location.search).get('perfil');
+      if(_pid && typeof verPerfilUsuario==='function'){ verPerfilUsuario(_pid); history.replaceState(null,'',location.origin+location.pathname); }
+    }catch(e){}
     // 2026-08-15: antes eran 2 timeouts de tiempo fijo (950ms para abrirEsfera, 3000ms
     // para el mic de manos libres) adivinando cuanto dura el saludo -- con saludos
     // largos, el flash+sonido de abrirEsfera() cortaba la voz a mitad de frase (mismo

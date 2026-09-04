@@ -29,7 +29,11 @@ const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  F
 
 // Las dos ramas de arranque (registro nuevo y sesion que vuelve) tienen que ser iguales:
 // si se aligera una sola, la mitad de los usuarios sigue pagando el precio viejo.
-const arranques = [...HTML.matchAll(/await im\(\); au\(\); rm\(MG\); fg\('todos'\);([\s\S]{0,1400}?)getCurrentLocation\(\);/g)]
+// Límite subido a 2500 el 2026-09-04 (rescate del fix de "?perfil=" compartido desde una
+// rama vieja, ver perfil-compartido-link.test.mjs): el bloque de auth-vinculo.js pasó de
+// 675 a 2212 caracteres por ese fix real, con margen para crecer un poco más sin tener
+// que volver a tocar este número por cada cambio chico.
+const arranques = [...HTML.matchAll(/await im\(\); au\(\); rm\(MG\); fg\('todos'\);([\s\S]{0,2500}?)getCurrentLocation\(\);/g)]
   .map(m => m[1]);
 debe('se encontraron las DOS ramas de arranque', arranques.length === 2);
 
