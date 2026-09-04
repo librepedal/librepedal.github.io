@@ -98,6 +98,31 @@ function esFugaDePrompt(texto) {
   return FUGA_MARCADORES.some(function (m) { return texto.indexOf(m) !== -1; });
 }
 
+// Red de seguridad REAL contra recomendar autopistas a quien NO va motorizado (hub #199,
+// 2026-09-04, reporte real de Tundra): la regla 9 del prompt ya prohíbe esto de forma
+// explícita, pero el modelo gratis puede igual recomendar una vía así -- mismo patrón que
+// esFugaDePrompt arriba: la instrucción de texto sola no alcanza con un modelo abierto/
+// gratis, hace falta un filtro de SERVIDOR que no dependa de que obedezca. Lista no
+// exhaustiva de autopistas/vías concesionadas donde bicicletas y peatones NO pueden
+// circular en Chile (Decreto N83 MTT) -- cubre las que un ciclista real preguntaría.
+const VIAS_PROHIBIDAS_BICI = [
+  "ruta 68", "autopista central", "costanera norte", "vespucio norte", "vespucio sur",
+  "américo vespucio norte", "américo vespucio sur", "americo vespucio norte", "americo vespucio sur",
+  "ruta 78", "autopista del sol", "autopista los libertadores", "acceso sur", "autopista vespucio",
+];
+function recomiendaViaProhibida(texto, actividad) {
+  if (actividad === "moto") return false; // en moto/auto estas vías son normales y correctas
+  const t = texto.toLowerCase();
+  // SIEMPRE se bloquea si aparece el nombre, sin intentar distinguir "la recomienda" de
+  // "advierte que está prohibida" -- probado en vivo (2026-09-04) que el modelo puede
+  // redactar la advertencia de forma ambigua y lejana de la mención ("evita vías donde
+  // esté prohibido... más abajo: toma la Ruta 68, pero no la autopista, sino la ruta
+  // paralela"): técnicamente matizado, pero un ciclista leyendo rápido se queda con
+  // "toma la Ruta 68". En seguridad física, un falso positivo (bloquear una respuesta
+  // que en realidad advertía bien) sale mucho más barato que un falso negativo.
+  return VIAS_PROHIBIDAS_BICI.some(function (v) { return t.indexOf(v) !== -1; });
+}
+
 async function buscarWikipedia(q) {
   try {
     const r = await fetch("https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=" + encodeURIComponent(q) + "&srlimit=3&format=json&utf8=1", { headers: { "User-Agent": "LibrePedal/1.0 (contacto@librepedal.cl)" } });
@@ -707,6 +732,13 @@ export default {
     // recortando -- se reemplaza entero por una respuesta honesta en personaje.
     if (body && body.mensaje && esFugaDePrompt(texto)) {
       texto = "Eso mejor me lo guardo yo -- cuéntame de tu viaje, ¿en qué te ayudo?";
+    }
+
+    // Filtro de vía prohibida (ver recomiendaViaProhibida arriba): igual que la fuga de
+    // prompt, no se corrige recortando -- se reemplaza entero por una respuesta segura
+    // que redirige al motor de ruteo real (que ya excluye estas vías por diseño).
+    if (body && body.mensaje && recomiendaViaProhibida(texto, body.usuario && body.usuario.actividad)) {
+      texto = "Por seguridad no te puedo indicar esa ruta -- ahí no pueden circular bicicletas ni peatones. Dime a dónde quieres ir y te trazo una ruta real y segura con el navegador de la app.";
     }
 
     const out = body && body.mensaje ? { respuesta: texto, modelo: usado } : { lugar, texto, modelo: usado };
