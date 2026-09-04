@@ -547,15 +547,20 @@ function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure, _respaldo){
   // `&voz=`. Cachea en Cloudflare, así una frase repetida no vuelve a pegarle a ElevenLabs.
   //
   // Escalera de respaldo, en orden: (1) el mp3 PREGRABADO de esa misma frase, si existe —
-  // sirve sin red y suena mucho mejor que la nativa; (2) Azure, por si algún día vuelve;
-  // (3) la voz nativa del teléfono, último recurso. `_yaProboAzure` corta el rebote
-  // infinito entre motores, y `_respaldo` trae los ids de los catálogos pregrabados.
+  // sirve sin red y suena mucho mejor que la nativa; (2) Edge TTS (gratis, real, ver
+  // _vozEdgeRuntime) -- reemplaza a Azure el 2026-09-04: Azure llevaba semanas muerto
+  // (clave expirada, siempre 401) y ese paso solo agregaba un salto inútil antes de
+  // caer igual a la nativa. Edge TTS SÍ funciona siempre, así que este "plan B" ahora
+  // es real: si ElevenLabs falla por lo que sea (presupuesto agotado, red, error del
+  // worker), CUALQUIER usuario -- premium incluido -- cae a una voz decente en vez de
+  // la robótica de una vez; (3) la voz nativa del teléfono, último recurso de verdad.
+  // `_respaldo` trae los ids de los catálogos pregrabados.
   let cayo=false;
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true;
     const r=_respaldo||{};
     if(r.idEL && typeof _vozArchivoEL==='function') _vozArchivoEL(item, durEst, r.idEL, miGen);
     else if(r.idAz && typeof _vozArchivo==='function') _vozArchivo(item, durEst, r.idAz, miGen);
-    else if(!_yaProboAzure) _vozAzureRuntime(item, durEst, miGen, true);
+    else if(typeof _vozEdgeRuntime==='function') _vozEdgeRuntime(item, durEst, miGen);
     else _vozNativaOWeb(item, durEst);
   };
   try{
