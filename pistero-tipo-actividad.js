@@ -142,4 +142,4 @@ function _actualizarBtnCicloCargado(){
 // Aplica el tema y pinta el selector apenas carga el script — así la pantalla de
 // registro (y una sesión que vuelve) ya se ven con el color correcto desde el
 // primer pintado, no recién después de loguearse.
-_aplicarTemaActividad(); _aplicarTemaUI(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
+_aplicarTemaActividad(); _aplicarTemaUI(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado(); _renderResenaStars();

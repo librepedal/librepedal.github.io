@@ -329,6 +329,12 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   _subUnaVez('reportes', subscribeToReportes);
   navGuardado=false;
   document.getElementById('nav-screen').classList.add('active');
+  // Modo conducción (pedido de Inty): si vas en "Motorizado" la pantalla de
+  // navegación se agranda y se simplifica sola — texto/botones más grandes
+  // (criterio real: guías de Google "Design for Driving", targets táctiles
+  // grandes, texto legible de un vistazo) y se esconde la fila de Vuelta/Ver
+  // vueltas/Reiniciar (una función de running/ciclismo que no aplica manejando).
+  document.getElementById('nav-screen').classList.toggle('modo-auto', actividadTipo==='moto');
   _actualizarBtnManosLibres();
   if(navMap) navMap.remove();
   navMap=L.map('nav-map').setView([startLat,startLon],15);

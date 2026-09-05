@@ -267,7 +267,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
       <button class="nav-end-btn" id="btnPausaViaje" onclick="togglePausaViaje()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-pause"></i> Pausar</button>
       <button class="nav-end-btn" onclick="finishTrip()" style="flex:1"><i class="fas fa-circle-check"></i> Terminar</button>
     </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
+    <div class="nav-lap-row">
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="marcarVuelta()"><i class="fas fa-flag-checkered"></i> Vuelta</button>
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="verVueltas()"><i class="fas fa-clipboard"></i> Ver vueltas</button>
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="reiniciarCronometro()"><i class="fas fa-arrows-rotate"></i> Reiniciar</button>
@@ -475,6 +475,14 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <button class="ab sec" style="margin:0" onclick="conectarPulsometro()"><i class="fas fa-heart"></i> Conectar pulsómetro</button>
   <button class="ab sec" style="margin:0" onclick="conectarPotenciometro()"><i class="fas fa-bolt"></i> Conectar potenciómetro</button>
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()"><i class="fas fa-plug"></i> Desconectar</button>
+</div>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-star"></i> Ayúdanos a crecer</h4>
+<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Contanos qué tal te va con la app — tu opinión nos ayuda a mejorarla.</p>
+<div class="resena-stars" id="resenaStars"></div>
+<textarea id="resenaComentario" rows="2" placeholder="Comentario (opcional)..." maxlength="500"></textarea>
+<div class="quick-links">
+  <button class="ab sec" style="margin:0" onclick="enviarResenaApp()"><i class="fas fa-paper-plane"></i> Enviar</button>
+  <a href="https://play.google.com/store/apps/details?id=cl.librepedal.app" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fab fa-google-play"></i> Calificar en Play Store</a>
 </div>
 <div class="quick-links" style="margin-top:16px">
   <a href="terminos.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fas fa-file-lines"></i> Términos y Condiciones</a>
@@ -1187,6 +1195,9 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 
 </script>
 <script src="app-estado-global.js"></script>
+<script>
+</script>
+<script src="resena-app.js"></script>
 <script>
 </script>
 <script src="pistero-tipo-actividad.js"></script>
