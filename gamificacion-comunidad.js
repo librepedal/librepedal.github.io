@@ -31,7 +31,11 @@ async function mostrarFundadores(){
   }
   const pctF=Math.round((cupoUsado/LP_FUNDADORES_CUPO)*100);
   html+='<div style="background:var(--gl);padding:12px;border-radius:10px;margin-bottom:12px"><div style="font-size:0.78rem;color:#9fb3c8;text-align:center">Los <strong style="color:var(--p)">primeros '+LP_FUNDADORES_CUPO+'</strong> ciclistas son Socios Fundadores — un lugar que no se vuelve a dar.</div></div>';
-  html+='<h4 style="color:var(--p);font-size:0.85rem;margin:0 0 6px">Beneficios de por vida</h4><ul style="font-size:0.76rem;color:#cdd6e6;line-height:1.6;margin:0 0 12px;padding-left:18px"><li>Insignia de fundador única (no se vuelve a dar)</li><li>Más Darma por cada acción</li><li>Acceso anticipado a lo nuevo</li><li>Entradas extra y prioridad en los sorteos de la comunidad</li></ul>';
+  html+='<h4 style="color:var(--p);font-size:0.85rem;margin:0 0 6px">Beneficios de por vida</h4><ul style="font-size:0.76rem;color:#cdd6e6;line-height:1.6;margin:0 0 6px;padding-left:18px"><li>Insignia de fundador única (no se vuelve a dar)</li><li>Más Darma por cada acción</li><li>Acceso anticipado a lo nuevo</li><li>Entradas extra y prioridad en los sorteos de la comunidad</li></ul>';
+  // Condición real del sorteo, a la vista y no en letra chica: los premios se pagan de un
+  // fondo que hoy no existe, no de la nada. Decirlo acá (pegado al beneficio) es lo que
+  // separa esto de una promesa sin respaldo -- ver tarea #149/#210 del hub.
+  html+='<p style="font-size:0.68rem;color:#7d8ba0;margin:0 0 12px;line-height:1.5">Los premios de los sorteos se entregan cuando el proyecto tenga los fondos para financiarlos — sin fecha comprometida.</p>';
   html+='<h4 style="color:var(--p);font-size:0.85rem;margin:0 0 6px"><i class="fas fa-trophy"></i> Muro de Fundadores</h4>';
   primeros.forEach(function(f,i){ const medal=i<3?['#ffd700','#c0c0c0','#cd7f32'][i]:null; html+='<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-bottom:1px solid #15202e"><div style="width:26px;text-align:center;font-weight:800;color:'+(medal||'#7d8ba0')+'">'+(medal?'<i class=\'fas fa-medal\'></i>':(i+1))+'</div><div style="flex:1;font-size:0.82rem;color:#dfe7ff">'+escapeHTML(f.nombre)+(f.id===cu?' <span style="color:var(--g)">(tú)</span>':'')+'</div></div>'; });
   if(!cu) html+='<p style="color:#888;font-size:0.8rem;margin-top:10px">Inicia sesión para ver tu insignia de fundador.</p>';
