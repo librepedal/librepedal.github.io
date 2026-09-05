@@ -1,5 +1,38 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ Freno anti-ráfaga de voz movido de KV a Cache API — sesión Lenovo, 2026-09-05
+> Sin candado, sin tocar `index.html`. Commit `27426fe`, worker-ia YA DESPLEGADO
+> (`wrangler deploy`, Version ID `7f6f557c-acaa-4e62-80ee-d0b82deb32a8`), verificado en
+> producción real con curl (`?edgetts=`, HTTP 200, audio válido).
+>
+> **El problema**: `_limiteIP()` (freno anti-abuso por IP) vivía en el KV `VOZ_CUOTA` y se
+> disparaba en TODA síntesis de voz sin excepción, cacheada o no -- era la mayor fuente de
+> escrituras repetidas y llevó al límite gratis diario de Cloudflare KV varias veces esta
+> semana (correos reales de alerta: 28-ago, 30-ago x2, 2-sep, "50% reached").
+>
+> **El fix**: movido a la Cache API (mismo mecanismo que ya usa `cache` para servir audio),
+> que no cuenta contra ese límite. Misma función (frenar ráfagas de una IP), mismo criterio
+> best-effort sin locking atómico. Trade-off aceptado a propósito: deja de ser un contador
+> GLOBAL (cada datacenter de Cloudflare lleva el suyo por separado) -- aceptable para un
+> freno anti-abuso, no una defensa de seguridad crítica. Los presupuestos de caracteres
+> (diario/mensual, el control real de gasto de ElevenLabs) siguen sin tocar en KV.
+>
+> 16 tests nuevos (`tests/voz-limite-ip-cache-api.test.mjs`). Suite 40/40, estable en 3
+> corridas.
+>
+> **Hallazgo de infraestructura, aparte, que casi bloquea el deploy**: `wrangler` tenía
+> cacheado en `node_modules/.cache/wrangler/wrangler-account.json` el account_id
+> `567086d1d92cd4fa156c0110a46ae209` = **"Inty405@gmail.com's Account"** -- una cuenta de
+> Cloudflare DISTINTA a la que tiene el token real de LibrePedal (`Intyrivera@gmail.com's
+> Account`, `024bc85be759cbf54b131202a0a1d183`, la documentada en `librepedal-infra`).
+> Alguien desplegó ahí antes con otro token y wrangler quedó memorizando esa cuenta para
+> TODO el repo (`node_modules` es compartido entre `worker-ia` y `worker-auth`), así que
+> cualquier deploy con el token de Intyrivera fallaba con "Authentication error [code:
+> 10000]" sin importar que el token en sí fuera válido. Se borró ese caché (es solo un
+> archivo regenerable, no config del proyecto) y el deploy funcionó al toque. **Si un
+> deploy de worker-ia/worker-auth falla con error de autenticación pese a que el token es
+> bueno, revisar/borrar ese archivo ANTES de sospechar del token.**
+
 > ## ✅ Privacidad real de /routes cerrada — sesión Lenovo, 2026-09-04
 > Sin candado, sin tocar `index.html`. Hub #201 (Tundra, prioridad alta), commit
 > `28995f2`, en `main`, CI en verde (tests + deploy Cloudflare a librepedal.cl) y ya
