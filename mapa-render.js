@@ -402,12 +402,15 @@ function _mapPointsSemillaEstatica(cb){
     terminar(true);
   }).catch(function(){ terminar(false); });
 }
-// Caché compartida entre todos los testers (Cloudflare Worker de Capone, cachea la lectura
-// pesada horas enteras) — respaldo SOLO si el archivo estático de arriba falla (404, build
-// viejo sin el archivo, etc.). Si esto TAMBIÉN falla (Capone caído, sin red, CORS) se sigue
-// exactamente como antes de cualquiera de estos dos cambios: full read directo a Firestore.
-// Nunca deja al mapa peor de lo que ya estaba.
-const MAPA_CACHE_COMPARTIDO_URL='https://asistente-inty.pages.dev/api/mapa-librepedal';
+// Caché compartida entre todos los testers (Pages Function propia de LibrePedal, cachea la
+// lectura pesada horas enteras) — respaldo SOLO si el archivo estático de arriba falla (404,
+// build viejo sin el archivo, etc.). Si esto TAMBIÉN falla (sin red) se sigue exactamente
+// como antes de cualquiera de estos dos cambios: full read directo a Firestore. Nunca deja
+// al mapa peor de lo que ya estaba.
+// Ruta relativa (mismo origen que librepedal.cl) desde el 2026-09-05: antes pegaba a un
+// proyecto de Cloudflare separado (Capone/asistente-inty) y el mapa dependía de que ESE
+// proyecto siguiera vivo para pintar los puntos, sin ninguna razón relacionada con LibrePedal.
+const MAPA_CACHE_COMPARTIDO_URL='/api/mapa';
 function _mapPointsSemillaCompartida(cb){
   let listo=false;
   const terminar=function(ok){ if(listo) return; listo=true; cb(ok); };
