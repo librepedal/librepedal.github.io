@@ -1,7 +1,9 @@
-// Gating free/premium de la voz (voz-motor.js), 2026-09-04.
+// Gating free/premium de la voz (voz-motor.js), 2026-09-04 (actualizado 2026-09-05).
 // Por qué existe: decisión de producto de Inty tras medir el costo real de ElevenLabs
-// (~US$0,51/usuario/mes en agosto) -- el tier free usa Microsoft Edge TTS (gratis, sin
-// arquetipo); el tier premium sigue con los 14 arquetipos de ElevenLabs de siempre.
+// (~US$0,51/usuario/mes en agosto) -- el tier free usaba Microsoft Edge TTS (gratis, sin
+// arquetipo); desde el 2026-09-05 el free es Google Chirp3-HD (gratis, CON arquetipo real
+// -- ver _vozGoogleRuntime en voz-motor.js); Edge queda como respaldo si Google falla. El
+// tier premium sigue con los 14 arquetipos de ElevenLabs de siempre.
 // us.premium lo escribe SOLO el worker de verificación de compras (nunca el cliente,
 // ver firestore.rules premiumSinTocar()), así que _esPremium() puede confiar en él tal
 // cual llega de la nube.
@@ -77,20 +79,20 @@ function correr(overrides) {
   const _esPremium = o.esPremium;
   const _vozArchivoEL = () => llamadas.push({ fn: 'archivoEL' });
   const _vozElevenRuntime = () => llamadas.push({ fn: 'elevenEnVivo' });
-  const _vozEdgeRuntime = () => llamadas.push({ fn: 'edgeFree' });
+  const _vozGoogleRuntime = () => llamadas.push({ fn: 'googleFree' });
   const _vozNativaOWeb = () => llamadas.push({ fn: 'nativa' });
   const _vozSiguiente = () => {};
   const PRIO_VOZ = { AMBIENTE: 1, INFO: 2, NAV: 3, SEGURIDAD: 4 };
   const fn = new Function(
     '_esPremium', 'vozMejorada', 'VOCES_MANIFEST_EL', 'VOCES_MANIFEST',
-    '_vozArchivoEL', '_vozElevenRuntime', '_vozEdgeRuntime', '_vozNativaOWeb',
+    '_vozArchivoEL', '_vozElevenRuntime', '_vozGoogleRuntime', '_vozNativaOWeb',
     'vozGen', 'vozHablando', 'vozPrioActual', 'vozTimerFin', 'PRIO_VOZ', '_durEstVoz',
     'mostrarBocadillo', '_pisteroHabla', '_vozSiguiente', 'setTimeout', 'clearTimeout',
     REPRODUCIR + '\nreturn _reproducirVoz;'
   );
   const _reproducirVoz = fn(
     _esPremium, o.vozMejorada, o.VOCES_MANIFEST_EL, o.VOCES_MANIFEST,
-    _vozArchivoEL, _vozElevenRuntime, _vozEdgeRuntime, _vozNativaOWeb,
+    _vozArchivoEL, _vozElevenRuntime, _vozGoogleRuntime, _vozNativaOWeb,
     0, false, 0, null, PRIO_VOZ, () => 2000,
     () => {}, () => {}, _vozSiguiente, setTimeout, clearTimeout
   );
@@ -100,7 +102,7 @@ function correr(overrides) {
 
 {
   const llamadas = correr({ esPremium: () => false });
-  t('usuario FREE: va a Edge TTS, nunca toca ElevenLabs', llamadas.length === 1 && llamadas[0].fn === 'edgeFree');
+  t('usuario FREE: va a Google (Chirp3-HD), nunca toca ElevenLabs', llamadas.length === 1 && llamadas[0].fn === 'googleFree');
 }
 {
   const llamadas = correr({ esPremium: () => true, VOCES_MANIFEST_EL: { map: {} } });

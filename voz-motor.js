@@ -379,13 +379,13 @@ function _reproducirVoz(item){
      Además `navigator.onLine` miente seguido (dice que no hay red cuando sí, y al revés),
      así que mientras menos cosas cuelguen de él, mejor. */
   // Gating free/premium (2026-09-04, decision de producto de Inty tras medir el costo
-  // real de ElevenLabs -- ~US$0,51/usuario/mes en agosto): free = Microsoft Edge TTS,
-  // gratis, dos voces genericas (Lorenzo/Catalina) SIN arquetipo/personalidad; premium =
+  // real de ElevenLabs -- ~US$0,51/usuario/mes en agosto): free = Google Chirp3-HD
+  // (2026-09-05, reemplaza a Edge TTS aqui) CON arquetipo/personalidad real; premium =
   // los 14 arquetipos ElevenLabs de siempre. us.premium lo escribe SOLO el worker de
   // verificacion de compras (nunca el cliente -- ver firestore.rules, premiumSinTocar()).
   if(vozMejorada && !_esPremium()){
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
-    _vozEdgeRuntime(item, durEst, miGen);
+    _vozGoogleRuntime(item, durEst, miGen);
     return;
   }
   if(vozMejorada){
@@ -589,11 +589,31 @@ function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure, _respaldo){
     const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
   }catch(e){ fallback(); }
 }
-// Tier FREE (2026-09-04): Microsoft Edge TTS, gratis, sin key -- dos voces chilenas
-// genericas (es-CL-LorenzoNeural/CatalinaNeural segun pisteroGenero), SIN arquetipo ni
-// personalidad (eso es lo que diferencia al premium). Mismo patron que _vozElevenRuntime
-// (audio completo via <audio>, no streaming), pero sin escalera de pregrabado/Azure --
-// no aplica, ya es gratis siempre. Si Microsoft no responde, cae directo a la nativa.
+// Tier FREE (2026-09-05): Google Chirp3-HD, gratis (1.000.000 caracteres/mes reales,
+// tope propio mas chico en el worker), CON arquetipo/personalidad real -- 14 voces
+// distintas + velocidad/tono propios por arquetipo (ver VOZ_ARQ_GOOGLE en worker-ia/
+// worker.js), a diferencia de Edge TTS que siempre sonaba igual sin importar el
+// arquetipo elegido. Mismo patron que _vozEdgeRuntime (audio completo via <audio>, no
+// streaming). Si Google no responde (o se agota la cuota del mes), cae a Edge TTS --
+// no directo a la nativa -- porque Edge sigue siendo mejor que la voz del telefono.
+function _vozGoogleRuntime(item, durEst, miGen){
+  let cayo=false;
+  const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozEdgeRuntime(item, durEst, miGen); };
+  try{
+    const a=new Audio(IA_URL+'/?gtts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&arq='+encodeURIComponent(pisteroPersonalidad));
+    _vozNeuralAudio=a;
+    a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
+    a.onplaying=function(){ cayo=true; };
+    a.onended=function(){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); };
+    a.onerror=function(){ if(cayo){ clearTimeout(vozTimerFin); _vozNeuralAudio=null; _vozSiguiente(); } else { fallback(); } };
+    const p=a.play(); if(p&&p.catch) p.catch(function(){ fallback(); });
+  }catch(e){ fallback(); }
+}
+// Tier FREE anterior (2026-09-04), Microsoft Edge TTS -- se conserva como RESPALDO de
+// Google (ver _vozGoogleRuntime arriba), ya no es el free por defecto. Gratis, sin key
+// -- dos voces chilenas genericas (es-CL-LorenzoNeural/CatalinaNeural segun
+// pisteroGenero), SIN arquetipo ni personalidad. Si Microsoft tampoco responde, ahi si
+// cae a la nativa.
 function _vozEdgeRuntime(item, durEst, miGen){
   let cayo=false;
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
