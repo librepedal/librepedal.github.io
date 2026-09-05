@@ -660,11 +660,17 @@ export default {
       const arq = (url.searchParams.get("arq") || "cercano").toLowerCase().replace(/[^a-z]/g, "");
       const voiceName = "es-US-Chirp3-HD-" + (VOZ_ARQ_GOOGLE[gsel][arq] || VOZ_ARQ_GOOGLE[gsel].cercano);
       const pr = PROSODIA_ARQ_GOOGLE[arq] || PROSODIA_ARQ_GOOGLE.cercano;
-      // rate: multiplicador directo (igual que _rateArq() del cliente). pitch: Google lo
-      // pide en semitonos, no en % -- conversión estándar de cambio de frecuencia a semitonos.
+      // rate: multiplicador directo (igual que _rateArq() del cliente), va en
+      // audioConfig.speakingRate. pitch: Google lo pide en semitonos, no en % (conversión
+      // estándar de cambio de frecuencia a semitonos) -- PERO Chirp3-HD devuelve 400
+      // "This voice does not support pitch parameters at this time" si pitch va en
+      // audioConfig (probado en vivo, 2026-09-05). El rodeo real: SÍ acepta pitch si el
+      // texto entra como SSML con <prosody pitch="Xst">, en vez de input.text plano.
       const speakingRate = Math.max(0.75, Math.min(1.25, 1 + pr.rate / 100));
       const pitchSemitonos = Math.max(-20, Math.min(20, 12 * Math.log2(1 + pr.pitch / 100)));
       const t = String(gText).slice(0, 480);
+      const pitchStr = (pitchSemitonos >= 0 ? "+" : "") + pitchSemitonos.toFixed(1) + "st";
+      const ssml = "<speak><prosody pitch=\"" + pitchStr + "\">" + _edgeEscapeXml(t) + "</prosody></speak>";
 
       const cacheKeyKV = await _claveCachePermanente(t, voiceName, "google-chirp3", speakingRate, pitchSemitonos, 0);
       if (env.VOZ_CUOTA) {
@@ -686,9 +692,9 @@ export default {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            input: { text: t },
+            input: { ssml: ssml },
             voice: { languageCode: "es-US", name: voiceName },
-            audioConfig: { audioEncoding: "MP3", speakingRate: speakingRate, pitch: pitchSemitonos }
+            audioConfig: { audioEncoding: "MP3", speakingRate: speakingRate }
           })
         });
         if (!r.ok) return new Response(JSON.stringify({ error: "gtts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
