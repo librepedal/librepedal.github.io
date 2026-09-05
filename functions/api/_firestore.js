@@ -93,3 +93,39 @@ export async function leerTodo(env, coleccion, { max = 6000 } = {}) {
   const d = await r.json();
   return { docs: (Array.isArray(d) ? d : []).filter((x) => x && x.document).map((x) => campos(x.document)) };
 }
+
+// Cuenta documentos SIN leerlos: una lectura en vez de N. Con la cuota justa, esto es la
+// diferencia entre que el panel de analítica funcione y que tumbe lo que le queda al día.
+export async function contar(env, coleccion) {
+  const tk = await token(env);
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${proyecto(env)}/databases/(default)/documents:runAggregationQuery`, {
+    method: 'POST',
+    headers: { authorization: 'Bearer ' + tk, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      structuredAggregationQuery: {
+        structuredQuery: { from: [{ collectionId: coleccion }] },
+        aggregations: [{ alias: 'n', count: {} }],
+      },
+    }),
+  });
+  if (!r.ok) return { error: r.status === 429 ? 'cuota' : 'http ' + r.status };
+  const d = await r.json();
+  const fila = Array.isArray(d) ? d.find((x) => x && x.result) : null;
+  return { n: fila ? Number(fila.result.aggregateFields.n.integerValue) : 0 };
+}
+
+// Lee una colección con tope. NUNCA sin tope: es justo el patrón que agotó la cuota de
+// Libre Pedal y no se va a repetir desde acá.
+export async function leer(env, coleccion, { max = 100, orden = null } = {}) {
+  const tk = await token(env);
+  const q = { from: [{ collectionId: coleccion }], limit: Math.min(max, 300) };
+  if (orden) q.orderBy = [{ field: { fieldPath: orden.campo }, direction: orden.desc ? 'DESCENDING' : 'ASCENDING' }];
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${proyecto(env)}/databases/(default)/documents:runQuery`, {
+    method: 'POST',
+    headers: { authorization: 'Bearer ' + tk, 'content-type': 'application/json' },
+    body: JSON.stringify({ structuredQuery: q }),
+  });
+  if (!r.ok) return { error: r.status === 429 ? 'cuota' : 'http ' + r.status };
+  const d = await r.json();
+  return { docs: (Array.isArray(d) ? d : []).filter((x) => x && x.document).map((x) => campos(x.document)) };
+}
