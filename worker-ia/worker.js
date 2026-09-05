@@ -224,6 +224,24 @@ async function _presupuestoMensualLector(env, chars) {
     return true;
   } catch (e) { return true; }
 }
+// Tope MENSUAL propio para Google Cloud TTS (Chirp3-HD), 2026-09-05. La cuota real que
+// regala Google es 1.000.000 de caracteres/mes (verificado en la consola, se renueva
+// solo cada mes) -- este tope se queda en 900.000 a propósito, mismo colchón de seguridad
+// que ya usa MAX_CHARS_MES con ElevenLabs, por si el conteo de caracteres de acá y el de
+// Google difieren un poco. Contador de KV APARTE del de ElevenLabs: son presupuestos de
+// dos proveedores distintos, no deberían pisarse.
+const MAX_CHARS_MES_GOOGLE = 900000;
+async function _presupuestoMensualGoogle(env, chars) {
+  if (!env.VOZ_CUOTA) return true;
+  const mes = new Date().toISOString().slice(0, 7);
+  const key = "presupuesto-mes-google:" + mes;
+  try {
+    const usado = parseInt((await env.VOZ_CUOTA.get(key)) || "0", 10);
+    if (usado + chars > MAX_CHARS_MES_GOOGLE) return false;
+    await env.VOZ_CUOTA.put(key, String(usado + chars), { expirationTtl: 2764800 });
+    return true;
+  } catch (e) { return true; }
+}
 // Freno anti-ráfaga por IP, 2026-09-04: movido de KV a la Cache API. Antes vivía en
 // VOZ_CUOTA (mismo KV que los presupuestos de abajo) y se disparaba en TODA síntesis de
 // voz sin excepción, cacheada o no -- era la mayor fuente de escrituras repetidas y llevó
@@ -602,10 +620,98 @@ export default {
       }
     }
 
+    // ===== VOZ GOOGLE CHIRP3-HD (tier free CON personalidad real), 2026-09-05. Reemplaza
+    // el hueco que tenía edgetts: Edge TTS da voz digna pero SIEMPRE la misma (Lorenzo/
+    // Catalina neutros, "sin arquetipo/personalidad" según el comentario original de ese
+    // bloque) -- Chirp3-HD trae 30 voces distintas + control real de velocidad/tono por
+    // API (audioConfig.speakingRate/pitch, no solo el playbackRate del <audio> del
+    // cliente), así que el tier gratis TAMBIÉN puede sonar al arquetipo elegido, igual
+    // que el tier pago. Cuota real: 1.000.000 caracteres/mes gratis, se renueva solo cada
+    // mes (verificado en la consola de Google Cloud, cuenta "Default Gemini Project", ya
+    // con facturación real vinculada) -- tope propio en MAX_CHARS_MES_GOOGLE con colchón.
+    // La key vive en el secreto GOOGLE_TTS_API_KEY, restringida SOLO a Cloud
+    // Text-to-Speech API (nunca en la app ni el repo, mismo patrón que ELEVENLABS_API_KEY).
+    // Mapa arquetipo->voz: primera asignación por nombre/vibra de cada voz de Google, NO
+    // escuchadas una por una todavía para las 14 -- fácil de reajustar cambiando una sola
+    // línea si algún arquetipo no calza al oído. Prosodia (rate/pitch) son los MISMOS
+    // números ya afinados en PERSONALIDAD_PROSODIA (pistero-personalidad.js) -- no hay
+    // import compartido cliente/worker, así que si se afina uno allá hay que afinar el
+    // mismo acá. Uso: ?gtts=<texto>&g=l|c&arq=<personalidad>. Devuelve MP3. =====
+    const gText = url.searchParams.get("gtts") || (body && body.gtts);
+    if (gText) {
+      if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      const key = env.GOOGLE_TTS_API_KEY;
+      if (!key) return new Response(JSON.stringify({ error: "sin_llave_google_tts" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+
+      const VOZ_ARQ_GOOGLE = {
+        l: { cercano: "Charon", compadre: "Puck", entrenador: "Orus", roquero: "Enceladus", profe: "Iapetus", solitario: "Umbriel", loco: "Sadachbia", cicletero: "Algieba", sabio: "Schedar", relajado: "Alnilam", aventurero: "Rasalgethi", maternal: "Achird", seductor: "Zubenelgenubi", otaku: "Algenib" },
+        c: { cercano: "Kore", compadre: "Aoede", entrenador: "Autonoe", roquero: "Callirrhoe", profe: "Despina", solitario: "Vindemiatrix", loco: "Zephyr", cicletero: "Erinome", sabio: "Gacrux", relajado: "Sulafat", aventurero: "Laomedeia", maternal: "Achernar", seductor: "Pulcherrima", otaku: "Leda" }
+      };
+      // Mismos rate/pitch (en %) que PERSONALIDAD_PROSODIA del cliente -- ver comentario arriba.
+      const PROSODIA_ARQ_GOOGLE = {
+        cercano: { rate: 0, pitch: 0 }, compadre: { rate: -4, pitch: -3 }, entrenador: { rate: 16, pitch: 3 },
+        roquero: { rate: 2, pitch: -8 }, profe: { rate: -8, pitch: 2 }, solitario: { rate: -14, pitch: -5 },
+        loco: { rate: 22, pitch: 10 }, cicletero: { rate: 6, pitch: -2 }, sabio: { rate: -18, pitch: -8 },
+        relajado: { rate: -16, pitch: 0 }, aventurero: { rate: 12, pitch: 6 }, maternal: { rate: -9, pitch: -1 },
+        seductor: { rate: -10, pitch: -4 }, otaku: { rate: 10, pitch: 7 }
+      };
+
+      const gsel = (url.searchParams.get("g") === "c") ? "c" : "l";
+      const arq = (url.searchParams.get("arq") || "cercano").toLowerCase().replace(/[^a-z]/g, "");
+      const voiceName = "es-US-Chirp3-HD-" + (VOZ_ARQ_GOOGLE[gsel][arq] || VOZ_ARQ_GOOGLE[gsel].cercano);
+      const pr = PROSODIA_ARQ_GOOGLE[arq] || PROSODIA_ARQ_GOOGLE.cercano;
+      // rate: multiplicador directo (igual que _rateArq() del cliente). pitch: Google lo
+      // pide en semitonos, no en % -- conversión estándar de cambio de frecuencia a semitonos.
+      const speakingRate = Math.max(0.75, Math.min(1.25, 1 + pr.rate / 100));
+      const pitchSemitonos = Math.max(-20, Math.min(20, 12 * Math.log2(1 + pr.pitch / 100)));
+      const t = String(gText).slice(0, 480);
+
+      const cacheKeyKV = await _claveCachePermanente(t, voiceName, "google-chirp3", speakingRate, pitchSemitonos, 0);
+      if (env.VOZ_CUOTA) {
+        try {
+          const cachedBuf = await env.VOZ_CUOTA.get(cacheKeyKV, "arrayBuffer");
+          if (cachedBuf) {
+            const respCache = new Response(cachedBuf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+            ctx.waitUntil(cache.put(request, respCache.clone()));
+            return respCache;
+          }
+        } catch (e) {}
+      }
+
+      if (!(await _presupuestoDiario(env, t.length))) return new Response(JSON.stringify({ error: "presupuesto_diario_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+      if (!(await _presupuestoMensualGoogle(env, t.length))) return new Response(JSON.stringify({ error: "presupuesto_mensual_google_agotado" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+
+      try {
+        const r = await fetch("https://texttospeech.googleapis.com/v1/text:synthesize?key=" + key, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            input: { text: t },
+            voice: { languageCode: "es-US", name: voiceName },
+            audioConfig: { audioEncoding: "MP3", speakingRate: speakingRate, pitch: pitchSemitonos }
+          })
+        });
+        if (!r.ok) return new Response(JSON.stringify({ error: "gtts", code: r.status }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        const j = await r.json();
+        if (!j.audioContent) return new Response(JSON.stringify({ error: "gtts_sin_audio" }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+        const bin = atob(j.audioContent);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const resp = new Response(bytes, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
+        ctx.waitUntil(cache.put(request, resp.clone()));
+        if (env.VOZ_CUOTA) ctx.waitUntil(env.VOZ_CUOTA.put(cacheKeyKV, bytes.buffer).catch(function () {}));
+        return resp;
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "gtts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    }
+
     // ===== VOZ GRATIS (tier free), Microsoft Edge TTS -- ver _edgeSynth arriba.
     // Uso: ?edgetts=<texto>&g=l|c. Sin presupuesto de caracteres (no le pega a ElevenLabs,
     // no cuesta plata) -- solo el limite por IP de siempre, para no abusar del servicio de
-    // Microsoft. Mismo cache permanente en KV que la voz paga, mismo Cache-Control 24h. =====
+    // Microsoft. Mismo cache permanente en KV que la voz paga, mismo Cache-Control 24h.
+    // 2026-09-05: dejó de ser el free por defecto (ver gtts arriba) -- se conserva vivo
+    // como respaldo si Google fallara o se agotara el millón de caracteres del mes. =====
     const edgeText = url.searchParams.get("edgetts") || (body && body.edgetts);
     if (edgeText) {
       if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
