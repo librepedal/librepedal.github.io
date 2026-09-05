@@ -224,16 +224,29 @@ async function _presupuestoMensualLector(env, chars) {
     return true;
   } catch (e) { return true; }
 }
+// Freno anti-ráfaga por IP, 2026-09-04: movido de KV a la Cache API. Antes vivía en
+// VOZ_CUOTA (mismo KV que los presupuestos de abajo) y se disparaba en TODA síntesis de
+// voz sin excepción, cacheada o no -- era la mayor fuente de escrituras repetidas y llevó
+// al límite gratis diario de KV varias veces esta semana (alertas reales de Cloudflare,
+// "50% reached", 28-ago/30-ago/2-sep). La Cache API no cuenta contra ese límite: es el
+// mismo mecanismo que ya usa `cache` más abajo para servir audio, solo que acá la key es
+// sintética (nunca se hace fetch real a esa URL, solo sirve de identificador).
+// Contrapartida aceptada a propósito: ya no es un contador GLOBAL como era en KV -- cada
+// datacenter de Cloudflare lleva el suyo por separado. Para un freno anti-abuso (evitar
+// una ráfaga desde un mismo origen), no un control de seguridad crítico, esto es
+// suficiente -- mismo criterio "best-effort, sin locking atómico" que ya regía este freno.
 async function _limiteIP(env, ip) {
-  if (!env.VOZ_CUOTA || !ip) return true;
+  if (!ip) return true;
   const minuto = Math.floor(Date.now() / 60000);
-  const key = "rl:" + ip + ":" + minuto;
+  const key = new Request("https://ratelimit.interno.worker/" + encodeURIComponent(ip) + "/" + minuto);
   try {
-    const actual = parseInt((await env.VOZ_CUOTA.get(key)) || "0", 10);
+    const cache = caches.default;
+    const previo = await cache.match(key);
+    const actual = previo ? parseInt(await previo.text(), 10) : 0;
     if (actual >= REQS_POR_MIN) return false;
-    await env.VOZ_CUOTA.put(key, String(actual + 1), { expirationTtl: 90 });
+    await cache.put(key, new Response(String(actual + 1), { headers: { "Cache-Control": "max-age=90" } }));
     return true;
-  } catch (e) { return true; } // si KV falla, no bloqueamos voz por un problema nuestro
+  } catch (e) { return true; } // si la Cache API falla, no bloqueamos voz por un problema nuestro
 }
 async function _presupuestoDiario(env, chars) {
   if (!env.VOZ_CUOTA) return true;
