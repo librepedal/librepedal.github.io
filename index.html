@@ -755,6 +755,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </section>
 
 <section id="v-mac" class="view">
+<!-- 2026-09-06: Taller se bifurca según actividadTipo (ver _renderTaller() en
+     pistero-tipo-actividad.js, se llama desde elegirActividad() y al arrancar). El
+     triage de bici (rueda pinchada, cadena, etc.) no aplica a un auto/moto, así que
+     Motorizado ve una pantalla completamente distinta, no una mezcla. -->
+<div id="tallerBici">
 <div class="section-info"><h4><i class="fas fa-wrench"></i> Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
 <!-- 2026-08-23: Mantención preventiva — pedido de Inty tras "Arregla mi bici" en
      Pistero: no solo reactivo (síntoma → arreglo), también proactivo por km, como
@@ -827,6 +832,18 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="quick-links" style="margin-top:14px">
   <a class="ab sec taller-cercano-link" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Buscar taller cercano</a>
   <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.parktool.com/es/blog/repair-help" target="_blank"><i class="fas fa-book-open"></i> Guías Park Tool (Calvin Jones)</a>
+</div>
+</div>
+<div id="tallerVehiculo" style="display:none">
+<div class="section-info"><h4><i class="fas fa-car-side"></i> Taller</h4><p>Tu vehículo, al día — mantención por kilometraje y documentos sin vencer.</p></div>
+<details class="soc-group" id="vehGroup" open>
+  <summary><span class="soc-ic"><i class="fas fa-gauge-high"></i> </span><span><b>Mantención del vehículo</b><small id="vehResumen">Cargando…</small></span></summary>
+  <div style="margin-top:9px" id="vehLista"></div>
+</details>
+<details class="soc-group" id="docGroup" open>
+  <summary><span class="soc-ic"><i class="fas fa-file-shield"></i> </span><span><b>Documentación al día</b><small id="docResumen">Cargando…</small></span></summary>
+  <div style="margin-top:9px" id="docLista"></div>
+</details>
 </div>
 <!-- Elementos legacy OCULTOS: el arranque llama rm(MG) y loadRepairTips() y necesitan estos targets; sin ellos crashea el init. Quedan invisibles: ya no mostramos tips improvisados. -->
 <input type="text" id="bm" style="display:none"><div id="ml" style="display:none"></div><div id="repair-tips" style="display:none"></div>
@@ -1263,6 +1280,9 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 <script>
 </script>
 <script src="mantencion-preventiva.js"></script>
+<script>
+</script>
+<script src="mantencion-vehiculo.js"></script>
 <script>
 </script>
 <script src="gamificacion-darma.js"></script>

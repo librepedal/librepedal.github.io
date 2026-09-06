@@ -64,7 +64,11 @@ function au(){
   // proactivo aunque no estés mirando Taller.
   try{
     if(typeof renderMantencion==='function'){ const _vMac=document.getElementById('v-mac'); if(_vMac && _vMac.classList.contains('on')) renderMantencion(); }
+    if(typeof renderMantencionVehiculo==='function'){ const _vMac2=document.getElementById('v-mac'); if(_vMac2 && _vMac2.classList.contains('on')) renderMantencionVehiculo(); }
+    if(typeof renderDocumentacion==='function'){ const _vMac3=document.getElementById('v-mac'); if(_vMac3 && _vMac3.classList.contains('on')) renderDocumentacion(); }
     if(typeof _mantencionRevisarAvisos==='function') _mantencionRevisarAvisos();
+    if(typeof _vehRevisarAvisos==='function') _vehRevisarAvisos();
+    if(typeof _docRevisarAvisos==='function') _docRevisarAvisos();
   }catch(e){}
   try{ if(_logrosListo&&typeof _chequearLogros==='function') _chequearLogros(false); }catch(e){} gd();
   // Sincroniza tu km total a la nube cada ~60s mientras avanzas (no en cada punto,

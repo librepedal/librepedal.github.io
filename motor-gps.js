@@ -361,7 +361,12 @@ function ug(p){
   // promedia y cancela justo ese ruido) muestre 0 = estás parado de verdad. Se
   // agrega sp>0 como condición: solo suma kilometraje cuando la propia app ya
   // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
-  if(us.la && sp>0 && _saltoPosOK){ us.di+=moved; _kmEsteViaje+=moved; _sumarKmModo(moved); _sumarKmMantencion(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  // 2026-09-06: el km de mantención va a UN SOLO odómetro según el modo -- antes
+  // _sumarKmMantencion() (desgaste de CADENA de bici) corría para cualquier actividad
+  // sin filtrar, así que manejar en modo Motorizado envejecía la cadena de tu bici.
+  // Ahora Motorizado sube a su propio contador (mantencion-vehiculo.js) y el resto
+  // sigue subiendo al de la bici, nunca los dos a la vez.
+  if(us.la && sp>0 && _saltoPosOK){ us.di+=moved; _kmEsteViaje+=moved; _sumarKmModo(moved); if(typeof actividadTipo!=='undefined' && actividadTipo==='moto'){ if(typeof _sumarKmVehiculo==='function') _sumarKmVehiculo(moved); } else { _sumarKmMantencion(moved); } us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);

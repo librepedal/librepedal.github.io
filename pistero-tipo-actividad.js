@@ -62,8 +62,23 @@ function elegirActividad(id, silencioso){
      función se suscribe sola si el modo es 'moto' y se da de baja si no. Así el que
      pedalea no gasta datos escuchando algo que no le sirve. */
   if(typeof suscribirCiclistasCerca==='function') suscribirCiclistasCerca();
-  renderActividadGrid(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado();
+  renderActividadGrid(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado(); _renderTaller();
   if(!silencioso) h('Listo, ahora te acompaño como '+_actividadActual().gentilicio+'.');
+}
+// Taller se bifurca según actividadTipo: el triage de bici (rueda pinchada, cadena,
+// etc.) no aplica a un auto/moto, así que Motorizado ve mantención del vehículo +
+// documentación al día en su lugar, no una mezcla de las dos cosas (ver index.html,
+// #tallerBici / #tallerVehiculo, y mantencion-vehiculo.js).
+function _renderTaller(){
+  const bici=document.getElementById('tallerBici'), veh=document.getElementById('tallerVehiculo');
+  if(!bici || !veh) return;
+  const esVehiculo = actividadTipo==='moto';
+  bici.style.display = esVehiculo ? 'none' : '';
+  veh.style.display = esVehiculo ? '' : 'none';
+  if(esVehiculo){
+    if(typeof renderMantencionVehiculo==='function') renderMantencionVehiculo();
+    if(typeof renderDocumentacion==='function') renderDocumentacion();
+  }
 }
 function renderActividadGrid(){
   const c=document.getElementById('actividadGrid'); if(!c) return;
@@ -142,4 +157,4 @@ function _actualizarBtnCicloCargado(){
 // Aplica el tema y pinta el selector apenas carga el script — así la pantalla de
 // registro (y una sesión que vuelve) ya se ven con el color correcto desde el
 // primer pintado, no recién después de loguearse.
-_aplicarTemaActividad(); _aplicarTemaUI(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado(); _renderResenaStars();
+_aplicarTemaActividad(); _aplicarTemaUI(); renderModoRegistro(); renderModoRapidoEsfera(); _actualizarBtnCicloCargado(); _renderResenaStars(); _renderTaller();
