@@ -73,6 +73,22 @@
 
 > 📌 (2026-07-29, sesión Thunderobot): ver `COORDINACION-IA/SPEC-REDISENO-MAPA-2026-07-29.md` — pase de control de calidad del MAPA (feedback real de Inty: mapa claro por defecto, quitar botón GPS, un solo sistema de botones, reportar sobre el mismo mapa, voz de Pistero sin globo, planificar Desde→Hasta). Listo para ejecutar+deployar.
 
+> 💰 **IDEA DE PRODUCTO NUEVA (2026-09-06, Inty) — NO EJECUTAR TODAVÍA, solo guardar.**
+> Dejar abierta la posibilidad de que **cualquier usuario** (persona individual o empresa)
+> pueda pedir que **su bitácora** (el diario/registro de viaje, hoy `diarios.js` +
+> "Mis viajes") le llegue **en formato físico** (impresa/impreso a domicilio), si lo
+> solicita, **con un precio asignado** (no gratis — se cobra por el servicio).
+> - Aplica a cualquier tipo de cuenta, no solo individual — dejar la puerta abierta a
+>   empresas (ej. un club de ciclismo o una empresa que quiera pedir bitácoras físicas
+>   para su gente).
+> - Es una idea de monetización/merchandising, no un bug ni algo urgente — **no tocar
+>   código todavía**. Falta definir con Inty: qué formato físico (¿libro impreso? ¿póster?
+>   ¿ambos?), el precio, quién imprime/despacha (proveedor de impresión bajo demanda),
+>   y cómo se pide dentro de la app (¿botón en "Mis viajes"? ¿desde el panel admin?).
+> - Recordar la regla dura del proyecto: LibrePedal está en fase testers de Play Store —
+>   **nada de esto se implementa en código sin autorización explícita de Inty**, esto
+>   queda solo como nota de backlog hasta que él la retome.
+
 # ✅ Pendientes — Libre Pedal
 
 ## 📌 ESTADO AL 2026-08-13 (sesión Lenovo) — leer antes de tocar voz o mapas
