@@ -1,3 +1,11 @@
+> ⚠️ **ACTUALIZACIÓN — 2026-09-07, sesión Tundra: de las 3 cuentas de abajo, solo esta
+> (Tundra) sigue activa hoy.** Confirmado por Inty. `intyrivera`/`intyrivera.a` caducaron.
+> Esto no cambia ninguna de las 3 urgencias de abajo (siguen sin resolver si nadie las
+> tocó desde el 18-ago) — solo significa que, mientras dure, no hay otra cuenta que vaya
+> a leer un candado o tomar una tarea delegada aquí. Si una entrada de abajo dice "avisa
+> a intyrivera/intyrivera405", tratarlo como una nota histórica, no como una posta real
+> hoy. Se reactiva el reparto de 3 cuentas si vuelve a haber una segunda sesión activa.
+
 > 🔴 **ESTADO CONSOLIDADO — 2026-08-18, sesión "intyrivera" — LEER PRIMERO, ANTES QUE
 > CUALQUIER OTRA COSA EN ESTE ARCHIVO.** Hay 3 cuentas de Claude distintas trabajando
 > en este repo, sin canal de mensajería en vivo entre las 3 — esta carpeta es el único
