@@ -1,5 +1,28 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔧 CORRECCIÓN inmediata — Costa Rica y R. Dominicana vuelven a la lista, Guatemala se queda afuera por ley (no por contenido) — sesión Tundra, 2026-09-07
+> Corrige un error real de la entrada de abajo (misma sesión, minutos después). Al sacar los 3 países
+> "sin jerga" me basé en la tarea #170 del hub (2026-09-03), que estaba **desactualizada**: el commit
+> `b01430b` ("feat(voz): jerga real para Costa Rica, Puerto Rico, Guatemala y R. Dominicana", 2-sep) ya
+> estaba mergeado a `main` -- confirmado leyendo `pistero-frases-pais.js` real, las 4 entradas (`cr`,
+> `pr`, `gt`, `do`) existen con modismos reales (mae/tuanis, wepa/pana, chapín/va pue, manín/tíguere).
+> El gap de contenido que documentó #170 ya no existe.
+>
+> **Pero Guatemala sí tiene una razón real, distinta, para quedar afuera** (decisión de Inty, confirmada
+> contra `PLAN-LANZAMIENTO-GUATEMALA.md`): Iniciativa 6464 en el Congreso guatemalteco, en revisión activa
+> a julio-2026, propone 6-8 años de cárcel y multas de Q50.000 por uso indebido de datos personales --
+> el perfil de riesgo legal más severo de los 14 países investigados, no solo "vacío legal" como el resto.
+> Costa Rica y R. Dominicana no tienen ningún hallazgo de riesgo legal equivalente en sus respectivos
+> `PLAN-LANZAMIENTO-*.md`.
+>
+> **Fix aplicado y ya enviado a revisión de Google (agrupado con el reanude, ver de nuevo "Reanudar el
+> segmento" abajo):** Costa Rica y República Dominicana vueltos a agregar a la Prueba Abierta. **Guatemala
+> queda fuera a propósito** -- si alguien lo vuelve a agregar sin conversar antes con Inty sobre el riesgo
+> legal, está deshaciendo una decisión explícita suya, no un descuido. Lista final: 11 países (los 9 de
+> la entrada de abajo + Costa Rica + R. Dominicana).
+>
+> Verificado en vivo en Play Console: "Activo · Versión 29812496 (8.788) · 11 países o regiones".
+
 > ## ✅ CERRADO — Prueba Abierta reanudada con 9 países + AAB 8.788 en Alpha y Abierta, enviado a revisión de Google — sesión Tundra, 2026-09-07
 > Cierra por completo la entrada de abajo (misma sesión). Con el OK explícito de Inty ("dale, sube el AAB
 > y reanuda") se completaron los 2 pasos que habían quedado pendientes:
