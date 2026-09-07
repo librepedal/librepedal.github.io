@@ -1,5 +1,30 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ CERRADO — Prueba Abierta reanudada con 9 países + AAB 8.788 en Alpha y Abierta, enviado a revisión de Google — sesión Tundra, 2026-09-07
+> Cierra por completo la entrada de abajo (misma sesión). Con el OK explícito de Inty ("dale, sube el AAB
+> y reanuda") se completaron los 2 pasos que habían quedado pendientes:
+>
+> 1. **AAB subido a Alpha** (`versionCode 29812476`, `8.788`) — enviado a revisión junto con nada más en
+>    ese track. Los 74 testers de Alpha siguen recibiendo el build viejo (`8.753`) sin corte de servicio
+>    mientras Google revisa (hasta 7 días).
+> 2. **AAB subido a Prueba Abierta** (`versionCode 29812496`, distinto al de Alpha — Google no deja
+>    reusar el mismo código entre pistas, hubo que regenerar el AAB una vez más solo por eso, mismo
+>    commit `8d352c2`, contenido idéntico).
+> 3. **Segmento reanudado**: pasó de "En pausa" a **"Activo"**. Los 4 cambios (build de Alpha, build de
+>    Abierta, quitar 3 países, desincronizar de producción) quedaron agrupados en UNA sola revisión de
+>    Google (advertencia de Play Console al enviar: agregar el build reinicia el conteo de días de
+>    revisión si ya había una en curso — aceptado a propósito, mejor una revisión limpia con todo junto
+>    que dos parciales).
+>
+> Verificado en vivo en Play Console tras cada paso (no solo "se guardó"): "Activo · Versión 29812496
+> (8.788) en revisión · 9 países o regiones" en Abierta, "Activo · Versión 29812476 (8.788) en revisión ·
+> 177 países o regiones" en Alpha.
+>
+> **Nada más pendiente de esta ronda.** Lo único que falta es que Google termine de revisar (hasta 7
+> días según el propio diálogo de confirmación) — no hay acción humana ni de ninguna cuenta bloqueando
+> nada. Si alguien ve la Prueba Abierta todavía "en pausa" o con los 3 países viejos después de esto,
+> es que la revisión de Google aún no terminó, no un error de esta sesión.
+
 > ## 🟡 Prueba Abierta: sacados 3 países sin contenido + AAB nuevo listo, PENDIENTE de subir a Play Console — sesión Tundra, 2026-09-06/07
 > Sin candado, sin tocar `index.html`. Trabajo hecho a pedido directo de Inty en vivo (revisó Play Console
 > conmigo vía Claude in Chrome, cuenta `inty405@gmail.com`). **Nada de esto se subió todavía a Play
