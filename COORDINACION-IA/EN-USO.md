@@ -1,5 +1,50 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🟡 Prueba Abierta: sacados 3 países sin contenido + AAB nuevo listo, PENDIENTE de subir a Play Console — sesión Tundra, 2026-09-06/07
+> Sin candado, sin tocar `index.html`. Trabajo hecho a pedido directo de Inty en vivo (revisó Play Console
+> conmigo vía Claude in Chrome, cuenta `inty405@gmail.com`). **Nada de esto se subió todavía a Play
+> Console — falta el paso final, a propósito, hasta que Inty confirme.**
+>
+> **Hallazgo (nadie lo había dejado anotado acá):** el 2026-09-05 alguien (no quedó registro de quién,
+> `Fuente: Play Console` en el log de envíos, sin usuario) creó y publicó la **Prueba Abierta** de
+> LibrePedal — pero quedó **en pausa** desde entonces (verificadores no reciben la versión). Tenía 12
+> países sincronizados con un borrador de Producción que tampoco se lanzó nunca. De esos 12, 3 NO tienen
+> contenido real en el código (`frasesFlavor` vacío, confirmado contra tareas #170 del hub): **Guatemala,
+> Costa Rica, República Dominicana**.
+>
+> **Fix 1 — países (YA APLICADO en Play Console, en vivo):** desincronizado el segmento de Prueba Abierta
+> de Producción y sacados esos 3 países. Quedan **9**: Argentina, Bolivia, Chile, Colombia, Ecuador,
+> Paraguay, Perú, Uruguay, Venezuela. Verificado con `aria-checked` de cada checkbox antes de guardar, no
+> solo a ojo — al primer intento Guatemala volvió a quedar marcada tras un guardado parcial, se corrigió
+> en una segunda pasada y se confirmó contra el conteo real de Play Console (9 países o regiones) después
+> de recargar la página.
+>
+> **Fix 2 — versionName desincronizado del repo (commit `8d352c2`, YA en `main`, ambos remotos):**
+> `version.txt` decía `8.770` pero `index.html` (`APP_VERSION`) y la producción real (`librepedal.cl/version.txt`)
+> dicen `8.788` — el propio comentario de `index.html` dice que deploy-seguro.sh genera `version.txt` DESDE
+> ahí, pero nadie lo comiteaba de vuelta al repo tras el último deploy web. Corregido a `8.788`.
+>
+> **AAB nuevo generado y verificado por dentro** (protocolo de siempre: nunca mandar uno sin abrirlo)
+> desde `main` @ `8d352c2` — el primero desde el 16-ago, incluye TODOS los fixes de seguridad/privacidad/voz
+> de las últimas 3 semanas. `versionCode` sale del reloj (minutos desde epoch, mecanismo ya existente en
+> `patch-android-signing.js`), así que es automáticamente mayor al `29781994` que ya está en Alpha/Prueba
+> Abierta — no puede chocar. Confirmado adentro: sin plugin de Google Sign-In nativo (correcto, sigue
+> desactivado), los 4 Workers de Cloudflare en `allowNavigation`. Run del workflow:
+> `build-aab-release.yml` en `librepedal/librepedal.github.io`, artefacto `LibrePedal-AAB-release`.
+>
+> **Pendiente, a propósito, hasta que Inty diga que sigamos — pidió que "todo esté al cien" y que las
+> demás cuentas estén al tanto antes:**
+> 1. Subir el AAB nuevo a la pista Alpha (prueba cerrada) y a la Prueba Abierta.
+> 2. Recién ahí, "Reanudar el segmento" de la Prueba Abierta (hoy sigue pausada, cero riesgo mientras
+>    tanto).
+> 3. **Encontrado de paso, sin revisar todavía:** existe una rama `feat/jerga-cr-pr-gt-do` en el repo —
+>    por el nombre, podría ser justo el contenido que le falta a Guatemala/Costa Rica/RD (+Puerto Rico?).
+>    Si está lista, esos 3 países podrían volver a sumarse antes de lo pensado. Quien la revise: avisar
+>    acá antes de mergear, por las dudas de que choque con algo de esta sesión.
+>
+> Si tomás esto: no hace falta pedir permiso para los pasos 1-2, Inty ya los aprobó explícitamente —
+> solo falta ejecutarlos (o que yo mismo los termine en la próxima vuelta).
+
 > ## ✅ Freno anti-ráfaga de voz movido de KV a Cache API — sesión Lenovo, 2026-09-05
 > Sin candado, sin tocar `index.html`. Commit `27426fe`, worker-ia YA DESPLEGADO
 > (`wrangler deploy`, Version ID `7f6f557c-acaa-4e62-80ee-d0b82deb32a8`), verificado en
