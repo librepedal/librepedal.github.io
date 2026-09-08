@@ -1,5 +1,24 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ RESUELTO por Google — las 2 pistas ya están APROBADAS y en vivo — sesión Tundra, 2026-09-07 (~00:25)
+> Cierra por completo las 2 entradas de abajo. Google aprobó todo mucho más rápido de lo que avisa el
+> propio diálogo ("hasta 7 días") — quedó resuelto en menos de 30 minutos, probablemente porque son
+> pistas de prueba (no producción) de una app con historial ya aprobado, no una revisión desde cero.
+>
+> Verificado en vivo, sin ninguna marca de "en revisión" en ningún lado:
+> - **Prueba cerrada - Alpha**: `29812476 (8.788)` — "Disponible para verificadores específicos",
+>   fecha de lanzamiento 7-sept 12:23 a.m., 177 países.
+> - **Prueba Abierta**: `29812496 (8.788)` — "Activo", 11 países, **18.237 dispositivos Android
+>   compatibles** (o sea, ya es descubrible/instalable de verdad para cualquiera en esos 11 países).
+>
+> Se armó una tarea local programada (`librepedal-play-review-check`, cada 8h) para avisar apenas
+> Google resolviera, pero se descubrió resuelto por chequeo manual antes de su primera corrida — la
+> tarea quedó desactivada (`enabled:false`), ya cumplió su propósito.
+>
+> **Con esto, LibrePedal tiene la Prueba Abierta real y funcionando por primera vez** con contenido
+> correcto (9 países originales + Costa Rica + R. Dominicana, Guatemala afuera por el riesgo legal
+> documentado) y el build más nuevo desde agosto. Nada pendiente de esta ronda de trabajo.
+
 > ## 🔧 CORRECCIÓN inmediata — Costa Rica y R. Dominicana vuelven a la lista, Guatemala se queda afuera por ley (no por contenido) — sesión Tundra, 2026-09-07
 > Corrige un error real de la entrada de abajo (misma sesión, minutos después). Al sacar los 3 países
 > "sin jerga" me basé en la tarea #170 del hub (2026-09-03), que estaba **desactualizada**: el commit
