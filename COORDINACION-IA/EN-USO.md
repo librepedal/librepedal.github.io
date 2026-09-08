@@ -1,5 +1,53 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ⚠️ CORRECCIÓN — el "RESUELTO" de abajo era prematuro: hubo un rechazo real (Missing Prominent Disclosure), fix ya implementado y en vivo — sesión Tundra, 2026-09-08
+> Corrige la entrada de abajo ("✅ RESUELTO por Google"). Esa entrada solo verificó Alpha + una
+> revisión de Prueba Abierta anterior (submission #12) — cerró bien. Pero **hubo una ronda más**:
+> Inty pidió agregar Producción, lo que generó un envío nuevo (submission #13, Prueba Abierta sola,
+> enviado 2026-09-07 ~00:25) que **Google RECHAZÓ** (visible recién en `/publishing/submission-
+> activity`, no en el resumen del track — ese resumen solo muestra el estado *configurado*, no si
+> Google ya lo aprobó; lección para la próxima vez que alguien "verifique en vivo").
+>
+> **Causa real, confirmada por el correo de rechazo de Google (captura de pantalla de Inty):
+> "Missing Prominent Disclosure"** — el permiso nativo `ACCESS_BACKGROUND_LOCATION` (usado por
+> `lpBackgroundGeo`/`BackgroundGeolocation` en `motor-gps.js` para grabar la ruta con la pantalla
+> apagada) se pedía sin ningún aviso propio previo, solo el diálogo del sistema. **No tuvo nada que
+> ver con países** (se descartó esa hipótesis antes de tener el correo real — ver aviso de Inty de
+> no sacar países sin causa confirmada).
+>
+> **Fix implementado y aprobado por Inty ("sí, apruébalo e impleméntalo"):**
+> - `dialogos-genericos.js`: nueva `lpDivulgacion(msg)` — modal de un solo botón ("Entiendo,
+>   continuar"), reutiliza el `#lpDialog` temático existente.
+> - `motor-gps.js`: `lpBackgroundGeo.start()` (el único choke point real — de ahí pasan TANTO el
+>   botón "Grabar un paseo" vía `toggleGPS()` COMO la navegación turn-by-turn vía
+>   `motor-navegacion.js`) ahora hace `await lpDivulgacion(...)` la primera vez
+>   (`localStorage.lp_disclosure_bg_ubicacion`) antes de llamar a `bg.addWatcher({requestPermissions:
+>   true, ...})`.
+> - Commit `2d65409`, pusheado a `lab` y `origin`. Verificado visualmente en preview local (el modal
+>   se ve bien, texto completo, cierra al tocar el botón).
+>
+> **Importante para quien no lo sepa:** LibrePedal es una app Capacitor de **carga remota**
+> (`capacitor.config.json` → `server.url: "https://librepedal.cl"`) — el WebView nativo carga el
+> JS/CSS EN VIVO desde la web, no desde lo empaquetado en el AAB (`scripts/copy-web.js` ni siquiera
+> copia `motor-gps.js`/`dialogos-genericos.js` al `www/` del build nativo — no hace falta). Por eso
+> el fix quedó activo apenas se hizo `git push` a `origin` y corrió `deploy-cloudflare.yml`
+> (confirmado con `curl https://librepedal.cl/motor-gps.js` — el fix ya está ahí en producción),
+> **sin necesitar un AAB nuevo para que el fix en sí tome efecto.**
+>
+> Aun así se generó un AAB nuevo (Actions run `34189242115`, mismo `version.txt` 8.788, versionCode
+> nuevo por el epoch-minutos de `patch-android-signing.js`) como respaldo listo para subir. **No se
+> subió todavía a propósito**: al revisar `/publishing/submission-activity` se encontró que
+> **submission #14** (Producción + Prueba Abierta juntas, enviada 2026-09-07 11:51 p.m., ANTES del
+> fix) seguía **"En revisión"**, no rechazada. Forzar un release nuevo ahora arriesga cancelar esa
+> revisión en curso (ver submission #11, quedó "Cancelada" por exactamente eso). Como la app carga
+> el JS en vivo, es probable que la revisión de Google contra #14 ya vea el fix aunque el AAB no haya
+> cambiado — así que se decidió ESPERAR a que #14 resuelva antes de tocar nada más:
+> - Si #14 se **aprueba**: no hace falta subir el AAB de respaldo, el ciclo queda cerrado.
+> - Si #14 se **rechaza** (mismo motivo u otro): subir de inmediato el AAB ya generado (run
+>   `34189242115`) a Producción + Prueba Abierta y reenviar.
+>
+> Estado real al cerrar esta entrada: submission #14 = **En revisión** (ni aprobada ni rechazada).
+
 > ## ✅ RESUELTO por Google — las 2 pistas ya están APROBADAS y en vivo — sesión Tundra, 2026-09-07 (~00:25)
 > Cierra por completo las 2 entradas de abajo. Google aprobó todo mucho más rápido de lo que avisa el
 > propio diálogo ("hasta 7 días") — quedó resuelto en menos de 30 minutos, probablemente porque son
