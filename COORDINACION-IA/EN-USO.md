@@ -39,6 +39,26 @@
 > mostró el rechazo real minutos/horas antes de que `submission-activity` actualizara la fila de
 > la submission en cuestión. Ante cualquier duda real (no solo un chequeo rutinario), revisar
 > `policy-center` también, no solo `submission-activity`.
+>
+> **⚠️ HALLAZGO PENDIENTE, no bloquea el reenvío pero SÍ hace falta cerrarlo:** auditando
+> `Contenido de la app > Permisos de ubicación` (`app-content/background-location-permissions`) —
+> la declaración formal donde Google exige explicar el uso de `ACCESS_BACKGROUND_LOCATION` — hay un
+> campo obligatorio de **video de YouTube** ("El video debe incluir la divulgación destacada que se
+> muestra a los usuarios antes de la solicitud en tiempo de ejecución") con un link ya cargado
+> (`https://youtu.be/eOhNzWFdWak`), pero la declaración entera está fechada **8 ago 2026** — UN MES
+> ANTES de que existiera el aviso previo (`lpDivulgacion`, implementado 8-sept). Ese video casi
+> seguro NO muestra el aviso nuevo (no podía, no existía). No pude confirmarlo en video porque
+> `youtube.com` está bloqueado para navegación de la extensión — Inty tendría que revisarlo él
+> mismo o confiar en la fecha como evidencia indirecta.
+>
+> Esto no bloquea la revisión actual en curso (Google prueba el comportamiento real de la app, que
+> ya está corregido), pero SÍ es un cabo suelto real: si en algún momento Google audita esta
+> declaración específica contra el video, va a encontrar el mismo hueco otra vez aunque el código
+> esté arreglado. **Hace falta:** grabar un video corto (≤30 seg) mostrando el aviso nuevo
+> apareciendo antes del permiso nativo, subirlo a YouTube, y reemplazar el link en ese campo. Esto
+> requiere una cuenta de YouTube/Google real y grabación de pantalla del dispositivo — no es algo
+> que esta sesión pueda hacer sola (sin acceso a cámara/dispositivo físico ni a subir video
+> públicamente sin autorización explícita). Pendiente de que Inty lo grabe o autorice cómo hacerlo.
 
 > ## ⚠️ CORRECCIÓN — el "RESUELTO" de abajo era prematuro: hubo un rechazo real (Missing Prominent Disclosure), fix ya implementado y en vivo — sesión Tundra, 2026-09-08
 > Corrige la entrada de abajo ("✅ RESUELTO por Google"). Esa entrada solo verificó Alpha + una
