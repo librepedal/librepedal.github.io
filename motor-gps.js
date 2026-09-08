@@ -4,6 +4,18 @@
    Corre un Foreground Service que entrega la ubicación AUNQUE LA PANTALLA ESTÉ
    APAGADA, y la inyecta en el mismo motor (ug) que usa la versión web.
    En la web no hace nada: disponible() devuelve false. */
+// DIAGNÓSTICO TEMPORAL (2026-09-08, sacar después de confirmar el bug del aviso de
+// ubicación en segundo plano — ver hilo con Inty): escribe a meta/diagBgLoc (público,
+// cualquier signedIn() puede escribir, ver firestore.rules) para poder ver desde afuera
+// qué pasó en el celular real sin necesitar acceso al dispositivo ni a su consola.
+function _diagBgLoc(extra){
+  try{
+    if(typeof db==='undefined') return;
+    const doc={ts:(typeof firebase!=='undefined'&&firebase.firestore)?firebase.firestore.FieldValue.serverTimestamp():Date.now(), ua:navigator.userAgent, capacitor:(typeof window.Capacitor!=='undefined')};
+    Object.assign(doc, extra);
+    db.collection('meta').doc('diagBgLoc').set({ultimo:doc}, {merge:true}).catch(function(){});
+  }catch(e){}
+}
 const lpBackgroundGeo = (function(){
   let watcherId=null, BG=null;
   function getBG(){ if(!BG){ BG=lpPlugin('BackgroundGeolocation'); } return BG; }
@@ -12,7 +24,8 @@ const lpBackgroundGeo = (function(){
     // onLocation es opcional: si no se pasa, alimenta el registro simple (ug).
     // La navegación turn-by-turn pasa su propio manejador para seguir guiando con la pantalla apagada.
     start: async function(onLocation){
-      const bg=getBG(); if(!bg || watcherId) return;
+      const bg=getBG();
+      if(!bg || watcherId){ _diagBgLoc({paso:'entrada', bg:!!bg, watcherIdYaActivo:!!watcherId, motivo:'abortó antes de llegar al aviso'}); return; }
       // Prominent Disclosure (política de Google Play para ACCESS_BACKGROUND_LOCATION):
       // hay que mostrar este aviso ANTES de pedir el permiso nativo, y solo la primera vez.
       // Único choke point: tanto el botón "Grabar un paseo" (toggleGPS) como la navegación
@@ -20,11 +33,19 @@ const lpBackgroundGeo = (function(){
       // IMPORTANTE: si el aviso falla por lo que sea, NO seguir a pedir el permiso igual
       // (eso repetiría exactamente el rechazo de Google) — mejor fallar cerrado y avisar
       // por consola para poder diagnosticarlo, que fallar abierto en silencio.
-      if(!localStorage.getItem('lp_disclosure_bg_ubicacion')){
+      const flagYaEstaba=!!localStorage.getItem('lp_disclosure_bg_ubicacion');
+      if(!flagYaEstaba){
         try{
           await lpDivulgacion('📍 Ubicación en segundo plano\nLibre Pedal necesita acceder a tu ubicación incluso con la pantalla apagada para seguir grabando tu ruta mientras pedaleas y avisarte de peligros en el camino.\nTu ubicación no se comparte con otros usuarios, salvo que actives "Compartir mi viaje en vivo" tú mismo desde Ajustes.');
           localStorage.setItem('lp_disclosure_bg_ubicacion','1');
-        }catch(e){ console.error('lpDivulgacion falló, no se inicia GPS en segundo plano sin aviso:', e); return; }
+          _diagBgLoc({paso:'aviso', flagYaEstaba:false, avisoMostrado:true});
+        }catch(e){
+          console.error('lpDivulgacion falló, no se inicia GPS en segundo plano sin aviso:', e);
+          _diagBgLoc({paso:'aviso', flagYaEstaba:false, avisoMostrado:false, error:String(e&&e.message||e)});
+          return;
+        }
+      } else {
+        _diagBgLoc({paso:'aviso', flagYaEstaba:true, avisoMostrado:'omitido (ya se había mostrado antes)'});
       }
       const cb = onLocation || function(location){ if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}}); };
       // Con Ahorro GPS activo pedimos fixes cada 25m en vez de 8m: bastante menos
@@ -42,7 +63,8 @@ const lpBackgroundGeo = (function(){
           if(error || !location) return;
           cb(location);
         });
-      }catch(e){}
+        _diagBgLoc({paso:'addWatcher', ok:true, watcherId:watcherId});
+      }catch(e){ _diagBgLoc({paso:'addWatcher', ok:false, error:String(e&&e.message||e)}); }
     },
     restart: async function(onLocation){ await this.stop(); await this.start(onLocation); },
     stop: async function(){ if(BG && watcherId){ try{ await BG.removeWatcher({id:watcherId}); }catch(e){} watcherId=null; } },
