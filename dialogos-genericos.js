@@ -17,6 +17,20 @@ function lpConfirmar(msg){
     modal.classList.add('on');
   });
 }
+// Aviso previo (Prominent Disclosure) exigido por Google Play antes de pedir el permiso
+// de ubicación en segundo plano: un solo botón de "entendido", sin opción de cancelar
+// desde acá (el usuario igual puede negar el permiso nativo del sistema justo después).
+function lpDivulgacion(msg){
+  return new Promise(function(resolve){
+    const modal=document.getElementById('lpDialog');
+    document.getElementById('lpDialogMsg').innerText=msg;
+    const inp=document.getElementById('lpDialogInput'); inp.style.display='none';
+    const btnOk=document.getElementById('lpDialogBtnOk'), btnCancel=document.getElementById('lpDialogBtnCancel');
+    btnCancel.style.display='none'; btnOk.innerText='Entiendo, continuar';
+    btnOk.onclick=function(){ _lpDialogCerrar(); resolve(true); };
+    modal.classList.add('on');
+  });
+}
 function lpPedirTexto(msg, placeholder){
   return new Promise(function(resolve){
     const modal=document.getElementById('lpDialog');

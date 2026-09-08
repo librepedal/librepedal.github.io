@@ -13,6 +13,16 @@ const lpBackgroundGeo = (function(){
     // La navegación turn-by-turn pasa su propio manejador para seguir guiando con la pantalla apagada.
     start: async function(onLocation){
       const bg=getBG(); if(!bg || watcherId) return;
+      // Prominent Disclosure (política de Google Play para ACCESS_BACKGROUND_LOCATION):
+      // hay que mostrar este aviso ANTES de pedir el permiso nativo, y solo la primera vez.
+      // Único choke point: tanto el botón "Grabar un paseo" (toggleGPS) como la navegación
+      // turn-by-turn pasan por acá, así que gatearlo aquí cubre ambos caminos.
+      try{
+        if(!localStorage.getItem('lp_disclosure_bg_ubicacion')){
+          await lpDivulgacion('📍 Ubicación en segundo plano\nLibre Pedal necesita acceder a tu ubicación incluso con la pantalla apagada para seguir grabando tu ruta mientras pedaleas y avisarte de peligros en el camino.\nTu ubicación no se comparte con otros usuarios, salvo que actives "Compartir mi viaje en vivo" tú mismo desde Ajustes.');
+          localStorage.setItem('lp_disclosure_bg_ubicacion','1');
+        }
+      }catch(e){}
       const cb = onLocation || function(location){ if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}}); };
       // Con Ahorro GPS activo pedimos fixes cada 25m en vez de 8m: bastante menos
       // preciso en curvas cerradas, pero muchas menos lecturas de GPS = más batería
