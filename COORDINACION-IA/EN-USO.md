@@ -1,5 +1,45 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔁 REENVIADO a revisión con el fix — submission #14 confirmada rechazada, AABs nuevos subidos — sesión Tundra, 2026-09-08 (~14:50 hora Chile / 17:50 UTC)
+> Continúa la entrada de abajo. Confirmación final de que submission #14 SÍ fue rechazada (no
+> solo "seguía en revisión" como mostraba por un buen rato `submission-activity`): Inty compartió
+> el correo real de Google ("Action Required... Missing Prominent Disclosure", recibido ~00:01 8-
+> sept) y `policy-center` mostró la tarjeta "Actualización rechazada — Requisito de aviso
+> destacado y consentimiento — Se aplicó el 8 sept", con evidencia (capturas del flujo de la app).
+> Mismo motivo que ya se había diagnosticado y arreglado (ver entrada de abajo), solo que la
+> revisión de Google corrió ANTES de que el fix quedara en vivo (rechazo ~00:01-00:43, fix
+> desplegado ~02:04, ambos 8-sept hora Chile) — por eso el submission ya rechazado no lo iba a
+> arreglar solo con tener el JS corregido en producción; hacía falta un reenvío nuevo.
+>
+> **Acción tomada (con el fix ya confirmado en vivo):**
+> 1. Se generaron 2 AABs nuevos vía `build-aab-release.yml` (versionCode por epoch-minutos, cada
+>    track necesita el suyo): `29814065 (8.788)` para Producción, `29814831 (8.788)` para Prueba
+>    Abierta.
+> 2. Se subieron directo (sin pasar por "Agregar desde la biblioteca") a un borrador nuevo en cada
+>    track — Producción con lanzamiento completo (11 países, Guatemala afuera), Prueba Abierta con
+>    Costa Rica + R. Dominicana agregadas y el segmento reanudado (mismo contenido que ya estaba
+>    configurado, solo builds nuevos).
+> 3. Se envió con "Enviar 2 cambios a revisión" — Play Console avisó que esto **cancela y reinicia**
+>    la revisión en curso desde el 7-sept (aceptado a propósito: esa revisión ya estaba rechazada de
+>    fondo, no tenía sentido dejarla "viva").
+> 4. Confirmado en pantalla: ambos cambios quedaron en "Cambios en la etapa de revisión", pasando
+>    primero por las verificaciones rápidas automáticas de Google (mismas ~12-14 min que
+>    probablemente son las que generan la tarjeta de Policy Center) antes de pasar a revisión
+>    completa.
+>
+> **Pendiente de esta ronda:** confirmar que la nueva submission (aparecerá como #15 o similar en
+> `/publishing/submission-activity`, con un ID nuevo) resuelve OK esta vez — el fix real (aviso
+> previo antes de pedir `ACCESS_BACKGROUND_LOCATION`, ver `dialogos-genericos.js`/`motor-gps.js` en
+> la entrada de abajo) ya estaba en vivo antes de este reenvío, así que debería pasar. Tarea
+> programada `librepedal-play-review-check` sigue activa (cada 1h, a pedido de Inty) chequeando el
+> log real de Actividad de envío, no el resumen del track.
+>
+> **Lección para la próxima vez:** el "Estado con respecto a las políticas" (`policy-center`) y la
+> tabla de "Actividad de envío" (`submission-activity`) pueden desincronizarse — `policy-center`
+> mostró el rechazo real minutos/horas antes de que `submission-activity` actualizara la fila de
+> la submission en cuestión. Ante cualquier duda real (no solo un chequeo rutinario), revisar
+> `policy-center` también, no solo `submission-activity`.
+
 > ## ⚠️ CORRECCIÓN — el "RESUELTO" de abajo era prematuro: hubo un rechazo real (Missing Prominent Disclosure), fix ya implementado y en vivo — sesión Tundra, 2026-09-08
 > Corrige la entrada de abajo ("✅ RESUELTO por Google"). Esa entrada solo verificó Alpha + una
 > revisión de Prueba Abierta anterior (submission #12) — cerró bien. Pero **hubo una ronda más**:
