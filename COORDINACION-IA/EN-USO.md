@@ -1,5 +1,26 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ CERRADO — fix del Prominent Disclosure confirmado en el celular real de Inty, evidencia actualizada — sesión Tundra, 2026-09-08 noche
+> Cierra por completo el resto de las entradas de esta ronda (todas abajo, misma sesión).
+>
+> **Confirmación real, no solo teórica.** Inty probó "Grabar un paseo" en su Galaxy real y el
+> aviso apareció correctamente. Además, la instrumentación de diagnóstico temporal (ver entrada
+> de abajo) capturó la secuencia completa desde su dispositivo real vía `meta/diagBgLoc`:
+> `aviso mostrado (avisoMostrado:true) → permiso pedido → watcher arrancado (ok:true)`, con
+> `capacitor:true` y user-agent de Android 16 real. La instrumentación ya se sacó del código
+> (commit `c0e35a7`) — cumplió su propósito.
+>
+> **Evidencia de Play Console actualizada también:** el video de YouTube que pedía la
+> declaración `Contenido de la app > Permisos de ubicación` (desactualizado desde 8-ago, un mes
+> antes de que existiera el aviso — ver hallazgo de más abajo) se reemplazó por
+> `https://youtube.com/shorts/J3UEmihvg9w`, grabado por Inty mostrando el aviso real en su
+> teléfono. Guardado y confirmado ("Se guardaron los cambios").
+>
+> **Estado real al cerrar esta ronda:** el código está arreglado y verificado en dispositivo
+> real; la declaración de Play Console está al día. Sigue pendiente únicamente que Google
+> apruebe la submission #15 (en revisión desde 8-sept ~15:22 hora Chile) — la tarea programada
+> `librepedal-play-review-check` (cada 1h) sigue activa para avisar apenas resuelva.
+
 > ## 🔁 REENVIADO a revisión con el fix — submission #14 confirmada rechazada, AABs nuevos subidos — sesión Tundra, 2026-09-08 (~14:50 hora Chile / 17:50 UTC)
 > Continúa la entrada de abajo. Confirmación final de que submission #14 SÍ fue rechazada (no
 > solo "seguía en revisión" como mostraba por un buen rato `submission-activity`): Inty compartió
