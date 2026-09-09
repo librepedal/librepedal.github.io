@@ -33,6 +33,17 @@ const PROJECT = 'librepedal-cb983';
 const ISS = 'https://securetoken.google.com/' + PROJECT;
 const CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 const AUD = 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit';
+// La cuenta admin real (ver isAdmin() en firestore.rules: uid == cuDeEmail(ADMIN_EMAIL)).
+const ADMIN_EMAIL = 'intyrivera.a@gmail.com';
+
+// Comparación de largo constante: no filtrar el código a fuerza de medir tiempos.
+function codigosIguales(a, b) {
+  let iguales = a.length === b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if (a.charCodeAt(i) !== b.charCodeAt(i)) iguales = false;
+  }
+  return iguales;
+}
 
 function cuDeEmail(email) {
   return String(email).replace(/[^a-zA-Z0-9]/g, '_');
@@ -104,13 +115,23 @@ export default {
       const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
       if (!codigo || !email) return json({ error: 'falta el código o el correo' }, 400);
 
-      // Comparación de largo constante: no filtrar el código a fuerza de medir tiempos.
-      const esperado = String(env.CODIGO_TESTER);
-      let iguales = codigo.length === esperado.length;
-      for (let i = 0; i < Math.max(codigo.length, esperado.length); i++) {
-        if (codigo.charCodeAt(i) !== esperado.charCodeAt(i)) iguales = false;
+      // Seguridad 2026-09-09: CODIGO_TESTER es UNO SOLO compartido a todo el grupo de
+      // testers -- probarlo con el correo de OTRO daba un token válido como esa persona,
+      // sin más prueba que saber su correo público. Para la cuenta admin exacta (la única
+      // con isAdmin()===true en firestore.rules), eso significaba compromiso total del
+      // panel admin sabiendo solo el código público del grupo + el correo de Inty. Fix:
+      // para ese correo exacto se exige un código DISTINTO (CODIGO_ADMIN, solo lo tiene
+      // Inty) -- el código de tester normal ya NO sirve para entrar como admin. El resto
+      // de los testers no cambia en NADA: mismo código compartido, mismo flujo de
+      // siempre, cero impacto. La suplantación entre testers normales (no-admin) sigue
+      // siendo un riesgo menor pendiente -- requiere código por persona, cambio más
+      // grande que necesita coordinación para redistribuir códigos individuales.
+      const esAdmin = email === ADMIN_EMAIL;
+      if (esAdmin && !env.CODIGO_ADMIN) {
+        return json({ error: 'el ingreso de administrador no está habilitado en este deploy' }, 403);
       }
-      if (!iguales) return json({ error: 'código incorrecto' }, 401);
+      const esperado = String(esAdmin ? env.CODIGO_ADMIN : env.CODIGO_TESTER);
+      if (!codigosIguales(codigo, esperado)) return json({ error: 'código incorrecto' }, 401);
 
       const permitidos = String(env.TESTERS_PERMITIDOS).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       if (permitidos.indexOf(email) === -1) {
