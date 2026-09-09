@@ -790,6 +790,11 @@ export default {
     // Workers AI. La app la usa cuando hay señal (con fallback a la voz nativa offline). =====
     const ttsText = url.searchParams.get("tts") || (body && body.tts);
     if (ttsText) {
+      // Auditoría 2026-09-09: a diferencia de aztts/eltts/gtts/edgetts, esta ruta (TTS
+      // gratis de Workers AI) no tenía freno de tasa -- sin costo por request individual,
+      // pero sin límite se podía scriptear sin parar y saturar la cuota/latencia real de
+      // Workers AI para gente real usando la app.
+      if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
       // MeloTTS de Workers AI: el idioma va en MAYÚSCULA (lang:"ES"). Ojo:
       //  - "es" (minúscula) => 8002 Invalid input.  - sin lang => fonética inglesa (suena a gringo).
       //  - "ES" a veces da un 8002/3043 transitorio => reintentamos, y como último recurso
@@ -810,6 +815,11 @@ export default {
 
     let messages, maxTokens, sys = "";
     if (body && body.mensaje) {
+      // Auditoría 2026-09-09: el chat (la función principal del worker) tampoco tenía
+      // freno de tasa, a diferencia de las voces pagas. Sin esto, un script podía llamar
+      // al modelo sin límite -- gratis por request pero no gratis en agregado ni en
+      // latencia real para gente usando la app de verdad.
+      if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
       sys = personalidad(body.usuario, body.hospedajes, body.contexto);
       messages = [{ role: "system", content: sys }];
       const hist = Array.isArray(body.historial) ? body.historial.slice(-12) : [];
