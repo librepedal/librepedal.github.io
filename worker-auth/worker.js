@@ -49,6 +49,31 @@ function cuDeEmail(email) {
   return String(email).replace(/[^a-zA-Z0-9]/g, '_');
 }
 
+// Límite por IP (2026-09-09): sin esto, alguien con un código filtrado podía scriptear
+// miles de intentos por minuto contra distintos correos (o simplemente saturar el
+// endpoint). 15 intentos / 10 min por IP es de sobra para una persona real (incluso
+// tipeando mal el código un par de veces) y frena en seco cualquier automatización.
+// FALLA ABIERTA a propósito: si KV falla por lo que sea, se deja pasar el intento en vez
+// de romper el login de gente real -- un límite que a veces no limita es aceptable, un
+// login que a veces no deja entrar no lo es.
+async function bajoLimite(env, ip) {
+  if (!env.RATE_LIMIT_AUTH) return true;
+  try {
+    const VENTANA_MS = 10 * 60 * 1000;
+    const MAX = 15;
+    const key = 'rl:' + ip;
+    const ahora = Date.now();
+    const raw = await env.RATE_LIMIT_AUTH.get(key);
+    let data = raw ? JSON.parse(raw) : null;
+    if (!data || ahora - data.inicio > VENTANA_MS) data = { inicio: ahora, cuenta: 0 };
+    data.cuenta++;
+    await env.RATE_LIMIT_AUTH.put(key, JSON.stringify(data), { expirationTtl: 620 });
+    return data.cuenta <= MAX;
+  } catch (e) {
+    return true; // KV caído: no bloquear logins reales por eso.
+  }
+}
+
 // Cache de 1h de las llaves públicas de Google (JWKS) — no hay que pedirlas en cada request.
 let _certs = { at: 0, data: null };
 async function googleCerts() {
@@ -76,16 +101,28 @@ async function verificarIdToken(idToken) {
   return payload;
 }
 
+// Orígenes reales de la app (mismo patrón ya usado en worker-ia): CORS no frena un
+// script/curl (eso lo hace el límite por IP de arriba), pero sí evita que este Worker se
+// pueda llamar desde JS de una página ajena usando la sesión de un visitante inocente.
+const ORIGENES_OK = ['https://librepedal.cl', 'https://www.librepedal.cl', 'https://librepedal-web.pages.dev'];
+
 export default {
   async fetch(request, env) {
+    const origenReq = request.headers.get('Origin') || '';
     const cors = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': ORIGENES_OK.includes(origenReq) ? origenReq : ORIGENES_OK[0],
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Vary': 'Origin'
     };
     const json = (obj, status) => new Response(JSON.stringify(obj), { status: status || 200, headers: { ...cors, 'Content-Type': 'application/json' } });
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     if (request.method !== 'POST') return json({ error: 'usa POST' }, 405);
+
+    const ip = request.headers.get('CF-Connecting-IP') || 'desconocida';
+    if (!(await bajoLimite(env, ip))) {
+      return json({ error: 'demasiados intentos, esperá unos minutos' }, 429);
+    }
 
     let body = null;
     try { body = await request.json(); } catch (e) {}
