@@ -49,29 +49,58 @@ function cuDeEmail(email) {
   return String(email).replace(/[^a-zA-Z0-9]/g, '_');
 }
 
-// Límite por IP (2026-09-09): sin esto, alguien con un código filtrado podía scriptear
-// miles de intentos por minuto contra distintos correos (o simplemente saturar el
-// endpoint). 15 intentos / 10 min por IP es de sobra para una persona real (incluso
-// tipeando mal el código un par de veces) y frena en seco cualquier automatización.
-// FALLA ABIERTA a propósito: si KV falla por lo que sea, se deja pasar el intento en vez
-// de romper el login de gente real -- un límite que a veces no limita es aceptable, un
-// login que a veces no deja entrar no lo es.
-async function bajoLimite(env, ip) {
-  if (!env.RATE_LIMIT_AUTH) return true;
+// Contador+ventana sobre KV. FALLA ABIERTA a propósito en las dos funciones: si KV falla
+// por lo que sea, se deja pasar el intento en vez de romper el login de gente real -- un
+// límite que a veces no limita es aceptable, un login que a veces no deja entrar no lo es.
+async function leerContador(env, clave) {
+  if (!env.RATE_LIMIT_AUTH) return 0;
   try {
-    const VENTANA_MS = 10 * 60 * 1000;
-    const MAX = 15;
-    const key = 'rl:' + ip;
-    const ahora = Date.now();
-    const raw = await env.RATE_LIMIT_AUTH.get(key);
-    let data = raw ? JSON.parse(raw) : null;
-    if (!data || ahora - data.inicio > VENTANA_MS) data = { inicio: ahora, cuenta: 0 };
-    data.cuenta++;
-    await env.RATE_LIMIT_AUTH.put(key, JSON.stringify(data), { expirationTtl: 620 });
-    return data.cuenta <= MAX;
+    const raw = await env.RATE_LIMIT_AUTH.get(clave);
+    if (!raw) return 0;
+    const data = JSON.parse(raw);
+    if (Date.now() - data.inicio > VENTANA_LIMITE_MS) return 0;
+    return data.cuenta;
   } catch (e) {
-    return true; // KV caído: no bloquear logins reales por eso.
+    return 0;
   }
+}
+async function incrementarContador(env, clave) {
+  if (!env.RATE_LIMIT_AUTH) return;
+  try {
+    const ahora = Date.now();
+    const raw = await env.RATE_LIMIT_AUTH.get(clave);
+    let data = raw ? JSON.parse(raw) : null;
+    if (!data || ahora - data.inicio > VENTANA_LIMITE_MS) data = { inicio: ahora, cuenta: 0 };
+    data.cuenta++;
+    await env.RATE_LIMIT_AUTH.put(clave, JSON.stringify(data), { expirationTtl: Math.ceil(VENTANA_LIMITE_MS / 1000) + 20 });
+  } catch (e) { /* KV caído: no romper el login por esto */ }
+}
+
+const VENTANA_LIMITE_MS = 10 * 60 * 1000; // 10 minutos
+const MAX_POR_IP = 5;    // por dirección de origen -- frena un script/una IP insistiendo.
+const MAX_POR_CORREO = 5; // por correo objetivo -- frena insistir contra UNA persona aunque
+                           // el ataque venga rotando de IP en IP (el límite por IP solo no alcanza para eso).
+
+// Sin esto, alguien con un código filtrado podía scriptear miles de intentos por minuto
+// contra distintos correos, o insistir sin parar contra UNA persona puntual (ver
+// MAX_POR_CORREO). Pedido explícito de Inty (2026-09-09): "que a una persona no la puedan
+// intentar tantas veces". Cuenta TODO intento (éxito o no) -- protege contra volumen, no
+// distingue si acertó.
+async function bajoLimitePorIP(env, ip) {
+  const clave = 'rl:ip:' + ip;
+  const ok = (await leerContador(env, clave)) < MAX_POR_IP;
+  await incrementarContador(env, clave);
+  return ok;
+}
+// Solo LEE el contador de fallos de ese correo (no incrementa) -- se usa como gate antes
+// de evaluar el código. El incremento real pasa en registrarIntentoFallido(), y solo ante
+// un código incorrecto: un éxito (aunque venga después de un par de intentos fallidos) no
+// debe dejar a la cuenta bloqueada.
+async function bajoLimitePorCorreo(env, email) {
+  return (await leerContador(env, 'rl:email:' + email)) < MAX_POR_CORREO;
+}
+async function registrarIntentoFallido(env, email) {
+  await incrementarContador(env, 'rl:email:' + email);
 }
 
 // Cache de 1h de las llaves públicas de Google (JWKS) — no hay que pedirlas en cada request.
@@ -120,7 +149,7 @@ export default {
     if (request.method !== 'POST') return json({ error: 'usa POST' }, 405);
 
     const ip = request.headers.get('CF-Connecting-IP') || 'desconocida';
-    if (!(await bajoLimite(env, ip))) {
+    if (!(await bajoLimitePorIP(env, ip))) {
       return json({ error: 'demasiados intentos, esperá unos minutos' }, 429);
     }
 
@@ -167,8 +196,21 @@ export default {
       if (esAdmin && !env.CODIGO_ADMIN) {
         return json({ error: 'el ingreso de administrador no está habilitado en este deploy' }, 403);
       }
+
+      // Límite por correo (2026-09-09): además del límite por IP de arriba, esto frena
+      // insistir contra UN correo puntual aunque el ataque venga rotando de IP en IP --
+      // el límite por IP solo no alcanza para eso. Se chequea ANTES de comparar el código
+      // (ni se evalúa el intento) y solo cuenta los que SALEN MAL: alguien que tipeó mal
+      // el código un par de veces antes de acertar no queda penalizado.
+      if (!(await bajoLimitePorCorreo(env, email))) {
+        return json({ error: 'demasiados intentos con ese correo, esperá unos minutos' }, 429);
+      }
+
       const esperado = String(esAdmin ? env.CODIGO_ADMIN : env.CODIGO_TESTER);
-      if (!codigosIguales(codigo, esperado)) return json({ error: 'código incorrecto' }, 401);
+      if (!codigosIguales(codigo, esperado)) {
+        await registrarIntentoFallido(env, email);
+        return json({ error: 'código incorrecto' }, 401);
+      }
 
       const permitidos = String(env.TESTERS_PERMITIDOS).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       if (permitidos.indexOf(email) === -1) {
