@@ -36,6 +36,8 @@ demo-voces/
 voces-el/
 MI-SENTRY.txt
 MI-*.txt
+MI-*.json
+MI-GOOGLE-PLAY-BILLING.json
 señuelos/
 .deploy-clean/
 
