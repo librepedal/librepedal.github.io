@@ -13,6 +13,19 @@ const lpBackgroundGeo = (function(){
     // La navegación turn-by-turn pasa su propio manejador para seguir guiando con la pantalla apagada.
     start: async function(onLocation){
       const bg=getBG(); if(!bg || watcherId) return;
+      // Prominent Disclosure (política de Google Play para ACCESS_BACKGROUND_LOCATION):
+      // hay que mostrar este aviso ANTES de pedir el permiso nativo, y solo la primera vez.
+      // Único choke point: tanto el botón "Grabar un paseo" (toggleGPS) como la navegación
+      // turn-by-turn pasan por acá, así que gatearlo aquí cubre ambos caminos.
+      // IMPORTANTE: si el aviso falla por lo que sea, NO seguir a pedir el permiso igual
+      // (eso repetiría exactamente el rechazo de Google) — mejor fallar cerrado y avisar
+      // por consola para poder diagnosticarlo, que fallar abierto en silencio.
+      if(!localStorage.getItem('lp_disclosure_bg_ubicacion')){
+        try{
+          await lpDivulgacion('📍 Ubicación en segundo plano\nLibre Pedal necesita acceder a tu ubicación incluso con la pantalla apagada para seguir grabando tu ruta mientras pedaleas y avisarte de peligros en el camino.\nTu ubicación no se comparte con otros usuarios, salvo que actives "Compartir mi viaje en vivo" tú mismo desde Ajustes.');
+          localStorage.setItem('lp_disclosure_bg_ubicacion','1');
+        }catch(e){ console.error('lpDivulgacion falló, no se inicia GPS en segundo plano sin aviso:', e); return; }
+      }
       const cb = onLocation || function(location){ if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}}); };
       // Con Ahorro GPS activo pedimos fixes cada 25m en vez de 8m: bastante menos
       // preciso en curvas cerradas, pero muchas menos lecturas de GPS = más batería
@@ -361,7 +374,12 @@ function ug(p){
   // promedia y cancela justo ese ruido) muestre 0 = estás parado de verdad. Se
   // agrega sp>0 como condición: solo suma kilometraje cuando la propia app ya
   // confirmó que hay movimiento real, no solo que un par de puntos lo sugieren.
-  if(us.la && sp>0 && _saltoPosOK){ us.di+=moved; _kmEsteViaje+=moved; _sumarKmModo(moved); _sumarKmMantencion(moved); us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  // 2026-09-06: el km de mantención va a UN SOLO odómetro según el modo -- antes
+  // _sumarKmMantencion() (desgaste de CADENA de bici) corría para cualquier actividad
+  // sin filtrar, así que manejar en modo Motorizado envejecía la cadena de tu bici.
+  // Ahora Motorizado sube a su propio contador (mantencion-vehiculo.js) y el resto
+  // sigue subiendo al de la bici, nunca los dos a la vez.
+  if(us.la && sp>0 && _saltoPosOK){ us.di+=moved; _kmEsteViaje+=moved; _sumarKmModo(moved); if(typeof actividadTipo!=='undefined' && actividadTipo==='moto'){ if(typeof _sumarKmVehiculo==='function') _sumarKmVehiculo(moved); } else { _sumarKmMantencion(moved); } us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);

@@ -267,7 +267,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
       <button class="nav-end-btn" id="btnPausaViaje" onclick="togglePausaViaje()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-pause"></i> Pausar</button>
       <button class="nav-end-btn" onclick="finishTrip()" style="flex:1"><i class="fas fa-circle-check"></i> Terminar</button>
     </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
+    <div class="nav-lap-row">
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="marcarVuelta()"><i class="fas fa-flag-checkered"></i> Vuelta</button>
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="verVueltas()"><i class="fas fa-clipboard"></i> Ver vueltas</button>
       <button class="ab sec" style="margin:0;flex:1;padding:8px" onclick="reiniciarCronometro()"><i class="fas fa-arrows-rotate"></i> Reiniciar</button>
@@ -475,6 +475,14 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <button class="ab sec" style="margin:0" onclick="conectarPulsometro()"><i class="fas fa-heart"></i> Conectar pulsómetro</button>
   <button class="ab sec" style="margin:0" onclick="conectarPotenciometro()"><i class="fas fa-bolt"></i> Conectar potenciómetro</button>
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()"><i class="fas fa-plug"></i> Desconectar</button>
+</div>
+<h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-star"></i> Ayúdanos a crecer</h4>
+<p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Contanos qué tal te va con la app — tu opinión nos ayuda a mejorarla.</p>
+<div class="resena-stars" id="resenaStars"></div>
+<textarea id="resenaComentario" rows="2" placeholder="Comentario (opcional)..." maxlength="500"></textarea>
+<div class="quick-links">
+  <button class="ab sec" style="margin:0" onclick="enviarResenaApp()"><i class="fas fa-paper-plane"></i> Enviar</button>
+  <a href="https://play.google.com/store/apps/details?id=cl.librepedal.app" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fab fa-google-play"></i> Calificar en Play Store</a>
 </div>
 <div class="quick-links" style="margin-top:16px">
   <a href="terminos.html" target="_blank" class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fas fa-file-lines"></i> Términos y Condiciones</a>
@@ -747,6 +755,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </section>
 
 <section id="v-mac" class="view">
+<!-- 2026-09-06: Taller se bifurca según actividadTipo (ver _renderTaller() en
+     pistero-tipo-actividad.js, se llama desde elegirActividad() y al arrancar). El
+     triage de bici (rueda pinchada, cadena, etc.) no aplica a un auto/moto, así que
+     Motorizado ve una pantalla completamente distinta, no una mezcla. -->
+<div id="tallerBici">
 <div class="section-info"><h4><i class="fas fa-wrench"></i> Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
 <!-- 2026-08-23: Mantención preventiva — pedido de Inty tras "Arregla mi bici" en
      Pistero: no solo reactivo (síntoma → arreglo), también proactivo por km, como
@@ -819,6 +832,18 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="quick-links" style="margin-top:14px">
   <a class="ab sec taller-cercano-link" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Buscar taller cercano</a>
   <a class="ab sec" style="margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.parktool.com/es/blog/repair-help" target="_blank"><i class="fas fa-book-open"></i> Guías Park Tool (Calvin Jones)</a>
+</div>
+</div>
+<div id="tallerVehiculo" style="display:none">
+<div class="section-info"><h4><i class="fas fa-car-side"></i> Taller</h4><p>Tu vehículo, al día — mantención por kilometraje y documentos sin vencer.</p></div>
+<details class="soc-group" id="vehGroup" open>
+  <summary><span class="soc-ic"><i class="fas fa-gauge-high"></i> </span><span><b>Mantención del vehículo</b><small id="vehResumen">Cargando…</small></span></summary>
+  <div style="margin-top:9px" id="vehLista"></div>
+</details>
+<details class="soc-group" id="docGroup" open>
+  <summary><span class="soc-ic"><i class="fas fa-file-shield"></i> </span><span><b>Documentación al día</b><small id="docResumen">Cargando…</small></span></summary>
+  <div style="margin-top:9px" id="docLista"></div>
+</details>
 </div>
 <!-- Elementos legacy OCULTOS: el arranque llama rm(MG) y loadRepairTips() y necesitan estos targets; sin ellos crashea el init. Quedan invisibles: ya no mostramos tips improvisados. -->
 <input type="text" id="bm" style="display:none"><div id="ml" style="display:none"></div><div id="repair-tips" style="display:none"></div>
@@ -1189,6 +1214,9 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 <script src="app-estado-global.js"></script>
 <script>
 </script>
+<script src="resena-app.js"></script>
+<script>
+</script>
 <script src="pistero-tipo-actividad.js"></script>
 <script>
 </script>
@@ -1252,6 +1280,9 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 <script>
 </script>
 <script src="mantencion-preventiva.js"></script>
+<script>
+</script>
+<script src="mantencion-vehiculo.js"></script>
 <script>
 </script>
 <script src="gamificacion-darma.js"></script>

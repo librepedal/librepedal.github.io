@@ -1,3 +1,21 @@
+# Cabeceras de seguridad (preparadas 2026-08-18 en auditoría, aplicadas 2026-09-09 tras
+# autorización de Inty). HTTPS ya forzado por Cloudflare, la app no se embebe en iframe
+# (Capacitor WebView carga la URL directo, X-Frame-Options no lo afecta), geolocalización
+# es la única que la app usa por diseño y queda permitida. CSP bloqueante queda pendiente
+# aparte -- ver CLOUDFLARE-HEADERS-SEGURIDAD-LIBREPEDAL.txt en el repo fábrica, requiere
+# probar en modo solo-reporte primero (la app carga muchos orígenes externos).
+# OJO 2026-09-09: el borrador original de agosto traía `microphone=()` -- se corrigió a
+# `microphone=(self)` porque la app SÍ usa getUserMedia() de verdad (comandos de voz /
+# Pistero, ver motor-navegacion.js y pistero-chat-ia.js); con `()` se habría roto la voz
+# para todo el mundo, incluido cualquiera que probara la app durante una revisión.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(self), microphone=(self), camera=(), payment=()
+  Cross-Origin-Opener-Policy: same-origin
+
 /sw.js
   Cache-Control: no-cache
 

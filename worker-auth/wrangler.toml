@@ -1,3 +1,7 @@
 name = "librepedal-auth"
 main = "worker.js"
 compatibility_date = "2024-11-01"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_AUTH"
+id = "87af0c17403445f78737975fd0b5b7c3"

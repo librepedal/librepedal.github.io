@@ -82,7 +82,15 @@ async function verSegmentos(){
   try{
     const snap=await db.collection('segmentos').orderBy('ts','desc').limit(50).get();
     if(snap.empty){ c.innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem">Aún no hay segmentos. Crea uno desde Historial de rutas → elige una ruta → <i class="fas fa-flag-checkered"></i> Crear segmento.</p>'; return; }
-    c.innerHTML=_btnVolverModal()+snap.docs.map(function(d){ const s=d.data(); const nom=escapeHTML(s.nombre||'').replace(/'/g,"\\'"); return '<div class="novedad-card"><h4>'+escapeHTML(s.nombre||'')+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" onclick="verTablaLideresSegmento(\''+d.id+'\',\''+nom+'\')"><i class="fas fa-trophy"></i> Ver tabla de líderes</button></div>'; }).join('');
+    // Auditoría 2026-09-09 (XSS crítico): antes se armaba `nom` con escapeHTML(...).replace(/'/g,"\\'")
+    // e iba directo dentro de onclick="...('...','ESO')" -- pero escapeHTML YA convirtió las
+    // comillas en &#39;, así que el .replace no encontraba nada (dead code). El navegador
+    // decodifica esas entidades ANTES de correr el JS del onclick, así que un nombre de
+    // segmento con una comilla rompía el string y ejecutaba JS arbitrario -- alcanzable
+    // desde la UI normal, sin bypasear nada. Fix: el nombre ya NO se interpola en el
+    // onclick; va en un atributo data-nombre (contexto HTML normal, un solo nivel de
+    // parseo) y se lee desde ahí con this.dataset.nombre al momento del click.
+    c.innerHTML=_btnVolverModal()+snap.docs.map(function(d){ const s=d.data(); const nomEsc=escapeHTML(s.nombre||''); return '<div class="novedad-card"><h4>'+nomEsc+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" data-nombre="'+nomEsc+'" onclick="verTablaLideresSegmento(\''+d.id+'\',this.dataset.nombre)"><i class="fas fa-trophy"></i> Ver tabla de líderes</button></div>'; }).join('');
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar los segmentos.</p>'; }
 }
 async function verTablaLideresSegmento(segmentoId, nombre){

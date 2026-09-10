@@ -18,11 +18,38 @@ async function _enviarLinkMagico(email){
   try{ localStorage.setItem(_EMAIL_LINK_KEY, email); }catch(e){}
 }
 
+// Auditoría 2026-09-09: _lpDbg queda SIEMPRE prendido (sin gate de entorno) y escribe a
+// localStorage sin expirar -- útil para diagnosticar logins sin interrogar a nadie, pero
+// varios call sites le pasaban la respuesta CRUDA del Worker (incluido el `token` real de
+// Firebase, reusable por 1h vía signInWithCustomToken) o el dump completo de
+// getRedirectResult() (puede traer el accessToken de OAuth de Google). Cualquiera que
+// leyera ese localStorage (XSS, un script de terceros comprometido de los que carga
+// index.html, o acceso al dispositivo) se llevaba una sesión ajena lista para usar.
+// _lpRedactar() recorre lo que se le pasa y tapa cualquier campo con pinta de credencial
+// ANTES de guardarlo -- protege los ~21 call sites existentes y los que se agreguen
+// después, sin tener que acordarse de sanitizar cada uno a mano.
+var _LP_CLAVES_SENSIBLES = /token|credential|secret|apikey|api_key|password|contrasena/i;
+function _lpRedactar(valor, profundidad){
+  profundidad = profundidad || 0;
+  if(profundidad > 6 || valor == null) return valor;
+  if(typeof valor === 'string') return valor.length > 40 ? valor.slice(0,8)+'…['+valor.length+']' : valor;
+  if(Array.isArray(valor)) return valor.map(function(v){ return _lpRedactar(v, profundidad+1); });
+  if(typeof valor === 'object'){
+    var out={};
+    for(var k in valor){
+      if(!Object.prototype.hasOwnProperty.call(valor,k)) continue;
+      out[k] = _LP_CLAVES_SENSIBLES.test(k) ? '[redactado]' : _lpRedactar(valor[k], profundidad+1);
+    }
+    return out;
+  }
+  return valor;
+}
 // Canjea la sesión Firebase YA verificada (por el link) por un token uid==cu del Worker.
 function _lpDbg(ev,extra){
   try{
     var arr=JSON.parse(localStorage.getItem('lpFullTrace')||'[]');
-    arr.push(Object.assign({t:Date.now(),ev:ev},extra||{}));
+    arr.push(Object.assign({t:Date.now(),ev:ev}, _lpRedactar(extra||{})));
+    if(arr.length>200) arr=arr.slice(-200); // tope: que no crezca sin fin en un dispositivo que queda prendido
     localStorage.setItem('lpFullTrace', JSON.stringify(arr));
   }catch(e){}
 }

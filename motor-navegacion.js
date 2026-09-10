@@ -329,6 +329,12 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   _subUnaVez('reportes', subscribeToReportes);
   navGuardado=false;
   document.getElementById('nav-screen').classList.add('active');
+  // Modo conducción (pedido de Inty): si vas en "Motorizado" la pantalla de
+  // navegación se agranda y se simplifica sola — texto/botones más grandes
+  // (criterio real: guías de Google "Design for Driving", targets táctiles
+  // grandes, texto legible de un vistazo) y se esconde la fila de Vuelta/Ver
+  // vueltas/Reiniciar (una función de running/ciclismo que no aplica manejando).
+  document.getElementById('nav-screen').classList.toggle('modo-auto', actividadTipo==='moto');
   _actualizarBtnManosLibres();
   if(navMap) navMap.remove();
   navMap=L.map('nav-map').setView([startLat,startLon],15);
@@ -801,7 +807,7 @@ function cv(id, _esVolver){
   if(id==='gui')       _subUnaVez('comentarios', subscribeToComments);
   if(id==='map')       _subUnaVez('reportes', subscribeToReportes);
   if(id==='mac')       _subUnaVez('repairTips', loadRepairTips);
-  if(id==='mac'){ if(typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); /* 2026-08-24: renderizar AL ABRIR. renderMantencion() solo se llamaba desde au(), y desde que au() la condiciona a que Taller este visible (para no reconstruir 5 tarjetas en cada punto de GPS), abrir Taller sin estar pedaleando dejaba la lista VACIA: al iniciar la app au() corre con Inicio a la vista, el guard bloquea, y cv('mac') no renderizaba nada. El guard esta bien; lo que faltaba era este render de apertura. */ if(typeof renderMantencion==='function') renderMantencion(); } if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
+  if(id==='mac'){ if(typeof _actualizarTallerCercano==='function') _actualizarTallerCercano(); /* 2026-08-24: renderizar AL ABRIR. renderMantencion() solo se llamaba desde au(), y desde que au() la condiciona a que Taller este visible (para no reconstruir 5 tarjetas en cada punto de GPS), abrir Taller sin estar pedaleando dejaba la lista VACIA: al iniciar la app au() corre con Inicio a la vista, el guard bloquea, y cv('mac') no renderizaba nada. El guard esta bien; lo que faltaba era este render de apertura. */ if(typeof renderMantencion==='function') renderMantencion(); if(typeof _renderTaller==='function') _renderTaller(); } if(id==='diario'){ /* Auditoria 2026-07-20: entrando por la esfera la Bitacora quedaba a medio
      inicializar (sin categorias de puntos y sin sincronizar con la nube) porque cv() solo
      hacia cargarDiario() y openDiario() hacia tres cosas mas. La misma pantalla se veia
      distinta segun por donde entraras: eso es exactamente la falta de concordancia que

@@ -207,6 +207,51 @@ function _mantParaNube(){
   }catch(e){}
   return out;
 }
+// Mismo tratamiento que _mantParaNube(), para el vehículo (mantencion-vehiculo.js) --
+// misma razón (historial es un array, {merge:true} lo reemplaza entero, nunca subir
+// undefined/NaN a Firestore).
+function _vehParaNube(){
+  const out={};
+  try{
+    const src=us.veh; if(!src || typeof src!=='object') return out;
+    const num=function(v){ return (typeof v==='number' && isFinite(v)) ? v : null; };
+    Object.keys(src).forEach(function(k){
+      const d=src[k]; if(!d || typeof d!=='object') return;
+      out[k]={
+        kmBase: num(d.kmBase)||0,
+        fecha: (typeof d.fecha==='string' && d.fecha) ? d.fecha : null,
+        avisado: !!d.avisado,
+        historial: (Array.isArray(d.historial)?d.historial:[]).slice(-30).map(function(hi){
+          return {
+            fecha: (hi && typeof hi.fecha==='string') ? hi.fecha : null,
+            km: num(hi && hi.km)||0,
+            costo: num(hi && hi.costo),
+            nota: (hi && typeof hi.nota==='string') ? hi.nota : null
+          };
+        })
+      };
+    });
+  }catch(e){}
+  return out;
+}
+// Documentación (Revisión Técnica/Permiso/SOAP): sin historial ni kmBase, solo una
+// fecha de vencimiento + los avisos ya disparados (para no repetirlos tras restaurar).
+function _docParaNube(){
+  const out={};
+  try{
+    const src=us.doc; if(!src || typeof src!=='object') return out;
+    Object.keys(src).forEach(function(k){
+      const d=src[k]; if(!d || typeof d!=='object') return;
+      out[k]={
+        vence: (typeof d.vence==='string' && d.vence) ? d.vence : null,
+        avisado30: !!d.avisado30,
+        avisado7: !!d.avisado7,
+        avisadoVencido: !!d.avisadoVencido
+      };
+    });
+  }catch(e){}
+  return out;
+}
 /* Nada de esto se sube hasta haber leído la nube. Es la misma trampa que ya costó
    kilómetros el 2026-07-20, y con la mantención muerde más fuerte: `historial` es un ARRAY,
    y Firestore con {merge:true} REEMPLAZA arrays enteros (a los mapas los fusiona, a los
@@ -235,6 +280,9 @@ async function sincronizarStats(){
     datos.darma=us.d||0;
     datos.mant=_mantParaNube();
     datos.mantKm=(typeof us.mantKm==='number'&&isFinite(us.mantKm))?us.mantKm:0;
+    datos.veh=_vehParaNube();
+    datos.vehKm=(typeof us.vehKm==='number'&&isFinite(us.vehKm))?us.vehKm:0;
+    datos.doc=_docParaNube();
   }
   try{
     await db.collection('users').doc(cu).set(datos,{merge:true});
@@ -324,6 +372,51 @@ function _restaurarDesdeNube(nube){
     // los umbrales los vuelve a fijar _mantData() desde MANT_ITEMS (fuente de verdad
     // del codigo, no de la nube), asi que no se suben ni se confia en ellos.
     try{ if(typeof _mantData==='function') _mantData(); }catch(e){}
+  }
+  // Vehículo: MISMO criterio que mant/mantKm de arriba (más historial gana; a
+  // igualdad, mayor kmBase; a igualdad, fecha más nueva) -- es la misma forma de dato
+  // (kmBase+fecha+historial), solo que para el auto/moto en vez de la bici.
+  const kmVehNube=Number(nube.vehKm)||0, kmVehLocal=Number(us.vehKm)||0;
+  if(kmVehNube>kmVehLocal+0.05){ us.vehKm=kmVehNube; restaurado=true; }
+  if(nube.veh && typeof nube.veh==='object'){
+    if(!us.veh || typeof us.veh!=='object') us.veh={};
+    Object.keys(nube.veh).forEach(function(k){
+      const dn=nube.veh[k]; if(!dn || typeof dn!=='object') return;
+      const dl=us.veh[k];
+      const hn=(Array.isArray(dn.historial)?dn.historial.length:0);
+      const hl=(dl&&Array.isArray(dl.historial))?dl.historial.length:0;
+      let nubeGana;
+      if(!dl) nubeGana=true;
+      else if(hn!==hl) nubeGana=hn>hl;
+      else if((Number(dn.kmBase)||0)!==(Number(dl.kmBase)||0)) nubeGana=(Number(dn.kmBase)||0)>(Number(dl.kmBase)||0);
+      else nubeGana=(new Date(dn.fecha||0).getTime()||0)>(new Date(dl.fecha||0).getTime()||0);
+      if(nubeGana){
+        us.veh[k]={kmBase:Number(dn.kmBase)||0, fecha:dn.fecha||null, avisado:!!dn.avisado,
+                    historial:Array.isArray(dn.historial)?dn.historial:[],
+                    umbralKm:(dl&&dl.umbralKm!==undefined)?dl.umbralKm:null,
+                    umbralMeses:(dl&&dl.umbralMeses!==undefined)?dl.umbralMeses:null};
+        restaurado=true;
+      }
+    });
+    try{ if(typeof _vehData==='function') _vehData(); }catch(e){}
+  }
+  // Documentación: SIN historial ni kmBase con que desempatar -- es una sola fecha.
+  // Si el teléfono YA tiene una fecha guardada, se respeta (pudo haberla editado hace
+  // 1 minuto; pisarla a ciegas con la nube sería peor que no sincronizar nada). Solo
+  // se RESCATA cuando el teléfono no tiene nada (nuevo, o datos borrados) y la nube sí
+  // -- "gana el mayor" no aplica porque no hay nada que comparar, así que la regla acá
+  // es "nunca perder, nunca pisar lo que ya existe".
+  if(nube.doc && typeof nube.doc==='object'){
+    if(!us.doc || typeof us.doc!=='object') us.doc={};
+    Object.keys(nube.doc).forEach(function(k){
+      const dn=nube.doc[k]; if(!dn || typeof dn!=='object') return;
+      const dl=us.doc[k];
+      if((!dl || !dl.vence) && dn.vence){
+        us.doc[k]={vence:dn.vence, avisado30:!!dn.avisado30, avisado7:!!dn.avisado7, avisadoVencido:!!dn.avisadoVencido};
+        restaurado=true;
+      }
+    });
+    try{ if(typeof _docData==='function') _docData(); }catch(e){}
   }
   return restaurado;
 }

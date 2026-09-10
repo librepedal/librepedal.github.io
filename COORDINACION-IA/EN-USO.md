@@ -1,5 +1,246 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ CERRADO — fix del Prominent Disclosure confirmado en el celular real de Inty, evidencia actualizada — sesión Tundra, 2026-09-08 noche
+> Cierra por completo el resto de las entradas de esta ronda (todas abajo, misma sesión).
+>
+> **Confirmación real, no solo teórica.** Inty probó "Grabar un paseo" en su Galaxy real y el
+> aviso apareció correctamente. Además, la instrumentación de diagnóstico temporal (ver entrada
+> de abajo) capturó la secuencia completa desde su dispositivo real vía `meta/diagBgLoc`:
+> `aviso mostrado (avisoMostrado:true) → permiso pedido → watcher arrancado (ok:true)`, con
+> `capacitor:true` y user-agent de Android 16 real. La instrumentación ya se sacó del código
+> (commit `c0e35a7`) — cumplió su propósito.
+>
+> **Evidencia de Play Console actualizada también:** el video de YouTube que pedía la
+> declaración `Contenido de la app > Permisos de ubicación` (desactualizado desde 8-ago, un mes
+> antes de que existiera el aviso — ver hallazgo de más abajo) se reemplazó por
+> `https://youtube.com/shorts/J3UEmihvg9w`, grabado por Inty mostrando el aviso real en su
+> teléfono. Guardado y confirmado ("Se guardaron los cambios").
+>
+> **Estado real al cerrar esta ronda:** el código está arreglado y verificado en dispositivo
+> real; la declaración de Play Console está al día. Sigue pendiente únicamente que Google
+> apruebe la submission #15 (en revisión desde 8-sept ~15:22 hora Chile) — la tarea programada
+> `librepedal-play-review-check` (cada 1h) sigue activa para avisar apenas resuelva.
+
+> ## 🔁 REENVIADO a revisión con el fix — submission #14 confirmada rechazada, AABs nuevos subidos — sesión Tundra, 2026-09-08 (~14:50 hora Chile / 17:50 UTC)
+> Continúa la entrada de abajo. Confirmación final de que submission #14 SÍ fue rechazada (no
+> solo "seguía en revisión" como mostraba por un buen rato `submission-activity`): Inty compartió
+> el correo real de Google ("Action Required... Missing Prominent Disclosure", recibido ~00:01 8-
+> sept) y `policy-center` mostró la tarjeta "Actualización rechazada — Requisito de aviso
+> destacado y consentimiento — Se aplicó el 8 sept", con evidencia (capturas del flujo de la app).
+> Mismo motivo que ya se había diagnosticado y arreglado (ver entrada de abajo), solo que la
+> revisión de Google corrió ANTES de que el fix quedara en vivo (rechazo ~00:01-00:43, fix
+> desplegado ~02:04, ambos 8-sept hora Chile) — por eso el submission ya rechazado no lo iba a
+> arreglar solo con tener el JS corregido en producción; hacía falta un reenvío nuevo.
+>
+> **Acción tomada (con el fix ya confirmado en vivo):**
+> 1. Se generaron 2 AABs nuevos vía `build-aab-release.yml` (versionCode por epoch-minutos, cada
+>    track necesita el suyo): `29814065 (8.788)` para Producción, `29814831 (8.788)` para Prueba
+>    Abierta.
+> 2. Se subieron directo (sin pasar por "Agregar desde la biblioteca") a un borrador nuevo en cada
+>    track — Producción con lanzamiento completo (11 países, Guatemala afuera), Prueba Abierta con
+>    Costa Rica + R. Dominicana agregadas y el segmento reanudado (mismo contenido que ya estaba
+>    configurado, solo builds nuevos).
+> 3. Se envió con "Enviar 2 cambios a revisión" — Play Console avisó que esto **cancela y reinicia**
+>    la revisión en curso desde el 7-sept (aceptado a propósito: esa revisión ya estaba rechazada de
+>    fondo, no tenía sentido dejarla "viva").
+> 4. Confirmado en pantalla: ambos cambios quedaron en "Cambios en la etapa de revisión", pasando
+>    primero por las verificaciones rápidas automáticas de Google (mismas ~12-14 min que
+>    probablemente son las que generan la tarjeta de Policy Center) antes de pasar a revisión
+>    completa.
+>
+> **Pendiente de esta ronda:** confirmar que la nueva submission (aparecerá como #15 o similar en
+> `/publishing/submission-activity`, con un ID nuevo) resuelve OK esta vez — el fix real (aviso
+> previo antes de pedir `ACCESS_BACKGROUND_LOCATION`, ver `dialogos-genericos.js`/`motor-gps.js` en
+> la entrada de abajo) ya estaba en vivo antes de este reenvío, así que debería pasar. Tarea
+> programada `librepedal-play-review-check` sigue activa (cada 1h, a pedido de Inty) chequeando el
+> log real de Actividad de envío, no el resumen del track.
+>
+> **Lección para la próxima vez:** el "Estado con respecto a las políticas" (`policy-center`) y la
+> tabla de "Actividad de envío" (`submission-activity`) pueden desincronizarse — `policy-center`
+> mostró el rechazo real minutos/horas antes de que `submission-activity` actualizara la fila de
+> la submission en cuestión. Ante cualquier duda real (no solo un chequeo rutinario), revisar
+> `policy-center` también, no solo `submission-activity`.
+>
+> **⚠️ HALLAZGO PENDIENTE, no bloquea el reenvío pero SÍ hace falta cerrarlo:** auditando
+> `Contenido de la app > Permisos de ubicación` (`app-content/background-location-permissions`) —
+> la declaración formal donde Google exige explicar el uso de `ACCESS_BACKGROUND_LOCATION` — hay un
+> campo obligatorio de **video de YouTube** ("El video debe incluir la divulgación destacada que se
+> muestra a los usuarios antes de la solicitud en tiempo de ejecución") con un link ya cargado
+> (`https://youtu.be/eOhNzWFdWak`), pero la declaración entera está fechada **8 ago 2026** — UN MES
+> ANTES de que existiera el aviso previo (`lpDivulgacion`, implementado 8-sept). Ese video casi
+> seguro NO muestra el aviso nuevo (no podía, no existía). No pude confirmarlo en video porque
+> `youtube.com` está bloqueado para navegación de la extensión — Inty tendría que revisarlo él
+> mismo o confiar en la fecha como evidencia indirecta.
+>
+> Esto no bloquea la revisión actual en curso (Google prueba el comportamiento real de la app, que
+> ya está corregido), pero SÍ es un cabo suelto real: si en algún momento Google audita esta
+> declaración específica contra el video, va a encontrar el mismo hueco otra vez aunque el código
+> esté arreglado. **Hace falta:** grabar un video corto (≤30 seg) mostrando el aviso nuevo
+> apareciendo antes del permiso nativo, subirlo a YouTube, y reemplazar el link en ese campo. Esto
+> requiere una cuenta de YouTube/Google real y grabación de pantalla del dispositivo — no es algo
+> que esta sesión pueda hacer sola (sin acceso a cámara/dispositivo físico ni a subir video
+> públicamente sin autorización explícita). Pendiente de que Inty lo grabe o autorice cómo hacerlo.
+
+> ## ⚠️ CORRECCIÓN — el "RESUELTO" de abajo era prematuro: hubo un rechazo real (Missing Prominent Disclosure), fix ya implementado y en vivo — sesión Tundra, 2026-09-08
+> Corrige la entrada de abajo ("✅ RESUELTO por Google"). Esa entrada solo verificó Alpha + una
+> revisión de Prueba Abierta anterior (submission #12) — cerró bien. Pero **hubo una ronda más**:
+> Inty pidió agregar Producción, lo que generó un envío nuevo (submission #13, Prueba Abierta sola,
+> enviado 2026-09-07 ~00:25) que **Google RECHAZÓ** (visible recién en `/publishing/submission-
+> activity`, no en el resumen del track — ese resumen solo muestra el estado *configurado*, no si
+> Google ya lo aprobó; lección para la próxima vez que alguien "verifique en vivo").
+>
+> **Causa real, confirmada por el correo de rechazo de Google (captura de pantalla de Inty):
+> "Missing Prominent Disclosure"** — el permiso nativo `ACCESS_BACKGROUND_LOCATION` (usado por
+> `lpBackgroundGeo`/`BackgroundGeolocation` en `motor-gps.js` para grabar la ruta con la pantalla
+> apagada) se pedía sin ningún aviso propio previo, solo el diálogo del sistema. **No tuvo nada que
+> ver con países** (se descartó esa hipótesis antes de tener el correo real — ver aviso de Inty de
+> no sacar países sin causa confirmada).
+>
+> **Fix implementado y aprobado por Inty ("sí, apruébalo e impleméntalo"):**
+> - `dialogos-genericos.js`: nueva `lpDivulgacion(msg)` — modal de un solo botón ("Entiendo,
+>   continuar"), reutiliza el `#lpDialog` temático existente.
+> - `motor-gps.js`: `lpBackgroundGeo.start()` (el único choke point real — de ahí pasan TANTO el
+>   botón "Grabar un paseo" vía `toggleGPS()` COMO la navegación turn-by-turn vía
+>   `motor-navegacion.js`) ahora hace `await lpDivulgacion(...)` la primera vez
+>   (`localStorage.lp_disclosure_bg_ubicacion`) antes de llamar a `bg.addWatcher({requestPermissions:
+>   true, ...})`.
+> - Commit `2d65409`, pusheado a `lab` y `origin`. Verificado visualmente en preview local (el modal
+>   se ve bien, texto completo, cierra al tocar el botón).
+>
+> **Importante para quien no lo sepa:** LibrePedal es una app Capacitor de **carga remota**
+> (`capacitor.config.json` → `server.url: "https://librepedal.cl"`) — el WebView nativo carga el
+> JS/CSS EN VIVO desde la web, no desde lo empaquetado en el AAB (`scripts/copy-web.js` ni siquiera
+> copia `motor-gps.js`/`dialogos-genericos.js` al `www/` del build nativo — no hace falta). Por eso
+> el fix quedó activo apenas se hizo `git push` a `origin` y corrió `deploy-cloudflare.yml`
+> (confirmado con `curl https://librepedal.cl/motor-gps.js` — el fix ya está ahí en producción),
+> **sin necesitar un AAB nuevo para que el fix en sí tome efecto.**
+>
+> Aun así se generó un AAB nuevo (Actions run `34189242115`, mismo `version.txt` 8.788, versionCode
+> nuevo por el epoch-minutos de `patch-android-signing.js`) como respaldo listo para subir. **No se
+> subió todavía a propósito**: al revisar `/publishing/submission-activity` se encontró que
+> **submission #14** (Producción + Prueba Abierta juntas, enviada 2026-09-07 11:51 p.m., ANTES del
+> fix) seguía **"En revisión"**, no rechazada. Forzar un release nuevo ahora arriesga cancelar esa
+> revisión en curso (ver submission #11, quedó "Cancelada" por exactamente eso). Como la app carga
+> el JS en vivo, es probable que la revisión de Google contra #14 ya vea el fix aunque el AAB no haya
+> cambiado — así que se decidió ESPERAR a que #14 resuelva antes de tocar nada más:
+> - Si #14 se **aprueba**: no hace falta subir el AAB de respaldo, el ciclo queda cerrado.
+> - Si #14 se **rechaza** (mismo motivo u otro): subir de inmediato el AAB ya generado (run
+>   `34189242115`) a Producción + Prueba Abierta y reenviar.
+>
+> Estado real al cerrar esta entrada: submission #14 = **En revisión** (ni aprobada ni rechazada).
+
+> ## ✅ RESUELTO por Google — las 2 pistas ya están APROBADAS y en vivo — sesión Tundra, 2026-09-07 (~00:25)
+> Cierra por completo las 2 entradas de abajo. Google aprobó todo mucho más rápido de lo que avisa el
+> propio diálogo ("hasta 7 días") — quedó resuelto en menos de 30 minutos, probablemente porque son
+> pistas de prueba (no producción) de una app con historial ya aprobado, no una revisión desde cero.
+>
+> Verificado en vivo, sin ninguna marca de "en revisión" en ningún lado:
+> - **Prueba cerrada - Alpha**: `29812476 (8.788)` — "Disponible para verificadores específicos",
+>   fecha de lanzamiento 7-sept 12:23 a.m., 177 países.
+> - **Prueba Abierta**: `29812496 (8.788)` — "Activo", 11 países, **18.237 dispositivos Android
+>   compatibles** (o sea, ya es descubrible/instalable de verdad para cualquiera en esos 11 países).
+>
+> Se armó una tarea local programada (`librepedal-play-review-check`, cada 8h) para avisar apenas
+> Google resolviera, pero se descubrió resuelto por chequeo manual antes de su primera corrida — la
+> tarea quedó desactivada (`enabled:false`), ya cumplió su propósito.
+>
+> **Con esto, LibrePedal tiene la Prueba Abierta real y funcionando por primera vez** con contenido
+> correcto (9 países originales + Costa Rica + R. Dominicana, Guatemala afuera por el riesgo legal
+> documentado) y el build más nuevo desde agosto. Nada pendiente de esta ronda de trabajo.
+
+> ## 🔧 CORRECCIÓN inmediata — Costa Rica y R. Dominicana vuelven a la lista, Guatemala se queda afuera por ley (no por contenido) — sesión Tundra, 2026-09-07
+> Corrige un error real de la entrada de abajo (misma sesión, minutos después). Al sacar los 3 países
+> "sin jerga" me basé en la tarea #170 del hub (2026-09-03), que estaba **desactualizada**: el commit
+> `b01430b` ("feat(voz): jerga real para Costa Rica, Puerto Rico, Guatemala y R. Dominicana", 2-sep) ya
+> estaba mergeado a `main` -- confirmado leyendo `pistero-frases-pais.js` real, las 4 entradas (`cr`,
+> `pr`, `gt`, `do`) existen con modismos reales (mae/tuanis, wepa/pana, chapín/va pue, manín/tíguere).
+> El gap de contenido que documentó #170 ya no existe.
+>
+> **Pero Guatemala sí tiene una razón real, distinta, para quedar afuera** (decisión de Inty, confirmada
+> contra `PLAN-LANZAMIENTO-GUATEMALA.md`): Iniciativa 6464 en el Congreso guatemalteco, en revisión activa
+> a julio-2026, propone 6-8 años de cárcel y multas de Q50.000 por uso indebido de datos personales --
+> el perfil de riesgo legal más severo de los 14 países investigados, no solo "vacío legal" como el resto.
+> Costa Rica y R. Dominicana no tienen ningún hallazgo de riesgo legal equivalente en sus respectivos
+> `PLAN-LANZAMIENTO-*.md`.
+>
+> **Fix aplicado y ya enviado a revisión de Google (agrupado con el reanude, ver de nuevo "Reanudar el
+> segmento" abajo):** Costa Rica y República Dominicana vueltos a agregar a la Prueba Abierta. **Guatemala
+> queda fuera a propósito** -- si alguien lo vuelve a agregar sin conversar antes con Inty sobre el riesgo
+> legal, está deshaciendo una decisión explícita suya, no un descuido. Lista final: 11 países (los 9 de
+> la entrada de abajo + Costa Rica + R. Dominicana).
+>
+> Verificado en vivo en Play Console: "Activo · Versión 29812496 (8.788) · 11 países o regiones".
+
+> ## ✅ CERRADO — Prueba Abierta reanudada con 9 países + AAB 8.788 en Alpha y Abierta, enviado a revisión de Google — sesión Tundra, 2026-09-07
+> Cierra por completo la entrada de abajo (misma sesión). Con el OK explícito de Inty ("dale, sube el AAB
+> y reanuda") se completaron los 2 pasos que habían quedado pendientes:
+>
+> 1. **AAB subido a Alpha** (`versionCode 29812476`, `8.788`) — enviado a revisión junto con nada más en
+>    ese track. Los 74 testers de Alpha siguen recibiendo el build viejo (`8.753`) sin corte de servicio
+>    mientras Google revisa (hasta 7 días).
+> 2. **AAB subido a Prueba Abierta** (`versionCode 29812496`, distinto al de Alpha — Google no deja
+>    reusar el mismo código entre pistas, hubo que regenerar el AAB una vez más solo por eso, mismo
+>    commit `8d352c2`, contenido idéntico).
+> 3. **Segmento reanudado**: pasó de "En pausa" a **"Activo"**. Los 4 cambios (build de Alpha, build de
+>    Abierta, quitar 3 países, desincronizar de producción) quedaron agrupados en UNA sola revisión de
+>    Google (advertencia de Play Console al enviar: agregar el build reinicia el conteo de días de
+>    revisión si ya había una en curso — aceptado a propósito, mejor una revisión limpia con todo junto
+>    que dos parciales).
+>
+> Verificado en vivo en Play Console tras cada paso (no solo "se guardó"): "Activo · Versión 29812496
+> (8.788) en revisión · 9 países o regiones" en Abierta, "Activo · Versión 29812476 (8.788) en revisión ·
+> 177 países o regiones" en Alpha.
+>
+> **Nada más pendiente de esta ronda.** Lo único que falta es que Google termine de revisar (hasta 7
+> días según el propio diálogo de confirmación) — no hay acción humana ni de ninguna cuenta bloqueando
+> nada. Si alguien ve la Prueba Abierta todavía "en pausa" o con los 3 países viejos después de esto,
+> es que la revisión de Google aún no terminó, no un error de esta sesión.
+
+> ## 🟡 Prueba Abierta: sacados 3 países sin contenido + AAB nuevo listo, PENDIENTE de subir a Play Console — sesión Tundra, 2026-09-06/07
+> Sin candado, sin tocar `index.html`. Trabajo hecho a pedido directo de Inty en vivo (revisó Play Console
+> conmigo vía Claude in Chrome, cuenta `inty405@gmail.com`). **Nada de esto se subió todavía a Play
+> Console — falta el paso final, a propósito, hasta que Inty confirme.**
+>
+> **Hallazgo (nadie lo había dejado anotado acá):** el 2026-09-05 alguien (no quedó registro de quién,
+> `Fuente: Play Console` en el log de envíos, sin usuario) creó y publicó la **Prueba Abierta** de
+> LibrePedal — pero quedó **en pausa** desde entonces (verificadores no reciben la versión). Tenía 12
+> países sincronizados con un borrador de Producción que tampoco se lanzó nunca. De esos 12, 3 NO tienen
+> contenido real en el código (`frasesFlavor` vacío, confirmado contra tareas #170 del hub): **Guatemala,
+> Costa Rica, República Dominicana**.
+>
+> **Fix 1 — países (YA APLICADO en Play Console, en vivo):** desincronizado el segmento de Prueba Abierta
+> de Producción y sacados esos 3 países. Quedan **9**: Argentina, Bolivia, Chile, Colombia, Ecuador,
+> Paraguay, Perú, Uruguay, Venezuela. Verificado con `aria-checked` de cada checkbox antes de guardar, no
+> solo a ojo — al primer intento Guatemala volvió a quedar marcada tras un guardado parcial, se corrigió
+> en una segunda pasada y se confirmó contra el conteo real de Play Console (9 países o regiones) después
+> de recargar la página.
+>
+> **Fix 2 — versionName desincronizado del repo (commit `8d352c2`, YA en `main`, ambos remotos):**
+> `version.txt` decía `8.770` pero `index.html` (`APP_VERSION`) y la producción real (`librepedal.cl/version.txt`)
+> dicen `8.788` — el propio comentario de `index.html` dice que deploy-seguro.sh genera `version.txt` DESDE
+> ahí, pero nadie lo comiteaba de vuelta al repo tras el último deploy web. Corregido a `8.788`.
+>
+> **AAB nuevo generado y verificado por dentro** (protocolo de siempre: nunca mandar uno sin abrirlo)
+> desde `main` @ `8d352c2` — el primero desde el 16-ago, incluye TODOS los fixes de seguridad/privacidad/voz
+> de las últimas 3 semanas. `versionCode` sale del reloj (minutos desde epoch, mecanismo ya existente en
+> `patch-android-signing.js`), así que es automáticamente mayor al `29781994` que ya está en Alpha/Prueba
+> Abierta — no puede chocar. Confirmado adentro: sin plugin de Google Sign-In nativo (correcto, sigue
+> desactivado), los 4 Workers de Cloudflare en `allowNavigation`. Run del workflow:
+> `build-aab-release.yml` en `librepedal/librepedal.github.io`, artefacto `LibrePedal-AAB-release`.
+>
+> **Pendiente, a propósito, hasta que Inty diga que sigamos — pidió que "todo esté al cien" y que las
+> demás cuentas estén al tanto antes:**
+> 1. Subir el AAB nuevo a la pista Alpha (prueba cerrada) y a la Prueba Abierta.
+> 2. Recién ahí, "Reanudar el segmento" de la Prueba Abierta (hoy sigue pausada, cero riesgo mientras
+>    tanto).
+> 3. **Encontrado de paso, sin revisar todavía:** existe una rama `feat/jerga-cr-pr-gt-do` en el repo —
+>    por el nombre, podría ser justo el contenido que le falta a Guatemala/Costa Rica/RD (+Puerto Rico?).
+>    Si está lista, esos 3 países podrían volver a sumarse antes de lo pensado. Quien la revise: avisar
+>    acá antes de mergear, por las dudas de que choque con algo de esta sesión.
+>
+> Si tomás esto: no hace falta pedir permiso para los pasos 1-2, Inty ya los aprobó explícitamente —
+> solo falta ejecutarlos (o que yo mismo los termine en la próxima vuelta).
+
 > ## ✅ Freno anti-ráfaga de voz movido de KV a Cache API — sesión Lenovo, 2026-09-05
 > Sin candado, sin tocar `index.html`. Commit `27426fe`, worker-ia YA DESPLEGADO
 > (`wrangler deploy`, Version ID `7f6f557c-acaa-4e62-80ee-d0b82deb32a8`), verificado en

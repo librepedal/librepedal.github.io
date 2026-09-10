@@ -33,9 +33,74 @@ const PROJECT = 'librepedal-cb983';
 const ISS = 'https://securetoken.google.com/' + PROJECT;
 const CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 const AUD = 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit';
+// La cuenta admin real (ver isAdmin() en firestore.rules: uid == cuDeEmail(ADMIN_EMAIL)).
+const ADMIN_EMAIL = 'intyrivera.a@gmail.com';
+
+// Comparación de largo constante: no filtrar el código a fuerza de medir tiempos.
+function codigosIguales(a, b) {
+  let iguales = a.length === b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if (a.charCodeAt(i) !== b.charCodeAt(i)) iguales = false;
+  }
+  return iguales;
+}
 
 function cuDeEmail(email) {
   return String(email).replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+// Contador+ventana sobre KV. FALLA ABIERTA a propósito en las dos funciones: si KV falla
+// por lo que sea, se deja pasar el intento en vez de romper el login de gente real -- un
+// límite que a veces no limita es aceptable, un login que a veces no deja entrar no lo es.
+async function leerContador(env, clave) {
+  if (!env.RATE_LIMIT_AUTH) return 0;
+  try {
+    const raw = await env.RATE_LIMIT_AUTH.get(clave);
+    if (!raw) return 0;
+    const data = JSON.parse(raw);
+    if (Date.now() - data.inicio > VENTANA_LIMITE_MS) return 0;
+    return data.cuenta;
+  } catch (e) {
+    return 0;
+  }
+}
+async function incrementarContador(env, clave) {
+  if (!env.RATE_LIMIT_AUTH) return;
+  try {
+    const ahora = Date.now();
+    const raw = await env.RATE_LIMIT_AUTH.get(clave);
+    let data = raw ? JSON.parse(raw) : null;
+    if (!data || ahora - data.inicio > VENTANA_LIMITE_MS) data = { inicio: ahora, cuenta: 0 };
+    data.cuenta++;
+    await env.RATE_LIMIT_AUTH.put(clave, JSON.stringify(data), { expirationTtl: Math.ceil(VENTANA_LIMITE_MS / 1000) + 20 });
+  } catch (e) { /* KV caído: no romper el login por esto */ }
+}
+
+const VENTANA_LIMITE_MS = 10 * 60 * 1000; // 10 minutos
+const MAX_POR_IP = 5;    // por dirección de origen -- frena un script/una IP insistiendo.
+const MAX_POR_CORREO = 5; // por correo objetivo -- frena insistir contra UNA persona aunque
+                           // el ataque venga rotando de IP en IP (el límite por IP solo no alcanza para eso).
+
+// Sin esto, alguien con un código filtrado podía scriptear miles de intentos por minuto
+// contra distintos correos, o insistir sin parar contra UNA persona puntual (ver
+// MAX_POR_CORREO). Pedido explícito de Inty (2026-09-09): "que a una persona no la puedan
+// intentar tantas veces". Cuenta TODO intento (éxito o no) -- protege contra volumen, no
+// distingue si acertó.
+async function bajoLimitePorIP(env, ip) {
+  const clave = 'rl:ip:' + ip;
+  const ok = (await leerContador(env, clave)) < MAX_POR_IP;
+  await incrementarContador(env, clave);
+  return ok;
+}
+// Solo LEE el contador de fallos de ese correo (no incrementa) -- se usa como gate antes
+// de evaluar el código. El incremento real pasa en registrarIntentoFallido(), y solo ante
+// un código incorrecto: un éxito (aunque venga después de un par de intentos fallidos) no
+// debe dejar a la cuenta bloqueada.
+async function bajoLimitePorCorreo(env, email) {
+  return (await leerContador(env, 'rl:email:' + email)) < MAX_POR_CORREO;
+}
+async function registrarIntentoFallido(env, email) {
+  await incrementarContador(env, 'rl:email:' + email);
 }
 
 // Cache de 1h de las llaves públicas de Google (JWKS) — no hay que pedirlas en cada request.
@@ -65,16 +130,28 @@ async function verificarIdToken(idToken) {
   return payload;
 }
 
+// Orígenes reales de la app (mismo patrón ya usado en worker-ia): CORS no frena un
+// script/curl (eso lo hace el límite por IP de arriba), pero sí evita que este Worker se
+// pueda llamar desde JS de una página ajena usando la sesión de un visitante inocente.
+const ORIGENES_OK = ['https://librepedal.cl', 'https://www.librepedal.cl', 'https://librepedal-web.pages.dev'];
+
 export default {
   async fetch(request, env) {
+    const origenReq = request.headers.get('Origin') || '';
     const cors = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': ORIGENES_OK.includes(origenReq) ? origenReq : ORIGENES_OK[0],
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Vary': 'Origin'
     };
     const json = (obj, status) => new Response(JSON.stringify(obj), { status: status || 200, headers: { ...cors, 'Content-Type': 'application/json' } });
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     if (request.method !== 'POST') return json({ error: 'usa POST' }, 405);
+
+    const ip = request.headers.get('CF-Connecting-IP') || 'desconocida';
+    if (!(await bajoLimitePorIP(env, ip))) {
+      return json({ error: 'demasiados intentos, esperá unos minutos' }, 429);
+    }
 
     let body = null;
     try { body = await request.json(); } catch (e) {}
@@ -104,13 +181,36 @@ export default {
       const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
       if (!codigo || !email) return json({ error: 'falta el código o el correo' }, 400);
 
-      // Comparación de largo constante: no filtrar el código a fuerza de medir tiempos.
-      const esperado = String(env.CODIGO_TESTER);
-      let iguales = codigo.length === esperado.length;
-      for (let i = 0; i < Math.max(codigo.length, esperado.length); i++) {
-        if (codigo.charCodeAt(i) !== esperado.charCodeAt(i)) iguales = false;
+      // Seguridad 2026-09-09: CODIGO_TESTER es UNO SOLO compartido a todo el grupo de
+      // testers -- probarlo con el correo de OTRO daba un token válido como esa persona,
+      // sin más prueba que saber su correo público. Para la cuenta admin exacta (la única
+      // con isAdmin()===true en firestore.rules), eso significaba compromiso total del
+      // panel admin sabiendo solo el código público del grupo + el correo de Inty. Fix:
+      // para ese correo exacto se exige un código DISTINTO (CODIGO_ADMIN, solo lo tiene
+      // Inty) -- el código de tester normal ya NO sirve para entrar como admin. El resto
+      // de los testers no cambia en NADA: mismo código compartido, mismo flujo de
+      // siempre, cero impacto. La suplantación entre testers normales (no-admin) sigue
+      // siendo un riesgo menor pendiente -- requiere código por persona, cambio más
+      // grande que necesita coordinación para redistribuir códigos individuales.
+      const esAdmin = email === ADMIN_EMAIL;
+      if (esAdmin && !env.CODIGO_ADMIN) {
+        return json({ error: 'el ingreso de administrador no está habilitado en este deploy' }, 403);
       }
-      if (!iguales) return json({ error: 'código incorrecto' }, 401);
+
+      // Límite por correo (2026-09-09): además del límite por IP de arriba, esto frena
+      // insistir contra UN correo puntual aunque el ataque venga rotando de IP en IP --
+      // el límite por IP solo no alcanza para eso. Se chequea ANTES de comparar el código
+      // (ni se evalúa el intento) y solo cuenta los que SALEN MAL: alguien que tipeó mal
+      // el código un par de veces antes de acertar no queda penalizado.
+      if (!(await bajoLimitePorCorreo(env, email))) {
+        return json({ error: 'demasiados intentos con ese correo, esperá unos minutos' }, 429);
+      }
+
+      const esperado = String(esAdmin ? env.CODIGO_ADMIN : env.CODIGO_TESTER);
+      if (!codigosIguales(codigo, esperado)) {
+        await registrarIntentoFallido(env, email);
+        return json({ error: 'código incorrecto' }, 401);
+      }
 
       const permitidos = String(env.TESTERS_PERMITIDOS).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       if (permitidos.indexOf(email) === -1) {

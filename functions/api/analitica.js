@@ -30,6 +30,28 @@ const esDueno = (env, code) => {
 const CLAVE_CACHE = new Request('https://cache.interno.librepedal/analitica');
 const VIDA_S = 30 * 60; // media hora
 
+// Auditoría 2026-09-09: esDueno() comparaba `k` contra OWNER_CODE sin ningún freno --
+// alguien podía scriptear miles de valores por minuto contra `?k=`. Mismo patrón (Cache
+// API por IP, best-effort) que ya usa este archivo para el caché de 30min. 20
+// intentos/10min por IP es de sobra para Inty abriendo el panel varias veces seguidas y
+// frena en seco un script de fuerza bruta.
+const LIMITE_VENTANA_S = 10 * 60;
+const LIMITE_MAX = 20;
+async function bajoLimite(request) {
+  const ip = request.headers.get('CF-Connecting-IP');
+  if (!ip) return true;
+  const minutoBucket = Math.floor(Date.now() / (LIMITE_VENTANA_S * 1000));
+  const clave = new Request('https://ratelimit.interno.librepedal/analitica/' + encodeURIComponent(ip) + '/' + minutoBucket);
+  try {
+    const cache = caches.default;
+    const previo = await cache.match(clave);
+    const actual = previo ? parseInt(await previo.text(), 10) : 0;
+    if (actual >= LIMITE_MAX) return false;
+    await cache.put(clave, new Response(String(actual + 1), { headers: { 'Cache-Control': 'max-age=' + LIMITE_VENTANA_S } }));
+    return true;
+  } catch (e) { return true; } // Cache API caída: no bloquear a Inty por un problema nuestro
+}
+
 const dias = (iso) => {
   if (!iso) return null;
   const t = typeof iso === 'string' ? Date.parse(iso) : Number(iso);
@@ -39,6 +61,7 @@ const dias = (iso) => {
 
 export async function onRequestGet({ env, request }) {
   const url = new URL(request.url);
+  if (!(await bajoLimite(request))) return json({ error: 'demasiados intentos, esperá unos minutos' }, 429);
   if (!esDueno(env, url.searchParams.get('k'))) return json({ error: 'sin identidad' }, 401);
   if (!env.FIREBASE_SA) return json({ error: 'Falta la credencial de Firebase (FIREBASE_SA).' }, 503);
 

@@ -126,8 +126,13 @@
              + '<button class="ab sec" onclick="document.getElementById(\'fotoPerfilInput\').click()"'+(fotos.length>=MAX_FOTOS?' disabled':'')+'><i class="fas fa-camera"></i> Subir foto ('+fotos.length+'/'+MAX_FOTOS+')</button>';
       }
       if(fotos.length){
+        // Auditoría 2026-09-09 (XSS alto): `f` se insertaba crudo en src="..." -- firestore.rules
+        // solo valida que `fotos` sea una lista de máx. 9 elementos, no que cada uno sea una URL
+        // de verdad. Un atacante amigo de la víctima podía poner algo como `x" onerror="...` y
+        // correr JS con la sesión real de quien viera su galería. escapeHTML() alcanza acá (es un
+        // atributo HTML normal, no un manejador de evento como el caso de segmentos.js).
         html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px">'+fotos.map(function(f,i){
-          return '<div style="position:relative"><img src="'+f+'" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px">'
+          return '<div style="position:relative"><img src="'+escapeHTML(f)+'" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px">'
                + (esPropio?'<button onclick="borrarFotoPerfil('+i+')" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer">✕</button>':'')
                + '</div>';
         }).join('')+'</div>';

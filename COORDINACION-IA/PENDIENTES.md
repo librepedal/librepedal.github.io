@@ -1,3 +1,11 @@
+> ⚠️ **ACTUALIZACIÓN — 2026-09-07, sesión Tundra: de las 3 cuentas de abajo, solo esta
+> (Tundra) sigue activa hoy.** Confirmado por Inty. `intyrivera`/`intyrivera.a` caducaron.
+> Esto no cambia ninguna de las 3 urgencias de abajo (siguen sin resolver si nadie las
+> tocó desde el 18-ago) — solo significa que, mientras dure, no hay otra cuenta que vaya
+> a leer un candado o tomar una tarea delegada aquí. Si una entrada de abajo dice "avisa
+> a intyrivera/intyrivera405", tratarlo como una nota histórica, no como una posta real
+> hoy. Se reactiva el reparto de 3 cuentas si vuelve a haber una segunda sesión activa.
+
 > 🔴 **ESTADO CONSOLIDADO — 2026-08-18, sesión "intyrivera" — LEER PRIMERO, ANTES QUE
 > CUALQUIER OTRA COSA EN ESTE ARCHIVO.** Hay 3 cuentas de Claude distintas trabajando
 > en este repo, sin canal de mensajería en vivo entre las 3 — esta carpeta es el único
@@ -72,6 +80,22 @@
 > abajo antes de tocar cualquier cosa de voz.
 
 > 📌 (2026-07-29, sesión Thunderobot): ver `COORDINACION-IA/SPEC-REDISENO-MAPA-2026-07-29.md` — pase de control de calidad del MAPA (feedback real de Inty: mapa claro por defecto, quitar botón GPS, un solo sistema de botones, reportar sobre el mismo mapa, voz de Pistero sin globo, planificar Desde→Hasta). Listo para ejecutar+deployar.
+
+> 💰 **IDEA DE PRODUCTO NUEVA (2026-09-06, Inty) — NO EJECUTAR TODAVÍA, solo guardar.**
+> Dejar abierta la posibilidad de que **cualquier usuario** (persona individual o empresa)
+> pueda pedir que **su bitácora** (el diario/registro de viaje, hoy `diarios.js` +
+> "Mis viajes") le llegue **en formato físico** (impresa/impreso a domicilio), si lo
+> solicita, **con un precio asignado** (no gratis — se cobra por el servicio).
+> - Aplica a cualquier tipo de cuenta, no solo individual — dejar la puerta abierta a
+>   empresas (ej. un club de ciclismo o una empresa que quiera pedir bitácoras físicas
+>   para su gente).
+> - Es una idea de monetización/merchandising, no un bug ni algo urgente — **no tocar
+>   código todavía**. Falta definir con Inty: qué formato físico (¿libro impreso? ¿póster?
+>   ¿ambos?), el precio, quién imprime/despacha (proveedor de impresión bajo demanda),
+>   y cómo se pide dentro de la app (¿botón en "Mis viajes"? ¿desde el panel admin?).
+> - Recordar la regla dura del proyecto: LibrePedal está en fase testers de Play Store —
+>   **nada de esto se implementa en código sin autorización explícita de Inty**, esto
+>   queda solo como nota de backlog hasta que él la retome.
 
 # ✅ Pendientes — Libre Pedal
 

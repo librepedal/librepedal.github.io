@@ -166,12 +166,47 @@ function _vaAdelante(rumboMio, rumboAlCiclista) {
   return d <= CICLISTA_AVISO_ARCO;
 }
 
+// Límite por IP (2026-09-09, auditoría de seguridad): este endpoint no pide identidad --
+// a propósito, el cliente nunca supo quién comparte ubicación, ver cabecera del archivo.
+// Pero sin ESTE freno, alguien podía mandar 3+ lat/lon inventados (sin `rumbo`, que
+// desactiva el filtro de dirección) y triangular la posición real del ciclista activo más
+// cercano a cada punto -- lento contra un usuario real, pero real. 8 consultas/10min por
+// IP alcanza de sobra para el uso real (se llama una vez cada tanto durante la navegación)
+// y frena en seco un script insistiendo. Reusa el mismo KV namespace que worker-auth, con
+// prefijo de clave propio para no pisarse. FALLA ABIERTA a propósito: si KV falla, se dejan
+// pasar los avisos reales de seguridad vial en vez de romperlos por un problema de infra.
+const VENTANA_LIMITE_MS = 10 * 60 * 1000;
+const MAX_POR_IP = 8;
+async function bajoLimite(env, ip) {
+  if (!env.RATE_LIMIT_AUTH) return true;
+  try {
+    const clave = 'prox:ip:' + ip;
+    const ahora = Date.now();
+    const raw = await env.RATE_LIMIT_AUTH.get(clave);
+    let data = raw ? JSON.parse(raw) : null;
+    if (!data || ahora - data.inicio > VENTANA_LIMITE_MS) data = { inicio: ahora, cuenta: 0 };
+    data.cuenta++;
+    await env.RATE_LIMIT_AUTH.put(clave, JSON.stringify(data), { expirationTtl: Math.ceil(VENTANA_LIMITE_MS / 1000) + 20 });
+    return data.cuenta <= MAX_POR_IP;
+  } catch (e) {
+    return true;
+  }
+}
+
 export default {
   async fetch(request, env) {
     const origen = request.headers.get('Origin') || '';
     if (request.method === 'OPTIONS') return new Response(null, { headers: corsHeaders(origen) });
     if (request.method !== 'POST')
       return new Response(JSON.stringify({ error: 'usa POST' }), { status: 405, headers: corsHeaders(origen) });
+
+    const ip = request.headers.get('CF-Connecting-IP') || 'desconocida';
+    if (!(await bajoLimite(env, ip))) {
+      return new Response(JSON.stringify({ error: 'demasiadas consultas, esperá un momento' }), {
+        status: 429,
+        headers: corsHeaders(origen),
+      });
+    }
 
     let body;
     try {

@@ -691,6 +691,35 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-eta-item{text-align:center}
 .nav-eta-item .val{font-size:1.1rem;font-weight:800;color:var(--g)}
 .nav-eta-item .lbl{font-size:0.65rem;color:#888}
+/* Modo conducción (nav-screen.modo-auto, se activa solo si actividadTipo==='moto'):
+   texto/íconos/botones más grandes, criterio de las guías reales de Google "Design for
+   Driving" (targets táctiles grandes, texto legible de un vistazo, sin obligar a mirar
+   fijo la pantalla) — ver calculateAndStartNavigation() en motor-navegacion.js. Vuelta/Ver
+   vueltas/Reiniciar se esconden: son de running/ciclismo, no aplican manejando. */
+#nav-screen.modo-auto .nav-instruction{padding:16px 18px;min-height:76px}
+#nav-screen.modo-auto .nav-instruction .icon{font-size:3.1rem;min-width:60px}
+#nav-screen.modo-auto .nav-instruction .text{font-size:1.7rem;line-height:1.25}
+#nav-screen.modo-auto .nav-instruction .dist{font-size:1.15rem;margin-top:5px}
+#nav-screen.modo-auto .nav-stat{padding:10px 16px;min-width:76px}
+#nav-screen.modo-auto .nav-stat .val{font-size:1.6rem}
+#nav-screen.modo-auto .nav-stat .lbl{font-size:0.78rem}
+#nav-screen.modo-auto .nav-eta-item .val{font-size:1.7rem}
+#nav-screen.modo-auto .nav-eta-item .lbl{font-size:0.82rem}
+#nav-screen.modo-auto .nav-end-btn{padding:20px 12px;font-size:1.15rem;min-height:64px}
+#nav-screen.modo-auto .nav-close{width:48px;height:48px;font-size:1.3rem}
+.nav-lap-row{display:flex;gap:8px;margin-top:8px}
+#nav-screen.modo-auto .nav-lap-row{display:none}
+/* Estrellas de la reseña de la app. Reusa a propósito la MISMA convención de color que
+   la valoración que ya existe en el archivo (oro var(--g) encendida, #3a4a5a apagada):
+   es el lenguaje que la app ya habla, no uno nuevo. Van como <button> y no como <span>
+   (el otro caso) porque acá son el control principal del formulario: así entran por
+   teclado y las lee un lector de pantalla. Target de 44px, el mínimo táctil real. */
+.resena-stars{display:flex;gap:2px;margin:6px 0 4px}
+.resena-star{background:none;border:0;padding:0;width:44px;height:44px;line-height:44px;
+  font-size:1.35rem;color:#3a4a5a;cursor:pointer;transition:color 0.15s,transform 0.1s}
+.resena-star.on{color:var(--g)}
+.resena-star:active{transform:scale(0.88)}
+.resena-star:focus-visible{outline:2px solid var(--p);outline-offset:2px;border-radius:6px}
 .speech-bubble{position:absolute;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.95);color:#fff;padding:10px 15px;border-radius:12px;font-size:0.85rem;max-width:280px;text-align:center;border:2px solid var(--p);opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:700;font-weight:700}
 .speech-bubble.show{opacity:1}
 .nav-alert{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);background:rgba(255,215,0,0.95);color:#000;padding:15px 25px;border-radius:15px;font-size:1rem;font-weight:800;z-index:800;opacity:0;transition:opacity 0.3s;pointer-events:none;text-align:center;box-shadow:0 0 25px rgba(255,215,0,0.5)}

@@ -30,6 +30,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function signedIn() { return request.auth != null; }
+    // Auditoría 2026-09-09: signedIn() también es true en la sesión anónima con la
+    // que arranca la app (ver nota de arriba) -- eso dejaba CASI TODAS las colecciones
+    // abiertas a escritura sin que nadie se registrara ni entrara con código de tester,
+    // simplemente abriendo la app y llamando la API directo (spam masivo / DoW por
+    // escrituras). signedInReal() exige además que la sesión NO sea anónima -- se usa
+    // en los `create` (el punto donde se generan documentos nuevos) de las colecciones
+    // públicas/comunitarias. Los `update`/`delete` ya protegidos por dueño real
+    // (isOwnerOrLegacy/isOwnerByCu) no se tocan: un anónimo no puede satisfacerlos igual.
+    function signedInReal() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
     // true si el campo no viene, o si es string y no supera n caracteres
     function strOk(f, n) {
       return !(f in request.resource.data)
@@ -72,7 +83,7 @@ service cloud.firestore {
     // skin) con solo saber su `cu`.
     match /users/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && !('premium' in request.resource.data);
+      allow create: if signedInReal() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && !('premium' in request.resource.data);
       allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && isOwnerOrLegacy() && premiumSinTocar();
       allow delete: if false;
     }
@@ -88,7 +99,7 @@ service cloud.firestore {
     }
     match /amistades/{id} {
       allow read: if false;
-      allow create: if signedIn()
+      allow create: if signedInReal()
         && (request.auth.uid == request.resource.data.a || request.auth.uid == request.resource.data.b)
         && request.resource.data.a < request.resource.data.b
         && id == request.resource.data.a + '_' + request.resource.data.b;
@@ -143,7 +154,7 @@ service cloud.firestore {
     // los 5.000 reales.
     match /meta/{id} {
       allow read: if true;
-      allow create, update: if signedIn();
+      allow create, update: if signedInReal();
       allow delete: if false;
     }
 
@@ -158,7 +169,7 @@ service cloud.firestore {
     // igual, sin arreglar nada. Se compara directo contra `a`.
     match /chat/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('t', 500) && strOk('nombre', 60);
+      allow create: if signedInReal() && strOk('t', 500) && strOk('nombre', 60);
       allow update, delete: if signedIn() && resource.data.a == request.auth.uid;
     }
 
@@ -166,7 +177,7 @@ service cloud.firestore {
     // (o cualquiera, en documentos de antes de este cambio — ver isOwnerOrLegacy).
     match /reportes/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('text', 600) && strOk('comuna', 80) && strOk('cat', 30);
+      allow create: if signedInReal() && strOk('text', 600) && strOk('comuna', 80) && strOk('cat', 30);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
       // Confirmación comunitaria estilo Waze (v6.86): CUALQUIER usuario logueado puede
       // decir "sigue ahí" / "ya no está", pero SOLO tocando los campos de confirmación —
@@ -180,14 +191,14 @@ service cloud.firestore {
     // Alertas de ruta
     match /routeAlerts/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('desc', 500) && strOk('type', 60);
+      allow create: if signedInReal() && strOk('desc', 500) && strOk('type', 60);
       allow update, delete: if signedIn();
     }
 
     // Comentarios de la CicloGuía
     match /guiComments/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('text', 500);
+      allow create: if signedInReal() && strOk('text', 500);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -196,7 +207,8 @@ service cloud.firestore {
     // de la función. delete sí se restringe: nadie borra la recomendación de otro.
     match /recommendations/{id} {
       allow read: if true;
-      allow create, update: if signedIn() && strOk('title', 120) && strOk('desc', 800);
+      allow create: if signedInReal() && strOk('title', 120) && strOk('desc', 800);
+      allow update: if signedIn() && strOk('title', 120) && strOk('desc', 800);
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -204,7 +216,7 @@ service cloud.firestore {
     // las pone cualquier usuario, no solo el dueño. delete sí se restringe.
     match /hostels/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('name', 120) && strOk('location', 200) && strOk('desc', 800);
+      allow create: if signedInReal() && strOk('name', 120) && strOk('location', 200) && strOk('desc', 800);
       allow update: if signedIn();
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
@@ -212,7 +224,7 @@ service cloud.firestore {
     // Tips de taller (MacGyver)
     match /repairTips/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('title', 120) && strOk('desc', 1000);
+      allow create: if signedInReal() && strOk('title', 120) && strOk('desc', 1000);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -223,7 +235,7 @@ service cloud.firestore {
     // al dueño real: nadie más tiene por qué tocar tu ruta grabada.
     match /routes/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000);
+      allow create: if signedInReal() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000);
       allow update, delete: if signedIn() && isOwnerOrLegacy() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000);
     }
 
@@ -238,7 +250,7 @@ service cloud.firestore {
     // track EXACTO vive acá, separado, solo para el dueño real.
     match /routesTrack/{id} {
       allow read: if signedIn() && isOwnerOrLegacy();
-      allow create: if signedIn() && request.resource.data.user == request.auth.uid;
+      allow create: if signedInReal() && request.resource.data.user == request.auth.uid;
       allow update: if signedIn() && isOwnerOrLegacy();
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
@@ -246,7 +258,7 @@ service cloud.firestore {
     // Viajes planificados (el usuario gestiona los suyos desde la app)
     match /trips/{id} {
       allow read: if true;
-      allow create: if signedIn();
+      allow create: if signedInReal();
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -256,7 +268,7 @@ service cloud.firestore {
     // solicitudes, pero si algo llega a hacerlo, que sea solo el propio remitente).
     match /friendRequests/{id} {
       allow read: if true;
-      allow create: if signedIn();
+      allow create: if signedInReal();
       allow update: if signedIn();
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
@@ -274,7 +286,7 @@ service cloud.firestore {
     // escriba el suyo).
     match /diarios/{id} {
       allow read: if signedIn() && isOwnerByCu();
-      allow create: if signedIn() && request.resource.data.user == request.auth.uid && strOk('reflexion', 2000) && strOk('complejo', 2000) && strOk('meta', 300);
+      allow create: if signedInReal() && request.resource.data.user == request.auth.uid && strOk('reflexion', 2000) && strOk('complejo', 2000) && strOk('meta', 300);
       allow update: if signedIn() && isOwnerByCu() && strOk('reflexion', 2000) && strOk('complejo', 2000) && strOk('meta', 300);
       allow delete: if signedIn() && isOwnerByCu();
     }
@@ -291,29 +303,36 @@ service cloud.firestore {
     // editarlo/borrarlo.
     match /dm/{conversationId}/messages/{msgId} {
       allow read: if signedIn() && conversationId.split('__').hasAny([request.auth.uid]);
-      allow create: if signedIn() && strOk('text', 1000);
+      allow create: if signedInReal() && strOk('text', 1000);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Te doy alojo (solo usuarios con 6+ meses, verificado en la app)
     match /alojo/{id} {
       allow read: if signedIn();
-      allow create: if signedIn() && strOk('desc', 600) && strOk('zona', 100);
+      allow create: if signedInReal() && strOk('desc', 600) && strOk('zona', 100);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Votación de comunidad (un voto por usuario, id del doc = su propio usuario)
     match /votacionComunidad/{id} {
       allow read: if true;
-      allow create, update: if signedIn() && strOk('opcion', 40);
-      allow delete: if signedIn();
+      // Auditoría 2026-09-09: el doc id ES tu propio uid (db.collection('votacionComunidad').doc(cu),
+      // ver gamificacion-comunidad.js) pero la regla no lo exigía -- cualquier signedIn() podía crear
+      // docs con id inventado, y como el conteo es un count() sobre TODA la colección filtrando por
+      // 'opcion', eso permitía inflar el resultado de la votación a mano (ballot stuffing).
+      allow create, update: if signedInReal() && id == request.auth.uid && strOk('opcion', 40);
+      allow delete: if signedIn() && id == request.auth.uid;
     }
 
     // Sorteo de comunidad (una participación por usuario; lista pública para transparencia)
     match /sorteoComunidad/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('nombre', 60);
-      allow update, delete: if signedIn();
+      // Auditoría 2026-09-09: mismo patrón que /votacionComunidad -- el doc id ES tu propio
+      // uid (db.collection('sorteoComunidad').doc(cu)) pero no se exigía, permitiendo anotarse
+      // varias veces con ids inventados (inflar el conteo del sorteo).
+      allow create: if signedInReal() && id == request.auth.uid && strOk('nombre', 60);
+      allow update, delete: if signedIn() && id == request.auth.uid;
     }
 
     // Frases que aporta la comunidad para que Pistero las diga en la app. Quedan en
@@ -322,7 +341,7 @@ service cloud.firestore {
     // frases ajenas llamando la API directo, aunque la UI lo ocultara.
     match /frasesComunidad/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('texto', 140) && strOk('nombre', 60);
+      allow create: if signedInReal() && strOk('texto', 140) && strOk('nombre', 60);
       allow update, delete: if isAdmin();
     }
 
@@ -352,19 +371,25 @@ service cloud.firestore {
     match /liveTracking/{id} {
       allow get: if true;
       allow list: if false;
-      allow create, update: if signedIn() && strOk('nombre', 60);
+      allow create, update: if signedInReal() && strOk('nombre', 60);
       allow delete: if signedIn();
     }
 
     // Segmentos (tramos para competir por mejor tiempo, estilo Strava) y sus marcas.
     match /segmentos/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('nombre', 80) && strOk('desc', 300);
-      allow update, delete: if signedIn();
+      allow create: if signedInReal() && strOk('nombre', 80) && strOk('desc', 300);
+      // Auditoría 2026-09-09: no había NINGÚN chequeo de dueño en update/delete (ni siquiera
+      // isOwnerOrLegacy, que acá no aplica -- el campo se llama `creadoPor`, no `user`/`authUid`)
+      // -- cualquier signedIn() podía editar o borrar el segmento de otro llamando la API directo.
+      // Grandfather igual que isOwnerOrLegacy: si un segmento viejo no tiene `creadoPor`, no se
+      // bloquea a nadie (no hay forma de saber quién era el dueño real).
+      allow update, delete: if signedIn()
+        && (!('creadoPor' in resource.data) || resource.data.creadoPor == request.auth.uid);
     }
     match /segmentoTiempos/{id} {
       allow read: if true;
-      allow create: if signedIn() && strOk('nombre', 60) && strOk('segmentoId', 100);
+      allow create: if signedInReal() && strOk('nombre', 60) && strOk('segmentoId', 100);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -382,7 +407,8 @@ service cloud.firestore {
     // de asistentes), no solo quien la creó. delete sí se restringe al creador.
     match /rodadas/{id} {
       allow read: if true;
-      allow create, update: if signedIn() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400);
+      allow create: if signedInReal() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400);
+      allow update: if signedIn() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400);
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -406,7 +432,7 @@ service cloud.firestore {
     //  - inmutable: nadie edita ni borra una reseña ya enviada, ni la propia.
     match /resenasApp/{id} {
       allow read: if signedIn() && isAdmin();
-      allow create: if signedIn()
+      allow create: if signedInReal()
         && strOk('comentario', 500) && strOk('nombre', 80)
         && request.resource.data.estrellas is number
         && request.resource.data.estrellas >= 1
