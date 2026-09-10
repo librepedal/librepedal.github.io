@@ -1,5 +1,34 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 📍 ESTADO CONSOLIDADO del Prominent Disclosure — LEER ESTO PRIMERO, 2026-09-10 tarde, sesión Tundra
+> Para cualquier sesión (Tundra o Lenovo) que entre de acá en adelante: esto reemplaza y cierra
+> todo el hilo de rechazos de abajo. No hace falta releer las entradas viejas salvo por
+> curiosidad histórica.
+>
+> **Checklist de la ronda de la Lista de pendientes que dejó Lenovo (commit `6d0049b`):**
+> 1. ✅ AAB nuevo generado con AMBOS fixes (JS + `MainActivity` nativo sin pedir ubicación).
+> 2. ✅ Probado en dispositivo real — el video de evidencia (punto 3) confirma que el aviso
+>    aparece correctamente apenas se loguea, con el permiso reseteado.
+> 3. ✅ Video de YouTube ya está actualizado al flujo nuevo: `youtube.com/shorts/xFtAN9x-ofU`
+>    (verificado en vivo en `app-content/background-location-permissions`, campo "Instrucciones
+>    en video"). **Ojo:** por un rato hubo confusión entre cuentas sobre si este video era el
+>    viejo o el nuevo — ES el nuevo, ya resuelto, no volver a pedir que se regrabe.
+> 4. ✅ Reenviado a revisión — submission **#17** (10-sept, 1:28pm), versionCode 29817607
+>    (Producción) / 29817618 (Prueba abierta). La #16 (intento intermedio sin el fix nativo) se
+>    retiró con "Quitar los cambios" ANTES de que Google la evaluara — quedó "Cancelada", no
+>    cuenta como rechazo.
+> 5. ✅ `Contenido de la app`: 12/12 declaraciones completas, "Requiere atención" vacío — no hay
+>    ningún otro video ni declaración pendiente en todo el Play Console.
+>
+> **Único pendiente real ahora mismo:** que Google resuelva la #17. Tarea programada
+> `librepedal-play-review-check` la vigila cada 1h y avisa a Inty apenas cambie. Si Google la
+> rechaza otra vez, el motivo YA NO puede ser "Missing Prominent Disclosure" (los 6 caminos
+> reales a ubicación del repo — `lpBackgroundGeo.start()`, `toggleGPS()`, `getCurrentLocation()`,
+> `publicarUbicacionInicial()`, `enviarSOS()`/`_broadcastSOS()`, y `MainActivity.onCreate()` —
+> están confirmados, uno por uno, pasando por el mismo aviso o sin pedir el permiso). Si vuelve a
+> aparecer ese mismo motivo, hay que asumir que se nos escapó un 7º camino y auditar de nuevo con
+> `grep -rn` sin filtrar, no repetir el mismo fix.
+
 > ## ✅ REENVIADO con el fix COMPLETO (JS + nativo) — sesión Tundra, 2026-09-10
 > Mergeado el fix de Lenovo (`6d0049b`, ver entrada de abajo) a `main` — sin conflictos en
 > código, solo en `EN-USO.md`. Desplegado el gate único (`lpAsegurarUbicacion`) en vivo a
