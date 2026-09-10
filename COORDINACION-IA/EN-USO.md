@@ -1,5 +1,18 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ REENVIADO con el fix COMPLETO (JS + nativo) — sesión Tundra, 2026-09-10
+> Mergeado el fix de Lenovo (`6d0049b`, ver entrada de abajo) a `main` — sin conflictos en
+> código, solo en `EN-USO.md`. Desplegado el gate único (`lpAsegurarUbicacion`) en vivo a
+> `librepedal.cl` (verificado con curl en `dialogos-genericos.js`, `ubicacion-carga.js`,
+> `suscripciones-comunidad.js`, `sos-comunitario.js`). Retirada la submission a medio-camino
+> (#16, sin el fix nativo) con "Quitar los cambios" — volvió a estado editable sin quedar
+> registrada como rechazo. Generados 2 AABs nuevos con `MainActivity.onCreate()` YA sin pedir
+> ubicación (versionCode 29817607 Producción / 29817618 Prueba abierta), subidos, notas
+> copiadas, y reenviados a revisión juntos (mismos 6 cambios: 2 versiones + países + segmento +
+> Data Safety). Confirmado en Play Console: "Cambios en la etapa de revisión" — esta vez con
+> AMBOS caminos (foreground al login + background al grabar/navegar) cubiertos por el mismo
+> aviso antes de submission. `librepedal-play-review-check` sigue vigilando cada 1h.
+
 > ## ⚠️ submission #16 (Tundra) INVALIDADA antes de tiempo — subida SIN el fix de Lenovo de abajo, hay que rehacerla — 2026-09-10
 > Tundra generó y reenvió 2 AABs nuevos (versionCode 29817585/29817594) para "resolver" el
 > rechazo de #15, SIN saber que Lenovo ya había encontrado la causa real 7 horas antes (commit
