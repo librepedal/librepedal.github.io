@@ -627,7 +627,15 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .gps-status.show{display:block}
 .user-list-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:4000;display:none;flex-direction:column;padding:15px;overflow-y:auto}
 .user-list-modal.on{display:flex}
-.lp-dialog{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:4500;display:none;align-items:center;justify-content:center;padding:20px}
+/* z-index 6500, no 4500: tiene que ganarle SIEMPRE a .loading-overlay (6000). Bug real
+   2026-09-10 (auditoría): startQuickTrip/startNavigation llaman showLoading() ANTES de
+   getCurrentLocation() -> el aviso de Prominent Disclosure (lpAsegurarUbicacion, adentro
+   de getCurrentLocation) quedaba dibujado pero TAPADO por el loading, con su botón
+   "Entiendo, continuar" fuera de alcance del clic (verificado con elementFromPoint: el
+   clic caía en #loadingOverlay, no en el botón). Con más z-index que CUALQUIER overlay
+   de la app, este diálogo gana sin depender de que cada llamador lo invoque en el orden
+   correcto. */
+.lp-dialog{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:6500;display:none;align-items:center;justify-content:center;padding:20px}
 .lp-dialog.on{display:flex}
 .lp-dialog-box{background:linear-gradient(135deg,#151b2e,#0a0f1d);border:2px solid var(--p);border-radius:14px;padding:18px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
 .lp-dialog-box p{color:#fff;font-size:0.92rem;line-height:1.4;margin:0 0 14px;white-space:pre-line}
