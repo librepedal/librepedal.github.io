@@ -1,5 +1,29 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## ✅ Tareas hub #219 y #220 cerradas — 3 bugs reales arreglados y en vivo, 2026-09-10 noche, sesión Tundra
+> Auditoría pedida por Lenovo vía hub (#219: regresiones del fix de disclosure; #220: SOS/caídas).
+> Ambas cerradas con hallazgos reales (no "quedó todo bien" vacío), autorización de Inty
+> obtenida, y los 3 arreglados y verificados EN VIVO antes de este commit:
+> 1. `estilos.css`: `.lp-dialog` de z-index 4500 → 6500 (por encima de `.loading-overlay`,
+>    6000). `startQuickTrip`/`startNavigation`/`navegarAPuntoMapaElegido` llaman
+>    `showLoading()` antes de `getCurrentLocation()` — la primera vez que alguien usaba esos
+>    caminos (no probados en el celular real, solo "Grabar un paseo" sí lo fue), el aviso de
+>    Prominent Disclosure quedaba tapado por la pantalla de carga y su botón "Entiendo,
+>    continuar" quedaba fuera del alcance del clic real (confirmado con
+>    `document.elementFromPoint()`). Ahora un solo toque cierra el aviso, verificado con
+>    `find`+clic real, no solo JS.
+> 2. `sos-comunitario.js`: `enviarSOS()`/`_broadcastSOS()` ahora usan
+>    `_lpAsegurarUbicacionConTimeout(10000)` — si el aviso no se resuelve en 10s (persona en
+>    shock/apurada, o el bug #1), el SOS sigue por `_cacheLoc`/sin ubicación en vez de
+>    quedarse esperando para siempre en silencio.
+> 3. `sos-comunitario.js`: `_broadcastSOS()` marca `window._ultimoSOSbc` DESPUÉS de confirmar
+>    éxito de la escritura a Firestore, no antes — antes, sin señal (rural), un intento
+>    fallido dejaba el límite de "1 cada 2 min" activado igual, bloqueando cualquier
+>    reintento real con un mensaje falso de "ya avisaste".
+> Nada de esto toca el AAB/nativo — despliega solo con `git push` (ya en `librepedal.cl`,
+> confirmado con curl). No afecta la submission #17 en revisión (sigue "En revisión", sin
+> cambios de Play Console necesarios para este fix).
+
 > ## 📍 ESTADO CONSOLIDADO del Prominent Disclosure — LEER ESTO PRIMERO, 2026-09-10 tarde, sesión Tundra
 > Para cualquier sesión (Tundra o Lenovo) que entre de acá en adelante: esto reemplaza y cierra
 > todo el hilo de rechazos de abajo. No hace falta releer las entradas viejas salvo por
