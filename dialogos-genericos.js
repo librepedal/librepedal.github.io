@@ -31,6 +31,21 @@ function lpDivulgacion(msg){
     modal.classList.add('on');
   });
 }
+// Aviso destacado ÚNICO para TODO acceso a ubicación (foreground o background). Google exige
+// que preceda a la PRIMERA vez que la app toca el GPS, sin importar qué camino de código lo
+// dispare — no solo "Grabar un paseo"/navegación. El rechazo del 10-sept-2026 fue justo por
+// esto: auth-sesion.js/auth-vinculo.js llamaban getCurrentLocation()/publicarUbicacionInicial()
+// apenas resuelto el login, sin ningún aviso antes (el diálogo nativo de Android aparecía
+// encima de la pantalla de login). Ahora getCurrentLocation(), publicarUbicacionInicial(),
+// lpBackgroundGeo.start() y el SOS pasan todos por este mismo gate — un solo aviso, un solo
+// texto, ningún camino sin cubrir. Texto alineado con la función declarada en Play Console
+// (Contenido de la app > Permisos de ubicación) para que formulario, video y app coincidan.
+function lpAsegurarUbicacion(){
+  if(localStorage.getItem('lp_disclosure_ubicacion')) return Promise.resolve(true);
+  return lpDivulgacion('📍 Ubicación, incluso en segundo plano\nLibre Pedal usa tu ubicación —incluso con la pantalla apagada o la app en segundo plano— para guiarte por voz en cada giro durante la navegación y avisarte si te desviaste de la ruta, sin que tengas que mirar el teléfono. Esa misma ubicación activa la detección automática de caídas, el botón SOS, el seguimiento en vivo (si tú lo activas) y tu posición aproximada en el mapa comunitario.\nNo se comparte con otros usuarios salvo que actives esas funciones tú mismo.')
+    .then(function(){ localStorage.setItem('lp_disclosure_ubicacion','1'); return true; })
+    .catch(function(e){ console.error('lpDivulgacion falló, no se accede a ubicación sin aviso:', e); return false; });
+}
 function lpPedirTexto(msg, placeholder){
   return new Promise(function(resolve){
     const modal=document.getElementById('lpDialog');

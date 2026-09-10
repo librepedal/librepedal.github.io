@@ -32,7 +32,7 @@ async function _broadcastSOS(lat,lon){
     if(typeof db==='undefined' || !db || !cu){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad (sin conexion). Usa el 133 y tus contactos.'); return; }
     var now=Date.now();
     if(now-(window._ultimoSOSbc||0) < 120000){ if(typeof h==='function') h('Ya avisaste a la comunidad hace poco. Si sigues en peligro, llama al 133.'); return; }
-    if(lat==null||lon==null){ if(navigator.geolocation){ if(typeof h==='function') h('Ubicando tu zona para avisar a la comunidad...'); navigator.geolocation.getCurrentPosition(function(p){ _broadcastSOS(p.coords.latitude,p.coords.longitude); }, function(){ if(typeof lpAviso==='function') lpAviso('No pude obtener tu zona (permiso de ubicacion). No se avisó a la comunidad; usa el 133 y tus contactos.'); }, {enableHighAccuracy:true,timeout:8000,maximumAge:0}); } else { if(typeof lpAviso==='function') lpAviso('Tu telefono no entrega ubicacion.'); } return; }
+    if(lat==null||lon==null){ if(navigator.geolocation){ if(typeof h==='function') h('Ubicando tu zona para avisar a la comunidad...'); lpAsegurarUbicacion().then(function(ok){ if(!ok){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad (permiso de ubicacion). Usa el 133 y tus contactos.'); return; } navigator.geolocation.getCurrentPosition(function(p){ _broadcastSOS(p.coords.latitude,p.coords.longitude); }, function(){ if(typeof lpAviso==='function') lpAviso('No pude obtener tu zona (permiso de ubicacion). No se avisó a la comunidad; usa el 133 y tus contactos.'); }, {enableHighAccuracy:true,timeout:8000,maximumAge:0}); }); } else { if(typeof lpAviso==='function') lpAviso('Tu telefono no entrega ubicacion.'); } return; }
     var clat=Math.round(lat/0.05)*0.05, clon=Math.round(lon/0.05)*0.05; // gruesa ~5km
     window._ultimoSOSbc=now;
     var _ref=await db.collection('sosAlertas').add({ clat:clat, clon:clon, ts:firebase.firestore.FieldValue.serverTimestamp() });
@@ -67,10 +67,16 @@ function enviarSOS(){
   // y usamos el cache solo de respaldo (una posicion vieja puede mandar el auxilio al lugar equivocado).
   var _cacheLoc = currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
   if(!navigator.geolocation){ if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('Tu telefono no entrega ubicacion. El SOS ira SIN ubicacion — activa el GPS y avisa a un contacto por telefono.'); } return; }
-  hUrgente('Ubicando tu posicion para el SOS, un segundo...');
-  var _sosDone=false;
-  var _sosT=setTimeout(function(){ if(_sosDone) return; _sosDone=true; if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('No alcance a fijar tu ubicacion. El SOS va sin ella — activa el permiso de ubicacion para tu seguridad.'); } }, 9000);
-  navigator.geolocation.getCurrentPosition(function(p){ if(_sosDone) return; _sosDone=true; clearTimeout(_sosT); seguir(p.coords.latitude,p.coords.longitude); },
-    function(){ if(_sosDone) return; _sosDone=true; clearTimeout(_sosT); if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('No pude obtener tu ubicacion (permiso denegado). Activa la ubicacion para que el SOS la incluya.'); } },
-    {enableHighAccuracy:true, timeout:8000, maximumAge:0});
+  // Gate único (dialogos-genericos.js): en la práctica ya está resuelto desde el login
+  // (publicarUbicacionInicial), así que esto resuelve al instante — pero cubre el caso límite
+  // de un SOS siendo el primer contacto de la app con el GPS.
+  lpAsegurarUbicacion().then(function(ok){
+    if(!ok){ if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('No pude pedir tu ubicacion para el SOS. Usa el 133 y tus contactos.'); } return; }
+    hUrgente('Ubicando tu posicion para el SOS, un segundo...');
+    var _sosDone=false;
+    var _sosT=setTimeout(function(){ if(_sosDone) return; _sosDone=true; if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('No alcance a fijar tu ubicacion. El SOS va sin ella — activa el permiso de ubicacion para tu seguridad.'); } }, 9000);
+    navigator.geolocation.getCurrentPosition(function(p){ if(_sosDone) return; _sosDone=true; clearTimeout(_sosT); seguir(p.coords.latitude,p.coords.longitude); },
+      function(){ if(_sosDone) return; _sosDone=true; clearTimeout(_sosT); if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('No pude obtener tu ubicacion (permiso denegado). Activa la ubicacion para que el SOS la incluya.'); } },
+      {enableHighAccuracy:true, timeout:8000, maximumAge:0});
+  });
 }

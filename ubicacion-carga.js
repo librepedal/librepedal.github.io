@@ -1,23 +1,29 @@
 function getCurrentLocation(){
   return new Promise(function(resolve){
-    showLoading("Obteniendo tu ubicación...");
-    if(!navigator.geolocation){ hideLoading(); resolve(null); return; }
-    let listo=false;
-    function fin(v){ if(listo) return; listo=true; clearTimeout(failsafe); hideLoading(); resolve(v); }
-    // RED DE SEGURIDAD: si el permiso de GPS queda pendiente (el usuario no responde
-    // el aviso), los callbacks nunca llegan y el timeout de la API no corre —
-    // sin esto la pantalla de carga quedaba pegada para siempre al iniciar.
-    const failsafe=setTimeout(function(){ const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; fin(null); },16000);
-    navigator.geolocation.getCurrentPosition(function(pos){
-      currentUserLocation={lat:pos.coords.latitude, lon:pos.coords.longitude, accuracy:pos.coords.accuracy};
-      const qs=document.getElementById('quick-start'); if(qs) qs.value="Mi ubicación actual";
-      // El mapa arranca centrado en un punto genérico (aún no sabe dónde estás);
-      // apenas llega el GPS real, hace zoom hasta tu ubicación en vez de dejarte
-      // mirando medio país o medio Chile.
-      if(mp) mp.flyTo({center:[pos.coords.longitude,pos.coords.latitude], zoom:15, duration:1800});
-      showSpeechBubble("Ubicación detectada"); fin(currentUserLocation);
-    }, function(){ const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; showSpeechBubble("No se pudo obtener el GPS"); fin(null); },
-    {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+    // Gate único (dialogos-genericos.js): esta función es el camino MÁS usado hacia el GPS
+    // (recentrar mapa, iniciar navegación, reportes, resumir viaje) — sin el aviso destacado
+    // ANTES de aquí, cualquiera de esos caminos pedía el permiso sin haber avisado nada.
+    lpAsegurarUbicacion().then(function(ok){
+      if(!ok){ resolve(null); return; }
+      showLoading("Obteniendo tu ubicación...");
+      if(!navigator.geolocation){ hideLoading(); resolve(null); return; }
+      let listo=false;
+      function fin(v){ if(listo) return; listo=true; clearTimeout(failsafe); hideLoading(); resolve(v); }
+      // RED DE SEGURIDAD: si el permiso de GPS queda pendiente (el usuario no responde
+      // el aviso), los callbacks nunca llegan y el timeout de la API no corre —
+      // sin esto la pantalla de carga quedaba pegada para siempre al iniciar.
+      const failsafe=setTimeout(function(){ const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; fin(null); },16000);
+      navigator.geolocation.getCurrentPosition(function(pos){
+        currentUserLocation={lat:pos.coords.latitude, lon:pos.coords.longitude, accuracy:pos.coords.accuracy};
+        const qs=document.getElementById('quick-start'); if(qs) qs.value="Mi ubicación actual";
+        // El mapa arranca centrado en un punto genérico (aún no sabe dónde estás);
+        // apenas llega el GPS real, hace zoom hasta tu ubicación en vez de dejarte
+        // mirando medio país o medio Chile.
+        if(mp) mp.flyTo({center:[pos.coords.longitude,pos.coords.latitude], zoom:15, duration:1800});
+        showSpeechBubble("Ubicación detectada"); fin(currentUserLocation);
+      }, function(){ const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; showSpeechBubble("No se pudo obtener el GPS"); fin(null); },
+      {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+    });
   });
 }
 // Botón 🎯 del Mapa Global: a diferencia del mapa de navegación, este mapa

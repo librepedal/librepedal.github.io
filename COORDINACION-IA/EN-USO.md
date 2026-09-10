@@ -1,5 +1,83 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔁 RECHAZO #3 confirmado — el fix del 8-sept era necesario pero INCOMPLETO, 2 caminos nuevos encontrados y arreglados — sesión Lenovo, 2026-09-10
+> Continúa (y corrige el alcance de) la entrada "✅ CERRADO" de abajo (Tundra, 2026-09-08 noche).
+> Esa sesión confirmó en el celular real de Inty que el aviso de `lpBackgroundGeo.start()`
+> funcionaba, y esa parte SIGUE siendo cierta y correcta — pero Google volvió a rechazar la app
+> (verificado en vivo en `policy-center`: "Actualización rechazada — Requisito de aviso destacado
+> y consentimiento — Se aplicó el 10 sept 2026", mismo texto: "Tu aplicación accede al permiso
+> BACKGROUND_LOCATION sin mostrar un aviso destacado"). La captura que Google adjuntó como
+> evidencia muestra el diálogo nativo de ubicación **encima de la pantalla de login** — un camino
+> que el fix de Tundra nunca cubrió ni podía cubrir, porque vive fuera de `motor-gps.js`.
+>
+> **Causa real de este 2º rechazo, verificada línea por línea (no el mensaje genérico de Google):**
+> 1. `scripts/patch-android.js` generaba un `MainActivity.java` que pedía
+>    `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` en `onCreate()` — **apenas arranca la
+>    Activity nativa**, antes de que cargue nada de JS. Esto nunca tuvo relación con
+>    `lpBackgroundGeo`/`motor-gps.js`, es 100% independiente y corría en cada apertura de la app.
+> 2. `auth-sesion.js:166-167` y `auth-vinculo.js:116-117` llamaban `getCurrentLocation()` +
+>    `publicarUbicacionInicial()` automáticamente apenas se resolvía el login (manual o restaurado),
+>    sin pasar por ningún aviso — otro camino a `navigator.geolocation.getCurrentPosition` que
+>    `lpDivulgacion` nunca gateaba.
+> Cualquiera de los dos por sí solo ya dispara el diálogo nativo sin aviso previo; probablemente
+> ambos contribuyeron a lo que el reviewer de Google vio.
+>
+> **Fix aplicado (con permiso explícito de Inty, "última oportunidad"):**
+> - `dialogos-genericos.js`: nuevo `lpAsegurarUbicacion()` — gate ÚNICO y centralizado (antes de
+>   esto había 1 solo choke point cubierto, ahora hay 1 función que TODOS los caminos llaman).
+>   Reemplaza el disclosure inline de `lpBackgroundGeo.start()`; texto ampliado para mencionar
+>   TODOS los usos reales (navegación por voz, detección de caídas, SOS, seguimiento en vivo, mapa
+>   comunitario), alineado palabra por palabra con la función ya declarada en Play Console
+>   (`app-content/background-location-permissions`: "Navegación por voz en curso...").
+> - `motor-gps.js`: `lpBackgroundGeo.start()` usa el gate central; `toggleGPS()` ahora es `async` y
+>   gatea TAMBIÉN el camino sin plugin nativo (`watchPosition` de respaldo), que antes quedaba sin
+>   cubrir en un teléfono sin el plugin.
+> - `ubicacion-carga.js` (`getCurrentLocation`), `suscripciones-comunidad.js`
+>   (`publicarUbicacionInicial`), `sos-comunitario.js` (`enviarSOS`, `_broadcastSOS`): los 3 puntos
+>   de entrada reales restantes, todos gateados con `lpAsegurarUbicacion()`. Cubre transitivamente
+>   `reportes.js`, el botón recentrar del mapa, e iniciar/reanudar navegación (todos llaman
+>   `getCurrentLocation()`, nunca `navigator.geolocation` directo).
+> - `scripts/patch-android.js`: sacado `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` del array de
+>   `onCreate()` — queda solo `RECORD_AUDIO`. Regenerado y verificado localmente
+>   (`node scripts/patch-android.js`): el `MainActivity.java` resultante ya no pide ubicación al
+>   arrancar. **La manifest sigue declarando los 3 permisos de ubicación sin cambios** (siguen
+>   siendo necesarios para cuando el JS/plugin los pida más tarde).
+> - Sintaxis verificada con `node --check` en los 6 archivos JS/script modificados, sin errores.
+>
+> **CRÍTICO — a diferencia del fix de Tundra, este SÍ necesita un AAB nuevo antes de reenviar:**
+> el fix de `patch-android.js` es código nativo Java, compilado dentro del AAB — no toma efecto
+> solo con `git push`/deploy web (a diferencia del gate de JS, que sí es de carga remota y queda
+> en vivo apenas se despliega a `librepedal.cl`, igual que documentó Tundra abajo). Cualquier AAB
+> ya subido o generado ANTES de este commit sigue teniendo el `onCreate()` viejo horneado adentro.
+>
+> **Pendiente de esta ronda (no lo puede hacer esta sesión sola):**
+> 1. Ejecutar `build-aab-release.yml` para generar un AAB con AMBOS fixes.
+> 2. Probarlo en un dispositivo real **desinstalando la app por completo primero** (para resetear
+>    el permiso de ubicación a "no otorgado" — si no, el diálogo nativo no vuelve a aparecer y no
+>    se puede confirmar ni grabar el flujo real).
+> 3. **Regrabar el video de YouTube** (el actual, `youtube.com/shorts/J3UEmihvg9w`, grabado por
+>    Tundra/Inty el 8-sept, muestra el aviso SOLO en el flujo "Grabar un paseo" — con este fix el
+>    aviso aparece apenas se loguea, un flujo distinto y más temprano; el video viejo ya no
+>    representa fielmente cuándo/cómo aparece) y reemplazar el link en
+>    `app-content/background-location-permissions`.
+> 4. Reenviar a revisión desde "Descripción general de la publicación".
+>
+> **Lección para la próxima vez, para que no se repita un 3er rechazo:** "confirmado en el
+> dispositivo real" NO es lo mismo que "cubre todos los caminos" — hay que auditar TODOS los
+> call-sites de `navigator.geolocation`/`getCurrentPosition`/`watchPosition`/`lpBackgroundGeo` en
+> el repo (`grep -rn` sin filtrar por archivo) antes de dar un Prominent Disclosure por cerrado,
+> incluyendo el lado nativo (`scripts/patch-android.js` → `MainActivity.java`), no solo el JS que
+> ya se sospecha.
+
+> ## ⚠️ PEDIDO DE VERIFICACIÓN pendiente — sesión Cowork/web, 2026-09-05
+> Sin candado, sin tocar `index.html`. Detalle completo en
+> `COORDINACION-IA/sudamerica/VERIFICAR-WORKER-SUDAMERICA-2026-09-05.md` — pido que
+> quien tenga Claude Code con git normal en este PC verifique si el worker
+> `librepedal-ia-sudamerica` (sin protección anti-abuso) sigue en uso real o es
+> código muerto (mi lectura dice que ya no se usa, pero pido segunda verificación).
+> De paso, hay ~116 archivos con diffs raros (línea-por-línea, probable CRLF/LF) y
+> un `.git/index.lock` que mi puente no pudo borrar — revisar antes de commitear.
+
 > ## ✅ CERRADO — fix del Prominent Disclosure confirmado en el celular real de Inty, evidencia actualizada — sesión Tundra, 2026-09-08 noche
 > Cierra por completo el resto de las entradas de esta ronda (todas abajo, misma sesión).
 >

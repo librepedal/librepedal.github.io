@@ -129,10 +129,15 @@ public class MainActivity extends BridgeActivity {
     // Pide de una vez los permisos que Android exige mostrar con diálogo propio
     // (no basta con declararlos en el manifest). Sin esto, el WebView niega el
     // micrófono en silencio y el usuario nunca ve un cuadro para permitirlo.
+    // OJO: la UBICACIÓN a propósito NO va acá. Rechazo real de Google Play (10-sept-2026,
+    // "Missing Prominent Disclosure"): este bloque pedía ACCESS_FINE/COARSE_LOCATION apenas
+    // arrancaba la Activity —antes de que cargara nada de JS—, así que el diálogo nativo de
+    // ubicación aparecía sin haber mostrado ningún aviso. La ubicación ahora se pide SOLO
+    // desde el JS (lpAsegurarUbicacion() en dialogos-genericos.js), que muestra el aviso
+    // destacado primero y recién después deja que Capacitor/el plugin pidan el permiso real.
+    // NO reagregar ACCESS_FINE_LOCATION/ACCESS_COARSE_LOCATION aquí sin ese aviso antes.
     String[] permisos = {
-      Manifest.permission.RECORD_AUDIO,
-      Manifest.permission.ACCESS_FINE_LOCATION,
-      Manifest.permission.ACCESS_COARSE_LOCATION
+      Manifest.permission.RECORD_AUDIO
     };
     List<String> faltantes = new ArrayList<>();
     for (String p : permisos) {
