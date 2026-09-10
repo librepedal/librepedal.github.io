@@ -3,11 +3,17 @@
 // así apareces al tiro en el mapa sin esperar a pedalear.
 function publicarUbicacionInicial(){
   if(!cu||ghostMode||!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(function(pos){
-    const plat=Math.round(pos.coords.latitude*100)/100, plon=Math.round(pos.coords.longitude*100)/100;
-    db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}).catch(function(){});
-    _rtdPublicarPosicion(plat, plon);
-  },function(){},{enableHighAccuracy:false,timeout:8000,maximumAge:600000});
+  // Gate único (dialogos-genericos.js): esta función corre SOLA apenas resuelve el login
+  // (auth-sesion.js/auth-vinculo.js) — sin el aviso antes de aquí, el permiso se pedía sin
+  // haber avisado nada apenas el usuario entraba a la app.
+  lpAsegurarUbicacion().then(function(ok){
+    if(!ok) return;
+    navigator.geolocation.getCurrentPosition(function(pos){
+      const plat=Math.round(pos.coords.latitude*100)/100, plon=Math.round(pos.coords.longitude*100)/100;
+      db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}).catch(function(){});
+      _rtdPublicarPosicion(plat, plon);
+    },function(){},{enableHighAccuracy:false,timeout:8000,maximumAge:600000});
+  });
 }
 function subscribeToChat(){ db.collection('chat').orderBy('ts','asc').limit(100).onSnapshot(function(snapshot){ cm=snapshot.docs.map(function(doc){ const data=doc.data(); return Object.assign({},data,{nombre:data.nombre||data.a}); }); rc(); }); }
 /* Escapa texto de usuarios para evitar inyección HTML/XSS al meterlo en innerHTML. */

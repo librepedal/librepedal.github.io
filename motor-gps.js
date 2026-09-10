@@ -13,19 +13,13 @@ const lpBackgroundGeo = (function(){
     // La navegación turn-by-turn pasa su propio manejador para seguir guiando con la pantalla apagada.
     start: async function(onLocation){
       const bg=getBG(); if(!bg || watcherId) return;
-      // Prominent Disclosure (política de Google Play para ACCESS_BACKGROUND_LOCATION):
-      // hay que mostrar este aviso ANTES de pedir el permiso nativo, y solo la primera vez.
-      // Único choke point: tanto el botón "Grabar un paseo" (toggleGPS) como la navegación
-      // turn-by-turn pasan por acá, así que gatearlo aquí cubre ambos caminos.
-      // IMPORTANTE: si el aviso falla por lo que sea, NO seguir a pedir el permiso igual
-      // (eso repetiría exactamente el rechazo de Google) — mejor fallar cerrado y avisar
-      // por consola para poder diagnosticarlo, que fallar abierto en silencio.
-      if(!localStorage.getItem('lp_disclosure_bg_ubicacion')){
-        try{
-          await lpDivulgacion('📍 Ubicación en segundo plano\nLibre Pedal necesita acceder a tu ubicación incluso con la pantalla apagada para seguir grabando tu ruta mientras pedaleas y avisarte de peligros en el camino.\nTu ubicación no se comparte con otros usuarios, salvo que actives "Compartir mi viaje en vivo" tú mismo desde Ajustes.');
-          localStorage.setItem('lp_disclosure_bg_ubicacion','1');
-        }catch(e){ console.error('lpDivulgacion falló, no se inicia GPS en segundo plano sin aviso:', e); return; }
-      }
+      // Prominent Disclosure (política de Google Play para ACCESS_BACKGROUND_LOCATION): hay
+      // que mostrar el aviso ANTES de pedir el permiso nativo. Gate centralizado en
+      // lpAsegurarUbicacion() (dialogos-genericos.js) — el mismo que usan getCurrentLocation(),
+      // publicarUbicacionInicial() y el SOS, para que TODO camino que toque el GPS por primera
+      // vez pase por el mismo aviso único. Si falla, NO seguir a pedir el permiso igual (eso
+      // repetiría exactamente el rechazo de Google) — mejor fallar cerrado.
+      if(!(await lpAsegurarUbicacion())){ console.error('Consentimiento de ubicación no obtenido, no se inicia GPS en segundo plano.'); return; }
       const cb = onLocation || function(location){ if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}}); };
       // Con Ahorro GPS activo pedimos fixes cada 25m en vez de 8m: bastante menos
       // preciso en curvas cerradas, pero muchas menos lecturas de GPS = más batería
@@ -71,9 +65,13 @@ function _actualizarBtnGPS(){
 // la presión de las ruedas apenas abres la app: quejas reales de Inty, esos avisos
 // solo deberían sonar cuando el viaje arranca de verdad (tocas el botón, o pides una
 // ruta). El GPS sigue grabando igual en silencio; solo se calla el aviso inmediato.
-function toggleGPS(silencioso){
+async function toggleGPS(silencioso){
   const btn=document.getElementById('btnGPSLibre');
   if(!ig){
+    // Cubre también el camino sin plugin nativo (watchPosition de abajo): antes solo
+    // lpBackgroundGeo.start() gateaba el aviso, así que en un teléfono sin el plugin el
+    // permiso se pedía sin haber mostrado nada.
+    if(!(await lpAsegurarUbicacion())) return;
     rutaDocId=null; puntosGuardados=0; spAnterior=0;
     _logrosDelViaje=[]; _kmEsteViaje=0; // arranca el conteo del resumen de este viaje
     ultimoMovimientoTime=Date.now(); rutaSegCerrada=true; rutaSegDistIni=us.di;
