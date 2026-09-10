@@ -1,5 +1,21 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🔁 REENVIADO (submission #16) tras el rechazo real de #15 — sesión Tundra, 2026-09-10
+> Google rechazó la submission #15 (10-sept) por el mismo motivo — "Requisito de aviso
+> destacado" — pese al fix ya confirmado funcionando en dispositivo real. El código en sí no
+> cambió (verificado línea por línea: producción == repo, sin diferencias); lo que pasó es que
+> #15 correspondía al build subido el 8-sept antes de los últimos ajustes (fail-closed,
+> limpieza de instrumentación de diagnóstico). Se generaron 2 AABs nuevos (`build-aab-release.yml`
+> disparado 2 veces, versionCode 29817585 para Producción y 29817594 para Prueba abierta — el
+> primer intento con 29817570 chocó con "código ya usado" por un draft descartado antes, normal),
+> subidos a ambas pistas, notas de versión copiadas desde el último release publicado real
+> (`<es-419>` intacto), y reenviados a revisión juntos (6 cambios: 2 versiones + países +
+> segmento + Data Safety). Confirmado: la app pasó de "Rechazado" a "Cambios en la etapa de
+> revisión" (con las nuevas comprobaciones previas de Google, ~12-14 min antes de pasar a
+> revisión real). Video de evidencia en Permisos de ubicación también renovado por la otra
+> sesión (`youtube.com/shorts/xFtAN9x-ofU`), verificado en vivo.
+> La tarea programada `librepedal-play-review-check` sigue activa cada 1h.
+
 > ## ✅ CERRADO — fix del Prominent Disclosure confirmado en el celular real de Inty, evidencia actualizada — sesión Tundra, 2026-09-08 noche
 > Cierra por completo el resto de las entradas de esta ronda (todas abajo, misma sesión).
 >
