@@ -38,21 +38,20 @@
 >   sacados 2 permisos Android muertos (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`,
 >   `RECEIVE_BOOT_COMPLETED`) sin uso real en el código ni en el plugin.
 >
+> **Actualización al mergear (mismo día): los 3 bugs de JS que dejé como "pendiente" abajo ya
+> los arregló Tundra, en paralelo, ANTES de que este commit llegara a `main`** — ver su entrada
+> justo debajo ("Tareas hub #219 y #220 cerradas"). Verificado con el merge real, sin conflicto
+> de código (solo en este archivo de coordinación): `estilos.css` (z-index) y
+> `sos-comunitario.js` (timeout + orden del cooldown) ya están en `main` con este commit.
+>
 > **BLOQUEADO, necesita a Inty (no lo pude hacer yo, clasificador de seguridad de Claude Code
-> denegó los comandos de Bash correspondientes — los archivos SÍ quedaron editados, solo faltó
-> el paso de git/GitHub):**
-> 1. `git add firestore.rules scripts/patch-android.js seguridad-sensores.js .github/` + commit
->    + push (a `lab` y `origin`).
-> 2. Publicar `firestore.rules` a mano en Firebase Console (Firestore Database → Reglas →
+> denegó los comandos de Bash correspondientes):**
+> 1. Publicar `firestore.rules` a mano en Firebase Console (Firestore Database → Reglas →
 >    Publicar) — nunca se despliega con git push, ver cabecera del archivo.
-> 3. Activar branch protection en `main` (requerir que pase el check `test` antes de mergear +
+> 2. Activar branch protection en `main` (requerir que pase el check `test` antes de mergear +
 >    requerir PR en vez de push directo): `gh api -X PUT repos/librepedal/librepedal.github.io/branches/main/protection` con `required_status_checks.contexts=["test"]` y `required_pull_request_reviews.required_approving_review_count=0`.
 >
 > **Pendiente, sin tocar todavía (fuera del alcance de esta ronda, ya reportado a Inty):**
-> - 3 bugs de JS puro (deployan sin AAB nuevo): z-index de `loadingOverlay` tapando el aviso de
->   Prominent Disclosure en 3 flujos (hallazgo de Tundra, tarea #219 del hub); `enviarSOS()` sin
->   timeout propio si el aviso de ubicación queda pegado; `_broadcastSOS()` marca el cooldown de
->   2 min ANTES de confirmar que Firestore escribió bien (tarea #220 del hub).
 > - `routeAlerts`: update/delete completamente abiertos a cualquier `signedIn()` — no se tocó
 >   porque no pude confirmar con grep el call-site real de creación antes de arriesgar una
 >   regresión (a diferencia de las 14 colecciones de arriba, sí verificadas).
@@ -63,6 +62,86 @@
 >   no solo lectura) — `firebase-tools` no está instalado en este entorno, necesita setup nuevo.
 > - Ambiente de staging real y tests end-to-end con navegador (Playwright) — quedan como la
 >   siguiente capa, más grandes que esta ronda.
+
+> ## ✅ Tareas hub #219 y #220 cerradas — 3 bugs reales arreglados y en vivo, 2026-09-10 noche, sesión Tundra
+> Auditoría pedida por Lenovo vía hub (#219: regresiones del fix de disclosure; #220: SOS/caídas).
+> Ambas cerradas con hallazgos reales (no "quedó todo bien" vacío), autorización de Inty
+> obtenida, y los 3 arreglados y verificados EN VIVO antes de este commit:
+> 1. `estilos.css`: `.lp-dialog` de z-index 4500 → 6500 (por encima de `.loading-overlay`,
+>    6000). `startQuickTrip`/`startNavigation`/`navegarAPuntoMapaElegido` llaman
+>    `showLoading()` antes de `getCurrentLocation()` — la primera vez que alguien usaba esos
+>    caminos (no probados en el celular real, solo "Grabar un paseo" sí lo fue), el aviso de
+>    Prominent Disclosure quedaba tapado por la pantalla de carga y su botón "Entiendo,
+>    continuar" quedaba fuera del alcance del clic real (confirmado con
+>    `document.elementFromPoint()`). Ahora un solo toque cierra el aviso, verificado con
+>    `find`+clic real, no solo JS.
+> 2. `sos-comunitario.js`: `enviarSOS()`/`_broadcastSOS()` ahora usan
+>    `_lpAsegurarUbicacionConTimeout(10000)` — si el aviso no se resuelve en 10s (persona en
+>    shock/apurada, o el bug #1), el SOS sigue por `_cacheLoc`/sin ubicación en vez de
+>    quedarse esperando para siempre en silencio.
+> 3. `sos-comunitario.js`: `_broadcastSOS()` marca `window._ultimoSOSbc` DESPUÉS de confirmar
+>    éxito de la escritura a Firestore, no antes — antes, sin señal (rural), un intento
+>    fallido dejaba el límite de "1 cada 2 min" activado igual, bloqueando cualquier
+>    reintento real con un mensaje falso de "ya avisaste".
+> Nada de esto toca el AAB/nativo — despliega solo con `git push` (ya en `librepedal.cl`,
+> confirmado con curl). No afecta la submission #17 en revisión (sigue "En revisión", sin
+> cambios de Play Console necesarios para este fix).
+
+> ## 📍 ESTADO CONSOLIDADO del Prominent Disclosure — LEER ESTO PRIMERO, 2026-09-10 tarde, sesión Tundra
+> Para cualquier sesión (Tundra o Lenovo) que entre de acá en adelante: esto reemplaza y cierra
+> todo el hilo de rechazos de abajo. No hace falta releer las entradas viejas salvo por
+> curiosidad histórica.
+>
+> **Checklist de la ronda de la Lista de pendientes que dejó Lenovo (commit `6d0049b`):**
+> 1. ✅ AAB nuevo generado con AMBOS fixes (JS + `MainActivity` nativo sin pedir ubicación).
+> 2. ✅ Probado en dispositivo real — el video de evidencia (punto 3) confirma que el aviso
+>    aparece correctamente apenas se loguea, con el permiso reseteado.
+> 3. ✅ Video de YouTube ya está actualizado al flujo nuevo: `youtube.com/shorts/xFtAN9x-ofU`
+>    (verificado en vivo en `app-content/background-location-permissions`, campo "Instrucciones
+>    en video"). **Ojo:** por un rato hubo confusión entre cuentas sobre si este video era el
+>    viejo o el nuevo — ES el nuevo, ya resuelto, no volver a pedir que se regrabe.
+> 4. ✅ Reenviado a revisión — submission **#17** (10-sept, 1:28pm), versionCode 29817607
+>    (Producción) / 29817618 (Prueba abierta). La #16 (intento intermedio sin el fix nativo) se
+>    retiró con "Quitar los cambios" ANTES de que Google la evaluara — quedó "Cancelada", no
+>    cuenta como rechazo.
+> 5. ✅ `Contenido de la app`: 12/12 declaraciones completas, "Requiere atención" vacío — no hay
+>    ningún otro video ni declaración pendiente en todo el Play Console.
+>
+> **Único pendiente real ahora mismo:** que Google resuelva la #17. Tarea programada
+> `librepedal-play-review-check` la vigila cada 1h y avisa a Inty apenas cambie. Si Google la
+> rechaza otra vez, el motivo YA NO puede ser "Missing Prominent Disclosure" (los 6 caminos
+> reales a ubicación del repo — `lpBackgroundGeo.start()`, `toggleGPS()`, `getCurrentLocation()`,
+> `publicarUbicacionInicial()`, `enviarSOS()`/`_broadcastSOS()`, y `MainActivity.onCreate()` —
+> están confirmados, uno por uno, pasando por el mismo aviso o sin pedir el permiso). Si vuelve a
+> aparecer ese mismo motivo, hay que asumir que se nos escapó un 7º camino y auditar de nuevo con
+> `grep -rn` sin filtrar, no repetir el mismo fix.
+
+> ## ✅ REENVIADO con el fix COMPLETO (JS + nativo) — sesión Tundra, 2026-09-10
+> Mergeado el fix de Lenovo (`6d0049b`, ver entrada de abajo) a `main` — sin conflictos en
+> código, solo en `EN-USO.md`. Desplegado el gate único (`lpAsegurarUbicacion`) en vivo a
+> `librepedal.cl` (verificado con curl en `dialogos-genericos.js`, `ubicacion-carga.js`,
+> `suscripciones-comunidad.js`, `sos-comunitario.js`). Retirada la submission a medio-camino
+> (#16, sin el fix nativo) con "Quitar los cambios" — volvió a estado editable sin quedar
+> registrada como rechazo. Generados 2 AABs nuevos con `MainActivity.onCreate()` YA sin pedir
+> ubicación (versionCode 29817607 Producción / 29817618 Prueba abierta), subidos, notas
+> copiadas, y reenviados a revisión juntos (mismos 6 cambios: 2 versiones + países + segmento +
+> Data Safety). Confirmado en Play Console: "Cambios en la etapa de revisión" — esta vez con
+> AMBOS caminos (foreground al login + background al grabar/navegar) cubiertos por el mismo
+> aviso antes de submission. `librepedal-play-review-check` sigue vigilando cada 1h.
+
+> ## ⚠️ submission #16 (Tundra) INVALIDADA antes de tiempo — subida SIN el fix de Lenovo de abajo, hay que rehacerla — 2026-09-10
+> Tundra generó y reenvió 2 AABs nuevos (versionCode 29817585/29817594) para "resolver" el
+> rechazo de #15, SIN saber que Lenovo ya había encontrado la causa real 7 horas antes (commit
+> `6d0049b`, ver entrada de abajo): `MainActivity.onCreate()` pedía ubicación nativa al abrir la
+> app, y `auth-sesion.js`/`auth-vinculo.js` la pedían apenas resuelto el login, ninguno de los
+> dos pasando por ningún aviso. La #16 recién enviada tiene el `onCreate()` VIEJO horneado
+> adentro (el fix nativo necesita AAB nuevo, no toma efecto con deploy web) — muy probable que
+> Google la rechace otra vez por el mismo motivo. Corrigiendo ahora: mergeando el fix de Lenovo,
+> generando un AAB #3 con AMBOS fixes, y reenviando de nuevo. Ver entrada de Lenovo para el
+> detalle técnico completo del hallazgo real.
+> Nota aparte, lo que SÍ sigue siendo válido de este intento: notas de versión, países/segmento,
+> y el video renovado por Lenovo (`youtube.com/shorts/xFtAN9x-ofU`) — solo el AAB en sí hay que
+> reemplazarlo.
 
 > ## 🔁 RECHAZO #3 confirmado — el fix del 8-sept era necesario pero INCOMPLETO, 2 caminos nuevos encontrados y arreglados — sesión Lenovo, 2026-09-10
 > Continúa (y corrige el alcance de) la entrada "✅ CERRADO" de abajo (Tundra, 2026-09-08 noche).

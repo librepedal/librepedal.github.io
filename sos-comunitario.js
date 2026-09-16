@@ -3,6 +3,17 @@
 // La ubicacion exacta sigue yendo SOLO a tus contactos (WhatsApp) y al 133.
 // ===== SOS COMUNITARIO (PASO 2: recibir). Solo ciclistas de CONFIANZA (km de bici) reciben,
 // y solo una alerta de BAJA PRECISION (zona ~5-10km, sin identidad ni ubicacion exacta).
+// El SOS no puede quedar colgado esperando un aviso que nadie alcanza a tocar (persona
+// inconsciente/apurada en plena emergencia, o el aviso tapado por otro overlay). Con
+// timeout, se trata como "sin permiso" -- sigue el flujo normal por _cacheLoc/sin
+// ubicación, NUNCA toca GPS sin consentimiento, pero el SOS en sí SIEMPRE sale.
+function _lpAsegurarUbicacionConTimeout(ms){
+  return new Promise(function(resolve){
+    var listo=false;
+    var t=setTimeout(function(){ if(listo) return; listo=true; resolve(false); }, ms);
+    lpAsegurarUbicacion().then(function(ok){ if(listo) return; listo=true; clearTimeout(t); resolve(ok); });
+  });
+}
 var _sosListener=null, _sosVistos={};
 function _iniciarEscuchaSOS(){
   try{
@@ -32,10 +43,15 @@ async function _broadcastSOS(lat,lon){
     if(typeof db==='undefined' || !db || !cu){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad (sin conexion). Usa el 133 y tus contactos.'); return; }
     var now=Date.now();
     if(now-(window._ultimoSOSbc||0) < 120000){ if(typeof h==='function') h('Ya avisaste a la comunidad hace poco. Si sigues en peligro, llama al 133.'); return; }
-    if(lat==null||lon==null){ if(navigator.geolocation){ if(typeof h==='function') h('Ubicando tu zona para avisar a la comunidad...'); lpAsegurarUbicacion().then(function(ok){ if(!ok){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad (permiso de ubicacion). Usa el 133 y tus contactos.'); return; } navigator.geolocation.getCurrentPosition(function(p){ _broadcastSOS(p.coords.latitude,p.coords.longitude); }, function(){ if(typeof lpAviso==='function') lpAviso('No pude obtener tu zona (permiso de ubicacion). No se avisó a la comunidad; usa el 133 y tus contactos.'); }, {enableHighAccuracy:true,timeout:8000,maximumAge:0}); }); } else { if(typeof lpAviso==='function') lpAviso('Tu telefono no entrega ubicacion.'); } return; }
+    if(lat==null||lon==null){ if(navigator.geolocation){ if(typeof h==='function') h('Ubicando tu zona para avisar a la comunidad...'); _lpAsegurarUbicacionConTimeout(10000).then(function(ok){ if(!ok){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad (permiso de ubicacion). Usa el 133 y tus contactos.'); return; } navigator.geolocation.getCurrentPosition(function(p){ _broadcastSOS(p.coords.latitude,p.coords.longitude); }, function(){ if(typeof lpAviso==='function') lpAviso('No pude obtener tu zona (permiso de ubicacion). No se avisó a la comunidad; usa el 133 y tus contactos.'); }, {enableHighAccuracy:true,timeout:8000,maximumAge:0}); }); } else { if(typeof lpAviso==='function') lpAviso('Tu telefono no entrega ubicacion.'); } return; }
     var clat=Math.round(lat/0.05)*0.05, clon=Math.round(lon/0.05)*0.05; // gruesa ~5km
-    window._ultimoSOSbc=now;
+    // OJO (bug real, auditoría 2026-09-10): el sello de "1 cada 2 min" va DESPUÉS de
+    // confirmar el éxito de la escritura, no antes. Antes se marcaba primero -- si
+    // db.collection().add() fallaba (típico: sin señal en ruta rural), el catch avisaba
+    // el error pero el límite ya había quedado activo, bloqueando en silencio cualquier
+    // reintento en los siguientes 2 minutos con un mensaje falso ("ya avisaste").
     var _ref=await db.collection('sosAlertas').add({ clat:clat, clon:clon, ts:firebase.firestore.FieldValue.serverTimestamp() });
+    window._ultimoSOSbc=now;
     try{ window._misSOS=window._misSOS||{}; if(_ref&&_ref.id) window._misSOS[_ref.id]=1; }catch(e){}
     if(typeof h==='function') h('Listo: avisamos a los ciclistas de tu zona, sin tu ubicacion exacta ni tu nombre. Si estas en peligro, llama tambien al 133.');
   }catch(e){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad ahora. Usa la llamada al 133 y tus contactos.'); }
@@ -69,8 +85,11 @@ function enviarSOS(){
   if(!navigator.geolocation){ if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('Tu telefono no entrega ubicacion. El SOS ira SIN ubicacion — activa el GPS y avisa a un contacto por telefono.'); } return; }
   // Gate único (dialogos-genericos.js): en la práctica ya está resuelto desde el login
   // (publicarUbicacionInicial), así que esto resuelve al instante — pero cubre el caso límite
-  // de un SOS siendo el primer contacto de la app con el GPS.
-  lpAsegurarUbicacion().then(function(ok){
+  // de un SOS siendo el primer contacto de la app con el GPS. Con timeout (bug real,
+  // auditoría 2026-09-10): sin esto, si el aviso no se resuelve -- persona apurada/en
+  // shock que no alcanza a tocar "Entiendo, continuar", o el aviso tapado por otro
+  // overlay -- el SOS completo se quedaba esperando para siempre, sin fallback ni error.
+  _lpAsegurarUbicacionConTimeout(10000).then(function(ok){
     if(!ok){ if(_cacheLoc) seguir(_cacheLoc.lat,_cacheLoc.lon); else { seguir(null,null); lpAviso('No pude pedir tu ubicacion para el SOS. Usa el 133 y tus contactos.'); } return; }
     hUrgente('Ubicando tu posicion para el SOS, un segundo...');
     var _sosDone=false;
