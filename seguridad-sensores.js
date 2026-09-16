@@ -277,7 +277,11 @@ async function toggleSeguimientoVivo(){
     /* `modo` se publica desde 2026-07-21 para que el aviso de ciclista adelante sepa a
        quién avisar y de quién: un motorizado necesita saber que el punto que tiene a 400 m
        es una BICI, no otro auto. Sin este campo el aviso no puede distinguirlos. */
-    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo'), ts:firebase.firestore.FieldValue.serverTimestamp()});
+    // authUid agregado 2026-09-16: sin esto, las reglas de Firestore no podian saber
+    // quien era el dueno real de este documento -- cualquier otro usuario logueado
+    // podia sobrescribir tu ubicacion en vivo o borrar tu seguimiento llamando la API
+    // directo (hallazgo real de la auditoria, ver firestore.rules).
+    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo'), authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
     liveTrackActivo=true; liveTrackUltimoEnvio=0;
     _actualizarBtnSeguimientoVivo();
     const url=location.origin+location.pathname.replace(/index\.html$/,'')+'seguir.html?id='+liveTrackId;

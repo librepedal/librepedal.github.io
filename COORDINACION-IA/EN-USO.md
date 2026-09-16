@@ -1,5 +1,69 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 🛡️ Blindaje estructural tras la auditoría de punta a punta — sesión Lenovo, 2026-09-16
+> Sin candado, no toca `index.html`. Cierra (parcialmente) el pedido explícito de Inty de
+> "cero errores" tras el patrón repetido de los 4 rechazos de Play Store: en vez de otro
+> parche puntual, esto ataca la CLASE de bug (impersonación, valores sin límite) en TODA
+> `firestore.rules`, no solo la colección que se auditó primero.
+>
+> **`firestore.rules` — verificado contra el código real (grep de cada `.add()`) antes de
+> exigir nada nuevo, para no repetir el error de romper una escritura legítima:**
+> - `autorEsUnoMismo()`: nuevo helper — si el payload trae `user`/`authUid`/`creadoPor`/`from`,
+>   debe coincidir con `request.auth.uid`. Aplicado a creates de: reportes, recommendations,
+>   hostels, repairTips, routes, trips, friendRequests, rodadas, segmentos, segmentoTiempos,
+>   frasesComunidad, dm/messages, alojo, guiComments. Cierra la impersonación (crear una ruta o
+>   reporte "a nombre de" otro ciclista, que aparecía en su perfil público como si él lo hubiera
+>   hecho).
+> - `statsIncrementoPlausible()` + `createdAtSinTocar()` en `/users` update: Darma y km ya NO
+>   pueden saltar de 0 a 999999999 de un tiro (tope de 300 por escritura) ni se puede reescribir
+>   `createdAt` para autodeclararse "Socio Fundador" gratis. **Límite honesto**: no hay Cloud
+>   Function que recalcule desde el GPS crudo, así que esto no elimina la trampa del todo — solo
+>   la vuelve mucho más lenta/detectable en vez de instantánea. Ver hallazgo pendiente abajo.
+> - `liveTracking`: create/update/delete ya exigen dueño real (`authUid`). Requirió tocar
+>   `seguridad-sensores.js` (`toggleSeguimientoVivo()`) porque el cliente NUNCA escribía ese
+>   campo — sin el fix de JS, exigirlo en la regla habría roto la función entera.
+> - `trips` update: `gpsData.distance` acotado a 0–1000 km. `segmentoTiempos` create:
+>   `tiempoMs` acotado a 1ms–24h (antes aceptaba negativos/cero, encabezando cualquier tabla de
+>   líderes sin pedalear).
+>
+> **Infraestructura nueva (para que "cero errores" deje de depender de que alguien se acuerde
+> de pedirlo):**
+> - `.github/PULL_REQUEST_TEMPLATE.md`: checklist obligatorio visible en cada PR (grep
+>   exhaustivo del patrón, test nuevo, verificación real, Firestore rules validadas contra
+>   código real, riesgo físico probado en dispositivo si aplica).
+> - `.github/workflows/secret-scan.yml`: gitleaks en cada push/PR — el proyecto ya tuvo 2
+>   casi-fugas de documentos confidenciales a este mismo repo público, nunca se automatizó la
+>   detección.
+> - `scripts/patch-android.js`: limpieza pendiente de la ronda anterior, ya commiteada acá —
+>   sacados 2 permisos Android muertos (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`,
+>   `RECEIVE_BOOT_COMPLETED`) sin uso real en el código ni en el plugin.
+>
+> **BLOQUEADO, necesita a Inty (no lo pude hacer yo, clasificador de seguridad de Claude Code
+> denegó los comandos de Bash correspondientes — los archivos SÍ quedaron editados, solo faltó
+> el paso de git/GitHub):**
+> 1. `git add firestore.rules scripts/patch-android.js seguridad-sensores.js .github/` + commit
+>    + push (a `lab` y `origin`).
+> 2. Publicar `firestore.rules` a mano en Firebase Console (Firestore Database → Reglas →
+>    Publicar) — nunca se despliega con git push, ver cabecera del archivo.
+> 3. Activar branch protection en `main` (requerir que pase el check `test` antes de mergear +
+>    requerir PR en vez de push directo): `gh api -X PUT repos/librepedal/librepedal.github.io/branches/main/protection` con `required_status_checks.contexts=["test"]` y `required_pull_request_reviews.required_approving_review_count=0`.
+>
+> **Pendiente, sin tocar todavía (fuera del alcance de esta ronda, ya reportado a Inty):**
+> - 3 bugs de JS puro (deployan sin AAB nuevo): z-index de `loadingOverlay` tapando el aviso de
+>   Prominent Disclosure en 3 flujos (hallazgo de Tundra, tarea #219 del hub); `enviarSOS()` sin
+>   timeout propio si el aviso de ubicación queda pegado; `_broadcastSOS()` marca el cooldown de
+>   2 min ANTES de confirmar que Firestore escribió bien (tarea #220 del hub).
+> - `routeAlerts`: update/delete completamente abiertos a cualquier `signedIn()` — no se tocó
+>   porque no pude confirmar con grep el call-site real de creación antes de arriesgar una
+>   regresión (a diferencia de las 14 colecciones de arriba, sí verificadas).
+> - `guiComments`: `autorEsUnoMismo()` aplicado, pero el sub-tipo "voto" (calificación de
+>   hostels) usa un shape de documento distinto — revisado y es compatible, pero queda como nota
+>   para quien lo toque después.
+> - Tests de Firestore rules con `@firebase/rules-unit-testing` (fuzzing real de las reglas,
+>   no solo lectura) — `firebase-tools` no está instalado en este entorno, necesita setup nuevo.
+> - Ambiente de staging real y tests end-to-end con navegador (Playwright) — quedan como la
+>   siguiente capa, más grandes que esta ronda.
+
 > ## 🔁 RECHAZO #3 confirmado — el fix del 8-sept era necesario pero INCOMPLETO, 2 caminos nuevos encontrados y arreglados — sesión Lenovo, 2026-09-10
 > Continúa (y corrige el alcance de) la entrada "✅ CERRADO" de abajo (Tundra, 2026-09-08 noche).
 > Esa sesión confirmó en el celular real de Inty que el aviso de `lpBackgroundGeo.start()`

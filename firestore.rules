@@ -78,13 +78,61 @@ service cloud.firestore {
         || ('premium' in resource.data && request.resource.data.premium == resource.data.premium);
     }
 
+    // Auditoría 2026-09-16 (control de calidad estructural, tras el 4to rechazo de
+    // Play Store por el mismo patrón: arreglar el caso reportado sin cazar la CLASE
+    // completa del bug). Helpers genéricos para cerrar 2 clases de hallazgo que se
+    // repetían colección por colección:
+    //
+    // 1) IMPERSONACIÓN: ninguna colección validaba que el autor (user/authUid/
+    //    creadoPor/from) fuera de verdad quien está escribiendo -- un ciclista podía
+    //    crear una ruta o un reporte con el `user` de OTRO, y aparecía en el perfil
+    //    público de la víctima como si ella lo hubiera hecho. Confirmado contra el
+    //    código real (grep de cada `.add(...)`) que TODAS las colecciones de abajo ya
+    //    escriben su propio uid en esos campos hoy -- este helper no exige que el
+    //    campo esté (cada colección usa el suyo, y `guiComments` tiene 2 formas de
+    //    documento distintas), solo que SI está, coincida con quien firma la escritura.
+    //    Por eso no rompe ninguna escritura legítima existente.
+    function autorEsUnoMismo() {
+      return (!('user' in request.resource.data) || request.resource.data.user == request.auth.uid)
+        && (!('authUid' in request.resource.data) || request.resource.data.authUid == request.auth.uid)
+        && (!('creadoPor' in request.resource.data) || request.resource.data.creadoPor == request.auth.uid)
+        && (!('from' in request.resource.data) || request.resource.data.from == request.auth.uid);
+    }
+    // 2) VALORES SIN LÍMITE: Darma/km/tiempos de segmento aceptaban cualquier número,
+    //    incluido escribir 999999999 directo desde la consola del navegador (el JS de
+    //    esta app se sirve en vivo y es 100% visible/editable por el cliente, así que
+    //    las reglas son la ÚNICA defensa real). numOk() es para valores acotados en un
+    //    rango fijo (ej. un tiempo de segmento); statsIncrementoPlausible() es para
+    //    contadores que crecen con el uso normal (Darma, km) -- no puede evitar del
+    //    todo la trampa (no hay Cloud Function que recalcule desde el GPS crudo, eso
+    //    queda como hallazgo pendiente aparte), pero hace IMPOSIBLE saltar de 0 a
+    //    999999999 de un tiro, que es el ataque real que se probó en la auditoría.
+    function numOk(f, min, max) {
+      return !(f in request.resource.data)
+        || (request.resource.data[f] is number && request.resource.data[f] >= min && request.resource.data[f] <= max);
+    }
+    function statsIncrementoPlausible(campo, maxDelta) {
+      return !(campo in request.resource.data) || !(campo in resource.data)
+        || (request.resource.data[campo] is number && resource.data[campo] is number
+            && request.resource.data[campo] - resource.data[campo] <= maxDelta
+            && request.resource.data[campo] - resource.data[campo] >= -maxDelta);
+    }
+    // createdAt decide el cupo de "Socio Fundador" (primeros 3 meses) -- sin esto,
+    // cualquiera podía reescribir su propia fecha de registro a una vieja y
+    // autodeclararse fundador gratis.
+    function createdAtSinTocar() {
+      return !('createdAt' in request.resource.data) || !('createdAt' in resource.data)
+        || request.resource.data.createdAt == resource.data.createdAt;
+    }
+
     // Perfiles de ciclistas. update restringido al dueño real: antes cualquier
     // usuario autenticado podía sobrescribir el perfil de OTRO (nombre, casco,
     // skin) con solo saber su `cu`.
     match /users/{id} {
       allow read: if true;
       allow create: if signedInReal() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && !('premium' in request.resource.data);
-      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && isOwnerOrLegacy() && premiumSinTocar();
+      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && isOwnerOrLegacy() && premiumSinTocar()
+        && statsIncrementoPlausible('darma', 300) && statsIncrementoPlausible('km', 300) && createdAtSinTocar();
       allow delete: if false;
     }
 
@@ -177,7 +225,7 @@ service cloud.firestore {
     // (o cualquiera, en documentos de antes de este cambio — ver isOwnerOrLegacy).
     match /reportes/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('text', 600) && strOk('comuna', 80) && strOk('cat', 30);
+      allow create: if signedInReal() && strOk('text', 600) && strOk('comuna', 80) && strOk('cat', 30) && autorEsUnoMismo();
       allow update, delete: if signedIn() && isOwnerOrLegacy();
       // Confirmación comunitaria estilo Waze (v6.86): CUALQUIER usuario logueado puede
       // decir "sigue ahí" / "ya no está", pero SOLO tocando los campos de confirmación —
@@ -198,7 +246,7 @@ service cloud.firestore {
     // Comentarios de la CicloGuía
     match /guiComments/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('text', 500);
+      allow create: if signedInReal() && strOk('text', 500) && autorEsUnoMismo();
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -207,7 +255,7 @@ service cloud.firestore {
     // de la función. delete sí se restringe: nadie borra la recomendación de otro.
     match /recommendations/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('title', 120) && strOk('desc', 800);
+      allow create: if signedInReal() && strOk('title', 120) && strOk('desc', 800) && autorEsUnoMismo();
       allow update: if signedIn() && strOk('title', 120) && strOk('desc', 800);
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
@@ -216,7 +264,7 @@ service cloud.firestore {
     // las pone cualquier usuario, no solo el dueño. delete sí se restringe.
     match /hostels/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('name', 120) && strOk('location', 200) && strOk('desc', 800);
+      allow create: if signedInReal() && strOk('name', 120) && strOk('location', 200) && strOk('desc', 800) && autorEsUnoMismo();
       allow update: if signedIn();
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
@@ -224,7 +272,7 @@ service cloud.firestore {
     // Tips de taller (MacGyver)
     match /repairTips/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('title', 120) && strOk('desc', 1000);
+      allow create: if signedInReal() && strOk('title', 120) && strOk('desc', 1000) && autorEsUnoMismo();
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -235,7 +283,7 @@ service cloud.firestore {
     // al dueño real: nadie más tiene por qué tocar tu ruta grabada.
     match /routes/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000);
+      allow create: if signedInReal() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000) && autorEsUnoMismo();
       allow update, delete: if signedIn() && isOwnerOrLegacy() && strOk('hospedaje', 200) && strOk('notasDelDia', 3000);
     }
 
@@ -258,8 +306,15 @@ service cloud.firestore {
     // Viajes planificados (el usuario gestiona los suyos desde la app)
     match /trips/{id} {
       allow read: if true;
-      allow create: if signedInReal();
-      allow update, delete: if signedIn() && isOwnerOrLegacy();
+      allow create: if signedInReal() && autorEsUnoMismo();
+      // gpsData.distance lo escribe el cliente al terminar el viaje (finishTrip/
+      // finishTripAuto) -- sin límite, un viaje con "500.000 km" era válido para las
+      // reglas. Tope generoso (1.000 km) para no chocar con ultra-distancia real.
+      allow update, delete: if signedIn() && isOwnerOrLegacy()
+        && (!('gpsData' in request.resource.data) || !('distance' in request.resource.data.gpsData)
+            || (request.resource.data.gpsData.distance is number
+                && request.resource.data.gpsData.distance >= 0
+                && request.resource.data.gpsData.distance <= 1000));
     }
 
     // Solicitudes de amistad. update queda abierto: quien las ACEPTA/RECHAZA es el
@@ -268,7 +323,10 @@ service cloud.firestore {
     // solicitudes, pero si algo llega a hacerlo, que sea solo el propio remitente).
     match /friendRequests/{id} {
       allow read: if true;
-      allow create: if signedInReal();
+      // Auditoría 2026-09-16: cero validación de campos ni de autor -- cualquiera podía
+      // crear una solicitud "de parte de" otro usuario, o inflar el documento hasta el
+      // límite de 1MB de Firestore.
+      allow create: if signedInReal() && autorEsUnoMismo() && strOk('to', 120) && strOk('status', 20);
       allow update: if signedIn();
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
@@ -303,14 +361,14 @@ service cloud.firestore {
     // editarlo/borrarlo.
     match /dm/{conversationId}/messages/{msgId} {
       allow read: if signedIn() && conversationId.split('__').hasAny([request.auth.uid]);
-      allow create: if signedInReal() && strOk('text', 1000);
+      allow create: if signedInReal() && strOk('text', 1000) && autorEsUnoMismo();
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
     // Te doy alojo (solo usuarios con 6+ meses, verificado en la app)
     match /alojo/{id} {
       allow read: if signedIn();
-      allow create: if signedInReal() && strOk('desc', 600) && strOk('zona', 100);
+      allow create: if signedInReal() && strOk('desc', 600) && strOk('zona', 100) && autorEsUnoMismo();
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -341,7 +399,7 @@ service cloud.firestore {
     // frases ajenas llamando la API directo, aunque la UI lo ocultara.
     match /frasesComunidad/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('texto', 140) && strOk('nombre', 60);
+      allow create: if signedInReal() && strOk('texto', 140) && strOk('nombre', 60) && autorEsUnoMismo();
       allow update, delete: if isAdmin();
     }
 
@@ -368,17 +426,26 @@ service cloud.firestore {
     // (El worker-proximidad que reemplaza la alerta "ciclista adelante" sobre esta
     // misma base -- ver tarea #195 del hub -- ya está construido y en main, solo
     // falta desplegarlo con un token de Cloudflare con más permiso.)
+    // Auditoría 2026-09-16: create/update solo exigían estar logueado -- sin
+    // verificar dueño, cualquier usuario real podía escribir lat/lon en el
+    // liveTracking de OTRO ciclista (falsificar la ubicación que ven sus contactos de
+    // confianza) o borrar su seguimiento (`delete: if signedIn()`, sin dueño tampoco).
+    // authUid ahora se escribe siempre desde el cliente (ver seguridad-sensores.js) --
+    // se exige en el create y se verifica en update/delete contra el documento ya
+    // guardado.
     match /liveTracking/{id} {
       allow get: if true;
       allow list: if false;
-      allow create, update: if signedInReal() && strOk('nombre', 60);
-      allow delete: if signedIn();
+      allow create: if signedInReal() && strOk('nombre', 60) && request.resource.data.authUid == request.auth.uid;
+      allow update: if signedIn() && strOk('nombre', 60)
+        && (!('authUid' in resource.data) || resource.data.authUid == request.auth.uid);
+      allow delete: if signedIn() && (!('authUid' in resource.data) || resource.data.authUid == request.auth.uid);
     }
 
     // Segmentos (tramos para competir por mejor tiempo, estilo Strava) y sus marcas.
     match /segmentos/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('nombre', 80) && strOk('desc', 300);
+      allow create: if signedInReal() && strOk('nombre', 80) && strOk('desc', 300) && autorEsUnoMismo();
       // Auditoría 2026-09-09: no había NINGÚN chequeo de dueño en update/delete (ni siquiera
       // isOwnerOrLegacy, que acá no aplica -- el campo se llama `creadoPor`, no `user`/`authUid`)
       // -- cualquier signedIn() podía editar o borrar el segmento de otro llamando la API directo.
@@ -389,7 +456,10 @@ service cloud.firestore {
     }
     match /segmentoTiempos/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('nombre', 60) && strOk('segmentoId', 100);
+      // Auditoría 2026-09-16: tiempoMs sin validar -- un valor negativo o cero encabeza
+      // cualquier tabla de líderes sin haber pedaleado. Tope de 24h, generoso.
+      allow create: if signedInReal() && strOk('nombre', 60) && strOk('segmentoId', 100)
+        && autorEsUnoMismo() && numOk('tiempoMs', 1, 86400000);
       allow update, delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -407,7 +477,7 @@ service cloud.firestore {
     // de asistentes), no solo quien la creó. delete sí se restringe al creador.
     match /rodadas/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400);
+      allow create: if signedInReal() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400) && autorEsUnoMismo();
       allow update: if signedIn() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400);
       allow delete: if signedIn() && isOwnerOrLegacy();
     }

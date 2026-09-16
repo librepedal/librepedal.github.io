@@ -53,3 +53,6 @@ testers_kv_bulk.json
 # mas abajo en el historial (PROMPTS-GEMINI-VIDEO-PISTERO.md) para la misma clase de hueco.
 INVERSIONISTA-*
 confidencial/
+
+# Permisos locales de Claude Code (por sesion/cuenta, no es politica de equipo)
+.claude/settings.local.json

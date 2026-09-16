@@ -50,6 +50,11 @@ if (xml.indexOf('android:host="librepedal.cl"') === -1) {
   console.log('App Links ya estaba presente.');
 }
 
+// Auditoría 2026-09-10 (misma ronda del fix de Prominent Disclosure): REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+// y RECEIVE_BOOT_COMPLETED estaban acá pero NUNCA se usan en ningún lado — ni en el código propio
+// (`grep -rn` sin resultados) ni los necesita el plugin de background-geolocation (su propio
+// AndroidManifest.xml en node_modules no los declara). Son permisos "muertos": riesgo real sin
+// ningún beneficio (Google puede cuestionar cualquier permiso declarado sin uso real), sacados.
 const permisos = [
   'android.permission.ACCESS_COARSE_LOCATION',
   'android.permission.ACCESS_FINE_LOCATION',
@@ -57,8 +62,6 @@ const permisos = [
   'android.permission.FOREGROUND_SERVICE',
   'android.permission.FOREGROUND_SERVICE_LOCATION',
   'android.permission.WAKE_LOCK',
-  'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
-  'android.permission.RECEIVE_BOOT_COMPLETED',
   'android.permission.RECORD_AUDIO'
 ];
 
@@ -152,7 +155,7 @@ public class MainActivity extends BridgeActivity {
 }
 `;
   fs.writeFileSync(mainActivityPath, nuevoContenido);
-  console.log('MainActivity parchada para pedir permisos de micrófono/ubicación al arrancar: ' + mainActivityPath);
+  console.log('MainActivity parchada para pedir el permiso de micrófono al arrancar (ubicación queda a cargo del JS, ver lpAsegurarUbicacion): ' + mainActivityPath);
 } else {
   console.error('No se encontró MainActivity.java bajo android/app/src/main/java — no se pudo agregar el pedido de permisos.');
   process.exit(1);
