@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"scripts/gate-calidad.mjs\" lineas",
+            "timeout": 15,
+            "statusMessage": "Gate de calidad: revisando tamaño del archivo..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"scripts/gate-calidad.mjs\" stub",
+            "timeout": 15,
+            "statusMessage": "Gate de calidad: buscando código en falso..."
+          }
+        ]
+      }
+    ]
+  }
+}
