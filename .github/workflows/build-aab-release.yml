@@ -52,7 +52,12 @@ jobs:
           echo "sdkmanager encontrado en: $SDKMANAGER"
           if [ -z "$SDKMANAGER" ]; then echo "No se encontró sdkmanager en $SDK_ROOT"; exit 1; fi
           yes | "$SDKMANAGER" --licenses > /dev/null || true
-          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
+          # build-tools;35.0.0 tambien hace falta: AGP 8.13.0 (Capacitor 8) pide esa
+          # revision por defecto para el paso de compilacion aunque compileSdk sea 36
+          # (confirmado con un build local: "Failed to find Build Tools revision 35.0.0"
+          # hasta instalarla aparte). No hay buildToolsVersion fijado a mano en
+          # variables.gradle -- mas simple instalar ambas revisiones que fijar una.
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "build-tools;35.0.0"
 
       - name: Subir a API 36 (Google Play exige apuntar al menos a API 36 antes del 30-ago-2026)
         run: |

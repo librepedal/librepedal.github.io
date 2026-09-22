@@ -45,6 +45,20 @@ jobs:
       - name: Agregar plataforma Android
         run: npx cap add android
 
+      - name: Instalar plataforma Android 16 (API 36) y Build-Tools en el SDK del runner
+        # Con Capacitor 8 (migracion 2026-09-22) el template ya genera
+        # compileSdkVersion=targetSdkVersion=36 por defecto -- el runner de GitHub
+        # puede no traer esa plataforma preinstalada todavia. build-tools;35.0.0
+        # tambien hace falta: AGP 8.13.0 pide esa revision por defecto para
+        # compilar aunque compileSdk sea 36 (confirmado con un build local, mismo
+        # ajuste que build-aab-release.yml).
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          SDKMANAGER=$(find "$SDK_ROOT" -maxdepth 5 -name sdkmanager -type f 2>/dev/null | head -1)
+          if [ -z "$SDKMANAGER" ]; then echo "No se encontró sdkmanager en $SDK_ROOT"; exit 1; fi
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "build-tools;35.0.0"
+
       - name: Generar ícono y splash desde resources/ (logo real de Libre Pedal)
         run: npx @capacitor/assets generate --android
 
