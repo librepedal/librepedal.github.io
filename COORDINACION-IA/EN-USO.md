@@ -1,5 +1,52 @@
 # 🔒 Quién está editando `index.html` AHORA MISMO
 
+> ## 📱 Migración Capacitor 6 → 8.5.2 / API 36 — rama lista para revisión, sesión Tundra, 2026-09-22
+> Sin candado, sin tocar `index.html`. Hub #224 (Lenovo, urgente): Google exige apuntar a
+> Android 16 (API 36) antes del 1-nov-2026; Capacitor 6/7 no llegan a esa API. Trabajado
+> **en rama** `migracion-capacitor-8-api36` (pusheada a `lab` y `origin`, commit `e045bb2`),
+> **NO mergeada a main a propósito** — así lo pedía la tarea, queda para que Lenovo revise.
+>
+> **Qué se actualizó:** `package.json` — `@capacitor/core`/`android`/`cli` a `^8.5.2`,
+> `@capacitor-community/background-geolocation` a `^1.2.26`, `speech-recognition` a `^7.0.1`
+> (su peerDependency exige `@capacitor/core >=7.0.0`, no llegaba con 6.x), `text-to-speech` a
+> `^8.0.2` (peerDependency exige `>=8.0.0`). Las 3 APIs revisadas contra el uso real en
+> `motor-gps.js`/`motor-navegacion.js`/`voz-motor.js` (`speak()`, `start()`,
+> `requestPermissions()`, etc.) — **cero cambios de código necesarios**, compatibles tal cual.
+>
+> **Hallazgo importante:** `android/` no vive en el repo (gitignored, se regenera con
+> `npx cap add android` en cada build) — con Capacitor 8 el propio template YA genera
+> `compileSdkVersion=targetSdkVersion=36` y AGP `8.13.0` por defecto, sin tocar
+> `variables.gradle` a mano.
+>
+> **Bug real encontrado y arreglado en los workflows** (afectaba la release real, no solo mi
+> build local): AGP 8.13.0 exige Build Tools **35.0.0** por defecto para compilar aunque
+> `compileSdk` sea 36 (falla con "Failed to find Build Tools revision 35.0.0" si falta) —
+> `build-aab-release.yml` solo instalaba `36.0.0`, y `build-apk.yml` (el que corre automático
+> en cada push a `main`) **no instalaba NINGÚN componente de SDK** — con Capacitor 8 subiendo
+> el compileSdk por defecto a 36, se habría roto en el próximo push sin este fix. Agregado
+> `build-tools;35.0.0` a ambos workflows.
+>
+> **Verificado real, no solo "dice que compila":** `assembleDebug` local exitoso completo
+> (Gradle 8.14.3 standalone, AGP 8.13.0, JDK 21, SDK con platform android-36 + build-tools
+> 36.0.0/35.0.0 instalados a mano en este equipo, antes solo tenía build-tools 34.0.0 y ni
+> `sdkmanager` funcional). `aapt dump badging` del APK resultante confirma
+> `compileSdkVersion=36`, `targetSdkVersion=36`, los 7 permisos nativos esperados presentes
+> (incluye `foregroundServiceType="location"` del plugin de segundo plano). `npm test`:
+> 40/41 OK — el único que falla (`iconos-lucide.test.mjs`, `TypeError` de jsdom) ya fallaba
+> igual con Capacitor 6 en `main` (confirmado corriendo el mismo test contra el `package.json`
+> viejo antes de commitear) — no es una regresión de esta migración.
+>
+> **No tocado:** `AndroidManifest.xml` a mano (solo lo que ya inyecta `scripts/patch-android.js`,
+> sin cambios al script). **Sin plugin nativo de Firebase Authentication instalado** — Firebase
+> corre vía SDK web remoto (`auth.js`: `lpPlugin('FirebaseAuthentication')` devuelve `null` si
+> no está y sigue por el camino web), así que ese punto de la tarea no aplicaba en la práctica.
+>
+> **Pendiente de esta ronda (fuera de mi alcance en esta sesión):** probar en dispositivo
+> físico real (solo verificado con build local + suite de tests); generar un AAB de verdad con
+> `build-aab-release.yml` para confirmar el fix de `build-tools;35.0.0` también en el runner de
+> GitHub Actions, no solo localmente; revisar/mergear la rama (a propósito dejado para Lenovo,
+> como pedía la tarea).
+
 > ## 🛡️ Blindaje estructural tras la auditoría de punta a punta — sesión Lenovo, 2026-09-16
 > Sin candado, no toca `index.html`. Cierra (parcialmente) el pedido explícito de Inty de
 > "cero errores" tras el patrón repetido de los 4 rechazos de Play Store: en vez de otro
