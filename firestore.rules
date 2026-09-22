@@ -92,11 +92,24 @@ service cloud.firestore {
     //    campo esté (cada colección usa el suyo, y `guiComments` tiene 2 formas de
     //    documento distintas), solo que SI está, coincida con quien firma la escritura.
     //    Por eso no rompe ninguna escritura legítima existente.
+    //
+    //    Auditoría 2026-09-22: el helper de arriba solo exigía "SI el campo está,
+    //    coincide" -- pero no exigía que ALGUNO de los 4 campos estuviera. Eso dejaba
+    //    crear documentos "sin dueño" (omitiendo user/authUid/creadoPor/from a propósito
+    //    en una escritura cruda a la API, sin pasar por la app real) que después
+    //    isOwnerOrLegacy() trata como legacy y deja editable/borrable por cualquiera
+    //    para siempre -- vandalismo persistente. Confirmado igual que en 2026-09-16 que
+    //    las 13 colecciones que usan este helper en su `create` ya escriben alguno de
+    //    los 4 campos siempre (grep de cada `.add(...)`), así que exigir "al menos uno
+    //    presente" no rompe ninguna escritura legítima existente -- solo cierra la
+    //    puerta a crear documentos deliberadamente huérfanos.
     function autorEsUnoMismo() {
       return (!('user' in request.resource.data) || request.resource.data.user == request.auth.uid)
         && (!('authUid' in request.resource.data) || request.resource.data.authUid == request.auth.uid)
         && (!('creadoPor' in request.resource.data) || request.resource.data.creadoPor == request.auth.uid)
-        && (!('from' in request.resource.data) || request.resource.data.from == request.auth.uid);
+        && (!('from' in request.resource.data) || request.resource.data.from == request.auth.uid)
+        && (('user' in request.resource.data) || ('authUid' in request.resource.data)
+            || ('creadoPor' in request.resource.data) || ('from' in request.resource.data));
     }
     // 2) VALORES SIN LÍMITE: Darma/km/tiempos de segmento aceptaban cualquier número,
     //    incluido escribir 999999999 directo desde la consola del navegador (el JS de
@@ -110,6 +123,14 @@ service cloud.firestore {
     function numOk(f, min, max) {
       return !(f in request.resource.data)
         || (request.resource.data[f] is number && request.resource.data[f] >= min && request.resource.data[f] <= max);
+    }
+    // gpsData.distance de /trips, factorizado para usarse igual en create y en update
+    // (auditoría 2026-09-22 -- antes solo corría en update, ver match /trips más abajo).
+    function distanciaViajeOk() {
+      return !('gpsData' in request.resource.data) || !('distance' in request.resource.data.gpsData)
+        || (request.resource.data.gpsData.distance is number
+            && request.resource.data.gpsData.distance >= 0
+            && request.resource.data.gpsData.distance <= 1000);
     }
     function statsIncrementoPlausible(campo, maxDelta) {
       return !(campo in request.resource.data) || !(campo in resource.data)
@@ -130,7 +151,20 @@ service cloud.firestore {
     // skin) con solo saber su `cu`.
     match /users/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && !('premium' in request.resource.data);
+      // Auditoría 2026-09-22: `create` no exigía id==auth.uid (cualquiera podía crear el
+      // doc de OTRO usuario que aún no se registró, con contenido arbitrario -- lo
+      // adopta como "datos previos" al entrar por primera vez, ver _completarLoginVerificadoOriginal
+      // en auth-sesion.js) ni límite de darma/km/createdAt (statsIncrementoPlausible/
+      // createdAtSinTocar solo corren en `update`, no hay resource.data previo en `create`).
+      // darma/km SÍ pueden venir >0 en un create real (auth-sesion.js:147 manda us.d/us.di,
+      // que ya pueden traer actividad de ANTES de registrarse, sesión anónima) -- por eso
+      // el tope es generoso (100.000), no cero; el punto es bloquear el salto a
+      // 999.999.999, no la acumulación real de un ciclista de verdad.
+      allow create: if signedInReal() && request.auth.uid == id
+        && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300)
+        && !('premium' in request.resource.data)
+        && numOk('darma', 0, 100000) && numOk('km', 0, 100000)
+        && (!('createdAt' in request.resource.data) || request.resource.data.createdAt == request.time);
       allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && isOwnerOrLegacy() && premiumSinTocar()
         && statsIncrementoPlausible('darma', 300) && statsIncrementoPlausible('km', 300) && createdAtSinTocar();
       allow delete: if false;
@@ -306,15 +340,16 @@ service cloud.firestore {
     // Viajes planificados (el usuario gestiona los suyos desde la app)
     match /trips/{id} {
       allow read: if true;
-      allow create: if signedInReal() && autorEsUnoMismo();
+      // Auditoría 2026-09-22: `create` no validaba gpsData.distance -- saveAndStartTrip()
+      // (funciones-mapa-viajes.js) nunca manda `gpsData` al crear el viaje (lo agrega
+      // recién `update` al terminar, ver comentario de abajo), así que aplicar el mismo
+      // tope acá no rompe nada real y cierra la puerta a un `create` crudo con
+      // "500.000 km" ya puesto desde el primer .add().
+      allow create: if signedInReal() && autorEsUnoMismo() && distanciaViajeOk();
       // gpsData.distance lo escribe el cliente al terminar el viaje (finishTrip/
       // finishTripAuto) -- sin límite, un viaje con "500.000 km" era válido para las
       // reglas. Tope generoso (1.000 km) para no chocar con ultra-distancia real.
-      allow update, delete: if signedIn() && isOwnerOrLegacy()
-        && (!('gpsData' in request.resource.data) || !('distance' in request.resource.data.gpsData)
-            || (request.resource.data.gpsData.distance is number
-                && request.resource.data.gpsData.distance >= 0
-                && request.resource.data.gpsData.distance <= 1000));
+      allow update, delete: if signedIn() && isOwnerOrLegacy() && distanciaViajeOk();
     }
 
     // Solicitudes de amistad. update queda abierto: quien las ACEPTA/RECHAZA es el

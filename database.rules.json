@@ -1,7 +1,7 @@
 {
   "rules": {
     "posiciones": {
-      ".read": true,
+      ".read": "auth != null",
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.hasChildren(['lat','lon','visible','ts']) && newData.child('lat').isNumber() && newData.child('lon').isNumber()",
@@ -17,8 +17,8 @@
     },
     "liveTracking": {
       "$id": {
-        ".read": true,
-        ".write": "auth != null",
+        ".read": false,
+        ".write": false,
         ".validate": "newData.hasChildren(['lat','lon','activo','ts'])",
         "lat": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
         "lon": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
