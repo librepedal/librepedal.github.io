@@ -1,0 +1,28 @@
+title = "gitleaks config — Libre Pedal"
+
+# Extiende el set de reglas por defecto de gitleaks (no lo reemplaza): seguimos
+# detectando cualquier secreto real con las mismas reglas de siempre, esto solo
+# agrega una excepción puntual.
+[extend]
+useDefault = true
+
+# El apiKey del Firebase Web SDK (firebaseConfig en index.html) NO es un secreto:
+# es público por diseño (viaja en el HTML servido a cualquier visitante, Google lo
+# documenta así). La seguridad real de la app la dan firestore.rules/database.rules.json,
+# no la confidencialidad de este valor. La regla "gcp-api-key" de gitleaks lo detecta
+# igual por el patrón del string -- se permite este valor puntual (no todo index.html,
+# ni todo el patrón gcp-api-key) para que un secreto REAL pegado ahí por error siga
+# bloqueando el CI.
+#
+# EDGE_TRUSTED_TOKEN (worker-ia/worker.js) TAMPOCO es un secreto de LibrePedal: es el
+# "TrustedClientToken" fijo del protocolo NO oficial de TTS gratuito de Microsoft Edge
+# (speech.platform.bing.com/.../readaloud) -- el mismo valor público, reverse-engineered
+# y documentado en proyectos open-source como github.com/DIYgod/cloudflare-edge-tts, no
+# una credencial de cuenta. Es igual para cualquiera que use ese protocolo, no identifica
+# ni autoriza a LibrePedal.
+[allowlist]
+description = "Valores con forma de credencial pero publicos por diseno (no son secretos de LibrePedal)"
+regexes = [
+  '''AIzaSyBIhhvyhRR0ekVmOXmVDx7C_J-TBfVGCbQ''', # Firebase Web apiKey (librepedal-cb983)
+  '''6A5AA1D4EAFF4E9FB37E23D68491D6F4''', # TrustedClientToken publico del TTS de Microsoft Edge
+]
