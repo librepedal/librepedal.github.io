@@ -90,9 +90,20 @@ function _actualizarBtnGPS(){
 // la presión de las ruedas apenas abres la app: quejas reales de Inty, esos avisos
 // solo deberían sonar cuando el viaje arranca de verdad (tocas el botón, o pides una
 // ruta). El GPS sigue grabando igual en silencio; solo se calla el aviso inmediato.
+let _iniciandoGPS=false;
 async function toggleGPS(silencioso){
   const btn=document.getElementById('btnGPSLibre');
   if(!ig){
+    // Candado de reentrancia (auditoría 2026-09-23, encontrado probando en vivo con doble-toque):
+    // sin esto, tocar "Grabar un paseo" dos veces seguidas mientras el primer toque todavía está
+    // esperando el diálogo de permiso (ubicación o notificaciones) dispara una segunda llamada que
+    // pisa a la primera a mitad de camino -- Android tira un SecurityException real al segundo
+    // intento de startForeground() (confirmado en logcat), que queda atrapado en el try/catch del
+    // propio plugin y falla en silencio: la UI queda diciendo "grabando" sin que el GPS real ni la
+    // notificación lleguen a activarse.
+    if(_iniciandoGPS) return;
+    _iniciandoGPS=true;
+    try{
     // Cubre también el camino sin plugin nativo (watchPosition de abajo): antes solo
     // lpBackgroundGeo.start() gateaba el aviso, así que en un teléfono sin el plugin el
     // permiso se pedía sin haber mostrado nada.
@@ -145,6 +156,7 @@ async function toggleGPS(silencioso){
     // apagada/bolsillo necesita ubicación en "Permitir siempre". El permiso normal solo graba
     // con la app abierta y deja el track como una recta entre inicio y fin. Se muestra 1 sola vez.
     try{ if(!localStorage.getItem('lp_tip_bg_ubic')){ localStorage.setItem('lp_tip_bg_ubic','1'); setTimeout(function(){ lpAviso('Consejo: para que se grabe tu ruta con la pantalla apagada, activa la Ubicación en "Permitir siempre" en los ajustes del teléfono. Con el permiso normal, el trazado puede quedar como una línea recta.'); }, 4500); } }catch(e){}
+    }finally{ _iniciandoGPS=false; }
   } else {
     if(lpBackgroundGeo.disponible()){ lpBackgroundGeo.stop(); } else if(gw){ navigator.geolocation.clearWatch(gw); }
     ig=false; _lpWLoff(); detenerDeteccionCaidas(); _detenerCronometroDash();
