@@ -86,6 +86,29 @@ permisos.forEach(function (p) {
   }
 });
 
+// Auditoría 2026-09-23 (misma ronda del fix de POST_NOTIFICATIONS): se agregó
+// @capacitor/local-notifications SOLO para su requestPermissions() -- pero el plugin trae de
+// regalo en su propio manifest RECEIVE_BOOT_COMPLETED (el mismo permiso "muerto" que la
+// auditoría del 10-sept ya había sacado a propósito por no usarse en ningún lado) y
+// SCHEDULE_EXACT_ALARM (permiso sensible que Google exige justificar en el formulario de
+// declaraciones -- la app no programa alarmas exactas, nada la necesita). El manifest merger
+// de Android soporta remover un permiso que trae una librería con tools:node="remove"; se
+// inyecta acá para que el AndroidManifest.xml final NO los declare, sin tener que dejar de
+// usar el plugin por su único método útil.
+if (xml.indexOf('xmlns:tools=') === -1) {
+  xml = xml.replace(/<manifest\b/, '<manifest xmlns:tools="http://schemas.android.com/tools"');
+}
+const permisosARemover = [
+  'android.permission.RECEIVE_BOOT_COMPLETED',
+  'android.permission.SCHEDULE_EXACT_ALARM'
+];
+permisosARemover.forEach(function (p) {
+  const tag = '<uses-permission android:name="' + p + '" tools:node="remove" />\n';
+  if (xml.indexOf('name="' + p + '" tools:node="remove"') === -1) {
+    bloque += '    ' + tag;
+  }
+});
+
 if (bloque) {
   // Insertar los permisos justo después de la etiqueta <manifest ...>
   xml = xml.replace(/(<manifest[^>]*>\s*)/, '$1\n' + bloque);
