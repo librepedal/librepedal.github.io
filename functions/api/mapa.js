@@ -20,26 +20,29 @@
 // directa a Firestore de siempre (`where('ts','>',...)`), que ya es barata.
 import { leerTodo } from './_firestore.js';
 
-const VIDA_S = 24 * 60 * 60; // 24h: los puntos nuevos de la comunidad tardan como mucho un
-// día en propagarse a las cachés nuevas -- aceptable en prueba cerrada, y mantiene el costo
-// de esta lectura pesada en un techo diario, no por visita.
+const VIDA_S = 24 * 60 * 60; // 24h "blando": pasado esto, el dato se considera viejo y se
+// refresca -- pero se sigue SIRVIENDO mientras se refresca (ver stale-while-revalidate
+// abajo), nunca se bloquea a nadie esperando la lectura pesada de Firestore.
+const VIDA_S_DURA = 3 * VIDA_S; // 72h: TTL real del Cache API -- el margen entre el TTL
+// blando y este da varios días de gracia si el refresco en segundo plano falla seguido
+// (ej. Firestore sin cuota), antes de que la Cache API borre el dato y quede vacío.
 
 const CLAVE_CACHE = new Request('https://cache.interno.librepedal/mapa');
+// Auditoría 2026-09-22 (cache stampede): el candado de refresco es su PROPIA entrada de
+// Cache API con TTL corto -- si ya hay uno puesto, ninguna otra request en la misma PoP
+// dispara otra lectura de 6000 documentos en paralelo mientras la primera termina.
+const CLAVE_REFRESCANDO = new Request('https://cache.interno.librepedal/mapa-refrescando');
+const VIDA_CANDADO_S = 120; // más que de sobra para que termine leerTodo(max:6000)
 
 const json = (obj, status, cacheControl) => new Response(JSON.stringify(obj), {
   status,
   headers: { 'content-type': 'application/json; charset=utf-8', ...(cacheControl ? { 'cache-control': cacheControl } : {}) },
 });
 
-export async function onRequestGet({ env }) {
-  const cache = caches.default;
-  const previa = await cache.match(CLAVE_CACHE);
-  if (previa) return previa;
-
-  if (!env.FIREBASE_SA) return json({ error: 'sin credencial' }, 503);
-
+async function _leerYCachear(env, cache) {
+  if (!env.FIREBASE_SA) return null;
   const r = await leerTodo(env, 'recommendations', { max: 6000 });
-  if (r.error) return json({ error: r.error }, 200);
+  if (r.error) return null;
 
   const puntos = (r.docs || [])
     .filter((d) => d.lat && d.lon)
@@ -49,7 +52,42 @@ export async function onRequestGet({ env }) {
       tsMs: (d.ts ? (Date.parse(d.ts) || 0) : 0),
     }));
 
-  const resp = json({ puntos, medido: new Date().toISOString() }, 200, `public, max-age=${VIDA_S}`);
+  const resp = json({ puntos, medido: new Date().toISOString() }, 200, `public, max-age=${VIDA_S_DURA}`);
   try { await cache.put(CLAVE_CACHE, resp.clone()); } catch (e) {}
   return resp;
+}
+
+export async function onRequestGet({ env, waitUntil }) {
+  const cache = caches.default;
+  const previa = await cache.match(CLAVE_CACHE);
+
+  if (previa) {
+    let stale = true;
+    try { stale = (Date.now() - Date.parse((await previa.clone().json()).medido || 0)) > VIDA_S * 1000; } catch (e) {}
+    if (!stale) return previa;
+    // Stale pero todavía dentro del TTL duro: se sirve YA (nadie espera la lectura
+    // pesada) y se dispara el refresco en segundo plano -- salvo que otra request ya
+    // esté refrescando ahora mismo (candado).
+    const yaRefrescando = await cache.match(CLAVE_REFRESCANDO);
+    if (!yaRefrescando) {
+      try { await cache.put(CLAVE_REFRESCANDO, new Response('1', { headers: { 'cache-control': `max-age=${VIDA_CANDADO_S}` } })); } catch (e) {}
+      waitUntil(_leerYCachear(env, cache).catch(() => {}));
+    }
+    return previa;
+  }
+
+  // Sin nada cacheado todavía (primera vez en esta PoP, o recién desplegado): no hay dato
+  // stale que servir, así que sí toca esperar la lectura -- pero igual respeta el candado
+  // para no apilar varias lecturas de 6000 documentos si varias requests llegan juntas
+  // en este arranque en frío.
+  const yaRefrescando = await cache.match(CLAVE_REFRESCANDO);
+  if (yaRefrescando) {
+    await new Promise((res) => setTimeout(res, 400));
+    const reintento = await cache.match(CLAVE_CACHE);
+    if (reintento) return reintento;
+  }
+  try { await cache.put(CLAVE_REFRESCANDO, new Response('1', { headers: { 'cache-control': `max-age=${VIDA_CANDADO_S}` } })); } catch (e) {}
+  const fresco = await _leerYCachear(env, cache);
+  if (fresco) return fresco;
+  return json({ error: env.FIREBASE_SA ? 'error' : 'sin credencial' }, env.FIREBASE_SA ? 200 : 503);
 }

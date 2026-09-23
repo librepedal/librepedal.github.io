@@ -22,9 +22,26 @@ const json = (obj, status = 200) => new Response(JSON.stringify(obj), {
 });
 
 const norm = (s) => (s || '').trim().toLowerCase().replace(/\s+/g, '');
+
+// Auditoría 2026-09-22: esDueno() comparaba con `===` -- comparación NO de tiempo
+// constante, JS corta apenas encuentra el primer byte distinto. Contra un endpoint que
+// devuelve datos reales de usuarios (nombres, km, actividad) protegido solo por este
+// código, eso es un canal lateral de timing real: medir la respuesta letra por letra deja
+// adivinar OWNER_CODE más rápido que probarlo a ciegas. bajoLimite() (20/10min por IP) ya
+// frena la fuerza bruta pura, pero no cierra el canal de timing en sí -- son defensas
+// distintas y complementarias. Comparación byte a byte con XOR acumulado: SIEMPRE recorre
+// el largo completo antes de decidir, el tiempo no depende de en qué posición difieren.
+function _igualTiempoConstante(a, b) {
+  const bufA = new TextEncoder().encode(a), bufB = new TextEncoder().encode(b);
+  const largo = Math.max(bufA.length, bufB.length, 1);
+  let dif = bufA.length ^ bufB.length; // el largo también compara, pero sin salir antes
+  for (let i = 0; i < largo; i++) dif |= (bufA[i] || 0) ^ (bufB[i] || 0);
+  return dif === 0;
+}
 const esDueno = (env, code) => {
   const c = norm(code);
-  return !!(c && env.OWNER_CODE && c === norm(env.OWNER_CODE));
+  if (!c || !env.OWNER_CODE) return false;
+  return _igualTiempoConstante(c, norm(env.OWNER_CODE));
 };
 
 const CLAVE_CACHE = new Request('https://cache.interno.librepedal/analitica');
