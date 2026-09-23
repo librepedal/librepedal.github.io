@@ -78,13 +78,20 @@ export async function onRequestGet({ env, waitUntil }) {
 
   // Sin nada cacheado todavía (primera vez en esta PoP, o recién desplegado): no hay dato
   // stale que servir, así que sí toca esperar la lectura -- pero igual respeta el candado
-  // para no apilar varias lecturas de 6000 documentos si varias requests llegan juntas
-  // en este arranque en frío.
+  // para no apilar varias lecturas de 6000 documentos si varias requests llegan juntas en
+  // este arranque en frío. Reintentos (no una sola espera corta): leerTodo(max:6000)
+  // puede tardar más que un solo intento de 400ms -- con varios intentos más espaciados
+  // se cubre igual una lectura lenta sin bloquear de más al caso rápido.
   const yaRefrescando = await cache.match(CLAVE_REFRESCANDO);
   if (yaRefrescando) {
-    await new Promise((res) => setTimeout(res, 400));
-    const reintento = await cache.match(CLAVE_CACHE);
-    if (reintento) return reintento;
+    for (const ms of [300, 600, 1200, 2000]) {
+      await new Promise((res) => setTimeout(res, ms));
+      const reintento = await cache.match(CLAVE_CACHE);
+      if (reintento) return reintento;
+    }
+    // Se agotaron los reintentos (la otra request sigue sin terminar, o murió a mitad de
+    // camino sin dejar nada cacheado): sigue con su propia lectura en vez de devolver un
+    // error -- más lento que lo ideal, pero nunca deja a nadie sin mapa.
   }
   try { await cache.put(CLAVE_REFRESCANDO, new Response('1', { headers: { 'cache-control': `max-age=${VIDA_CANDADO_S}` } })); } catch (e) {}
   const fresco = await _leerYCachear(env, cache);
