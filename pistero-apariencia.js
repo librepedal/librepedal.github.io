@@ -189,7 +189,12 @@ function estaDesbloqueado(id){ return true; } // v8.20: TODO liberado, nada bloq
 function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ lpAviso('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){}
   // Respalda en la nube lo que ya pagaste con Darma — si no, al cambiar de teléfono
   // o reinstalar, perdías el ítem aunque tu saldo de Darma (ya gastado) sí viajaba.
-  if(cu){ try{ db.collection('users').doc(cu).set({unlocked:firebase.firestore.FieldValue.arrayUnion(id)},{merge:true}); }catch(e){} }
+  if(cu){
+    db.collection('users').doc(cu).set({unlocked:firebase.firestore.FieldValue.arrayUnion(id)},{merge:true}).catch(function(err){
+      try{ if(window.Sentry) Sentry.captureException(err,{tags:{donde:'comprarItem'}}); }catch(_e){}
+      h('No se pudo respaldar tu compra en la nube, revisa tu conexión. Si cambias de teléfono podrías perderla.');
+    });
+  }
   au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
 function mostrarTienda(desdeLogros){
   // Se abre desde 2 lugares distintos: el menú de Logros (ahí sí tiene sentido
