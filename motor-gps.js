@@ -11,15 +11,21 @@ const lpBackgroundGeo = (function(){
     disponible: function(){ return !!getBG(); },
     // onLocation es opcional: si no se pasa, alimenta el registro simple (ug).
     // La navegación turn-by-turn pasa su propio manejador para seguir guiando con la pantalla apagada.
+    // Devuelve true/false: si el GPS nativo de verdad quedó corriendo. Antes esta función
+    // no devolvía nada y el catch de addWatcher quedaba vacío, así que un fallo real (permiso
+    // negado a mitad de camino, plugin caído, etc.) se tragaba en silencio -- toggleGPS()
+    // marcaba ig=true y pintaba "grabando" en la UI igual, aunque NINGÚN fix de GPS fuera a
+    // llegar nunca. Ahora el llamador puede (y debe) esperar esto y reaccionar a un false.
     start: async function(onLocation){
-      const bg=getBG(); if(!bg || watcherId) return;
+      const bg=getBG(); if(!bg) return false;
+      if(watcherId) return true; // ya está corriendo, no hay nada que hacer
       // Prominent Disclosure (política de Google Play para ACCESS_BACKGROUND_LOCATION): hay
       // que mostrar el aviso ANTES de pedir el permiso nativo. Gate centralizado en
       // lpAsegurarUbicacion() (dialogos-genericos.js) — el mismo que usan getCurrentLocation(),
       // publicarUbicacionInicial() y el SOS, para que TODO camino que toque el GPS por primera
       // vez pase por el mismo aviso único. Si falla, NO seguir a pedir el permiso igual (eso
       // repetiría exactamente el rechazo de Google) — mejor fallar cerrado.
-      if(!(await lpAsegurarUbicacion())){ console.error('Consentimiento de ubicación no obtenido, no se inicia GPS en segundo plano.'); return; }
+      if(!(await lpAsegurarUbicacion())){ console.error('Consentimiento de ubicación no obtenido, no se inicia GPS en segundo plano.'); return false; }
       const cb = onLocation || function(location){ if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}}); };
       // Con Ahorro GPS activo pedimos fixes cada 25m en vez de 8m: bastante menos
       // preciso en curvas cerradas, pero muchas menos lecturas de GPS = más batería
@@ -36,7 +42,12 @@ const lpBackgroundGeo = (function(){
           if(error || !location) return;
           cb(location);
         });
-      }catch(e){}
+        return true;
+      }catch(e){
+        try{ if(window.Sentry) Sentry.captureException(e, {tags:{donde:'lpBackgroundGeo.start'}}); }catch(_e){}
+        watcherId=null;
+        return false;
+      }
     },
     restart: async function(onLocation){ await this.stop(); await this.start(onLocation); },
     stop: async function(){ if(BG && watcherId){ try{ await BG.removeWatcher({id:watcherId}); }catch(e){} watcherId=null; } },
@@ -88,7 +99,19 @@ async function toggleGPS(silencioso){
     try{ if(window.PisteroMemoria) PisteroMemoria.registrarInicioViaje(); }catch(e){}
     iniciarDeteccionCaidas();
     if(lpBackgroundGeo.disponible()){
-      lpBackgroundGeo.start(); ig=true;
+      // Bug real (auditoría 2026-09-22): antes esto no se esperaba (sin await) y marcaba
+      // ig=true / pintaba "grabando" en la UI de inmediato, sin saber si el GPS nativo
+      // arrancó de verdad. Si el permiso fallaba a mitad de camino o el plugin no podía
+      // iniciar, el usuario quedaba creyendo que se está grabando (y que el SOS/detector de
+      // caídas tienen su ubicación) cuando en realidad no hay ningún fix llegando.
+      const _gpsOK = await lpBackgroundGeo.start();
+      if(!_gpsOK){
+        try{ if(window.Sentry) Sentry.captureException(new Error('lpBackgroundGeo.start() no pudo iniciar el GPS nativo'), {tags:{donde:'toggleGPS'}}); }catch(_e){}
+        lpAviso('No se pudo iniciar el GPS en segundo plano. Revisa los permisos de ubicación (Ajustes del teléfono) e intenta de nuevo.');
+        detenerDeteccionCaidas(); // ya se había prendido más arriba; sin GPS real no tiene sentido dejarlo corriendo
+        return;
+      }
+      ig=true;
       if(btn){ btn.innerHTML="<i class='fas fa-stop'></i> Detener grabación"; btn.style.background="rgba(220,38,38,0.18)"; btn.style.borderColor="rgba(220,38,38,0.5)"; btn.style.color="#ff9d9d"; }
       currentRoute=[]; crl=mlPolyline([],{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp);
       lpWakeLock.enable(silencioso);

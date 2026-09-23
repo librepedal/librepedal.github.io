@@ -777,6 +777,21 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   if(!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   if(accuracy>30){ _gpsBadgeToggle('navGpsSignalBadge', true); return; }
   _gpsBadgeToggle('navGpsSignalBadge', false);
+  // Blindaje de seguridad (auditoría 2026-09-22): lastFixTime/us.la/us.lo/currentUserLocation
+  // SOLO se actualizaban en ug() (GPS libre, motor-gps.js) -- este modo "Navegar a destino"
+  // movía el marcador y sumaba distancia con sus propias variables (lastGpsPoint/gpsPoints)
+  // pero JAMÁS tocaba esas cuatro. Resultado real: cualquier función de seguridad que lee esas
+  // variables (SOS por caída -- _dispararSOSPorCaida en seguridad-sensores.js --, el filtro de
+  // velocidad del detector de caídas, sos-comunitario.js) veía la última posición de GPS libre
+  // o la posición inicial de arranque, pudiendo estar a kilómetros de donde el ciclista está
+  // navegando de verdad. Se replica aquí la MISMA actualización que hace ug() en cada fix válido
+  // (mismo formato: grados decimales en us.la/us.lo, epoch ms en lastFixTime), incondicional en
+  // cada posición nueva -- a diferencia de ug(), acá no hay anti-jitter porque estas variables
+  // son solo para "dónde estoy ahora" (seguridad), no para el kilometraje (que ya filtra su
+  // propio salto/jitter más abajo con lastGpsPoint).
+  lastFixTime=Date.now();
+  us.la=lat; us.lo=lon;
+  currentUserLocation={lat:lat, lon:lon, accuracy:accuracy};
   // Pausa manual: seguimos mostrando tu posición pero NO contamos km, tiempo ni recalculamos.
   if(viajePausaManual){ if(helmetMarker&&navMap){ helmetMarker.setLatLng([lat,lon]); if(navAutoFollow) navMap.panTo([lat,lon]); } document.getElementById('navSpeed').innerText='0'; return; }
   const _now=Date.now();

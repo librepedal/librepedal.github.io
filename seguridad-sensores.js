@@ -39,6 +39,13 @@ function borrarContactoSOS(i){ const cs=contactosSOS(); cs.splice(i,1); guardarC
    dentro de la app (por seguridad/antispam de Meta) — así que "automático" acá
    significa que preparamos todo y lo dejamos a un toque, no un envío 100% silencioso. */
 let crashDetectorActivo=false, crashUltimoImpacto=0, crashAlertaActiva=false, crashCountdownId=null;
+// Bandera de "sesión de detección" (auditoría 2026-09-22): en iOS, DeviceMotionEvent.requestPermission()
+// es async y depende de un gesto del usuario -- puede tardar. Si el viaje termina (detenerDeteccionCaidas)
+// MIENTRAS esa promesa sigue pendiente, el .then() de más abajo se disparaba igual y agregaba el listener
+// DESPUÉS de haber apagado el detector a propósito -- quedaba corriendo un detector de caídas de un viaje
+// que ya terminó. Cada iniciar/detener cambia este id; el .then() solo agrega el listener si el id que
+// capturó al pedir el permiso sigue siendo el vigente cuando la promesa resuelve.
+let _crashSesionId=0;
 const CRASH_UMBRAL_G=3.5;
 /* Muestras de MOVIMIENTO tomadas del acelerómetro justo después del impacto.
    Antes la quietud se preguntaba al número de velocidad que se ve en pantalla, y eso
@@ -169,16 +176,22 @@ function _verificarQuietudTrasImpacto(intento){
 function iniciarDeteccionCaidas(){
   if(!crashDeteccionOn || crashDetectorActivo || typeof DeviceMotionEvent==='undefined') return;
   crashDetectorActivo=true;
+  const _miSesion=++_crashSesionId; // se captura ACÁ, en el momento de pedir el permiso
   // iOS exige pedir permiso con un gesto del usuario; Android no lo necesita y el
   // request simplemente no existe ahí (por eso el chequeo de función antes de llamar).
   if(typeof DeviceMotionEvent.requestPermission==='function'){
-    DeviceMotionEvent.requestPermission().then(function(r){ if(r==='granted') window.addEventListener('devicemotion', _crashMotionHandler); }).catch(function(){});
+    DeviceMotionEvent.requestPermission().then(function(r){
+      // Si el viaje ya terminó (detenerDeteccionCaidas corrió mientras esto estaba pendiente),
+      // _crashSesionId ya cambió: esta promesa quedó vieja y NO debe agregar el listener.
+      if(r==='granted' && _miSesion===_crashSesionId && crashDetectorActivo) window.addEventListener('devicemotion', _crashMotionHandler);
+    }).catch(function(){});
   } else {
     window.addEventListener('devicemotion', _crashMotionHandler);
   }
 }
 function detenerDeteccionCaidas(){
   crashDetectorActivo=false;
+  _crashSesionId++; // invalida cualquier permiso de iOS que siga pendiente de una sesión anterior
   window.removeEventListener('devicemotion', _crashMotionHandler);
 }
 function mostrarAlertaCaida(){
