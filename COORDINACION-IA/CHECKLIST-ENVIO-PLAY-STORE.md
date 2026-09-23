@@ -64,8 +64,7 @@ stubs, catch vacíos) recién escrito y sin commitear. No reemplaza esta checkli
 un problema distinto (calidad de código, no verificación de envíos). Detalle completo:
 `protocolos/P10-gate-automatico-codigo.md` del repo `fabrica-contenido-ia`.
 
-**Pendiente de verificar en vivo:** este hook se probó en pipe-test y en el repo
-`fabrica-contenido-ia` con cwd real, pero todavía NO se confirmó disparando en una
-sesión de Claude Code abierta directamente en este repo (LibrePedal). La primera sesión
-que abra con cwd en esta carpeta y toque un archivo de código: confirmar que el hook
-dispara (editar algo grande a propósito y ver que bloquea) y borrar esta nota.
+**Verificado en vivo (2026-09-22):** con la sesión parada realmente en este repo
+(`change_directory`), se creó un archivo de prueba de 1052 líneas y se editó vía `Edit`
+real — el hook bloqueó el turno con el mensaje esperado. Archivo de prueba borrado, no
+quedó rastro en el historial.
