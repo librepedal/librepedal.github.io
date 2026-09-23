@@ -18,16 +18,22 @@ function lpConfirmar(msg){
   });
 }
 // Aviso previo (Prominent Disclosure) exigido por Google Play antes de pedir el permiso
-// de ubicación en segundo plano: un solo botón de "entendido", sin opción de cancelar
-// desde acá (el usuario igual puede negar el permiso nativo del sistema justo después).
+// de ubicación en segundo plano. Auditoría 2026-09-23 contra la guía oficial
+// (support.google.com/googleplay/android-developer/answer/11150561): Google recomienda
+// (best practice, no exigencia legal dura, pero es lo que revisa un humano tras un
+// rechazo previo por este motivo) al menos DOS opciones -- aceptar, o declinar pudiendo
+// pedir permiso más tarde -- en vez de un solo botón forzado. Declinar NO marca
+// lp_disclosure_ubicacion, así que el aviso vuelve a aparecer la próxima vez que algo
+// necesite ubicación (equivale al "Not now" que pide la guía).
 function lpDivulgacion(msg){
   return new Promise(function(resolve){
     const modal=document.getElementById('lpDialog');
     document.getElementById('lpDialogMsg').innerText=msg;
     const inp=document.getElementById('lpDialogInput'); inp.style.display='none';
     const btnOk=document.getElementById('lpDialogBtnOk'), btnCancel=document.getElementById('lpDialogBtnCancel');
-    btnCancel.style.display='none'; btnOk.innerText='Entiendo, continuar';
+    btnCancel.style.display='block'; btnOk.innerText='Aceptar'; btnCancel.innerText='Ahora no';
     btnOk.onclick=function(){ _lpDialogCerrar(); resolve(true); };
+    btnCancel.onclick=function(){ _lpDialogCerrar(); resolve(false); };
     modal.classList.add('on');
   });
 }
@@ -43,7 +49,7 @@ function lpDivulgacion(msg){
 function lpAsegurarUbicacion(){
   if(localStorage.getItem('lp_disclosure_ubicacion')) return Promise.resolve(true);
   return lpDivulgacion('📍 Ubicación, incluso en segundo plano\nLibre Pedal usa tu ubicación —incluso con la pantalla apagada o la app en segundo plano— para guiarte por voz en cada giro durante la navegación y avisarte si te desviaste de la ruta, sin que tengas que mirar el teléfono. Esa misma ubicación activa la detección automática de caídas, el botón SOS, el seguimiento en vivo (si tú lo activas) y tu posición aproximada en el mapa comunitario.\nNo se comparte con otros usuarios salvo que actives esas funciones tú mismo.')
-    .then(function(){ localStorage.setItem('lp_disclosure_ubicacion','1'); return true; })
+    .then(function(aceptado){ if(aceptado) localStorage.setItem('lp_disclosure_ubicacion','1'); return !!aceptado; })
     .catch(function(e){ console.error('lpDivulgacion falló, no se accede a ubicación sin aviso:', e); return false; });
 }
 function lpPedirTexto(msg, placeholder){
