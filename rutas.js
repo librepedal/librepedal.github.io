@@ -188,10 +188,30 @@ function renderRutas(){
 // Muestra al toque lo local (garantizado) y fusiona rutas viejas que estén SOLO en la nube.
 function loadRoutesList(){ if(!cu) return; renderRutas();
   try{ db.collection('routes').where('user','==',cu).limit(100).get().then(function(snapshot){ const arr=rutasLocales(); let changed=false;
-    snapshot.forEach(function(doc){ const d=doc.data(); const dup=arr.some(function(r){ return r.firebaseId===doc.id || r.startTime===d.startTime; }); if(!dup){ arr.push({localId:'fb'+doc.id,firebaseId:doc.id,user:cu,nombre:d.nombre,points:d.points||d.pointsPub||[],startTime:d.startTime,endTime:d.endTime,distance:d.distance||0,calories:d.calories||0,savedAt:(d.savedAt&&d.savedAt.seconds?d.savedAt.seconds*1000:(d.startTime||Date.now()))}); changed=true; } });
+    const borradas=_rutasBorradas();
+    snapshot.forEach(function(doc){
+      // Auditoría 2026-09-22: no fusionar (resucitar) una ruta que el usuario ya borró
+      // acá pero cuyo delete en la nube no llegó a confirmarse -- y reintentar ese
+      // delete pendiente ahora que sí hay respuesta real del servidor (signal de sobra).
+      if(borradas.indexOf(doc.id)!==-1){ db.collection('routes').doc(doc.id).delete().then(function(){ _confirmarRutaBorradaOk(doc.id); }).catch(function(){}); db.collection('routesTrack').doc(doc.id).delete().catch(function(){}); return; }
+      const d=doc.data(); const dup=arr.some(function(r){ return r.firebaseId===doc.id || r.startTime===d.startTime; }); if(!dup){ arr.push({localId:'fb'+doc.id,firebaseId:doc.id,user:cu,nombre:d.nombre,points:d.points||d.pointsPub||[],startTime:d.startTime,endTime:d.endTime,distance:d.distance||0,calories:d.calories||0,savedAt:(d.savedAt&&d.savedAt.seconds?d.savedAt.seconds*1000:(d.startTime||Date.now()))}); changed=true; }
+    });
     if(changed){ rutasLocalesSet(arr); renderRutas(); }
   }).catch(function(){}); }catch(e){}
 }
+// Tumbas de rutas borradas (auditoría 2026-09-22): deleteRoute() borraba /routes en la
+// nube de forma "best-effort" (.catch vacío) -- sin señal, o con cualquier error
+// transitorio, ese delete simplemente nunca llegaba y no quedaba ningún registro de que
+// se había intentado. La próxima vez que loadRoutesList() corría (login siguiente),
+// encontraba la ruta TODAVÍA en Firestore y, como no está en el local (se había borrado
+// ahí), la "fusionaba" de vuelta como si fuera nueva -- la ruta borrada resucitaba sola.
+// Se guarda el id localmente hasta confirmar el delete real; loadRoutesList() lo usa
+// para (a) no resucitar esa ruta al fusionar y (b) reintentar el delete pendiente.
+function _rutasBorradasKey(){ return 'lp_rutas_borradas_'+(cu||'anon'); }
+function _rutasBorradas(){ try{ return JSON.parse(localStorage.getItem(_rutasBorradasKey()))||[]; }catch(e){ return []; } }
+function _rutasBorradasSet(arr){ try{ localStorage.setItem(_rutasBorradasKey(), JSON.stringify(arr.slice(-200))); }catch(e){} }
+function _marcarRutaBorrada(firebaseId){ if(!firebaseId) return; const arr=_rutasBorradas(); if(arr.indexOf(firebaseId)===-1){ arr.push(firebaseId); _rutasBorradasSet(arr); } }
+function _confirmarRutaBorradaOk(firebaseId){ _rutasBorradasSet(_rutasBorradas().filter(function(x){return x!==firebaseId;})); }
 function _rutaPorId(id){ return rutasLocales().find(function(x){return x.localId===id;}); }
 function showSingleRoute(id){ const r=_rutaPorId(id); function pintar(points){ if(!points||!points.length){ h("Esta ruta no tiene puntos guardados."); return; } cv('map'); setTimeout(function(){ if(crl) mp.removeLayer(crl); crl=mlPolyline(points,{color:'#ffd700',weight:3,opacity:0.95}).addTo(mp); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); h("Aquí está tu ruta."); },300); } if(r&&r.points&&r.points.length){ pintar(r.points.map(function(p){return [p.lat,p.lon];})); return; }
   // _traerPuntosRuta intenta /routesTrack (track exacto) primero -- si es tuya, lo trae
@@ -202,7 +222,9 @@ function showSingleRoute(id){ const r=_rutaPorId(id); function pintar(points){ i
 async function deleteRoute(id){ if(!await lpConfirmar("¿Eliminar esta ruta?")) return; const it=_rutaPorId(id); rutasLocalesSet(rutasLocales().filter(function(x){return x.localId!==id;}));
   // Borra también /routesTrack (privacidad, hub #201): si no, el track EXACTO queda
   // huérfano en la nube aunque el usuario crea que borró su ruta.
-  if(it&&it.firebaseId){ db.collection('routes').doc(it.firebaseId).delete().catch(function(){}); db.collection('routesTrack').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ db.collection('routes').doc(id).delete().catch(function(){}); db.collection('routesTrack').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
+  // La tumba se marca ANTES de intentar el delete (no solo si falla): si no hay señal
+  // ahora mismo, loadRoutesList() reintentará en el próximo login (ver tumbas más arriba).
+  if(it&&it.firebaseId){ _marcarRutaBorrada(it.firebaseId); db.collection('routes').doc(it.firebaseId).delete().then(function(){ _confirmarRutaBorradaOk(it.firebaseId); }).catch(function(){}); db.collection('routesTrack').doc(it.firebaseId).delete().catch(function(){}); } else if(!it){ _marcarRutaBorrada(id); db.collection('routes').doc(id).delete().then(function(){ _confirmarRutaBorradaOk(id); }).catch(function(){}); db.collection('routesTrack').doc(id).delete().catch(function(){}); } renderRutas(); h("Ruta eliminada."); }
 
 /* ===== PERFIL DE ELEVACIÓN: usa la altitud que reporta el GPS del celular (gratis,
    sin servicios externos). Es más ruidosa que un DEM profesional, por eso se suaviza
