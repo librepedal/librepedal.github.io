@@ -118,6 +118,9 @@ async function toggleGPS(silencioso){
     if(cu&&!ghostMode){ db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true}); _rtdOcultarPosicion(); }
     try{ if(_logrosListo) _chequearLogros(false); }catch(e){} // por si algo cruzó el umbral justo con el último dato sincronizado
     try{ _mostrarResumenViaje(); }catch(e){}
+    // Si una actualización de la app quedó pospuesta por estar grabando (ver
+    // index.html/pwa-wakelock.js), este es el momento de aplicarla: el viaje ya terminó.
+    if(typeof _lpAplicarActualizacionSiPendiente==='function') _lpAplicarActualizacionSiPendiente();
   }
 }
 function toggleSaver(){

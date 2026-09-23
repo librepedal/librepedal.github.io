@@ -670,6 +670,10 @@ function endNavigation(){
   _lpWLoff(); detenerDeteccionCaidas();
   if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
   if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop(); _navMapUsersActive=false; navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[]; document.getElementById('nav-screen').classList.remove('active'); currentTrip=null; helmetMarker=null; routeLine=null; navSteps=[]; rutaLatLngs=[]; rutaPerfil=[]; currentStepIndex=0; lastSpokenStep=-1; gpsPoints=[]; lastGpsPoint=null; navPosHistory=[]; viajePausedMs=0; viajePausedDesde=null; viajePausaManual=false; _gpsBadgeToggle('navPausaBadge', false); loadTrips();
+  // Si una actualización de la app quedó pospuesta por haber navegación activa (ver
+  // index.html/pwa-wakelock.js), este es el momento de aplicarla: la navegación ya terminó.
+  // Si además seguía grabando GPS libre (ig), toggleGPS ya la aplicará al detener eso.
+  if(typeof _lpAplicarActualizacionSiPendiente==='function') _lpAplicarActualizacionSiPendiente();
 }
 // Historial de vistas para el botón "← Atrás" del header: cv() apila la vista que
 // dejas atrás (salvo cuando el que llama es volverAtras()); "Inicio" siempre limpia
