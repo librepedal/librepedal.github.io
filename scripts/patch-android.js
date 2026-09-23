@@ -4,8 +4,9 @@
    - Foreground Service (+ tipo location, Android 14+)
    - WakeLock (mantener el proceso vivo)
    - Ignorar optimización de batería (Xiaomi/Samsung/etc no maten la app)
-   - Micrófono (para el reconocimiento de voz: sin esto en el manifiesto, Android
-     NUNCA deja pedir permiso de mic aunque la app lo solicite desde JS)
+   - Micrófono (el propio @capacitor-community/speech-recognition YA lo declara en
+     su AndroidManifest.xml -- esta entrada es redundante pero inofensiva, Gradle
+     la deduplica en el merge; se deja por si el merge de ese plugin cambiara)
    El Foreground Service en sí lo aporta el plugin background-geolocation. */
 const fs = require('fs');
 const path = require('path');
@@ -81,82 +82,31 @@ if (bloque) {
   console.log('Los permisos ya estaban presentes.');
 }
 
-/* Declarar el permiso en el manifest NO alcanza: en Android 6+ hay que pedirlo
-   en tiempo de ejecución (el diálogo del sistema "Permitir que Libre Pedal
-   acceda al micrófono/ubicación") o la app nunca lo muestra. El WebView de
-   Capacitor solo AUTO-OTORGA el micrófono a getUserMedia() si el permiso
-   nativo YA fue concedido antes — si nadie lo pidió nunca, getUserMedia()
-   simplemente falla en silencio (sin diálogo visible). Por eso hay que
-   pedirlo explícitamente apenas arranca la app, en MainActivity. */
-function encontrarMainActivity(dir) {
-  for (const nombre of fs.readdirSync(dir)) {
-    const p = path.join(dir, nombre);
-    if (fs.statSync(p).isDirectory()) {
-      const enc = encontrarMainActivity(p);
-      if (enc) return enc;
-    } else if (nombre === 'MainActivity.java') {
-      return p;
-    }
-  }
-  return null;
-}
-
-const javaRoot = path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'java');
-const mainActivityPath = fs.existsSync(javaRoot) ? encontrarMainActivity(javaRoot) : null;
-
-// Nota Google Sign-In nativo (2026-08-16): el classpath de google-services y el
-// "apply plugin" ya los inyecta solo @capacitor-firebase/authentication al hacer
-// `cap add android` (verificado contra un build real) — solo falta que el
-// workflow copie google-services.json a android/app/ antes de compilar.
-
-if (mainActivityPath) {
-  const original = fs.readFileSync(mainActivityPath, 'utf8');
-  const paqueteMatch = original.match(/^package\s+([\w.]+);/m);
-  const paquete = paqueteMatch ? paqueteMatch[1] : 'cl.librepedal.app';
-
-  const nuevoContenido = `package ${paquete};
-
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.os.Bundle;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import com.getcapacitor.BridgeActivity;
-import java.util.ArrayList;
-import java.util.List;
-
-public class MainActivity extends BridgeActivity {
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    // Pide de una vez los permisos que Android exige mostrar con diálogo propio
-    // (no basta con declararlos en el manifest). Sin esto, el WebView niega el
-    // micrófono en silencio y el usuario nunca ve un cuadro para permitirlo.
-    // OJO: la UBICACIÓN a propósito NO va acá. Rechazo real de Google Play (10-sept-2026,
-    // "Missing Prominent Disclosure"): este bloque pedía ACCESS_FINE/COARSE_LOCATION apenas
-    // arrancaba la Activity —antes de que cargara nada de JS—, así que el diálogo nativo de
-    // ubicación aparecía sin haber mostrado ningún aviso. La ubicación ahora se pide SOLO
-    // desde el JS (lpAsegurarUbicacion() en dialogos-genericos.js), que muestra el aviso
-    // destacado primero y recién después deja que Capacitor/el plugin pidan el permiso real.
-    // NO reagregar ACCESS_FINE_LOCATION/ACCESS_COARSE_LOCATION aquí sin ese aviso antes.
-    String[] permisos = {
-      Manifest.permission.RECORD_AUDIO
-    };
-    List<String> faltantes = new ArrayList<>();
-    for (String p : permisos) {
-      if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
-        faltantes.add(p);
-      }
-    }
-    if (!faltantes.isEmpty()) {
-      ActivityCompat.requestPermissions(this, faltantes.toArray(new String[0]), 1001);
-    }
-  }
-}
-`;
-  fs.writeFileSync(mainActivityPath, nuevoContenido);
-  console.log('MainActivity parchada para pedir el permiso de micrófono al arrancar (ubicación queda a cargo del JS, ver lpAsegurarUbicacion): ' + mainActivityPath);
-} else {
-  console.error('No se encontró MainActivity.java bajo android/app/src/main/java — no se pudo agregar el pedido de permisos.');
-  process.exit(1);
-}
+// Auditoría de cumplimiento Play Store 2026-09-23 (pedido de Inty: "mil por ciento de
+// certeza de que estamos cumpliendo con todo" antes de cualquier envío): hasta acá este
+// script parchaba MainActivity.onCreate() para pedir RECORD_AUDIO apenas arrancaba la
+// app -- el MISMO patrón exacto ("permiso sin ningún aviso, antes de que cargue nada de
+// JS") que causó el rechazo real "Missing Prominent Disclosure" del 10-sept-2026 para
+// ubicación. Se rastreó la cadena completa antes de sacarlo, no se asumió:
+//   1) Ningún código de la app llama getUserMedia() en ningún lado (grep sin resultados)
+//      -- el comentario original que justificaba esto ("el WebView niega el micrófono en
+//      silencio si no se pidió antes") describe un mecanismo que esta app ni siquiera usa.
+//   2) Aunque lo usara: BridgeWebChromeClient.onPermissionRequest() (código fuente real
+//      revisado en node_modules/@capacitor/android, confirmado igual en Capacitor 6.2.1
+//      -actual en esta rama- y en 8.5.2 -la de la migración pendiente en PR #3-) YA
+//      dispara el diálogo nativo de permiso on-demand cuando getUserMedia() lo pide.
+//   3) El camino real de esta app (_micNativoEscuchar() en motor-navegacion.js) usa el
+//      plugin nativo @capacitor-community/speech-recognition, que declara
+//      @Permission(RECORD_AUDIO) -- Capacitor le da automáticamente su propio
+//      requestPermissions() genérico, y el JS YA lo llama explícitamente
+//      (SR.requestPermissions()) justo antes de SR.start(), en el momento real en que el
+//      usuario toca el botón de micrófono. Verificado contra el código fuente real del
+//      plugin instalado (v6.0.1 y v7.0.1), no supuesto.
+//   4) Probado de punta a punta con `npx cap add android` + este script + inspección real
+//      del AndroidManifest.xml/MainActivity.java resultantes, y con un build real de CI
+//      (rama de prueba combinada con la migración Capacitor 8) -- el permiso sigue
+//      declarado (vía el manifest del propio plugin) y MainActivity queda igual al
+//      default que genera Capacitor.
+// Con los 4 puntos confirmados: el pedido en MainActivity no protegía nada, solo agregaba
+// el mismo riesgo de cumplimiento que ya costó un rechazo. MainActivity.java queda sin
+// tocar (el que genera `cap add android` por defecto ya es correcto tal cual).
