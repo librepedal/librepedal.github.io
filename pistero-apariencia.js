@@ -189,7 +189,12 @@ function estaDesbloqueado(id){ return true; } // v8.20: TODO liberado, nada bloq
 function comprarItem(id){ const costo=PRECIOS[id]||0; if(us.d<costo){ lpAviso('Te faltan '+(costo-us.d)+' de Darma para esto. ¡Aporta a la comunidad (reportes, puntos, rutas) para ganar más!'); return; } us.d-=costo; const arr=getDesbloqueados(); if(arr.indexOf(id)===-1) arr.push(id); try{ localStorage.setItem('lp_unlocked_'+(cu||'anon'),JSON.stringify(arr)); }catch(e){}
   // Respalda en la nube lo que ya pagaste con Darma — si no, al cambiar de teléfono
   // o reinstalar, perdías el ítem aunque tu saldo de Darma (ya gastado) sí viajaba.
-  if(cu){ try{ db.collection('users').doc(cu).set({unlocked:firebase.firestore.FieldValue.arrayUnion(id)},{merge:true}); }catch(e){} }
+  if(cu){
+    db.collection('users').doc(cu).set({unlocked:firebase.firestore.FieldValue.arrayUnion(id)},{merge:true}).catch(function(err){
+      try{ if(window.Sentry) Sentry.captureException(err,{tags:{donde:'comprarItem'}}); }catch(_e){}
+      h('No se pudo respaldar tu compra en la nube, revisa tu conexión. Si cambias de teléfono podrías perderla.');
+    });
+  }
   au(); if(typeof sincronizarStats==='function') sincronizarStats(); h('¡Desbloqueado! Ya puedes usarlo en tu Perfil.'); mostrarTienda(); }
 function mostrarTienda(desdeLogros){
   // Se abre desde 2 lugares distintos: el menú de Logros (ahí sí tiene sentido
@@ -360,7 +365,16 @@ function saveCustomization(){
   localStorage.setItem('lp_vello_'+cu, selectedVello);
   localStorage.setItem('lp_peinado_'+cu, selectedPeinado);
   localStorage.setItem('lp_panuelo_'+cu, selectedPanuelo);
-  db.collection('users').doc(cu).update({helmet:selectedHelmet, lens:selectedLens, skin:selectedSkin, extras:selectedExtras, piel:selectedPiel, ojos:selectedOjos, labios:selectedLabios, vello:selectedVello, peinado:selectedPeinado, panuelo:selectedPanuelo}).catch(function(){});
+  // Auditoría 2026-09-22: lo local (arriba) es lo GARANTIZADO -- por eso el mensaje de
+  // éxito no espera a la nube. Pero /users es el doc PÚBLICO que otros ciclistas leen para
+  // dibujar tu marcador en el mapa (subscribeToUsers) -- si este update fallaba en
+  // silencio (antes .catch vacío), vos te veías bien en tu propio teléfono pero los demás
+  // seguían viendo tu casco/skin viejo en el mapa, sin ningún aviso de que la nube no se
+  // había actualizado.
+  db.collection('users').doc(cu).update({helmet:selectedHelmet, lens:selectedLens, skin:selectedSkin, extras:selectedExtras, piel:selectedPiel, ojos:selectedOjos, labios:selectedLabios, vello:selectedVello, peinado:selectedPeinado, panuelo:selectedPanuelo}).catch(function(err){
+    try{ if(window.Sentry) Sentry.captureException(err,{tags:{donde:'saveCustomization'}}); }catch(_e){}
+    h('Tu personaje quedó guardado en este teléfono, pero no se pudo sincronizar con la nube -- otros ciclistas podrían seguir viéndote con el look anterior. Revisa tu conexión.');
+  });
   if(helmetMarker) helmetMarker.setIcon(L.divIcon({className:'',html:riderMarkerHTML(selectedHelmet, skinColor(selectedSkin), true),iconSize:[50,34],iconAnchor:[25,17]}));
   h("Tu personaje quedó listo. Te ves de lujo.");
 }

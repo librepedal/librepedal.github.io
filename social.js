@@ -1,9 +1,26 @@
-function em(){ const i=document.getElementById('chi'), t=i.value.trim(); if(!t||!cu) return; const n=new Date(), h2=(n.getHours().toString().padStart(2,'0'))+':'+(n.getMinutes().toString().padStart(2,'0')); db.collection('chat').add({a:cu,nombre:nombreUsuario,t:t,h:h2,ts:firebase.firestore.FieldValue.serverTimestamp()}); i.value=""; }
+// Auditoría 2026-09-22: antes vaciaba el input ANTES de saber si add() tuvo éxito -- sin
+// señal (o cualquier error de Firestore), el mensaje se perdía sin aviso y el texto ya no
+// estaba para reintentar (el usuario tenía que recordarlo y escribirlo de nuevo). Ahora el
+// input se vacía recién si add() confirma, y si falla se restaura el texto + aviso.
+function em(){ const i=document.getElementById('chi'), t=i.value.trim(); if(!t||!cu) return; const n=new Date(), h2=(n.getHours().toString().padStart(2,'0'))+':'+(n.getMinutes().toString().padStart(2,'0')); i.value=""; db.collection('chat').add({a:cu,nombre:nombreUsuario,t:t,h:h2,ts:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(err){ i.value=t; try{ if(window.Sentry) Sentry.captureException(err,{tags:{donde:'em'}}); }catch(_e){} h('No se pudo enviar tu mensaje. Revisa tu conexión e inténtalo de nuevo.'); }); }
 function rc(){ const c=document.getElementById('chm'); if(!c) return; c.innerHTML=cm.map(function(m){ return '<div class="ms '+(m.a===cu?'sf':'ot')+'">'+(m.a!==cu?'<div class="ma">'+escapeHTML(m.nombre||m.a)+' · '+escapeHTML(m.h)+'</div>':'')+'<div class="mb">'+escapeHTML(m.t)+'</div>'+(m.a===cu?'<div class="ma" style="text-align:right;margin-top:3px">'+escapeHTML(m.h)+'</div>':'')+'</div>'; }).join(''); c.scrollTop=c.scrollHeight; }
 /* ===== CHAT PRIVADO ENTRE AMIGOS (1 a 1) ===== */
 let dmUnsub=null, dmConvId=null;
 function convIdDe(a,b){ return [a,b].sort().join('__'); }
 async function abrirChatAmigo(friendId){
+  // Self-heal (ver acceptFriendRequest): si el espejo /amistades no llegó a crearse por
+  // un fallo silencioso de red, cada apertura del chat con este amigo lo vuelve a
+  // intentar -- idempotente, no rompe nada si ya existía.
+  // OJO al tocar esto: /amistades tiene "allow update: if false" -- un .set() sobre un
+  // documento que YA EXISTE (el caso normal: la amistad ya está sana, que es casi
+  // siempre) se evalúa como update y Firestore lo RECHAZA, no como no-op. Eso es
+  // ESPERADO acá (nada que reparar) y no un error real -- por eso el .catch() se traga
+  // el rechazo en vez de reportarlo a Sentry, a diferencia del de acceptFriendRequest()
+  // (ahí sí es una escritura nueva de verdad, un fallo ahí sí importa). Encontrado en la
+  // revisión de este mismo PR: un try/catch síncrono NO atrapa el rechazo de una
+  // promesa -- sin el .catch() de abajo, esto generaba un unhandled rejection en la
+  // consola cada vez que se abría un chat con un amigo ya establecido.
+  _asegurarAmistadEspejo(friendId).catch(function(){});
   const nombre=await getNombreUsuario(friendId);
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-comment-dots"></i> '+escapeHTML(nombre);
   const c=document.getElementById('modalContent');
@@ -20,22 +37,61 @@ async function abrirChatAmigo(friendId){
     box.scrollTop=box.scrollHeight;
   }, function(err){ const box=document.getElementById('dmMsgs'); if(box) box.innerHTML='<p style="color:#888;font-size:0.8rem">No se pudo cargar el chat.</p>'; });
 }
+// Auditoría 2026-09-22: mismo hueco que em() -- vaciaba el input antes de confirmar el
+// add(), perdiendo el mensaje en silencio si fallaba (sin señal, permiso, etc). Se vacía
+// optimista para que la UI no se sienta trabada, pero si falla se restaura el texto (solo
+// si el usuario no escribió algo nuevo mientras tanto) + aviso.
 function enviarDM(){
   const inp=document.getElementById('dmInput'); if(!inp) return; const text=inp.value.trim(); if(!text||!dmConvId||!cu) return;
-  db.collection('dm').doc(dmConvId).collection('messages').add({from:cu, nombre:nombreUsuario, text:text, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
   inp.value='';
+  db.collection('dm').doc(dmConvId).collection('messages').add({from:cu, nombre:nombreUsuario, text:text, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(err){
+    if(!inp.value) inp.value=text;
+    try{ if(window.Sentry) Sentry.captureException(err,{tags:{donde:'enviarDM'}}); }catch(_e){}
+    h('No se pudo enviar tu mensaje. Revisa tu conexión e inténtalo de nuevo.');
+  });
 }
 function cerrarChatAmigo(){ if(dmUnsub){ dmUnsub(); dmUnsub=null; } dmConvId=null; showAmigosYSolicitudes(); }
 async function showFriendsList(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Amigos'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); try{ const res=await Promise.all([ db.collection('friendRequests').where('from','==',cu).get(), db.collection('friendRequests').where('to','==',cu).get() ]); const ids={}; res[0].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.to) ids[x.to]=true; }); res[1].docs.forEach(function(d){ const x=d.data(); if(x.status==='accepted'&&x.from) ids[x.from]=true; }); const friendIds=Object.keys(ids); if(friendIds.length===0){ c.innerHTML='<p style="color:#888">Aún no tienes amigos</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; return; } let html=''; for(const friendId of friendIds){ const nombre=await getNombreUsuario(friendId); html+='<div class="chat-user-item" style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;background:var(--p);border-radius:50%"></div><div style="flex:1;cursor:pointer" onclick="verPerfilUsuario(\''+friendId+'\',\'showFriendsList\')"><h4 style="margin:0;color:var(--p);font-size:0.9rem">'+escapeHTML(nombre)+'</h4><p style="margin:0;font-size:0.7rem;color:#aaa;text-decoration:underline">Ver perfil</p></div><button class="ab" style="width:auto;padding:7px 12px;margin:0;font-size:0.78rem" onclick="abrirChatAmigo(\''+friendId+'\')"><i class="fas fa-comment"></i> Chat</button></div>'; } c.innerHTML=html+'<button class="ab sec" style="margin-top:8px" onclick="showUserListForFriendRequest()">Agregar más</button>'; }catch(e){ c.innerHTML='<p style="color:#888">No se pudieron cargar los amigos. Intenta de nuevo.</p><button class="ab" onclick="showUserListForFriendRequest()">Buscar ciclistas</button>'; } }
 async function showFriendRequests(){ _modalVolverA=null; document.getElementById('modalTitle').innerText='Solicitudes'; const c=document.getElementById('modalContent'); c.innerHTML='<p style="color:#888">Cargando...</p>'; document.getElementById('userModal').classList.add('on'); const snapshot=await db.collection('friendRequests').where('to','==',cu).get(); const pend=snapshot.docs.filter(function(d){return d.data().status==='pending';}); if(pend.length===0){ c.innerHTML='<p style="color:#888">Sin solicitudes</p>'; return; } let html=''; for(const doc of pend){ const data=doc.data(); const nombre=await getNombreUsuario(data.from); html+='<div class="friend-request"><span><strong>'+escapeHTML(nombre)+'</strong></span><div><button class="ab" style="width:auto;padding:6px 10px;margin:2px;font-size:0.75rem" onclick="acceptFriendRequest(\''+doc.id+'\',\''+data.from+'\')">Aceptar</button><button class="ab" style="width:auto;padding:6px 10px;margin:2px;background:#dc2626;font-size:0.75rem" onclick="rejectFriendRequest(\''+doc.id+'\')">Rechazar</button></div></div>'; } c.innerHTML=html; }
+// Crea (o repara) el espejo /amistades de un par de uids -- id determinista (uid menor +
+// '_' + uid mayor) para que la regla de Firestore del perfil privado (fotos/relatos)
+// pueda chequear "son amigos" con un exists() simple, sin necesitar una query -- ver
+// perfil-comunidad.js. set() sin merge:false es idempotente (mismo id, mismo contenido),
+// así que llamarla de nuevo sobre una amistad que ya tiene su espejo no hace daño.
+function _asegurarAmistadEspejo(otherUid){
+  const a=cu<otherUid?cu:otherUid, b=cu<otherUid?otherUid:cu;
+  return db.collection('amistades').doc(a+'_'+b).set({a:a,b:b});
+}
+// Guardia de reentrada (encontrado en la revisión de este PR, mismo patrón ya usado en
+// _agregandoHostel/_enviandoReporte/etc): un doble-tap rápido en "Aceptar" antes de que
+// la lista se vuelva a pintar podía disparar acceptFriendRequest() dos veces para la
+// MISMA solicitud -- el segundo intento reportaba "falló un paso de permisos" (falso:
+// /amistades ya existía, el .set() se rechaza por diseño sobre un doc ya creado, ver
+// _asegurarAmistadEspejo) aunque la amistad quedara perfectamente sana.
+const _aceptandoSolicitud={};
 function acceptFriendRequest(reqId,fromUser){
+  if(_aceptandoSolicitud[reqId]) return;
+  _aceptandoSolicitud[reqId]=true;
   db.collection('friendRequests').doc(reqId).update({status:'accepted'}).then(function(){
-    // Espejo con id determinista (uid menor + '_' + uid mayor) para que la regla de
-    // Firestore del perfil privado (fotos/relatos) pueda chequear "son amigos" con
-    // un exists() simple, sin necesitar una query — ver perfil-comunidad.js.
-    try{ const a=cu<fromUser?cu:fromUser, b=cu<fromUser?fromUser:cu; db.collection('amistades').doc(a+'_'+b).set({a:a,b:b}); }catch(e){}
-    h("¡Nuevo amigo agregado!"); showAmigosYSolicitudes();
-  }).catch(function(){ h("No se pudo aceptar, intenta de nuevo."); });
+    // Auditoría 2026-09-22: el .set() de abajo era fire-and-forget dentro de un try/catch
+    // que NO atrapa el rechazo de una promesa (solo atraparía si `db.collection(...).set`
+    // tirara síncrono, cosa que casi nunca pasa). Si esa escritura fallaba (sin señal, o
+    // cualquier error transitorio), el status quedaba en 'accepted' -- la UI ya mostraba
+    // "amigos" (showAmigosYSolicitudes calcula friendIds desde friendRequests, no desde
+    // /amistades) -- pero sonAmigos() en firestore.rules exige el documento /amistades
+    // real para dejar ver fotos/relatos privados: la amistad quedaba "sin el permiso real
+    // activado", con permission-denied silencioso la primera vez que se intenta ver el
+    // perfil privado del nuevo amigo. Ahora se espera la escritura y, si falla, se avisa
+    // en vez de mostrar éxito falso -- y además abrirChatAmigo() la reintenta sola la
+    // próxima vez que se abre esa conversación (self-heal, ver más abajo).
+    _asegurarAmistadEspejo(fromUser).then(function(){
+      h("¡Nuevo amigo agregado!"); showAmigosYSolicitudes();
+    }).catch(function(err){
+      try{ if(window.Sentry) Sentry.captureException(err,{tags:{donde:'acceptFriendRequest.amistades'}}); }catch(_e){}
+      h("Se aceptó la solicitud, pero falló un paso de permisos (fotos/relatos privados podrían no verse todavía). Se reintenta solo al abrir el chat.");
+      showAmigosYSolicitudes();
+    });
+  }).catch(function(){ _aceptandoSolicitud[reqId]=false; h("No se pudo aceptar, intenta de nuevo."); });
 }
 // 2026-08-23: Amigos + Solicitudes fusionados en una sola vista (pedido de Inty:
 // "eso debería ir todo junto y se despliega para ver todo el contenido") — antes
