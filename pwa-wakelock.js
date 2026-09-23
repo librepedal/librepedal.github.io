@@ -19,14 +19,24 @@ if('serviceWorker' in navigator){
     lpRefrescando=true; // se marca YA (antes del fetch async) para que un segundo
                          // controllerchange casi simultáneo no dispare su propia
                          // verificación en paralelo
-    fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(function(v){
+    // _fetchT (con timeout real vía AbortController, definida en index.html) en vez de
+    // un fetch crudo: mismo motivo que la auto-reparación por version.txt de más arriba,
+    // no dejar esta verificación colgada indefinidamente si la red está lenta.
+    _fetchT('version.txt?cb='+Date.now(), 8000, {cache:'no-store'}).then(function(r){return r.text();}).then(function(v){
       v=(v||'').replace(/^﻿/,'').trim();
       if(v && v===APP_VERSION){ lpRefrescando=false; return; } // ya estás al día: no hacía falta recargar
+      // Un Service Worker nuevo tomó control mientras había un viaje en curso (GPS libre
+      // o navegación activa): recargar ahora le cortaría el GPS/voz a medio pedaleo. Se
+      // pospone hasta que termine -- ver _lpAplicarActualizacionSiPendiente en index.html,
+      // enganchada en endNavigation() y al soltar el GPS libre (motor-gps.js).
+      if(typeof _lpNavOGrabacionActiva==='function' && _lpNavOGrabacionActiva()){ window.__lpActualizacionPendiente=true; lpRefrescando=false; return; }
       if(typeof _lpMarcarRecargaEstaVisita==='function') _lpMarcarRecargaEstaVisita();
       window.location.reload();
     }).catch(function(){
       // sin poder confirmar la versión, se mantiene el comportamiento de antes
-      // (recargar) para no dejar a nadie atascado en una versión vieja
+      // (recargar) para no dejar a nadie atascado en una versión vieja -- salvo que
+      // haya un viaje en curso, mismo freno que arriba.
+      if(typeof _lpNavOGrabacionActiva==='function' && _lpNavOGrabacionActiva()){ window.__lpActualizacionPendiente=true; lpRefrescando=false; return; }
       if(typeof _lpMarcarRecargaEstaVisita==='function') _lpMarcarRecargaEstaVisita();
       window.location.reload();
     });

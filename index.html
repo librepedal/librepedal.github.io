@@ -1017,14 +1017,46 @@ window.__lpRedirectListo = new Promise(function(resolve){ window.__lpResolverRed
 // la dispare primero.
 function _lpYaRecargoEstaVisita(){ try{ return sessionStorage.getItem('lp_reload_visita')==='1'; }catch(e){ return false; } }
 function _lpMarcarRecargaEstaVisita(){ try{ sessionStorage.setItem('lp_reload_visita','1'); }catch(e){} }
+// Detecta viaje/grabación en curso reusando lo que YA usa el resto de la app (ig =
+// GPS libre grabando, definido en app-estado-global.js; _navActivoAhora = pantalla de
+// navegación activa, definido en pwa-wakelock.js) -- sin inventar un estado nuevo.
+// typeof-guard porque este IIFE corre ANTES de que esos scripts se hayan cargado; para
+// cuando la promesa de version.txt resuelve (red real) ya existen los dos.
+function _lpNavOGrabacionActiva(){ return (typeof ig!=='undefined'&&ig) || (typeof _navActivoAhora==='function'&&_navActivoAhora()); }
+// Si version.txt trae una versión distinta mientras hay un viaje en curso, NO se
+// recarga a mitad de ruta (le cortaría GPS/voz a medio pedaleo): se guarda acá y se
+// aplica recién cuando el viaje termina -- ver los `_lpAplicarActualizacionSiPendiente()`
+// agregados en endNavigation() (motor-navegacion.js) y al soltar el GPS libre (motor-gps.js).
+window.__lpActualizacionPendiente = false;
+async function _lpAplicarActualizacionSiPendiente(){
+  if(!window.__lpActualizacionPendiente) return;
+  window.__lpActualizacionPendiente = false;
+  if(_lpYaRecargoEstaVisita()) return; // otro mecanismo ya recargó mientras tanto
+  _lpMarcarRecargaEstaVisita();
+  try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); for(const r of rs){ await r.unregister(); } } }catch(e){}
+  try{ if(window.caches){ const ks=await caches.keys(); for(const k of ks){ if(k==='librepedal-tiles') continue; await caches.delete(k); } } }catch(e){}
+  location.reload();
+}
 (function(){
   try{
-    fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
+    // _fetchT (con AbortController) en vez de fetch crudo: sin timeout, una red lenta
+    // dejaba esta promesa colgada más allá de los 1.5s que auth-vinculo.js le da de
+    // margen a __lpListoParaArrancar (Promise.race) antes de arrancar igual -- la app
+    // ya podía estar en marcha (y hasta con un viaje iniciado) cuando esto resolvía
+    // tarde y recargaba a ciegas.
+    _fetchT('version.txt?cb='+Date.now(), 8000, {cache:'no-store'}).then(function(r){return r.text();}).then(async function(v){
       v=(v||'').replace(/^﻿/,'').trim();
       // UN solo intento de reparación por versión remota (recordado en localStorage):
       // si tras limpiar la versión sigue distinta, la app ARRANCA IGUAL en vez de
       // recargarse en bucle infinito (bug v5.4-v5.8: APP_VERSION quedó en 5.3).
       if(v && v!==APP_VERSION && localStorage.getItem('lp_heal_v')!==v && !_lpYaRecargoEstaVisita()){
+        if(_lpNavOGrabacionActiva()){
+          // Viaje en curso: se pospone (ver _lpAplicarActualizacionSiPendiente) en vez
+          // de recargar ahora mismo.
+          window.__lpActualizacionPendiente = true;
+          window.__lpResolverArranque();
+          return;
+        }
         try{ localStorage.setItem('lp_heal_v',v); }catch(e){}
         _lpMarcarRecargaEstaVisita();
         try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); for(const r of rs){ await r.unregister(); } } }catch(e){}
@@ -1043,7 +1075,12 @@ function _lpMarcarRecargaEstaVisita(){ try{ sessionStorage.setItem('lp_reload_vi
 })();
 async function forzarActualizacion(){
   try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); for(const r of rs){ await r.unregister(); } } }catch(e){}
-  try{ if(window.caches){ const ks=await caches.keys(); for(const k of ks){ await caches.delete(k); } } }catch(e){}
+  // NO borrar los mosaicos del mapa descargados para andar sin señal: son trabajo
+  // del ciclista (a veces cientos de MB bajados a propósito antes de una ruta), y
+  // sw.js es explícito en que TILES_CACHE sobrevive a las actualizaciones. Mismo
+  // criterio que el auto-reparo de versión de más arriba (no repetir el bug del
+  // 2026-08-16 que le vaciaba el mapa offline a cualquiera).
+  try{ if(window.caches){ const ks=await caches.keys(); for(const k of ks){ if(k==='librepedal-tiles') continue; await caches.delete(k); } } }catch(e){}
   try{ localStorage.removeItem('lp_pais'); }catch(e){}
   location.reload();
 }
