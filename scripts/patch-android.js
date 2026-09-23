@@ -56,10 +56,23 @@ if (xml.indexOf('android:host="librepedal.cl"') === -1) {
 // (`grep -rn` sin resultados) ni los necesita el plugin de background-geolocation (su propio
 // AndroidManifest.xml en node_modules no los declara). Son permisos "muertos": riesgo real sin
 // ningún beneficio (Google puede cuestionar cualquier permiso declarado sin uso real), sacados.
+//
+// Auditoría 2026-09-23 (verificación en vivo con emulador real, no solo lectura de código):
+// ACCESS_BACKGROUND_LOCATION sacado por el mismo motivo exacto. Se probó lpBackgroundGeo.start()
+// (motor-gps.js) en un dispositivo real (emulador Android 34) con solo el permiso "Mientras se
+// usa" concedido: el GPS en 2do plano arrancó y siguió corriendo con pantalla apagada SIN que
+// Android pidiera nunca "Permitir todo el tiempo" -- confirmado con
+// `dumpsys package cl.librepedal.app` (ACCESS_BACKGROUND_LOCATION: granted=false) mientras la
+// grabación seguía activa. Se confirmó la causa en la fuente: el AndroidManifest.xml propio de
+// @capacitor-community/background-geolocation (node_modules) NO declara ACCESS_BACKGROUND_LOCATION
+// -- el plugin entero está diseñado para funcionar solo con la excepción de Foreground Service
+// (FOREGROUND_SERVICE_LOCATION + notificación persistente), que Android exime del permiso de
+// background. Tenerlo declarado sin usarlo real generaba la exigencia completa de la declaración
+// "Permisos de ubicación en segundo plano" en Play Console (formulario + video dedicado) para un
+// permiso que la app nunca ejercía -- exactamente el tipo de hueco que ya causó un rechazo real.
 const permisos = [
   'android.permission.ACCESS_COARSE_LOCATION',
   'android.permission.ACCESS_FINE_LOCATION',
-  'android.permission.ACCESS_BACKGROUND_LOCATION',
   'android.permission.FOREGROUND_SERVICE',
   'android.permission.FOREGROUND_SERVICE_LOCATION',
   'android.permission.WAKE_LOCK',
