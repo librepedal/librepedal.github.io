@@ -30,7 +30,7 @@ t('usa SHA-1 real (Web Crypto, disponible en el runtime de Workers)', /crypto\.s
 // --- El chequeo de KV va ANTES del gasto (no debe contar contra el presupuesto si ya está cacheado) ---
 const iBloqueEltts = WORKER.indexOf('const elText = url.searchParams.get("eltts")');
 const iCacheGet = WORKER.indexOf('await env.VOZ_CUOTA.get(cacheKeyKV', iBloqueEltts);
-const iPresupuestoDiario = WORKER.indexOf('_presupuestoDiario(env, String(elText).length)', iBloqueEltts);
+const iPresupuestoDiario = WORKER.indexOf('_presupuestoDiario(env, t.length)', iBloqueEltts);
 t('el chequeo de caché permanente existe en el bloque eltts', iBloqueEltts > 0 && iCacheGet > iBloqueEltts);
 t('el chequeo de caché va ANTES de tocar el presupuesto diario (un hit no debe gastar cuota)',
   iCacheGet > 0 && iPresupuestoDiario > 0 && iCacheGet < iPresupuestoDiario);
