@@ -28,7 +28,12 @@ jobs:
       - name: Instalar Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # Capacitor 8 (migración 2026-09-22) exige Node >=22 -- "npx cap add android"
+          # falla en seco ("[fatal] The Capacitor CLI requires NodeJS >=22.0.0") con
+          # Node 20. Encontrado corriendo este workflow de verdad en CI antes de
+          # mergear (el build local que validó la migración no lo detectó porque esa
+          # máquina ya tenía Node más nuevo instalado, sin relación con lo fijado acá).
+          node-version: '22'
 
       - name: Instalar Java (JDK 17)
         uses: actions/setup-java@v4
