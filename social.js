@@ -11,7 +11,16 @@ async function abrirChatAmigo(friendId){
   // Self-heal (ver acceptFriendRequest): si el espejo /amistades no llegó a crearse por
   // un fallo silencioso de red, cada apertura del chat con este amigo lo vuelve a
   // intentar -- idempotente, no rompe nada si ya existía.
-  try{ _asegurarAmistadEspejo(friendId); }catch(e){}
+  // OJO al tocar esto: /amistades tiene "allow update: if false" -- un .set() sobre un
+  // documento que YA EXISTE (el caso normal: la amistad ya está sana, que es casi
+  // siempre) se evalúa como update y Firestore lo RECHAZA, no como no-op. Eso es
+  // ESPERADO acá (nada que reparar) y no un error real -- por eso el .catch() se traga
+  // el rechazo en vez de reportarlo a Sentry, a diferencia del de acceptFriendRequest()
+  // (ahí sí es una escritura nueva de verdad, un fallo ahí sí importa). Encontrado en la
+  // revisión de este mismo PR: un try/catch síncrono NO atrapa el rechazo de una
+  // promesa -- sin el .catch() de abajo, esto generaba un unhandled rejection en la
+  // consola cada vez que se abría un chat con un amigo ya establecido.
+  _asegurarAmistadEspejo(friendId).catch(function(){});
   const nombre=await getNombreUsuario(friendId);
   document.getElementById('modalTitle').innerHTML='<i class="fas fa-comment-dots"></i> '+escapeHTML(nombre);
   const c=document.getElementById('modalContent');
@@ -53,7 +62,16 @@ function _asegurarAmistadEspejo(otherUid){
   const a=cu<otherUid?cu:otherUid, b=cu<otherUid?otherUid:cu;
   return db.collection('amistades').doc(a+'_'+b).set({a:a,b:b});
 }
+// Guardia de reentrada (encontrado en la revisión de este PR, mismo patrón ya usado en
+// _agregandoHostel/_enviandoReporte/etc): un doble-tap rápido en "Aceptar" antes de que
+// la lista se vuelva a pintar podía disparar acceptFriendRequest() dos veces para la
+// MISMA solicitud -- el segundo intento reportaba "falló un paso de permisos" (falso:
+// /amistades ya existía, el .set() se rechaza por diseño sobre un doc ya creado, ver
+// _asegurarAmistadEspejo) aunque la amistad quedara perfectamente sana.
+const _aceptandoSolicitud={};
 function acceptFriendRequest(reqId,fromUser){
+  if(_aceptandoSolicitud[reqId]) return;
+  _aceptandoSolicitud[reqId]=true;
   db.collection('friendRequests').doc(reqId).update({status:'accepted'}).then(function(){
     // Auditoría 2026-09-22: el .set() de abajo era fire-and-forget dentro de un try/catch
     // que NO atrapa el rechazo de una promesa (solo atraparía si `db.collection(...).set`
@@ -73,7 +91,7 @@ function acceptFriendRequest(reqId,fromUser){
       h("Se aceptó la solicitud, pero falló un paso de permisos (fotos/relatos privados podrían no verse todavía). Se reintenta solo al abrir el chat.");
       showAmigosYSolicitudes();
     });
-  }).catch(function(){ h("No se pudo aceptar, intenta de nuevo."); });
+  }).catch(function(){ _aceptandoSolicitud[reqId]=false; h("No se pudo aceptar, intenta de nuevo."); });
 }
 // 2026-08-23: Amigos + Solicitudes fusionados en una sola vista (pedido de Inty:
 // "eso debería ir todo junto y se despliega para ver todo el contenido") — antes
