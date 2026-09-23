@@ -26,6 +26,20 @@ const lpBackgroundGeo = (function(){
       // vez pase por el mismo aviso único. Si falla, NO seguir a pedir el permiso igual (eso
       // repetiría exactamente el rechazo de Google) — mejor fallar cerrado.
       if(!(await lpAsegurarUbicacion())){ console.error('Consentimiento de ubicación no obtenido, no se inicia GPS en segundo plano.'); return false; }
+      // Auditoría 2026-09-23: el plugin de background-geolocation DECLARA POST_NOTIFICATIONS
+      // en su manifest (obligatorio desde Android 13 para mostrar cualquier notificación) pero
+      // su propio @Permission de Capacitor solo cubre ubicación -- nunca pide este permiso en
+      // tiempo de ejecución (confirmado leyendo BackgroundGeolocation.java). Sin pedirlo queda
+      // denegado por defecto en Android 13+, así que la notificación persistente de "grabando tu
+      // ruta" -- la misma que le da transparencia al usuario de que su ubicación sigue activa
+      // con la pantalla apagada -- nunca llegaba a mostrarse. Se pide acá, best-effort: si el
+      // plugin no está (typeof, versión vieja de Capacitor) o el usuario lo niega, no bloquea el
+      // tracking en sí (que sigue funcionando vía la excepción de Foreground Service), solo se
+      // pierde la notificación visible.
+      try{
+        const ln=lpPlugin('LocalNotifications');
+        if(ln && ln.requestPermissions) await ln.requestPermissions();
+      }catch(e){}
       const cb = onLocation || function(location){ if(typeof ug==='function') ug({coords:{latitude:location.latitude, longitude:location.longitude, accuracy:location.accuracy, speed:location.speed, altitude:location.altitude}}); };
       // Con Ahorro GPS activo pedimos fixes cada 25m en vez de 8m: bastante menos
       // preciso en curvas cerradas, pero muchas menos lecturas de GPS = más batería
