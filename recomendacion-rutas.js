@@ -24,14 +24,24 @@ async function verRecomendacionRutas(){
   try{
     const minKm=perfil.avgKm*1.1, maxKm=perfil.avgKm*1.35;
     const RADIO_CERCANIA_KM=80;
-    const snap=await db.collection('routes').orderBy('distance','desc').limit(200).get();
+    // Auditoría 2026-09-22: antes esto pedía las 200 rutas de MAYOR distancia de TODA la
+    // comunidad (orderBy('distance','desc').limit(200)) y recién ahí filtraba por
+    // minKm/maxKm en el cliente -- con pocos ciclistas alcanzaba a incluir el rango de
+    // cualquiera, pero a medida que la comunidad crece esos 200 documentos se llenan de
+    // las rutas más largas que existen (maratonistas de ruta, viajes de varios días), y
+    // el rango real de un ciclista promedio (avgKm*1.1 a avgKm*1.35, casi siempre bien
+    // por debajo del tope de la comunidad) queda AFUERA de esos 200 -- "Rutas para ti"
+    // sistemáticamente vacío para la mayoría, y cada vez peor con más usuarios. El rango
+    // se pide directo con un filtro de Firestore sobre el mismo campo que ordena (no
+    // necesita índice compuesto), así siempre trae rutas del rango que corresponde.
+    const snap=await db.collection('routes').where('distance','>=',minKm).where('distance','<=',maxKm).orderBy('distance').limit(200).get();
     const candidatas=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());})
       .filter(function(r){
         // pointsPub (privacidad, hub #201): track difuminado -- recortado en las puntas y
         // redondeado, nunca el domicilio/destino real de otro ciclista. Fallback a .points
         // solo para rutas viejas guardadas antes de este fix.
         const pts=r.pointsPub||r.points;
-        if(r.user===cu || r.distance<minKm || r.distance>maxKm || !pts || !pts.length) return false;
+        if(r.user===cu || !pts || !pts.length) return false;
         const p0=pts[0];
         if(p0.lat==null || p0.lon==null) return false;
         return calculateDistance(yo.lat, yo.lon, p0.lat, p0.lon)/1000 <= RADIO_CERCANIA_KM;
