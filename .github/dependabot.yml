@@ -1,0 +1,43 @@
+# Dependabot — vigilancia automática de dependencias (2026-09-27, auditoría de seguridad).
+# Un bot de GitHub que revisa las dependencias en busca de CVE y abre PRs para actualizarlas.
+# Automatiza el `npm audit` que hoy hay que correr a mano.
+#
+# IMPORTANTE: Dependabot lee esta config desde la rama POR DEFECTO (main) -- se activa recién
+# cuando este archivo llegue a main (vía el PR de esta rama). Las alertas de seguridad de
+# GitHub (Security > Dependabot alerts) conviene además activarlas en Settings del repo.
+version: 2
+updates:
+  # App raíz (Capacitor + firebase-admin de dev). Aquí salieron las 8 CVE moderadas de tooling.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+    groups:
+      # Agrupa parches/menores en un solo PR para no inundar de PRs sueltos.
+      dependencias-menores:
+        update-types: ["minor", "patch"]
+
+  # Worker de login (jose). Es código de producción cara al atacante -> prioridad.
+  - package-ecosystem: "npm"
+    directory: "/worker-auth"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(worker-auth)"
+
+  # Actions de CI (build-aab, deploy-cloudflare, etc.): también reciben CVE.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"

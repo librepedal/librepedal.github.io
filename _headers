@@ -8,6 +8,14 @@
 # `microphone=(self)` porque la app SÍ usa getUserMedia() de verdad (comandos de voz /
 # Pistero, ver motor-navegacion.js y pistero-chat-ia.js); con `()` se habría roto la voz
 # para todo el mundo, incluido cualquiera que probara la app durante una revisión.
+# CSP en modo REPORT-ONLY (2026-09-27, auditoría). NO bloquea nada: solo reporta en la
+# consola del navegador lo que violaría la política, para poder afinarla ANTES de activar
+# la versión bloqueante (Content-Security-Policy, sin "-Report-Only"). Los orígenes de
+# script/style/frame (los que importan para XSS) van específicos; img/connect/media van
+# amplios (https:/wss:) para no inundar de ruido en esta primera pasada -- el paso siguiente
+# es apretar connect-src a los hosts exactos observados (googleapis/firebaseio/workers/
+# open-meteo/wikipedia/sentry/tiles) y recién ahí pasar a bloqueante. Es una sola línea
+# (el formato _headers no permite multilínea).
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   X-Frame-Options: DENY
@@ -15,6 +23,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(self), microphone=(self), camera=(), payment=()
   Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://www.gstatic.com https://js.sentry-cdn.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; worker-src 'self' blob:; frame-src 'self' https://accounts.google.com https://librepedal-cb983.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'
 
 /sw.js
   Cache-Control: no-cache
