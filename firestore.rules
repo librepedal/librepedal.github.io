@@ -270,11 +270,17 @@ service cloud.firestore {
              .hasOnly(['confirmadoPor', 'desmentidoPor', 'lastConfirm']);
     }
 
-    // Alertas de ruta
+    // Alertas de ruta. Auditoría 2026-09-27: update/delete estaba abierto a CUALQUIER
+    // signedIn() sin verificar dueño -> cualquiera podía editar/borrar la alerta de otro
+    // llamando la API directo. La colección hoy no la usa el cliente (solo aparece en
+    // scripts/backup-firestore.js), así que este cierre no rompe nada; si se reactiva, ya
+    // queda atada al autor. Mismo patrón grandfather que isOwnerOrLegacy().
     match /routeAlerts/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('desc', 500) && strOk('type', 60);
-      allow update, delete: if signedIn();
+      allow create: if signedInReal() && strOk('desc', 500) && strOk('type', 60) && autorEsUnoMismo();
+      allow update, delete: if signedIn()
+        && (!('authUid' in resource.data) || resource.data.authUid == request.auth.uid)
+        && (!('user' in resource.data) || resource.data.user == request.auth.uid);
     }
 
     // Comentarios de la CicloGuía
