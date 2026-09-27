@@ -92,7 +92,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publicar APK en Releases (enlace de descarga directa y fijo)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: latest-apk
           name: "Libre Pedal · Última APK"
