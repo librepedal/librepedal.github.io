@@ -99,7 +99,7 @@ jobs:
         run: rm -f android/app/librepedal-release.keystore
 
       - name: Publicar el AAB como artefacto descargable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: LibrePedal-AAB-release
           path: android/app/build/outputs/bundle/release/*.aab
