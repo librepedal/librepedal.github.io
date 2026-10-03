@@ -195,8 +195,10 @@ async function _entrarConGoogle(){
   try{
     var _esAppNativa = (typeof window.Capacitor!=='undefined') && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
     if(_esAppNativa){
-      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualizá Libre Pedal desde Play Store para activarlo.\n\nMientras tanto podés entrar con tu correo: escribilo arriba y tocá "Enviarme el enlace".');
-      var _em=document.getElementById('em'); if(_em){ try{ _em.scrollIntoView({behavior:'smooth',block:'center'}); _em.focus(); }catch(e){} }
+      // El bloque del link mágico (#em) está oculto desde el 17-ago: mandar ahí dejaba al
+      // usuario frente a un campo invisible. La vía que sí está visible es la del código.
+      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualiza Libre Pedal desde Play Store para activarlo.\n\nMientras tanto puedes entrar con el código de la prueba: escríbelo arriba junto a tu correo.');
+      var _ct=document.getElementById('codigoTesterInput'); if(_ct){ try{ _ct.scrollIntoView({behavior:'smooth',block:'center'}); _ct.focus(); }catch(e){} }
       return;
     }
   }catch(_e2){}
