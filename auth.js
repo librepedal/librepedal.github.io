@@ -166,7 +166,15 @@ async function _entrarConGoogleNativo(){
     if(typeof hideLoading==='function') hideLoading();
     var code=(err&&err.code)||'';
     if(code==='ERR_CANCELED') return; // el usuario cerró el selector de cuenta, no es un error real
-    _lpAvisoLogin('No se pudo entrar con Google: '+((err&&err.message)||err));
+    var msg=String((err&&err.message)||err||'');
+    // Credential Manager de Android responde "No credentials available" (en inglés) cuando el
+    // teléfono no tiene ninguna cuenta de Google agregada -- visto validando en emulador el
+    // 2026-10-03. Se traduce a algo que el usuario pueda resolver solo.
+    if(/no credentials available/i.test(msg)){
+      _lpAvisoLogin('No hay ninguna cuenta de Google en este teléfono.\n\nAgrega una en Ajustes > Cuentas, o entra con el código de la prueba.');
+      return;
+    }
+    _lpAvisoLogin('No se pudo entrar con Google: '+msg);
   }
 }
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
