@@ -38,11 +38,12 @@ nada). Solo estas tienen commits que NO están en `main`:
 
 | Rama | Qué tiene | Estado / sugerencia |
 |---|---|---|
-| `fix/perfil-volver-modal-roto` | Botón "Volver" muerto en el modal de perfil + deep link `?perfil=` | Deep link ya en `main`. El botón Volver se rescató en **`fix/perfil-volver-customize`** (rama nueva, 2026-10-03). Borrar la vieja tras mergear. |
-| `google-signin-nativo` | Google Sign-In nativo (saca link mágico) | Muy atrasada (377 commits). El login actual es por código. Decidir con Inty si sigue vigente. |
-| `wip/modo-conduccion-resena` | Modo conducción + reseña de la app (WIP) | Parte ya está en `main` (`resena-app.js`). Revisar qué falta. |
-| `feature/testers-kv-migracion` / `fix/auth-idtoken-gate-testers` | `worker-auth`: lista de testers en KV + gate de idToken | Tocan el Worker de auth (despliegue aparte con wrangler). Revisar con cuidado. |
-| `feature/pistero-escena-cinematica` | Escena al hablar Pistero (35 líneas) | UI sin mockup aprobado → no mergear sin ✓ de Inty. |
+| `fix/perfil-volver-modal-roto` | Botón "Volver" muerto en el modal de perfil + deep link `?perfil=` | ✅ **Resuelto**: el Volver entró a `main` en v8.801 (PR #21, 2026-10-03); el deep link ya estaba. Borrar. |
+| `google-signin-nativo` | Google Sign-In nativo (saca link mágico) | **Superada**: `main` ya trae la vía nativa (`auth.js`, `lpPlugin('FirebaseAuthentication')`) + ingreso por código. Lo distinto que queda en la rama es la versión vieja de agosto. Borrar. |
+| `wip/modo-conduccion-resena` | Modo conducción + reseña de la app (WIP) | **Superada**: `main` ya tiene `modo-auto` (14 usos), `.nav-lap-row`, la UI de reseña (`resena-app.js`) y la regla `resenasApp` en `firestore.rules`. Borrar. |
+| `fix/auth-idtoken-gate-testers` | `worker-auth`: gate de testers en la vía idToken | **Superada**: el mismo chequeo ya está en `main` (`worker-auth/worker.js`, bloque `if (!env.TESTERS_PERMITIDOS)` de la vía idToken). Borrar. |
+| `feature/testers-kv-migracion` | `worker-auth`: lista de testers en KV en vez de secreto plano | **Único trabajo vivo de valor.** NO está en `main`. Permite que Inty agregue testers desde el dashboard de Cloudflare sin re-pegar la lista. Necesita: confirmar que el namespace KV `7936d9…` existe y tiene los correos cargados, y desplegar el Worker a mano (`wrangler deploy` en `worker-auth/`, no lo hace el CI). Solo vale si la app sigue en prueba cerrada. |
+| `feature/pistero-escena-cinematica` | Escena al hablar Pistero (35 líneas CSS/HTML) | **No mergear así.** Oscurece y desenfoca TODA la pantalla (velo + `backdrop-filter`) cada vez que Pistero habla, también durante la navegación → tapa el mapa mientras se pedalea. Si se retoma: excluir `#nav-screen` activo o sacar el velo. Sin mockup aprobado. |
 | `assets/capas-transparentes-*`, `assets/panoletas-piloto-*` | PNG de diseño de Pistero | Solo assets de diseño, "sin aprobar". |
 | `reconcile` | `.gitignore` viejo | Obsoleta: `main` ya tiene un `.gitignore` más completo. Borrar. |
 
