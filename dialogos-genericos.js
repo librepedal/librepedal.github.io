@@ -75,4 +75,9 @@ function lpPedirTexto(msg, placeholder){
 // no desde Logros — ahí la "✕" ya vuelve al lugar correcto).
 let _modalVolverA=null;
 function _btnVolverModal(){ return _modalVolverA ? '<button class="ab sec" style="margin:0 0 10px;width:auto;padding:8px 14px" onclick="'+_modalVolverA+'()"><i class="fas fa-arrow-left"></i> Volver</button>' : ''; }
+// "Ver mi perfil de comunidad" (Perfil) abre verPerfilUsuario(cu,'customize'), pero
+// no existía función customize() (la vista real es cv('customize')): el "Volver" del
+// modal quedaba muerto (ReferenceError silencioso). Wrapper mínimo para que el nombre
+// de vista funcione como nombre de función, igual que el resto de los volverA.
+function customize(){ closeModal(); cv('customize'); }
 
