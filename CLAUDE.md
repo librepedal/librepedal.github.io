@@ -17,11 +17,11 @@ pongan a trabajar en paralelo, sin chocar y sin esperar permiso.** Protocolo:
 1. **Al arrancar, y luego cada ~5 minutos**, corre el latido:
    ```bash
    git fetch origin && git log --oneline -6 origin/main && \
-   git show origin/main:COORDINACION-IA/REPARTO-NOCHE-2026-08-14.md | head -50
+   git show origin/main:COORDINACION-IA/EMPEZAR-AQUI.md | head -60
    ```
-   Revisa también `COORDINACION-IA/ESTADO-CUENTA-*.md` y `EN-USO.md` por mensajes nuevos.
-2. **Toma tu lane** del reparto vigente (`REPARTO-NOCHE-2026-08-14.md`) y **PONTE A
-   TRABAJAR** en tu rama. No esperes a Inty; él dio autonomía a ambas cuentas.
+   Revisa también `EN-USO.md` por mensajes nuevos.
+2. **Toma una tarea** de `COORDINACION-IA/EMPEZAR-AQUI.md` (estado y pendientes al día) y
+   **PONTE A TRABAJAR** en tu rama.
 3. **Pushea tu rama seguido** para que la otra cuenta vea tu avance en el próximo latido.
 4. Si el reparto no te asigna algo claro, mejora tu área (ver `AUDITORIA-CEO-2026-08-14.md`)
    y deja nota en la coordinación de qué tomaste, para no duplicar.
