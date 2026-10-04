@@ -49,8 +49,26 @@ var PIST_COLORES=[
   {id:'#8b5a2b',n:'Café'},{id:'#d4a017',n:'Dorado'}
 ];
 var PIST_PIEZA_COL=[{id:'',n:'Original'}].concat(PIST_COLORES);
-var PIST_BICI=[{id:'ruta',n:'Ruta'},{id:'mtb',n:'Montaña'},{id:'urbana',n:'Urbana'},{id:'bmx',n:'BMX'},{id:'playera',n:'Playera'}];
+// Bicis (Taller v2, 2026-10-04). Handbike y triciclo adaptado: inclusión, siempre gratis.
+var PIST_BICI=[{id:'ruta',n:'Ruta'},{id:'mtb',n:'Montaña'},{id:'cicloviaje',n:'Cicloviaje'},{id:'gravel',n:'Gravel'},{id:'urbana',n:'Urbana'},{id:'bmx',n:'BMX'},{id:'playera',n:'Playera'},{id:'triciclo',n:'Triciclo adaptado'},{id:'handbike',n:'Handbike'}];
+// vehículo del modo Motorizado (el ícono del modo es un auto: el auto va por defecto)
+var PIST_MOTOR=[{id:'auto',n:'Auto'},{id:'moto',n:'Moto'}];
 var PIST_BICI_COL=[{id:'',n:'Como el casco'}].concat(PIST_COLORES);
+var PIST_BICI_COL2=[{id:'',n:'Sin segundo color'}].concat(PIST_COLORES);
+/* ===== TALLER: lo que se compra para la bici y el traje. Cada cosa se combina con todo.
+   '' = lo que trae su bici de fábrica (la cicloviaje viene con alforjas y banderín, la urbana
+   con canasto y luces). Precios en PIST_TIER (pistero-tienda.js). Dibujo en pistero-bici.js. */
+var PIST_BICI_SKIN=[{id:'',n:'Liso'},{id:'degrade',n:'Degradé a juego'},{id:'retro',n:'Retro 3 franjas'},{id:'chile',n:'Chile'},{id:'camo',n:'Camuflaje'},{id:'llamas',n:'Llamas'},{id:'galaxia',n:'Galaxia'}];
+var PIST_BICI_ACAB=[{id:'',n:'Brillante'},{id:'mate',n:'Mate'},{id:'metal',n:'Metálico'},{id:'carbono',n:'Carbono'},{id:'neon',n:'Neón'}];
+var PIST_NEUM=[{id:'',n:'Negro'},{id:'cafe',n:'Costado café'},{id:'blanca',n:'Banda blanca'},{id:'rojo',n:'Rojo'},{id:'neon',n:'Neón'}];
+var PIST_AROS=[{id:'',n:'Plata'},{id:'negro',n:'Negro'},{id:'cuadro',n:'Color del cuadro'},{id:'dorado',n:'Dorado'}];
+var PIST_CARGA=[{id:'',n:'La de fábrica'},{id:'nada',n:'Sin carga'},{id:'canasto',n:'Canasto'},{id:'alforjas',n:'Alforjas de viaje'},{id:'bikepacking',n:'Bikepacking'},{id:'caja',n:'Caja de reparto'}];
+var PIST_EXTRA=[{id:'',n:'El de fábrica'},{id:'nada',n:'Nada'},{id:'luces',n:'Luces'},{id:'banderin',n:'Banderín'},{id:'patito',n:'Patito con timbre'},{id:'dorsal',n:'Dorsal de carrera'}];
+var PIST_TRAJE=[{id:'',n:'Clásico'},{id:'equipo',n:'Equipo'},{id:'retro',n:'Retro de lana'},{id:'enduro',n:'Enduro'},{id:'chile',n:'Selección Chile'},{id:'montana',n:'Rey de la montaña'},{id:'lider',n:'Líder amarillo'},{id:'campeon',n:'Campeón mundial'},
+  {id:'huaso',n:'Huaso (Fiestas Patrias)'},{id:'pascuero',n:'Viejo Pascuero'},{id:'heroe',n:'Superhéroe'},{id:'dino',n:'Dinosaurio'}];
+var PIST_MASCOTA=[{id:'',n:'Sin mascota'},{id:'quiltro',n:'Quiltro'},{id:'negro',n:'Perro negro'},{id:'gato',n:'Gato'}];
+var PIST_ESTELA=[{id:'',n:'Sin estela'},{id:'chispas',n:'Chispas'},{id:'hojas',n:'Hojas de otoño'},{id:'nieve',n:'Nieve'},{id:'burbujas',n:'Burbujas'},{id:'arcoiris',n:'Arcoíris'},{id:'fuego',n:'Fuego'}];
+var PIST_BANDERA=[{id:'',n:'Banderín Libre Pedal'},{id:'chile',n:'Chile'},{id:'argentina',n:'Argentina'},{id:'peru',n:'Perú'},{id:'bolivia',n:'Bolivia'},{id:'colombia',n:'Colombia'},{id:'mexico',n:'México'},{id:'uruguay',n:'Uruguay'},{id:'espana',n:'España'},{id:'arcoiris',n:'Diversidad'}];
 var PIST_ARO_COL=[{id:'',n:'Oro'},{id:'#d1d5db',n:'Plata'},{id:'#e8a598',n:'Oro rosa'},{id:'#111827',n:'Negro'},{id:'#ec4899',n:'Rosa'},{id:'#2563eb',n:'Azul'},{id:'#16a34a',n:'Verde'},{id:'#dc2626',n:'Rojo'}];
 var PIST_DISENO=[
   {id:'',n:'Liso'},{id:'franja',n:'Franja'},{id:'doble',n:'Doble franja'},{id:'rayo',n:'Rayo'},
@@ -114,7 +132,8 @@ var PIST_PANO=[
 
 var PIST_DEF={casco:'azul',piel:'claro',lentes:'',lentesCol:'#16203a',bigote:'',acc:'',pelo:'',peloCol:'#4a3222',pest:'',aro:'',pano:'',
   diseno:'franja',disenoCol:'#fc4c02',gadget:'',marca:'',ojosCol:'',labios:'',cuello:'',
-  acabado:'',accCol:'',gadgetCol:'',marcoCol:'',aroCol:'',biciTipo:'ruta',biciCol:''};
+  acabado:'',accCol:'',gadgetCol:'',marcoCol:'',aroCol:'',biciTipo:'ruta',biciCol:'',
+  biciCol2:'',motorTipo:'auto',biciSkin:'',biciAcab:'',biciNeum:'',biciAros:'',biciCarga:'',biciExtra:'',traje:'',mascota:'',estela:'',bandera:''};
 var _LP_HEX=/^#[0-9a-fA-F]{6}$/;
 // oscurece (f<0) o aclara (f>0) un '#rrggbb'
 function _lpShade(hex,f){ if(!_LP_HEX.test(hex||'')) return hex; var n=parseInt(hex.slice(1),16); function t(c){ return Math.max(0,Math.min(255,Math.round(f<0?c*(1+f):c+(255-c)*f))); } return '#'+((1<<24)|(t(n>>16)<<16)|(t((n>>8)&255)<<8)|t(n&255)).toString(16).slice(1); }
@@ -330,10 +349,11 @@ function _pistNormal(o){
   // Solo valores del catálogo o colores '#rrggbb': el objeto puede venir de Firestore
   // (lo escribe el cliente de otro usuario) y estos valores se insertan tal cual en el SVG.
   var CAT={piel:PIST_PIEL,lentes:PIST_LENTES,bigote:PIST_BIGOTE,acc:PIST_ACC,pelo:PIST_PELO,pest:PIST_PEST,aro:PIST_ARO,
-    diseno:PIST_DISENO,gadget:PIST_GADGET,marca:PIST_MARCA,cuello:PIST_CUELLO,acabado:PIST_ACABADO,biciTipo:PIST_BICI};
+    diseno:PIST_DISENO,gadget:PIST_GADGET,marca:PIST_MARCA,cuello:PIST_CUELLO,acabado:PIST_ACABADO,biciTipo:PIST_BICI,
+    motorTipo:PIST_MOTOR,biciSkin:PIST_BICI_SKIN,biciAcab:PIST_BICI_ACAB,biciNeum:PIST_NEUM,biciAros:PIST_AROS,biciCarga:PIST_CARGA,biciExtra:PIST_EXTRA,traje:PIST_TRAJE,mascota:PIST_MASCOTA,estela:PIST_ESTELA,bandera:PIST_BANDERA};
   for(var c in CAT){ var v=r[c]; if(!CAT[c].some(function(it){return it.id===v;})) r[c]=PIST_DEF[c]; }
   // colores libres (selector de color): '' (= original/sin) o hex de 6 dígitos
-  ['peloCol','lentesCol','disenoCol','pano','ojosCol','labios','accCol','gadgetCol','marcoCol','aroCol','biciCol'].forEach(function(c){ if(r[c]!=='' && !_LP_HEX.test(String(r[c]))) r[c]=PIST_DEF[c]; });
+  ['peloCol','lentesCol','disenoCol','pano','ojosCol','labios','accCol','gadgetCol','marcoCol','aroCol','biciCol','biciCol2'].forEach(function(c){ if(r[c]!=='' && !_LP_HEX.test(String(r[c]))) r[c]=PIST_DEF[c]; });
   if(!_LP_HEX.test(String(r.casco)) && !PIST_CASCO.some(function(h){return h.id===r.casco;})) r.casco=PIST_DEF.casco;
   if(!r.cuello && r.pano) r.cuello='panoleta';
   if(r.cuello && !r.pano) r.pano='#fc4c02';

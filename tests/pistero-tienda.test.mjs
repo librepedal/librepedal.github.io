@@ -21,15 +21,21 @@ let f = 0, n = 0; const ok = (c, m) => { n++; if (!c) { f++; console.log('  ✗ 
 
 // 1) cada rareza apunta a una pieza real del catálogo
 const TIER = J('PIST_TIER');
+// El Taller (bici, traje, estela…) tiene su propia regla (abajo y en taller-pistero.test.mjs):
+// el tercio gratis se exige sobre la cara, el casco y el tipo de bici (lo que la regla protegía).
+const TALLER = ['biciSkin','biciAcab','biciNeum','biciAros','biciCarga','biciExtra','bandera','mascota','traje','estela'];
 let total = 0, gratis = 0;
 for (const k of Object.keys(TIER)) {
   const G = J(`PIST_GRUPOS.find(function(G){return G.k==='${k}';})`);
   ok(G, 'hay grupo para ' + k);
   const ids = G.l().map((x) => x.id);
   for (const id of Object.keys(TIER[k])) { ok(ids.includes(id), k + ': la rareza apunta a una pieza que existe (' + id + ')'); ok('rel'.includes(TIER[k][id]), k + ':' + id + ' rareza válida'); }
+  if (TALLER.includes(k)) { ok(G.l().some((it) => J(`_ptTier('${k}','${it.id}')`) === 'c'), k + ': el Taller deja al menos una opción gratis'); continue; }
   ids.filter(Boolean).forEach((id) => { total++; if (J(`_ptTier('${k}','${id}')`) === 'c') gratis++; });
 }
-ok(gratis / total >= 0.35, `al menos un tercio de lo vendible es gratis (${gratis}/${total})`);
+ok(gratis / total >= 0.35, `al menos un tercio de lo vendible de la cara, el casco y las bicis es gratis (${gratis}/${total})`);
+// inclusión y seguridad del Taller: siempre gratis
+for (const [k, id] of [['biciTipo','handbike'],['biciTipo','triciclo'],['biciExtra','luces'],['bandera','chile']]) ok(J(`_ptTier('${k}','${id}')`) === 'c', k + ':' + id + ' gratis (inclusión/seguridad/Chile)');
 
 // 2) identidad y seguridad SIEMPRE gratis
 for (const k of ['piel', 'pelo', 'ojosCol', 'pest', 'labios']) ok(!TIER[k], k + ' no se vende (identidad)');

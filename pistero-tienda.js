@@ -37,8 +37,21 @@ var PIST_TIER={
   marca:{barro:'r',curita:'r',corazon:'r',brillos:'r',guerrero:'r'},
   aro:{estrella:'r',corazon:'r',colgante:'r',doble:'r'},
   cuello:{buff:'r',bufanda:'r',maillot:'r',pajarita:'e',collar:'e'},
-  biciTipo:{bmx:'r',playera:'r'}
+  biciTipo:{gravel:'r',bmx:'r',playera:'r'},   // handbike y triciclo adaptado: inclusión, SIEMPRE gratis
+  // ---- Taller (2026-10-04). Seguridad (luces), quitar cosas, colores libres y el bicolor: gratis.
+  biciSkin:{degrade:'r',retro:'r',chile:'r',camo:'e',llamas:'e',galaxia:'l'},
+  biciAcab:{metal:'r',carbono:'e',neon:'l'},
+  biciNeum:{cafe:'r',blanca:'r',rojo:'r',neon:'e'},
+  biciAros:{negro:'r',cuadro:'r',dorado:'e'},
+  biciCarga:{canasto:'r',alforjas:'e',bikepacking:'e',caja:'r'},
+  biciExtra:{banderin:'r',patito:'r',dorsal:'e'},
+  bandera:{argentina:'r',peru:'r',bolivia:'r',colombia:'r',mexico:'r',uruguay:'r',espana:'r',arcoiris:'r'},  // Chile gratis
+  mascota:{quiltro:'r',negro:'r',gato:'r'},
+  traje:{equipo:'r',retro:'r',enduro:'r',chile:'r',montana:'e',lider:'e',campeon:'l',huaso:'r',pascuero:'r',heroe:'e',dino:'e'},
+  estela:{chispas:'r',hojas:'r',nieve:'r',burbujas:'r',arcoiris:'e',fuego:'l'}
 };
+// Pestañas del Taller: ahí el Pistero grande de arriba se muestra en su bici.
+var PIST_TABS_BICI=['bici','pintura','ruedas','carga','traje','estela'];
 function _ptTier(k,id){ if(!id) return 'c'; var m=PIST_TIER[k]; return (m&&m[id])||'c'; }
 function _ptPrecio(t){ var p=PIST_RAREZA[t].clp; return p?('$'+String(p).replace(/\B(?=(\d{3})+(?!\d))/g,'.')):'Gratis'; }
 function _ptTiene(k,id){
@@ -61,24 +74,30 @@ var PIST_TABS=[
   {id:'cara',n:'Cara',i:_ptIco('<circle cx="12" cy="12" r="9"/><path d="M8 14.5c2 2 6 2 8 0"/><path d="M9 9.5v1M15 9.5v1"/>'),g:[{k:'marca',t:'Detalles'},{k:'ojosCol',t:'Color de ojos'},{k:'pest',t:'Pestañas'},{k:'labios',t:'Labial'}]},
   {id:'aros',n:'Aros',i:_ptIco('<circle cx="12" cy="15.5" r="5"/><path d="M12 3v7.5"/>'),g:[{k:'aro',t:'Aros'},{k:'aroCol',t:'Metal o color'}]},
   {id:'cuello',n:'Cuello',i:_ptIco('<path d="M4 7c5 3.5 11 3.5 16 0l.8 4.5c-5.5 3.5-12 3.5-17.6 0z"/><path d="M14.5 11.5l1.8 8.5h-3.6l.6-8"/>'),g:[{k:'cuello',t:'Cuello'},{k:'pano',t:'Color'}]},
-  {id:'bici',n:'Bici',i:_ptIco('<circle cx="5.5" cy="16.5" r="3.8"/><circle cx="18.5" cy="16.5" r="3.8"/><path d="M5.5 16.5l4-7h6l3 7M9.5 9.5l3 7h3M14 6h3l-1.5 3.5"/>'),g:[{k:'biciTipo',t:'Tu bici'},{k:'biciCol',t:'Color de la bici'}]},
+  {id:'bici',n:'Bici',i:_ptIco('<circle cx="5.5" cy="16.5" r="3.8"/><circle cx="18.5" cy="16.5" r="3.8"/><path d="M5.5 16.5l4-7h6l3 7M9.5 9.5l3 7h3M14 6h3l-1.5 3.5"/>'),g:[{k:'biciTipo',t:'Tu bici'},{k:'biciCol',t:'Color de la bici'},{k:'biciCol2',t:'Segundo color'},{k:'motorTipo',t:'Para el modo Motorizado'}]},
+  {id:'pintura',n:'Pintura',i:_ptIco('<path d="M4 20l5-5"/><path d="M9 15l7.5-7.5a2.5 2.5 0 0 1 3.5 3.5L12.5 18.5z"/><path d="M14 10l3 3"/>'),g:[{k:'biciSkin',t:'Diseño del cuadro'},{k:'biciAcab',t:'Acabado'}]},
+  {id:'ruedas',n:'Ruedas',i:_ptIco('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.2"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/>'),g:[{k:'biciNeum',t:'Neumáticos'},{k:'biciAros',t:'Aros'}]},
+  {id:'carga',n:'Carga',i:_ptIco('<rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M4 12.5h16"/><path d="M10 12.5v2.5M14 12.5v2.5"/>'),g:[{k:'biciCarga',t:'Carga'},{k:'mascota',t:'Mascota'},{k:'biciExtra',t:'Extras'},{k:'bandera',t:'Bandera del banderín'}]},
+  {id:'traje',n:'Traje',i:_ptIco('<path d="M8 4l-4.5 3 2 4 2-1.2V20h9V9.8l2 1.2 2-4L16 4c-.8 1.6-2.2 2.5-4 2.5S8.8 5.6 8 4z"/>'),g:[{k:'traje',t:'Traje y disfraces'}]},
+  {id:'estela',n:'Estela',i:_ptIco('<circle cx="17" cy="12" r="3"/><path d="M13 9.5H5M13.5 12H3M13 14.5H6"/>'),g:[{k:'estela',t:'Estela al pedalear'}]},
   {id:'piel',n:'Piel',i:_ptIco('<path d="M12 3c4 5 6 8.2 6 11a6 6 0 0 1-12 0c0-2.8 2-6 6-11z"/>'),g:[{k:'piel',t:'Tono de piel'}]}
 ];
 // Recorte del dibujo por pestaña: que en la tarjeta se vea la pieza, no todo Pistero.
 var PIST_ZOOM={acc:'2 -2 96 72',acabado:'8 12 84 58',diseno:'8 12 84 58',gadget:'0 0 100 84',cuello:'10 42 80 42',pelo:'0 6 100 78'};
 
-var _ptTab='casco', _ptPrueba=null, _ptFiltro='', _ptGesto=0;
+var _ptTab='casco', _ptPrueba=null, _ptFiltro='', _ptGesto=0, _ptMotor=false; // _ptMotor: arriba se ve el auto/moto (se tocó "Para el modo Motorizado")
 function _ptGrupo(k){ return (typeof PIST_GRUPOS!=='undefined'&&PIST_GRUPOS.find(function(G){return G.k===k;}))||null; }
 function _ptNombre(k,id){ var G=_ptGrupo(k), it=G&&G.l().find(function(x){return x.id===id;}); return it?it.n:id; }
-function _ptOpts(){ var o=_pistOpts(); if(_ptPrueba){ o[_ptPrueba.k]=_ptPrueba.id; if(_ptPrueba.k==='cuello'&&_ptPrueba.id&&!o.pano) o.pano='#fc4c02'; if(_ptPrueba.k==='disenoCol'&&!o.diseno) o.diseno='franja'; } return o; }
+function _ptOpts(){ var o=_pistOpts(); if(_ptPrueba){ o[_ptPrueba.k]=_ptPrueba.id; if(_ptPrueba.k==='cuello'&&_ptPrueba.id&&!o.pano) o.pano='#fc4c02'; if(_ptPrueba.k==='disenoCol'&&!o.diseno) o.diseno='franja'; if(_ptPrueba.k==='bandera'&&_ptPrueba.id&&o.biciExtra!=='banderin') o.biciExtra='banderin'; } return o; }
 function _ptRarezaMax(o){ var mx='c'; Object.keys(PIST_TIER).forEach(function(k){ var t=_ptTier(k,o[k]); if('crel'.indexOf(t)>'crel'.indexOf(mx)) mx=t; }); return mx; }
 
 function _ptTabs(){ return PIST_TABS.map(function(T){ return '<button type="button" role="tab" class="pt-tab'+(T.id===_ptTab?' on':'')+'" aria-selected="'+(T.id===_ptTab)+'" onclick="_ptAbrirTab(\''+T.id+'\')"><span class="pt-tab-i">'+T.i+'</span><span>'+T.n+'</span></button>'; }).join(''); }
-function _ptAbrirTab(id){ _ptTab=id; _ptPrueba=null; _ptRender(); var pn=document.getElementById('ptPanel'); if(pn) pn.scrollTop=0;
+function _ptAbrirTab(id){ _ptTab=id; _ptPrueba=null; _ptMotor=false; _ptRender(); var pn=document.getElementById('ptPanel'); if(pn) pn.scrollTop=0;
   // deja la tienda entera a la vista (Pistero + pestañas + lista) bajo la cabecera
   var ti=document.getElementById('pistTienda'), hd=document.querySelector('header'); if(ti){ var y=ti.getBoundingClientRect().top-(hd?hd.getBoundingClientRect().height:0)-6; if(Math.abs(y)>8) try{ window.scrollBy({top:y,behavior:'smooth'}); }catch(e){ /* gate:permitido scroll cosmetico */ } } var b=document.querySelector('.pt-tab.on'); if(b&&b.scrollIntoView) try{ b.scrollIntoView({block:'nearest',inline:'center'}); }catch(e){ /* gate:permitido scroll cosmetico, navegadores viejos */ } }
 function _ptFiltrar(f){ _ptFiltro=(_ptFiltro===f)?'':f; _ptRender(); }
 function _ptElegir(k,id){
+  if(k==='motorTipo') _ptMotor=true; else if(PIST_TABS_BICI.indexOf(_ptTab)>=0) _ptMotor=false;
   if(_ptTiene(k,id)){ _ptPrueba=null; _pistSet(k,id); return; }
   _ptPrueba={k:k,id:id}; _ptRender();
 }
@@ -91,7 +110,7 @@ function _ptCambiarGesto(){ _ptGesto=(_ptGesto+1)%5; _ptPreview(); }
 function _ptPreview(){
   var box=document.getElementById('customize-preview-svg'); if(!box) return;
   var o=_ptOpts(), gestos=['feliz','contento','guino','sorprendido','emocionado'];
-  var enBici=(_ptTab==='bici'&&typeof _pistBiciSVG==='function'), svg=enBici?_pistBiciSVG(o,{expr:gestos[_ptGesto]}):_pistoDe(o,gestos[_ptGesto]), mx=_ptRarezaMax(o);
+  var enBici=(PIST_TABS_BICI.indexOf(_ptTab)>=0&&typeof _pistBiciSVG==='function'), svg=enBici?_pistBiciSVG(o,{expr:gestos[_ptGesto],vehiculo:_ptMotor?(o.motorTipo==='moto'?'moto':'auto'):''}):_pistoDe(o,gestos[_ptGesto]), mx=_ptRarezaMax(o);
   box.className='pt-pistero r-'+mx+(enBici?' en-bici':'');
   box.innerHTML=svg+(mx==='l'||mx==='e'?'<span class="pt-chispa s1"></span><span class="pt-chispa s2"></span><span class="pt-chispa s3"></span><span class="pt-chispa s4"></span>':'');
   var n=document.getElementById('customizeCharacterName'); if(n&&typeof nombreUsuario!=='undefined'&&nombreUsuario) n.innerText=nombreUsuario;

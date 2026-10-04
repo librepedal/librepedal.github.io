@@ -38,7 +38,7 @@ function _sbvAnalizar(coords){
   if(conAlt>=Math.max(5,n*0.6)){
     var as=alt.map(function(_,k){ var s=0,c=0; for(var q=Math.max(0,k-2);q<=Math.min(n-1,k+2);q++){ if(alt[q]!==null){ s+=alt[q]; c++; } } return c?s/c:null; });
     var tramo=null;
-    function cerrar(fin){ if(!tramo) return; var largo=cum[fin]-cum[tramo.i]; if(largo>=120){ var dif=Math.round(Math.abs(as[fin]-as[tramo.i])); if(dif>=6) ev.push(tramo.up?{d:cum[tramo.i]+largo*.35,pri:6,expr:'cansado',txt:'¡Uf, qué subida! +'+dif+' m'}:{d:cum[tramo.i]+largo*.35,pri:5,expr:'emocionado',txt:'¡Bajadaaa! −'+dif+' m'}); } tramo=null; }
+    function cerrar(fin){ if(!tramo) return; var largo=cum[fin]-cum[tramo.i]; if(largo>=120){ var dif=Math.round(Math.abs(as[fin]-as[tramo.i])); if(dif>=6) ev.push(tramo.up?{d:cum[tramo.i]+largo*.35,pri:6,expr:'cansado',pose:'pie',txt:'¡Uf, qué subida! +'+dif+' m'}:{d:cum[tramo.i]+largo*.35,pri:5,expr:'emocionado',txt:'¡Bajadaaa! −'+dif+' m'}); } tramo=null; }
     for(i=0;i<n;i++){
       if(as[i]===null) continue;
       for(j=i+1;j<n && cum[j]-cum[i]<100;j++){}
@@ -49,10 +49,10 @@ function _sbvAnalizar(coords){
     }
     cerrar(n-1);
     var imax=0, imin=0; for(i=0;i<n;i++){ if(as[i]!==null&&(as[imax]===null||as[i]>as[imax])) imax=i; if(as[i]!==null&&(as[imin]===null||as[i]<as[imin])) imin=i; }
-    if(as[imax]-as[imin]>=25 && imax>0 && imax<n-1) ev.push({d:cum[imax],pri:8,expr:'contento',txt:'¡Cima! '+Math.round(alt[imax]!==null?alt[imax]:as[imax])+' m'});
+    if(as[imax]-as[imin]>=25 && imax>0 && imax<n-1) ev.push({d:cum[imax],pri:8,expr:'contento',pose:'sinmanos',txt:'¡Cima! '+Math.round(alt[imax]!==null?alt[imax]:as[imax])+' m'});
   }
   if(ev.length<3 && total>800) ev.push({d:total/2,pri:3,expr:'guino',txt:'¡Vamos por la mitad!'});
-  ev.push({d:total,pri:9,expr:'guino',txt:'¡Llegamos! '+km(total)+' km'});
+  ev.push({d:total,pri:9,expr:'guino',pose:'caballito',txt:'¡Llegamos! '+km(total)+' km'});
   // sin amontonar: se deja el más importante dentro de cada ~9 % del recorrido; máx. 7
   ev.sort(function(a,b){ return b.pri-a.pri; });
   var hueco=total*0.09, ok=[];
@@ -77,7 +77,9 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     if(total<=0){ if(typeof h==='function') h('El recorrido es demasiado corto para animarlo.'); detenerSobrevuelo(); if(onEnd)onEnd(); return; }
     var opts=(typeof _pistOpts==='function')?_pistOpts():{};
     var conBici=(typeof _pistBiciSVG==='function');
-    function bici(expr,rapido){ return conBici?_pistBiciSVG(opts,{expr:expr||'feliz',rapido:!!rapido,cadencia:rapido?0.5:0.85}):((typeof _pistoNuevo==='function')?_pistoNuevo(expr||'feliz'):''); }
+    // vehículo según el modo del viaje (auto/moto en Motorizado, MTB, cicloviaje…) y pose según el momento
+    var veh=(typeof _pistVehiculo==='function')?_pistVehiculo(opts,modo||(typeof actividadTipo!=='undefined'?actividadTipo:'')):'';
+    function bici(expr,rapido,pose){ return conBici?_pistBiciSVG(opts,{expr:expr||'feliz',rapido:!!rapido,cadencia:rapido?0.5:0.85,pose:pose||'',vehiculo:veh}):((typeof _pistoNuevo==='function')?_pistoNuevo(expr||'feliz'):''); }
     _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:_sbvMarcadorHTML(bici('feliz'))}}).addTo(mp);
     var el=(_sbvMarker._ml&&_sbvMarker._ml.getElement)?_sbvMarker._ml.getElement():null;
     var cajaBici=el&&el.querySelector('.sbv-bici'), globo=el&&el.querySelector('.sbv-globo');
@@ -89,7 +91,7 @@ function reproducirSobrevuelo(coords, modo, onEnd){
       if(cara && typeof _pistoDe==='function') cara.innerHTML=_pistoDe(opts,e.expr);
       if(txt) txt.textContent=e.txt;
       globo.classList.remove('on'); void globo.offsetWidth; globo.classList.add('on');
-      if(cajaBici) cajaBici.innerHTML=bici(e.expr,e.rapido);
+      if(cajaBici) cajaBici.innerHTML=bici(e.expr,e.rapido,e.pose);
       globoHasta=ts+PAUSA+900;
     }
     function frame(ts){

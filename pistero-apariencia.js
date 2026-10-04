@@ -271,6 +271,8 @@ var _PIST_ORIGINAL='repeating-linear-gradient(45deg,#cbd5e1 0 3px,#64748b 3px 6p
 // aros) se vea en el ícono; chip = selector de color redondo; libre = además el
 // selector de color libre. Cada pieza tiene su propio color, independiente del resto.
 var _PIST_CARA='12 34 76 64';
+// tarjeta del Taller: Pistero quieto en su bici (las piezas del modo Motorizado van en su propio grupo)
+function _pistTallerSVG(o){ return (typeof _pistBiciSVG==='function')?_pistBiciSVG(o,{pedal:false}):''; }
 var PIST_GRUPOS=[
   {g:'pistCascoGrid',k:'casco',l:function(){return PIST_CASCO;},chip:1,libre:1,col:function(it){return it.css||it.c;}},
   {g:'pistAcabadoGrid',k:'acabado',l:function(){return PIST_ACABADO;}},
@@ -296,7 +298,20 @@ var PIST_GRUPOS=[
   {g:'pistPanoGrid',k:'pano',l:function(){return PIST_PANO;},chip:1,libre:1},
   {g:'pistBigoteGrid',k:'bigote',l:function(){return PIST_BIGOTE;}},
   {g:'pistBiciGrid',k:'biciTipo',l:function(){return PIST_BICI;},svg:function(o){ return _pistBiciSVG(o,{pedal:false}); }},
-  {g:'pistBiciColGrid',k:'biciCol',l:function(){return PIST_BICI_COL;},chip:1,libre:1,vacio:_PIST_ORIGINAL}
+  {g:'pistBiciColGrid',k:'biciCol',l:function(){return PIST_BICI_COL;},chip:1,libre:1,vacio:_PIST_ORIGINAL},
+  // ---- Taller (2026-10-04): cada tarjeta muestra a Pistero en su bici con esa pieza puesta
+  {g:'pistBiciCol2Grid',k:'biciCol2',l:function(){return PIST_BICI_COL2;},chip:1,libre:1,vacio:'#334155'},
+  {g:'pistMotorGrid',k:'motorTipo',l:function(){return PIST_MOTOR;},svg:function(o){ return _pistBiciSVG(o,{pedal:false,vehiculo:o.motorTipo==='moto'?'moto':'auto'}); }},
+  {g:'pistBiciSkinGrid',k:'biciSkin',l:function(){return PIST_BICI_SKIN;},svg:_pistTallerSVG},
+  {g:'pistBiciAcabGrid',k:'biciAcab',l:function(){return PIST_BICI_ACAB;},svg:_pistTallerSVG},
+  {g:'pistNeumGrid',k:'biciNeum',l:function(){return PIST_NEUM;},svg:_pistTallerSVG},
+  {g:'pistArosGrid',k:'biciAros',l:function(){return PIST_AROS;},svg:_pistTallerSVG},
+  {g:'pistCargaGrid',k:'biciCarga',l:function(){return PIST_CARGA;},svg:_pistTallerSVG},
+  {g:'pistExtraGrid',k:'biciExtra',l:function(){return PIST_EXTRA;},svg:_pistTallerSVG},
+  {g:'pistBanderaGrid',k:'bandera',l:function(){return PIST_BANDERA;},svg:function(o){ return _pistTallerSVG(Object.assign({},o,{biciExtra:'banderin'})); }},
+  {g:'pistMascotaGrid',k:'mascota',l:function(){return PIST_MASCOTA;},svg:_pistTallerSVG},
+  {g:'pistTrajeGrid',k:'traje',l:function(){return PIST_TRAJE;},svg:_pistTallerSVG},
+  {g:'pistEstelaGrid',k:'estela',l:function(){return PIST_ESTELA;},svg:_pistTallerSVG}
 ];
 function renderPistCustom(){ if(typeof _ptRender==='function' && _ptRender()) return; var o=_pistOpts();
   PIST_GRUPOS.forEach(function(G){

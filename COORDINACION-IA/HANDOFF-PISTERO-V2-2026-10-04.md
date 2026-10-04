@@ -46,3 +46,37 @@ Galería visual de todo (mismo código de la app): `npx serve .` → `/disenos-u
 - El contenedor `main` tiene `overflow:auto` sin alto fijo → `position:sticky` **no funciona** dentro de las vistas. Por eso la tienda usa lista con scroll propio en vez de cabecera fija.
 - Al probar en el navegador local, el service worker sirve JS viejo: desregistrarlo y limpiar `caches` antes de recargar.
 - El gate de calidad (`scripts/gate-calidad.mjs`) bloquea `catch(e){}` vacíos en líneas tocadas: poner `console.warn` o `/* gate:permitido <motivo> */`.
+
+---
+
+## 🛠️ Actualización (misma rama) — Taller de Pistero pasado a la app · 2026-10-04 tarde
+
+Inty aprobó el diseño (mockups en `disenos-ui/pistero-v2/bici-v2.html` y `taller.html`) y pidió pasarlo a la app.
+**Sigue sin mergear**: falta que Inty lo pruebe en su teléfono.
+
+Qué quedó en la app (archivos reales):
+- `pistero-bici.js` — dibujo nuevo completo: 9 bicis (ruta, MTB, cicloviaje, gravel, urbana, BMX, playera,
+  **triciclo adaptado y handbike = inclusión, gratis**) + moto y auto. Pedaleo con tobillo, glúteo en el sillín,
+  sombras/luz, poses (`cfg.pose`: pie/sinmanos/caballito), `cfg.vehiculo` y `_pistVehiculo(o,modo)`.
+- `pistero-armario.js` — catálogos del Taller (`PIST_BICI_SKIN`, `PIST_NEUM`, `PIST_AROS`, `PIST_CARGA`, `PIST_EXTRA`,
+  `PIST_TRAJE`, `PIST_MASCOTA`, `PIST_ESTELA`, `PIST_BANDERA`, `PIST_MOTOR`, `PIST_BICI_COL2`), defaults en `PIST_DEF`
+  y validación en `_pistNormal` (barrera anti-inyección: solo catálogo o `#rrggbb`).
+- `pistero-tienda.js` — precios del Taller en `PIST_TIER` (**tope $1.000**: Raro $290 · Épico $590 · Legendario $990),
+  6 pestañas nuevas (Bici, Pintura, Ruedas, Carga, Traje, Estela), vista grande en bici/auto/moto.
+- `pistero-apariencia.js` — grupos de la tienda para cada pieza (tarjeta = Pistero en su bici con la pieza puesta).
+- `sobrevuelo-viaje.js` — el vehículo sigue el **modo del viaje** (Motorizado → auto o moto; MTB → montaña;
+  Cicloviaje → cicloviaje o gravel; handbike/triciclo se respetan siempre) y las poses: subida → de pie,
+  cima → sin manos, llegada → caballito.
+
+Tests: `taller-pistero.test.mjs` (nuevo: 594 piezas dibujadas, barrera, vehículo por modo, poses, precios),
+`sobrevuelo-bici.test.mjs` (poses) y `pistero-tienda.test.mjs` (el tercio gratis se exige sobre cara+casco+bicis;
+el Taller exige ≥1 opción gratis por categoría). `node tests/run.mjs` → 45/46 (el rojo es `iconos-lucide`, ya fallaba en main).
+Probado en la app real (localhost, sin iniciar sesión): pestañas, elegir quiltro (se guarda), cobro simulado
+(pieza no comprada = solo prueba + barra "Raro · Gato · $290"), selector auto/moto.
+
+Pendiente:
+1. ✓ de Inty en su teléfono → recién ahí merge (subir versión en los 3 lugares; la rama dice 8.805).
+2. Probar el sobrevuelo con una ruta real grabada (subida/cima/llegada con su pose; modo Motorizado con auto).
+3. Cobro real: regla Firestore para `armario`, worker de compras y Google Play Billing (mínimo Chile $200 → $290 cabe).
+4. Lista de precios completa: `COORDINACION-IA/LISTA-PRECIOS-PISTERO-2026-10-04.md`. Plan por etapas: `PLAN-TALLER-PISTERO-2026-10-04.md`
+   (siguiente: etapa 3 = temporadas Halloween/Navidad 2026, tándem, carro con perro, furgón camper).
