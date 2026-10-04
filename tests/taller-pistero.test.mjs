@@ -14,7 +14,7 @@ const ctx = { console, Math, JSON, Object, Array, String, Number, RegExp, isFini
   document: { addEventListener() {}, querySelectorAll: () => [], querySelector: () => null, getElementById: () => null, body: { classList: { contains: () => false } } },
   window: { addEventListener() {} }, setTimeout: () => 0, clearTimeout() {} };
 vm.createContext(ctx);
-for (const f of ['pistero-personalizacion-datos.js', 'pistero-armario.js', 'pistero-apariencia.js', 'pistero-tienda.js', 'pistero-bici.js']) {
+for (const f of ['pistero-personalizacion-datos.js', 'pistero-armario.js', 'pistero-apariencia.js', 'pistero-tienda.js', 'pistero-bici.js', 'pistero-sonidos.js']) {
   vm.runInContext(readFileSync(join(raiz, f), 'utf8'), ctx, { filename: f });
 }
 const J = (s) => vm.runInContext(s, ctx);
@@ -61,5 +61,14 @@ ok(J('Object.keys(PIST_RAREZA).every(function(k){ return PIST_RAREZA[k].clp<=100
 for (const [k, id] of [['biciTipo', 'handbike'], ['biciTipo', 'triciclo'], ['biciExtra', 'luces'], ['bandera', 'chile'], ['biciCol2', '#123456']]) ok(J(`_ptTier('${k}','${id}')`) === 'c', `${k}:${id} gratis`);
 ok(J("PIST_TABS.some(function(t){return t.id==='pintura';}) && PIST_TABS_BICI.length===6"), 'la tienda tiene las pestañas del Taller');
 
+// 6) sonidos (pistero-sonidos.js): cada pieza que se vende tiene un sonido que existe, y sin
+//    Web Audio (o con la voz en OFF) no se rompe nada
+const SONIDOS = J('Object.keys(PS)');
+let sinSonido = [];
+for (const k of Object.keys(J('PIST_TIER'))) { if (!(k in J('_PS_CATEGORIA'))) continue; const G = J(`PIST_GRUPOS.find(function(G){return G.k==='${k}';})`);
+  for (const it of G.l()) { if (!it.id) continue; const nom = J(`_psNombre('${k}','${it.id}')`); if (!nom || !SONIDOS.includes(nom)) sinSonido.push(k + ':' + it.id); } }
+ok(sinSonido.length === 0, 'cada pieza del Taller suena al tocarla' + (sinSonido.length ? ' (faltan: ' + sinSonido.join(', ') + ')' : ''));
+let rompio = false; try { J("pistSonar('mascota','quiltro'); pistSonarNombre('timbre'); var v=pistSonidoViaje('auto'); v.momento({pose:'caballito'}); v.parar();"); } catch (e) { rompio = true; }
+ok(!rompio, 'sin Web Audio los sonidos se callan sin romper nada');
 console.log(f ? `  ${f}/${n} FALLARON` : `  ✓ taller de Pistero: ${n} chequeos OK (${dib} piezas dibujadas)`);
 process.exit(f ? 1 : 0);

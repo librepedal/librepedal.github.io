@@ -97,6 +97,7 @@ function _ptAbrirTab(id){ _ptTab=id; _ptPrueba=null; _ptMotor=false; _ptRender()
   var ti=document.getElementById('pistTienda'), hd=document.querySelector('header'); if(ti){ var y=ti.getBoundingClientRect().top-(hd?hd.getBoundingClientRect().height:0)-6; if(Math.abs(y)>8) try{ window.scrollBy({top:y,behavior:'smooth'}); }catch(e){ /* gate:permitido scroll cosmetico */ } } var b=document.querySelector('.pt-tab.on'); if(b&&b.scrollIntoView) try{ b.scrollIntoView({block:'nearest',inline:'center'}); }catch(e){ /* gate:permitido scroll cosmetico, navegadores viejos */ } }
 function _ptFiltrar(f){ _ptFiltro=(_ptFiltro===f)?'':f; _ptRender(); }
 function _ptElegir(k,id){
+  if(typeof pistSonar==='function') pistSonar(k,id); // cada pieza suena al tocarla (pistero-sonidos.js)
   if(k==='motorTipo') _ptMotor=true; else if(PIST_TABS_BICI.indexOf(_ptTab)>=0) _ptMotor=false;
   if(_ptTiene(k,id)){ _ptPrueba=null; _pistSet(k,id); return; }
   _ptPrueba={k:k,id:id}; _ptRender();

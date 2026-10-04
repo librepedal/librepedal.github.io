@@ -40,6 +40,7 @@ const CORE = [
   './pistero-apariencia.js',
   './pistero-tienda.js',
   './pistero-bici.js',
+  './pistero-sonidos.js',
   './pistero-frases-pais.js',
   './pistero-chat-ia.js',
   './funciones-mapa-viajes.js',

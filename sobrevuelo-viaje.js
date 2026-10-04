@@ -5,9 +5,10 @@
    se adapta al modo actual (_modoIconHTML(actividadTipo): ciclismo/mtb/trekking/moto).
    NO toca GPS (toggleGPS se ENVUELVE sin editar su cuerpo), ni auth, ni reportes,
    ni el guardado. Todo cae en try/catch para no poder romper el núcleo. */
-var _sbvRAF=null,_sbvMarker=null,_sbvLine=null;
+var _sbvRAF=null,_sbvMarker=null,_sbvLine=null,_sbvSonido=null;
 function _sbvHaversine(a,b){ var R=6371000,d=Math.PI/180; var dLat=(b[0]-a[0])*d,dLon=(b[1]-a[1])*d,la1=a[0]*d,la2=b[0]*d; var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)*Math.sin(dLon/2); return 2*R*Math.asin(Math.min(1,Math.sqrt(s))); }
 function detenerSobrevuelo(){
+  if(_sbvSonido){ try{ _sbvSonido.parar(); }catch(e){ console.warn('[sobrevuelo] sonido', e); } _sbvSonido=null; }
   if(_sbvRAF){ try{ cancelAnimationFrame(_sbvRAF); }catch(e){} _sbvRAF=null; }
   if(_sbvMarker){ try{ _sbvMarker.remove(); }catch(e){} _sbvMarker=null; }
   if(_sbvLine){ try{ if(mp) mp.removeLayer(_sbvLine); }catch(e){} _sbvLine=null; }
@@ -79,6 +80,9 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     var conBici=(typeof _pistBiciSVG==='function');
     // vehículo según el modo del viaje (auto/moto en Motorizado, MTB, cicloviaje…) y pose según el momento
     var veh=(typeof _pistVehiculo==='function')?_pistVehiculo(opts,modo||(typeof actividadTipo!=='undefined'?actividadTipo:'')):'';
+    // sonido: cadena (bici) o motor (auto/moto) mientras avanza; la mascota saluda al partir
+    _sbvSonido=(typeof pistSonidoViaje==='function')?pistSonidoViaje(veh):null;
+    if(opts.mascota && typeof pistSonar==='function') pistSonar('mascota',opts.mascota);
     function bici(expr,rapido,pose){ return conBici?_pistBiciSVG(opts,{expr:expr||'feliz',rapido:!!rapido,cadencia:rapido?0.5:0.85,pose:pose||'',vehiculo:veh}):((typeof _pistoNuevo==='function')?_pistoNuevo(expr||'feliz'):''); }
     _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:_sbvMarcadorHTML(bici('feliz'))}}).addTo(mp);
     var el=(_sbvMarker._ml&&_sbvMarker._ml.getElement)?_sbvMarker._ml.getElement():null;
@@ -92,6 +96,7 @@ function reproducirSobrevuelo(coords, modo, onEnd){
       if(txt) txt.textContent=e.txt;
       globo.classList.remove('on'); void globo.offsetWidth; globo.classList.add('on');
       if(cajaBici) cajaBici.innerHTML=bici(e.expr,e.rapido,e.pose);
+      if(_sbvSonido) _sbvSonido.momento(e);
       globoHasta=ts+PAUSA+900;
     }
     function frame(ts){

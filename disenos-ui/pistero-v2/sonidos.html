@@ -1,0 +1,35 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sonidos de Pistero</title>
+<style>
+body{margin:0;background:#0b1220;color:#e5e7eb;font-family:system-ui,sans-serif;padding:16px}
+h1{font-size:1.3rem;margin:0 0 4px}h2{font-size:.95rem;color:#fc4c02;margin:22px 0 8px}
+p{color:#9fb3c8;font-size:.82rem;margin:0 0 10px;max-width:720px}
+.fila{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+button{background:#141f33;border:1px solid #2a3348;border-radius:12px;color:#e2e8f0;padding:12px 10px;font:600 .82rem system-ui;cursor:pointer;text-align:left;display:flex;gap:8px;align-items:center}
+button:hover{border-color:#fc4c02}button:active{transform:scale(.98)}
+button i{font-style:normal;font-weight:500;font-size:.68rem;color:#8ea3bd;display:block}
+.ic{width:26px;height:26px;border-radius:50%;background:#fc4c02;display:grid;place-items:center;flex:none}
+.ic svg{width:12px;height:12px;fill:#fff}
+.viaje button{border-color:#3b82f6}
+</style></head><body>
+<h1>Sonidos de Pistero (para escuchar y aprobar)</h1>
+<p>En la app suenan solos: al tocar una pieza en la tienda y durante el sobrevuelo. Aquí puedes escucharlos uno por uno. Si la voz está en OFF en la app, todos quedan en silencio.</p>
+<div id="out"></div>
+<script src="../../esfera.js" onerror="void 0"></script>
+<script src="../../sonido-cadena.js"></script>
+<script src="../../pistero-sonidos.js"></script>
+<script>
+var ICON='<span class="ic"><svg viewBox="0 0 10 10"><path d="M2 1 L9 5 L2 9 Z"/></svg></span>';
+function b(n,t,sub,fn){ return '<button onclick="'+(fn||"pistSonarNombre('"+n+"')")+'">'+ICON+'<span>'+t+(sub?'<i>'+sub+'</i>':'')+'</span></button>'; }
+function sec(t,html,cls){ document.getElementById('out').insertAdjacentHTML('beforeend','<h2>'+t+'</h2><div class="fila '+(cls||'')+'">'+html+'</div>'); }
+sec('Extras',b('timbre','Timbre','ring-ring')+b('patito','Patito','cuac cuac')+b('luces','Luces','clic y destello')+b('viento','Banderín','flamea al viento')+b('papel','Dorsal','papel'));
+sec('Mascotas',b('perro','Quiltro / perro negro','¡guau guau!')+b('gato','Gato','miau'));
+sec('Carga',b('mimbre','Canasto','crujido del mimbre')+b('cierre','Alforjas / bikepacking','cierre')+b('caja','Caja de reparto','golpe sordo'));
+sec('Pintura, ruedas y traje',b('spray','Diseño y colores','spray')+b('brillo','Acabado metálico / carbono / neón','destello')+b('inflar','Neumáticos','bombín')+b('aro','Aros','ting de rayo')+b('tela','Trajes','tela')+b('clic','Cambios','clic clic'));
+sec('Estelas',b('chispas','Chispas')+b('hojas','Hojas de otoño')+b('nieve','Nieve')+b('burbujas','Burbujas')+b('arcoiris','Arcoíris')+b('fuego','Fuego'));
+sec('Vehículos',b('cadena','Bici','cadena')+b('moto','Moto','acelera')+b('auto','Auto','arranca y toca la bocina')+b('bocina','Bocina'));
+sec('Sobrevuelo (ambiente de 4 segundos + momentos)',
+  b('','En bici','cadena → cima → llegada con timbre',"probarViaje('ruta')")+b('','En moto','motor → bocina al llegar',"probarViaje('moto')")+b('','En auto','motor → bocina al llegar',"probarViaje('auto')"),'viaje');
+function probarViaje(v){ var s=pistSonidoViaje(v); setTimeout(function(){ s.momento({rapido:true}); },800); setTimeout(function(){ s.momento({pose:'sinmanos'}); },1900); setTimeout(function(){ s.momento({pose:'caballito'}); },3100); setTimeout(function(){ s.parar(); },4000); }
+</script>
+</body></html>
