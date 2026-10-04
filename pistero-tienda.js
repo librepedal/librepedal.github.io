@@ -82,8 +82,15 @@ var PIST_TABS=[
   {id:'estela',n:'Estela',i:_ptIco('<circle cx="17" cy="12" r="3"/><path d="M13 9.5H5M13.5 12H3M13 14.5H6"/>'),g:[{k:'estela',t:'Estela al pedalear'}]},
   {id:'piel',n:'Piel',i:_ptIco('<path d="M12 3c4 5 6 8.2 6 11a6 6 0 0 1-12 0c0-2.8 2-6 6-11z"/>'),g:[{k:'piel',t:'Tono de piel'}]}
 ];
-// Recorte del dibujo por pestaña: que en la tarjeta se vea la pieza, no todo Pistero.
-var PIST_ZOOM={acc:'2 -2 96 72',acabado:'8 12 84 58',diseno:'8 12 84 58',gadget:'0 0 100 84',cuello:'10 42 80 42',pelo:'0 6 100 78'};
+// Encuadre de las tarjetas (2026-10-04, Inty: "unos Pisteros más grandes, otros más chicos, no caen
+// bien en la tarjeta"). Antes cada pestaña recortaba distinto (la cabeza medía 44 px en Piel y 55 en
+// Casco) y algunas piezas se salían (espejo, banderín, afro). Ahora hay DOS encuadres fijos, medidos
+// como la caja que contiene TODAS las piezas de su familia + margen: Pistero mide lo mismo en todas
+// las pestañas de la cara y en todas las de la bici, y ninguna pieza queda cortada.
+//   retrato: unión de casco, diseño, accesorios, equipo, pelo, cara, lentes, aros, cuello y piel = -2.5 -1.2 105 91.2
+//   bici:    unión de bici, pintura, ruedas, carga, traje y estela                                 = -6.4 -4.1 124.4 114.5
+var PIST_ENCUADRE={retrato:'-5 -4 110 96', bici:'-9 -7 130 120'};
+function _ptEncuadre(svg){ return svg.replace(/viewBox="[^"]*"/, 'viewBox="'+PIST_ENCUADRE[PIST_TABS_BICI.indexOf(_ptTab)>=0?'bici':'retrato']+'"'); }
 
 var _ptTab='casco', _ptPrueba=null, _ptFiltro='', _ptGesto=0, _ptMotor=false; // _ptMotor: arriba se ve el auto/moto (se tocó "Para el modo Motorizado")
 function _ptGrupo(k){ return (typeof PIST_GRUPOS!=='undefined'&&PIST_GRUPOS.find(function(G){return G.k===k;}))||null; }
@@ -125,8 +132,7 @@ function _ptPreview(){
 function _ptCard(G,it,o,actual){
   var t=_ptTier(G.k,it.id), sel=(actual===it.id), tiene=_ptTiene(G.k,it.id), prueba=_ptPrueba&&_ptPrueba.k===G.k&&_ptPrueba.id===it.id;
   var m={}; m[G.k]=it.id; if(G.k==='cuello'&&it.id&&!o.pano) m.pano='#fc4c02';
-  var mix=Object.assign({},o,m), svg=G.svg?G.svg(mix):_pistoDe(mix,'feliz'), z=G.svg?null:(PIST_ZOOM[G.k]||G.zoom);
-  if(z) svg=svg.replace('viewBox="0 0 100 84"','viewBox="'+z+'"');
+  var mix=Object.assign({},o,m), svg=_ptEncuadre(G.svg?G.svg(mix):_pistoDe(mix,'feliz'));
   return '<button type="button" class="pt-card r-'+t+(sel?' sel':'')+(prueba?' prueba':'')+(tiene?'':' lock')+'" onclick="_ptElegir(\''+G.k+'\',\''+it.id+'\')" title="'+it.n+'">'
     +'<span class="pt-card-img">'+svg+'</span><span class="pt-card-n">'+it.n+'</span>'
     +'<span class="pt-card-p">'+(sel?'<i class="fas fa-check"></i> Puesto':(t==='c'?'Gratis':(tiene&&TIENDA_COBRO_ACTIVO?'Tuyo':_ptPrecio(t))))+'</span></button>';
