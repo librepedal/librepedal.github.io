@@ -53,7 +53,12 @@ var PIST_NEUM=[{id:'',n:'Negro'},{id:'cafe',n:'Costado café'},{id:'blanca',n:'B
 var PIST_AROS=[{id:'',n:'Plata'},{id:'negro',n:'Negro'},{id:'cuadro',n:'Color del cuadro'},{id:'dorado',n:'Dorado'}];
 var PIST_CARGA=[{id:'',n:'La de fábrica'},{id:'nada',n:'Sin carga'},{id:'canasto',n:'Canasto'},{id:'alforjas',n:'Alforjas de viaje'},{id:'bikepacking',n:'Bikepacking'},{id:'caja',n:'Caja de reparto'}];
 var PIST_EXTRA=[{id:'',n:'El de fábrica'},{id:'nada',n:'Nada'},{id:'luces',n:'Luces'},{id:'banderin',n:'Banderín'},{id:'patito',n:'Patito con timbre'},{id:'dorsal',n:'Dorsal de carrera'}];
-var PIST_TRAJE=[{id:'',n:'Clásico'},{id:'equipo',n:'Equipo'},{id:'retro',n:'Retro de lana'},{id:'enduro',n:'Enduro'},{id:'chile',n:'Selección Chile'},{id:'montana',n:'Rey de la montaña'},{id:'lider',n:'Líder amarillo'},{id:'campeon',n:'Campeón mundial'}];
+var PIST_TRAJE=[{id:'',n:'Clásico'},{id:'equipo',n:'Equipo'},{id:'retro',n:'Retro de lana'},{id:'enduro',n:'Enduro'},{id:'chile',n:'Selección Chile'},{id:'montana',n:'Rey de la montaña'},{id:'lider',n:'Líder amarillo'},{id:'campeon',n:'Campeón mundial'},
+  {id:'huaso',n:'Huaso (Fiestas Patrias)'},{id:'pascuero',n:'Viejo Pascuero'},{id:'heroe',n:'Superhéroe'},{id:'dino',n:'Dinosaurio'}];
+// estela que deja al pedalear (sale de la rueda trasera)
+var PIST_ESTELA=[{id:'',n:'Sin estela'},{id:'chispas',n:'Chispas'},{id:'hojas',n:'Hojas de otoño'},{id:'nieve',n:'Nieve'},{id:'burbujas',n:'Burbujas'},{id:'arcoiris',n:'Arcoíris'},{id:'fuego',n:'Fuego'}];
+// bandera del banderín (sin elegir = banderín naranjo de Libre Pedal)
+var PIST_BANDERA=[{id:'',n:'Banderín Libre Pedal'},{id:'chile',n:'Chile'},{id:'argentina',n:'Argentina'},{id:'peru',n:'Perú'},{id:'bolivia',n:'Bolivia'},{id:'colombia',n:'Colombia'},{id:'mexico',n:'México'},{id:'uruguay',n:'Uruguay'},{id:'espana',n:'España'},{id:'arcoiris',n:'Diversidad'}];
 // rareza propuesta (misma escala de pistero-tienda.js: c gratis · r $290 · e $590 · l $990; nada pasa de $1.000)
 // Seguridad (luces) y quitar cosas: siempre gratis.
 var PIST_TIER_BICI={
@@ -63,7 +68,9 @@ var PIST_TIER_BICI={
   biciAros:{negro:'r',cuadro:'r',dorado:'e'},
   biciCarga:{canasto:'r',alforjas:'e',bikepacking:'e',caja:'r'},
   biciExtra:{banderin:'r',patito:'r',dorsal:'e'},
-  traje:{equipo:'r',retro:'r',enduro:'r',chile:'r',montana:'e',lider:'e',campeon:'l'},
+  traje:{equipo:'r',retro:'r',enduro:'r',chile:'r',montana:'e',lider:'e',campeon:'l',huaso:'r',pascuero:'r',heroe:'e',dino:'e'},
+  estela:{chispas:'r',hojas:'r',nieve:'r',burbujas:'r',arcoiris:'e',fuego:'l'},
+  bandera:{argentina:'r',peru:'r',bolivia:'r',colombia:'r',mexico:'r',uruguay:'r',espana:'r',arcoiris:'r'},  // Chile gratis
   mascota:{quiltro:'r',negro:'r',gato:'r'}
   // vehículos nuevos: gravel 'r'; handbike y triciclo SIEMPRE gratis (inclusión); bicolor gratis (es color libre)
 };
@@ -79,12 +86,16 @@ var _BICI_TRAJE={
   chile:  {pol:'#d52b1e',sh:'#0039a6',pat:'chile'},
   montana:{pol:'#f8fafc',sh:'#111827',pat:'lunares'},
   lider:  {pol:'#facc15',sh:'#111827',pat:'lider'},
-  campeon:{pol:'#f8fafc',sh:'#111827',pat:'arcoiris'}
+  campeon:{pol:'#f8fafc',sh:'#111827',pat:'arcoiris'},
+  huaso:  {pol:'#7f1d1d',sh:'#1f2937',pat:'huaso'},
+  pascuero:{pol:'#dc2626',sh:'#dc2626',pat:'pascuero'},
+  heroe:  {pol:'#1d4ed8',sh:'#1d4ed8',pat:'heroe',capa:'#dc2626'},
+  dino:   {pol:'#16a34a',sh:'#16a34a',pat:'dino',puas:'#15803d'}
 };
 // Solo valores del catálogo: estos campos vienen de Firestore (los escribe el cliente de
 // otro usuario) y se insertan tal cual en el SVG — misma barrera que _pistNormal.
 function _biciOpts(o,tipo){
-  var C={biciSkin:PIST_BICI_SKIN,biciAcab:PIST_BICI_ACAB,biciNeum:PIST_NEUM,biciAros:PIST_AROS,biciCarga:PIST_CARGA,biciExtra:PIST_EXTRA,traje:PIST_TRAJE,mascota:PIST_MASCOTA}, b={};
+  var C={biciSkin:PIST_BICI_SKIN,biciAcab:PIST_BICI_ACAB,biciNeum:PIST_NEUM,biciAros:PIST_AROS,biciCarga:PIST_CARGA,biciExtra:PIST_EXTRA,traje:PIST_TRAJE,mascota:PIST_MASCOTA,estela:PIST_ESTELA,bandera:PIST_BANDERA}, b={};
   for(var k in C){ var v=o&&o[k]; b[k]=C[k].some(function(it){return it.id===v;})?v:''; }
   // segundo color (bicolor): solo '#rrggbb'
   b.biciCol2=(o&&typeof o.biciCol2==='string'&&/^#[0-9a-fA-F]{6}$/.test(o.biciCol2))?o.biciCol2:'';
@@ -219,7 +230,11 @@ function _pistBiciSVG(opts, cfg){
   var aero=(cfg.rapido&&(tipo==='ruta'||tipo==='mtb'))?1:0;
   var SH=[G.sh[0]+aero*3,G.sh[1]+aero*4], HEAD=[G.head[0]+aero*4,G.head[1]+aero*4.5];
   // pelvis: el glúteo se asienta SOBRE el sillín (lo aplasta un poco) y de ahí salen el muslo y el torso
-  var GL=[G.hip[0]-1.8,G.sd[1]-2.4-4.2+1.6], HIP=[GL[0]+1.8,GL[1]-.8];
+  var pose=cfg.pose||'';
+  var GL=[G.hip[0]-1.8,G.sd[1]-2.4-4.2+1.6]; if(pose==='pie') GL=[GL[0]+4,GL[1]-5.5];
+  var HIP=[GL[0]+1.8,GL[1]-.8];
+  if(pose==='sinmanos'){ SH=[HIP[0]+4,HIP[1]-19]; HEAD=[SH[0]+3,SH[1]-14]; }
+  if(pose==='caballito'){ SH=[SH[0]-3,SH[1]+1]; HEAD=[HEAD[0]-3,HEAD[1]+1]; }
 
   // ---- manubrio: define dónde va la mano ----
   var ht=G.ht, bar='', barExtra='', S, hand;
@@ -242,6 +257,10 @@ function _pistBiciSVG(opts, cfg){
     barExtra='<path d="'+_bCap([ht[0]-5.6,ht[1]-11.6],[ht[0]-9.6,ht[1]-11.3],1.6,1.6)+'" fill="#f5ead4" stroke="#c9b78f" stroke-width=".4"/>'
       +'<circle cx="'+(ht[0]-1.4).toFixed(1)+'" cy="'+(ht[1]-12.6).toFixed(1)+'" r="1.6" fill="#facc15" stroke="#a16207" stroke-width=".5"/>'; }
 
+  // poses (las pide el sobrevuelo): 'pie' de pie en los pedales (subida) · 'sinmanos' brazos arriba (celebración) · 'caballito' (llegada)
+  var handF=[hand[0]-1.4,hand[1]-.8];
+  // sin manos: saluda hacia adelante a la altura del pecho y apoya la otra mano en el muslo (arriba la tapa la cabeza)
+  if(pose==='sinmanos'){ hand=[SH[0]+15,SH[1]+1]; handF=[HIP[0]+7,HIP[1]+.6]; }
   // ---- cuerpo: 16 poses por vuelta de biela ----
   // largo de pierna: que en el punto más bajo quede apenas flectada (como un ciclista bien ajustado)
   function pedal(t){ return [G.bb[0]+rc*Math.cos(t),G.bb[1]+rc*Math.sin(t)]; }
@@ -250,7 +269,7 @@ function _pistBiciSVG(opts, cfg){
   var L=dmax/2+.9, La=Math.max(Math.hypot(hand[0]-SH[0],hand[1]-SH[1])/2+1.6,11), ap=R.ap;
   var F=[];
   for(k=0;k<N;k++){
-    var th=k*2*Math.PI/N, bob=Math.sin(2*th-.6)*.5, f={};
+    var th=k*2*Math.PI/N, bob=Math.sin(2*th-.6)*(pose==='pie'?1.3:.5), f={};
     // par(): el volumen y su versión interior (para la luz)
     var par=function(key,A,B,ra,rm,rb,lado,t){ f[key]=_bLimb(A,B,ra,rm,rb,lado,t); f[key+'_i']=_bLimb(A,B,ra*.7,rm*.7,rb*.7,lado,t); };
     f.hip=[HIP[0],HIP[1]+bob*.25]; f.gl=_bC([0,bob*.25]); f.ta=[GL[0]+.6,GL[1]-2.2+bob*.25]; f.sh=[SH[0]+bob*.25,SH[1]+bob]; f.head=[bob*.3,bob*1.15];
@@ -262,7 +281,7 @@ function _pistBiciSVG(opts, cfg){
       if(R.calcetin) f[x+'cal']=_bCap(_bL(K,A.T,.7),A.T,2.3,2.1);
       f[x+'pie']=_bC(A.P); f[x+'rot']=A.fa.toFixed(1);
     });
-    [['n',hand,f.sh],['f',[hand[0]-1.4,hand[1]-.8],[f.sh[0]-1.6,f.sh[1]+.6]]].forEach(function(pp){
+    [['n',hand,f.sh],['f',handF,[f.sh[0]-1.6,f.sh[1]+.6]]].forEach(function(pp){
       var x=pp[0], H=pp[1], Sh=pp[2], E=_bCodo(Sh,H,La);
       par(x+'bra',Sh,E,3,2.9,2.4,1,.4); par(x+'ant',E,H,2.5,2.5,2,1,.32); par(x+'man',Sh,_bL(Sh,E,.55),3.7,3.6,3.2,1,.5);
     });
@@ -284,14 +303,14 @@ function _pistBiciSVG(opts, cfg){
     return t;
   }
   function brazo(x){
-    var cp=x==='n'?Y.piel:Y.pielS, cpo=x==='n'?Y.polera:Y.poleraS, H=x==='n'?hand:[hand[0]-1.4,hand[1]-.8];
+    var cp=x==='n'?Y.piel:Y.pielS, cpo=x==='n'?Y.polera:Y.poleraS, H=x==='n'?hand:handF;
     return vol(x+'bra',cp)+vol(x+'ant',cp)+vol(x+'man',cpo)
       +'<circle cx="'+H[0].toFixed(1)+'" cy="'+H[1].toFixed(1)+'" r="2.5" fill="'+(x==='n'?'#1f2937':'#111827')+'"/>';
   }
 
   // ---- sombra + líneas de velocidad ----
   var rw=G.rw, fw=G.fw, bb=G.bb, st=G.st, hb=G.hb, sd=G.sd;
-  s+='<ellipse cx="62" cy="'+(rw[1]+G.r+2)+'" rx="46" ry="3.2" fill="rgba(0,0,0,.28)"/>';
+  var sombraPiso='<ellipse cx="62" cy="'+(rw[1]+G.r+2)+'" rx="46" ry="3.2" fill="rgba(0,0,0,.28)"/>'; s+=sombraPiso;
   if(cfg.rapido) s+='<g stroke="rgba(255,255,255,.75)" stroke-width="1.6" stroke-linecap="round"><path d="M2 58 L16 58"/><path d="M6 68 L22 68"/><path d="M0 78 L12 78"/></g>';
 
   s+=pierna('f')+brazo('f');
@@ -310,6 +329,8 @@ function _pistBiciSVG(opts, cfg){
   // ---- ruedas ----
   // triciclo: la rueda trasera del lado lejano asoma detrás (más oscura, sin sombra propia)
   s+=(modelo==='triciclo'?'<g opacity=".6">'+_biciRueda([rw[0]-4,rw[1]-1.6],G,'triciclo',anim,dur*.75,_lpShade(col,-.3),B)+'</g>':'')+_biciRueda(rw,G,modelo,anim,dur*.75,col,B)+_biciRueda(fw,G,modelo,anim,dur*.75,col,B);
+  // estela: la lanza el neumático trasero (va delante de la rueda para que se vea salir)
+  s+=_bEstela(B.estela,[rw[0]+2,rw[1]-5],anim);
   if(tipo==='bmx') s+='<path d="'+_bCap([rw[0]-3,rw[1]],[rw[0]+3,rw[1]],1.5,1.5)+'" fill="#cbd5e1" stroke="#64748b" stroke-width=".5"/><path d="'+_bCap([fw[0]-3,fw[1]],[fw[0]+3,fw[1]],1.5,1.5)+'" fill="#cbd5e1" stroke="#64748b" stroke-width=".5"/>';
   if(tipo==='urbana'||tipo==='playera'||tipo==='cicloviaje'){
     var fc=tipo==='playera'?col:'#1f2937', fco=tipo==='playera'?osc:'#0b0f17';
@@ -418,7 +439,7 @@ function _pistBiciSVG(opts, cfg){
   // banderín (extra): mástil flexible desde la parrilla o el eje, flamea
   if(B.biciExtra==='banderin'){ var mx=rw[0]-(conParrilla?12:3), my=conParrilla?rk2-1:rw[1]-2, top=rk2-31;
     var fl=['M'+mx+' '+top+' Q'+(mx-5)+' '+(top+1)+' '+(mx-10)+' '+(top+3)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top+3)+' '+(mx-10)+' '+(top+2)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top-1)+' '+(mx-10)+' '+(top+4)+' L'+mx+' '+(top+6)+' Z'];
-    s+='<path d="M'+mx+' '+my+' L'+mx+' '+top+'" stroke="#e5e7eb" stroke-width=".8"/>'+_bAP(fl,'#f97316',anim,.8); }
+    s+='<path d="M'+mx+' '+my+' L'+mx+' '+top+'" stroke="#e5e7eb" stroke-width=".8"/>'+(B.bandera?_bBandera(B.bandera,mx,top,anim):_bAP(fl,'#f97316',anim,.8)); }
 
   // ---- tija + sillín ----
   var conResorte=(tipo==='playera');
@@ -474,6 +495,14 @@ function _pistBiciSVG(opts, cfg){
       :'<rect x="-6.8" y="-4" width="13.6" height="8" rx="2.6" fill="'+osc+'" stroke="#0b0f17" stroke-width=".6"/><rect x="-4" y="-5.2" width="6" height="2.6" rx="1" fill="'+col+'" stroke="#0b0f17" stroke-width=".5"/>')+'</g>'; }
   s+='<g transform="translate('+F[0].esp+')">'+_bAT('translate',col_('esp'),anim,dur)+esp+'</g>';
   // glúteo (con el color del short/pantalón) y encima el torso: la polera cae sobre la pretina
+  if(TJ&&(TJ.capa||TJ.puas)){ var fondo='', T0=[GL[0]+.6,GL[1]-2.2];
+    if(TJ.capa){ var c0=[SH[0]-1.5,SH[1]-.5];
+      var cp3=[[-27,9,-17,19],[-28,13,-19,21],[-26,6,-15,17]].map(function(q){ return 'M'+_bP(c0)+' Q'+_bP([c0[0]-9,c0[1]-2])+' '+_bP([c0[0]+q[0],c0[1]+q[1]])+' Q'+_bP([c0[0]+q[2],c0[1]+q[3]])+' '+_bP([GL[0]-4,GL[1]+3])+' Z'; });
+      fondo+=_bAP(cp3,_lpShade(TJ.capa,-.25),anim,.6)+_bAP(cp3,TJ.capa,anim,.6,' transform="translate(-.6 -.8) scale(.97)" transform-origin="'+_bP(c0)+'"'); }
+    if(TJ.puas){ for(var pi=0;pi<6;pi++){ var pb=_bL(T0,shp,.12+pi*.15), a1=[pb[0]+bn[0]*4.6-(shp[0]-T0[0])*.05,pb[1]+bn[1]*4.6-(shp[1]-T0[1])*.05], a2=[pb[0]+bn[0]*4.6+(shp[0]-T0[0])*.05,pb[1]+bn[1]*4.6+(shp[1]-T0[1])*.05], tp=[pb[0]+bn[0]*8.4,pb[1]+bn[1]*8.4];
+        fondo+='<path d="M'+_bP(a1)+' L'+_bP(tp)+' L'+_bP(a2)+' Z" fill="'+TJ.puas+'" stroke="#14532d" stroke-width=".4" stroke-linejoin="round"/>'; }
+      fondo+='<path d="M'+_bP([GL[0]-3,GL[1]-2])+' Q'+_bP([GL[0]-12,GL[1]-2.6])+' '+_bP([GL[0]-19,GL[1]+5])+' Q'+_bP([GL[0]-11,GL[1]+2.6])+' '+_bP([GL[0]-2,GL[1]+2.4])+' Z" fill="'+TJ.pol+'" stroke="#14532d" stroke-width=".5"/>'; }
+    s+='<g transform="translate('+F[0].esp+')">'+_bAT('translate',col_('esp'),anim,dur)+fondo+'</g>'; }
   var glr='rotate(12 '+_bP(GL)+')';
   s+='<g transform="translate('+F[0].gl+')">'+_bAT('translate',col_('gl'),anim,dur)
     +'<ellipse cx="'+GL[0].toFixed(1)+'" cy="'+GL[1].toFixed(1)+'" rx="5.6" ry="4.3" fill="'+somb(R.pierna)+'" transform="'+glr+'"/>'
@@ -493,6 +522,10 @@ function _pistBiciSVG(opts, cfg){
     else if(TJ.pat==='lunares'){ for(var ti=0;ti<7;ti++) for(var di=-3;di<=3;di++){ var p=_bL(T0,shp,.04+ti*.16), d=di*3.3+(ti%2?1.65:0);
       pat+='<circle cx="'+(p[0]+bn[0]*d).toFixed(1)+'" cy="'+(p[1]+bn[1]*d).toFixed(1)+'" r="1.15" fill="#dc2626"/>'; } }
     else if(TJ.pat==='lider') pat=banda(.38,.8,'#111827')+banda(.44,.8,'#111827')+aLo(.62,.8,-2.6,2.6,'#111827');
+    else if(TJ.pat==='huaso') pat=banda(.06,2.6,'#dc2626')+banda(.26,1,'#f8fafc')+banda(.33,1.3,'#1d4ed8')+banda(.4,1,'#f8fafc')+banda(.68,1,'#f8fafc')+banda(.75,1.3,'#1d4ed8')+banda(.82,1,'#f8fafc');
+    else if(TJ.pat==='pascuero'){ var hb2=_bL(T0,shp,.2); pat=banda(.04,2.8,'#f8fafc')+aLo(.2,1.05,-4.6,1.8,'#f8fafc')+banda(.2,2.2,'#111827')+'<rect x="'+(hb2[0]-bn[0]*3.4-1.2).toFixed(1)+'" y="'+(hb2[1]-bn[1]*3.4-1.2).toFixed(1)+'" width="2.4" height="2.4" rx=".3" fill="none" stroke="#facc15" stroke-width=".7"/>'; }
+    else if(TJ.pat==='heroe'){ var em=_bL(T0,shp,.66); em=[em[0]-bn[0]*2.6,em[1]-bn[1]*2.6]; pat=banda(.12,1.4,'#facc15')+'<circle cx="'+em[0].toFixed(1)+'" cy="'+em[1].toFixed(1)+'" r="2.6" fill="#facc15" stroke="#a16207" stroke-width=".4"/><path d="M'+(em[0]+.4).toFixed(1)+' '+(em[1]-1.9).toFixed(1)+' l-1.4 2 l1 0 l-.7 1.8 l1.8 -2.3 l-1 0 Z" fill="#dc2626"/>'; }
+    else if(TJ.pat==='dino') pat=aLo(.05,1,-4.2,3.4,'#86efac');
     else if(TJ.pat==='arcoiris') ['#2563eb','#dc2626','#111827','#facc15','#16a34a'].forEach(function(c,i){ pat+=banda(.44+i*1.2/td,1.25,c); });
   }
   s+='<g transform="translate('+F[0].esp+')">'+_bAT('translate',col_('esp'),anim,dur)
@@ -519,10 +552,70 @@ function _pistBiciSVG(opts, cfg){
   s+=pierna('n')+brazo('n');
 
   // ---- cabeza: el Pistero del usuario (se mece con el cuerpo; inclinada según la postura) ----
-  var inc=G.inc+aero*8, cab=_bCabeza(o,cfg.expr,HEAD,52);
+  var inc=pose==='sinmanos'?0:(pose==='caballito'?-4:(G.inc+aero*8+(pose==='pie'?4:0))), cab=_bCabeza(o,cfg.expr,HEAD,52);
   var hv=F.map(function(f){ return _bC(f.head); });
   s+='<g transform="translate('+hv[0]+')">'+_bAT('translate',hv,anim,dur)+(inc?'<g transform="rotate('+inc+' '+_bP(HEAD)+')">'+cab+'</g>':cab)+'</g>';
+  // caballito: todo (menos la sombra del piso) gira sobre el punto donde la rueda trasera toca el suelo
+  if(pose==='caballito') s=sombraPiso+'<g transform="rotate(-15 '+_bP([rw[0]+G.r*.25,rw[1]+G.r])+')">'+s.replace(sombraPiso,'')+'</g>';
   return '<svg viewBox="-4 -14 132 124" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>';
+}
+
+/* ===== ESTELAS: lo que deja Pistero al pedalear (sale de la rueda trasera hacia atrás) =====
+   p = punto de salida (detrás de la rueda trasera, a media altura). Quieta (tienda) = un
+   cuadro congelado con las partículas repartidas, para que igual se vea en la tarjeta. */
+function _bEstela(id,p,anim){
+  if(!id) return '';
+  var s='', n=10, dur=1.3, i;
+  function part(forma,dx,dy,rot,col,k){
+    forma='<g transform="scale(1.6)">'+forma+'</g>';
+    var x1=p[0]-32, f=k/n, x=p[0]+(x1-p[0])*f;
+    var y=p[1]+dy;
+    if(!anim) return '<g transform="translate('+x.toFixed(1)+' '+(y+dx*f).toFixed(1)+') rotate('+(rot*f).toFixed(0)+')" opacity="'+(1-f*.85).toFixed(2)+'">'+forma+'</g>';
+    return '<g opacity="0">'+forma
+      +'<animateTransform attributeName="transform" type="translate" values="'+p[0]+' '+y+';'+(p[0]-32)+' '+(y+dx)+'" dur="'+dur+'s" begin="'+(k*dur/n).toFixed(2)+'s" repeatCount="indefinite"/>'
+      +'<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.12;.7;1" dur="'+dur+'s" begin="'+(k*dur/n).toFixed(2)+'s" repeatCount="indefinite"/></g>';
+  }
+  if(id==='arcoiris'){
+    // cinta arcoíris ondulada que corre hacia atrás
+    ['#ef4444','#f97316','#facc15','#22c55e','#3b82f6','#8b5cf6'].forEach(function(c,j){ var y=p[1]-7+j*2.3;
+      s+='<path d="M'+p[0]+' '+y+' q-8 -3 -16 0 t-16 0 t-6 0" fill="none" stroke="'+c+'" stroke-width="2.4" stroke-linecap="round" opacity=".85" stroke-dasharray="8 3">'
+        +(anim?'<animate attributeName="stroke-dashoffset" values="0;22" dur=".7s" repeatCount="indefinite"/>':'')+'</path>'; });
+    return s;
+  }
+  if(id==='fuego'){
+    var fr=['M'+p[0]+' '+(p[1]+8)+' q-9 -2 -16 -10 q6 2 8 -1 q-6 -3 -6 -10 q7 6 14 6 Z','M'+p[0]+' '+(p[1]+8)+' q-11 -1 -18 -8 q6 1 8 -3 q-7 -4 -5 -11 q6 7 15 7 Z','M'+p[0]+' '+(p[1]+8)+' q-8 -3 -14 -12 q6 3 8 0 q-5 -3 -7 -8 q8 5 13 5 Z'];
+    return '<g transform="translate('+p[0]+' '+(p[1]+8)+') scale(1.6) translate('+(-p[0])+' '+(-p[1]-8)+')">'+_bAP(fr,'#ef4444',anim,.35,' opacity=".85"')+_bAP(fr,'#f97316',anim,.3,' transform="translate(.8 1.2) scale(.85)" transform-origin="'+p[0]+' '+(p[1]+8)+'"')+_bAP(fr,'#facc15',anim,.35,' transform="translate(1.5 2) scale(.6)" transform-origin="'+p[0]+' '+(p[1]+8)+'"')+'</g>';
+  }
+  for(i=0;i<n;i++){
+    var dy=[-7,4,-2,8,-5,1,6,-8,3,-3][i%10], forma;
+    if(id==='chispas') forma='<path d="M0 -1.8 L.5 -.5 L1.8 0 L.5 .5 L0 1.8 L-.5 .5 L-1.8 0 L-.5 -.5 Z" fill="'+(i%2?'#fde047':'#fb923c')+'"/>';
+    else if(id==='hojas') forma='<path d="M-2 0 Q0 -1.8 2 0 Q0 1.8 -2 0 Z" fill="'+['#ea580c','#dc2626','#ca8a04'][i%3]+'"/><path d="M-2 0 L2 0" stroke="rgba(0,0,0,.25)" stroke-width=".3"/>';
+    else if(id==='nieve') forma='<circle r="'+(i%3?.9:1.3)+'" fill="#fff"/>';
+    else forma='<circle r="'+(1+(i%3)*.5)+'" fill="rgba(186,230,253,.25)" stroke="#bae6fd" stroke-width=".4"/><circle cx="-.4" cy="-.4" r=".3" fill="#fff"/>';
+    var deriva=(id==='nieve'?5:(id==='hojas'?7:(id==='burbujas'?-9:-2)));
+    s+=part(forma,deriva,dy,id==='hojas'?300:0,'',i);
+  }
+  return s;
+}
+/* ===== BANDERAS del banderín: rectángulo que flamea (ondulación de la tela) =====
+   El asta va a la derecha (la bandera flamea hacia atrás), así que el cantón queda a la derecha. */
+function _bBandera(id,mx,top,anim){
+  var w=11, h=7, x=mx-w, t='';
+  function franjasH(cols){ var k=cols.length, r=''; cols.forEach(function(c,i){ r+='<rect x="'+x+'" y="'+(top+i*h/k).toFixed(2)+'" width="'+w+'" height="'+(h/k+.05).toFixed(2)+'" fill="'+c+'"/>'; }); return r; }
+  function franjasV(cols){ var k=cols.length, r=''; cols.forEach(function(c,i){ r+='<rect x="'+(x+i*w/k).toFixed(2)+'" y="'+top+'" width="'+(w/k+.05).toFixed(2)+'" height="'+h+'" fill="'+c+'"/>'; }); return r; }
+  if(id==='chile') t='<rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+h+'" fill="#d52b1e"/><rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+h/2+'" fill="#fff"/><rect x="'+(mx-4)+'" y="'+top+'" width="4" height="'+h/2+'" fill="#0039a6"/><path d="'+_lpStar(mx-2,top+h/4,1.1,.42)+'" fill="#fff"/>';
+  else if(id==='argentina') t=franjasH(['#74acdf','#fff','#74acdf'])+'<circle cx="'+(x+w/2)+'" cy="'+(top+h/2)+'" r=".9" fill="#f6b40e"/>';
+  else if(id==='peru') t=franjasV(['#d91023','#fff','#d91023']);
+  else if(id==='bolivia') t=franjasH(['#d52b1e','#f9e300','#007934']);
+  else if(id==='colombia') t='<rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+h/2+'" fill="#fcd116"/><rect x="'+x+'" y="'+(top+h/2)+'" width="'+w+'" height="'+h/4+'" fill="#003893"/><rect x="'+x+'" y="'+(top+h*.75)+'" width="'+w+'" height="'+h/4+'" fill="#ce1126"/>';
+  else if(id==='mexico') t=franjasV(['#ce1126','#fff','#006847'])+'<circle cx="'+(x+w/2)+'" cy="'+(top+h/2)+'" r=".9" fill="#8b5a2b"/>';
+  else if(id==='uruguay') t=franjasH(['#fff','#0038a8','#fff','#0038a8','#fff','#0038a8','#fff','#0038a8','#fff'])+'<rect x="'+(mx-4)+'" y="'+top+'" width="4" height="'+(h*5/9).toFixed(2)+'" fill="#fff"/><circle cx="'+(mx-2)+'" cy="'+(top+h*5/18).toFixed(2)+'" r="1.1" fill="#fcd116"/>';
+  else if(id==='espana') t='<rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+h+'" fill="#aa151b"/><rect x="'+x+'" y="'+(top+h/4)+'" width="'+w+'" height="'+h/2+'" fill="#f1bf00"/>';
+  else t=franjasH(['#e40303','#ff8c00','#ffed00','#008026','#004dff','#750787']);
+  // ondulación: la tela se tuerce un poco (skewY) y una sombra de pliegue la cruza
+  var pl='<path d="M'+(x+3)+' '+top+' l0 '+h+'" stroke="rgba(0,0,0,.18)" stroke-width="1.6"/><path d="M'+(x+7)+' '+top+' l0 '+h+'" stroke="rgba(255,255,255,.18)" stroke-width="1.2"/>';
+  return '<g transform-origin="'+mx+' '+top+'">'+(anim?'<animateTransform attributeName="transform" type="skewY" values="0;-7;3;-4;0" dur=".9s" repeatCount="indefinite"/>':'')+t+pl
+    +'<rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+h+'" fill="none" stroke="rgba(0,0,0,.25)" stroke-width=".3"/></g>';
 }
 
 /* ===== MASCOTAS: perro (quiltro / negro) con orejas al viento y gato con cola que se mece =====
@@ -594,6 +687,7 @@ function _pistHandbikeSVG(o,cfg,opts){
   s+=brazo('f');
   // cuadro: viga baja de la silla al tubo de dirección, horquilla, brazo de la biela
   var cuadro='M40 84 L92 80', tubDir='M93 70 L95.6 81', boom='M93.4 71 L'+_bP(CR);
+  s+=_bEstela(B.estela,[rw[0]+2,rw[1]-5],anim);
   s+=_bTubo(cuadro,4.4,col,osc,cla)+_bTubo(tubDir,3.6,col,osc,cla)+_bTubo('M95.6 81 Q100 86 '+_bP(fw),2.4,osc,'#0b0f17',col)+_bTubo(boom,3.4,col,osc,cla);
   // cadena de la biela a la rueda delantera
   s+='<path d="M'+_bP([CR[0],CR[1]-5])+' L'+_bP([fw[0],fw[1]-2.6])+' M'+_bP([CR[0],CR[1]+5])+' L'+_bP([fw[0],fw[1]+2.6])+'" fill="none" stroke="#4b5563" stroke-width="1.1" stroke-dasharray="1.2 .7">'+(anim?'<animate attributeName="stroke-dashoffset" values="0;-3.8" dur="'+(dur/2)+'s" repeatCount="indefinite"/>':'')+'</path>';
@@ -618,7 +712,7 @@ function _pistHandbikeSVG(o,cfg,opts){
   // banderín alto de seguridad (de serie en las handbike: van bajas y así las ven los autos)
   var mx=26, top=24;
   var fl=['M'+mx+' '+top+' Q'+(mx-5)+' '+(top+1)+' '+(mx-10)+' '+(top+3)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top+3)+' '+(mx-10)+' '+(top+2)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top-1)+' '+(mx-10)+' '+(top+4)+' L'+mx+' '+(top+6)+' Z'];
-  s+='<path d="M36 88 L'+mx+' 84 M'+mx+' 84 L'+mx+' '+top+'" stroke="#e5e7eb" stroke-width=".8"/>'+_bAP(fl,'#f97316',anim,.8);
+  s+='<path d="M36 88 L'+mx+' 84 M'+mx+' 84 L'+mx+' '+top+'" stroke="#e5e7eb" stroke-width=".8"/>'+(B.bandera?_bBandera(B.bandera,mx,top,anim):_bAP(fl,'#f97316',anim,.8));
   // cabeza
   var cab=_bCabeza(o,cfg.expr,HEAD,50), hv=col_('head');
   s+='<g transform="translate('+hv[0]+')">'+_bAT('translate',hv,anim,dur)+'<g transform="rotate(-6 '+_bP(HEAD)+')">'+cab+'</g></g>';

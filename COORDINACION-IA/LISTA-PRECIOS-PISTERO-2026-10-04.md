@@ -24,14 +24,16 @@ así no se escapa ninguna pieza. Rama `feature/pistero-v2-armario`; nada está e
 | Reparto con estilo | caja de reparto + patito + banda blanca + traje equipo | $1.160 | **$590** |
 | Compañero fiel | quiltro + canasto + banderín | $870 | **$490** |
 
+Etapa 2 suma: 4 disfraces (huaso y Viejo Pascuero $290; superhéroe y dinosaurio $590), 6 estelas ($290 a $990) y 8 banderas ($290; **Chile gratis**). Las poses del sobrevuelo no se venden.
+
 ## Resumen
 | | Piezas | Precio c/u | Suma |
 |---|---|---|---|
-| Gratis | 72 | — | — |
-| Raro | 77 | $290 | $22.330 |
-| Épico | 25 | $590 | $14.750 |
-| Legendario | 8 | $990 | $7.920 |
-| **Total** | **182** | | **$45.000** |
+| Gratis | 73 | — | — |
+| Raro | 91 | $290 | $26.390 |
+| Épico | 28 | $590 | $16.520 |
+| Legendario | 9 | $990 | $8.910 |
+| **Total** | **201** | | **$51.820** |
 
 ## Todas las piezas
 
@@ -99,15 +101,19 @@ así no se escapa ninguna pieza. Rama `feature/pistero-v2-armario`; nada está e
 | Patito con timbre | Raro | $290 |
 | Dorsal de carrera | Épico | $590 |
 
-### Trajes
+### Trajes y disfraces
 | Pieza | Rareza | Precio |
 |---|---|---|
 | Equipo | Raro | $290 |
 | Retro de lana | Raro | $290 |
 | Enduro | Raro | $290 |
 | Selección Chile | Raro | $290 |
+| Huaso (Fiestas Patrias) | Raro | $290 |
+| Viejo Pascuero | Raro | $290 |
 | Rey de la montaña | Épico | $590 |
 | Líder amarillo | Épico | $590 |
+| Superhéroe | Épico | $590 |
+| Dinosaurio | Épico | $590 |
 | Campeón mundial | Legendario | $990 |
 
 ### Mascotas
@@ -116,6 +122,29 @@ así no se escapa ninguna pieza. Rama `feature/pistero-v2-armario`; nada está e
 | Quiltro | Raro | $290 |
 | Perro negro | Raro | $290 |
 | Gato | Raro | $290 |
+
+### Estelas
+| Pieza | Rareza | Precio |
+|---|---|---|
+| Chispas | Raro | $290 |
+| Hojas de otoño | Raro | $290 |
+| Nieve | Raro | $290 |
+| Burbujas | Raro | $290 |
+| Arcoíris | Épico | $590 |
+| Fuego | Legendario | $990 |
+
+### Banderas del banderín
+| Pieza | Rareza | Precio |
+|---|---|---|
+| Chile | Gratis | Gratis |
+| Argentina | Raro | $290 |
+| Perú | Raro | $290 |
+| Bolivia | Raro | $290 |
+| Colombia | Raro | $290 |
+| México | Raro | $290 |
+| Uruguay | Raro | $290 |
+| España | Raro | $290 |
+| Diversidad | Raro | $290 |
 
 ### Color del casco
 | Pieza | Rareza | Precio |

@@ -15,7 +15,7 @@ p{color:#9fb3c8;font-size:.8rem;margin:0 0 10px;max-width:780px}
 .t-e{border-color:#a855f7}.t-e .rz{color:#c084fc}.t-e .pr{background:#581c87;color:#f3e8ff}
 .t-l{border-color:#f59e0b;box-shadow:0 0 14px rgba(245,158,11,.35)}.t-l .rz{color:#fbbf24}.t-l .pr{background:#92400e;color:#fef3c7}
 .combo{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
-.combo .c i{display:block;font-style:normal;font-size:.66rem;color:#8ea3bd;margin-top:2px}
+.c i{display:block;font-style:normal;font-size:.66rem;color:#8ea3bd;margin-top:2px}
 .leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:.72rem;color:#cbd5e1;margin:8px 0 4px}
 .leyenda span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--k)}
 .cascos{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
@@ -38,7 +38,7 @@ function sec(t,d,html,cls){ out.insertAdjacentHTML('beforeend','<h2>'+t+'</h2>'+
 var BASE={casco:'azul',diseno:'franja',disenoCol:'#fc4c02',lentes:'escudo',lentesCol:'#111827',biciTipo:'ruta',biciCol:'#2563eb'};
 function V(extra,cfg){ return _pistBiciSVG(Object.assign({},BASE,extra),Object.assign({pedal:false,expr:'contento'},cfg||{})); }
 function tier(k,id){ return (PIST_TIER_BICI[k]&&PIST_TIER_BICI[k][id])||'c'; }
-function cat(k,lista,extra,filtro){ return lista.filter(function(it){ return filtro?filtro(it):true; }).map(function(it){ var o={}; o[k]=it.id; return card(V(Object.assign({},extra||{},o)),it.n,tier(k,it.id)); }).join(''); }
+function cat(k,lista,extra,filtro,cfg){ return lista.filter(function(it){ return filtro?filtro(it):true; }).map(function(it){ var o={}; o[k]=it.id; return card(V(Object.assign({},extra||{},o),cfg),it.n,tier(k,it.id)); }).join(''); }
 
 sec('Nuevo · Etapa 1','Inclusión (handbike y triciclo adaptado, siempre gratis), gravel, mascotas en el canasto y bicolor. Todo animado.',
   card(_pistBiciSVG({casco:'naranja',diseno:'estrellas',disenoCol:'#fff',biciTipo:'handbike',biciCol:'#0d9488',traje:'equipo'},{expr:'emocionado'}),'Handbike','c','se pedalea con los brazos')
@@ -49,6 +49,14 @@ sec('Nuevo · Etapa 1','Inclusión (handbike y triciclo adaptado, siempre gratis
   +card(_pistBiciSVG({casco:'amarillo',biciTipo:'playera',biciCol:'#38bdf8',mascota:'gato'},{expr:'feliz'}),'Gato','r','con la cola que se mece')
   +card(_pistBiciSVG({casco:'azul',biciTipo:'ruta',biciCol:'#1d4ed8',biciCol2:'#f8fafc'},{expr:'contento'}),'Bicolor','c','segundo color libre')
   +card(_pistBiciSVG({casco:'rojo',biciTipo:'mtb',biciCol:'#dc2626',biciCol2:'#111827'},{expr:'emocionado'}),'Bicolor MTB','c','rojo y negro'));
+sec('Nuevo · Etapa 2: poses del sobrevuelo','No se venden: las pone el sobrevuelo según el momento del viaje (subida, plano, llegada).',
+  card(_pistBiciSVG({casco:'azul',biciTipo:'ruta',biciCol:'#2563eb'},{expr:'contento'}),'Pedaleando','c','normal')
+  +card(_pistBiciSVG({casco:'azul',biciTipo:'ruta',biciCol:'#2563eb'},{expr:'cansado',pose:'pie',cadencia:1.2}),'De pie en la subida','c','se mece más')
+  +card(_pistBiciSVG({casco:'azul',biciTipo:'ruta',biciCol:'#2563eb'},{expr:'emocionado',pose:'sinmanos'}),'¡Sin manos!','c','celebración')
+  +card(_pistBiciSVG({casco:'azul',biciTipo:'mtb',biciCol:'#f97316'},{expr:'emocionado',pose:'caballito'}),'Caballito','c','al llegar'));
+sec('Estelas','Lo que deja al pedalear.',cat('estela',PIST_ESTELA,{biciTipo:'ruta',biciCol:'#111827'},null,{pedal:true}));
+sec('Banderas del banderín','Chile gratis; el resto $290.',cat('bandera',PIST_BANDERA,{biciTipo:'cicloviaje',biciCol:'#1e3a5f',biciCarga:'nada',biciExtra:'banderin'}));
+sec('Disfraces','',cat('traje',PIST_TRAJE,{biciTipo:'urbana',biciCol:'#64748b',biciCarga:'nada',biciExtra:'nada'},function(it){ return ['huaso','pascuero','heroe','dino'].indexOf(it.id)>=0; }));
 sec('Diseños del cuadro','El degradé combina el color de la bici con el de tu polera.',cat('biciSkin',PIST_BICI_SKIN));
 sec('Acabado del cuadro','',cat('biciAcab',PIST_BICI_ACAB,{biciCol:'#dc2626'}));
 sec('Neumáticos','',cat('biciNeum',PIST_NEUM,{biciTipo:'urbana',biciCol:'#10b981',biciCarga:'nada'}));
