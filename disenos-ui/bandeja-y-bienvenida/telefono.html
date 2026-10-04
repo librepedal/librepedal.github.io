@@ -163,8 +163,14 @@ html,body{margin:0;padding:0;background:var(--d);height:100%;overflow:hidden}
 textarea.ta{width:100%;box-sizing:border-box;color:var(--txt);font:inherit;resize:none}
 .top span{display:flex}
 .mapa{height:42%}
+
+.wel .w0,.wel .w1,.wel .w2,.wel .w3,.wel .w4,.wel .w5,.wel .w6,.wel .w7,.wel .w8,.wel .w9{opacity:0}
+.wel .vis{animation:aparece .6s ease forwards}.wel .w8.vis{animation-name:sello}
+.wel.anda .track path{stroke-dashoffset:400;animation:rueda 4s ease-out forwards}
+#empezar{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:rgba(5,8,16,.92);color:var(--txt);font:600 1.1rem var(--f-ui);border:0;width:100%}
+#empezar small{display:block;color:var(--sub);font-weight:400;font-size:.85rem;margin-top:8px}
 </style></head><body>
-<div class="phone wel run on" id="wel" aria-label="Bienvenida a pantalla completa">
+<div class="phone wel on" id="wel" aria-label="Bienvenida a pantalla completa">
       <div class="sb"><span>9:41</span><span>4G</span></div>
       <svg class="track" viewBox="0 0 310 120" preserveAspectRatio="none" aria-hidden="true"><path d="M-10 100 C 60 60, 110 118, 170 80 S 270 40, 330 70"/></svg>
       <div class="wel-in">
@@ -232,7 +238,15 @@ textarea.ta{width:100%;box-sizing:border-box;color:var(--txt);font:inherit;resiz
         </div>
       </div>
     </div>
+<button id="empezar" type="button" onclick="this.remove();bienvenida()"><span>Tocar para empezar<small>Con sonido: sube el volumen</small></span></button>
 <script>
-var P=document.querySelectorAll(".phone");
-function ir(n){P.forEach(function(x,i){x.classList.toggle("on",i===n)});if(n===0){var w=P[0];w.classList.remove("run");void w.offsetWidth;w.classList.add("run")}}
+var P=document.querySelectorAll(".phone"),W=P[0],G=(location.search.match(/g=(l|c)/)||[,"l"])[1],corre=0;
+function ir(n){P.forEach(function(x,i){x.classList.toggle("on",i===n)});if(n===0)bienvenida();if(n===2)decir("h1",corre);}
+function decir(id,t){return new Promise(function(ok){var a=new Audio("/voces-el/bienvenida/"+G+"-"+id+".mp3"),fin=function(){ok()};
+  a.onended=fin;a.onerror=function(){setTimeout(fin,2200)};a.play().catch(function(){setTimeout(fin,2200)});});}
+async function bienvenida(){var mi=++corre;W.querySelectorAll(".vis").forEach(function(e){e.classList.remove("vis")});
+  W.classList.remove("anda");void W.offsetWidth;W.classList.add("anda");
+  var ver=function(c){var e=W.querySelector("."+c);if(e)e.classList.add("vis")};
+  ver("w0");for(var i=1;i<=7;i++){if(mi!==corre)return;ver("w"+i);await decir("b"+i);}
+  if(mi!==corre)return;ver("w8");await new Promise(function(r){setTimeout(r,900)});ver("w9");}
 </script></body></html>
