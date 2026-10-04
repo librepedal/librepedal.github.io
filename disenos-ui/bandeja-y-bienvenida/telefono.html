@@ -1,0 +1,238 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Prueba bienvenida</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap"><style>
+/* Cuatro teléfonos (se apilan en móvil): bienvenida, centro de ayuda, respuesta con atajo, mis mensajes.
+   Paleta de estilos.css de la app (--p, --d, --g, --gl). Un solo mundo visual: el oscuro de la app. */
+:root{
+  --p:#fc4c02; --d:#0a0f1d; --g:#ffd700; --gl:rgba(255,255,255,0.08);
+  --line:rgba(255,255,255,0.12); --txt:#f2f4f8; --sub:#9aa6bb; --ok:#2fd2a8; --page:#121827; --field:#0f1525;
+  --f-ui:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  --f-disp:'Barlow Condensed','Segoe UI',system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--page);color:var(--txt);font-family:var(--f-ui);padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1320px;margin:0 auto;display:grid;gap:28px}
+header h1{font-family:var(--f-disp);font-weight:700;font-size:2rem;margin:0;text-wrap:balance}
+header p{color:var(--sub);max-width:70ch;line-height:1.55;margin:.4rem 0 0}
+.phones{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:22px;align-items:start}
+.cap{display:grid;gap:10px;min-width:0}
+.cap h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--g);margin:0}
+.cap p{margin:0;color:var(--sub);font-size:.85rem;line-height:1.5}
+.phone{position:relative;width:100%;max-width:310px;aspect-ratio:9/19;background:var(--d);border:1px solid var(--line);border-radius:30px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.sb{display:flex;justify-content:space-between;padding:10px 18px 0;font-size:.7rem;color:var(--sub)}
+.scr{position:absolute;inset:28px 0 0 0;display:flex;flex-direction:column}
+.home{position:absolute;inset:0;background:radial-gradient(120% 60% at 50% 100%,#1f3a2d 0%,transparent 60%),linear-gradient(#1b3b5a,#0d1a2b 55%,#13241b)}
+.home::after{content:"";position:absolute;inset:0;background:rgba(5,8,16,.72)}
+.sheet{position:absolute;left:12px;right:12px;bottom:18px;background:#141b2c;border:1.5px solid var(--p);border-radius:20px;padding:16px 14px 14px;display:grid;gap:11px}
+.pist{display:grid;justify-items:center;gap:10px}
+.face{width:92px;height:78px;display:block}
+.face svg{width:100%;height:100%}
+.bubble{background:var(--gl);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:.83rem;line-height:1.48}
+.bubble b{color:var(--g)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;min-height:42px;font-weight:700;font-size:.88rem;border:0;font-family:inherit;cursor:pointer;padding:0 14px}
+.btn svg{width:17px;height:17px;flex:none}
+.btn.pri{background:var(--p);color:#16090a}
+.btn.sec{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn.go{background:rgba(252,76,2,.14);color:#ffd2bd;border:1px solid var(--p);min-height:38px;font-size:.82rem}
+.fine{font-size:.7rem;color:var(--sub);text-align:center}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.top svg{width:20px;height:20px;color:var(--sub);flex:none}
+.top h3{margin:0;font-size:1rem}
+.body{padding:12px 14px;display:grid;gap:10px;align-content:start;overflow:hidden}
+.search{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:.84rem;color:var(--sub)}
+.search svg{width:16px;height:16px;flex:none}
+.lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sub)}
+.faq{display:grid;gap:7px}
+.q{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:12px;padding:9px 11px;background:rgba(255,255,255,.03);font-size:.82rem}
+.q small{display:block;color:var(--sub);font-size:.7rem;margin-top:2px}
+.q .to{flex:none;font-size:.68rem;font-weight:700;color:#ffd2bd;border:1px solid rgba(252,76,2,.6);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.alt{border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px}
+.alt span{font-size:.76rem;color:var(--sub);text-align:center}
+.ans h4{margin:0;font-size:1rem;line-height:1.3}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:8px;counter-reset:p}
+.steps li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:.82rem;line-height:1.45}
+.steps li::before{counter-increment:p;content:counter(p);display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:rgba(252,76,2,.18);color:var(--p);font-weight:700;font-size:.72rem}
+.ok{display:grid;gap:7px;border:1px solid var(--line);border-radius:12px;padding:10px}
+.ok b{font-size:.82rem}
+.ok .row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ok .btn{min-height:36px;font-size:.78rem}
+.tk{border:1px solid var(--line);border-radius:14px;padding:10px 11px;display:grid;gap:6px;background:rgba(255,255,255,.03)}
+.tk .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tk .t{font-weight:700;font-size:.84rem}
+.pill{font-size:.64rem;font-weight:700;border-radius:999px;padding:3px 8px;white-space:nowrap}
+.pill.okp{background:rgba(47,210,168,.15);color:var(--ok)}
+.pill.wait{background:rgba(255,215,0,.13);color:var(--g)}
+.msg{font-size:.79rem;line-height:1.45;border-radius:12px;padding:8px 10px}
+.msg.me{background:rgba(252,76,2,.14);justify-self:end;max-width:88%}
+.msg.eq{background:var(--gl);max-width:94%;display:grid;gap:7px}
+.msg small{display:block;color:var(--sub);font-size:.65rem;margin-top:2px}
+.meta{border:1px solid var(--line);border-radius:12px;padding:10px 11px;display:grid;gap:6px}
+.meta .mrow{display:flex;justify-content:space-between;font-size:.8rem}
+.meta b{font-variant-numeric:tabular-nums;color:var(--g)}
+.meta small{font-size:.68rem;color:var(--sub)}
+.bar{height:8px;border-radius:99px;background:var(--gl);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--p),var(--g))}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:.74rem}
+.ta{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:9px 11px;min-height:64px;font-size:.82rem;line-height:1.45}
+.note{display:flex;gap:8px;font-size:.74rem;color:var(--sub);line-height:1.45}
+.note svg{flex:none;width:16px;height:16px;color:var(--g);margin-top:1px}
+.win{display:grid;gap:3px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.35);border-radius:12px;padding:10px 11px;font-size:.8rem}
+.win b{color:var(--g);font-size:.92rem}
+.win span{color:var(--sub)}
+.v{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:.82rem;background:rgba(255,255,255,.03)}
+.v small{display:block;color:var(--sub);font-size:.68rem;margin-top:2px;font-variant-numeric:tabular-nums}
+.rd{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--line)}
+.rd.on{border-color:var(--p);box-shadow:inset 0 0 0 3px var(--d);background:var(--p)}
+.flow{border-top:1px solid var(--line);padding-top:22px;display:grid;gap:14px}
+.flow h2{font-family:var(--f-disp);font-size:1.4rem;margin:0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.st{background:var(--gl);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:6px;min-width:0;align-content:start}
+.st b{font-size:.92rem}
+.st span{color:var(--sub);font-size:.83rem;line-height:1.5}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.84rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--sub);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em}
+tr:last-child td{border-bottom:0}
+td code{color:#ffd2bd;font-size:.8rem}
+.wel{background:radial-gradient(90% 45% at 50% 0%,rgba(252,76,2,.22),transparent 70%),linear-gradient(#0d1426,#0a0f1d 60%,#120d0a)}
+.wel .track{position:absolute;left:0;right:0;bottom:0;width:100%;height:120px;opacity:.35}
+.wel .track path{fill:none;stroke:var(--p);stroke-width:7;stroke-dasharray:2 9;stroke-linecap:round}
+.wel-in{position:absolute;inset:30px 16px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.face.big{width:96px;height:80px}
+.wel-txt{display:grid;gap:7px;font-size:.84rem;line-height:1.42}
+.wel-txt b{font-family:var(--f-disp);font-size:1.35rem;letter-spacing:.01em;color:var(--txt)}
+.wel-txt .hl{font-family:var(--f-disp);font-weight:700;font-size:1.18rem;line-height:1.2;color:var(--g)}
+.fund{display:flex;align-items:center;gap:10px;border:1px solid rgba(255,215,0,.4);background:rgba(255,215,0,.06);border-radius:14px;padding:7px 14px}
+.fund svg{width:34px;height:38px}
+.fund span{display:grid;text-align:left;line-height:1.1}
+.fund small{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--sub)}
+.fund b{font-family:var(--f-disp);font-size:1.3rem;color:var(--g);font-variant-numeric:tabular-nums}
+.fund em{font-style:normal;font-size:.7rem;font-weight:700;color:var(--g);letter-spacing:.06em;text-transform:uppercase}
+.wel-btns{display:grid;gap:8px;width:100%;margin-top:auto;position:relative;z-index:1}
+.wel-btns .btn.sec{background:#141b2c}
+.replay{max-width:310px;min-height:36px;font-size:.8rem}
+.wel.run .w0,.wel.run .w1,.wel.run .w2,.wel.run .w3,.wel.run .w4,.wel.run .w5,.wel.run .w6,.wel.run .w7,.wel.run .w8,.wel.run .w9{opacity:0;animation:aparece .7s ease forwards}
+.wel.run .w1{animation-delay:.8s}.wel.run .w2{animation-delay:2.4s}.wel.run .w3{animation-delay:5s}.wel.run .w4{animation-delay:8s}.wel.run .w5{animation-delay:11.6s}.wel.run .w6{animation-delay:14.4s}.wel.run .w7{animation-delay:17.4s}.wel.run .w8{animation-delay:19.2s;animation-name:sello}.wel.run .w9{animation-delay:20.6s}
+.wel.run .track path{stroke-dashoffset:400;animation:rueda 4s ease-out forwards}
+@keyframes aparece{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sello{0%{opacity:0;transform:scale(1.4)}60%{opacity:1;transform:scale(.96)}100%{opacity:1;transform:none}}
+@keyframes rueda{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.wel.run *{animation:none!important;opacity:1!important}}
+.hx{font-size:.8rem;line-height:1.45;color:var(--sub)}
+.hx b{display:block;color:var(--txt);font-size:.9rem;margin-bottom:3px}
+.loc{display:flex;align-items:center;gap:7px;font-size:.8rem;border:1px solid var(--line);border-radius:999px;padding:6px 11px;justify-self:start}
+.loc svg{width:15px;height:15px;color:var(--p)}
+.loc u{color:#ffd2bd;text-decoration:none;font-weight:700;font-size:.72rem;margin-left:4px}
+.mapa{height:46%;border-bottom:1px solid var(--line);flex:none}
+.mapa svg{width:100%;height:100%;display:block}
+.mapa .tierra{fill:#13202a}.mapa .mar{fill:#0b1830}.mapa .lago{fill:#0f2440}
+.mapa .cord{fill:none;stroke:rgba(255,255,255,.08);stroke-width:14;stroke-linecap:round}
+.mapa .ruta{fill:none;stroke:rgba(255,255,255,.14);stroke-width:2;stroke-dasharray:5 5}
+.mapa .com circle{fill:var(--p);opacity:.85}
+.mapa .fun circle{fill:rgba(255,215,0,.25);stroke:var(--g);stroke-width:2.2}
+.mapa .obra circle:first-child{fill:rgba(255,255,255,.06);stroke:#fff;stroke-width:2;stroke-dasharray:3 3}
+.mapa .obra circle:last-child{fill:#fff}
+.mapa .yo circle:nth-child(2){fill:var(--g)}
+.mapa .yo path{stroke:#16090a;stroke-width:2.2;stroke-linecap:round}
+.mapa .pulso{fill:none;stroke:var(--g);stroke-width:2;transform-origin:146px 138px;animation:pulso 1.8s ease-out infinite}
+.mapa text{fill:var(--g);font-size:12px;font-weight:700;font-family:var(--f-ui)}
+@keyframes pulso{from{transform:scale(1);opacity:.9}to{transform:scale(2.6);opacity:0}}
+.gold{color:var(--g)}
+.cnt{display:flex;justify-content:space-between;font-size:.8rem;color:var(--sub)}
+.cnt b{color:var(--txt);font-variant-numeric:tabular-nums}
+.leg{display:flex;flex-wrap:wrap;gap:10px;font-size:.7rem;color:var(--sub)}
+.leg span{display:flex;align-items:center;gap:5px}
+.leg i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.leg .lf{background:rgba(255,215,0,.25);border:2px solid var(--g)}
+.leg .lc{background:var(--p)}
+.leg .lo{border:2px dashed #fff}
+@media (prefers-reduced-motion:reduce){.mapa .pulso{animation:none}}
+
+html,body{margin:0;padding:0;background:var(--d);height:100%;overflow:hidden}
+.phone{position:fixed;inset:0;max-width:none;width:100vw;height:100dvh;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none;display:none}
+.phone.on{display:block}
+.sb{display:none}
+.scr{inset:env(safe-area-inset-top,0) 0 0 0}
+.wel-in{inset:calc(env(safe-area-inset-top,0px) + 40px) 22px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.wel-in{gap:clamp(6px,1.4vh,12px)}
+.wel-txt{font-size:clamp(.82rem,2vh,.95rem);gap:clamp(4px,1vh,8px);line-height:1.35}.wel-txt b{font-size:clamp(1.3rem,3.2vh,1.6rem)}.wel-txt .hl{font-size:clamp(1.1rem,2.7vh,1.35rem)}
+.face.big{width:clamp(70px,11vh,110px);height:clamp(58px,9vh,92px)}
+.fund{position:relative;z-index:1;background:#16140c}
+.wel-btns .btn{min-height:46px}
+.body{font-size:1rem}.btn{min-height:50px;font-size:1rem}
+textarea.ta{width:100%;box-sizing:border-box;color:var(--txt);font:inherit;resize:none}
+.top span{display:flex}
+.mapa{height:42%}
+</style></head><body>
+<div class="phone wel run on" id="wel" aria-label="Bienvenida a pantalla completa">
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <svg class="track" viewBox="0 0 310 120" preserveAspectRatio="none" aria-hidden="true"><path d="M-10 100 C 60 60, 110 118, 170 80 S 270 40, 330 70"/></svg>
+      <div class="wel-in">
+        <span class="face big w0"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><g class="lp-eye lp-parpadeo"><ellipse cx="40" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="37.8" cy="60" r="2.5" fill="#fff"/><circle cx="42" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g><g class="lp-eye lp-parpadeo"><ellipse cx="60" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="57.8" cy="60" r="2.5" fill="#fff"/><circle cx="62" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g><ellipse cx="30" cy="71" rx="5.5" ry="3.2" fill="#ff9db0" opacity=".55"/><ellipse cx="70" cy="71" rx="5.5" ry="3.2" fill="#ff9db0" opacity=".55"/><path d="M43 73 Q50 79 57 73" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></span>
+        <div class="wel-txt">
+          <span class="ln w1"><b>Llegaste justo a tiempo.</b></span>
+          <span class="ln w2">Desde hoy eres parte de algo que nunca se había hecho.</span>
+          <span class="ln w3">Aquí no venimos a contar kilómetros: venimos a cambiar las cosas.</span>
+          <span class="ln w4">Tu voz, tus rutas, tus ideas van a marcar el camino de miles que vienen detrás.</span>
+          <span class="ln w5">Esto recién empieza, y tú estás aquí desde el principio.</span>
+          <span class="ln w6 hl">Vamos a dejar una huella que nadie podrá borrar.</span>
+          <span class="ln w7">Bienvenido a Libre Pedal.</span>
+        </div>
+        <div class="fund w8">
+          <svg viewBox="0 0 40 44" aria-hidden="true"><path d="M20 2 L37 8 V22 C37 32 29 39 20 42 C11 39 3 32 3 22 V8 Z" fill="rgba(255,215,0,.12)" stroke="#ffd700" stroke-width="2"/><g stroke="#ffd700" stroke-width="2.2" stroke-linecap="round"><path d="M20 12v3M20 29v3M10 22h3M27 22h3M13 15l2 2M25 27l2 2M13 29l2-2M25 17l2-2"/></g><circle cx="20" cy="22" r="5.5" fill="none" stroke="#ffd700" stroke-width="2"/><circle cx="20" cy="22" r="1.6" fill="#ffd700"/></svg>
+          <span><small>Ciclista</small><b>N° 214</b><em>Fundador</em></span>
+        </div>
+        <div class="wel-btns w9">
+          <button class="btn pri" type="button" onclick="ir(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4c-2 0-3 2-3 5s1 5 3 5 3-2 3-5-1-5-3-5zM6 17h4l-.5 3h-3z"/><path d="M16 8c-2 0-3 2-3 5s1 5 3 5 3-2 3-5-1-5-3-5z" opacity=".55"/></svg>Dejar mi huella</button>
+          <button class="btn sec" type="button" onclick="ir(0)">Vamos a rodar</button>
+          <div class="fine">¿Dudas? Ayuda y contacto</div>
+        </div>
+      </div>
+    </div>
+<div class="phone" aria-label="Dejar mi huella">
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="scr">
+        <div class="top"><span onclick="ir(0)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></span><h3>Dejar mi huella</h3></div>
+        <div class="body">
+          <div class="hx"><b>Nuestra huella es lo que vamos a construir juntos.</b> Con el fondo de la comunidad haremos realidad lo que más se pida. Empieza con tu idea.</div>
+          <div class="lbl">¿Qué cambiarías en tus rutas?</div>
+          <textarea class="ta" rows="3">Un bebedero y un punto de reparación en la ruta a Lago Ranco.</textarea>
+          <div class="loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg><span>Futrono, Los Ríos</span><u>Cambiar</u></div>
+          <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>Tu idea es privada. En el mapa solo se ve cuántas huellas hay en cada comuna, nunca tu texto ni tu ubicación exacta.</span></div>
+          <button class="btn pri" type="button" onclick="ir(2)">Marcar mi huella</button>
+          <div class="fine">Puedes dejar 2 ideas</div>
+        </div>
+      </div>
+    </div>
+<div class="phone" aria-label="Mapa de huellas">
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="scr">
+        <div class="top"><span onclick="ir(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></span><h3>Mapa de huellas</h3></div>
+        <div class="mapa">
+          <svg viewBox="0 0 300 250" aria-hidden="true">
+            <path class="tierra" d="M0 0 H300 V250 H0 Z"/>
+            <path class="mar" d="M0 0 H58 C66 30 50 55 62 85 C74 115 52 140 64 170 C74 200 58 225 66 250 H0 Z"/>
+            <path class="cord" d="M240 0 C230 60 255 120 238 180 C228 220 246 240 240 250"/>
+            <ellipse class="lago" cx="150" cy="118" rx="34" ry="13" transform="rotate(-12 150 118)"/>
+            <ellipse class="lago" cx="176" cy="178" rx="26" ry="11" transform="rotate(8 176 178)"/>
+            <path class="ruta" d="M70 40 C120 70 110 100 150 132 S 200 170 230 215"/>
+            <g class="com"><circle cx="96" cy="58" r="4"/><circle cx="208" cy="196" r="4"/><circle cx="120" cy="205" r="4"/><circle cx="84" cy="150" r="4"/><circle cx="188" cy="70" r="4"/></g>
+            <g class="fun"><circle cx="112" cy="84" r="6"/><circle cx="214" cy="150" r="6"/><circle cx="90" cy="118" r="6"/></g>
+            <g class="obra"><circle cx="196" cy="100" r="11"/><circle cx="196" cy="100" r="4.5"/></g>
+            <g class="yo"><circle class="pulso" cx="146" cy="138" r="9"/><circle cx="146" cy="138" r="8"/><path d="M146 133v10M141 138h10" /></g>
+            <text x="160" y="142">Tú</text>
+          </svg>
+        </div>
+        <div class="body">
+          <div class="msg eq"><span><b class="gold">Tu huella de Fundador quedó marcada para siempre.</b> Eres el Fundador N° 38 de Chile.</span></div>
+          <div class="cnt"><span><b>3</b> huellas en Futrono</span><span><b>38</b> en Chile</span></div>
+          <div class="leg"><span><i class="lf"></i>Fundadores</span><span><i class="lc"></i>Comunidad</span><span><i class="lo"></i>Obras del fondo</span></div>
+          <button class="btn sec" type="button">Compartir mi huella</button>
+          <div class="fine">Cuando la comunidad crezca, el 10% de Premium hará realidad lo que más se pida, y quedará marcado aquí como obra.</div>
+        </div>
+      </div>
+    </div>
+<script>
+var P=document.querySelectorAll(".phone");
+function ir(n){P.forEach(function(x,i){x.classList.toggle("on",i===n)});if(n===0){var w=P[0];w.classList.remove("run");void w.offsetWidth;w.classList.add("run")}}
+</script></body></html>
