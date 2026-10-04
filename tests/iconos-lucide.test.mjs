@@ -14,7 +14,9 @@ const SRC = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'ic
 // con un document mínimo (sin body, así la IIFE no dispara el MutationObserver real)
 // y se exponen las funciones internas reemplazando el final del archivo.
 const SRC_EXPUESTO = SRC.replace(
-  /if\(document\.body\) arrancar\(\); else document\.addEventListener\('DOMContentLoaded', arrancar\);\n\}\)\(\);/,
+  // \r?\n: en Windows git deja el archivo con CRLF (core.autocrlf) y sin esto el reemplazo
+  // no calzaba -> window.__test quedaba undefined y el test fallaba solo en Windows.
+  /if\(document\.body\) arrancar\(\); else document\.addEventListener\('DOMContentLoaded', arrancar\);\r?\n\}\)\(\);/,
   "if(document.body) arrancar(); else document.addEventListener('DOMContentLoaded', arrancar);\nwindow.__test={nombreIconoDe:nombreIconoDe, migrar:migrar, ICONOS_LUCIDE:ICONOS_LUCIDE, inyectarEstiloSupresion:inyectarEstiloSupresion};\n})();"
 );
 

@@ -28,17 +28,25 @@ function _sbvAnalizar(coords){
   ev.push({d:0,pri:9,expr:'contento',txt:'¡Partimos!'});
   // velocidad (km/h) con ventana de ±2 puntos; sin hora no hay velocidad
   var vel=[], tieneT=coords.every(function(c){ return isFinite(c[2]); });
-  if(tieneT) for(i=0;i<n;i++){ var a=Math.max(0,i-2), b=Math.min(n-1,i+2), dt=(coords[b][2]-coords[a][2])/1000; vel.push(dt>0?Math.min(90,(cum[b]-cum[a])/dt*3.6):0); }
+  // ventana de al menos 20 s centrada en el punto: un salto del GPS entre dos puntos
+  // seguidos (muy común en el teléfono) no se convierte en un falso "¡Volando! 80 km/h"
+  if(tieneT) for(i=0;i<n;i++){ var a=i, b=i; while(coords[b][2]-coords[a][2]<20000 && (a>0||b<n-1)){ if(a>0) a--; if(b<n-1 && coords[b][2]-coords[a][2]<20000) b++; } var dt=(coords[b][2]-coords[a][2])/1000; vel.push(dt>0?Math.min(90,Math.min(cum[b]-cum[a],_sbvHaversine(coords[a],coords[b])*1.15)/dt*3.6):0); }
   if(vel.length){
     var iv=0; for(i=1;i<n;i++) if(vel[i]>vel[iv]) iv=i;
-    if(vel[iv]>=15) ev.push({d:cum[iv],pri:7,expr:'sorprendido',txt:'¡Volando! '+Math.round(vel[iv])+' km/h',rapido:true});
+    // "¡Volando!" solo cuando de verdad es rápido; si no, la máxima solo si se nota sobre el
+    // ritmo normal del viaje (a ritmo parejo no hay globo de velocidad)
+    var vm_=0,nv_=0; vel.forEach(function(v){ if(v>2){ vm_+=v; nv_++; } }); vm_=nv_?vm_/nv_:0;
+    if(vel[iv]>=28) ev.push({d:cum[iv],pri:7,expr:'sorprendido',txt:'¡Volando! '+Math.round(vel[iv])+' km/h',rapido:true});
+    else if(vel[iv]>=15 && vel[iv]>=vm_*1.35) ev.push({d:cum[iv],pri:6,expr:'contento',txt:'Máxima: '+Math.round(vel[iv])+' km/h'});
     // pausas: más de 90 s casi sin moverse
     for(i=1;i<n;i++){ var pdt=(coords[i][2]-coords[i-1][2])/1000; if(pdt>=90 && cum[i]-cum[i-1]<30) ev.push({d:cum[i],pri:4,expr:'pensando',txt:'Pausa para respirar ('+Math.round(pdt/60)+' min)'}); }
   }
   // altura suavizada y pendiente cada ~100 m
   var alt=coords.map(function(c){ return isFinite(c[3])?c[3]:null; }), conAlt=alt.filter(function(x){return x!==null;}).length;
   if(conAlt>=Math.max(5,n*0.6)){
-    var as=alt.map(function(_,k){ var s=0,c=0; for(var q=Math.max(0,k-2);q<=Math.min(n-1,k+2);q++){ if(alt[q]!==null){ s+=alt[q]; c++; } } return c?s/c:null; });
+    // altura promediada en ±75 m de recorrido: la del GPS del teléfono salta ±5-10 m en
+    // plano; con una ventana corta eso parecía subida/bajada (Pistero "¡Ufff!" en lo plano)
+    var as=alt.map(function(_,k){ var s=0,c=0,q; for(q=k;q>=0 && cum[k]-cum[q]<=75;q--){ if(alt[q]!==null){ s+=alt[q]; c++; } } for(q=k+1;q<n && cum[q]-cum[k]<=75;q++){ if(alt[q]!==null){ s+=alt[q]; c++; } } return c?s/c:null; });
     var tramo=null;
     function cerrar(fin){ if(!tramo) return; var largo=cum[fin]-cum[tramo.i]; if(largo>=120){ var dif=Math.round(Math.abs(as[fin]-as[tramo.i])); if(dif>=6) ev.push(tramo.up?{d:cum[tramo.i]+largo*.35,pri:6,expr:'cansado',pose:'pie',txt:'¡Uf, qué subida! +'+dif+' m'}:{d:cum[tramo.i]+largo*.35,pri:5,expr:'emocionado',txt:'¡Bajadaaa! −'+dif+' m'}); } tramo=null; }
     for(i=0;i<n;i++){
@@ -62,8 +70,17 @@ function _sbvAnalizar(coords){
   ok.sort(function(a,b){ return a.d-b.d; });
   // pendiente por punto (±50 m) con la altura suavizada; null si la ruta no trae altura
   var pend=null;
-  if(typeof as!=='undefined' && as){ pend=[]; for(i=0;i<n;i++){ var i0=i, i1=i; while(i0>0 && cum[i]-cum[i0]<50) i0--; while(i1<n-1 && cum[i1]-cum[i]<50) i1++; pend.push((as[i0]!==null&&as[i1]!==null&&cum[i1]>cum[i0])?(as[i1]-as[i0])/(cum[i1]-cum[i0]):null); } }
+  if(typeof as!=='undefined' && as){ pend=[]; for(i=0;i<n;i++){ var i0=i, i1=i; while(i0>0 && cum[i]-cum[i0]<75) i0--; while(i1<n-1 && cum[i1]-cum[i]<75) i1++; pend.push((as[i0]!==null&&as[i1]!==null&&cum[i1]>cum[i0])?(as[i1]-as[i0])/(cum[i1]-cum[i0]):null); } }
   return {cum:cum,total:total,eventos:ok,vel:vel.length?vel:null,pend:pend};
+}
+// Saca los "saltos" del GPS: puntos que implican una velocidad imposible para el vehículo
+// desde el último punto bueno (bici > 80 km/h; auto/moto > 160 km/h). Sin hora no filtra.
+function _sbvLimpiar(coords,modo){
+  var lim=(modo==='moto')?45:22, out=[];
+  for(var i=0;i<coords.length;i++){ var c=coords[i], u=out[out.length-1];
+    if(u && isFinite(c[2]) && isFinite(u[2]) && c[2]>u[2] && _sbvHaversine(u,c)/((c[2]-u[2])/1000)>lim) continue;
+    out.push(c); }
+  return out.length>=2?out:coords;
 }
 // rumbo (0 = norte, sentido horario) de a hacia b, en grados
 function _sbvRumbo(a,b){ var d=Math.PI/180, y=Math.sin((b[1]-a[1])*d)*Math.cos(b[0]*d), x=Math.cos(a[0]*d)*Math.sin(b[0]*d)-Math.sin(a[0]*d)*Math.cos(b[0]*d)*Math.cos((b[1]-a[1])*d); return (Math.atan2(y,x)/d+360)%360; }
@@ -78,6 +95,7 @@ function reproducirSobrevuelo(coords, modo, onEnd){
   try{
     if(!mp){ if(typeof h==='function') h('El mapa todavía no está listo, prueba de nuevo en un momento.'); if(onEnd)onEnd(); return; }
     coords=(coords||[]).filter(function(c){ return c && isFinite(c[0]) && isFinite(c[1]); });
+    coords=_sbvLimpiar(coords,modo);
     if(coords.length<2){ if(typeof h==='function') h('No hay suficiente recorrido para el sobrevuelo.'); if(onEnd)onEnd(); return; }
     detenerSobrevuelo();
     var accent=(getComputedStyle(document.documentElement).getPropertyValue('--p')||'').trim()||'#fc4c02';
@@ -149,7 +167,11 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     else { try{ mp.fitBounds(_sbvLine.getBounds().pad(0.22)); }catch(e){ console.warn('[sobrevuelo] encuadre', e); } }
     var vMedia=0; if(A.vel){ var sv=0,nv=0; A.vel.forEach(function(v){ if(v>2){ sv+=v; nv++; } }); vMedia=nv?sv/nv:0; }
     var ritmo=0.2, Zc=null;
-    var dur=primera?Math.min(60000,Math.max(15000,total/1000*5000)):Math.min(22000,Math.max(8000,coords.length*80)), PAUSA=1500, prog=0, ultimo=null, espera=0, seg=1, mirando=1, sigEv=0, globoHasta=0;
+    var dur0=primera?Math.min(60000,Math.max(15000,total/1000*5000)):Math.min(22000,Math.max(8000,coords.length*80));
+    // el ritmo cambia por tramo (lento subiendo, rápido bajando): se compensa para que el
+    // recorrido completo dure lo previsto (~5 s/km), no más
+    var lento=1; if(primera && A.vel && vMedia>0){ var acum=0; for(var q=1;q<coords.length;q++){ var rq=Math.max(.55,Math.min(1.7,(A.vel[q]||vMedia)/vMedia)); acum+=(cum[q]-cum[q-1])/rq; } lento=acum/total; }
+    var dur=dur0/lento, PAUSA=1500, prog=0, ultimo=null, espera=0, seg=1, mirando=1, sigEv=0, globoHasta=0;
     function mostrarGlobo(e,ts){
       if(!globo) return;
       var cara=globo.querySelector('.sbv-cara'), txt=globo.querySelector('.sbv-txt');

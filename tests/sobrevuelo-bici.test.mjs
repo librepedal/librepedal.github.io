@@ -12,7 +12,7 @@ const ctx = { console, Math, JSON, Object, Array, String, Number, RegExp, isFini
   document: { addEventListener() {}, querySelectorAll: () => [], querySelector: () => null, getElementById: () => null, body: { classList: { contains: () => false } } },
   window: { addEventListener() {} }, setTimeout, clearTimeout };
 vm.createContext(ctx);
-for (const f of ['pistero-personalizacion-datos.js', 'pistero-armario.js', 'pistero-apariencia.js', 'pistero-bici.js', 'sobrevuelo-viaje.js']) {
+for (const f of ['pistero-personalizacion-datos.js', 'pistero-armario.js', 'pistero-apariencia.js', 'pistero-bici.js', 'pistero-bici-atras.js', 'sobrevuelo-viaje.js']) {
   vm.runInContext(readFileSync(join(raiz, f), 'utf8'), ctx, { filename: f });
 }
 const J = (s) => vm.runInContext(s, ctx);
@@ -51,6 +51,20 @@ ok(A.eventos.every((e) => caras.includes(e.expr)), 'cada globo usa un gesto que 
 ctx.__pts2 = pts.map((p) => [p[0], p[1]]);
 const B = J('_sbvAnalizar(__pts2)');
 ok(B.eventos.length >= 2 && B.eventos.every((e) => !/subida|Cima|Pausa|Volando/.test(e.txt)), 'sin datos de hora/altura no inventa momentos');
+
+// 3) GPS real del teléfono: ruta PLANA de 3 km a ~18 km/h, un punto cada 3 s, altura con
+//    ruido de ±8 m y dos saltos del GPS (un punto desplazado ~120 m). No debe inventar
+//    subidas/bajadas ni velocidades de auto, ni poner cara de esfuerzo en lo plano.
+let semilla = 7; const azar = () => { semilla = (semilla * 16807) % 2147483647; return semilla / 2147483647; };
+const plano = []; let la = -39.81, lo = -73.24, tt = 0;
+for (let i = 0; i < 200; i++) { la += 0.000135; tt += 3000; let pla = la, plo = lo; if (i === 60 || i === 140) plo += 0.0015; plano.push([pla, plo, tt, 20 + (azar() * 16 - 8)]); }
+ctx.__plano = plano;
+const P = J("_sbvAnalizar(_sbvLimpiar(__plano,'ciclismo'))"), txtP = P.eventos.map((e) => e.txt).join(' | ');
+ok(!/subida|Bajada|Cima|Volando/.test(txtP), 'plano con ruido de GPS: no inventa subidas, bajadas, cima ni velocidad (' + txtP + ')');
+const vmax = Math.max(...P.vel);
+ok(J("_sbvLimpiar(__plano,'ciclismo').length") === 198, 'los 2 saltos del GPS se descartan'); ok(vmax < 40, 'un salto del GPS no se vuelve "velocidad de auto" (máx ' + Math.round(vmax) + ' km/h)');
+const esfuerzo = P.pend.filter((g, i) => J(`_pistGestoEsfuerzo(${g === null ? 'null' : g},${P.vel[i]}).expr`) !== 'feliz' && J(`_pistGestoEsfuerzo(${g === null ? 'null' : g},${P.vel[i]}).expr`) !== 'contento').length;
+ok(esfuerzo / P.pend.length < 0.05, 'en plano casi nunca pone cara de esfuerzo/bajada (' + esfuerzo + ' de ' + P.pend.length + ' puntos)');
 
 console.log(f ? `  ${f}/${n} FALLARON` : `  ✓ bici y sobrevuelo: ${n} chequeos OK`);
 process.exit(f ? 1 : 0);
