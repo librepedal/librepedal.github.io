@@ -20,7 +20,7 @@ function _psOut(){
   var ac=_psAC();
   if(_psSalida && _psSalida.context===ac) return _psSalida;
   var comp=ac.createDynamicsCompressor(); comp.threshold.value=-22; comp.knee.value=20; comp.ratio.value=3; comp.attack.value=.005; comp.release.value=.25;
-  var g=ac.createGain(); g.gain.value=.55; comp.connect(g); g.connect(ac.destination);
+  var g=ac.createGain(); g.gain.value=.35; comp.connect(g); g.connect(ac.destination); // 2026-10-04 Inty: "bajarle un poco el volumen" (.55 → .35)
   if(typeof _reverb==='function'){ try{ var s=ac.createGain(); s.gain.value=.08; comp.connect(s); s.connect(_reverb()); }catch(e){ console.warn('[sonidos] sin reverb', e); } }
   _psSalida=comp; return comp;
 }
