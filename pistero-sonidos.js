@@ -43,7 +43,7 @@ function _psRuido(t0,dur,o){ o=o||{}; var ac=_psAC(), len=Math.max(1,Math.floor(
 // decodificarlas (Ogg en algún Safari viejo), suena la versión sintetizada como respaldo.
 // ruta relativa a ESTE archivo (sirve igual en la app y en las páginas de diseño)
 var _PS_BASE=(typeof document!=='undefined'&&document.currentScript&&document.currentScript.src)?document.currentScript.src.replace(/[^/]*$/,''):'';
-var _PS_MUESTRAS={perro:_PS_BASE+'sonidos/perro-ladrido.ogg',gato:_PS_BASE+'sonidos/gato-maullido.ogg'}, _psBuf={};
+var _PS_MUESTRAS={perro:_PS_BASE+'sonidos/perro-ladrido.ogg',gato:_PS_BASE+'sonidos/gato-maullido.ogg',timbre:_PS_BASE+'sonidos/timbre-bici.wav',auto:_PS_BASE+'sonidos/auto-partida.ogg'}, _psBuf={};
 function _psMuestra(n,t,rate,v,respaldo){
   var ac=_psAC();
   function tocar(buf){ var src=ac.createBufferSource(), g=ac.createGain(); src.buffer=buf; src.playbackRate.value=rate||1; g.gain.value=v||.8; src.connect(g); g.connect(_psOut()); src.start(Math.max(t,ac.currentTime)); }
@@ -60,7 +60,8 @@ function _psMuestra(n,t,rate,v,respaldo){
 var _psDecae=function(p){ return Math.pow(1-p,2.5); }, _psCampana=function(p){ return Math.sin(Math.PI*p); };
 // ---- sonidos ----
 var PS={
-  timbre:function(t){ [0,.16].forEach(function(dt){ [[2350,.16],[2350*2.76,.07],[2350*5.4,.035]].forEach(function(p){ _psTono(p[0],t+dt,.7,{v:p[1],ataque:.002}); }); }); },
+  timbre:function(t){ _psMuestra('timbre',t,1,.45,PS.timbreSint); },
+  timbreSint:function(t){ [0,.16].forEach(function(dt){ [[2350,.16],[2350*2.76,.07],[2350*5.4,.035]].forEach(function(p){ _psTono(p[0],t+dt,.7,{v:p[1],ataque:.002}); }); }); },
   patito:function(t){ [0,.2].forEach(function(dt){ _psTono(900,t+dt,.17,{tipo:'triangle',a:1450,en:.08,v:.16,filtro:'bandpass',ff:1600,q:2}); }); },
   bocina:function(t){ [0,.22].forEach(function(dt){ _psTono(392,t+dt,.17,{tipo:'square',v:.07,filtro:'lowpass',ff:1600}); _psTono(494,t+dt,.17,{tipo:'square',v:.06,filtro:'lowpass',ff:1600}); }); },
   clic:function(t){ _psRuido(t,.03,{ff:2600,q:4,v:.25,forma:_psDecae}); _psRuido(t+.06,.03,{ff:1800,q:4,v:.2,forma:_psDecae}); },
@@ -97,7 +98,8 @@ var PS={
     lfo.frequency.value=28; lg.gain.value=12; lfo.connect(lg); lg.connect(os.frequency);
     bq.type='lowpass'; bq.frequency.value=900; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.12,t+.08); g.gain.exponentialRampToValueAtTime(.0001,t+1.3);
     os.connect(bq); bq.connect(g); g.connect(_psOut()); os.start(t); lfo.start(t); os.stop(t+1.35); lfo.stop(t+1.35); },
-  auto:function(t){ _psRuido(t,.35,{filtro:'lowpass',ff:300,v:.18,forma:function(p){ return .5+.5*Math.sin(p*70); }}); PS.moto(t+.3); PS.bocina(t+1.1); }
+  auto:function(t){ _psMuestra('auto',t,1,.4,PS.autoSint); },
+  autoSint:function(t){ _psRuido(t,.35,{filtro:'lowpass',ff:300,v:.18,forma:function(p){ return .5+.5*Math.sin(p*70); }}); PS.moto(t+.3); PS.bocina(t+1.1); }
 };
 // qué suena cada pieza de la tienda (lo que no está acá usa el de su categoría)
 var _PS_PIEZA={
@@ -112,9 +114,11 @@ var _PS_PIEZA={
 var _PS_CATEGORIA={biciTipo:'timbre',biciCol:'spray',biciCol2:'spray',biciSkin:'spray',biciAcab:'spray',biciNeum:'inflar',biciAros:'aro',biciCarga:'clic',biciExtra:'timbre',bandera:'viento',traje:'tela',mascota:'',estela:'',motorTipo:''};
 function _psNombre(k,id){ var m=_PS_PIEZA[k]; return (m&&m[id])||(k in _PS_CATEGORIA?_PS_CATEGORIA[k]:''); }
 // tocar una pieza en la tienda → suena (la usa _ptElegir de pistero-tienda.js)
+var _psUltimo={n:'',t:0};
 function pistSonar(k,id){
   if(_psSilencio()) return;
   var n=_psNombre(k,id); if(!n||!PS[n]) return;
+  var ahora=Date.now(); if(_psUltimo.n===n && ahora-_psUltimo.t<1500) return; _psUltimo={n:n,t:ahora};
   try{ PS[n](_psAC().currentTime+.02); }catch(e){ console.warn('[sonidos] no sonó', k, id, e); }
 }
 function pistSonarNombre(n){ if(_psSilencio()||!PS[n]) return; try{ PS[n](_psAC().currentTime+.02); }catch(e){ console.warn('[sonidos] no sonó', n, e); } }
@@ -123,10 +127,11 @@ function pistSonidoViaje(veh){
   var parar=function(){};
   if(_psSilencio()) return {parar:parar,momento:function(){}};
   try{
-    if(veh==='moto'||veh==='auto'){
+    if(veh==='auto'){ pistSonarNombre('auto'); }
+    else if(veh==='moto'){
       var ac=_psAC(), os=ac.createOscillator(), bq=ac.createBiquadFilter(), g=ac.createGain(), lfo=ac.createOscillator(), lg=ac.createGain(), t=ac.currentTime;
-      os.type='sawtooth'; os.frequency.value=veh==='moto'?78:58; lfo.frequency.value=veh==='moto'?24:16; lg.gain.value=6; lfo.connect(lg); lg.connect(os.frequency);
-      bq.type='lowpass'; bq.frequency.value=veh==='moto'?700:450; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.03,t+.6); g.gain.setValueAtTime(.03,t+2.4); g.gain.exponentialRampToValueAtTime(.0001,t+3.6);
+      os.type='sawtooth'; os.frequency.value=78; lfo.frequency.value=24; lg.gain.value=6; lfo.connect(lg); lg.connect(os.frequency);
+      bq.type='lowpass'; bq.frequency.value=700; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.03,t+.6); g.gain.setValueAtTime(.03,t+2.4); g.gain.exponentialRampToValueAtTime(.0001,t+3.6);
       os.connect(bq); bq.connect(g); g.connect(_psOut()); os.start(t); lfo.start(t);
       os.stop(t+3.7); lfo.stop(t+3.7);
       parar=function(){ try{ var t2=ac.currentTime; if(t2<t+3.6){ g.gain.cancelScheduledValues(t2); g.gain.setValueAtTime(Math.max(.0001,g.gain.value),t2); g.gain.exponentialRampToValueAtTime(.0001,t2+.5); } }catch(e){ console.warn('[sonidos] motor', e); } };

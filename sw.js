@@ -43,6 +43,8 @@ const CORE = [
   './pistero-sonidos.js',
   './sonidos/perro-ladrido.ogg',
   './sonidos/gato-maullido.ogg',
+  './sonidos/timbre-bici.wav',
+  './sonidos/auto-partida.ogg',
   './pistero-frases-pais.js',
   './pistero-chat-ia.js',
   './funciones-mapa-viajes.js',
