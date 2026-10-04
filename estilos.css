@@ -1013,3 +1013,9 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 @keyframes sbvBalanceo{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
 @media (prefers-reduced-motion:reduce){.sbv-bici.esfuerzo{animation:none}}
 .sbv-cabeza{transition:transform .14s ease-in;transform-origin:50% 70%}.sbv-cabeza.girando{transform:scaleX(.06)}
+.sbv-incl{position:relative;width:100%;height:100%;transform-origin:50% 96%;transition:transform .12s linear}
+.sbv-globo.mini{font-size:.66rem;padding:3px 9px 3px 4px;border-width:2px;box-shadow:2px 2px 0 #111827}.sbv-globo.mini .sbv-cara{width:26px;height:22px}
+
+/* Esqueleto animado: el balanceo y la inclinación los mueve JS; el giro de cabeza usa scale (no choca con rotate) */
+.sbv-bici.con-rig{animation:none!important}.sbv-bici.con-rig .sbv-incl{transition:none}
+.sbv-bici.con-rig .sbv-cabeza{transition:scale .2s cubic-bezier(.4,0,.2,1);transform:none}.sbv-bici.con-rig .sbv-cabeza.girando{transform:none;scale:0 1}

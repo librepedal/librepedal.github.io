@@ -68,7 +68,7 @@ function _sbvAnalizar(coords){
 // rumbo (0 = norte, sentido horario) de a hacia b, en grados
 function _sbvRumbo(a,b){ var d=Math.PI/180, y=Math.sin((b[1]-a[1])*d)*Math.cos(b[0]*d), x=Math.cos(a[0]*d)*Math.sin(b[0]*d)-Math.sin(a[0]*d)*Math.cos(b[0]*d)*Math.cos((b[1]-a[1])*d); return (Math.atan2(y,x)/d+360)%360; }
 function _sbvGiro(de,a){ return ((a-de+540)%360)-180; }
-function _sbvMarcadorAtrasHTML(A){ return '<div class="sbv-rider atras"><div class="sbv-globo"><span class="sbv-cara"></span><span class="sbv-txt"></span></div><div class="sbv-bici"><div class="sbv-cuerpo">'+A.svg+'</div><div class="sbv-cabeza" style="left:'+A.cab.l+'%;top:'+A.cab.t+'%;width:'+A.cab.w+'%;height:'+A.cab.h+'%"></div></div></div>'; }
+function _sbvMarcadorAtrasHTML(A){ return '<div class="sbv-rider atras"><div class="sbv-globo"><span class="sbv-cara"></span><span class="sbv-txt"></span></div><div class="sbv-bici"><div class="sbv-incl"><div class="sbv-cuerpo">'+A.svg+'</div><div class="sbv-cabeza" style="left:'+A.cab.l+'%;top:'+A.cab.t+'%;width:'+A.cab.w+'%;height:'+A.cab.h+'%"></div></div></div></div>'; }
 function _sbvMarcadorHTML(svg){ return '<div class="sbv-rider"><div class="sbv-globo"><span class="sbv-cara"></span><span class="sbv-txt"></span></div><div class="sbv-bici">'+svg+'</div></div>'; }
 // Anima a Pistero en su bici recorriendo `coords` sobre `mp`. Encuadra toda la ruta y
 // avanza a velocidad uniforme por distancia real; se detiene un instante en cada
@@ -94,15 +94,18 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     function bici(expr,rapido,pose){ return conBici?_pistBiciSVG(opts,{expr:expr||'feliz',rapido:!!rapido,cadencia:rapido?0.5:0.85,pose:pose||'',vehiculo:veh}):((typeof _pistoNuevo==='function')?_pistoNuevo(expr||'feliz'):''); }
     // en primera persona Pistero va DE ESPALDAS hacia donde avanza la ruta (cámara detrás)
     var primera=!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    var deEspaldas=primera && typeof _pistAtrasSVG==='function', gesto=null, gestoNuevo=null, gestoDesde=0;
-    function cuerpo(G){ return _pistAtrasSVG(opts,{vehiculo:veh,cadencia:G.cad,rapido:G.rapido}); }
-    _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:deEspaldas?_sbvMarcadorAtrasHTML(cuerpo({cad:.68,rapido:0})):_sbvMarcadorHTML(bici('feliz'))}}).addTo(mp);
+    var deEspaldas=primera && typeof _pistAtrasSVG==='function';
+    function cuerpo(G){ return _pistAtrasSVG(opts,{vehiculo:veh,cadencia:G.cad,rapido:G.rapido,pose:G.pose||''}); }
+    // esqueleto animado (movimiento orgánico) para las bicis; moto/auto usan el dibujo fijo
+    var rig=(deEspaldas && typeof _pistAtrasRig==='function')?_pistAtrasRig(opts,veh):null, rigSt={cad:.68,pose:'',sway:0,rapido:0};
+    function marcadorAtras(){ var A=cuerpo({cad:.68,rapido:0,pose:''}); if(rig) A={svg:rig.svg,cab:A.cab}; return _sbvMarcadorAtrasHTML(A); }
+    _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:deEspaldas?marcadorAtras():_sbvMarcadorHTML(bici('feliz'))}}).addTo(mp);
     var el=(_sbvMarker._ml&&_sbvMarker._ml.getElement)?_sbvMarker._ml.getElement():null;
-    var cajaBici=el&&el.querySelector('.sbv-bici'), globo=el&&el.querySelector('.sbv-globo'), cajaCuerpo=el&&el.querySelector('.sbv-cuerpo'), cajaCabeza=el&&el.querySelector('.sbv-cabeza');
-    // cara + pedalada según esfuerzo y velocidad del tramo actual (cambia solo si se sostiene 0,5 s)
-    // Pistero mira al camino (se le ve la nuca) y GIRA la cabeza hacia la cámara solo cuando
-    // pasa algo (subida, bajada, cima, pausa, llegada…): pone su gesto ~2 s y vuelve a mirar
-    // adelante. El giro es un "aplastado" horizontal corto; la pedalada no se reinicia.
+    var cajaBici=el&&el.querySelector('.sbv-bici'), globo=el&&el.querySelector('.sbv-globo'), cajaCuerpo=el&&el.querySelector('.sbv-cuerpo'), cajaCabeza=el&&el.querySelector('.sbv-cabeza'), cajaIncl=el&&el.querySelector('.sbv-incl');
+    if(rig && cajaCuerpo){ rig.bind(cajaCuerpo); if(cajaBici) cajaBici.classList.add('con-rig'); }
+    var cabTop0=cajaCabeza?parseFloat(cajaCabeza.style.top)||3.5:3.5;
+    // Pistero mira al camino (se le ve la nuca) y GIRA la cabeza hacia la cámara cuando pasa
+    // algo; pone su gesto un rato y vuelve a mirar adelante. La pedalada no se reinicia.
     var girarT=null, caraVisible='';
     function cabeza(html){ if(!cajaCabeza) return; cajaCabeza.classList.add('girando'); setTimeout(function(){ cajaCabeza.innerHTML=html; cajaCabeza.classList.remove('girando'); },140); }
     function girar(expr,ms){
@@ -110,15 +113,32 @@ function reproducirSobrevuelo(coords, modo, onEnd){
       clearTimeout(girarT); if(caraVisible!==expr){ cabeza(_pistoDe(opts,expr)); caraVisible=expr; }
       girarT=setTimeout(function(){ caraVisible=''; cabeza(typeof _pistNucaSVG==='function'?_pistNucaSVG(opts):_pistoDe(opts,'feliz')); },ms);
     }
-    function ponerGesto(G,forzar){
-      var cambiaCuerpo=!gesto || gesto.cad!==G.cad || gesto.rapido!==G.rapido;
-      if(cajaCabeza && forzar) cajaCabeza.innerHTML=(typeof _pistNucaSVG==='function')?_pistNucaSVG(opts):_pistoDe(opts,G.expr);
-      else if(gesto && gesto.expr!==G.expr) girar(G.expr,2200);
-      if(cajaCuerpo && cambiaCuerpo) cajaCuerpo.innerHTML=cuerpo(G).svg;
-      if(cajaBici){ cajaBici.classList.toggle('esfuerzo',!!G.sway); cajaBici.style.setProperty('--cad',(G.cad||.9)+'s'); }
-      gesto=G;
+    // ===== Reacciones según lo que pasa en el trayecto =====
+    // base  = postura que corresponde al tramo (de pie en subida, agachado en bajada o a
+    //         alta velocidad, pie en el suelo detenido) + pedalada y balanceo.
+    // reacción = gesto puntual cuando CAMBIA la situación: gira la cabeza con su cara, a
+    //         veces una pose (secarse el sudor, puño en alto…) y un globito corto que NO
+    //         detiene el avance. Mínimo 2,5 s entre reacciones y cada tipo con su espera.
+    var base=null, gNuevo=null, cuerpoKey='', poseTemp=null, poseTempHasta=0, ultReac=-1e9, ultTipo={}, sit={}, sitPrevSube=false, incl=0;
+    function pintarCuerpo(G){ var P=Object.assign({},G); if(poseTemp) P.pose=poseTemp;
+      if(rig){ rigSt={cad:P.cad,pose:P.pose||'',sway:G.sway&&!poseTemp,rapido:P.rapido}; return; }
+      var k=P.cad+'|'+P.rapido+'|'+(P.pose||''); if(cajaCuerpo && k!==cuerpoKey){ cajaCuerpo.innerHTML=cuerpo(P).svg; cuerpoKey=k; } if(cajaBici){ cajaBici.classList.toggle('esfuerzo',!!G.sway && !poseTemp); cajaBici.style.setProperty('--cad',(G.cad||.9)+'s'); } }
+    function miniGlobo(expr,txt,ts,ms){
+      if(!globo||!txt) return;
+      var cara=globo.querySelector('.sbv-cara'), t=globo.querySelector('.sbv-txt');
+      if(cara && typeof _pistoDe==='function') cara.innerHTML=_pistoDe(opts,expr);
+      if(t) t.textContent=txt;
+      globo.classList.remove('on'); void globo.offsetWidth; globo.classList.add('on','mini');
+      globoHasta=ts+ms;
     }
-    if(deEspaldas) ponerGesto({expr:'feliz',cad:.68,sway:0,rapido:0},true);
+    function reaccionar(tipo,expr,txt,pose,ms,ts,enfriar){
+      if(ts-ultReac<2500 || (ultTipo[tipo] && ts-ultTipo[tipo]<enfriar)) return false;
+      ultReac=ts; ultTipo[tipo]=ts; girar(expr,ms);
+      if(pose){ poseTemp=pose; poseTempHasta=ts+ms; if(base) pintarCuerpo(base); }
+      miniGlobo(expr,txt,ts,ms);
+      return true;
+    }
+    if(deEspaldas){ if(cajaCabeza) cajaCabeza.innerHTML=(typeof _pistNucaSVG==='function')?_pistNucaSVG(opts):''; base={expr:'feliz',cad:.68,sway:0,rapido:0,pose:''}; pintarCuerpo(base); }
     // Cámara en primera persona: sigue a Pistero de cerca, inclinada y girando hacia donde
     // avanza (con más camino visible adelante). Con movimiento reducido: vista general.
     var Z=total>40000?14.6:(total>15000?15.4:16.2), PITCH=58, camB=null, intro=primera?2200:0;
@@ -127,6 +147,8 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     var altoMapa=(mp.getContainer&&mp.getContainer().clientHeight)||400, PAD={top:Math.round(altoMapa*0.32),bottom:0,left:0,right:0};
     if(primera){ camB=rumboEn(0); try{ mp.fitBounds(_sbvLine.getBounds().pad(0.22),{duration:0}); mp.flyTo({center:[coords[0][1],coords[0][0]],zoom:Z,pitch:PITCH,bearing:camB,padding:PAD,duration:intro-200,essential:true}); }catch(e){ console.warn('[sobrevuelo] cámara', e); } }
     else { try{ mp.fitBounds(_sbvLine.getBounds().pad(0.22)); }catch(e){ console.warn('[sobrevuelo] encuadre', e); } }
+    var vMedia=0; if(A.vel){ var sv=0,nv=0; A.vel.forEach(function(v){ if(v>2){ sv+=v; nv++; } }); vMedia=nv?sv/nv:0; }
+    var ritmo=0.2, Zc=null;
     var dur=primera?Math.min(60000,Math.max(15000,total/1000*5000)):Math.min(22000,Math.max(8000,coords.length*80)), PAUSA=1500, prog=0, ultimo=null, espera=0, seg=1, mirando=1, sigEv=0, globoHasta=0;
     function mostrarGlobo(e,ts){
       if(!globo) return;
@@ -134,7 +156,11 @@ function reproducirSobrevuelo(coords, modo, onEnd){
       if(cara && typeof _pistoDe==='function') cara.innerHTML=_pistoDe(opts,e.expr);
       if(txt) txt.textContent=e.txt;
       globo.classList.remove('on'); void globo.offsetWidth; globo.classList.add('on');
-      if(deEspaldas){ girar(e.expr,PAUSA+900); gestoNuevo=null; }
+      if(deEspaldas){
+        globo.classList.remove('mini'); girar(e.expr,PAUSA+900); ultReac=ts;
+        var pe=/^¡Cima/.test(e.txt)?'puno':/^¡Llegamos/.test(e.txt)?'brazos':/^Pausa/.test(e.txt)?'suelo':/^¡Partimos/.test(e.txt)?'puno':null;
+        if(pe){ poseTemp=pe; poseTempHasta=ts+PAUSA+900; if(base) pintarCuerpo(base); }
+      }
       else if(cajaBici) cajaBici.innerHTML=bici(e.expr,e.rapido,e.pose);
       if(_sbvSonido) _sbvSonido.momento(e);
       globoHasta=ts+PAUSA+900;
@@ -142,21 +168,51 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     function frame(ts){
       if(ultimo===null) ultimo=ts;
       var dt=ts-ultimo; ultimo=ts;
-      if(intro>0){ intro-=dt; } else if(espera>0){ espera-=dt; } else { prog+=dt/dur; }
+      if(intro>0){ intro-=dt; } else if(espera>0){ espera-=dt; ritmo=0.15; } else {
+        var rT=1; if(A.vel && vMedia>0){ var vv=A.vel[seg]; rT=Math.max(.55,Math.min(1.7,(vv||vMedia)/vMedia)); }
+        var falta=(sigEv<eventos.length)?eventos[sigEv].d-prog*total:1e9; if(falta<70) rT*=Math.max(.25,falta/70);
+        ritmo+=(rT-ritmo)*(1-Math.exp(-dt/500)); prog+=dt/dur*ritmo;
+      }
       if(prog>1) prog=1;
       var target=prog*total;
       if(sigEv<eventos.length && target>=eventos[sigEv].d){ target=eventos[sigEv].d; prog=target/total; mostrarGlobo(eventos[sigEv],ts); espera=PAUSA; sigEv++; }
-      if(globo && globoHasta && ts>globoHasta){ globo.classList.remove('on'); globoHasta=0; if(!deEspaldas && cajaBici) cajaBici.innerHTML=bici('feliz'); }
+      if(globo && globoHasta && ts>globoHasta){ globo.classList.remove('on','mini'); globoHasta=0; if(!deEspaldas && cajaBici) cajaBici.innerHTML=bici('feliz'); }
       while(seg<coords.length-1 && cum[seg]<target) seg++;
       var a=coords[seg-1], b=coords[seg];
       var segLen=cum[seg]-cum[seg-1], f=segLen>0?Math.min(1,Math.max(0,(target-cum[seg-1])/segLen)):0;
       var lat=a[0]+(b[0]-a[0])*f, lon=a[1]+(b[1]-a[1])*f;
       if(_sbvMarker) _sbvMarker.setLatLng([lat,lon]);
-      if(deEspaldas && !globoHasta && intro<=0 && typeof _pistGestoEsfuerzo==='function'){
+      if(deEspaldas && intro<=0 && typeof _pistGestoEsfuerzo==='function'){
         var gp=A.pend?A.pend[seg]:null, vp=A.vel?A.vel[seg]:null, G=_pistGestoEsfuerzo(gp,vp);
-        if(!gesto || G.expr!==gesto.expr || G.cad!==gesto.cad){ if(!gestoNuevo || gestoNuevo.expr!==G.expr || gestoNuevo.cad!==G.cad){ gestoNuevo=G; gestoDesde=ts; } else if(ts-gestoDesde>500){ ponerGesto(G); gestoNuevo=null; } } else gestoNuevo=null;
+        if(poseTemp && ts>poseTempHasta){ poseTemp=null; }
+        var kG=G.cad+'|'+G.rapido+'|'+G.pose;
+        if(!base || kG!==(base.cad+'|'+base.rapido+'|'+base.pose)){ if(!gNuevo||gNuevo.k!==kG) gNuevo={k:kG,t:ts}; else if(ts-gNuevo.t>400){ base=G; gNuevo=null; } }
+        if(base) pintarCuerpo(base);
+        // se inclina hacia el lado de la curva
+        var giro=_sbvGiro(rumboEn(target),rumboEn(Math.min(total,target+45)));
+        incl+=(Math.max(-14,Math.min(14,giro*0.22))-incl)*Math.min(1,dt/300);
+        var rr=rig?rig.update(rigSt,dt):{sway:0,cabezaDy:0,cabezaRot:0};
+        if(cajaIncl) cajaIncl.style.transform='rotate('+(incl+rr.sway).toFixed(2)+'deg)';
+        if(rig && cajaCabeza){ cajaCabeza.style.top=(cabTop0+rr.cabezaDy/110*100).toFixed(2)+'%'; cajaCabeza.style.rotate=rr.cabezaRot.toFixed(2)+'deg'; }
+        if(!globoHasta && espera<=0){
+          var sube=gp!==null&&gp>0.045, dura=gp!==null&&gp>0.09, baja=gp!==null&&gp<-0.05, rap=vp!==null&&vp>35, llano=!sube&&!baja&&!rap;
+          // cada situación queda "pendiente" hasta que se pueda mostrar (si coincidió con un
+          // globo o con otra reacción, sale apenas haya espacio mientras siga pasando)
+          var hecho=false;
+          function una(flag,activo,fn){ if(!activo){ sit[flag]=false; return; } if(hecho||sit[flag]) return; if(fn()){ sit[flag]=true; hecho=true; } }
+          var curva=Math.abs(giro)>40;
+          una('sube',sube,function(){ return reaccionar('subida','cansado','¡A subir!',null,2000,ts,6000); });
+          una('dura',dura,function(){ return reaccionar('dura','enojado','¡Ufff!',null,2000,ts,6000); });
+          una('baja',baja,function(){ return reaccionar('bajada','emocionado','¡Wiii!',null,1800,ts,6000); });
+          una('rap',rap,function(){ return reaccionar('rapido','sorprendido','¡Volando!',null,1800,ts,8000); });
+          una('curva',curva,function(){ return reaccionar('curva','sorprendido','¡Ojo, curva!',null,1500,ts,5000); });
+          una('fin',!sube && sitPrevSube && gp!==null && gp<0.02,function(){ return reaccionar('finSubida','guino','¡Listo!',null,1800,ts,6000); });
+          if(!hecho && sube && ts-ultReac>6000) hecho=reaccionar('seca','cansado','','seca',1700,ts,6000);
+          if(!hecho && llano && ts-ultReac>12000) reaccionar('silba','guino','♪',null,1500,ts,12000);
+          if(sube) sitPrevSube=true; else if(gp!==null && gp<0.02) sitPrevSube=false;
+        }
       }
-      if(primera && intro<=0){ var rb=rumboEn(target); camB=(camB===null)?rb:(camB+_sbvGiro(camB,rb)*Math.min(1,dt/450)+360)%360; try{ mp.jumpTo({center:[lon,lat],zoom:Z,pitch:PITCH,bearing:camB,padding:PAD}); }catch(e){ console.warn('[sobrevuelo] cámara', e); } }
+      if(primera && intro<=0){ var rb=rumboEn(target); camB=(camB===null)?rb:(camB+_sbvGiro(camB,rb)*Math.min(1,dt/450)+360)%360; var zT=Z+((A.vel&&A.vel[seg]>32)?-.45:0)+((A.pend&&A.pend[seg]>.045)?.2:0); Zc=(Zc===null)?Z:Zc+(zT-Zc)*(1-Math.exp(-dt/1400)); try{ mp.jumpTo({center:[lon,lat],zoom:Zc,pitch:PITCH,bearing:camB,padding:PAD}); }catch(e){ console.warn('[sobrevuelo] cámara', e); } }
       // mira hacia donde avanza (solo cambia si el giro es claro, para no "temblar")
       var dl=primera?0:b[1]-a[1]; if(Math.abs(dl)>1e-6){ var m=dl>0?1:-1; if(m!==mirando && cajaBici){ mirando=m; cajaBici.style.transform='scaleX('+m+')'; } }
       if(prog<1 || espera>0){ _sbvRAF=requestAnimationFrame(frame); }
