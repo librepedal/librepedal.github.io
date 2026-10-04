@@ -1,5 +1,8 @@
 # 🚀 EMPEZAR AQUÍ — cualquier cuenta Claude que retome LibrePedal
 
+> 🆕 **2026-10-04 noche — LEE PRIMERO `HANDOFF-2026-10-04-NOCHE.md`** (rama `docs/traspaso-2026-10-04-noche` hasta que se mergee): estado real verificado en Play y producción, botón de Google probado OK, ramas listas y todo lo decidido con Inty (bienvenida, fondo de la comunidad, centro de ayuda, bandeja con agente, Pistero en ruta). Lo de abajo puede estar desactualizado.
+
+
 Punto de entrada único. Léelo y en 2 minutos sabes el estado y qué hacer. Actualizado
 2026-08-15 por la cuenta Claude Code (sesión de la tarde/noche). Meta de Inty: dejar
 LibrePedal al 100% + **AAB final** para Play, e ir a **toda Sudamérica**.

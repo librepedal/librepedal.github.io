@@ -1,0 +1,267 @@
+<title>Bienvenida y Bandeja Libre Pedal</title>
+<style>
+/* Cuatro teléfonos (se apilan en móvil): bienvenida, centro de ayuda, respuesta con atajo, mis mensajes.
+   Paleta de estilos.css de la app (--p, --d, --g, --gl). Un solo mundo visual: el oscuro de la app. */
+:root{
+  --p:#fc4c02; --d:#0a0f1d; --g:#ffd700; --gl:rgba(255,255,255,0.08);
+  --line:rgba(255,255,255,0.12); --txt:#f2f4f8; --sub:#9aa6bb; --ok:#2fd2a8; --page:#121827; --field:#0f1525;
+  --f-ui:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  --f-disp:'Barlow Condensed','Segoe UI',system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--page);color:var(--txt);font-family:var(--f-ui);padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1320px;margin:0 auto;display:grid;gap:28px}
+header h1{font-family:var(--f-disp);font-weight:700;font-size:2rem;margin:0;text-wrap:balance}
+header p{color:var(--sub);max-width:70ch;line-height:1.55;margin:.4rem 0 0}
+.phones{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:22px;align-items:start}
+.cap{display:grid;gap:10px;min-width:0}
+.cap h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--g);margin:0}
+.cap p{margin:0;color:var(--sub);font-size:.85rem;line-height:1.5}
+.phone{position:relative;width:100%;max-width:310px;aspect-ratio:9/19;background:var(--d);border:1px solid var(--line);border-radius:30px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.sb{display:flex;justify-content:space-between;padding:10px 18px 0;font-size:.7rem;color:var(--sub)}
+.scr{position:absolute;inset:28px 0 0 0;display:flex;flex-direction:column}
+.home{position:absolute;inset:0;background:radial-gradient(120% 60% at 50% 100%,#1f3a2d 0%,transparent 60%),linear-gradient(#1b3b5a,#0d1a2b 55%,#13241b)}
+.home::after{content:"";position:absolute;inset:0;background:rgba(5,8,16,.72)}
+.sheet{position:absolute;left:12px;right:12px;bottom:18px;background:#141b2c;border:1.5px solid var(--p);border-radius:20px;padding:16px 14px 14px;display:grid;gap:11px}
+.pist{display:grid;justify-items:center;gap:10px}
+.face{width:92px;height:78px;display:block}
+.face svg{width:100%;height:100%}
+.bubble{background:var(--gl);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:.83rem;line-height:1.48}
+.bubble b{color:var(--g)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;min-height:42px;font-weight:700;font-size:.88rem;border:0;font-family:inherit;cursor:pointer;padding:0 14px}
+.btn svg{width:17px;height:17px;flex:none}
+.btn.pri{background:var(--p);color:#16090a}
+.btn.sec{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn.go{background:rgba(252,76,2,.14);color:#ffd2bd;border:1px solid var(--p);min-height:38px;font-size:.82rem}
+.fine{font-size:.7rem;color:var(--sub);text-align:center}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.top svg{width:20px;height:20px;color:var(--sub);flex:none}
+.top h3{margin:0;font-size:1rem}
+.body{padding:12px 14px;display:grid;gap:10px;align-content:start;overflow:hidden}
+.search{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:.84rem;color:var(--sub)}
+.search svg{width:16px;height:16px;flex:none}
+.lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sub)}
+.faq{display:grid;gap:7px}
+.q{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:12px;padding:9px 11px;background:rgba(255,255,255,.03);font-size:.82rem}
+.q small{display:block;color:var(--sub);font-size:.7rem;margin-top:2px}
+.q .to{flex:none;font-size:.68rem;font-weight:700;color:#ffd2bd;border:1px solid rgba(252,76,2,.6);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.alt{border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px}
+.alt span{font-size:.76rem;color:var(--sub);text-align:center}
+.ans h4{margin:0;font-size:1rem;line-height:1.3}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:8px;counter-reset:p}
+.steps li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:.82rem;line-height:1.45}
+.steps li::before{counter-increment:p;content:counter(p);display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:rgba(252,76,2,.18);color:var(--p);font-weight:700;font-size:.72rem}
+.ok{display:grid;gap:7px;border:1px solid var(--line);border-radius:12px;padding:10px}
+.ok b{font-size:.82rem}
+.ok .row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ok .btn{min-height:36px;font-size:.78rem}
+.tk{border:1px solid var(--line);border-radius:14px;padding:10px 11px;display:grid;gap:6px;background:rgba(255,255,255,.03)}
+.tk .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tk .t{font-weight:700;font-size:.84rem}
+.pill{font-size:.64rem;font-weight:700;border-radius:999px;padding:3px 8px;white-space:nowrap}
+.pill.okp{background:rgba(47,210,168,.15);color:var(--ok)}
+.pill.wait{background:rgba(255,215,0,.13);color:var(--g)}
+.msg{font-size:.79rem;line-height:1.45;border-radius:12px;padding:8px 10px}
+.msg.me{background:rgba(252,76,2,.14);justify-self:end;max-width:88%}
+.msg.eq{background:var(--gl);max-width:94%;display:grid;gap:7px}
+.msg small{display:block;color:var(--sub);font-size:.65rem;margin-top:2px}
+.meta{border:1px solid var(--line);border-radius:12px;padding:10px 11px;display:grid;gap:6px}
+.meta .mrow{display:flex;justify-content:space-between;font-size:.8rem}
+.meta b{font-variant-numeric:tabular-nums;color:var(--g)}
+.meta small{font-size:.68rem;color:var(--sub)}
+.bar{height:8px;border-radius:99px;background:var(--gl);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--p),var(--g))}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:.74rem}
+.ta{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:9px 11px;min-height:64px;font-size:.82rem;line-height:1.45}
+.note{display:flex;gap:8px;font-size:.74rem;color:var(--sub);line-height:1.45}
+.note svg{flex:none;width:16px;height:16px;color:var(--g);margin-top:1px}
+.win{display:grid;gap:3px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.35);border-radius:12px;padding:10px 11px;font-size:.8rem}
+.win b{color:var(--g);font-size:.92rem}
+.win span{color:var(--sub)}
+.v{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:.82rem;background:rgba(255,255,255,.03)}
+.v small{display:block;color:var(--sub);font-size:.68rem;margin-top:2px;font-variant-numeric:tabular-nums}
+.rd{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--line)}
+.rd.on{border-color:var(--p);box-shadow:inset 0 0 0 3px var(--d);background:var(--p)}
+.flow{border-top:1px solid var(--line);padding-top:22px;display:grid;gap:14px}
+.flow h2{font-family:var(--f-disp);font-size:1.4rem;margin:0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.st{background:var(--gl);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:6px;min-width:0;align-content:start}
+.st b{font-size:.92rem}
+.st span{color:var(--sub);font-size:.83rem;line-height:1.5}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.84rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--sub);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em}
+tr:last-child td{border-bottom:0}
+td code{color:#ffd2bd;font-size:.8rem}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+
+<div class="wrap">
+<header>
+  <h1>Bienvenida, fondo de la comunidad y ayuda</h1>
+  <p>Mockup para aprobar antes de programar. La bienvenida lleva primero a dejar una idea para el fondo de la comunidad; las 5 más repetidas se votan en vivo. Cada duda frecuente tiene una respuesta lista, con pasos y un botón que lleva directo a la pantalla donde se resuelve. Solo lo que no tiene respuesta llega al equipo.</p>
+</header>
+
+<section class="phones">
+  <div class="cap">
+    <h2>1 · Bienvenida (una sola vez)</h2>
+    <div class="phone" aria-label="Bienvenida">
+      <div class="home"></div>
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="sheet">
+        <div class="pist">
+          <span class="face"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><g class="lp-eye lp-parpadeo"><ellipse cx="40" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="37.8" cy="60" r="2.5" fill="#fff"/><circle cx="42" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g><g class="lp-eye lp-parpadeo"><ellipse cx="60" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="57.8" cy="60" r="2.5" fill="#fff"/><circle cx="62" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g><ellipse cx="30" cy="71" rx="5.5" ry="3.2" fill="#ff9db0" opacity=".55"/><ellipse cx="70" cy="71" rx="5.5" ry="3.2" fill="#ff9db0" opacity=".55"/><path d="M43 73 Q50 79 57 73" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></span>
+          <div class="bubble"><b>¡Qué bueno que llegaste!</b> Bienvenido a Libre Pedal, la comunidad ciclista. No hicimos esta app solo para contar kilómetros: la hicimos para que juntos dejemos una huella en nuestras rutas, nuestros pueblos y nuestra gente. Parte de lo que se junta va a un fondo, y la comunidad decide en qué se usa. ¿Qué cambiarías tú? Deja tu idea.</div>
+        </div>
+        <button class="btn pri" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>Dejar mi idea</button>
+        <button class="btn sec" type="button">Vamos a rodar</button>
+        <div class="fine">¿Dudas? Ayuda y contacto · Pistero lo dice en voz alta</div>
+      </div>
+    </div>
+    <p>Es el Pistero real de la app, con el casco de cada usuario. Sale una sola vez por cuenta y lleva primero a dejar la idea.</p>
+  </div>
+
+  <div class="cap">
+    <h2>2 · Ideas de la comunidad</h2>
+    <div class="phone" aria-label="Ideas de la comunidad">
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="scr">
+        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg><h3>Fondo de la comunidad</h3></div>
+        <div class="body">
+          <div class="meta"><div class="mrow"><span>Fondo de tu país · 2026</span><b>$148.200</b></div><small>10% de lo que pagan los suscritos de tu país · se invierte aquí, en la idea ganadora, el 31 de diciembre · monto de ejemplo</small></div>
+          <div class="lbl">¿En qué usarías el fondo?</div>
+          <div class="ta">Arreglar ciclovías y poner bebederos en las rutas.</div>
+          <button class="btn pri" type="button">Enviar mi idea</button>
+          <div class="fine">Puedes dejar 2 ideas · te queda 1</div>
+          <div class="lbl">Las 5 más propuestas en tu país · en vivo</div>
+          <div class="faq">
+            <label class="v"><span class="rd on"></span><span>Mejorar ciclovías y bebederos<small>412 ideas parecidas</small></span></label>
+            <label class="v"><span class="rd"></span><span>Bicis para quien no tiene<small>297 ideas parecidas</small></span></label>
+            <label class="v"><span class="rd"></span><span>Reforestar zonas naturales<small>233 ideas parecidas</small></span></label>
+            <label class="v"><span class="rd"></span><span>Talleres de mecánica gratis<small>181 ideas parecidas</small></span></label>
+            <label class="v"><span class="rd"></span><span>Apoyo a deportistas<small>158 ideas parecidas</small></span></label>
+          </div>
+          <button class="btn sec" type="button">Votar por esta</button>
+        </div>
+      </div>
+    </div>
+    <p>Todos opinan. Las ideas que dicen lo mismo se agrupan y aparecen con un título neutro, nunca con el texto de la persona. Cifras de ejemplo.</p>
+  </div>
+
+  <div class="cap">
+    <h2>3 · Votar sin suscripción</h2>
+    <div class="phone" aria-label="Votar es para suscritos">
+      <div class="home" style="background:linear-gradient(#141b2c,#0a0f1d)"></div>
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="sheet">
+        <div class="pist"><span class="face"><svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/><g class="lp-eye lp-parpadeo"><ellipse cx="40" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="37.8" cy="60" r="2.5" fill="#fff"/><circle cx="42" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g><g class="lp-eye lp-parpadeo"><ellipse cx="60" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="57.8" cy="60" r="2.5" fill="#fff"/><circle cx="62" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g><ellipse cx="30" cy="71" rx="5.5" ry="3.2" fill="#ff9db0" opacity=".55"/><ellipse cx="70" cy="71" rx="5.5" ry="3.2" fill="#ff9db0" opacity=".55"/><path d="M43 73 Q50 79 57 73" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></span></div>
+        <div class="bubble"><b>Tu idea ya está sumada.</b> Votar es para los suscritos: tu suscripción alimenta el fondo, por eso tu voto decide en qué se usa.</div>
+        <button class="btn pri" type="button">Suscribirme y votar</button>
+        <button class="btn sec" type="button">Ahora no</button>
+        <div class="fine">Un voto por cuenta · lo puedes cambiar mientras la votación esté abierta</div>
+      </div>
+    </div>
+    <p>Sale solo al tocar "Votar". Sin urgencias falsas ni contadores, para cumplir las reglas de Play.</p>
+  </div>
+
+  
+<div class="cap">
+    <h2>4 · Centro de ayuda</h2>
+    <div class="phone" aria-label="Centro de ayuda">
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="scr">
+        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg><h3>Ayuda y contacto</h3></div>
+        <div class="body">
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>revisión téc</div>
+          <div class="lbl">Te puede servir</div>
+          <div class="faq">
+            <div class="q"><span>Aviso de revisión técnica<small>Taller · 3 pasos</small></span><span class="to">Ir a Taller</span></div>
+            <div class="q"><span>Permiso de circulación y SOAP<small>Taller · 2 pasos</small></span><span class="to">Ir a Taller</span></div>
+          </div>
+          <div class="lbl">Lo más consultado</div>
+          <div class="faq">
+            <div class="q"><span>Cambiar la voz de Pistero</span><span class="to">Ir a Pistero</span></div>
+            <div class="q"><span>Contactos para el SOS</span><span class="to">Ir a SOS</span></div>
+            <div class="q"><span>Planificar una ruta</span><span class="to">Ir al Mapa</span></div>
+          </div>
+          <div class="alt"><span>¿No está tu duda?</span><button class="btn sec" type="button">Escribir al equipo</button></div>
+        </div>
+      </div>
+    </div>
+    <p>Mientras escribes, filtra las respuestas listas. La mayoría se resuelve aquí sin escribirle a nadie.</p>
+  </div>
+
+  <div class="cap">
+    <h2>5 · Respuesta con atajo</h2>
+    <div class="phone" aria-label="Respuesta con atajo">
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="scr">
+        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg><h3>Ayuda</h3></div>
+        <div class="body ans">
+          <h4>Aviso de revisión técnica</h4>
+          <ol class="steps">
+            <li>Abre Taller y toca "Mi vehículo".</li>
+            <li>Escribe tu patente. Con el último dígito calculamos el mes de tu revisión.</li>
+            <li>Activa los avisos: te llegan 30, 7 y 0 días antes, aunque no abras la app.</li>
+          </ol>
+          <button class="btn pri" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 6l6 6-6 6M20 12H4"/></svg>Ir a Mi vehículo</button>
+          <div class="ok"><b>¿Se resolvió?</b><div class="row"><button class="btn sec" type="button">Sí, gracias</button><button class="btn sec" type="button">No, escribir</button></div></div>
+        </div>
+      </div>
+    </div>
+    <p>El botón abre la pantalla exacta. Si la respuesta no sirvió, el mensaje al equipo ya va con la pregunta escrita.</p>
+  </div>
+
+  <div class="cap">
+    <h2>6 · Mis mensajes</h2>
+    <div class="phone" aria-label="Mis mensajes">
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="scr">
+        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg><h3>Mis mensajes</h3></div>
+        <div class="body">
+          <div class="tk">
+            <div class="hd"><span class="t">Pistero no me habla</span><span class="pill okp">Respondido</span></div>
+            <div class="msg me">Pistero dejó de hablarme en los viajes.<small>Hoy 09:12</small></div>
+            <div class="msg eq"><span>Está en modo Callado. Cámbialo a Normal en Ajustes, "Pistero habla".</span><button class="btn go" type="button">Abrir Ajustes</button><small>Equipo Libre Pedal · 09:13</small></div>
+          </div>
+          <div class="tk">
+            <div class="hd"><span class="t">Cobro de Premium</span><span class="pill wait">Lo revisa el equipo</span></div>
+            <div class="msg me">Me cobraron dos veces este mes.<small>Ayer 18:40</small></div>
+            <div class="msg eq"><span>Recibimos tu mensaje. Lo revisa una persona del equipo y te respondemos aquí.</span><small>Equipo Libre Pedal · 18:41</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p>Las respuestas del agente también traen el botón que lleva directo a la solución.</p>
+  </div>
+</section>
+
+<section class="flow">
+  <h2>Respuestas listas: primeras 10</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Duda</th><th>Respuesta corta</th><th>Botón</th></tr></thead>
+    <tbody>
+      <tr><td>Aviso de revisión técnica</td><td>Patente en Mi vehículo; avisa 30, 7 y 0 días antes</td><td><code>Ir a Mi vehículo</code></td></tr>
+      <tr><td>Permiso de circulación y SOAP</td><td>Se calculan solos al 31 de marzo y 31 de agosto</td><td><code>Ir a Taller</code></td></tr>
+      <tr><td>Mantención de la bici</td><td>Kilómetros y fechas de cadena, pastillas y aceite</td><td><code>Ir a Taller</code></td></tr>
+      <tr><td>Cambiar la voz o personalidad de Pistero</td><td>Escucha cada voz con el parlante antes de elegir</td><td><code>Ir a Pistero</code></td></tr>
+      <tr><td>Pistero habla mucho o no habla</td><td>Callado, Normal o Hablador</td><td><code>Abrir Ajustes</code></td></tr>
+      <tr><td>Contactos para el SOS</td><td>Hasta 3 contactos que reciben tu ubicación</td><td><code>Ir a SOS</code></td></tr>
+      <tr><td>Planificar una ruta</td><td>Desde, Hasta y paradas en el mapa</td><td><code>Ir al Mapa</code></td></tr>
+      <tr><td>Ver mis viajes y kilómetros</td><td>Historial, distancia y recorrido de cada viaje</td><td><code>Ir a Mis viajes</code></td></tr>
+      <tr><td>No puedo entrar</td><td>Entrar con Google o con el código de la prueba</td><td><code>Ver cómo entrar</code></td></tr>
+      <tr><td>Borrar mi cuenta</td><td>Lo atiende una persona del equipo</td><td><code>Escribir al equipo</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Cómo funciona por dentro</h2>
+  <div class="grid3">
+    <div class="st"><b>1. Primero, la respuesta lista</b><span>El catálogo vive en la app. Responde al instante, funciona sin internet y siempre lleva a la pantalla correcta.</span></div>
+    <div class="st"><b>2. Si no alcanza, la bandeja</b><span>El mensaje, las reseñas con comentario y los correos a contacto@librepedal.cl llegan juntos a Firebase. El agente responde cada 15 minutos con la IA del servidor de Pistero y elige el botón del mismo catálogo.</span></div>
+    <div class="st"><b>Reglas del fondo (públicas)</b><span>Cada país tiene su fondo: el 10% de lo neto de Premium de ese país. Cada 31 de diciembre se invierte en la idea más votada y se muestra en qué se usó. Si no alcanza para hacerla, se guarda y se suma al año siguiente. Las ideas parten de cero cada año.</span></div>
+    <div class="st"><b>3. Lo delicado es tuyo</b><span>Pagos, borrar la cuenta, quejas y denuncias no los contesta el agente. Te llegan en un resumen diario con un borrador. Las preguntas que se repiten se suman al catálogo.</span></div>
+  </div>
+</section>
+</div>
