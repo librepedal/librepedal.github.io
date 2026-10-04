@@ -128,8 +128,11 @@ async function _tallerProgramarNotificaciones(){
     const nuestras=((pend && pend.notifications)||[]).filter(function(n){ const i=Number(n.id); return i>=TALLER_NOTIF_ID_MIN && i<=7899; }).map(function(n){ return {id:Number(n.id)}; });
     if(nuestras.length) await ln.cancel({notifications:nuestras});
     const lista=_tallerNotificacionesFuturas();
+    // isExactNotification:false en todos los schedule: el manifest quita SCHEDULE_EXACT_ALARM
+    // (46896db), y sin él el plugin abre "Alarmas y recordatorios" y el schedule() nunca
+    // resuelve (probado en emulador 2026-10-04). Unos minutos de holgura no importan aquí.
     if(lista.length){
-      await ln.schedule({notifications:lista.map(function(n){ return {id:n.id, title:n.title, body:n.body, schedule:{at:n.at, allowWhileIdle:true}}; })});
+      await ln.schedule({notifications:lista.map(function(n){ return {id:n.id, title:n.title, body:n.body, schedule:{at:n.at, allowWhileIdle:true}, isExactNotification:false}; })});
     }
   }catch(e){
     try{ if(window.Sentry) Sentry.captureException(e, {tags:{donde:'tallerProgramarNotificaciones'}}); }catch(_e){}
@@ -142,7 +145,7 @@ async function _tallerNotificarAhora(titulo, cuerpo){
     const perm=await ln.checkPermissions();
     if(!perm || perm.display!=='granted') return;
     const id=_tallerIdInmediata; _tallerIdInmediata = _tallerIdInmediata>=TALLER_NOTIF_ID_MAX ? 7900 : _tallerIdInmediata+1;
-    await ln.schedule({notifications:[{id:id, title:String(titulo), body:String(cuerpo), schedule:{at:new Date(Date.now()+1500), allowWhileIdle:true}}]});
+    await ln.schedule({notifications:[{id:id, title:String(titulo), body:String(cuerpo), schedule:{at:new Date(Date.now()+1500), allowWhileIdle:true}, isExactNotification:false}]});
   }catch(e){}
 }
 // Pide el permiso de notificaciones EN CONTEXTO (cuando el usuario activa los avisos),

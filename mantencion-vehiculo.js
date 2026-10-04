@@ -389,7 +389,11 @@ function _docRevisarAvisos(){
       if(e.estado==='vencido' && !d.avisadoVencido){ d.avisadoVencido=true; msg='Oye, tu '+info.l+' está '+(info.f?'VENCIDA':'VENCIDO')+' — regularíza'+(info.f?'la':'lo')+' apenas puedas.'; }
       else if(e.dias<=7 && e.dias>=0 && !d.avisado7){ d.avisado7=true; d.avisado30=true; msg='Tu '+info.l+' vence '+(e.dias===0?'hoy':('en '+e.dias+' día'+(e.dias===1?'':'s')))+' — no '+(info.f?'la':'lo')+' dejes para el final.'; }
       else if(e.dias<=30 && e.dias>7 && !d.avisado30){ d.avisado30=true; msg='Tu '+info.l+' vence en '+e.dias+' días — agenda con tiempo.'; }
-      if(msg){ h(msg); }
+      if(msg){
+        h(msg);
+        try{ if(typeof _tallerNotificarAhora==='function') _tallerNotificarAhora(info.l, msg); }
+        catch(err){ try{ if(window.Sentry) Sentry.captureException(err, {tags:{donde:'docRevisarAvisos.notificar'}}); }catch(_e){} }
+      }
     });
   }catch(e){}
 }
