@@ -94,18 +94,22 @@ function nuevoEntorno(o) {
   t('cola ocupada: dice que hay algo esperando turno, no que "no hay nada raro"', /esperando turno/.test(e.dichos[0]));
 }
 
-// Caso 4: todo limpio, en carretera -- calcula cuánto falta de verdad.
+// Caso 4 (2026-10-04, pistero-copiloto.js): todo limpio -- dice en qué km va la próxima
+// frase de compañía del viaje (ya no hay bromas por km ni por zona).
 {
-  const e = nuevoEntorno({ zonaActual: 'carretera', kmUltimaFrase: 0, us: { di: 0.5 } }); // faltan 1km de 1.5
+  globalThis.copEstado = () => ({ nivel: 'normal', kmViaje: 3.1, kmRuta: 22, proximoKm: 7.3 });
+  const e = nuevoEntorno({});
   e.api._pisteroExplicarBromas();
-  t('caso normal en carretera: reporta el cálculo real, no un genérico', /en carretera me faltan/.test(e.dichos[0]) && /km/.test(e.dichos[0]));
+  t('caso normal: dice el km real de la próxima frase', /kilómetro 7,3/.test(e.dichos[0]) && /cuatro veces por viaje/.test(e.dichos[0]));
 }
 
-// Caso 5: todo limpio, en ciudad -- usa el throttle de ciudad, no el de carretera.
+// Caso 5: modo Callado -- explica que solo avisa lo del camino.
 {
-  const e = nuevoEntorno({ zonaActual: 'ciudad', tFraseCiudad: Date.now() });
+  globalThis.copEstado = () => ({ nivel: 'callado', kmViaje: 3.1, kmRuta: 22, proximoKm: null });
+  const e = nuevoEntorno({});
   e.api._pisteroExplicarBromas();
-  t('caso normal en ciudad: usa el conteo de ciudad', /en ciudad me faltan/.test(e.dichos[0]));
+  t('Callado: lo dice y cómo cambiarlo', /modo Callado/.test(e.dichos[0]) && /Ajustes/.test(e.dichos[0]));
+  delete globalThis.copEstado;
 }
 
 console.log(`  diag-bromas.test.mjs: ${ok} OK${fail ? ', ' + fail + ' FALLAN' : ''}`);

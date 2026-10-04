@@ -6,7 +6,8 @@
 function _prevueloPistero(bgCapable){
   // Pre-vuelo MÍNIMO (feedback Inty): al iniciar el viaje, solo lo justo y necesario, SEGÚN EL MODO.
   // Nada de clima ni "¡a rodar!" (el clima queda a pedido). Bici -> revisa la bici; motorizado -> documentos.
-  var grabando = bgCapable ? ' Voy grabando tu ruta, aunque apagues la pantalla.' : ' Voy grabando tu ruta.';
+  // 2026-10-04: breve y directo (pistero-copiloto.js).
+  var grabando = ' Grabando.';
   var m = (typeof actividadTipo!=='undefined') ? actividadTipo : 'ciclismo';
   var base = (m==='moto')     ? '¿Llevas tus documentos? ¿No se te olvida nada?'
            : (m==='trekking') ? 'Revisa tu mochila y tu calzado.'

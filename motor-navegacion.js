@@ -119,8 +119,9 @@ function avisarPendienteAnticipada(lat,lon){
   // considerar que ALGO es pendiente (ver _umbralPendiente): mismo criterio, no uno nuevo.
   const gradeTxt=Math.round(Math.abs(r.grade))+'%';
   const fuerte=Math.abs(r.grade)>=_umbralPendiente()*2;
-  if(r.tipo==='subida') h('Ojo, se viene una subida'+(fuerte?' fuerte':'')+' al '+gradeTxt+' en los próximos '+dist+' metros. Baja un cambio y dosifica.');
-  else h('Prepárate: viene una bajada'+(fuerte?' pronunciada':'')+' al '+gradeTxt+' en unos '+dist+' metros. Ojo con la velocidad y los frenos.');
+  // 2026-10-04: breve y sin consejo ("baja un cambio", "ojo con los frenos" fuera). Ver pistero-copiloto.js.
+  const _txtPend=(typeof copPendienteTexto==='function') ? copPendienteTexto(r.tipo, r.grade, dist) : null;
+  if(_txtPend) h(_txtPend);
 }
 function _distPuntoASegmento(plat,plon, alat,alon, blat,blon){
   const R=6371000, tr=Math.PI/180, cl=Math.cos(plat*tr);
@@ -400,7 +401,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     }
     if(navSteps.length>0) showStepInstruction(0);
     showSpeechBubble("En ruta a "+destName.split(',')[0]);
-    h("Vamos a "+destName.split(',')[0]+". Yo te voy guiando, tú disfruta el camino.");
+    h((typeof copSalidaTexto==='function') ? copSalidaTexto(routeTotalDistance, destName) : ("Vamos a "+destName.split(',')[0]+"."));
     anunciarClimaRuta(destLat,destLon,'Clima en tu destino'); // antes de salir a pedalear
   }catch(err){ console.error(err); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'No pude calcular la ruta: parece que estás sin señal. Prueba de nuevo cuando tengas internet.' : 'No pude calcular la ruta ahora. Inténtalo otra vez.'); endNavigation(); }
 }
@@ -562,7 +563,7 @@ function checkNavigationSteps(lat,lon,speed){
 function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSteps[i]; document.getElementById('navIcon').innerText=getStepIcon(step.maneuver.type,step.maneuver.modifier); document.getElementById('navText').innerText=step.instruction; document.getElementById('navDist').innerText=formatDistance(step.distance); showAlert(step.instruction); hCorta(step.instruction); lastSpokenStep=i; /* marca el paso como YA dicho: evita que checkNavigationSteps repita el arranque ("Comienza el recorrido") por estar parado en el origen — redundancia real reportada por Inty */ }
 function getStepIcon(type,modifier){ switch(type){ case 'depart':return '🚴'; case 'arrive':return '🏁'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return '⬅️'; if(modifier&&modifier.indexOf('right')!==-1) return '➡️'; return '🔄'; case 'roundabout': case 'rotary': return '🔁'; case 'fork': return '🔱'; case 'continue': return '⬆️'; default: return '➡️'; } }
 function showAlert(text){ const a=document.getElementById('navAlert'); a.innerText=text; a.classList.add('show'); setTimeout(function(){ a.classList.remove('show'); },3000); }
-function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); try{ _pisteroMood='contento'; }catch(e){} h('¡Llegamos! Lo lograste. Que descanses esas piernas.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada();
+function showArrival(){ document.getElementById('navIcon').innerText='🏁'; document.getElementById('navText').innerText='¡Llegaste!'; document.getElementById('navDist').innerText='0 m'; showAlert('¡Llegaste!'); try{ _pisteroMood='contento'; }catch(e){} if(typeof copDecirLlegada==='function') copDecirLlegada((typeof _kmEsteViaje==='number'&&_kmEsteViaje>0)?_kmEsteViaje:totalDistance, tripStartTime?Date.now()-tripStartTime:0); else h('Llegaste.'); if(currentTrip) finishTripAuto(); else guardarRutaNavegada();
   // El resumen de viaje va SOLO acá (llegada real) -- endNavigation() también se
   // llama al cancelar con la X o si falla el cálculo de ruta, y ahí no hay nada
   // que festejar.

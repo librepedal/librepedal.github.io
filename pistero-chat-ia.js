@@ -237,6 +237,10 @@ function _anecdotasContadas(){ try{ return JSON.parse(localStorage.getItem('lp_a
 function _marcarAnecdota(t){ try{ const a=_anecdotasContadas(); if(a.indexOf(t)===-1){ a.push(t); localStorage.setItem('lp_anecdotas', JSON.stringify(a.slice(-250))); } }catch(e){} }
 async function contarAnecdotaDelLugar(clave, full, lat, lon){
   if(!clave || lugaresAnecdotaContados.has(clave)) return; // una sola vez por zona (en esta sesión), sin importar el orden en que se visiten
+  // 2026-10-04: máx. 1 dato cada 10 km de viaje (Hablador: 5). Si no toca, el lugar NO se
+  // gasta: puede contarse más adelante. Ver pistero-copiloto.js.
+  const _kmV=(typeof _kmEsteViaje==='number')?_kmEsteViaje:0;
+  if(typeof copPuedeDato==='function' && !copPuedeDato(_kmV)) return;
   lugaresAnecdotaContados.add(clave);
   if(lat==null || lon==null) return;
   try{
@@ -258,11 +262,12 @@ async function contarAnecdotaDelLugar(clave, full, lat, lon){
     if(!ext || (sj.type&&sj.type.indexOf('disambiguation')!==-1)) return;
     // 4) recortar a ~2 frases para que sea breve
     const frases=ext.split(/(?<=[.!?])\s+/);
-    let texto=frases.slice(0,2).join(' ');
-    if(texto.length>240) texto=frases[0];
+    // Breve y directo (2026-10-04): una sola frase del resumen real.
+    let texto=frases[0];
+    if(texto.length>200) return;
     _marcarAnecdota(elegido.title);
-    const intros=['Dato de por aquí:','Fíjate en esto:','Un dato del lugar:','Para que sepas:','Mira qué interesante:'];
-    hAmbiente(intros[Math.floor(Math.random()*intros.length)]+' '+texto);
+    if(typeof copMarcarDato==='function') copMarcarDato(_kmV);
+    hAmbiente('Dato de por aquí: '+texto);
   }catch(e){}
 }
 // "Cuéntame otra historia de este lugar" / mitos / leyendas / nombre antiguo,

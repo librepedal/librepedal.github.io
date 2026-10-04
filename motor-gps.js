@@ -191,48 +191,19 @@ function toggleSaver(){
     _lpWLoff();
   }
 }
-// Bromas/comentarios del camino. Se llama en AMBOS modos: GPS libre (ug) y navegación a destino (_navPosUpdate).
-// Si Pistero está ocupado, NO gasta la broma: se reintenta en el próximo fix (no se pierden).
-// kmRutaTotal: SOLO lo manda quien navega a un destino trazado (funciones-mapa-viajes.js
-// pasa routeTotalDistance, conocido desde que OSRM traza la ruta A->B). En GPS libre no
-// se conoce de antemano cuánto se va a andar, así que se omite y el intervalo queda fijo.
-// Por qué existe (2026-09-03, reporte de Inty: "no quiero que esté bromeando todo el
-// tiempo... hay que considerar la cantidad de frases según los km que se recorran"): con
-// el intervalo fijo de 1.5 km, una ruta de 120 km (caso real de un tester) permitía hasta
-// 80 disparos de broma en carretera -- se sentía como charla constante. BROMAS_OBJETIVO_RUTA
-// fija cuántas bromas "de ritmo" tiene sentido para una ruta ENTERA, sin importar qué tan
-// larga sea, y de ahí se deriva el espaciado real: rutas cortas ya quedaban bien con el
-// mínimo de 1.5 km (nunca da tiempo a exagerar), rutas largas ahora se espacian de verdad.
-const BROMAS_OBJETIVO_RUTA=10;
+// Compañía en ruta. Se llama en AMBOS modos: GPS libre (ug) y navegación a destino (_navPosUpdate).
+// 2026-10-04 (Inty: "breve y directo"; "la precaución vial es invasiva y se equivoca"): ya no
+// hay bromas cada X km, banco de ciudad (confundía pueblos con ciudad), frases de velocidad
+// ni hito cada 10 km. Solo las frases de compañía de pistero-copiloto.js: 4 por viaje con
+// salida y llegada (más en viajes de +60 km), según "Pistero habla". kmRutaTotal: solo lo
+// manda la navegación a un destino (routeTotalDistance); en GPS libre no se conoce.
+// Si Pistero está ocupado, NO se gasta la frase: se reintenta en el próximo punto.
 function bromasDelCamino(sp, kmRutaTotal){
   if(!vozActiva) return;
   if(vozOcupada()||vozCola.length) return;
-  const _cm=(typeof _charlaMult==='function')?_charlaMult():1; // "cuánto habla Pistero" (Ajustes): escala la cadencia
-  const _kmEntreFrases=(typeof kmRutaTotal==='number' && kmRutaTotal>0) ? Math.max(1.5, kmRutaTotal/BROMAS_OBJETIVO_RUTA) : 1.5;
-  if(sp===0){
-    if(Date.now()-lastFraseParadoTime>=1200000*_cm){ const _fr=obtenerFraseUnica('parado'); if(_fr){ h(_fr); lastFraseParadoTime=Date.now(); } } // parado
-  } else if(zonaActual==='ciudad'){
-    if(Date.now()-tFraseCiudad>=240000*_cm){ const _fr=(Math.random()<0.25)?obtenerFraseUnica('profunda'):obtenerFraseUnica('ciudad'); if(_fr){ h(_fr); tFraseCiudad=Date.now(); } } // ciudad
-  } else {
-    if(us.di-kmUltimaFrase>=_kmEntreFrases*_cm){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera
-  }
-  /* Auditoria 2026-07-20: el banco `motivacional` estaba escrito y traducido a 4 paises
-     (cl/ar/mx/es/co) y NADIE lo pedia nunca -> frases que el usuario jamas iba a oir.
-     Se conecta al hito de cada 10 km, que hoy pasaba en silencio: cruzar una decena es
-     logro y merece que el Pistero lo note. Va fuera del if/else para que valga en ciudad
-     y en carretera, y con su propio contador para no competir con las frases de ritmo. */
-  /* Bug encontrado de paso: kmUltimaFrase NO se reseteaba en ningun lado. Tras un viaje
-     largo quedaba alto y en el viaje siguiente la condicion (us.di - kmUltimaFrase >= 1.5)
-     era falsa durante kilometros: el Pistero se quedaba mudo al empezar de nuevo. En vez
-     de enganchar cada punto de inicio (hay varios: startQuickTrip, startNavigation,
-     saveAndStartTrip...), se detecta solo el reinicio viendo que la distancia retroceda. */
-  if(us.di+0.05 < kmUltimaFrase || us.di < _ultimoHitoKm*10){ kmUltimaFrase=0; _ultimoHitoKm=0; }
-  const _hito=Math.floor(us.di/10);
-  if(_hito>0 && _hito>_ultimoHitoKm){
-    _ultimoHitoKm=_hito;
-    const _fh=obtenerFraseUnica('motivacional');
-    if(_fh) h((_hito*10)+' kilómetros. '+_fh);
-  }
+  if(typeof copCompaniaEnRuta!=='function') return;
+  const _fr=copCompaniaEnRuta((typeof _kmEsteViaje==='number')?_kmEsteViaje:0, kmRutaTotal);
+  if(_fr) h(_fr);
 }
 /* ===== PENDIENTE EN VIVO: usa la altitud del GPS (misma fuente del perfil de
    elevación) para detectar que vas subiendo o bajando, y comentarlo. El buffer
@@ -285,8 +256,9 @@ function comentarPendiente(buffer, sp){
   if(zonaNueva===zonaPendienteActual) return;
   zonaPendienteActual=zonaNueva;
   if(!vozActiva || vozOcupada() || vozCola.length) return;
-  if(zonaNueva==='subida' && Date.now()-tFraseSubida>=180000){ const _fr=obtenerFraseUnica('subida'); if(_fr){ h(_fr); tFraseSubida=Date.now(); } }
-  else if(zonaNueva==='bajada' && Date.now()-tFraseBajada>=180000){ const _fr=obtenerFraseUnica('bajada'); if(_fr){ h(_fr); tFraseBajada=Date.now(); } }
+  // Sin ruta trazada no se sabe cuánto dura la pendiente: aviso corto, sin consejo (pistero-copiloto.js).
+  // La bajada no se anuncia aquí: sin perfil no se sabe si es larga, y "ojo con los frenos" era sermón.
+  if(zonaNueva==='subida' && Date.now()-tFraseSubida>=180000){ h('Empieza una subida.'); tFraseSubida=Date.now(); }
 }
 // Antes esto se descartaba en silencio: con mala señal (dentro de un edificio, entre
 // cerros, día nublado) la velocidad se quedaba pegada sin ninguna explicación. Ahora

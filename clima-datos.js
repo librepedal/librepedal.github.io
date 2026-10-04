@@ -132,19 +132,19 @@ function _cambioClimaRelevante(base, actual){
   const tempB=n(base.temp), tempA=n(actual.temp);
   // Tormenta: se avisa siempre, sin comparar con nada. Es la única que puede costar caro.
   if(n(actual.codigo)!==null && actual.codigo>=95)
-    return {tipo:'tormenta', severidad:3, texto:'Ojo, se está armando tormenta por acá. Busca dónde parar, esto no es para seguir pedaleando.'};
+    return {tipo:'tormenta', severidad:3, texto:'Tormenta cerca. Busca dónde parar.'};
   if(lluviaB!==null && lluviaA!==null){
     if(lluviaA-lluviaB>=30 && lluviaA>=50)
-      return {tipo:'empeora', severidad:2, texto:'Cambió el pronóstico: ahora dan '+Math.round(lluviaA)+' por ciento de lluvia, bastante más que hace un rato. Si puedes, busca techo.'};
+      return {tipo:'empeora', severidad:2, texto:'Sube la lluvia: '+Math.round(lluviaA)+' por ciento.'};
     if(lluviaB-lluviaA>=30 && lluviaA<30)
-      return {tipo:'mejora', severidad:1, texto:'Buenas noticias: se despejó el pronóstico, la lluvia bajó a '+Math.round(lluviaA)+' por ciento. Sigue tranquilo.'};
+      return {tipo:'mejora', severidad:1, texto:'Baja la lluvia: '+Math.round(lluviaA)+' por ciento.'};
   }
   // El viento en contra cansa más que la lluvia y casi ninguna app lo avisa.
   if(vientoB!==null && vientoA!==null && vientoA-vientoB>=15 && vientoA>=25)
-    return {tipo:'viento', severidad:2, texto:'Se levantó viento: van '+Math.round(vientoA)+' kilómetros por hora. Si lo tienes en contra, baja un cambio y no pelees con él.'};
+    return {tipo:'viento', severidad:2, texto:'Se levantó viento: '+Math.round(vientoA)+' kilómetros por hora.'};
   // Mojado y con frío es donde la gente se complica de verdad.
   if(tempB!==null && tempA!==null && tempB-tempA>=5)
-    return {tipo:'frio', severidad:2, texto:'Bajó la temperatura '+Math.round(tempB-tempA)+' grados, van '+Math.round(tempA)+'. Si andas mojado, abrígate antes de la próxima bajada.'};
+    return {tipo:'frio', severidad:2, texto:'Bajó la temperatura: '+Math.round(tempA)+' grados.'};
   return null;
 }
 /* Vigila el clima durante todo el viaje, no solo al principio. La primera vez guarda la
@@ -170,7 +170,7 @@ function _avisarVientoEnContra(rumbo){
   if(ahora-_vientoUltimoAviso<VIENTO_MIN_ENTRE_AVISOS) return;
   if(_diferenciaAngular(_climaBase.direccion, rumbo)>VIENTO_ANGULO_CONTRA) return;
   _vientoUltimoAviso=ahora;
-  h('Viento en contra, como '+Math.round(_climaBase.viento)+' kilómetros por hora. Vas a sentir más resistencia de lo normal.');
+  h('Viento en contra, '+Math.round(_climaBase.viento)+' kilómetros por hora.');
 }
 async function vigilarClima(lat,lon){
   // vozActiva solo bloquea el AVISO hablado — si el modulo de efectos visuales de clima

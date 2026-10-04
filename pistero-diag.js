@@ -12,8 +12,6 @@
 function pisteroDiagBromas(){
   const _cm=(typeof _charlaMult==='function')?_charlaMult():1;
   const ahora=Date.now();
-  const minFalta=function(desde, umbralMs){ const f=(umbralMs-(ahora-(desde||0)))/60000; return f<=0?'YA (debería sonar en el próximo fix de GPS)':f.toFixed(1)+' min'; };
-  const kmFalta=function(){ const u=1.5*_cm; const f=u-((typeof us!=='undefined'?us.di:0)-(typeof kmUltimaFrase!=='undefined'?kmUltimaFrase:0)); return f<=0?'YA (debería sonar en el próximo fix de GPS)':f.toFixed(2)+' km'; };
 
   const estado={
     config:{
@@ -29,19 +27,16 @@ function pisteroDiagBromas(){
       prioridadSonando: typeof vozPrioActual!=='undefined'?vozPrioActual:'(no definida)',
       nota: (typeof vozOcupada==='function'&&(vozOcupada()||(typeof vozCola!=='undefined'&&vozCola.length))) ? 'AHORA MISMO bromasDelCamino() se está descartando por esto (se reintenta solo en el próximo fix de GPS, no es permanente)' : 'libre ahora mismo, no está bloqueando'
     },
-    zonaYFaltaParaLaProximaBroma:{
-      zonaActual: typeof zonaActual!=='undefined'?zonaActual:'(no definida)',
-      siEstasParado: minFalta(typeof lastFraseParadoTime!=='undefined'?lastFraseParadoTime:0, 1200000*_cm),
-      siEstasEnCiudad: minFalta(typeof tFraseCiudad!=='undefined'?tFraseCiudad:0, 240000*_cm),
-      siEstasEnCarretera: kmFalta()
-    },
+    // 2026-10-04: ya no hay bromas por km ni por zona; la compañía va en puntos fijos del
+    // viaje (pistero-copiloto.js). Esto dice cuál es el próximo.
+    compania: (typeof copEstado==='function') ? copEstado() : '(pistero-copiloto.js no cargó)',
     categoriasAprendidas: (window.PisteroMemoria && typeof window.PisteroMemoria.debugCategorias==='function') ? window.PisteroMemoria.debugCategorias() : '(pistero-memoria.js no cargó)'
   };
 
   console.log('%c=== Diagnóstico bromas de Pistero ===', 'font-weight:bold');
   console.log('Config:', estado.config);
   console.log('Cola de voz:', estado.colaDeVoz);
-  console.log('Falta para la próxima (según dónde estés ahora):', estado.zonaYFaltaParaLaProximaBroma);
+  console.log('Compañía en este viaje:', estado.compania);
   console.log('Categorías con muestra suficiente (5+ veces ofrecidas) y si el sistema las retiró solo por callarlas seguido (ver pistero-memoria.js):', estado.categoriasAprendidas);
   return estado;
 }
@@ -72,8 +67,9 @@ function _pisteroExplicarBromas(){
     h('Ahora mismo tengo algo más sonando o esperando turno, por eso no te he tirado ninguna talla todavía. Apenas se libere, retomo.');
     return;
   }
-  const f=d.zonaYFaltaParaLaProximaBroma;
-  const cuando = (f.zonaActual==='ciudad') ? ('en ciudad me faltan '+f.siEstasEnCiudad) : ('en carretera me faltan '+f.siEstasEnCarretera);
-  h('No hay nada raro: '+cuando+', o '+f.siEstasParado+' si te detienes. Voy espaciando los comentarios para no marearte a cada rato, pero ahí sigo.');
+  const c=d.compania;
+  if(c && c.nivel==='callado'){ h('Estoy en modo Callado: solo aviso lo del camino y la llegada. Cámbialo en Ajustes si quieres compañía.'); return; }
+  const prox=(c && c.proximoKm!=null) ? (' La próxima va en el kilómetro '+String(c.proximoKm).replace('.',',')+' del viaje.') : '';
+  h('No hay nada raro. Hablo poco a propósito: cuatro veces por viaje, más los avisos del camino.'+prox);
 }
 window._pisteroExplicarBromas = _pisteroExplicarBromas;

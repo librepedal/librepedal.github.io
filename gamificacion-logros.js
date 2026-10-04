@@ -132,6 +132,8 @@ function _mostrarResumenViaje(){
   var duracionMs=tripStartTime?Math.max(0,Date.now()-tripStartTime):0;
   var minutos=Math.max(0,Math.round(duracionMs/60000));
   var velMedia=duracionMs>0?(kmViaje/(duracionMs/3600000)):0;
+  // Llegada de Pistero (pistero-copiloto.js): una sola vez aunque la navegación ya la haya dicho.
+  if(typeof copDecirLlegada==='function') copDecirLlegada(kmViaje, duracionMs);
   var medallasHTML=logros.map(function(l,i){
     return '<div class="rv-medalla"><div class="rv-medalla-ic-wrap" style="--rv-d:'+(i*180)+'ms"><span class="rv-medalla-ic">'+l.e+'</span></div><div class="rv-medalla-nombre">'+escapeHTML(l.t)+'</div></div>';
   }).join('');
