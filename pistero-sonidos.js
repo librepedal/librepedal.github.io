@@ -20,7 +20,10 @@ function _psOut(){
   var ac=_psAC();
   if(_psSalida && _psSalida.context===ac) return _psSalida;
   var comp=ac.createDynamicsCompressor(); comp.threshold.value=-22; comp.knee.value=20; comp.ratio.value=3; comp.attack.value=.005; comp.release.value=.25;
-  var g=ac.createGain(); g.gain.value=.35; comp.connect(g); g.connect(ac.destination); // 2026-10-04 Inty: "bajarle un poco el volumen" (.55 → .35)
+  // 2026-10-04 Inty: primero "bajarle un poco" (.55 → .35), después "muy fuerte, muy invasivo" (→ .14)
+  // + paso bajo a 4,5 kHz: lo agudo y chillón es lo que más molesta al oído.
+  var suave=ac.createBiquadFilter(); suave.type='lowpass'; suave.frequency.value=4500; suave.Q.value=.5;
+  var g=ac.createGain(); g.gain.value=.14; comp.connect(suave); suave.connect(g); g.connect(ac.destination);
   if(typeof _reverb==='function'){ try{ var s=ac.createGain(); s.gain.value=.08; comp.connect(s); s.connect(_reverb()); }catch(e){ console.warn('[sonidos] sin reverb', e); } }
   _psSalida=comp; return comp;
 }
@@ -73,9 +76,9 @@ var PS={
   luces:function(t){ _psRuido(t,.02,{ff:3000,q:3,v:.22,forma:_psDecae}); _psTono(1320,t+.04,.16,{v:.06}); },
   papel:function(t){ for(var i=0;i<6;i++) _psRuido(t+i*.05,.04,{filtro:'highpass',ff:2500+Math.random()*1500,v:.07,forma:_psDecae}); },
   tela:function(t){ _psRuido(t,.32,{ff:900,fa:2600,q:.9,v:.1,forma:_psCampana}); },
-  perro:function(t){ _psMuestra('perro',t,1,.8,PS.perroSint); },
-  perroNegro:function(t){ _psMuestra('perro',t,.82,.85,PS.perroSint); },
-  gato:function(t){ _psMuestra('gato',t,1,.7,PS.gatoSint); },
+  perro:function(t){ _psMuestra('perro',t,1,.5,PS.perroSint); },
+  perroNegro:function(t){ _psMuestra('perro',t,.82,.55,PS.perroSint); },
+  gato:function(t){ _psMuestra('gato',t,1,.45,PS.gatoSint); },
   perroSint:function(t){ [0,.24].forEach(function(dt){ _psTono(560,t+dt,.16,{tipo:'sawtooth',a:300,en:.14,v:.16,filtro:'bandpass',ff:1000,q:1.6}); _psRuido(t+dt,.05,{ff:1400,v:.06,forma:_psDecae}); }); },
   gatoSint:function(t){ var ac=_psAC(), os=ac.createOscillator(), bq=ac.createBiquadFilter(), g=ac.createGain();
     os.type='sawtooth'; os.frequency.setValueAtTime(520,t); os.frequency.linearRampToValueAtTime(820,t+.22); os.frequency.linearRampToValueAtTime(470,t+.6);
@@ -123,10 +126,11 @@ function pistSonidoViaje(veh){
     if(veh==='moto'||veh==='auto'){
       var ac=_psAC(), os=ac.createOscillator(), bq=ac.createBiquadFilter(), g=ac.createGain(), lfo=ac.createOscillator(), lg=ac.createGain(), t=ac.currentTime;
       os.type='sawtooth'; os.frequency.value=veh==='moto'?78:58; lfo.frequency.value=veh==='moto'?24:16; lg.gain.value=6; lfo.connect(lg); lg.connect(os.frequency);
-      bq.type='lowpass'; bq.frequency.value=veh==='moto'?700:450; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.05,t+.6);
+      bq.type='lowpass'; bq.frequency.value=veh==='moto'?700:450; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.03,t+.6); g.gain.setValueAtTime(.03,t+2.4); g.gain.exponentialRampToValueAtTime(.0001,t+3.6);
       os.connect(bq); bq.connect(g); g.connect(_psOut()); os.start(t); lfo.start(t);
-      parar=function(){ try{ var t2=ac.currentTime; g.gain.cancelScheduledValues(t2); g.gain.setValueAtTime(g.gain.value,t2); g.gain.exponentialRampToValueAtTime(.0001,t2+.8); os.stop(t2+.9); lfo.stop(t2+.9); }catch(e){ console.warn('[sonidos] motor', e); } };
-    } else if(typeof cadenaVel==='function'){ cadenaVel(.45); parar=function(){ if(typeof cadenaCoast==='function') cadenaCoast(); }; }
+      os.stop(t+3.7); lfo.stop(t+3.7);
+      parar=function(){ try{ var t2=ac.currentTime; if(t2<t+3.6){ g.gain.cancelScheduledValues(t2); g.gain.setValueAtTime(Math.max(.0001,g.gain.value),t2); g.gain.exponentialRampToValueAtTime(.0001,t2+.5); } }catch(e){ console.warn('[sonidos] motor', e); } };
+    } else if(typeof cadenaVel==='function'){ cadenaVel(.25); var tc=setTimeout(function(){ if(typeof cadenaCoast==='function') cadenaCoast(); },2500); parar=function(){ clearTimeout(tc); if(typeof cadenaCoast==='function') cadenaCoast(); }; }
   }catch(e){ console.warn('[sonidos] ambiente del viaje', e); }
   // momentos del viaje: rápido = viento · cima = fanfarria · llegada = timbre (o bocina en auto/moto)
   function momento(e){ if(!e) return;
