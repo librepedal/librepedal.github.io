@@ -80,3 +80,18 @@ Pendiente:
 3. Cobro real: regla Firestore para `armario`, worker de compras y Google Play Billing (mínimo Chile $200 → $290 cabe).
 4. Lista de precios completa: `COORDINACION-IA/LISTA-PRECIOS-PISTERO-2026-10-04.md`. Plan por etapas: `PLAN-TALLER-PISTERO-2026-10-04.md`
    (siguiente: etapa 3 = temporadas Halloween/Navidad 2026, tándem, carro con perro, furgón camper).
+
+## ➕ Sobrevuelo en primera persona (integrado a `feature/pistero-v2-armario`, 3 commits: 9ad0844, af0696c, 70520b1)
+Pedidos de Inty: cámara en primera persona que sigue a Pistero, que vaya de espaldas hacia donde va la ruta,
+que gire la cabeza y reaccione a subidas/bajadas/velocidad, y que todo se mueva orgánico y fluido.
+- **Si tienes la rama abierta en otra carpeta (`librepedal-bici`): haz `git pull --ff-only`** — llegó por avance rápido.
+- `sobrevuelo-viaje.js`: cámara (zoom de calle, inclinación 58°, gira con el rumbo mirando ~70 m adelante; se aleja
+  rápido y se acerca subiendo), ritmo según la velocidad real del tramo, frena/acelera suave en cada globo,
+  motor de **reacciones** (`reaccionar()`: ¡A subir!, ¡Ufff!, secarse el sudor, ¡Listo!, ¡Wiii!, ¡Volando!,
+  ¡Ojo, curva!, ♪) con espera mínima y "pendientes". `_sbvAnalizar` devuelve además `vel` y `pend` por punto.
+  Con "reducir movimiento" del sistema: vista general de antes.
+- `pistero-bici-atras.js` (nuevo): Pistero de espaldas (bicis, moto, auto), `_pistNucaSVG` (nuca con su casco y
+  peinado), `_pistGestoEsfuerzo` (gesto+postura por pendiente/velocidad) y `_pistAtrasRig` (esqueleto animado
+  cuadro a cuadro: pedalada con inercia, cadera que se mece, balanceo de pie, brazos de goma, cabeza que acompaña).
+  Reusa `_BICI_ROPA`, `_BICI_TRAJE`, `_bPersona`, `_biciOpts` de `pistero-bici.js` **sin tocarlo**.
+- Pendiente: probar con una ruta REAL en el teléfono; moto/auto no tienen esqueleto (dibujo fijo).
