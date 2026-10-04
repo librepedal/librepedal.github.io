@@ -22,7 +22,7 @@ p{color:#9fb3c8;font-size:.8rem;margin:0 0 10px;max-width:780px}
 </style></head><body>
 <h1>Taller de Pistero — catálogo inicial (mockup para aprobar)</h1>
 <p>Todo se compra por separado y se combina con todo: diseño del cuadro, acabado, neumáticos, aros, carga, extras y traje. Precios con la misma escala de la tienda del casco. Seguridad (luces) y quitar cosas: siempre gratis.</p>
-<div class="leyenda"><span style="--k:#475569">Común · Gratis</span><span style="--k:#3b82f6">Raro · $490</span><span style="--k:#a855f7">Épico · $990</span><span style="--k:#f59e0b">Legendario · $1.990</span></div>
+<div class="leyenda"><span style="--k:#475569">Común · Gratis</span><span style="--k:#3b82f6">Raro · $290</span><span style="--k:#a855f7">Épico · $590</span><span style="--k:#f59e0b">Legendario · $990</span></div>
 <div id="out"></div>
 <script>var cu=null;</script>
 <script src="../../pistero-personalizacion-datos.js"></script>
@@ -32,7 +32,7 @@ p{color:#9fb3c8;font-size:.8rem;margin:0 0 10px;max-width:780px}
 <script>
 PIST_BICI.splice(2,0,{id:'cicloviaje',n:'Cicloviaje'}); PIST_BICI.push({id:'moto',n:'Moto'},{id:'auto',n:'Auto'});
 var out=document.getElementById('out');
-var RZ={c:['Común','Gratis'],r:['Raro','$490'],e:['Épico','$990'],l:['Legendario','$1.990']};
+var RZ={c:['Común','Gratis'],r:['Raro','$290'],e:['Épico','$590'],l:['Legendario','$990']};
 function card(svg,n,t,sub){ t=t||'c'; return '<div class="c t-'+t+'"><span class="rz">'+RZ[t][0]+'</span>'+svg+'<b>'+n+'</b>'+(sub?'<i>'+sub+'</i>':'')+'<span class="pr">'+RZ[t][1]+'</span></div>'; }
 function sec(t,d,html,cls){ out.insertAdjacentHTML('beforeend','<h2>'+t+'</h2>'+(d?'<p>'+d+'</p>':'')+'<div class="'+(cls||'fila')+'">'+html+'</div>'); }
 var BASE={casco:'azul',diseno:'franja',disenoCol:'#fc4c02',lentes:'escudo',lentesCol:'#111827',biciTipo:'ruta',biciCol:'#2563eb'};

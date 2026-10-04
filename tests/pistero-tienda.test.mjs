@@ -39,8 +39,8 @@ for (const g of ['luzroja', 'reflectante', 'visera']) ok(J(`_ptTier('gadget','${
 // 3) precios razonables y formateados
 const R = J('PIST_RAREZA');
 ok(R.c.clp === 0 && R.r.clp > 0 && R.r.clp < R.e.clp && R.e.clp < R.l.clp, 'precios crecen con la rareza');
-ok(R.l.clp <= 2990, 'lo más caro no pasa de $2.990');
-ok(J("_ptPrecio('l')") === '$1.990' && J("_ptPrecio('c')") === 'Gratis', 'precio con separador de miles chileno');
+ok(Object.keys(R).every((k) => R[k].clp <= 1000), 'regla de Inty: ningún precio pasa de $1.000');
+ok(J("_ptPrecio('l')") === '$990' && J("_ptPrecio('c')") === 'Gratis', 'precio en pesos y Gratis para lo común');
 
 // 4) con el cobro activo: probar no guarda, y nunca se guarda lo que no se tiene
 J('TIENDA_COBRO_ACTIVO=true');

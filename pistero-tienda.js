@@ -18,11 +18,12 @@
    us.premium -- nunca el cliente). */
 
 var TIENDA_COBRO_ACTIVO=false;
+// Regla de Inty (2026-10-04): NINGÚN precio pasa de $1.000 (packs incluidos).
 var PIST_RAREZA={
   c:{n:'Común',clp:0},
-  r:{n:'Raro',clp:490},
-  e:{n:'Épico',clp:990},
-  l:{n:'Legendario',clp:1990}
+  r:{n:'Raro',clp:290},
+  e:{n:'Épico',clp:590},
+  l:{n:'Legendario',clp:990}
 };
 // Rareza por pieza; lo que no aparece es Común (gratis).
 var PIST_TIER={

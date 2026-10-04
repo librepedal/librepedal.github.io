@@ -49,7 +49,7 @@ var PIST_AROS=[{id:'',n:'Plata'},{id:'negro',n:'Negro'},{id:'cuadro',n:'Color de
 var PIST_CARGA=[{id:'',n:'La de fábrica'},{id:'nada',n:'Sin carga'},{id:'canasto',n:'Canasto'},{id:'alforjas',n:'Alforjas de viaje'},{id:'bikepacking',n:'Bikepacking'},{id:'caja',n:'Caja de reparto'}];
 var PIST_EXTRA=[{id:'',n:'El de fábrica'},{id:'nada',n:'Nada'},{id:'luces',n:'Luces'},{id:'banderin',n:'Banderín'},{id:'patito',n:'Patito con timbre'},{id:'dorsal',n:'Dorsal de carrera'}];
 var PIST_TRAJE=[{id:'',n:'Clásico'},{id:'equipo',n:'Equipo'},{id:'retro',n:'Retro de lana'},{id:'enduro',n:'Enduro'},{id:'chile',n:'Selección Chile'},{id:'montana',n:'Rey de la montaña'},{id:'lider',n:'Líder amarillo'},{id:'campeon',n:'Campeón mundial'}];
-// rareza propuesta (misma escala de pistero-tienda.js: c gratis · r $490 · e $990 · l $1.990)
+// rareza propuesta (misma escala de pistero-tienda.js: c gratis · r $290 · e $590 · l $990; nada pasa de $1.000)
 // Seguridad (luces) y quitar cosas: siempre gratis.
 var PIST_TIER_BICI={
   biciSkin:{degrade:'r',retro:'r',chile:'r',camo:'e',llamas:'e',galaxia:'l'},

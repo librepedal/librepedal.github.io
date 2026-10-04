@@ -29,7 +29,7 @@ Galería visual de todo (mismo código de la app): `npx serve .` → `/disenos-u
 - Se guarda en `localStorage lp_pist_<cu>` y en `users/{cu}.pistOpts` (mapa completo) + campos sueltos `pist*` para clientes viejos.
 - `_pistNormal()` (armario) **acepta solo valores del catálogo o `#rrggbb`**: `pistOpts` de otros usuarios se inserta tal cual en el SVG → es la barrera anti-inyección. Hay test para eso.
 - Tienda: `TIENDA_COBRO_ACTIVO=false` → todo usable + aviso "Lanzamiento". Con `true`, lo no-común solo se equipa si está en `us.armario` (lista `'clave:id'`), que debe escribir **solo** un worker de compras (como `us.premium`); `_ptLimpiar()` en `_pistGuardar` lo garantiza en el cliente. **Falta**: regla Firestore que impida al cliente escribir `armario` (copiar el patrón `premiumSinTocar()`), Google Play Billing en Android (obligatorio para bienes digitales, comisión 15%) y el worker.
-- Precios propuestos (CLP): Común gratis · Raro $490 · Épico $990 · Legendario $1.990. Identidad (piel, ojos, peinados, pelo natural, pestañas, labial), seguridad (luz, reflectante, visera) y colores libres: **siempre gratis**. Rarezas en `PIST_TIER` (pistero-tienda.js). **Inty no ha confirmado precios.**
+- Precios propuestos (CLP): Común gratis · Raro $290 · Épico $590 · Legendario $990 (regla de Inty: nada pasa de $1.000). Identidad (piel, ojos, peinados, pelo natural, pestañas, labial), seguridad (luz, reflectante, visera) y colores libres: **siempre gratis**. Rarezas en `PIST_TIER` (pistero-tienda.js). **Inty no ha confirmado precios.**
 
 ## Tests nuevos
 `pistero-armario.test.mjs` (1377), `pistero-tienda.test.mjs` (168), `sobrevuelo-bici.test.mjs` (31). Corren el código real en `vm`.

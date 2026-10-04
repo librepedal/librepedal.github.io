@@ -140,8 +140,8 @@ Los ítems de temporada vuelven cada año. Eso no apura a nadie y sirve de excus
 
 1. **Gratis siempre:** identidad (cara, piel, pelo), inclusión, seguridad (luces, reflectante, chaleco) y colores libres.
 2. **Logros (no se compran):** por kilómetros, rutas, retos y rachas. Por ejemplo "1.000 km → aros dorados", "10 rodadas → banderín de tu comuna". Sirve para ganar constancia y prestigio, no para pagar.
-3. **Compra suelta:** Raro $490 · Épico $990 · Legendario $1.990.
-4. **Packs temáticos con descuento:** cada combo de la página como pack, por ejemplo "Selección Chile" o "Aventura". Precio: suma de las piezas −30 %.
+3. **Compra suelta:** Raro $290 · Épico $590 · Legendario $990. **Regla de Inty: nada pasa de $1.000**, packs incluidos.
+4. **Packs temáticos:** cada combo de la página como pack ("Selección Chile", "Aventura"…), entre $590 y $990 según cuánto traiga, siempre más barato que comprar las piezas sueltas y nunca sobre $1.000.
 5. **Premium (suscripción en librepedal.cl):** incluye 1 pack al mes o un % del Taller.
 6. **Lo que NO haremos:** cajas sorpresa ni cofres al azar (es casi apuesta y es mal visto con niños), moneda virtual confusa y "oferta que vence en 10 minutos". El precio siempre se ve en pesos.
 
@@ -172,6 +172,6 @@ Con el plan completo hay del orden de **miles de millones**: cada usuario puede 
 
 ## Decisiones pendientes de Inty
 1. ¿Aprueba las capas y las etapas?
-2. Precios (base Raro $490 · Épico $990 · Legendario $1.990) y descuento de packs (−30 %).
+2. Precios: Raro $290 · Épico $590 · Legendario $990; packs $590–$990 (tope $1.000 ✓ decidido por Inty).
 3. ¿Premium incluye piezas del Taller? ¿Cuánto?
 4. ¿Qué entra primero de la etapa 1? (recomendación: inclusión + perro + gravel + bicolor)
