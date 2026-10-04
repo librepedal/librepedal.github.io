@@ -1,0 +1,61 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Taller de Pistero</title>
+<style>
+body{margin:0;background:#0b1220;color:#e5e7eb;font-family:system-ui,sans-serif;padding:16px}
+h1{font-size:1.35rem;margin:0 0 4px}h2{font-size:1rem;color:#fc4c02;margin:26px 0 4px}
+p{color:#9fb3c8;font-size:.8rem;margin:0 0 10px;max-width:780px}
+.fila{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.c{position:relative;background:#141f33;border:2px solid #334155;border-radius:14px;padding:6px 6px 8px;text-align:center}
+.c svg{width:100%;height:auto;display:block}
+.c b{display:block;font-size:.74rem;font-weight:600;color:#e2e8f0;margin-top:2px}
+.c .pr{display:inline-block;margin-top:4px;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#1e293b;color:#cbd5e1}
+.c .rz{position:absolute;top:6px;left:8px;font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.t-c{border-color:#475569}.t-c .rz{color:#94a3b8}
+.t-r{border-color:#3b82f6}.t-r .rz{color:#60a5fa}.t-r .pr{background:#1e3a8a;color:#dbeafe}
+.t-e{border-color:#a855f7}.t-e .rz{color:#c084fc}.t-e .pr{background:#581c87;color:#f3e8ff}
+.t-l{border-color:#f59e0b;box-shadow:0 0 14px rgba(245,158,11,.35)}.t-l .rz{color:#fbbf24}.t-l .pr{background:#92400e;color:#fef3c7}
+.combo{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.combo .c i{display:block;font-style:normal;font-size:.66rem;color:#8ea3bd;margin-top:2px}
+.leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:.72rem;color:#cbd5e1;margin:8px 0 4px}
+.leyenda span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--k)}
+.cascos{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+</style></head><body>
+<h1>Taller de Pistero — catálogo inicial (mockup para aprobar)</h1>
+<p>Todo se compra por separado y se combina con todo: diseño del cuadro, acabado, neumáticos, aros, carga, extras y traje. Precios con la misma escala de la tienda del casco. Seguridad (luces) y quitar cosas: siempre gratis.</p>
+<div class="leyenda"><span style="--k:#475569">Común · Gratis</span><span style="--k:#3b82f6">Raro · $490</span><span style="--k:#a855f7">Épico · $990</span><span style="--k:#f59e0b">Legendario · $1.990</span></div>
+<div id="out"></div>
+<script>var cu=null;</script>
+<script src="../../pistero-personalizacion-datos.js"></script>
+<script src="../../pistero-armario.js"></script>
+<script src="../../pistero-apariencia.js"></script>
+<script src="bici-v2.js"></script>
+<script>
+PIST_BICI.splice(2,0,{id:'cicloviaje',n:'Cicloviaje'}); PIST_BICI.push({id:'moto',n:'Moto'},{id:'auto',n:'Auto'});
+var out=document.getElementById('out');
+var RZ={c:['Común','Gratis'],r:['Raro','$490'],e:['Épico','$990'],l:['Legendario','$1.990']};
+function card(svg,n,t,sub){ t=t||'c'; return '<div class="c t-'+t+'"><span class="rz">'+RZ[t][0]+'</span>'+svg+'<b>'+n+'</b>'+(sub?'<i>'+sub+'</i>':'')+'<span class="pr">'+RZ[t][1]+'</span></div>'; }
+function sec(t,d,html,cls){ out.insertAdjacentHTML('beforeend','<h2>'+t+'</h2>'+(d?'<p>'+d+'</p>':'')+'<div class="'+(cls||'fila')+'">'+html+'</div>'); }
+var BASE={casco:'azul',diseno:'franja',disenoCol:'#fc4c02',lentes:'escudo',lentesCol:'#111827',biciTipo:'ruta',biciCol:'#2563eb'};
+function V(extra,cfg){ return _pistBiciSVG(Object.assign({},BASE,extra),Object.assign({pedal:false,expr:'contento'},cfg||{})); }
+function tier(k,id){ return (PIST_TIER_BICI[k]&&PIST_TIER_BICI[k][id])||'c'; }
+function cat(k,lista,extra,filtro){ return lista.filter(function(it){ return filtro?filtro(it):true; }).map(function(it){ var o={}; o[k]=it.id; return card(V(Object.assign({},extra||{},o)),it.n,tier(k,it.id)); }).join(''); }
+
+sec('Diseños del cuadro','El degradé combina el color de la bici con el de tu polera.',cat('biciSkin',PIST_BICI_SKIN));
+sec('Acabado del cuadro','',cat('biciAcab',PIST_BICI_ACAB,{biciCol:'#dc2626'}));
+sec('Neumáticos','',cat('biciNeum',PIST_NEUM,{biciTipo:'urbana',biciCol:'#10b981',biciCarga:'nada'}));
+sec('Aros','',cat('biciAros',PIST_AROS,{biciTipo:'mtb',biciCol:'#f97316'}));
+sec('Carga','Sirve en cualquier bici: alforjas en una de ruta, caja de reparto en una urbana, etc.',cat('biciCarga',PIST_CARGA,{biciTipo:'cicloviaje',biciCol:'#1e3a5f',biciExtra:'nada'},function(it){ return it.id!==''; }));
+sec('Extras','',cat('biciExtra',PIST_EXTRA,{biciTipo:'urbana',biciCol:'#ec4899',biciCarga:'nada'},function(it){ return it.id!==''; }));
+sec('Trajes','Los trajes cambian polera y calza. En bicis de calle (urbana, BMX) el pantalón se mantiene.',cat('traje',PIST_TRAJE,{biciCol:'#111827'}));
+sec('Combos (lo que se armaría un usuario)','',
+  card(_pistBiciSVG({casco:'blanco',diseno:'chile',biciTipo:'ruta',biciCol:'#f8fafc',biciSkin:'chile',traje:'chile',biciAros:'negro',biciExtra:'dorsal'},{expr:'emocionado'}),'Selección Chile','r','skin Chile + traje Chile + dorsal')
+  +card(_pistBiciSVG({casco:'negro',diseno:'llamas',disenoCol:'#f97316',lentes:'mascara',lentesCol:'#f59e0b',biciTipo:'mtb',biciCol:'#111827',biciSkin:'llamas',biciAcab:'mate',biciNeum:'rojo',traje:'enduro',biciCarga:'nada'},{expr:'emocionado'}),'Enduro fuego','e','llamas + mate + neumático rojo + traje enduro')
+  +card(_pistBiciSVG({casco:'galaxia',biciTipo:'ruta',biciSkin:'galaxia',biciAcab:'metal',biciAros:'dorado',traje:'campeon',biciCol:'#6d28d9'},{expr:'feliz',rapido:true,cadencia:.5}),'Campeón galáctico','l','galaxia + metálico + aros dorados + traje campeón')
+  +card(_pistBiciSVG({casco:'militar',diseno:'camuflaje',disenoCol:'#111827',biciTipo:'cicloviaje',biciCol:'#556b2f',biciSkin:'camo',biciCarga:'bikepacking',biciNeum:'cafe',biciExtra:'luces',traje:'retro',pelo:'rizado',peloCol:'#1c130c',piel:'moreno'},{expr:'contento'}),'Aventura','e','camuflaje + bikepacking + costado café + traje retro')
+  +card(_pistBiciSVG({casco:'rosa',diseno:'corazones',disenoCol:'#ffffff',pelo:'largo',peloCol:'#7a5232',pest:'si',biciTipo:'urbana',biciCol:'#f472b6',biciNeum:'blanca',biciCarga:'caja',biciExtra:'patito',traje:'equipo'},{expr:'guino'}),'Reparto con estilo','r','caja + patito + banda blanca + traje equipo')
+  +card(_pistBiciSVG({casco:'amarillo',lentes:'aviador',biciTipo:'ruta',biciCol:'#facc15',biciSkin:'degrade',traje:'lider',biciAcab:'carbono',biciAros:'negro'},{expr:'emocionado',rapido:true,cadencia:.5}),'Líder de la carrera','e','degradé + carbono + traje líder'),
+  'combo');
+sec('Casco: diseño pintado con sombra, barniz y respiraderos con fondo','El rayo y los demás diseños ahora se ven pegados sobre la cúpula; el brillo pasa por encima sin taparlos.',
+  [['negro','rayo','#2563eb'],['blanco','llamas','#f97316'],['rojo','cuadros','#111827'],['azul','estrellas','#facc15'],['verde','zigzag','#f8fafc'],['negro','tigre','#f59e0b']].map(function(h){ return '<div class="c t-c">'+_pistoDe({casco:h[0],diseno:h[1],disenoCol:h[2]},'feliz')+'<b>'+h[1]+'</b></div>'; }).join(''),'cascos');
+</script>
+</body></html>

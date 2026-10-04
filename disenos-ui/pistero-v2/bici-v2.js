@@ -39,6 +39,46 @@ var _BICI_ROPA={
   bmx:       {pierna:'#1f2937',hasta:2,  ap:.6, calcetin:'',       zap:'#dc2626',suela:'#f8fafc',extra:'capucha'},
   playera:   {pierna:'#0ea5e9',hasta:.62,ap:.7,calcetin:'',       zap:'',       suela:'#7c5a2e',extra:'flores',sandalia:1}
 };
+/* ===== TALLER: lo que se puede comprar para la bici y el traje (catálogo inicial) =====
+   Cada cosa es independiente y se combina con todo (igual que el casco).
+   '' = lo que trae su bici de fábrica (la cicloviaje viene con alforjas, la urbana con canasto). */
+var PIST_BICI_SKIN=[{id:'',n:'Liso'},{id:'degrade',n:'Degradé a juego'},{id:'retro',n:'Retro 3 franjas'},{id:'chile',n:'Chile'},{id:'camo',n:'Camuflaje'},{id:'llamas',n:'Llamas'},{id:'galaxia',n:'Galaxia'}];
+var PIST_BICI_ACAB=[{id:'',n:'Brillante'},{id:'mate',n:'Mate'},{id:'metal',n:'Metálico'},{id:'carbono',n:'Carbono'},{id:'neon',n:'Neón'}];
+var PIST_NEUM=[{id:'',n:'Negro'},{id:'cafe',n:'Costado café'},{id:'blanca',n:'Banda blanca'},{id:'rojo',n:'Rojo'},{id:'neon',n:'Neón'}];
+var PIST_AROS=[{id:'',n:'Plata'},{id:'negro',n:'Negro'},{id:'cuadro',n:'Color del cuadro'},{id:'dorado',n:'Dorado'}];
+var PIST_CARGA=[{id:'',n:'La de fábrica'},{id:'nada',n:'Sin carga'},{id:'canasto',n:'Canasto'},{id:'alforjas',n:'Alforjas de viaje'},{id:'bikepacking',n:'Bikepacking'},{id:'caja',n:'Caja de reparto'}];
+var PIST_EXTRA=[{id:'',n:'El de fábrica'},{id:'nada',n:'Nada'},{id:'luces',n:'Luces'},{id:'banderin',n:'Banderín'},{id:'patito',n:'Patito con timbre'},{id:'dorsal',n:'Dorsal de carrera'}];
+var PIST_TRAJE=[{id:'',n:'Clásico'},{id:'equipo',n:'Equipo'},{id:'retro',n:'Retro de lana'},{id:'enduro',n:'Enduro'},{id:'chile',n:'Selección Chile'},{id:'montana',n:'Rey de la montaña'},{id:'lider',n:'Líder amarillo'},{id:'campeon',n:'Campeón mundial'}];
+// rareza propuesta (misma escala de pistero-tienda.js: c gratis · r $490 · e $990 · l $1.990)
+// Seguridad (luces) y quitar cosas: siempre gratis.
+var PIST_TIER_BICI={
+  biciSkin:{degrade:'r',retro:'r',chile:'r',camo:'e',llamas:'e',galaxia:'l'},
+  biciAcab:{mate:'r',metal:'r',carbono:'e',neon:'l'},
+  biciNeum:{cafe:'r',blanca:'r',rojo:'r',neon:'e'},
+  biciAros:{negro:'r',cuadro:'r',dorado:'e'},
+  biciCarga:{canasto:'r',alforjas:'e',bikepacking:'e',caja:'r'},
+  biciExtra:{banderin:'r',patito:'r',dorsal:'e'},
+  traje:{equipo:'r',retro:'r',enduro:'r',chile:'r',montana:'e',lider:'e',campeon:'l'}
+};
+// trajes: polera (null = la del Pistero), short, manga, patrón
+var _BICI_TRAJE={
+  equipo: {pol:null,     sh:'#111827',pat:'equipo'},
+  retro:  {pol:null,     sh:'#1f2937',pat:'retro'},
+  enduro: {pol:null,     sh:'#374151',pat:'enduro',holgado:1},
+  chile:  {pol:'#d52b1e',sh:'#0039a6',pat:'chile'},
+  montana:{pol:'#f8fafc',sh:'#111827',pat:'lunares'},
+  lider:  {pol:'#facc15',sh:'#111827',pat:'lider'},
+  campeon:{pol:'#f8fafc',sh:'#111827',pat:'arcoiris'}
+};
+// Solo valores del catálogo: estos campos vienen de Firestore (los escribe el cliente de
+// otro usuario) y se insertan tal cual en el SVG — misma barrera que _pistNormal.
+function _biciOpts(o,tipo){
+  var C={biciSkin:PIST_BICI_SKIN,biciAcab:PIST_BICI_ACAB,biciNeum:PIST_NEUM,biciAros:PIST_AROS,biciCarga:PIST_CARGA,biciExtra:PIST_EXTRA,traje:PIST_TRAJE}, b={};
+  for(var k in C){ var v=o&&o[k]; b[k]=C[k].some(function(it){return it.id===v;})?v:''; }
+  if(b.biciCarga==='') b.biciCarga={cicloviaje:'alforjas',urbana:'canasto'}[tipo]||'nada';
+  if(b.biciExtra==='') b.biciExtra={cicloviaje:'banderin',urbana:'luces'}[tipo]||'nada';
+  return b;
+}
 var _biciUid=0;
 function _bP(p){ return p[0].toFixed(1)+' '+p[1].toFixed(1); }
 function _bC(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }
@@ -96,15 +136,23 @@ function _bHumo(p,anim){
     +'<animate attributeName="opacity" values=".55;0" dur="1.2s" begin="'+(i*.4)+'s" repeatCount="indefinite"/></circle>';
   return s;
 }
-function _biciRueda(c,G,tipo,anim,dur,col){
-  var r=G.r, tw=G.tw, rr=r-tw/2, s='', sp='', i, a;
-  s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+r+'" fill="none" stroke="#151a23" stroke-width="'+tw+'"/>';
-  if(tipo==='mtb') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(r+tw/2).toFixed(1)+'" fill="none" stroke="#151a23" stroke-width="1.7" stroke-dasharray="1.4 1.2"/>';
-  if(tipo==='bmx'||tipo==='cicloviaje') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(r+tw/2-.2).toFixed(1)+'" fill="none" stroke="#151a23" stroke-width="1.1" stroke-dasharray="1 1.2"/>';
-  if(tipo==='playera') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr+1.1).toFixed(1)+'" fill="none" stroke="#f5ead4" stroke-width="1.5"/>';
+var _NEUM_COL={'':'#151a23',cafe:'#151a23',blanca:'#151a23',rojo:'#b91c1c',neon:'#a3e635'};
+function _biciRueda(c,G,tipo,anim,dur,col,B){
+  B=B||{}; var r=G.r, tw=G.tw, rr=r-tw/2, s='', sp='', i, a, nc=_NEUM_COL[B.biciNeum||'']||'#151a23';
+  // aro: de fábrica plata (ruta: perfil alto negro; BMX: color del cuadro)
+  var aro={negro:'#111827',dorado:'#d4a017',cuadro:col}[B.biciAros]||(tipo==='bmx'?col:(tipo==='ruta'?'#1f2937':'#cbd5e1'));
+  // sombra de contacto con el piso
+  s+='<ellipse cx="'+c[0]+'" cy="'+(c[1]+r+.6).toFixed(1)+'" rx="'+(r*.55).toFixed(1)+'" ry="1.5" fill="rgba(0,0,0,.4)"/>';
+  s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+r+'" fill="none" stroke="'+nc+'" stroke-width="'+tw+'"/>';
+  // volumen del neumático: sombra abajo-derecha, brillo arriba-izquierda
+  s+='<path d="'+_bArc(c,r+tw*.18,-20,110)+'" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="'+(tw*.45).toFixed(2)+'"/><path d="'+_bArc(c,r+tw*.12,190,260)+'" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="'+(tw*.3).toFixed(2)+'" stroke-linecap="round"/>';
+  if(tipo==='mtb') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(r+tw/2).toFixed(1)+'" fill="none" stroke="'+nc+'" stroke-width="1.7" stroke-dasharray="1.4 1.2"/>';
+  if(tipo==='bmx'||tipo==='cicloviaje') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(r+tw/2-.2).toFixed(1)+'" fill="none" stroke="'+nc+'" stroke-width="1.1" stroke-dasharray="1 1.2"/>';
+  if(B.biciNeum==='cafe') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr+tw*.22).toFixed(1)+'" fill="none" stroke="#a0703c" stroke-width="'+(tw*.45).toFixed(2)+'"/>';
+  if(B.biciNeum==='blanca'||(tipo==='playera'&&!B.biciNeum)) s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr+Math.min(1.1,tw*.22)).toFixed(1)+'" fill="none" stroke="#f5ead4" stroke-width="'+Math.min(1.5,tw*.4).toFixed(2)+'"/>';
   if(tipo==='cicloviaje'||tipo==='urbana') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr+.7).toFixed(1)+'" fill="none" stroke="#9ca3af" stroke-width=".5" opacity=".8"/>';
-  if(tipo==='ruta') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr-2).toFixed(1)+'" fill="none" stroke="#1f2937" stroke-width="4"/>';
-  else s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr-.8).toFixed(1)+'" fill="none" stroke="'+(tipo==='bmx'?col:'#cbd5e1')+'" stroke-width="1.5"/>';
+  if(tipo==='ruta') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr-2).toFixed(1)+'" fill="none" stroke="'+aro+'" stroke-width="4"/>';
+  else s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr-.8).toFixed(1)+'" fill="none" stroke="'+aro+'" stroke-width="1.5"/>';
   var g='';
   if(tipo==='bmx'){
     for(i=0;i<5;i++){ a=i*2*Math.PI/5-Math.PI/2; g+='<path d="M'+_bP(c)+' L'+_bP([c[0]+Math.cos(a)*(rr-1.4),c[1]+Math.sin(a)*(rr-1.4)])+'" stroke="'+col+'" stroke-width="2.2" stroke-linecap="round"/>'; }
@@ -142,8 +190,15 @@ function _pistBiciSVG(opts, cfg){
   cfg=cfg||{}; var o=_pistNormal(opts), tipo=o.biciTipo||'ruta';
   if(tipo==='moto') return _pistMotoSVG(o,cfg);
   if(tipo==='auto') return _pistAutoSVG(o,cfg);
-  var G=_BICI_G[tipo]||_BICI_G.ruta, R=_BICI_ROPA[tipo]||_BICI_ROPA.ruta, Y=_bPersona(o);
+  var G=_BICI_G[tipo]||_BICI_G.ruta, R=Object.assign({},_BICI_ROPA[tipo]||_BICI_ROPA.ruta), Y=_bPersona(o), B=_biciOpts(opts,tipo);
   var col=o.biciCol||_lpColCasco(o.casco), osc=_lpShade(col,-.45), cla=_lpShade(col,.5);
+  // traje: cambia la polera y, si el tipo usa short, el short (los jeans/pantalones se quedan)
+  var TJ=_BICI_TRAJE[B.traje]||null;
+  if(TJ){ if(TJ.pol){ Y.polera=TJ.pol; Y.poleraS=_lpShade(TJ.pol,-.3); } if(R.hasta<=1){ R.pierna=TJ.sh; if(TJ.holgado){ R.hasta=.94; R.ap=.7; } } }
+  // sombra/luz: cada volumen se pinta en su tono de sombra y encima, corrido arriba-izquierda,
+  // una versión más chica en su tono normal → borde en sombra abajo-derecha (luz de arriba-izquierda)
+  var LUZ=' transform="translate(-.5 -.6)"';
+  function somb(c){ return _lpShade(c,-.24); }
   var anim=cfg.pedal!==false, dur=cfg.cadencia||0.9, rc=7, N=16, s='';
   var aero=(cfg.rapido&&(tipo==='ruta'||tipo==='mtb'))?1:0;
   var SH=[G.sh[0]+aero*3,G.sh[1]+aero*4], HEAD=[G.head[0]+aero*4,G.head[1]+aero*4.5];
@@ -180,18 +235,20 @@ function _pistBiciSVG(opts, cfg){
   var F=[];
   for(k=0;k<N;k++){
     var th=k*2*Math.PI/N, bob=Math.sin(2*th-.6)*.5, f={};
+    // par(): el volumen y su versión interior (para la luz)
+    var par=function(key,A,B,ra,rm,rb,lado,t){ f[key]=_bLimb(A,B,ra,rm,rb,lado,t); f[key+'_i']=_bLimb(A,B,ra*.7,rm*.7,rb*.7,lado,t); };
     f.hip=[HIP[0],HIP[1]+bob*.25]; f.gl=_bC([0,bob*.25]); f.ta=[GL[0]+.6,GL[1]-2.2+bob*.25]; f.sh=[SH[0]+bob*.25,SH[1]+bob]; f.head=[bob*.3,bob*1.15];
     [['n',th],['f',th+Math.PI]].forEach(function(pp){
       var x=pp[0], A=tobillo(pp[1]), K=_biciRodilla(f.hip,A.T,L);
-      f[x+'mus']=_bLimb(f.hip,K,4.3,3.9,3,-1,.4); f[x+'can']=_bLimb(K,A.T,3,3,1.9,1,.32);
-      if(R.hasta<=1) f[x+'ropa']=_bLimb(f.hip,_bL(f.hip,K,R.hasta),4.7+ap,4.25+ap,4.65-1.3*R.hasta+ap*.6,-1,.42);
-      else { f[x+'ropa']=_bLimb(f.hip,K,4.7+ap,4.25+ap,3.3+ap*.5,-1,.4); f[x+'ropa2']=_bLimb(K,A.T,3.3+ap*.5,3.2+ap*.5,2.5+ap*.4,1,.32); }
+      par(x+'mus',f.hip,K,4.3,3.9,3,-1,.4); par(x+'can',K,A.T,3,3,1.9,1,.32);
+      if(R.hasta<=1) par(x+'ropa',f.hip,_bL(f.hip,K,R.hasta),4.7+ap,4.25+ap,4.65-1.3*R.hasta+ap*.6,-1,.42);
+      else { par(x+'ropa',f.hip,K,4.7+ap,4.25+ap,3.3+ap*.5,-1,.4); par(x+'ropa2',K,A.T,3.3+ap*.5,3.2+ap*.5,2.5+ap*.4,1,.32); }
       if(R.calcetin) f[x+'cal']=_bCap(_bL(K,A.T,.7),A.T,2.3,2.1);
       f[x+'pie']=_bC(A.P); f[x+'rot']=A.fa.toFixed(1);
     });
     [['n',hand,f.sh],['f',[hand[0]-1.4,hand[1]-.8],[f.sh[0]-1.6,f.sh[1]+.6]]].forEach(function(pp){
       var x=pp[0], H=pp[1], Sh=pp[2], E=_bCodo(Sh,H,La);
-      f[x+'bra']=_bLimb(Sh,E,3,2.9,2.4,1,.4); f[x+'ant']=_bLimb(E,H,2.5,2.5,2,1,.32); f[x+'man']=_bLimb(Sh,_bL(Sh,E,.55),3.7,3.6,3.2,1,.5);
+      par(x+'bra',Sh,E,3,2.9,2.4,1,.4); par(x+'ant',E,H,2.5,2.5,2,1,.32); par(x+'man',Sh,_bL(Sh,E,.55),3.7,3.6,3.2,1,.5);
     });
     f.torso=_bLimb(f.ta,f.sh,5.6,6.1,5.4,-1,.56);
     f.cuello=_bCap(f.sh,_bL(f.sh,[HEAD[0]+f.head[0],HEAD[1]+f.head[1]],.35),2.6,2.5);
@@ -199,10 +256,12 @@ function _pistBiciSVG(opts, cfg){
     F.push(f);
   }
   function col_(x){ return F.map(function(f){ return f[x]; }); }
+  // volumen con luz: base en sombra + interior en su tono corrido hacia la luz
+  function vol(key,c){ return _bAP(col_(key),somb(c),anim,dur)+_bAP(col_(key+'_i'),c,anim,dur,LUZ); }
   function pierna(x){
     var c=x==='n'?function(v){return v;}:function(v){return _lpShade(v,-.28);};
-    var t=_bAP(col_(x+'mus'),c(Y.piel),anim,dur)+_bAP(col_(x+'can'),c(Y.piel),anim,dur)+_bAP(col_(x+'ropa'),c(R.pierna),anim,dur);
-    if(F[0][x+'ropa2']) t+=_bAP(col_(x+'ropa2'),c(R.pierna),anim,dur);
+    var t=vol(x+'mus',c(Y.piel))+vol(x+'can',c(Y.piel))+vol(x+'ropa',c(R.pierna));
+    if(F[0][x+'ropa2']) t+=vol(x+'ropa2',c(R.pierna));
     if(F[0][x+'cal']) t+=_bAP(col_(x+'cal'),c(R.calcetin),anim,dur);
     // el pie viaja con el pedal (translate) y gira con el tobillo (rotate)
     t+='<g transform="translate('+F[0][x+'pie']+')">'+_bAT('translate',col_(x+'pie'),anim,dur)+'<g transform="rotate('+F[0][x+'rot']+')">'+_bAT('rotate',col_(x+'rot'),anim,dur)+_bZapato(R,c,Y.piel)+'</g></g>';
@@ -210,7 +269,7 @@ function _pistBiciSVG(opts, cfg){
   }
   function brazo(x){
     var cp=x==='n'?Y.piel:Y.pielS, cpo=x==='n'?Y.polera:Y.poleraS, H=x==='n'?hand:[hand[0]-1.4,hand[1]-.8];
-    return _bAP(col_(x+'bra'),cp,anim,dur)+_bAP(col_(x+'ant'),cp,anim,dur)+_bAP(col_(x+'man'),cpo,anim,dur)
+    return vol(x+'bra',cp)+vol(x+'ant',cp)+vol(x+'man',cpo)
       +'<circle cx="'+H[0].toFixed(1)+'" cy="'+H[1].toFixed(1)+'" r="2.5" fill="'+(x==='n'?'#1f2937':'#111827')+'"/>';
   }
 
@@ -227,16 +286,13 @@ function _pistBiciSVG(opts, cfg){
     s+='<path d="M'+_bP(pr)+' L'+_bP(pf)+' M'+_bP([rw[0]-6,pr[1]])+' L'+_bP(rw)+' M'+_bP([rw[0]+4,pr[1]])+' L'+_bP(rw)+' M'+_bP(pf)+' L'+_bP([st[0]-1,st[1]+3])+'" fill="none" stroke="#475569" stroke-width="1.3" stroke-linecap="round"/>'
       +'<rect x="'+(pr[0]-1.6).toFixed(1)+'" y="'+(pr[1]-.4).toFixed(1)+'" width="2.6" height="3" rx=".6" fill="#ef4444" stroke="#991b1b" stroke-width=".4"/>';
   }
-  if(tipo==='cicloviaje'){
-    var rk=rw[1]-G.r-3.6;
-    s+='<path d="M'+(rw[0]-12)+' '+rk+' L'+(rw[0]+10)+' '+rk+' M'+(rw[0]-7)+' '+rk+' L'+_bP(rw)+' M'+(rw[0]+5)+' '+rk+' L'+_bP(rw)+' M'+(rw[0]+10)+' '+rk+' L'+_bP([st[0]-1,st[1]+3])+'" fill="none" stroke="#374151" stroke-width="1.4" stroke-linecap="round"/>';
-    // alforjas del lado lejano (asoman detrás)
-    s+='<rect x="'+(rw[0]-13)+'" y="'+(rk-1)+'" width="16" height="15" rx="3" fill="'+_lpShade('#b45309',-.3)+'"/>';
-    s+='<rect x="'+(fw[0]-1)+'" y="'+(fw[1]-12)+'" width="10" height="11" rx="2.4" fill="'+_lpShade('#b45309',-.3)+'"/>';
-  }
+  // parrilla trasera (la usan las alforjas y la caja de reparto) + alforjas del lado lejano
+  var conParrilla=(B.biciCarga==='alforjas'||B.biciCarga==='caja'), rk=rw[1]-G.r-3.6;
+  if(conParrilla&&tipo!=='urbana') s+='<path d="M'+(rw[0]-12)+' '+rk+' L'+(rw[0]+10)+' '+rk+' M'+(rw[0]-7)+' '+rk+' L'+_bP(rw)+' M'+(rw[0]+5)+' '+rk+' L'+_bP(rw)+' M'+(rw[0]+10)+' '+rk+' L'+_bP([st[0]-1,st[1]+3])+'" fill="none" stroke="#374151" stroke-width="1.4" stroke-linecap="round"/>';
+  if(B.biciCarga==='alforjas') s+='<rect x="'+(rw[0]-13)+'" y="'+(rk-1)+'" width="16" height="15" rx="3" fill="'+_lpShade('#b45309',-.3)+'"/><rect x="'+(fw[0]-1)+'" y="'+(fw[1]-12)+'" width="10" height="11" rx="2.4" fill="'+_lpShade('#b45309',-.3)+'"/>';
 
   // ---- ruedas ----
-  s+=_biciRueda(rw,G,tipo,anim,dur*.75,col)+_biciRueda(fw,G,tipo,anim,dur*.75,col);
+  s+=_biciRueda(rw,G,tipo,anim,dur*.75,col,B)+_biciRueda(fw,G,tipo,anim,dur*.75,col,B);
   if(tipo==='bmx') s+='<path d="'+_bCap([rw[0]-3,rw[1]],[rw[0]+3,rw[1]],1.5,1.5)+'" fill="#cbd5e1" stroke="#64748b" stroke-width=".5"/><path d="'+_bCap([fw[0]-3,fw[1]],[fw[0]+3,fw[1]],1.5,1.5)+'" fill="#cbd5e1" stroke="#64748b" stroke-width=".5"/>';
   if(tipo==='urbana'||tipo==='playera'||tipo==='cicloviaje'){
     var fc=tipo==='playera'?col:'#1f2937', fco=tipo==='playera'?osc:'#0b0f17';
@@ -259,10 +315,34 @@ function _pistBiciSVG(opts, cfg){
   else if(tipo==='urbana') tubos=[['M'+_bP(hb)+' Q'+_bP([66,91])+' '+_bP([bb[0]+1.5,bb[1]-1.5]),3.8],['M'+_bP(ht)+' Q'+_bP([64,68])+' '+_bP(_bL(st,bb,.5)),2.6],['M'+_bP(bb)+' L'+_bP(st),3.2],['M'+_bP(bb)+' L'+_bP(rw),2.4],['M'+_bP(ss)+' L'+_bP(rw),2.2]];
   else if(tipo==='bmx') tubos=[['M'+_bP(st)+' L'+_bP(ht),4.2],['M'+_bP(hb)+' L'+_bP(bb),4.6],['M'+_bP(bb)+' L'+_bP(st),3.8],['M'+_bP(bb)+' L'+_bP(rw),3],['M'+_bP(st)+' L'+_bP(rw),2.6]];
   else tubos=[['M'+_bP(ht)+' Q'+_bP([70,60])+' '+_bP([55,70])+' Q'+_bP([51,74])+' '+_bP([bb[0]-1,bb[1]-2]),3.6],['M'+_bP(hb)+' Q'+_bP([72,78])+' '+_bP([bb[0]+1,bb[1]-1]),3.6],['M'+_bP(bb)+' L'+_bP(st),3.4],['M'+_bP(bb)+' L'+_bP(rw),2.6],['M'+_bP(ss)+' L'+_bP(rw),2.6]];
-  tubos.forEach(function(t){ s+='<path d="'+t[0]+'" fill="none" stroke="'+osc+'" stroke-width="'+(t[1]+1.5).toFixed(1)+'" stroke-linecap="round" stroke-linejoin="round"/>'; });
-  tubos.forEach(function(t){ s+='<path d="'+t[0]+'" fill="none" stroke="'+col+'" stroke-width="'+t[1]+'" stroke-linecap="round" stroke-linejoin="round"/>'; });
-  tubos.forEach(function(t){ s+='<path d="'+t[0]+'" fill="none" stroke="'+cla+'" stroke-width="'+(t[1]*.32).toFixed(2)+'" stroke-linecap="round" opacity=".75" transform="translate(-.35 -.55)"/>'; });
-  if(tipo==='ruta'||tipo==='mtb'||tipo==='bmx'){ var w0=tubos[1][1];
+  // pintura del cuadro: color/degradé/galaxia como "tinta" del trazo; patrones encima del mismo trazo
+  var sk=B.biciSkin, ac=B.biciAcab, gid='bg'+(++_biciUid), tinta=col, defs='';
+  if(sk==='degrade'){ defs='<linearGradient id="'+gid+'" gradientUnits="userSpaceOnUse" x1="'+rw[0]+'" y1="0" x2="'+fw[0]+'" y2="0"><stop offset="0" stop-color="'+Y.polera+'"/><stop offset="1" stop-color="'+col+'"/></linearGradient>'; tinta='url(#'+gid+')'; }
+  if(sk==='galaxia'){ defs='<linearGradient id="'+gid+'" gradientUnits="userSpaceOnUse" x1="'+rw[0]+'" y1="'+ht[1]+'" x2="'+fw[0]+'" y2="'+bb[1]+'"><stop offset="0" stop-color="#1e1b4b"/><stop offset=".55" stop-color="#6d28d9"/><stop offset="1" stop-color="#db2777"/></linearGradient>'; tinta='url(#'+gid+')'; }
+  if(sk==='camo') tinta='#556b2f';
+  if(defs) s+='<defs>'+defs+'</defs>';
+  var borde=(sk==='galaxia'?'#0f0a2e':(sk==='camo'?'#2d3a17':osc));
+  function pase(fn){ tubos.forEach(function(t,i){ s+=fn(t[0],t[1],i); }); }
+  pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="'+borde+'" stroke-width="'+(w+1.5).toFixed(1)+'" stroke-linecap="round" stroke-linejoin="round"/>'; });
+  if(ac==='neon') pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="'+cla+'" stroke-width="'+(w+4).toFixed(1)+'" stroke-linecap="round" opacity=".22"/>'; });
+  pase(function(d,w,i){ var c=tinta; if(sk==='chile') c=(i===1?'#d52b1e':(i===0?'#f8fafc':(i===2?'#0039a6':'#d52b1e')));
+    return '<path d="'+d+'" fill="none" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round"/>'; });
+  if(sk==='camo'){ pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="#2f3b1c" stroke-width="'+(w*.8).toFixed(1)+'" stroke-dasharray="3.4 2.6 1.6 4"/><path d="'+d+'" fill="none" stroke="#a89f72" stroke-width="'+(w*.6).toFixed(1)+'" stroke-dasharray="1.8 5.2 2.4 3" stroke-dashoffset="2"/>'; }); }
+  if(sk==='galaxia'){ pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="#fff" stroke-width=".55" stroke-dasharray=".1 3.3" stroke-linecap="round" opacity=".9"/>'; }); }
+  if(sk==='chile'){ var ta0=tubos[0][0].match(/M([\d.]+) ([\d.]+) L([\d.]+) ([\d.]+)/); if(ta0){ var A0=[+ta0[1],+ta0[2]], B0=[+ta0[3],+ta0[4]];
+    s+='<path d="M'+_bP(_bL(A0,B0,.62))+' L'+_bP(B0)+'" stroke="#0039a6" stroke-width="'+tubos[0][1]+'" stroke-linecap="round"/><path d="'+_lpStar(_bL(A0,B0,.8)[0],_bL(A0,B0,.8)[1],1.3,.5)+'" fill="#fff"/>'; } }
+  if(sk==='retro'){ [[_bL(st,bb,.08),_bL(st,bb,.3)],[_bL(hb,bb,.06),_bL(hb,bb,.24)]].forEach(function(z){ var w=tubos[2][1]-.4;
+    ['#f8fafc','#dc2626','#1d4ed8'].forEach(function(c,i){ s+='<path d="M'+_bP(_bL(z[0],z[1],i/3))+' L'+_bP(_bL(z[0],z[1],(i+1)/3))+'" stroke="'+c+'" stroke-width="'+w.toFixed(1)+'"/>'; }); }); }
+  if(sk==='llamas'){ var w1=tubos[1][1]; // llamas que salen del tubo de dirección por el diagonal
+    s+='<path d="M'+_bP(_bL(hb,bb,.02))+' L'+_bP(_bL(hb,bb,.62))+'" stroke="#f97316" stroke-width="'+(w1-.6).toFixed(1)+'" stroke-dasharray="5 1.4 3 1.4 2 6" stroke-linecap="round"/>'
+      +'<path d="M'+_bP(_bL(hb,bb,.02))+' L'+_bP(_bL(hb,bb,.45))+'" stroke="#facc15" stroke-width="'+(w1-1.8).toFixed(1)+'" stroke-dasharray="4 1.6 2.4 1.6 1.4 5" stroke-linecap="round"/>'
+      +'<path d="M'+_bP(_bL(st,ht,.55))+' L'+_bP(_bL(st,ht,.98))+'" stroke="#f97316" stroke-width="'+(tubos[0][1]-.6).toFixed(1)+'" stroke-dasharray="1.4 3 2.4 1.4 4" stroke-linecap="round"/>'; }
+  if(ac==='carbono') pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="'+(w*.7).toFixed(1)+'" stroke-dasharray=".6 .6"/>'; });
+  if(ac==='mate') pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="'+w+'" stroke-linecap="round"/>'; });
+  // brillo (mate no brilla; metálico brilla fuerte con un segundo reflejo)
+  if(ac!=='mate') pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="'+(ac==='metal'?'#ffffff':cla)+'" stroke-width="'+(w*.3).toFixed(2)+'" stroke-linecap="round" opacity="'+(ac==='metal'?.85:.7)+'" transform="translate(-.35 -.55)"/>'; });
+  if(ac==='metal') pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="'+(w*.3).toFixed(2)+'" stroke-linecap="round" transform="translate(.35 .55)"/>'; });
+  if((tipo==='ruta'||tipo==='mtb'||tipo==='bmx')&&!sk){ var w0=tubos[1][1];
     s+='<path d="M'+_bP(_bL(hb,bb,.14))+' L'+_bP(_bL(hb,bb,.28))+'" stroke="#f8fafc" stroke-width="'+(w0-1.4).toFixed(1)+'"/>'
       +'<path d="M'+_bP(_bL(hb,bb,.31))+' L'+_bP(_bL(hb,bb,.34))+'" stroke="#f8fafc" stroke-width="'+(w0-1.4).toFixed(1)+'" opacity=".85"/>'; }
   // caramagiolas (cicloviaje lleva dos)
@@ -272,34 +352,50 @@ function _pistBiciSVG(opts, cfg){
   if(tipo==='cicloviaje') s+=botella(.4,'#0d9488')+botella(.72,'#0d9488');
   if(tipo==='urbana') s+='<path d="M'+_bP([bb[0]+3,bb[1]-7])+' L'+_bP([rw[0]+4,rw[1]-4.6])+' Q'+_bP([rw[0]+1,rw[1]-4.6])+' '+_bP([rw[0]+2,rw[1]-1])+' L'+_bP([bb[0]+2,bb[1]-1])+' Z" fill="#1f2937" stroke="#0b0f17" stroke-width=".5"/>';
   // tubo de dirección + horquilla
-  s+=_bTubo('M'+_bP(ht)+' L'+_bP(hb),3.6,col,osc,cla)+'<path d="M'+_bP([ht[0]-.4,ht[1]-1.4])+' L'+_bP([ht[0]+.2,ht[1]+.6])+'" stroke="#111827" stroke-width="4.4" stroke-linecap="round"/>';
+  s+=_bTubo('M'+_bP(ht)+' L'+_bP(hb),3.6,sk==='chile'?'#f8fafc':tinta,borde,ac==='mate'?tinta:cla)+'<path d="M'+_bP([ht[0]-.4,ht[1]-1.4])+' L'+_bP([ht[0]+.2,ht[1]+.6])+'" stroke="#111827" stroke-width="4.4" stroke-linecap="round"/>';
   if(tipo==='mtb'){ var mid=_bL(hb,fw,.45);
     s+='<path d="M'+_bP(hb)+' L'+_bP(_bL(hb,fw,.55))+'" stroke="#e5e7eb" stroke-width="2.6" stroke-linecap="round"/><path d="M'+_bP(mid)+' L'+_bP(fw)+'" stroke="#111827" stroke-width="4.2" stroke-linecap="round"/>'
       +'<path d="'+_bCap([hb[0]-2.4,hb[1]+.4],[hb[0]+2.6,hb[1]+1],1.6,1.6)+'" fill="#111827"/>'; }
   else s+=_bTubo('M'+_bP(hb)+' Q'+_bP([hb[0]+(tipo==='ruta'?5:4),(hb[1]+fw[1])/2+2])+' '+_bP(fw),tipo==='bmx'?3:2.3,tipo==='playera'?col:osc,'#0b0f17',tipo==='playera'?cla:col);
 
-  // ---- cicloviaje: parrilla delantera, alforjas, carpa, banderín, bolso de manubrio ----
-  if(tipo==='cicloviaje'){
-    var rk2=rw[1]-G.r-3.6, alf='#b45309', alfO='#78350f';
+  // ---- CARGA (producto, sirve en cualquier bici): alforjas, caja de reparto, bikepacking ----
+  var alf='#b45309', alfO='#78350f', rk2=rk;
+  if(B.biciCarga==='alforjas'){
     // carpa enrollada sobre la parrilla, con correas
-    s+='<path d="'+_bCap([rw[0]-11,rk2-3.4],[rw[0]+8,rk2-3.4],3.4,3.4)+'" fill="#15803d" stroke="#14532d" stroke-width=".6"/>'
+    s+='<path d="'+_bCap([rw[0]-11,rk2-3.4],[rw[0]+8,rk2-3.4],3.4,3.4)+'" fill="#14532d"/><path d="'+_bCap([rw[0]-11,rk2-4],[rw[0]+8,rk2-4],2.6,2.6)+'" fill="#15803d"/>'
       +'<path d="M'+(rw[0]-5)+' '+(rk2-6.8)+' l0 6.8 M'+(rw[0]+3)+' '+(rk2-6.8)+' l0 6.8" stroke="#111827" stroke-width="1"/>'
       +'<ellipse cx="'+(rw[0]-14.2)+'" cy="'+(rk2-3.4)+'" rx="1.2" ry="3.4" fill="#166534"/>';
-    // banderín en mástil flexible, flamea
-    var mx=rw[0]-12, my=rk2-1, top=my-30;
-    var fl=['M'+mx+' '+top+' Q'+(mx-5)+' '+(top+1)+' '+(mx-10)+' '+(top+3)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top+3)+' '+(mx-10)+' '+(top+2)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top-1)+' '+(mx-10)+' '+(top+4)+' L'+mx+' '+(top+6)+' Z'];
-    s+='<path d="M'+mx+' '+my+' L'+mx+' '+top+'" stroke="#e5e7eb" stroke-width=".8"/>'+_bAP(fl,'#f97316',anim,.8);
-    // alforja trasera (lado cercano): bolsillo, cierre enrollable, hebillas, reflectante
+    // alforja trasera (lado cercano): bolsillo, cierre enrollable, hebillas, reflectante, sombra lateral
     s+='<rect x="'+(rw[0]-14)+'" y="'+rk2+'" width="17" height="16" rx="3.2" fill="'+alf+'" stroke="'+alfO+'" stroke-width=".8"/>'
+      +'<rect x="'+(rw[0]-.4)+'" y="'+(rk2+.6)+'" width="2.8" height="14.8" rx="1.4" fill="rgba(0,0,0,.2)"/>'
+      +'<path d="M'+(rw[0]-13.2)+' '+(rk2+1.2)+' l13 0" stroke="rgba(255,255,255,.22)" stroke-width=".8" stroke-linecap="round"/>'
       +'<path d="M'+(rw[0]-14)+' '+(rk2+4)+' l17 0" stroke="'+alfO+'" stroke-width=".8"/>'
       +'<path d="M'+(rw[0]-10)+' '+(rk2+4)+' l0 5 M'+(rw[0]-1)+' '+(rk2+4)+' l0 5" stroke="#111827" stroke-width="1"/>'
       +'<rect x="'+(rw[0]-12)+'" y="'+(rk2+9)+'" width="13" height="5" rx="1.4" fill="'+_lpShade(alf,-.12)+'" stroke="'+alfO+'" stroke-width=".5"/>'
       +'<rect x="'+(rw[0]-13.4)+'" y="'+(rk2+6.6)+'" width="2.2" height="1.1" fill="#e5e7eb"/>';
     // parrilla delantera baja + alforja chica
     s+='<path d="M'+_bP(_bL(hb,fw,.35))+' L'+(fw[0]+4)+' '+(fw[1]-12)+' L'+_bP(fw)+'" fill="none" stroke="#374151" stroke-width="1.2"/>'
-      +'<rect x="'+(fw[0]-4)+'" y="'+(fw[1]-13)+'" width="11" height="12" rx="2.6" fill="'+alf+'" stroke="'+alfO+'" stroke-width=".8"/>'
+      +'<rect x="'+(fw[0]-4)+'" y="'+(fw[1]-13)+'" width="11" height="12" rx="2.6" fill="'+alf+'" stroke="'+alfO+'" stroke-width=".8"/><rect x="'+(fw[0]+4.6)+'" y="'+(fw[1]-12.4)+'" width="2" height="10.8" rx="1" fill="rgba(0,0,0,.2)"/>'
       +'<path d="M'+(fw[0]-4)+' '+(fw[1]-9.6)+' l11 0" stroke="'+alfO+'" stroke-width=".7"/><path d="M'+(fw[0]+1.5)+' '+(fw[1]-9.6)+' l0 4" stroke="#111827" stroke-width=".9"/>';
   }
+  if(B.biciCarga==='caja'){ var cx0=rw[0]-14, cy0=rk2-17;
+    s+='<rect x="'+cx0+'" y="'+cy0+'" width="22" height="17" rx="2.4" fill="#fc4c02" stroke="#9a3412" stroke-width=".8"/>'
+      +'<rect x="'+(cx0+17.4)+'" y="'+(cy0+.6)+'" width="4" height="15.8" rx="1.6" fill="rgba(0,0,0,.2)"/><path d="M'+(cx0+.8)+' '+(cy0+4)+' l20.4 0" stroke="#9a3412" stroke-width=".8"/>'
+      +'<path d="M'+(cx0+1.2)+' '+(cy0+1.4)+' l15 0" stroke="rgba(255,255,255,.3)" stroke-width=".9" stroke-linecap="round"/>'
+      +'<circle cx="'+(cx0+9)+'" cy="'+(cy0+10.4)+'" r="4.2" fill="#fff"/><text x="'+(cx0+9)+'" y="'+(cy0+12.2)+'" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="4.6" fill="#fc4c02">LP</text>'; }
+  if(B.biciCarga==='bikepacking'){
+    // bolso de marco (llena el triángulo) + bolso de sillín en cono
+    var tri=[_bL(st,ht,.1),_bL(st,ht,.9),_bL(hb,bb,.62)], cen=[(tri[0][0]+tri[1][0]+tri[2][0])/3,(tri[0][1]+tri[1][1]+tri[2][1])/3];
+    tri=tri.map(function(p){ return _bL(p,cen,.16); });
+    s+='<path d="M'+_bP(tri[0])+' L'+_bP(tri[1])+' L'+_bP(tri[2])+' Z" fill="#475569" stroke="#1e293b" stroke-width=".8" stroke-linejoin="round"/>'
+      +'<path d="M'+_bP(_bL(tri[0],tri[1],.08))+' L'+_bP(_bL(tri[2],tri[1],.12))+'" stroke="#f97316" stroke-width=".7" stroke-dasharray="1 .5"/>'
+      +'<path d="M'+_bP(_bL(tri[0],tri[1],.1))+' L'+_bP(_bL(tri[0],tri[1],.85))+'" stroke="rgba(255,255,255,.18)" stroke-width="1" stroke-linecap="round"/>';
+    s+='<path d="M'+(sd[0]-4)+' '+(sd[1]-1.4)+' L'+(sd[0]-15)+' '+(sd[1]-4.4)+' Q'+(sd[0]-18.4)+' '+(sd[1]-2.2)+' '+(sd[0]-15)+' '+(sd[1]+1.4)+' L'+(sd[0]-4)+' '+(sd[1]+3.2)+' Z" fill="#374151" stroke="#111827" stroke-width=".6"/>'
+      +'<path d="M'+(sd[0]-7)+' '+(sd[1]-2.2)+' l0 5 M'+(sd[0]-11)+' '+(sd[1]-3.2)+' l0 5.2" stroke="#111827" stroke-width=".8"/><path d="M'+(sd[0]-14.6)+' '+(sd[1]-3.4)+' l9.6 2.6" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>'; }
+  // banderín (extra): mástil flexible desde la parrilla o el eje, flamea
+  if(B.biciExtra==='banderin'){ var mx=rw[0]-(conParrilla?12:3), my=conParrilla?rk2-1:rw[1]-2, top=rk2-31;
+    var fl=['M'+mx+' '+top+' Q'+(mx-5)+' '+(top+1)+' '+(mx-10)+' '+(top+3)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top+3)+' '+(mx-10)+' '+(top+2)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top-1)+' '+(mx-10)+' '+(top+4)+' L'+mx+' '+(top+6)+' Z'];
+    s+='<path d="M'+mx+' '+my+' L'+mx+' '+top+'" stroke="#e5e7eb" stroke-width=".8"/>'+_bAP(fl,'#f97316',anim,.8); }
 
   // ---- tija + sillín ----
   var conResorte=(tipo==='playera');
@@ -312,12 +408,25 @@ function _pistBiciSVG(opts, cfg){
   // ---- manubrio ----
   s+='<path d="M'+_bP(ht)+' L'+_bP(S)+'" stroke="#374151" stroke-width="2.4" stroke-linecap="round"/>';
   s+='<path d="'+bar+'" fill="none" stroke="'+(tipo==='bmx'?'#cbd5e1':'#1f2937')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'+barExtra;
-  if(tipo==='cicloviaje') s+='<rect x="'+(S[0]+1)+'" y="'+(S[1]+.8)+'" width="9" height="7" rx="1.8" fill="#0f766e" stroke="#134e4a" stroke-width=".7"/><rect x="'+(S[0]+2.2)+'" y="'+(S[1]+1.6)+'" width="6.6" height="2.6" rx=".6" fill="rgba(226,232,240,.7)"/>';
-  if(tipo==='urbana'){ var bx=ht[0]+2.4, by=ht[1]-7.6;
+  // bolso de manubrio (con alforjas) · rollo de manubrio (bikepacking) · canasto
+  if(B.biciCarga==='alforjas') s+='<rect x="'+(S[0]+1)+'" y="'+(S[1]+.8)+'" width="9" height="7" rx="1.8" fill="#0f766e" stroke="#134e4a" stroke-width=".7"/><rect x="'+(S[0]+7.6)+'" y="'+(S[1]+1.4)+'" width="1.4" height="5.8" rx=".6" fill="rgba(0,0,0,.25)"/><rect x="'+(S[0]+2.2)+'" y="'+(S[1]+1.6)+'" width="6.6" height="2.6" rx=".6" fill="rgba(226,232,240,.7)"/>';
+  if(B.biciCarga==='bikepacking'){ var rl=[S[0]+3.4,S[1]+3];
+    s+='<circle cx="'+rl[0].toFixed(1)+'" cy="'+rl[1].toFixed(1)+'" r="3.8" fill="#14532d"/><circle cx="'+(rl[0]-.5).toFixed(1)+'" cy="'+(rl[1]-.6).toFixed(1)+'" r="2.8" fill="#15803d"/><circle cx="'+rl[0].toFixed(1)+'" cy="'+rl[1].toFixed(1)+'" r="1.4" fill="none" stroke="#166534" stroke-width=".6"/>'
+      +'<path d="M'+(rl[0]-1.4).toFixed(1)+' '+(rl[1]-3.8).toFixed(1)+' l0 7.6 M'+(rl[0]+1.4).toFixed(1)+' '+(rl[1]-3.8).toFixed(1)+' l0 7.6" stroke="#111827" stroke-width=".8"/>'; }
+  if(B.biciCarga==='canasto'){ var bx=ht[0]+2.4, by=ht[1]-7.6;
     s+='<path d="M'+bx+' '+by+' l12 0 l-1.6 9.4 l-8.8 0 Z" fill="#c08a4d" stroke="#7c5a2e" stroke-width=".8" stroke-linejoin="round"/>'
+      +'<path d="M'+(bx+8.6)+' '+by+' l3.4 0 l-1.6 9.4 l-2.6 0 Z" fill="rgba(0,0,0,.18)"/>'
       +'<path d="M'+(bx+.6)+' '+(by+3)+' l10.8 0 M'+(bx+1.1)+' '+(by+6)+' l9.8 0 M'+(bx+4)+' '+by+' l.2 9.4 M'+(bx+8)+' '+by+' l-.3 9.4" stroke="#7c5a2e" stroke-width=".55"/>'
-      +'<path d="M'+(bx-.8)+' '+(by+.2)+' l13.6 0" stroke="#7c5a2e" stroke-width="1.3" stroke-linecap="round"/>'
-      +'<path d="M'+(bx+3)+' '+(by+10.6)+' l4.4 0 l1 2.4 l-6.4 0 Z" fill="#fde68a" stroke="#a16207" stroke-width=".5"/>'; }
+      +'<path d="M'+(bx-.8)+' '+(by+.2)+' l13.6 0" stroke="#7c5a2e" stroke-width="1.3" stroke-linecap="round"/><path d="M'+(bx-.4)+' '+(by-.4)+' l12 0" stroke="rgba(255,255,255,.3)" stroke-width=".5"/>'; }
+  // EXTRAS: luces (delantera fija + trasera que parpadea) · patito con timbre
+  if(B.biciExtra==='luces'){ var lf=[ht[0]+1.2,ht[1]+2.4], lr=_bL(st,sd,.25);
+    s+='<path d="M'+_bP([lf[0]+3.6,lf[1]+.6])+' l13 -3.6 l0 8.4 Z" fill="rgba(253,230,138,.22)"/><rect x="'+lf[0].toFixed(1)+'" y="'+lf[1].toFixed(1)+'" width="4" height="2.6" rx=".9" fill="#1f2937"/><rect x="'+(lf[0]+2.6).toFixed(1)+'" y="'+(lf[1]+.4).toFixed(1)+'" width="1.4" height="1.8" rx=".5" fill="#fde68a"/>'
+      +'<rect x="'+(lr[0]-3.4).toFixed(1)+'" y="'+(lr[1]-1).toFixed(1)+'" width="2.4" height="3" rx=".8" fill="#ef4444" stroke="#7f1d1d" stroke-width=".4">'+(anim?'<animate attributeName="opacity" values="1;.25;1" dur=".9s" repeatCount="indefinite"/>':'')+'</rect>'; }
+  if(B.biciExtra==='patito'){ var pd=[ht[0]+2.2,ht[1]-4.2];
+    s+='<ellipse cx="'+pd[0]+'" cy="'+pd[1]+'" rx="2.8" ry="2" fill="#facc15" stroke="#a16207" stroke-width=".4"/><path d="M'+(pd[0]-2.6)+' '+(pd[1]-.6)+' l-1.4 -1.2 l.4 1.8 Z" fill="#facc15" stroke="#a16207" stroke-width=".3"/>'
+      +'<circle cx="'+(pd[0]+1.6)+'" cy="'+(pd[1]-2.2)+'" r="1.6" fill="#facc15" stroke="#a16207" stroke-width=".4"/><path d="M'+(pd[0]+3)+' '+(pd[1]-2.3)+' l1.6 .2 l-1.6 .8 Z" fill="#f97316"/><circle cx="'+(pd[0]+2)+'" cy="'+(pd[1]-2.6)+'" r=".35" fill="#111827"/>'
+      +'<path d="M'+(pd[0]-1.6)+' '+(pd[1]-.4)+' q1.2 -.9 2.4 0" fill="none" stroke="#fde68a" stroke-width=".5"/>'
+      +'<circle cx="'+(hand[0]+1.6).toFixed(1)+'" cy="'+(hand[1]+1.8).toFixed(1)+'" r="1.3" fill="#e5e7eb" stroke="#6b7280" stroke-width=".4"/>'; }
 
   // ---- bielas + plato ----
   s+='<g><circle cx="'+bb[0]+'" cy="'+bb[1]+'" r="'+plato+'" fill="none" stroke="#6b7280" stroke-width="1.7" stroke-dasharray=".9 .7"/><circle cx="'+bb[0]+'" cy="'+bb[1]+'" r="'+(plato-1.6)+'" fill="none" stroke="#9ca3af" stroke-width="1.1"/>'
@@ -332,11 +441,33 @@ function _pistBiciSVG(opts, cfg){
       :'<rect x="-6.8" y="-4" width="13.6" height="8" rx="2.6" fill="'+osc+'" stroke="#0b0f17" stroke-width=".6"/><rect x="-4" y="-5.2" width="6" height="2.6" rx="1" fill="'+col+'" stroke="#0b0f17" stroke-width=".5"/>')+'</g>'; }
   s+='<g transform="translate('+F[0].esp+')">'+_bAT('translate',col_('esp'),anim,dur)+esp+'</g>';
   // glúteo (con el color del short/pantalón) y encima el torso: la polera cae sobre la pretina
-  s+='<g transform="translate('+F[0].gl+')">'+_bAT('translate',col_('gl'),anim,dur)+'<ellipse cx="'+GL[0].toFixed(1)+'" cy="'+GL[1].toFixed(1)+'" rx="5.6" ry="4.3" fill="'+R.pierna+'" transform="rotate(12 '+_bP(GL)+')"/>'
-    +'<path d="'+_bArc(GL,3.4,195,265)+'" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.2" stroke-linecap="round"/></g>';
-  s+=_bAP(col_('torso'),Y.polera,anim,dur);
+  var glr='rotate(12 '+_bP(GL)+')';
+  s+='<g transform="translate('+F[0].gl+')">'+_bAT('translate',col_('gl'),anim,dur)
+    +'<ellipse cx="'+GL[0].toFixed(1)+'" cy="'+GL[1].toFixed(1)+'" rx="5.6" ry="4.3" fill="'+somb(R.pierna)+'" transform="'+glr+'"/>'
+    +'<ellipse cx="'+(GL[0]-.5).toFixed(1)+'" cy="'+(GL[1]-.6).toFixed(1)+'" rx="4.3" ry="3.1" fill="'+R.pierna+'" transform="'+glr+'"/>'
+    +'<path d="'+_bArc(GL,3.4,195,265)+'" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.1" stroke-linecap="round"/></g>';
+  // torso: se mece entero con el cuerpo; base en sombra + volumen con luz + patrón del traje recortado al torso
+  var T0=[GL[0]+.6,GL[1]-2.2], tors=_bLimb(T0,shp,5.6,6.1,5.4,-1,.56), cid='bt'+(++_biciUid);
+  function banda(t,w,c){ var p=_bL(T0,shp,t); return '<path d="M'+_bP([p[0]-bn[0]*10,p[1]-bn[1]*10])+' L'+_bP([p[0]+bn[0]*10,p[1]+bn[1]*10])+'" stroke="'+c+'" stroke-width="'+w+'"/>'; }
+  function aLo(t0,t1,off,w,c){ var a=_bL(T0,shp,t0), b=_bL(T0,shp,t1); return '<path d="M'+_bP([a[0]+bn[0]*off,a[1]+bn[1]*off])+' L'+_bP([b[0]+bn[0]*off,b[1]+bn[1]*off])+'" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round"/>'; }
+  var pat='';
+  if(TJ){
+    if(TJ.pat==='equipo') pat=aLo(0,1.1,-4.4,3.4,'#111827')+banda(.5,3,'#f8fafc')+banda(.6,1,Y.poleraS);
+    else if(TJ.pat==='retro') pat=banda(.68,1.5,'#f8fafc')+banda(.75,1.5,'#f8fafc')+aLo(.05,.4,-3,.9,'rgba(255,255,255,.4)');
+    else if(TJ.pat==='enduro') pat=aLo(0,1.1,3.6,4.4,'#1f2937')+banda(.34,1.6,'#f8fafc')+aLo(.2,.9,-4.6,1.4,'#facc15');
+    else if(TJ.pat==='chile'){ var cp=_bL(T0,shp,.86); cp=[cp[0]-bn[0]*1.6,cp[1]-bn[1]*1.6];
+      pat=banda(.85,7.4,'#f8fafc')+'<circle cx="'+cp[0].toFixed(1)+'" cy="'+cp[1].toFixed(1)+'" r="3.2" fill="#0039a6"/><path d="'+_lpStar(cp[0],cp[1],1.7,.6)+'" fill="#fff"/>'; }
+    else if(TJ.pat==='lunares'){ for(var ti=0;ti<7;ti++) for(var di=-3;di<=3;di++){ var p=_bL(T0,shp,.04+ti*.16), d=di*3.3+(ti%2?1.65:0);
+      pat+='<circle cx="'+(p[0]+bn[0]*d).toFixed(1)+'" cy="'+(p[1]+bn[1]*d).toFixed(1)+'" r="1.15" fill="#dc2626"/>'; } }
+    else if(TJ.pat==='lider') pat=banda(.38,.8,'#111827')+banda(.44,.8,'#111827')+aLo(.62,.8,-2.6,2.6,'#111827');
+    else if(TJ.pat==='arcoiris') ['#2563eb','#dc2626','#111827','#facc15','#16a34a'].forEach(function(c,i){ pat+=banda(.44+i*1.2/td,1.25,c); });
+  }
+  s+='<g transform="translate('+F[0].esp+')">'+_bAT('translate',col_('esp'),anim,dur)
+    +'<path d="'+tors+'" fill="'+somb(Y.polera)+'"/><path d="'+_bLimb(T0,shp,5.6*.74,6.1*.74,5.4*.74,-1,.56)+'" fill="'+Y.polera+'"'+LUZ+'/>'
+    +(pat?'<clipPath id="'+cid+'"><path d="'+tors+'"/></clipPath><g clip-path="url(#'+cid+')" opacity=".96">'+pat+'</g>':'')+'</g>';
   var det='';
   det+='<path d="M'+_bP([hip[0]+bn[0]*4.4,hip[1]+bn[1]*4.4])+' L'+_bP([shp[0]+bn[0]*3.8,shp[1]+bn[1]*3.8])+'" stroke="rgba(255,255,255,.22)" stroke-width="2.2" stroke-linecap="round"/>';
+  if(TJ&&(R.extra==='franja'||R.extra==='flores')) R.extra='';
   if(R.extra==='franja') det+='<path d="M'+_bP(_bL(hip,shp,.12))+' L'+_bP(_bL(shp,hip,.1))+'" stroke="#f8fafc" stroke-width="1.6" stroke-linecap="round" opacity=".9"/>'
     +'<path d="'+_bCap([hip[0]+bn[0]*3+(shp[0]-hip[0])*.1,hip[1]+bn[1]*3+(shp[1]-hip[1])*.1],[hip[0]+bn[0]*3.4+(shp[0]-hip[0])*.32,hip[1]+bn[1]*3.4+(shp[1]-hip[1])*.32],1.3,1.2)+'" fill="'+Y.poleraS+'" opacity=".8"/>';
   if(R.extra==='mochila'||R.extra==='hidra') det+='<path d="M'+_bP([shp[0]+bn[0]*2,shp[1]+bn[1]*2-1])+' Q'+_bP(_bL(hip,shp,.6))+' '+_bP([hip[0]+(shp[0]-hip[0])*.25,hip[1]+(shp[1]-hip[1])*.25+1.6])+'" fill="none" stroke="'+(R.extra==='hidra'?'#0f172a':osc)+'" stroke-width="1.3" stroke-linecap="round"/>';
@@ -346,6 +477,9 @@ function _pistBiciSVG(opts, cfg){
     det+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="1.3" fill="#fef3c7" opacity=".9"/><circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r=".5" fill="#f59e0b"/>'; });
   if(R.extra==='buff') det+='<path d="'+_bCap(_bL(hip,shp,.9),[shp[0]+(shp[0]-hip[0])*.05,shp[1]+(shp[1]-hip[1])*.05],3.4,3.2)+'" fill="#0d9488"/><path d="M'+_bP(_bL(hip,shp,.9))+' l1.6 1.4" stroke="#f2b705" stroke-width=".8"/>'
     +'<path d="M'+_bP(_bL(hip,shp,.3))+' l3 -1.4" stroke="'+Y.poleraS+'" stroke-width="1.4" stroke-linecap="round"/>';
+  if(B.biciExtra==='dorsal'){ var dc=_bL(hip,shp,.4); dc=[dc[0]+bn[0]*3.4,dc[1]+bn[1]*3.4];
+    det+='<g transform="translate('+_bC(dc)+') rotate('+(ta+90).toFixed(1)+')"><rect x="-3.8" y="-2.8" width="7.6" height="5.6" rx=".7" fill="#fff" stroke="#9ca3af" stroke-width=".4"/><path d="M-3 -2 l.01 0 M3 -2 l.01 0 M-3 2 l.01 0 M3 2 l.01 0" stroke="#6b7280" stroke-width=".7" stroke-linecap="round"/>'
+      +'<text x="0" y="1.7" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="4.6" fill="#111827">7</text></g>'; }
   s+='<g transform="translate('+F[0].esp+')">'+_bAT('translate',col_('esp'),anim,dur)+det+'</g>';
   s+=_bAP(col_('cuello'),Y.pielS,anim,dur);
 

@@ -158,15 +158,27 @@ function _cascoSVG(col,x){
   var s='<defs><clipPath id="c'+u+'"><path d="'+_LP_DOME+'"/></clipPath>'+_cascoFxDefs(grad?fx:'',ac,u)+'</defs><path d="'+_LP_DOME+'" fill="'+(grad?'url(#g'+u+')':col)+'"/>';
   if(fx==='galaxia') s+='<g fill="#fff"><circle cx="30" cy="32" r=".9"/><circle cx="44" cy="24" r=".7"/><circle cx="62" cy="30" r="1"/><circle cx="72" cy="42" r=".7"/><circle cx="24" cy="46" r=".7"/><circle cx="54" cy="44" r=".6"/><path d="'+_lpStar(38,38,1.8,.6)+'"/><path d="'+_lpStar(66,22,1.5,.5)+'"/></g><ellipse cx="58" cy="36" rx="12" ry="5" fill="#ec4899" opacity=".25" transform="rotate(-20 58 36)"/>';
   if(ac==='carbono') s+='<path d="'+_LP_DOME+'" fill="url(#p'+u+')"/>';
-  if(x.diseno) s+='<g clip-path="url(#c'+u+')">'+_disenoSVG(x.diseno,x.disenoCol)+'</g>';
-  // ventilaciones + volumen
-  s+='<g fill="rgba(0,0,0,.30)"><ellipse cx="38" cy="31" rx="2.8" ry="8" transform="rotate(28 38 31)"/><ellipse cx="62" cy="31" rx="2.8" ry="8" transform="rotate(-28 62 31)"/><ellipse cx="24.5" cy="43" rx="2.2" ry="6" transform="rotate(48 24.5 43)"/><ellipse cx="75.5" cy="43" rx="2.2" ry="6" transform="rotate(-48 75.5 43)"/></g>';
+  // diseño pintado (2026-10-04, Inty: "el brillo quedó por encima del rayo, ponle más detalle"):
+  // calcomanía con sombra propia abajo-derecha y filo de luz arriba-izquierda → se ve
+  // pegada sobre la cúpula, y el barniz (brillo) pasa por encima dejándola ver.
+  if(x.diseno){ var dz=_disenoSVG(x.diseno,x.disenoCol), mono=function(c){ return dz.replace(/fill="[^"]*"/g,'fill="'+c+'"').replace(/stroke="[^"]*"/g,'stroke="'+c+'"'); };
+    s+='<g clip-path="url(#c'+u+')"><g transform="translate(.7 1)" opacity=".22">'+mono('#000')+'</g><g transform="translate(-.4 -.5)" opacity=".3">'+mono('#fff')+'</g>'+dz+'</g>'; }
+  // volumen de la cúpula: sombra en el costado derecho y abajo
+  s+='<g clip-path="url(#c'+u+')"><path d="M66 22 Q86 32 84 52" fill="none" stroke="rgba(0,0,0,.14)" stroke-width="9" stroke-linecap="round"/></g>';
+  // ventilaciones con profundidad: labio de luz abajo + hueco oscuro
+  var vents=[[38,31,2.8,8,28],[62,31,2.8,8,-28],[24.5,43,2.2,6,48],[75.5,43,2.2,6,-48]];
+  s+='<g fill="rgba(255,255,255,.13)">'+vents.map(function(v){ return '<ellipse cx="'+(v[0]+.35)+'" cy="'+(v[1]+.6)+'" rx="'+v[2]+'" ry="'+v[3]+'" transform="rotate('+v[4]+' '+(v[0]+.35)+' '+(v[1]+.6)+')"/>'; }).join('')+'</g>'
+    +'<g fill="rgba(0,0,0,.42)">'+vents.map(function(v){ return '<ellipse cx="'+v[0]+'" cy="'+v[1]+'" rx="'+v[2]+'" ry="'+v[3]+'" transform="rotate('+v[4]+' '+v[0]+' '+v[1]+')"/>'; }).join('')+'</g>';
   if(ac==='metal'||ac==='perla') s+='<path d="'+_LP_DOME+'" fill="url(#m'+u+')"/>';
   if(ac==='perla') s+='<path d="'+_LP_DOME+'" fill="url(#h'+u+')"/>';
   if(ac==='mate') s+='<path d="'+_LP_DOME+'" fill="rgba(0,0,0,.07)"/>';
   if(ac==='neon'){ var gl=_lpShade(_LP_HEX.test(col)?col:'#39ff14',.55); s+='<path d="M12.5 53.5 A37.5 35.5 0 0 1 87.5 53.5" fill="none" stroke="'+gl+'" stroke-width="5" opacity=".28"/><path d="M13 53 A37 35 0 0 1 87 53" fill="none" stroke="'+gl+'" stroke-width="1.3"/>'; }
   s+='<path d="M12 54 Q50 45 88 54 Z" fill="rgba(0,0,0,.13)"/>';
-  if(ac!=='mate') s+='<path d="M21 42 Q27 26 45 21" stroke="rgba(255,255,255,'+(ac==='metal'||ac==='perla'?'.7':'.5')+')" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="19.6" cy="46.4" r="1.3" fill="rgba(255,255,255,.45)"/>';
+  // barniz: halo ancho y suave + filo fino (deja ver el diseño debajo, no lo tapa)
+  if(ac!=='mate'){ var fuerte=(ac==='metal'||ac==='perla');
+    s+='<g clip-path="url(#c'+u+')"><path d="M21 42 Q27 26 45 21" stroke="rgba(255,255,255,'+(fuerte?'.22':'.14')+')" stroke-width="7" fill="none" stroke-linecap="round"/></g>'
+      +'<path d="M21.6 41 Q27.4 26.6 44 21.8" stroke="rgba(255,255,255,'+(fuerte?'.8':'.6')+')" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
+      +'<circle cx="19.6" cy="46.4" r="1.2" fill="rgba(255,255,255,.5)"/><circle cx="50" cy="19.6" r=".9" fill="rgba(255,255,255,.4)"/>'; }
   s+='<path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/>';
   return s;
 }
