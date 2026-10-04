@@ -23,7 +23,7 @@ var ICON='<span class="ic"><svg viewBox="0 0 10 10"><path d="M2 1 L9 5 L2 9 Z"/>
 function b(n,t,sub,fn){ return '<button onclick="'+(fn||"pistSonarNombre('"+n+"')")+'">'+ICON+'<span>'+t+(sub?'<i>'+sub+'</i>':'')+'</span></button>'; }
 function sec(t,html,cls){ document.getElementById('out').insertAdjacentHTML('beforeend','<h2>'+t+'</h2><div class="fila '+(cls||'')+'">'+html+'</div>'); }
 sec('Extras',b('timbre','Timbre','ring-ring')+b('patito','Patito','cuac cuac')+b('luces','Luces','clic y destello')+b('viento','Banderín','flamea al viento')+b('papel','Dorsal','papel'));
-sec('Mascotas',b('perro','Quiltro / perro negro','¡guau guau!')+b('gato','Gato','miau'));
+sec('Mascotas (grabaciones reales)',b('perro','Quiltro','ladrido real')+b('perroNegro','Perro negro','el mismo ladrido, más grave')+b('gato','Gato','maullido real'));
 sec('Carga',b('mimbre','Canasto','crujido del mimbre')+b('cierre','Alforjas / bikepacking','cierre')+b('caja','Caja de reparto','golpe sordo'));
 sec('Pintura, ruedas y traje',b('spray','Diseño y colores','spray')+b('brillo','Acabado metálico / carbono / neón','destello')+b('inflar','Neumáticos','bombín')+b('aro','Aros','ting de rayo')+b('tela','Trajes','tela')+b('clic','Cambios','clic clic'));
 sec('Estelas',b('chispas','Chispas')+b('hojas','Hojas de otoño')+b('nieve','Nieve')+b('burbujas','Burbujas')+b('arcoiris','Arcoíris')+b('fuego','Fuego'));

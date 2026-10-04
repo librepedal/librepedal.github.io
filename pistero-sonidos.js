@@ -34,6 +34,26 @@ function _psRuido(t0,dur,o){ o=o||{}; var ac=_psAC(), len=Math.max(1,Math.floor(
   for(var i=0;i<len;i++) d[i]=(Math.random()*2-1)*(o.forma?o.forma(i/len):1);
   var src=ac.createBufferSource(); src.buffer=b; var bq=ac.createBiquadFilter(); bq.type=o.filtro||'bandpass'; bq.frequency.setValueAtTime(o.ff||1500,t0); if(o.fa) bq.frequency.exponentialRampToValueAtTime(o.fa,t0+dur); bq.Q.value=o.q||1;
   var g=ac.createGain(); g.gain.value=o.v||.15; src.connect(bq); bq.connect(g); g.connect(_psOut()); src.start(t0); return src; }
+// ---- grabaciones reales (animales: Inty, "deberían sonar como los animales. Es obvio") ----
+// Archivos y licencias en sonidos/CREDITOS.md (crédito del ladrido en terminos.html).
+// Se cargan la primera vez que se piden y quedan en memoria; si el navegador no puede
+// decodificarlas (Ogg en algún Safari viejo), suena la versión sintetizada como respaldo.
+// ruta relativa a ESTE archivo (sirve igual en la app y en las páginas de diseño)
+var _PS_BASE=(typeof document!=='undefined'&&document.currentScript&&document.currentScript.src)?document.currentScript.src.replace(/[^/]*$/,''):'';
+var _PS_MUESTRAS={perro:_PS_BASE+'sonidos/perro-ladrido.ogg',gato:_PS_BASE+'sonidos/gato-maullido.ogg'}, _psBuf={};
+function _psMuestra(n,t,rate,v,respaldo){
+  var ac=_psAC();
+  function tocar(buf){ var src=ac.createBufferSource(), g=ac.createGain(); src.buffer=buf; src.playbackRate.value=rate||1; g.gain.value=v||.8; src.connect(g); g.connect(_psOut()); src.start(Math.max(t,ac.currentTime)); }
+  var b=_psBuf[n];
+  if(b&&b!=='cargando'&&b!=='error'){ tocar(b); return; }
+  if(b==='error'||typeof fetch!=='function'){ if(respaldo) respaldo(t); return; }
+  if(b==='cargando') return;
+  _psBuf[n]='cargando';
+  fetch(_PS_MUESTRAS[n]).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); })
+    .then(function(ab){ return new Promise(function(ok,mal){ ac.decodeAudioData(ab,ok,mal); }); })
+    .then(function(buf){ _psBuf[n]=buf; tocar(buf); })
+    .catch(function(e){ _psBuf[n]='error'; console.warn('[sonidos] grabación no disponible, uso la sintetizada:', n, e); if(respaldo) respaldo(ac.currentTime); });
+}
 var _psDecae=function(p){ return Math.pow(1-p,2.5); }, _psCampana=function(p){ return Math.sin(Math.PI*p); };
 // ---- sonidos ----
 var PS={
@@ -53,8 +73,11 @@ var PS={
   luces:function(t){ _psRuido(t,.02,{ff:3000,q:3,v:.22,forma:_psDecae}); _psTono(1320,t+.04,.16,{v:.06}); },
   papel:function(t){ for(var i=0;i<6;i++) _psRuido(t+i*.05,.04,{filtro:'highpass',ff:2500+Math.random()*1500,v:.07,forma:_psDecae}); },
   tela:function(t){ _psRuido(t,.32,{ff:900,fa:2600,q:.9,v:.1,forma:_psCampana}); },
-  perro:function(t){ [0,.24].forEach(function(dt){ _psTono(560,t+dt,.16,{tipo:'sawtooth',a:300,en:.14,v:.16,filtro:'bandpass',ff:1000,q:1.6}); _psRuido(t+dt,.05,{ff:1400,v:.06,forma:_psDecae}); }); },
-  gato:function(t){ var ac=_psAC(), os=ac.createOscillator(), bq=ac.createBiquadFilter(), g=ac.createGain();
+  perro:function(t){ _psMuestra('perro',t,1,.8,PS.perroSint); },
+  perroNegro:function(t){ _psMuestra('perro',t,.82,.85,PS.perroSint); },
+  gato:function(t){ _psMuestra('gato',t,1,.7,PS.gatoSint); },
+  perroSint:function(t){ [0,.24].forEach(function(dt){ _psTono(560,t+dt,.16,{tipo:'sawtooth',a:300,en:.14,v:.16,filtro:'bandpass',ff:1000,q:1.6}); _psRuido(t+dt,.05,{ff:1400,v:.06,forma:_psDecae}); }); },
+  gatoSint:function(t){ var ac=_psAC(), os=ac.createOscillator(), bq=ac.createBiquadFilter(), g=ac.createGain();
     os.type='sawtooth'; os.frequency.setValueAtTime(520,t); os.frequency.linearRampToValueAtTime(820,t+.22); os.frequency.linearRampToValueAtTime(470,t+.6);
     bq.type='bandpass'; bq.Q.value=3; bq.frequency.setValueAtTime(700,t); bq.frequency.linearRampToValueAtTime(1600,t+.25); bq.frequency.linearRampToValueAtTime(800,t+.6);
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.12,t+.05); g.gain.exponentialRampToValueAtTime(.0001,t+.62);
@@ -77,7 +100,7 @@ var PS={
 var _PS_PIEZA={
   biciExtra:{patito:'patito',luces:'luces',banderin:'viento',dorsal:'papel',nada:'clic'},
   biciCarga:{canasto:'mimbre',alforjas:'cierre',bikepacking:'cierre',caja:'caja',nada:'clic'},
-  mascota:{quiltro:'perro',negro:'perro',gato:'gato'},
+  mascota:{quiltro:'perro',negro:'perroNegro',gato:'gato'},
   estela:{chispas:'chispas',hojas:'hojas',nieve:'nieve',burbujas:'burbujas',arcoiris:'arcoiris',fuego:'fuego'},
   biciAcab:{metal:'brillo',neon:'brillo',carbono:'brillo'},
   motorTipo:{moto:'moto',auto:'auto'},
