@@ -18,6 +18,7 @@ p{color:#9fb3c8;font-size:.8rem;margin:0 0 10px}
 <script src="../../pistero-personalizacion-datos.js"></script>
 <script src="../../pistero-armario.js"></script>
 <script src="../../pistero-apariencia.js"></script>
+<script src="../../pistero-bici.js"></script>
 <script>
 var out=document.getElementById('out');
 function P(o,e){ return _pistoDe(o,e||'feliz'); }
@@ -33,6 +34,7 @@ var looks=[
  ['Chile',{casco:'blanco',diseno:'chile',cuello:'panoleta',pano:'#d52b1e',pelo:'corto',peloCol:'#1c130c',piel:'trigueno',acc:'estrella'}],
  ['Gatita',{casco:'lila',diseno:'lunares',disenoCol:'#ffffff',acc:'gato',pelo:'melena',peloCol:'#1c130c',lentes:'gato',lentesCol:'#16203a',labios:'#c81d3a',pest:'si'}]
 ];
+sec('Pistero en su bici (pedaleando)',PIST_BICI.map(function(b,i){return card(_pistBiciSVG(Object.assign({},looks[i%looks.length][1],{biciTipo:b.id}),{expr:['feliz','contento','emocionado','guino','sorprendido'][i]}),b.n);}).join('')+card(_pistBiciSVG(Object.assign({},looks[1][1],{biciTipo:'ruta',biciCol:'#111827'}),{expr:'sorprendido',rapido:true,cadencia:.45}),'Ruta a fondo')+card(_pistBiciSVG(Object.assign({},looks[2][1],{biciTipo:'mtb'}),{expr:'cansado',cadencia:1.4}),'MTB en subida'),'hero big');
 sec('Looks armados',looks.map(function(l){return card(P(l[1]),l[0]);}).join(''),'hero big');
 // Cada miniatura con un casco, diseño y color distintos: así se ve que todo es
 // independiente (pedido de Inty: "veo muchos cascos azules y un puro color").

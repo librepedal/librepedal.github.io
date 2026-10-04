@@ -49,6 +49,8 @@ var PIST_COLORES=[
   {id:'#8b5a2b',n:'Café'},{id:'#d4a017',n:'Dorado'}
 ];
 var PIST_PIEZA_COL=[{id:'',n:'Original'}].concat(PIST_COLORES);
+var PIST_BICI=[{id:'ruta',n:'Ruta'},{id:'mtb',n:'Montaña'},{id:'urbana',n:'Urbana'},{id:'bmx',n:'BMX'},{id:'playera',n:'Playera'}];
+var PIST_BICI_COL=[{id:'',n:'Como el casco'}].concat(PIST_COLORES);
 var PIST_ARO_COL=[{id:'',n:'Oro'},{id:'#d1d5db',n:'Plata'},{id:'#e8a598',n:'Oro rosa'},{id:'#111827',n:'Negro'},{id:'#ec4899',n:'Rosa'},{id:'#2563eb',n:'Azul'},{id:'#16a34a',n:'Verde'},{id:'#dc2626',n:'Rojo'}];
 var PIST_DISENO=[
   {id:'',n:'Liso'},{id:'franja',n:'Franja'},{id:'doble',n:'Doble franja'},{id:'rayo',n:'Rayo'},
@@ -112,7 +114,7 @@ var PIST_PANO=[
 
 var PIST_DEF={casco:'azul',piel:'claro',lentes:'',lentesCol:'#16203a',bigote:'',acc:'',pelo:'',peloCol:'#4a3222',pest:'',aro:'',pano:'',
   diseno:'franja',disenoCol:'#fc4c02',gadget:'',marca:'',ojosCol:'',labios:'',cuello:'',
-  acabado:'',accCol:'',gadgetCol:'',marcoCol:'',aroCol:''};
+  acabado:'',accCol:'',gadgetCol:'',marcoCol:'',aroCol:'',biciTipo:'ruta',biciCol:''};
 var _LP_HEX=/^#[0-9a-fA-F]{6}$/;
 // oscurece (f<0) o aclara (f>0) un '#rrggbb'
 function _lpShade(hex,f){ if(!_LP_HEX.test(hex||'')) return hex; var n=parseInt(hex.slice(1),16); function t(c){ return Math.max(0,Math.min(255,Math.round(f<0?c*(1+f):c+(255-c)*f))); } return '#'+((1<<24)|(t(n>>16)<<16)|(t((n>>8)&255)<<8)|t(n&255)).toString(16).slice(1); }
@@ -316,10 +318,10 @@ function _pistNormal(o){
   // Solo valores del catálogo o colores '#rrggbb': el objeto puede venir de Firestore
   // (lo escribe el cliente de otro usuario) y estos valores se insertan tal cual en el SVG.
   var CAT={piel:PIST_PIEL,lentes:PIST_LENTES,bigote:PIST_BIGOTE,acc:PIST_ACC,pelo:PIST_PELO,pest:PIST_PEST,aro:PIST_ARO,
-    diseno:PIST_DISENO,gadget:PIST_GADGET,marca:PIST_MARCA,cuello:PIST_CUELLO,acabado:PIST_ACABADO};
+    diseno:PIST_DISENO,gadget:PIST_GADGET,marca:PIST_MARCA,cuello:PIST_CUELLO,acabado:PIST_ACABADO,biciTipo:PIST_BICI};
   for(var c in CAT){ var v=r[c]; if(!CAT[c].some(function(it){return it.id===v;})) r[c]=PIST_DEF[c]; }
   // colores libres (selector de color): '' (= original/sin) o hex de 6 dígitos
-  ['peloCol','lentesCol','disenoCol','pano','ojosCol','labios','accCol','gadgetCol','marcoCol','aroCol'].forEach(function(c){ if(r[c]!=='' && !_LP_HEX.test(String(r[c]))) r[c]=PIST_DEF[c]; });
+  ['peloCol','lentesCol','disenoCol','pano','ojosCol','labios','accCol','gadgetCol','marcoCol','aroCol','biciCol'].forEach(function(c){ if(r[c]!=='' && !_LP_HEX.test(String(r[c]))) r[c]=PIST_DEF[c]; });
   if(!_LP_HEX.test(String(r.casco)) && !PIST_CASCO.some(function(h){return h.id===r.casco;})) r.casco=PIST_DEF.casco;
   if(!r.cuello && r.pano) r.cuello='panoleta';
   if(r.cuello && !r.pano) r.pano='#fc4c02';

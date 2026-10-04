@@ -8,18 +8,19 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine){ var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
+function riderMarkerHTML(helmetId, accent, mine, opts){ if(!mine && opts && typeof opts==='object' && typeof _pistoDe==='function'){ return '<div class="helmet-pin"><div class="hp-in" style="--blink-delay:'+(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s">'+_pistoDe(opts,'feliz')+'</div></div>'; } var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
 // Popup de un ciclista en el mapa (2026-08-31, pedido de Inty: "no quiero nada generico").
 // Reusa EXACTAMENTE el mismo color de casco que ya pinta riderMarkerHTML() para el pin
 // (busca en helmetDesigns por helmetId) y dibuja el mismo Pistero, más grande, adentro del
 // popup -- cero datos nuevos, cero lecturas extra a Firestore.
-function _lpAvatarSVG(helmetId){
+function _lpAvatarSVG(helmetId, opts){
+  if(opts && typeof opts==='object' && typeof _pistoDe==='function'){ var oo=_pistNormal(opts); return {cc:_lpColCasco(oo.casco), svg:_pistoDe(oo,'feliz')}; }
   var cc = ((typeof helmetDesigns!=='undefined' && helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color || '#00aaff';
   var svg = (typeof _pisteroExprSVG==='function') ? _pisteroExprSVG('feliz', cc, '#f4c9a0', '', '', '', {casco:helmetId,piel:'claro',lentes:''}) : '';
   return {cc:cc, svg:svg};
 }
-function _lpPopupCiclista(nombre, helmetId, userId){
-  var av = _lpAvatarSVG(helmetId);
+function _lpPopupCiclista(nombre, helmetId, userId, opts){
+  var av = _lpAvatarSVG(helmetId, opts);
   return '<div class="lp-pop" style="--cc:'+av.cc+'"><div class="lp-ic lp-av">'+av.svg+'</div><div class="lp-body"><div class="lp-t">'+escapeHTML(nombre)+'</div><a href="#" class="lp-cta" onclick="verPerfilUsuario(\''+userId+'\');return false"><i class="fas fa-id-card"></i> Ver perfil</a></div></div>';
 }
 
@@ -64,6 +65,7 @@ var _pisteroExprActual='feliz';
 var _pisteroMood=null;
 function _setExprPistero(expr){
   if(!expr) expr='feliz';
+  _pintarMiPistero();
   _pisteroExprActual=expr;
   var svg=(typeof _pistOpts==='function')?_pisteroExprSVG(expr, _pistCascoCol(), _pistPielCol(), _pistOpts().lentes, _pistOpts().bigote, _pistOpts().acc, _pistOpts()):_pisteroExprSVG(expr);
   var ids=['micBtn','esMic'];
@@ -225,7 +227,7 @@ function _pistOpts(){ try{ return _pistNormal(JSON.parse(localStorage.getItem('l
 // Guarda el objeto completo: local + Firestore. `pistOpts` (mapa completo, v2) es lo
 // que leen las versiones nuevas; los campos sueltos pist* se mantienen para que las
 // versiones viejas de la app sigan dibujando algo razonable.
-function _pistGuardar(o){ if(typeof _ptLimpiar==='function') o=_ptLimpiar(o); try{ localStorage.setItem('lp_pist_'+(cu||'anon'), JSON.stringify(o)); }catch(e){ console.warn('[pistero] no se pudo guardar el personaje en el dispositivo', e); } if(cu){ try{ db.collection('users').doc(cu).set({pistOpts:o,pistCasco:o.casco,pistPiel:o.piel,pistLentes:o.lentes,pistLentesCol:o.lentesCol,pistBigote:o.bigote,pistAcc:o.acc,pistPelo:o.pelo,pistPeloCol:o.peloCol,pistPest:o.pest,pistAro:o.aro,pistPano:(o.cuello==='panoleta'?o.pano:'')},{merge:true}).catch(function(e){ console.warn('[pistero] no se pudo sincronizar el personaje', e); }); }catch(e){ console.warn('[pistero] no se pudo sincronizar el personaje', e); } } renderPistCustom(); if(typeof updateCustomizePreview==='function') updateCustomizePreview(); if(typeof _setExprPistero==='function') _setExprPistero(_pisteroExprActual||'feliz'); }
+function _pistGuardar(o){ if(typeof _ptLimpiar==='function') o=_ptLimpiar(o); try{ localStorage.setItem('lp_pist_'+(cu||'anon'), JSON.stringify(o)); }catch(e){ console.warn('[pistero] no se pudo guardar el personaje en el dispositivo', e); } if(cu){ try{ db.collection('users').doc(cu).set({pistOpts:o,pistCasco:o.casco,pistPiel:o.piel,pistLentes:o.lentes,pistLentesCol:o.lentesCol,pistBigote:o.bigote,pistAcc:o.acc,pistPelo:o.pelo,pistPeloCol:o.peloCol,pistPest:o.pest,pistAro:o.aro,pistPano:(o.cuello==='panoleta'?o.pano:'')},{merge:true}).catch(function(e){ console.warn('[pistero] no se pudo sincronizar el personaje', e); }); }catch(e){ console.warn('[pistero] no se pudo sincronizar el personaje', e); } } renderPistCustom(); if(typeof updateCustomizePreview==='function') updateCustomizePreview(); if(typeof _setExprPistero==='function') _setExprPistero(_pisteroExprActual||'feliz'); _pintarMiPistero(); }
 function _pistSet(k,v){ var o=_pistOpts(); o[k]=v;
   if(k==='cuello'){ if(!v) o.pano=''; else if(!o.pano) o.pano='#fc4c02'; }
   if(k==='pano' && v && !o.cuello) o.cuello='panoleta';
@@ -243,6 +245,10 @@ function _pistSorpresa(){ var o=_pistOpts();
   o.gadget=q(.3,PIST_GADGET); o.gadgetCol=q(.5,PIST_PIEZA_COL); o.marca=q(.35,PIST_MARCA);
   o.cuello=q(.6,PIST_CUELLO); o.pano=o.cuello?r(PIST_PANO):'';
   _pistGuardar(o); }
+// Pistero del usuario en toda la app (pestaña Pistero, chip de usuario, título de la
+// sección): el MISMO personaje que arma en la tienda. Solo repinta si cambió.
+var _miPistKey='';
+function _pintarMiPistero(forzar){ var els=document.querySelectorAll('.lp-mi-pistero'); if(!els.length) return; var o=_pistOpts(), k=JSON.stringify(o); if(!forzar && k===_miPistKey) return; _miPistKey=k; var svg=_pistoDe(o,'feliz'); for(var i=0;i<els.length;i++) els[i].innerHTML=svg; }
 function _pistCascoCol(){ return _lpColCasco(_pistOpts().casco); }
 function _pistPielCol(){ var o=_pistOpts(); var p=PIST_PIEL.find(function(x){return x.id===o.piel;}); return p?p.c:'#f4c9a0'; }
 function _pistoNuevo(expr){ var o=_pistOpts(); return _pisteroExprSVG(expr||'feliz', _pistCascoCol(), _pistPielCol(), o.lentes, o.bigote, o.acc, o); }
@@ -288,7 +294,9 @@ var PIST_GRUPOS=[
   {g:'pistAroColGrid',k:'aroCol',l:function(){return PIST_ARO_COL;},chip:1,libre:1,vacio:'#e8c34a'},
   {g:'pistCuelloGrid',k:'cuello',l:function(){return PIST_CUELLO;}},
   {g:'pistPanoGrid',k:'pano',l:function(){return PIST_PANO;},chip:1,libre:1},
-  {g:'pistBigoteGrid',k:'bigote',l:function(){return PIST_BIGOTE;}}
+  {g:'pistBigoteGrid',k:'bigote',l:function(){return PIST_BIGOTE;}},
+  {g:'pistBiciGrid',k:'biciTipo',l:function(){return PIST_BICI;},svg:function(o){ return _pistBiciSVG(o,{pedal:false}); }},
+  {g:'pistBiciColGrid',k:'biciCol',l:function(){return PIST_BICI_COL;},chip:1,libre:1,vacio:_PIST_ORIGINAL}
 ];
 function renderPistCustom(){ if(typeof _ptRender==='function' && _ptRender()) return; var o=_pistOpts();
   PIST_GRUPOS.forEach(function(G){

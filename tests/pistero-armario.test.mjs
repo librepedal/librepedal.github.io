@@ -31,7 +31,7 @@ const listas = { casco: 'PIST_CASCO', diseno: 'PIST_DISENO', disenoCol: 'PIST_AC
   pelo: 'PIST_PELO', peloCol: 'PIST_PELO_COL', lentes: 'PIST_LENTES', lentesCol: 'PIST_LENTES_COL',
   ojosCol: 'PIST_OJOS_COL', pest: 'PIST_PEST', labios: 'PIST_LABIOS', marca: 'PIST_MARCA', bigote: 'PIST_BIGOTE',
   acc: 'PIST_ACC', gadget: 'PIST_GADGET', aro: 'PIST_ARO', cuello: 'PIST_CUELLO', pano: 'PIST_PANO',
-  acabado: 'PIST_ACABADO', accCol: 'PIST_PIEZA_COL', gadgetCol: 'PIST_PIEZA_COL', marcoCol: 'PIST_PIEZA_COL', aroCol: 'PIST_ARO_COL' };
+  acabado: 'PIST_ACABADO', accCol: 'PIST_PIEZA_COL', gadgetCol: 'PIST_PIEZA_COL', marcoCol: 'PIST_PIEZA_COL', aroCol: 'PIST_ARO_COL', biciTipo: 'PIST_BICI', biciCol: 'PIST_BICI_COL' };
 let opciones = 0;
 for (const [k, nombre] of Object.entries(listas)) {
   const l = ctx[nombre] || vm.runInContext(nombre, ctx);

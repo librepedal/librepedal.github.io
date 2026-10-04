@@ -987,3 +987,19 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .pt-chip.r-r{border-color:var(--rr)}.pt-chip.r-e{border-color:var(--re)}.pt-chip.r-l{border-color:var(--rl)}
 .pt-chip.sel{border-color:var(--p)}
 @media (prefers-reduced-motion:reduce){.pt-card.r-l::after,.pt-chispa,.pt-pistero svg{animation:none}}
+/* Pistero del usuario en toda la app (_pintarMiPistero) */
+.lp-mi-pistero svg{width:100%;height:100%;display:block}
+.nb-pist{display:block;width:28px;height:23px;margin:0 auto 1px}
+.uchip-av.lp-mi-pistero{overflow:hidden;background:#0f1828;box-shadow:0 0 0 1.5px #fc4c02 inset}.uchip-av.lp-mi-pistero svg{transform:scale(1.18) translateY(4%)}
+.sec-pist{display:inline-block;width:24px;height:20px;vertical-align:-4px;margin-right:6px}
+/* Sobrevuelo v2: Pistero en su bici + globo de cómic con su cara */
+.sbv-rider{position:relative;width:78px;height:74px;pointer-events:none}
+.sbv-bici{width:78px;height:74px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));transition:transform .25s}
+.sbv-bici svg{width:100%;height:100%;overflow:visible}
+.sbv-globo{position:absolute;left:50%;bottom:calc(100% + 6px);display:flex;align-items:center;gap:6px;background:#fff;color:#111827;border:2.5px solid #111827;border-radius:16px;padding:4px 10px 4px 5px;font:900 .74rem/1.1 'Arial Black',system-ui,sans-serif;white-space:nowrap;box-shadow:3px 3px 0 #111827;transform:translateX(-50%) scale(0);transform-origin:50% 100%;opacity:0;transition:transform .22s cubic-bezier(.3,1.6,.5,1),opacity .15s}
+.sbv-globo::after{content:'';position:absolute;left:50%;top:100%;margin-left:-7px;border:7px solid transparent;border-top-color:#111827}
+.sbv-globo::before{content:'';position:absolute;left:50%;top:100%;margin-left:-4px;margin-top:-1px;border:4.5px solid transparent;border-top-color:#fff;z-index:1}
+.sbv-globo.on{transform:translateX(-50%) scale(1);opacity:1}
+.sbv-cara{width:34px;height:29px;flex:none}.sbv-cara svg{width:100%;height:100%}
+.pt-pistero.en-bici{width:130px;height:118px}
+@media (prefers-reduced-motion:reduce){.sbv-globo{transition:none}}

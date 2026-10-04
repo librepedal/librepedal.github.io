@@ -67,7 +67,7 @@ function _actualizarVisibilidadCiclistas(){
   if(typeof renderReporteMarkers==='function') renderReporteMarkers();
   if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas();
 }
-function _pintarUnCiclista(u){ const marker=mlMarker([u.lat,u.lon],{icon:{html:riderMarkerHTML(u.helmet,u.jersey,false)}}).addTo(mp).bindPopup(_lpPopupCiclista(u.nombre,u.helmet,u.id)); sm.push(marker); }
+function _pintarUnCiclista(u){ const marker=mlMarker([u.lat,u.lon],{icon:{html:riderMarkerHTML(u.helmet,u.jersey,false,u.pistOpts)}}).addTo(mp).bindPopup(_lpPopupCiclista(u.nombre,u.helmet,u.id,u.pistOpts)); sm.push(marker); }
 function _renderMainMapUsers(docs){
   if(!mp) return;
   sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; usuariosCercanosData=[];
@@ -77,7 +77,7 @@ function _renderMainMapUsers(docs){
     if(data.lat&&data.lon&&doc.id!==cu){
       const nombre=data.nombre||doc.id;
       usuariosCercanosData.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon});
-      vivos.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon,helmet:data.helmet||'giro',jersey:data.skin?skinColor(data.skin):'#ff6600'});
+      vivos.push({id:doc.id,nombre:nombre,lat:data.lat,lon:data.lon,helmet:data.helmet||'giro',jersey:data.skin?skinColor(data.skin):'#ff6600',pistOpts:data.pistOpts||null});
     }
   });
   const celda=_celdaClusterParaZoom(mp.getZoom());
@@ -94,4 +94,4 @@ function _renderMainMapUsers(docs){
     sm.push(marker);
   });
 }
-function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup(_lpPopupCiclista(nombre,data.helmet||'giro',doc.id)); navUserMarkers.push(marker); } }); }
+function _renderNavMapUsers(docs){ if(!navMap) return; navUserMarkers.forEach(function(m){ navMap.removeLayer(m); }); navUserMarkers=[]; docs.forEach(function(doc){ const data=doc.data(); if(data.lat&&data.lon&&doc.id!==cu){ const nombre=data.nombre||doc.id; const jersey=data.skin?skinColor(data.skin):'#ff6600'; const marker=L.marker([data.lat,data.lon],{icon:L.divIcon({className:'',html:riderMarkerHTML(data.helmet||'giro',jersey,false,data.pistOpts),iconSize:[44,30],iconAnchor:[22,15]})}).addTo(navMap).bindPopup(_lpPopupCiclista(nombre,data.helmet||'giro',doc.id,data.pistOpts)); navUserMarkers.push(marker); } }); }

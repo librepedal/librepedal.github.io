@@ -35,7 +35,8 @@ var PIST_TIER={
   peloCol:{'#f472b6':'r','#a78bfa':'r','#3b82f6':'r','#34d399':'r','#ef4444':'r'},
   marca:{barro:'r',curita:'r',corazon:'r',brillos:'r',guerrero:'r'},
   aro:{estrella:'r',corazon:'r',colgante:'r',doble:'r'},
-  cuello:{bufanda:'r',maillot:'r',pajarita:'e',collar:'e'}
+  cuello:{bufanda:'r',maillot:'r',pajarita:'e',collar:'e'},
+  biciTipo:{bmx:'r',playera:'r'}
 };
 function _ptTier(k,id){ if(!id) return 'c'; var m=PIST_TIER[k]; return (m&&m[id])||'c'; }
 function _ptPrecio(t){ var p=PIST_RAREZA[t].clp; return p?('$'+String(p).replace(/\B(?=(\d{3})+(?!\d))/g,'.')):'Gratis'; }
@@ -59,6 +60,7 @@ var PIST_TABS=[
   {id:'cara',n:'Cara',i:_ptIco('<circle cx="12" cy="12" r="9"/><path d="M8 14.5c2 2 6 2 8 0"/><path d="M9 9.5v1M15 9.5v1"/>'),g:[{k:'marca',t:'Detalles'},{k:'ojosCol',t:'Color de ojos'},{k:'pest',t:'Pestañas'},{k:'labios',t:'Labial'}]},
   {id:'aros',n:'Aros',i:_ptIco('<circle cx="12" cy="15.5" r="5"/><path d="M12 3v7.5"/>'),g:[{k:'aro',t:'Aros'},{k:'aroCol',t:'Metal o color'}]},
   {id:'cuello',n:'Cuello',i:_ptIco('<path d="M4 7c5 3.5 11 3.5 16 0l.8 4.5c-5.5 3.5-12 3.5-17.6 0z"/><path d="M14.5 11.5l1.8 8.5h-3.6l.6-8"/>'),g:[{k:'cuello',t:'Cuello'},{k:'pano',t:'Color'}]},
+  {id:'bici',n:'Bici',i:_ptIco('<circle cx="5.5" cy="16.5" r="3.8"/><circle cx="18.5" cy="16.5" r="3.8"/><path d="M5.5 16.5l4-7h6l3 7M9.5 9.5l3 7h3M14 6h3l-1.5 3.5"/>'),g:[{k:'biciTipo',t:'Tu bici'},{k:'biciCol',t:'Color de la bici'}]},
   {id:'piel',n:'Piel',i:_ptIco('<path d="M12 3c4 5 6 8.2 6 11a6 6 0 0 1-12 0c0-2.8 2-6 6-11z"/>'),g:[{k:'piel',t:'Tono de piel'}]}
 ];
 // Recorte del dibujo por pestaña: que en la tarjeta se vea la pieza, no todo Pistero.
@@ -88,8 +90,8 @@ function _ptCambiarGesto(){ _ptGesto=(_ptGesto+1)%5; _ptPreview(); }
 function _ptPreview(){
   var box=document.getElementById('customize-preview-svg'); if(!box) return;
   var o=_ptOpts(), gestos=['feliz','contento','guino','sorprendido','emocionado'];
-  var svg=_pistoDe(o,gestos[_ptGesto]), mx=_ptRarezaMax(o);
-  box.className='pt-pistero r-'+mx;
+  var enBici=(_ptTab==='bici'&&typeof _pistBiciSVG==='function'), svg=enBici?_pistBiciSVG(o,{expr:gestos[_ptGesto]}):_pistoDe(o,gestos[_ptGesto]), mx=_ptRarezaMax(o);
+  box.className='pt-pistero r-'+mx+(enBici?' en-bici':'');
   box.innerHTML=svg+(mx==='l'||mx==='e'?'<span class="pt-chispa s1"></span><span class="pt-chispa s2"></span><span class="pt-chispa s3"></span><span class="pt-chispa s4"></span>':'');
   var n=document.getElementById('customizeCharacterName'); if(n&&typeof nombreUsuario!=='undefined'&&nombreUsuario) n.innerText=nombreUsuario;
   var bar=document.getElementById('ptCompra'); if(!bar) return;
@@ -103,7 +105,7 @@ function _ptPreview(){
 function _ptCard(G,it,o,actual){
   var t=_ptTier(G.k,it.id), sel=(actual===it.id), tiene=_ptTiene(G.k,it.id), prueba=_ptPrueba&&_ptPrueba.k===G.k&&_ptPrueba.id===it.id;
   var m={}; m[G.k]=it.id; if(G.k==='cuello'&&it.id&&!o.pano) m.pano='#fc4c02';
-  var svg=_pistoDe(Object.assign({},o,m),'feliz'), z=PIST_ZOOM[G.k]||G.zoom;
+  var mix=Object.assign({},o,m), svg=G.svg?G.svg(mix):_pistoDe(mix,'feliz'), z=G.svg?null:(PIST_ZOOM[G.k]||G.zoom);
   if(z) svg=svg.replace('viewBox="0 0 100 84"','viewBox="'+z+'"');
   return '<button type="button" class="pt-card r-'+t+(sel?' sel':'')+(prueba?' prueba':'')+(tiene?'':' lock')+'" onclick="_ptElegir(\''+G.k+'\',\''+it.id+'\')" title="'+it.n+'">'
     +'<span class="pt-card-img">'+svg+'</span><span class="pt-card-n">'+it.n+'</span>'
@@ -132,3 +134,6 @@ function _ptRender(){
   _ptPreview();
   return true;
 }
+// primer pintado del Pistero del usuario en la cabecera/pestañas (después del login,
+// _setExprPistero lo repinta con el personaje de esa cuenta)
+if(typeof document!=='undefined' && document.addEventListener) document.addEventListener('DOMContentLoaded', function(){ try{ _pintarMiPistero(true); }catch(e){ console.warn('[pistero] no se pudo pintar el Pistero del usuario', e); } });
