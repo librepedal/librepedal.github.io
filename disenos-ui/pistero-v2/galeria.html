@@ -34,22 +34,26 @@ var looks=[
  ['Gatita',{casco:'lila',diseno:'lunares',disenoCol:'#ffffff',acc:'gato',pelo:'melena',peloCol:'#1c130c',lentes:'gato',lentesCol:'#16203a',labios:'#c81d3a',pest:'si'}]
 ];
 sec('Looks armados',looks.map(function(l){return card(P(l[1]),l[0]);}).join(''),'hero big');
-// Antes / después del pelo
+// Cada miniatura con un casco, diseño y color distintos: así se ve que todo es
+// independiente (pedido de Inty: "veo muchos cascos azules y un puro color").
+var CC=PIST_CASCO.map(function(h){return h.id;}), PAL=PIST_COLORES.map(function(c){return c.id;}), DD=['franja','doble','','rayo','lunares','ondas','zigzag','estrellas'];
+function V(i,o){ return Object.assign({casco:CC[(i*5+3)%CC.length],diseno:DD[i%DD.length],disenoCol:PAL[(i*7+4)%PAL.length]},o); }
 sec('Pelo — antes (moño con cola en gancho, se reemplaza)','<div class="c" id="viejo"></div>','hero');
-sec('Pelo — ahora',PIST_PELO.map(function(p){return card(P({casco:'azul',pelo:p.id,peloCol:'#7a5232',pest:p.id?'si':''}),p.n);}).join(''));
-sec('Pelo — colores',PIST_PELO_COL.map(function(c){return card(P({pelo:'ondulado',peloCol:c.id}),c.n);}).join(''));
-sec('Casco — colores y acabados',PIST_CASCO.map(function(h){return card(P({casco:h.id}),h.n);}).join(''));
-sec('Casco — diseños',PIST_DISENO.map(function(d){return card(P({casco:'negro',diseno:d.id,disenoCol:'#fc4c02'}),d.n);}).join(''));
-sec('Accesorios de casco',PIST_ACC.map(function(a){return card(P({casco:'celeste',acc:a.id}),a.n);}).join(''));
-sec('Equipo',PIST_GADGET.map(function(a){return card(P({casco:'naranja',diseno:'',gadget:a.id}),a.n);}).join(''));
-sec('Lentes',PIST_LENTES.map(function(a){return card(P({lentes:a.id,lentesCol:'#1e40af'}),a.n);}).join(''));
-sec('Cara',PIST_MARCA.map(function(a){return card(P({marca:a.id,piel:'medio'}),a.n);}).join(''));
-sec('Ojos',PIST_OJOS_COL.map(function(a){return card(P({ojosCol:a.id,pest:'si'}),a.n);}).join(''));
-sec('Pestañas',PIST_PEST.map(function(a){return card(P({pest:a.id}),a.n);}).join(''));
-sec('Labial',PIST_LABIOS.map(function(a){return card(P({labios:a.id}),a.n);}).join(''));
-sec('Aros',PIST_ARO.map(function(a){return card(P({aro:a.id,pelo:'corto'}),a.n);}).join(''));
-sec('Cuello',PIST_CUELLO.map(function(a){return card(P({cuello:a.id,pano:a.id?'#16a34a':''}),a.n);}).join(''));
-sec('Piel',PIST_PIEL.map(function(a){return card(P({piel:a.id,pelo:'melena',peloCol:'#1c130c'}),a.n);}).join(''));
+sec('Pelo — ahora',PIST_PELO.map(function(p,i){return card(P(V(i,{pelo:p.id,peloCol:PIST_PELO_COL[i%PIST_PELO_COL.length].id,pest:p.id?'si':''})),p.n);}).join(''));
+sec('Casco — color (cualquiera, también con el selector libre)',PIST_CASCO.concat([{id:'#0f766e',n:'Libre #0f766e'},{id:'#b45309',n:'Libre #b45309'}]).map(function(h){return card(P({casco:h.id,diseno:''}),h.n);}).join(''));
+sec('Casco — acabado (independiente del color)',PIST_ACABADO.map(function(a,i){return card(P({casco:['rojo','negro','azul','blanco','#334155','#ec4899'][i],acabado:a.id,diseno:''}),a.n);}).join(''));
+sec('Casco — diseños',PIST_DISENO.map(function(d,i){return card(P({casco:CC[(i*3+1)%CC.length],diseno:d.id,disenoCol:PAL[(i*5+2)%PAL.length]}),d.n);}).join(''));
+sec('Accesorios de casco',PIST_ACC.map(function(a,i){return card(P(V(i,{acc:a.id})),a.n);}).join(''));
+sec('Mismo accesorio, el color que quieras',PIST_PIEZA_COL.slice(0,9).map(function(c,i){return card(P({casco:'negro',diseno:'',acc:'gato',accCol:c.id}),c.n);}).join('')+PIST_PIEZA_COL.slice(0,5).map(function(c){return card(P({casco:'blanco',diseno:'',acc:'vikingo',accCol:c.id}),'Vikingo '+c.n);}).join(''));
+sec('Equipo (con su propio color)',PIST_GADGET.map(function(a,i){return card(P(V(i+2,{gadget:a.id,gadgetCol:i%2?PAL[(i*3)%PAL.length]:''})),a.n);}).join(''));
+sec('Lentes',PIST_LENTES.map(function(a,i){return card(P(V(i,{lentes:a.id,lentesCol:PIST_LENTES_COL[i%PIST_LENTES_COL.length].id})),a.n);}).join(''));
+sec('Mismos lentes, marco de otro color',PIST_PIEZA_COL.slice(0,7).map(function(c){return card(P({casco:'celeste',diseno:'',lentes:'redondas',lentesCol:'#16203a',marcoCol:c.id}),c.n);}).join(''));
+sec('Cara',PIST_MARCA.map(function(a,i){return card(P(V(i,{marca:a.id,piel:'medio'})),a.n);}).join(''));
+sec('Ojos',PIST_OJOS_COL.map(function(a,i){return card(P(V(i,{ojosCol:a.id,pest:'si'})),a.n);}).join(''));
+sec('Labial',PIST_LABIOS.map(function(a,i){return card(P(V(i,{labios:a.id})),a.n);}).join(''));
+sec('Aros (forma y metal por separado)',PIST_ARO.map(function(a,i){return card(P(V(i,{aro:a.id,aroCol:PIST_ARO_COL[i%PIST_ARO_COL.length].id,pelo:'corto'})),a.n);}).join(''));
+sec('Cuello',PIST_CUELLO.map(function(a,i){return card(P(V(i,{cuello:a.id,pano:a.id?PIST_PANO[i%PIST_PANO.length].id:''})),a.n);}).join(''));
+sec('Piel',PIST_PIEL.map(function(a,i){return card(P(V(i,{piel:a.id,pelo:'melena',peloCol:'#1c130c'})),a.n);}).join(''));
 sec('Expresiones (con look)',['feliz','contento','hablando','sorprendido','pensando','enojado','cansado','dormido','guino'].map(function(e){return card(P(looks[0][1],e),e);}).join(''));
 </script>
 <script>

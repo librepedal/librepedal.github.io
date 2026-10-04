@@ -58,7 +58,7 @@ function _pisteroExprSVG(expr, helmetCol, skinCol, lentes, bigote, accesorio, x)
   else if(expr==='preocupado'){ eyes='<path d="M33 55 Q40 52 45 55" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M55 55 Q60 52 67 55" stroke="#16203a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+eO(40)+eO(60); mouth='<path d="M44 75 Q47 72 50 75 Q53 78 56 75" stroke="#7a4a2a" stroke-width="2.2" fill="none" stroke-linecap="round"/>'; }
   else if(expr==='dormido'){ eyes=eC(40)+eC(60); mouth='<ellipse cx="50" cy="75" rx="2.4" ry="3" fill="#5a2f1a"/><text x="72" y="46" font-size="11" fill="#7fd0ff" font-family="sans-serif">z</text><text x="79" y="40" font-size="8" fill="#7fd0ff" font-family="sans-serif">z</text>'; }
   else { eyes=eO(40,true)+eO(60,true); mouth=SMILE; }
-  return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'+base+(accesorio?_accCascoSVG(accesorio):'')+(x.gadget?_gadgetSVG(x.gadget):'')+(x.aro?_aroSVG(x.aro):'')+eyes+(x.pest?_pestanasSVG(x.pest):'')+(lentes?_lentesSVG(lentes,x.lentesCol):'')+(x.marca==='rubor'?'':cheeks)+(x.marca?_marcaSVG(x.marca,x):'')+_labiosMouth(mouth,x.labios)+(bigote?_bigoteSVG(bigote):'')+(x.cuello?_cuelloSVG(x.cuello,x.pano):'')+'</svg>';
+  return '<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'+base+(accesorio?_accCascoSVG(accesorio,x.accCol):'')+(x.gadget?_gadgetSVG(x.gadget,x.gadgetCol):'')+(x.aro?_aroSVG(x.aro,x.aroCol):'')+eyes+(x.pest?_pestanasSVG(x.pest):'')+(lentes?_lentesSVG(lentes,x.lentesCol,x.marcoCol):'')+(x.marca==='rubor'?'':cheeks)+(x.marca?_marcaSVG(x.marca,x):'')+_labiosMouth(mouth,x.labios)+(bigote?_bigoteSVG(bigote):'')+(x.cuello?_cuelloSVG(x.cuello,x.pano):'')+'</svg>';
 }
 var _pisteroExprActual='feliz';
 var _pisteroMood=null;
@@ -236,13 +236,14 @@ function _pistSet(k,v){ var o=_pistOpts(); o[k]=v;
 function _pistSorpresa(){ var o=_pistOpts();
   function r(l){ return l[Math.floor(Math.random()*l.length)].id; }
   function q(p,l){ return Math.random()<p ? r(l.filter(function(x){return x.id;})) : ''; }
-  o.casco=r(PIST_CASCO); o.diseno=r(PIST_DISENO); o.disenoCol=r(PIST_ACENTO);
+  o.casco=r(PIST_CASCO); o.acabado=q(.4,PIST_ACABADO); o.diseno=r(PIST_DISENO); o.disenoCol=r(PIST_ACENTO);
   if(o.pelo) o.pelo=r(PIST_PELO.filter(function(x){return x.id;}));
-  o.lentes=q(.55,PIST_LENTES); o.lentesCol=r(PIST_LENTES_COL);
-  o.acc=q(.65,PIST_ACC); o.gadget=q(.3,PIST_GADGET); o.marca=q(.35,PIST_MARCA);
+  o.lentes=q(.55,PIST_LENTES); o.lentesCol=r(PIST_LENTES_COL); o.marcoCol=q(.4,PIST_PIEZA_COL);
+  o.acc=q(.65,PIST_ACC); o.accCol=q(.5,PIST_PIEZA_COL);
+  o.gadget=q(.3,PIST_GADGET); o.gadgetCol=q(.5,PIST_PIEZA_COL); o.marca=q(.35,PIST_MARCA);
   o.cuello=q(.6,PIST_CUELLO); o.pano=o.cuello?r(PIST_PANO):'';
   _pistGuardar(o); }
-function _pistCascoCol(){ var o=_pistOpts(); var h=PIST_CASCO.find(function(x){return x.id===o.casco;}); return h?h.c:'#00aaff'; }
+function _pistCascoCol(){ return _lpColCasco(_pistOpts().casco); }
 function _pistPielCol(){ var o=_pistOpts(); var p=PIST_PIEL.find(function(x){return x.id===o.piel;}); return p?p.c:'#f4c9a0'; }
 function _pistoNuevo(expr){ var o=_pistOpts(); return _pisteroExprSVG(expr||'feliz', _pistCascoCol(), _pistPielCol(), o.lentes, o.bigote, o.acc, o); }
 // Mismo Pistero de _pistoNuevo() pero para un `pistOpts` ARBITRARIO (de Firestore,
@@ -252,48 +253,59 @@ function _pistoNuevo(expr){ var o=_pistOpts(); return _pisteroExprSVG(expr||'fel
 // muestre el Pistero real de quien sea, no siempre el mismo por defecto.
 function _pistoDe(opts, expr){
   var o=_pistNormal(opts);
-  var h=PIST_CASCO.find(function(x){return x.id===o.casco;});
   var p=PIST_PIEL.find(function(x){return x.id===o.piel;});
-  return _pisteroExprSVG(expr||'feliz', h?h.c:'#00aaff', p?p.c:'#f4c9a0', o.lentes, o.bigote, o.acc, o);
+  return _pisteroExprSVG(expr||'feliz', _lpColCasco(o.casco), p?p.c:'#f4c9a0', o.lentes, o.bigote, o.acc, o);
 }
 function _pistSwatch(inner,sel,onclick,label){ return '<div class="pist-sw'+(sel?' sel':'')+'" onclick="'+onclick+'" title="'+label+'"><div class="pist-sw-ico">'+inner+'</div><div class="pist-sw-lbl">'+label+'</div></div>'; }
 function _pistChip(c,sel,onclick,label){ return '<div class="pist-chip'+(sel?' sel':'')+'" onclick="'+onclick+'" title="'+label+'" aria-label="'+label+'"><span style="background:'+c+'"></span></div>'; }
+// Chip "+" con selector de color libre: cualquier color, no solo los de la lista.
+function _pistChipLibre(k,actual,esLibre){ var v=_LP_HEX.test(actual||'')?actual:'#fc4c02'; return '<label class="pist-chip pist-chip-libre'+(esLibre?' sel':'')+'" title="Otro color" aria-label="Otro color"><span style="'+(esLibre?'background:'+v:'')+'"></span><input type="color" value="'+v+'" onchange="_pistSet(\''+k+'\',this.value)"></label>'; }
+var _PIST_ORIGINAL='repeating-linear-gradient(45deg,#cbd5e1 0 3px,#64748b 3px 6px)';
 // Grupos del armario. zoom = recorte del viewBox para que lo chico (ojos, labios,
-// aros) se vea en el ícono; chip = selector de color redondo (más liviano y claro).
+// aros) se vea en el ícono; chip = selector de color redondo; libre = además el
+// selector de color libre. Cada pieza tiene su propio color, independiente del resto.
 var _PIST_CARA='12 34 76 64';
 var PIST_GRUPOS=[
-  {g:'pistCascoGrid',k:'casco',l:function(){return PIST_CASCO;}},
+  {g:'pistCascoGrid',k:'casco',l:function(){return PIST_CASCO;},chip:1,libre:1,col:function(it){return it.css||it.c;}},
+  {g:'pistAcabadoGrid',k:'acabado',l:function(){return PIST_ACABADO;}},
   {g:'pistDisenoGrid',k:'diseno',l:function(){return PIST_DISENO;}},
-  {g:'pistDisenoColGrid',k:'disenoCol',l:function(){return PIST_ACENTO;},chip:1},
+  {g:'pistDisenoColGrid',k:'disenoCol',l:function(){return PIST_ACENTO;},chip:1,libre:1},
   {g:'pistAccGrid',k:'acc',l:function(){return PIST_ACC;}},
+  {g:'pistAccColGrid',k:'accCol',l:function(){return PIST_PIEZA_COL;},chip:1,libre:1,vacio:_PIST_ORIGINAL},
   {g:'pistGadgetGrid',k:'gadget',l:function(){return PIST_GADGET;}},
+  {g:'pistGadgetColGrid',k:'gadgetCol',l:function(){return PIST_PIEZA_COL;},chip:1,libre:1,vacio:_PIST_ORIGINAL},
   {g:'pistPielGrid',k:'piel',l:function(){return PIST_PIEL;}},
   {g:'pistPeloGrid',k:'pelo',l:function(){return PIST_PELO;}},
-  {g:'pistPeloColGrid',k:'peloCol',l:function(){return PIST_PELO_COL;},chip:1},
-  {g:'pistOjosColGrid',k:'ojosCol',l:function(){return PIST_OJOS_COL;},chip:1,vacio:'#16203a'},
+  {g:'pistPeloColGrid',k:'peloCol',l:function(){return PIST_PELO_COL;},chip:1,libre:1},
+  {g:'pistOjosColGrid',k:'ojosCol',l:function(){return PIST_OJOS_COL;},chip:1,libre:1,vacio:'#16203a'},
   {g:'pistPestGrid',k:'pest',l:function(){return PIST_PEST;},zoom:_PIST_CARA},
   {g:'pistLentesGrid',k:'lentes',l:function(){return PIST_LENTES;},zoom:_PIST_CARA},
-  {g:'pistLentesColGrid',k:'lentesCol',l:function(){return PIST_LENTES_COL;},chip:1},
+  {g:'pistLentesColGrid',k:'lentesCol',l:function(){return PIST_LENTES_COL;},chip:1,libre:1},
+  {g:'pistMarcoColGrid',k:'marcoCol',l:function(){return PIST_PIEZA_COL;},chip:1,libre:1,vacio:_PIST_ORIGINAL},
   {g:'pistMarcaGrid',k:'marca',l:function(){return PIST_MARCA;},zoom:_PIST_CARA},
-  {g:'pistLabiosGrid',k:'labios',l:function(){return PIST_LABIOS;},chip:1,vacio:'#c98a73'},
+  {g:'pistLabiosGrid',k:'labios',l:function(){return PIST_LABIOS;},chip:1,libre:1,vacio:'#c98a73'},
   {g:'pistAroGrid',k:'aro',l:function(){return PIST_ARO;},zoom:_PIST_CARA},
+  {g:'pistAroColGrid',k:'aroCol',l:function(){return PIST_ARO_COL;},chip:1,libre:1,vacio:'#e8c34a'},
   {g:'pistCuelloGrid',k:'cuello',l:function(){return PIST_CUELLO;}},
-  {g:'pistPanoGrid',k:'pano',l:function(){return PIST_PANO;},chip:1},
+  {g:'pistPanoGrid',k:'pano',l:function(){return PIST_PANO;},chip:1,libre:1},
   {g:'pistBigoteGrid',k:'bigote',l:function(){return PIST_BIGOTE;}}
 ];
 function renderPistCustom(){ var o=_pistOpts();
   PIST_GRUPOS.forEach(function(G){
     var el=document.getElementById(G.g); if(!el) return;
-    // Solo se dibuja el grupo abierto (son ~200 miniaturas); al abrir otro,
+    // Solo se dibuja el grupo abierto (son ~250 opciones); al abrir otro,
     // _perfilAcordeon() vuelve a llamar a renderPistCustom().
     var det=el.closest&&el.closest('details'); if(det && !det.open) return;
-    el.innerHTML=G.l().map(function(it){
-      var sel=(o[G.k]||'')===it.id, on="_pistSet('"+G.k+"','"+it.id+"')";
-      if(G.chip) return _pistChip(it.id||G.vacio,sel,on,it.n);
+    var lista=G.l(), actual=(o[G.k]||'');
+    var html=lista.map(function(it){
+      var sel=actual===it.id, on="_pistSet('"+G.k+"','"+it.id+"')";
+      if(G.chip) return _pistChip(it.id?(G.col?G.col(it):it.id):G.vacio,sel,on,it.n);
       var m={}; m[G.k]=it.id; var svg=_pistoDe(Object.assign({},o,m),'feliz');
       if(G.zoom) svg=svg.replace('viewBox="0 0 100 84"','viewBox="'+G.zoom+'"');
       return _pistSwatch(svg,sel,on,it.n);
     }).join('');
+    if(G.libre) html+=_pistChipLibre(G.k,actual,!!actual && !lista.some(function(it){return it.id===actual;}));
+    el.innerHTML=html;
   });
 }
 function initCustomization(){ try{ renderPistCustom(); }catch(e){}

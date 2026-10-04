@@ -30,7 +30,8 @@ function svgValido(s, donde) {
 const listas = { casco: 'PIST_CASCO', diseno: 'PIST_DISENO', disenoCol: 'PIST_ACENTO', piel: 'PIST_PIEL',
   pelo: 'PIST_PELO', peloCol: 'PIST_PELO_COL', lentes: 'PIST_LENTES', lentesCol: 'PIST_LENTES_COL',
   ojosCol: 'PIST_OJOS_COL', pest: 'PIST_PEST', labios: 'PIST_LABIOS', marca: 'PIST_MARCA', bigote: 'PIST_BIGOTE',
-  acc: 'PIST_ACC', gadget: 'PIST_GADGET', aro: 'PIST_ARO', cuello: 'PIST_CUELLO', pano: 'PIST_PANO' };
+  acc: 'PIST_ACC', gadget: 'PIST_GADGET', aro: 'PIST_ARO', cuello: 'PIST_CUELLO', pano: 'PIST_PANO',
+  acabado: 'PIST_ACABADO', accCol: 'PIST_PIEZA_COL', gadgetCol: 'PIST_PIEZA_COL', marcoCol: 'PIST_PIEZA_COL', aroCol: 'PIST_ARO_COL' };
 let opciones = 0;
 for (const [k, nombre] of Object.entries(listas)) {
   const l = ctx[nombre] || vm.runInContext(nombre, ctx);
@@ -40,6 +41,7 @@ for (const [k, nombre] of Object.entries(listas)) {
     ok(!ids.has(it.id), nombre + ': id repetido ' + it.id); ids.add(it.id);
     ok(typeof it.n === 'string' && it.n.length > 0, nombre + ': nombre visible para ' + it.id);
     const o = { [k]: it.id }; if (k === 'pano') o.cuello = 'buff';
+    if (k === 'accCol') o.acc = 'gato'; if (k === 'gadgetCol') o.gadget = 'visera'; if (k === 'marcoCol') o.lentes = 'redondas'; if (k === 'aroCol') o.aro = 'argolla';
     svgValido(vm.runInContext('_pistoDe', ctx)(o, 'feliz'), k + '=' + it.id);
     opciones++;
   }
@@ -58,9 +60,20 @@ ok(N({}).diseno === 'franja', 'sin diseño guardado = la franja de siempre');
 ok(N({ diseno: '' }).diseno === '', 'casco liso elegido se respeta');
 ok(N({ casco: undefined, piel: undefined }).casco === 'azul', 'campos undefined de Firestore no pisan el default');
 
+// 2b) Color y acabado independientes; cualquier color libre se acepta y se dibuja.
+ok(viejo.acabado === '', 'casco azul viejo queda brillante');
+ok(N({ casco: 'cromo' }).acabado === 'metal', 'el cromo guardado antes conserva su acabado metálico');
+ok(N({ casco: 'rojo', acabado: 'carbono' }).acabado === 'carbono', 'acabado elegido aparte se respeta');
+const libre = N({ casco: '#0f766e', accCol: '#123abc', marcoCol: '#ABCDEF', aroCol: '#d1d5db' });
+ok(libre.casco === '#0f766e' && libre.accCol === '#123abc' && libre.marcoCol === '#ABCDEF', 'colores libres #rrggbb se aceptan');
+const svgLibre = vm.runInContext('_pistoDe', ctx)({ casco: '#0f766e', diseno: '', acc: 'gato', accCol: '#123abc', lentes: 'redondas', marcoCol: '#abcdef' });
+ok(svgLibre.includes('#0f766e') && svgLibre.includes('#123abc') && svgLibre.includes('#abcdef'), 'casco, accesorio y marco usan cada uno su color');
+for (const ac of ['', 'mate', 'metal', 'perla', 'carbono', 'neon']) svgValido(vm.runInContext('_pistoDe', ctx)({ casco: '#334155', acabado: ac }), 'acabado ' + (ac || 'brillante') + ' con color libre');
+ok(N({ accCol: 'red' }).accCol === '' && N({ casco: '#12' }).casco === 'azul', 'colores mal formados vuelven al default');
+
 // 3) Datos de otro usuario (Firestore) no inyectan marcado en el SVG.
 const malo = N({ peloCol: '"/><image href=x onerror=alert(1)>', casco: '<script>', pano: 'red" onload="x', acc: 'x"y', diseno: 'zz' });
-ok(malo.peloCol === '#4a3222' && malo.casco === 'azul' && malo.pano === '#fc4c02' && malo.acc === '' && malo.diseno === 'franja', 'valores fuera del catálogo vuelven al default');
+ok(malo.peloCol === '#4a3222' && malo.casco === 'azul' && malo.pano === '' && malo.acc === '' && malo.diseno === 'franja', 'valores fuera del catálogo vuelven al default');
 const svgMalo = vm.runInContext('_pistoDe', ctx)({ peloCol: '"/><image href=x onerror=alert(1)>', pelo: 'largo', cuello: 'buff', pano: '"><script>' }, 'feliz');
 ok(!/onerror|<script|<image/.test(svgMalo), 'el SVG final no contiene marcado inyectado');
 

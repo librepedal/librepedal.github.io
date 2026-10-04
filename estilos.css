@@ -937,3 +937,7 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .pist-sw{transition:border-color .15s,transform .12s}.pist-sw:active,.pist-chip:active{transform:scale(.94)}
 .pist-sw.sel{background:linear-gradient(180deg,#1b2a45,#141f33)}
 .pist-toolbar{display:flex;align-items:center;gap:10px;margin:0 0 10px}.pist-toolbar .ab{width:auto;margin:0;padding:8px 14px}.pist-toolbar span{font-size:.66rem;color:#9fb3c8}
+/* chip "+" = selector de color libre (cualquier color) */
+.pist-chip-libre{position:relative;display:inline-block;overflow:hidden}
+.pist-chip-libre span{background:conic-gradient(#ef4444,#facc15,#22c55e,#22d3ee,#3b82f6,#a855f7,#ef4444)}
+.pist-chip-libre input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
