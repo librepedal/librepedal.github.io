@@ -86,7 +86,7 @@ function elegirPersonalidad(id){
 }
 function renderPersonalidadGrid(){
   const c=document.getElementById('personalidadGrid'); if(!c) return;
-  c.innerHTML=PERSONALIDADES.map(function(p){ return '<div class="custom-option'+(p.id===pisteroPersonalidad?' selected':'')+'" onclick="elegirPersonalidad(\''+p.id+'\')" style="text-align:left;padding:9px 34px 9px 12px"><div class="check">OK</div><strong style="font-size:0.82rem">'+_labelPersonalidad(p)+'</strong><button onclick="previsualizarPersonalidad(\''+p.id+'\',event)" style="position:absolute;bottom:4px;right:4px;background:rgba(252,76,2,0.15);border:1px solid var(--p);color:var(--p);border-radius:50%;width:26px;height:26px;font-size:0.75rem;cursor:pointer;line-height:1;padding:0" title="Escuchar voz" aria-label="Escuchar voz"><i class="fas fa-volume-high"></i></button></div>'; }).join('');
+  c.innerHTML=PERSONALIDADES.map(function(p){ return '<div class="custom-option'+(p.id===pisteroPersonalidad?' selected':'')+'" onclick="elegirPersonalidad(\''+p.id+'\')" style="text-align:left;padding:9px 34px 9px 12px"><div class="check">OK</div><strong style="font-size:0.82rem">'+_labelPersonalidad(p)+'</strong><button class="voz-preview" onclick="previsualizarPersonalidad(\''+p.id+'\',event)" style="position:absolute;bottom:4px;right:4px;background:rgba(252,76,2,0.15);border:1px solid var(--p);color:var(--p);border-radius:50%;width:26px;height:26px;font-size:0.75rem;cursor:pointer;line-height:1;padding:0" title="Escuchar voz" aria-label="Escuchar voz"><i class="fas fa-volume-high"></i></button></div>'; }).join('');
 }
 /* Probador de voces: deja escuchar cómo suena cada arquetipo ANTES de elegirlo, con la
    voz ElevenLabs real (voces-el/) — pidió Inty un "probador" en la selección de
