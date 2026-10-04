@@ -141,6 +141,9 @@ Los ítems de temporada vuelven cada año. Eso no apura a nadie y sirve de excus
 1. **Gratis siempre:** identidad (cara, piel, pelo), inclusión, seguridad (luces, reflectante, chaleco) y colores libres.
 2. **Logros (no se compran):** por kilómetros, rutas, retos y rachas. Por ejemplo "1.000 km → aros dorados", "10 rodadas → banderín de tu comuna". Sirve para ganar constancia y prestigio, no para pagar.
 3. **Compra suelta:** Raro $290 · Épico $590 · Legendario $990. **Regla de Inty: nada pasa de $1.000**, packs incluidos.
+   Mínimo de Google Play en Chile: **CLP $200** (anuncio oficial de Google, nov-2015; antes era $500), así que $290 cabe.
+   La tabla vigente no se pudo leer sin iniciar sesión: confirmarlo en Play Console al crear el primer producto (ahí se ve el rango permitido).
+   Con la comisión de 15 % quedan aprox. $247 · $502 · $842 netos por pieza (antes de IVA).
 4. **Packs temáticos:** cada combo de la página como pack ("Selección Chile", "Aventura"…), entre $590 y $990 según cuánto traiga, siempre más barato que comprar las piezas sueltas y nunca sobre $1.000.
 5. **Premium (suscripción en librepedal.cl):** incluye 1 pack al mes o un % del Taller.
 6. **Lo que NO haremos:** cajas sorpresa ni cofres al azar (es casi apuesta y es mal visto con niños), moneda virtual confusa y "oferta que vence en 10 minutos". El precio siempre se ve en pesos.
