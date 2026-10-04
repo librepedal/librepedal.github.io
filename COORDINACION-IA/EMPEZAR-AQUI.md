@@ -1,5 +1,7 @@
 # 🚀 EMPEZAR AQUÍ — cualquier cuenta Claude que retome LibrePedal
 
+> 🔴 **2026-10-04 tarde: hay errores reportados por Inty en el teléfono (skins que no aparecen, bienvenida antigua, login con Google lento).** Lee primero `TRASPASO-2026-10-04-TARDE.md`.
+
 Punto de entrada único. Léelo y en 2 minutos sabes el estado y qué hacer. Actualizado
 2026-08-15 por la cuenta Claude Code (sesión de la tarde/noche). Meta de Inty: dejar
 LibrePedal al 100% + **AAB final** para Play, e ir a **toda Sudamérica**.
