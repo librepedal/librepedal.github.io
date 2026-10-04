@@ -12,6 +12,7 @@ function detenerSobrevuelo(){
   if(_sbvRAF){ try{ cancelAnimationFrame(_sbvRAF); }catch(e){} _sbvRAF=null; }
   if(_sbvMarker){ try{ _sbvMarker.remove(); }catch(e){} _sbvMarker=null; }
   if(_sbvLine){ try{ if(mp) mp.removeLayer(_sbvLine); }catch(e){} _sbvLine=null; }
+  try{ if(mp && mp.getPitch && (mp.getPitch()>0 || mp.getBearing()!==0)) mp.easeTo({pitch:0,bearing:0,padding:{top:0,bottom:0,left:0,right:0},duration:600}); }catch(e){ console.warn('[sobrevuelo] restaurar mapa', e); }
 }
 // ===== Sobrevuelo v2 (2026-10-04): Pistero EN SU BICI recorre la ruta y reacciona =====
 // Cada punto guardado trae lat, lon, t (hora) y alt (altura, puede venir null). Con eso
@@ -61,6 +62,9 @@ function _sbvAnalizar(coords){
   ok.sort(function(a,b){ return a.d-b.d; });
   return {cum:cum,total:total,eventos:ok};
 }
+// rumbo (0 = norte, sentido horario) de a hacia b, en grados
+function _sbvRumbo(a,b){ var d=Math.PI/180, y=Math.sin((b[1]-a[1])*d)*Math.cos(b[0]*d), x=Math.cos(a[0]*d)*Math.sin(b[0]*d)-Math.sin(a[0]*d)*Math.cos(b[0]*d)*Math.cos((b[1]-a[1])*d); return (Math.atan2(y,x)/d+360)%360; }
+function _sbvGiro(de,a){ return ((a-de+540)%360)-180; }
 function _sbvMarcadorHTML(svg){ return '<div class="sbv-rider"><div class="sbv-globo"><span class="sbv-cara"></span><span class="sbv-txt"></span></div><div class="sbv-bici">'+svg+'</div></div>'; }
 // Anima a Pistero en su bici recorriendo `coords` sobre `mp`. Encuadra toda la ruta y
 // avanza a velocidad uniforme por distancia real; se detiene un instante en cada
@@ -87,8 +91,16 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:_sbvMarcadorHTML(bici('feliz'))}}).addTo(mp);
     var el=(_sbvMarker._ml&&_sbvMarker._ml.getElement)?_sbvMarker._ml.getElement():null;
     var cajaBici=el&&el.querySelector('.sbv-bici'), globo=el&&el.querySelector('.sbv-globo');
-    try{ mp.fitBounds(_sbvLine.getBounds().pad(0.22)); }catch(e){}
-    var dur=Math.min(22000,Math.max(8000,coords.length*80)), PAUSA=1500, prog=0, ultimo=null, espera=0, seg=1, mirando=1, sigEv=0, globoHasta=0;
+    // Cámara en primera persona: sigue a Pistero de cerca, inclinada y girando hacia donde
+    // avanza (con más camino visible adelante). Con movimiento reducido: vista general.
+    var primera=!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var Z=total>40000?14.6:(total>15000?15.4:16.2), PITCH=58, camB=null, intro=primera?2200:0;
+    function puntoEn(d){ var k=1; while(k<coords.length-1 && cum[k]<d) k++; var q=coords[k-1], r=coords[k], L=cum[k]-cum[k-1], ff=L>0?Math.min(1,Math.max(0,(d-cum[k-1])/L)):0; return [q[0]+(r[0]-q[0])*ff, q[1]+(r[1]-q[1])*ff]; }
+    function rumboEn(d){ return _sbvRumbo(puntoEn(Math.max(0,d-25)), puntoEn(Math.min(total,d+70))); }
+    var altoMapa=(mp.getContainer&&mp.getContainer().clientHeight)||400, PAD={top:Math.round(altoMapa*0.32),bottom:0,left:0,right:0};
+    if(primera){ camB=rumboEn(0); try{ mp.fitBounds(_sbvLine.getBounds().pad(0.22),{duration:0}); mp.flyTo({center:[coords[0][1],coords[0][0]],zoom:Z,pitch:PITCH,bearing:camB,padding:PAD,duration:intro-200,essential:true}); }catch(e){ console.warn('[sobrevuelo] cámara', e); } }
+    else { try{ mp.fitBounds(_sbvLine.getBounds().pad(0.22)); }catch(e){ console.warn('[sobrevuelo] encuadre', e); } }
+    var dur=primera?Math.min(60000,Math.max(15000,total/1000*5000)):Math.min(22000,Math.max(8000,coords.length*80)), PAUSA=1500, prog=0, ultimo=null, espera=0, seg=1, mirando=1, sigEv=0, globoHasta=0;
     function mostrarGlobo(e,ts){
       if(!globo) return;
       var cara=globo.querySelector('.sbv-cara'), txt=globo.querySelector('.sbv-txt');
@@ -102,7 +114,7 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     function frame(ts){
       if(ultimo===null) ultimo=ts;
       var dt=ts-ultimo; ultimo=ts;
-      if(espera>0){ espera-=dt; } else { prog+=dt/dur; }
+      if(intro>0){ intro-=dt; } else if(espera>0){ espera-=dt; } else { prog+=dt/dur; }
       if(prog>1) prog=1;
       var target=prog*total;
       if(sigEv<eventos.length && target>=eventos[sigEv].d){ target=eventos[sigEv].d; prog=target/total; mostrarGlobo(eventos[sigEv],ts); espera=PAUSA; sigEv++; }
@@ -112,10 +124,11 @@ function reproducirSobrevuelo(coords, modo, onEnd){
       var segLen=cum[seg]-cum[seg-1], f=segLen>0?Math.min(1,Math.max(0,(target-cum[seg-1])/segLen)):0;
       var lat=a[0]+(b[0]-a[0])*f, lon=a[1]+(b[1]-a[1])*f;
       if(_sbvMarker) _sbvMarker.setLatLng([lat,lon]);
+      if(primera && intro<=0){ var rb=rumboEn(target); camB=(camB===null)?rb:(camB+_sbvGiro(camB,rb)*Math.min(1,dt/450)+360)%360; try{ mp.jumpTo({center:[lon,lat],zoom:Z,pitch:PITCH,bearing:camB,padding:PAD}); }catch(e){ console.warn('[sobrevuelo] cámara', e); } }
       // mira hacia donde avanza (solo cambia si el giro es claro, para no "temblar")
-      var dl=b[1]-a[1]; if(Math.abs(dl)>1e-6){ var m=dl>0?1:-1; if(m!==mirando && cajaBici){ mirando=m; cajaBici.style.transform='scaleX('+m+')'; } }
+      var dl=primera?0:b[1]-a[1]; if(Math.abs(dl)>1e-6){ var m=dl>0?1:-1; if(m!==mirando && cajaBici){ mirando=m; cajaBici.style.transform='scaleX('+m+')'; } }
       if(prog<1 || espera>0){ _sbvRAF=requestAnimationFrame(frame); }
-      else { _sbvRAF=null; try{ mp.fitBounds(_sbvLine.getBounds().pad(0.22)); }catch(e){} setTimeout(function(){ detenerSobrevuelo(); if(onEnd)onEnd(); },1800); }
+      else { _sbvRAF=null; try{ mp.fitBounds(_sbvLine.getBounds().pad(0.22),{pitch:0,bearing:0,padding:20,duration:1400}); }catch(e){ console.warn('[sobrevuelo] encuadre final', e); } setTimeout(function(){ detenerSobrevuelo(); if(onEnd)onEnd(); },1800); }
     }
     if(typeof h==='function') h('Aquí va el sobrevuelo de tu viaje.');
     _sbvRAF=requestAnimationFrame(frame);
