@@ -70,6 +70,7 @@ const CORE = [
   './clima-fx.js',
   './logo-sound.js',
   './mantencion-vehiculo.js',
+  './taller-avisos.js',
   './resena-app.js',
   './pistero-diag.js',
   './como-funciona.html',

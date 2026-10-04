@@ -315,6 +315,10 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="es-modo-rapido" id="esModoRapido"></div>
 <div id="esferaWrap"></div>
 <button class="es-classic" onclick="cerrarEsfera()"><i class="fas fa-bars"></i> Menú clásico</button>
+<!-- 2026-10-04: recuadro "N cosas por hacer" del Taller (taller-avisos.js). Oculto si no
+     hay nada pendiente; lo actualiza _tallerActualizarBanner() al abrir la app y tras
+     cada cambio en Taller. -->
+<button id="esTallerAviso" type="button" onclick="_tallerAbrir()" style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(192px + env(safe-area-inset-bottom,0px));z-index:5;width:min(330px,calc(100% - 32px));min-height:52px;box-sizing:border-box;display:none;align-items:center;gap:10px;text-align:left;background:rgba(10,18,30,0.92);color:#e7edf6;border:2px solid #eab308;border-radius:16px;padding:8px 12px;cursor:pointer"><i class="fas fa-screwdriver-wrench" style="color:#eab308;font-size:1.1rem"></i><span style="flex:1;min-width:0"><span id="esTallerAvisoT1" style="display:block;font-weight:800;font-size:0.9rem"></span><span id="esTallerAvisoT2" style="display:block;font-size:0.75rem;color:#c9d4e3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span></span><i class="fas fa-chevron-right" style="color:#c9d4e3"></i></button>
 <div class="es-bottom">
   <div class="es-ind es-dato"><span class="es-ind-v" id="esKm">0</span><span class="es-ind-l">km</span></div>
   <!-- Antes "Avisos" y "Mensajes" eran DOS botones que llevaban al mismo lugar en el
@@ -768,6 +772,9 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
      Motorizado ve una pantalla completamente distinta, no una mezcla. -->
 <div id="tallerBici">
 <div class="section-info"><h4><i class="fas fa-wrench"></i> Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
+<!-- 2026-10-04: activar avisos del teléfono para la mantención de la bici (taller-avisos.js).
+     Solo se ve en la app instalada; en el navegador queda oculta. -->
+<div id="tallerNotifFila" style="display:none;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;font-size:0.85rem"></div>
 <!-- 2026-08-23: Mantención preventiva — pedido de Inty tras "Arregla mi bici" en
      Pistero: no solo reactivo (síntoma → arreglo), también proactivo por km, como
      ya hace cualquier bici real. Va COLAPSADO por defecto (mismo <details> que el
@@ -843,6 +850,13 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </div>
 <div id="tallerVehiculo" style="display:none">
 <div class="section-info"><h4><i class="fas fa-car-side"></i> Taller</h4><p>Tu vehículo, al día — mantención por kilometraje y documentos sin vencer.</p></div>
+<!-- 2026-10-04: configuración del vehículo (mantencion-vehiculo.js, renderVehiculoCfg):
+     tipo auto/moto, odómetro real, último dígito de la patente (calcula la Revisión
+     Técnica), auto nuevo + CHI, permiso en cuotas y notificaciones. -->
+<details class="soc-group" id="vehCfgGroup">
+  <summary><span class="soc-ic"><i class="fas fa-car"></i> </span><span><b>Mi vehículo</b><small id="vehCfgResumen">Configúralo una vez</small></span></summary>
+  <div style="margin-top:9px" id="vehCfg"></div>
+</details>
 <details class="soc-group" id="vehGroup" open>
   <summary><span class="soc-ic"><i class="fas fa-gauge-high"></i> </span><span><b>Mantención del vehículo</b><small id="vehResumen">Cargando…</small></span></summary>
   <div style="margin-top:9px" id="vehLista"></div>
@@ -1327,6 +1341,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 <script>
 </script>
 <script src="mantencion-vehiculo.js"></script>
+<script src="taller-avisos.js"></script>
 <script>
 </script>
 <script src="gamificacion-darma.js"></script>

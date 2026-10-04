@@ -1,14 +1,28 @@
 // ===== Mantención preventiva (2026-08-23, pedido de Inty) =====
-// Umbrales por defecto de guías reales (Bike Gremlin / CyclingTrend), no inventados
-// — esto es seguridad, no se adivina. El usuario los puede editar; se guardan en
-// us.mant junto al resto de sus stats (gd() los persiste solo, es el mismo objeto).
+// v2 (2026-10-04, "datos y recomendaciones reales"): los umbrales son RECORDATORIOS DE
+// REVISIÓN, no de cambio. Ningún fabricante da un km fijo para cambiar cadena o pastillas
+// -- depende de lluvia, barro y cuidado -- así que la app recuerda MEDIR y el usuario
+// decide con la medición real:
+//  - Cadena: medir con medidor de cadena; cambiar al 0,5% con 11-12 velocidades y al 0,75%
+//    con 10 o menos (Park Tool, medidor CC-3.2). Recordatorio de medición cada 1.000 km.
+//  - Pastillas de disco: bajo 1 mm de material, cambiarlas; nunca usarlas bajo 0,5 mm
+//    (Shimano). Recordatorio de revisión cada 1.000 km. El cambio es trabajo de taller.
+//  - Cables, rodamientos y neumáticos: sin intervalo de fabricante; recordatorio de
+//    revisión propio de la app (se dice así en la tarjeta, no se presenta como norma).
+// Se guardan en us.mant junto al resto de sus stats (gd() los persiste solo).
 const MANT_ITEMS={
-  cadena:      {l:'Cadena',             fa:'link',         c:'#f59e0b', umbralKm:2500, umbralMeses:12, taller:false, tip:'Mide el desgaste con un medidor de cadena. Si pasa 0.5–0.75%, cámbiala antes de que gaste también el cassette.'},
-  pastillas:   {l:'Pastillas de freno', fa:'hand',         c:'#ef4444', umbralKm:2000, umbralMeses:12, taller:true,  tip:'Revisa el grosor. Si están al límite, es trabajo de taller — los frenos no son DIY.'},
-  cables:      {l:'Cables y fundas',    fa:'wave-square',  c:'#3b82f6', umbralKm:5000, umbralMeses:12, taller:false, tip:'Si los cambios o los frenos se sienten duros o lentos, puede ser hora de cambiarlos.'},
-  rodamientos: {l:'Rodamientos',        fa:'circle-notch', c:'#8b5cf6', umbralKm:4000, umbralMeses:6,  taller:false, tip:'Revisa juego y ruido en dirección, bujes y pedalier.'},
-  neumaticos:  {l:'Neumáticos',         fa:'circle',       c:'#10b981', umbralKm:null, umbralMeses:24, taller:false, tip:'Revisa el dibujo y busca cortes en la carcasa — la goma se reseca aunque no la uses.'}
+  cadena:      {l:'Cadena',             fa:'link',         c:'#f59e0b', umbralKm:1000, umbralMeses:6,  taller:false, medir:true, tip:'Mídela con un medidor de cadena. Según Park Tool, cámbiala cuando calce el lado de {UMBRAL}: así no gastas también el cassette y los platos. Te recordamos medirla cada 1.000 km.'},
+  pastillas:   {l:'Pastillas de freno', fa:'hand',         c:'#ef4444', umbralKm:1000, umbralMeses:6,  taller:true,  medir:true, tip:'Mira el grosor del material, sin contar la placa metálica: bajo 1 mm, cámbialas; nunca las uses bajo 0,5 mm (Shimano). Te recordamos revisarlas cada 1.000 km.'},
+  cables:      {l:'Cables y fundas',    fa:'wave-square',  c:'#3b82f6', umbralKm:5000, umbralMeses:12, taller:false, tip:'Si los cambios o los frenos se sienten duros o lentos, toca cambiarlos. No hay un intervalo de fabricante: es un recordatorio de revisión de la app.'},
+  rodamientos: {l:'Rodamientos',        fa:'circle-notch', c:'#8b5cf6', umbralKm:4000, umbralMeses:6,  taller:false, tip:'Revisa juego y ruido en dirección, bujes y pedalier. No hay un intervalo de fabricante: es un recordatorio de revisión de la app.'},
+  neumaticos:  {l:'Neumáticos',         fa:'circle',       c:'#10b981', umbralKm:null, umbralMeses:24, taller:false, tip:'Revísalos seguido: cortes, grietas en el costado o la tela a la vista. Si ves alguno, cámbialo aunque tenga dibujo. Cada 24 meses te recordamos una revisión a fondo, porque la goma se reseca aunque no la uses.'}
 };
+// Velocidades de la transmisión (para el umbral de la cadena): '11-12' o '10-menos'.
+function _mantCfg(){
+  if(!us.mantCfg || typeof us.mantCfg!=='object') us.mantCfg={vel:'11-12'};
+  return us.mantCfg;
+}
+function _mantSetVel(v){ _mantCfg().vel=(v==='10-menos')?'10-menos':'11-12'; gd(); renderMantencion(); }
 function _mantData(){
   if(!us.mant || typeof us.mant!=='object') us.mant={};
   Object.keys(MANT_ITEMS).forEach(function(k){
@@ -69,7 +83,10 @@ function renderMantencion(){
   const cont=document.getElementById('mantLista'); if(!cont) return;
   const data=_mantData();
   let vencidos=0, cerca=0;
-  cont.innerHTML=Object.keys(MANT_ITEMS).map(function(key){
+  const gasto=(typeof _gastoAnio==='function') ? _gastoAnio(data) : 0;
+  const cab='<div class="mi-sub" style="margin:0 0 8px">Gastado en '+new Date().getFullYear()+': <b style="color:#e7edf6">$'+Math.round(gasto).toLocaleString('es-CL')+'</b>'+(gasto?'':' · anota el costo al registrar un cambio')+'</div>';
+  const vel=_mantCfg().vel;
+  cont.innerHTML=cab+Object.keys(MANT_ITEMS).map(function(key){
     const info=MANT_ITEMS[key], d=data[key], p=_mantProgreso(key, data);
     if(p.vencido) vencidos++; else if(p.cerca) cerca++;
     const color = p.vencido?'#ef4444':(p.cerca?'#eab308':'#35c46a');
@@ -82,11 +99,14 @@ function renderMantencion(){
       +badge
       +'</summary>'
       +'<div class="mi-body">'
-      +'<p style="margin:0 0 6px">'+info.tip+'</p>'
+      +'<p style="margin:0 0 6px">'+info.tip.replace('{UMBRAL}', vel==='10-menos'?'0,75 % (tu transmisión de 10 velocidades o menos)':'0,5 % (tu transmisión de 11 o 12 velocidades)')+'</p>'
+      +(key==='cadena'?'<div class="mi-row" style="margin:0 0 6px"><label style="flex:1;display:flex;align-items:center;gap:6px"><input type="radio" style="width:20px;height:20px;min-width:20px;margin:0;flex:none" name="mantVel" value="11-12"'+(vel!=='10-menos'?' checked':'')+' onchange="_mantSetVel(this.value)"> 11 o 12 vel.</label><label style="flex:1;display:flex;align-items:center;gap:6px"><input type="radio" style="width:20px;height:20px;min-width:20px;margin:0;flex:none" name="mantVel" value="10-menos"'+(vel==='10-menos'?' checked':'')+' onchange="_mantSetVel(this.value)"> 10 o menos</label></div>':'')
       +tallerNota
       +histHTML
       +'<div class="mi-row"><input type="number" id="mantCosto_'+key+'" placeholder="Costo (opcional)"><input type="text" id="mantNota_'+key+'" placeholder="Nota (opcional)" maxlength="80"></div>'
-      +'<button type="button" class="ab" style="margin-top:8px" onclick="_mantencionMarcarHecho(\''+key+'\')"><i class="fas fa-check"></i> Ya la cambié / revisé</button>'
+      +(info.medir
+        ? '<div class="mi-row" style="margin-top:8px"><button type="button" class="ab sec" style="margin:0" onclick="_mantencionRevisadoOk(\''+key+'\')"><i class="fas fa-ruler"></i> Revisé: está bien</button><button type="button" class="ab" style="margin:0" onclick="_mantencionMarcarHecho(\''+key+'\')"><i class="fas fa-check"></i> La cambié</button></div>'
+        : '<button type="button" class="ab" style="margin-top:8px" onclick="_mantencionMarcarHecho(\''+key+'\')"><i class="fas fa-check"></i> Ya la cambié / revisé</button>')
       +'</div></details>';
   }).join('');
   const resumen=document.getElementById('mantResumen');
@@ -98,13 +118,27 @@ function _mantencionMarcarHecho(key){
   const costo=(costoEl&&costoEl.value)?parseFloat(costoEl.value):null;
   const nota=(notaEl&&notaEl.value)?notaEl.value.trim():null;
   d.historial=d.historial||[];
-  d.historial.push({fecha:new Date().toISOString(), km:(us.mantKm||0)-(d.kmBase||0), costo:costo, nota:nota});
+  d.historial.push({fecha:new Date().toISOString(), km:(us.mantKm||0)-(d.kmBase||0), costo:(costo!=null&&isFinite(costo)&&costo>0)?costo:null, nota:nota});
   d.kmBase=us.mantKm||0;
   d.fecha=new Date().toISOString();
   d.avisado=false;
   gd(); renderMantencion();
   _ganarDarma(5);
+  try{ if(typeof _tallerAlCambiar==='function') _tallerAlCambiar(false); }catch(e){}
   try{ _pisteroMood='contento'; }catch(e){} h('¡Buena! Quedó registrado. Cinco de Darma por mantener tu bici al día.');
+}
+// v2: "Revisé: está bien" -- se midió y no hacía falta cambiar. Reinicia el recordatorio
+// y queda en el historial (sin costo), así la nube lo conserva igual que un cambio.
+function _mantencionRevisadoOk(key){
+  const d=_mantData()[key]; if(!d) return;
+  d.historial=d.historial||[];
+  d.historial.push({fecha:new Date().toISOString(), km:(us.mantKm||0)-(d.kmBase||0), costo:null, nota:'Revisado: en buen estado'});
+  d.kmBase=us.mantKm||0;
+  d.fecha=new Date().toISOString();
+  d.avisado=false;
+  gd(); renderMantencion();
+  try{ if(typeof _tallerAlCambiar==='function') _tallerAlCambiar(false); }catch(e){}
+  h('Anotado. Te recuerdo la próxima revisión.');
 }
 // Aviso proactivo: se dispara UNA vez por ítem al cruzar el umbral (no cada vez que
 // abrís la app) — mismo criterio que ya usamos hoy para "ya no está" en los reportes
@@ -117,7 +151,10 @@ function _mantencionRevisarAvisos(){
       if(p.vencido && !d.avisado){
         d.avisado=true;
         const info=MANT_ITEMS[key];
-        h('Oye, ya van '+p.km.toFixed(0)+' km desde tu último cambio de '+info.l.toLowerCase()+' — '+(info.taller?'llévala al taller cuando puedas.':'revísala cuando puedas.'));
+        const msg = info.medir ? ('Oye, toca revisar '+(key==='cadena'?'el desgaste de la cadena':'el grosor de las pastillas de freno')+': ya van '+Math.round(p.km).toLocaleString('es-CL')+' km desde la última vez.')
+          : (info.umbralKm ? ('Oye, ya van '+Math.round(p.km).toLocaleString('es-CL')+' km desde la última revisión de '+info.l.toLowerCase()+' — revísalos cuando puedas.') : ('Oye, toca una revisión a fondo de tus '+info.l.toLowerCase()+'.'));
+        h(msg);
+        try{ if(typeof _tallerNotificarAhora==='function') _tallerNotificarAhora(info.l, msg); }catch(e){}
       } else if(!p.vencido && d.avisado){ d.avisado=false; }
     });
   }catch(e){}
