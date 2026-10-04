@@ -51,6 +51,7 @@ const CORE = [
   './sobrevuelo-viaje.js',
   './abanico-reporte.js',
   './prevuelo-intro-pistero.js',
+  './bienvenida-huella.js',
   './recomendacion-rutas.js',
   './sos-comunitario.js',
   './pistero-ciclistas-cerca.js',

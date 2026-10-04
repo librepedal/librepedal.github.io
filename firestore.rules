@@ -215,6 +215,67 @@ service cloud.firestore {
       allow write: if signedIn() && request.auth.uid == id && strOk('email', 120);
     }
 
+    // "Dejar mi huella" (2026-10-04, bienvenida-huella.js). La idea es PRIVADA: solo la
+    // lee su dueño o el admin (nunca se publica el texto). Máx. 2 por cuenta: el id ES
+    // uid_1 / uid_2. No se edita. `fundador` solo puede ser true si la cuenta se creó
+    // durante el primer año (hasta el 24-sep-2027) -- nadie se lo pone a mano después.
+    function esMiHuella(id) {
+      return id == request.auth.uid + '_1' || id == request.auth.uid + '_2';
+    }
+    function fundadorPosible() {
+      return request.time < timestamp.date(2027, 9, 24)
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('createdAt', request.time) < timestamp.date(2027, 9, 24);
+    }
+    match /huellas/{id} {
+      allow read: if signedIn() && (esMiHuella(id) || isAdmin());
+      allow create: if signedInReal() && esMiHuella(id)
+        && request.resource.data.keys().hasOnly(['user', 'texto', 'pais', 'comuna', 'zona', 'fundador', 'ts'])
+        && request.resource.data.user == request.auth.uid
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() >= 8 && request.resource.data.texto.size() <= 280
+        && request.resource.data.comuna is string && request.resource.data.comuna.size() >= 1
+        && strOk('pais', 3) && strOk('comuna', 60) && strOk('zona', 70)
+        && request.resource.data.fundador is bool
+        && (request.resource.data.fundador == false || fundadorPosible())
+        && request.resource.data.ts == request.time;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Contador PÚBLICO de huellas por comuna (el mapa). Sin texto ni ubicación exacta
+    // (lat/lon redondeadas a ~10 km en el cliente). Solo sube de a 1 y SOLO en la misma
+    // escritura atómica (batch) que crea la PRIMERA huella de esa cuenta en esa zona:
+    // nadie puede inflar el mapa llamando la API directo.
+    function primeraHuellaAhora(zona) {
+      let h = /databases/$(database)/documents/huellas/$(request.auth.uid + '_1');
+      return !exists(h) && existsAfter(h) && getAfter(h).data.zona == zona;
+    }
+    function nfSube(prev) {
+      let f = getAfter(/databases/$(database)/documents/huellas/$(request.auth.uid + '_1')).data.fundador;
+      return (f == true && request.resource.data.nf == prev + 1) || (f == false && request.resource.data.nf == prev);
+    }
+    function zonaCampos() {
+      return request.resource.data.keys().hasOnly(['pais', 'comuna', 'n', 'nf', 'lat', 'lon'])
+        && strOk('pais', 3) && strOk('comuna', 60)
+        && numOk('lat', -90, 90) && numOk('lon', -180, 180);
+    }
+    match /huellasZona/{zona} {
+      allow read: if true;
+      allow create: if signedInReal() && zonaCampos() && primeraHuellaAhora(zona)
+        && request.resource.data.n == 1 && nfSube(0);
+      allow update: if signedInReal() && zonaCampos() && primeraHuellaAhora(zona)
+        && request.resource.data.n == resource.data.n + 1 && nfSube(resource.data.get('nf', 0))
+        && request.resource.data.pais == resource.data.pais && request.resource.data.comuna == resource.data.comuna
+        && (!('lat' in resource.data) || (request.resource.data.lat == resource.data.lat && request.resource.data.lon == resource.data.lon));
+      allow delete: if isAdmin();
+    }
+
+    // Obras del fondo de la comunidad: la huella grande. Solo el admin las publica.
+    match /obrasFondo/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Analiticas de uso por usuario (2026-08-24): un doc por usuario (id=cu), que la
     // app va llenando solo con contadores propios (pantallas vistas, tiempo, funciones
     // usadas) via _flushAnalytics() en index.html. NUNCA tuvo regla -- caia al bloqueo

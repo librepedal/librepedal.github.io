@@ -679,11 +679,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   </div>
 </details>
 <details class="soc-group">
-  <summary><span class="soc-ic"><i class="fas fa-earth-americas"></i> </span><span><b>Comunidad</b><small>Rodadas · novedades · vota la meta · fundadores</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-earth-americas"></i> </span><span><b>Comunidad</b><small>Rodadas · novedades · mapa de huellas · fundadores</small></span></summary>
   <div class="quick-links" style="margin-top:9px">
     <button class="ab sec" style="margin:0" onclick="verRodadas()"><i class="fas fa-person-biking"></i> Rodadas grupales</button>
     <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')"><i class="fas fa-newspaper"></i> Novedades del ciclismo</button>
-    <button class="ab sec" style="margin:0" onclick="mostrarComunidad()"><i class="fas fa-handshake"></i> Meta de la comunidad (vota)</button>
+    <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="bhAbrirMapa()"><i class="fas fa-shoe-prints"></i> Mapa de huellas</button>
     <button class="ab sec" style="margin:0" onclick="mostrarFundadores()"><i class="fas fa-medal"></i> Socios Fundadores</button>
   </div>
 </details>
@@ -1442,6 +1442,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 <script>
 </script>
 <script src="prevuelo-intro-pistero.js"></script>
+<script src="bienvenida-huella.js"></script>
 <script>
 </script>
 <script src="pistero-diag.js"></script>

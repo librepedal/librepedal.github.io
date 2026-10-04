@@ -177,6 +177,9 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   // 2026-08-15: los timeouts fijos (2600ms / 1050ms) para abrirEsfera() no esperaban a
   // que terminara la voz -- el mensaje de primera vez (~17s estimados) quedaba cortado
   // por el flash+sonido de abrirEsfera(). Ahora se espera a que vozHablando sea false.
+  // 2026-10-04: la bienvenida de Pistero (bienvenida-huella.js, una vez por cuenta) va
+  // ANTES del saludo de siempre; al cerrarla sigue exactamente el flujo de antes.
+  var _seguirTrasBienvenida=function(recienVista){
   if(localStorage.getItem('lp_tut_'+cu)!=='done'){
     setTimeout(function(){
       _pisteroIntroPrimeraVez(nombre);
@@ -184,10 +187,12 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
     }, 500);
   } else {
     setTimeout(function(){
-      if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre));
+      if(!_pisteroIntroPrimeraVez(nombre) && !recienVista) h(saludoBienvenida(nombre));
       _esperarFinVoz(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); });
     },600);
   }
+  };
+  if(typeof bhIniciar==='function') bhIniciar(nombre,_seguirTrasBienvenida); else _seguirTrasBienvenida();
 }
 
 async function _completarLoginVerificado(cuVal, nombre, e_val){
