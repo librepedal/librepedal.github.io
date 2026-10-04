@@ -61,11 +61,11 @@ function renderMantencionVehiculo(){
     if(p.vencido) vencidos++; else if(p.cerca) cerca++;
     const color = p.vencido?'#ef4444':(p.cerca?'#eab308':'#35c46a');
     const badge = p.vencido?'<span class="mi-badge" style="background:rgba(239,68,68,.16);color:#ef4444">Vencido</span>':(p.cerca?'<span class="mi-badge" style="background:rgba(234,179,8,.16);color:#eab308">Cerca</span>':'<span class="mi-badge" style="background:rgba(53,196,106,.16);color:#35c46a">OK</span>');
-    const histHTML = (d.historial&&d.historial.length) ? ('<ul class="mi-hist">'+d.historial.slice(-5).reverse().map(function(reg){ return '<li>'+new Date(reg.fecha).toLocaleDateString()+' · '+reg.km.toFixed(0)+' km'+(reg.costo?' · $'+reg.costo:'')+(reg.nota?' · '+escapeHTML(reg.nota):'')+'</li>'; }).join('')+'</ul>') : '<p class="mi-sub" style="margin:6px 0">Sin historial todavía.</p>';
+    const histHTML = (d.historial&&d.historial.length) ? ('<ul class="mi-hist">'+d.historial.slice(-5).reverse().map(function(reg){ return '<li>'+new Date(reg.fecha).toLocaleDateString()+' · '+reg.km.toFixed(0)+' km'+(reg.costo?' · $'+Number(reg.costo).toLocaleString('es-CL'):'')+(reg.nota?' · '+escapeHTML(reg.nota):'')+'</li>'; }).join('')+'</ul>') : '<p class="mi-sub" style="margin:6px 0">Sin historial todavía.</p>';
     const tallerNota = info.taller ? '<p style="color:#e7a33e;margin:6px 0 0"><i class="fas fa-triangle-exclamation"></i> Trabajo de mecánico — no DIY.</p>' : '';
     return '<details class="mant-item"><summary>'
       +'<span class="mi-ic" style="background:rgba(255,255,255,.06);color:'+info.c+'"><i class="fas fa-'+info.fa+'"></i></span>'
-      +'<span class="mi-txt"><span class="mi-t">'+info.l+'</span><div class="mi-bar"><div class="mi-fill" style="width:'+Math.round(p.pct*100)+'%;background:'+color+'"></div></div><div class="mi-sub">'+p.km.toFixed(0)+' km desde el último cambio'+(d.umbralKm?(' de '+d.umbralKm):'')+'</div></span>'
+      +'<span class="mi-txt"><span class="mi-t">'+info.l+'</span><div class="mi-bar"><div class="mi-fill" style="width:'+Math.round(p.pct*100)+'%;background:'+color+'"></div></div><div class="mi-sub">'+_mantTextoAvance(p, d)+'</div></span>'
       +badge
       +'</summary>'
       +'<div class="mi-body">'
@@ -105,7 +105,7 @@ function _vehRevisarAvisos(){
       if(p.vencido && !d.avisado){
         d.avisado=true;
         const info=VEH_ITEMS[key];
-        h('Che, ya van '+p.km.toFixed(0)+' km desde tu último cambio de '+info.l.toLowerCase()+' — '+(info.taller?'llévalo al taller cuando puedas.':'revísalo cuando puedas.'));
+        h('Oye, ya van '+p.km.toFixed(0)+' km desde tu último cambio de '+info.l.toLowerCase()+' — '+(info.taller?'llévalo al taller cuando puedas.':'revísalo cuando puedas.'));
       } else if(!p.vencido && d.avisado){ d.avisado=false; }
     });
   }catch(e){}
@@ -174,7 +174,7 @@ function _docRevisarAvisos(){
     Object.keys(DOC_ITEMS).forEach(function(key){
       const d=data[key]; if(!d.vence) return;
       const e=_docEstado(key, data), info=DOC_ITEMS[key];
-      if(e.estado==='vencido' && !d.avisadoVencido){ d.avisadoVencido=true; h('Che, tu '+info.l+' está VENCIDA — regularízala apenas puedas.'); }
+      if(e.estado==='vencido' && !d.avisadoVencido){ d.avisadoVencido=true; h('Oye, '+(key==='soap'?'tu SOAP está VENCIDO':'tu '+info.l+' está VENCIDA')+' — regularízalo apenas puedas.'); }
       else if(e.dias<=7 && e.dias>=0 && !d.avisado7){ d.avisado7=true; h('Tu '+info.l+' vence en '+e.dias+' día'+(e.dias===1?'':'s')+' — no lo dejes para el final.'); }
       else if(e.dias<=30 && e.dias>7 && !d.avisado30){ d.avisado30=true; h('Tu '+info.l+' vence en '+e.dias+' días — agenda con tiempo.'); }
     });

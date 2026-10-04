@@ -54,6 +54,17 @@ function _mantProgreso(key, data){
   const pct=Math.max(pctKm, pctMeses);
   return {km:km, mesesDesde:mesesDesde, pct:pct, vencido:pct>=1, cerca:(pct>=0.85 && pct<1)};
 }
+// Texto de avance de un ítem (2026-10-03). Los ítems que se miden solo por tiempo
+// (umbralKm null: neumáticos de bici, batería del vehículo) decían "9000 km desde el
+// último cambio", que no dice nada útil de algo que vence por meses. Lo usa también
+// mantencion-vehiculo.js (se carga después de este archivo).
+function _mantTextoAvance(p, d){
+  if(!d.umbralKm){
+    const m = (p.mesesDesde!=null) ? Math.floor(p.mesesDesde) : 0;
+    return (m<1 ? 'Cambiado hace menos de un mes' : ('Cambiado hace '+m+(m===1?' mes':' meses')))+' · cada '+d.umbralMeses+' meses';
+  }
+  return Math.round(p.km).toLocaleString('es-CL')+' km de '+Number(d.umbralKm).toLocaleString('es-CL')+' desde el último cambio';
+}
 function renderMantencion(){
   const cont=document.getElementById('mantLista'); if(!cont) return;
   const data=_mantData();
@@ -63,11 +74,11 @@ function renderMantencion(){
     if(p.vencido) vencidos++; else if(p.cerca) cerca++;
     const color = p.vencido?'#ef4444':(p.cerca?'#eab308':'#35c46a');
     const badge = p.vencido?'<span class="mi-badge" style="background:rgba(239,68,68,.16);color:#ef4444">Vencido</span>':(p.cerca?'<span class="mi-badge" style="background:rgba(234,179,8,.16);color:#eab308">Cerca</span>':'<span class="mi-badge" style="background:rgba(53,196,106,.16);color:#35c46a">OK</span>');
-    const histHTML = (d.historial&&d.historial.length) ? ('<ul class="mi-hist">'+d.historial.slice(-5).reverse().map(function(h){ return '<li>'+new Date(h.fecha).toLocaleDateString()+' · '+h.km.toFixed(0)+' km'+(h.costo?' · $'+h.costo:'')+(h.nota?' · '+escapeHTML(h.nota):'')+'</li>'; }).join('')+'</ul>') : '<p class="mi-sub" style="margin:6px 0">Sin historial todavía.</p>';
+    const histHTML = (d.historial&&d.historial.length) ? ('<ul class="mi-hist">'+d.historial.slice(-5).reverse().map(function(h){ return '<li>'+new Date(h.fecha).toLocaleDateString()+' · '+h.km.toFixed(0)+' km'+(h.costo?' · $'+Number(h.costo).toLocaleString('es-CL'):'')+(h.nota?' · '+escapeHTML(h.nota):'')+'</li>'; }).join('')+'</ul>') : '<p class="mi-sub" style="margin:6px 0">Sin historial todavía.</p>';
     const tallerNota = info.taller ? '<p style="color:#e7a33e;margin:6px 0 0"><i class="fas fa-triangle-exclamation"></i> Cuando toque cambiarlas, es trabajo de taller — no DIY.</p>' : '';
     return '<details class="mant-item"><summary>'
       +'<span class="mi-ic" style="background:rgba(255,255,255,.06);color:'+info.c+'"><i class="fas fa-'+info.fa+'"></i></span>'
-      +'<span class="mi-txt"><span class="mi-t">'+info.l+'</span><div class="mi-bar"><div class="mi-fill" style="width:'+Math.round(p.pct*100)+'%;background:'+color+'"></div></div><div class="mi-sub">'+p.km.toFixed(0)+' km desde el último cambio'+(d.umbralKm?(' de '+d.umbralKm):'')+'</div></span>'
+      +'<span class="mi-txt"><span class="mi-t">'+info.l+'</span><div class="mi-bar"><div class="mi-fill" style="width:'+Math.round(p.pct*100)+'%;background:'+color+'"></div></div><div class="mi-sub">'+_mantTextoAvance(p, d)+'</div></span>'
       +badge
       +'</summary>'
       +'<div class="mi-body">'
@@ -106,7 +117,7 @@ function _mantencionRevisarAvisos(){
       if(p.vencido && !d.avisado){
         d.avisado=true;
         const info=MANT_ITEMS[key];
-        h('Che, ya van '+p.km.toFixed(0)+' km desde tu último cambio de '+info.l.toLowerCase()+' — '+(info.taller?'llévala al taller cuando puedas.':'revísala cuando puedas.'));
+        h('Oye, ya van '+p.km.toFixed(0)+' km desde tu último cambio de '+info.l.toLowerCase()+' — '+(info.taller?'llévala al taller cuando puedas.':'revísala cuando puedas.'));
       } else if(!p.vencido && d.avisado){ d.avisado=false; }
     });
   }catch(e){}
