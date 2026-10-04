@@ -941,3 +941,49 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .pist-chip-libre{position:relative;display:inline-block;overflow:hidden}
 .pist-chip-libre span{background:conic-gradient(#ef4444,#facc15,#22c55e,#22d3ee,#3b82f6,#a855f7,#ef4444)}
 .pist-chip-libre input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
+/* ===== Tienda / armario de Pistero (pistero-tienda.js) ===== */
+.pt-tienda{--rc:#3a465e;--rr:#3b82f6;--re:#a855f7;--rl:#f59e0b;margin:10px 0}
+.pt-escena{padding:8px 0 6px}
+.pt-lanza{font-size:.66rem;color:#fde68a;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:6px 9px;margin-bottom:8px;line-height:1.35}
+.pt-top{display:flex;align-items:center;gap:12px;background:radial-gradient(120% 140% at 30% 20%,#1d2c48,#0c1422 70%);border:1px solid rgba(252,76,2,.3);border-radius:16px;padding:8px 12px}
+.pt-pistero{position:relative;width:118px;height:100px;flex:none;cursor:pointer}
+.pt-pistero svg{width:100%;height:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));animation:float 3s ease-in-out infinite}
+.pt-pistero.r-e svg{filter:drop-shadow(0 0 10px rgba(168,85,247,.55)) drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.pt-pistero.r-l svg{filter:drop-shadow(0 0 12px rgba(245,158,11,.6)) drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.pt-chispa{position:absolute;width:10px;height:10px;background:#fff;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:ptChispa 2.6s ease-in-out infinite;pointer-events:none}
+.pt-pistero.r-l .pt-chispa{background:#fde68a}.pt-pistero.r-e .pt-chispa{background:#e9d5ff}
+.pt-chispa.s1{top:6%;left:12%}.pt-chispa.s2{top:2%;right:14%;animation-delay:.7s;width:8px;height:8px}.pt-chispa.s3{bottom:30%;right:2%;animation-delay:1.4s}.pt-chispa.s4{bottom:36%;left:0;animation-delay:2s;width:7px;height:7px}
+@keyframes ptChispa{0%,100%{opacity:0;transform:scale(.3) rotate(0)}45%{opacity:1;transform:scale(1) rotate(45deg)}70%{opacity:0;transform:scale(.4) rotate(90deg)}}
+.pt-top-der{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;align-items:flex-start}.pt-top-der .character-name{margin:0}
+.pt-sorpresa{width:auto!important;margin:0!important;padding:7px 12px!important;font-size:.75rem!important}
+.pt-compra{display:none;align-items:center;gap:8px;margin-top:6px;background:#141f33;border:1px solid #2a3348;border-radius:12px;padding:6px 8px;font-size:.75rem;color:#dfe7ff}
+.pt-compra.on{display:flex}.pt-compra b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-comprar{background:linear-gradient(135deg,#fc4c02,#f59e0b);color:#111;border:0;border-radius:9px;padding:6px 12px;font-weight:800;font-size:.75rem;cursor:pointer}
+.pt-quitar{background:none;border:0;color:#9fb3c8;font-size:1.1rem;cursor:pointer;padding:0 4px}
+.pt-rz{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:6px;background:var(--rc);color:#fff}
+.pt-rz.r-r{background:var(--rr)}.pt-rz.r-e{background:var(--re)}.pt-rz.r-l{background:linear-gradient(135deg,#f59e0b,#fde047);color:#3b2a00}
+.pt-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:8px;padding-bottom:2px}.pt-tabs::-webkit-scrollbar{display:none}
+.pt-tab{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:56px;padding:6px 6px 5px;background:#141f33;border:1px solid #2a3348;border-radius:11px;color:#9fb3c8;font-size:.6rem;cursor:pointer}
+.pt-tab-i{width:20px;height:20px;display:block}.pt-tab-i svg{width:100%;height:100%}
+.pt-tab.on{color:#fff;border-color:var(--p);background:linear-gradient(180deg,rgba(252,76,2,.22),#141f33)}
+/* Pistero y las pestañas quedan a la vista: solo la lista de piezas tiene scroll propio (como las tiendas de juegos) */
+.pt-panel{padding:2px 2px 10px;max-height:calc(100dvh - 330px);min-height:280px;overflow-y:auto;overscroll-behavior:contain;border-top:1px solid #1e2a40}
+.pt-filtros{display:flex;gap:6px;margin:4px 0 2px}.pt-filtros button{background:#141f33;border:1px solid #2a3348;color:#9fb3c8;border-radius:14px;padding:3px 11px;font-size:.66rem;cursor:pointer}.pt-filtros button.on{color:#fff;border-color:var(--p)}
+.pt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:7px}
+.pt-card{position:relative;display:flex;flex-direction:column;align-items:center;padding:6px 4px 5px;border-radius:12px;border:1.5px solid var(--rc);background:linear-gradient(180deg,#18243b,#111a2c);color:#dfe7ff;cursor:pointer;overflow:hidden;transition:transform .12s}
+.pt-card:active{transform:scale(.95)}
+.pt-card-img{width:100%;height:58px;display:block}.pt-card-img svg{width:100%;height:100%}
+.pt-card-n{font-size:.62rem;line-height:1.15;margin-top:3px;text-align:center}
+.pt-card-p{font-size:.58rem;font-weight:800;margin-top:3px;padding:1px 7px;border-radius:7px;background:rgba(255,255,255,.07);color:#9fb3c8}
+.pt-card.r-r{border-color:var(--rr);background:linear-gradient(180deg,#16284a,#111a2c)}.pt-card.r-r .pt-card-p{background:rgba(59,130,246,.2);color:#bfdbfe}
+.pt-card.r-e{border-color:var(--re);background:linear-gradient(180deg,#2a1a4a,#130f26)}.pt-card.r-e .pt-card-p{background:rgba(168,85,247,.25);color:#e9d5ff}
+.pt-card.r-l{border-color:var(--rl);background:linear-gradient(180deg,#3a2808,#1a1206)}.pt-card.r-l .pt-card-p{background:linear-gradient(135deg,#f59e0b,#fde047);color:#3b2a00}
+.pt-card.r-l::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);animation:ptBrillo 3.2s ease-in-out infinite;pointer-events:none}
+.pt-card.r-e::before,.pt-card.r-l::before{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 14px rgba(168,85,247,.25);pointer-events:none}.pt-card.r-l::before{box-shadow:inset 0 0 16px rgba(245,158,11,.3)}
+@keyframes ptBrillo{0%,55%{left:-60%}100%{left:130%}}
+.pt-card.sel{box-shadow:0 0 0 2px var(--p)}.pt-card.sel .pt-card-p{background:var(--p);color:#fff}
+.pt-card.prueba{box-shadow:0 0 0 2px #fff}
+.pt-card.lock .pt-card-img{opacity:.85}
+.pt-chip.r-r{border-color:var(--rr)}.pt-chip.r-e{border-color:var(--re)}.pt-chip.r-l{border-color:var(--rl)}
+.pt-chip.sel{border-color:var(--p)}
+@media (prefers-reduced-motion:reduce){.pt-card.r-l::after,.pt-chispa,.pt-pistero svg{animation:none}}

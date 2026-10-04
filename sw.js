@@ -38,6 +38,7 @@ const CORE = [
   './pistero-vocabulario-modo.js',
   './pistero-armario.js',
   './pistero-apariencia.js',
+  './pistero-tienda.js',
   './pistero-frases-pais.js',
   './pistero-chat-ia.js',
   './funciones-mapa-viajes.js',

@@ -225,7 +225,7 @@ function _pistOpts(){ try{ return _pistNormal(JSON.parse(localStorage.getItem('l
 // Guarda el objeto completo: local + Firestore. `pistOpts` (mapa completo, v2) es lo
 // que leen las versiones nuevas; los campos sueltos pist* se mantienen para que las
 // versiones viejas de la app sigan dibujando algo razonable.
-function _pistGuardar(o){ try{ localStorage.setItem('lp_pist_'+(cu||'anon'), JSON.stringify(o)); }catch(e){ console.warn('[pistero] no se pudo guardar el personaje en el dispositivo', e); } if(cu){ try{ db.collection('users').doc(cu).set({pistOpts:o,pistCasco:o.casco,pistPiel:o.piel,pistLentes:o.lentes,pistLentesCol:o.lentesCol,pistBigote:o.bigote,pistAcc:o.acc,pistPelo:o.pelo,pistPeloCol:o.peloCol,pistPest:o.pest,pistAro:o.aro,pistPano:(o.cuello==='panoleta'?o.pano:'')},{merge:true}).catch(function(e){ console.warn('[pistero] no se pudo sincronizar el personaje', e); }); }catch(e){ console.warn('[pistero] no se pudo sincronizar el personaje', e); } } renderPistCustom(); if(typeof updateCustomizePreview==='function') updateCustomizePreview(); if(typeof _setExprPistero==='function') _setExprPistero(_pisteroExprActual||'feliz'); }
+function _pistGuardar(o){ if(typeof _ptLimpiar==='function') o=_ptLimpiar(o); try{ localStorage.setItem('lp_pist_'+(cu||'anon'), JSON.stringify(o)); }catch(e){ console.warn('[pistero] no se pudo guardar el personaje en el dispositivo', e); } if(cu){ try{ db.collection('users').doc(cu).set({pistOpts:o,pistCasco:o.casco,pistPiel:o.piel,pistLentes:o.lentes,pistLentesCol:o.lentesCol,pistBigote:o.bigote,pistAcc:o.acc,pistPelo:o.pelo,pistPeloCol:o.peloCol,pistPest:o.pest,pistAro:o.aro,pistPano:(o.cuello==='panoleta'?o.pano:'')},{merge:true}).catch(function(e){ console.warn('[pistero] no se pudo sincronizar el personaje', e); }); }catch(e){ console.warn('[pistero] no se pudo sincronizar el personaje', e); } } renderPistCustom(); if(typeof updateCustomizePreview==='function') updateCustomizePreview(); if(typeof _setExprPistero==='function') _setExprPistero(_pisteroExprActual||'feliz'); }
 function _pistSet(k,v){ var o=_pistOpts(); o[k]=v;
   if(k==='cuello'){ if(!v) o.pano=''; else if(!o.pano) o.pano='#fc4c02'; }
   if(k==='pano' && v && !o.cuello) o.cuello='panoleta';
@@ -290,7 +290,7 @@ var PIST_GRUPOS=[
   {g:'pistPanoGrid',k:'pano',l:function(){return PIST_PANO;},chip:1,libre:1},
   {g:'pistBigoteGrid',k:'bigote',l:function(){return PIST_BIGOTE;}}
 ];
-function renderPistCustom(){ var o=_pistOpts();
+function renderPistCustom(){ if(typeof _ptRender==='function' && _ptRender()) return; var o=_pistOpts();
   PIST_GRUPOS.forEach(function(G){
     var el=document.getElementById(G.g); if(!el) return;
     // Solo se dibuja el grupo abierto (son ~250 opciones); al abrir otro,
@@ -394,7 +394,7 @@ function selectVello(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } 
 function selectPeinado(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPeinado=id; initCustomization(); }
 function selectPanuelo(id){ if(!estaDesbloqueado(id)){ mostrarTienda(); return; } selectedPanuelo=id; initCustomization(); }
 function updatePreview(){ const p=document.getElementById('preview-svg'); if(p) p.innerHTML=_pistoNuevo('feliz'); const n=document.getElementById('characterNameDisplay'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
-function updateCustomizePreview(){ const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=_pistoNuevo('feliz'); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
+function updateCustomizePreview(){ if(typeof _ptPreview==='function' && document.getElementById('ptPanel')){ _ptPreview(); return; } const p=document.getElementById('customize-preview-svg'); if(p) p.innerHTML=_pistoNuevo('feliz'); const n=document.getElementById('customizeCharacterName'); if(n&&nombreUsuario) n.innerText=nombreUsuario; }
 function saveCustomization(){
   localStorage.setItem('lp_helmet_'+cu, selectedHelmet);
   localStorage.setItem('lp_lens_'+cu, selectedLens);
