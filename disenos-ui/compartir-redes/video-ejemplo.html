@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Video del viaje · prototipo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.js"></script>
+<style>
+/* Prototipo para grabar ejemplos del video para redes (no es la app). 1080x1920, 15 s. */
+body{margin:0;background:#0a0f1d;color:#f2f4f8;font-family:Barlow,system-ui,sans-serif}
+#ui{position:fixed;left:8px;top:8px;z-index:5;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:rgba(10,15,29,.85);padding:6px 8px;border-radius:8px;font-size:13px}
+#ui button{font:inherit;padding:4px 10px}
+#mapa{position:absolute;left:0;top:0;width:540px;height:960px}
+#out{position:absolute;left:0;top:0;width:540px;height:960px}
+</style>
+</head>
+<body>
+<div id="ui"><span id="estado">Cargando…</span></div>
+<div id="mapa"></div>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script>
+var W=1080, H=1920, DUR=15000, T_INTRO=2200, T_VUELO_FIN=12000, T_ALEJA=1700;
+var NARANJA='#fc4c02', ORO='#ffd700', TIZA='#f2f4f8', NIEBLA='#9aa6bb', NOCHE='#0a0f1d', PLATINO='#e8f1ff';
+var datos=null, D=null, map=null, ctx=document.getElementById('out').getContext('2d');
+var caraImg=null, coords=[], cum=[], total=0, bounds=null, camFinal=null;
+function est(t){ document.getElementById('estado').textContent=t; }
+function ease(t){ return t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function lerpAng(a,b,t){ var d=((b-a+540)%360)-180; return (a+d*t+360)%360; }
+function hav(a,b){ var R=6371000,r=Math.PI/180,dl=(b[1]-a[1])*r,dn=(b[0]-a[0])*r; var s=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dn/2)*Math.sin(dn/2); return 2*R*Math.asin(Math.sqrt(s)); }
+function rumbo(a,b){ var r=Math.PI/180, y=Math.sin((b[0]-a[0])*r)*Math.cos(b[1]*r), x=Math.cos(a[1]*r)*Math.sin(b[1]*r)-Math.sin(a[1]*r)*Math.cos(b[1]*r)*Math.cos((b[0]-a[0])*r); return (Math.atan2(y,x)/r+360)%360; }
+function puntoEn(dist){ var i=1; while(i<coords.length-1 && cum[i]<dist) i++; var a=coords[i-1], b=coords[i], L=cum[i]-cum[i-1], f=L>0?(dist-cum[i-1])/L:0; return {p:[lerp(a[0],b[0],f),lerp(a[1],b[1],f)], i:i}; }
+function kmTxt(km){ return km.toFixed(1).replace('.',','); }
+function tiempoTxt(km){ var min=Math.round(km/16*60); return Math.floor(min/60)+':'+String(min%60).padStart(2,'0'); }
+
+function cargarImg(svg){ return new Promise(function(r){ var i=new Image(); i.onload=function(){ r(i); }; i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg.replace('<svg ','<svg width="400" height="336" ')); }); }
+var EMBLEMAS={
+  fundador:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 44" width="80" height="88"><path d="M20 2 L37 8 V22 C37 32 29 39 20 42 C11 39 3 32 3 22 V8 Z" fill="rgba(255,215,0,.15)" stroke="#ffd700" stroke-width="2.4"/><g stroke="#ffd700" stroke-width="2.2" stroke-linecap="round"><path d="M20 12v3M20 29v3M10 22h3M27 22h3M13 15l2 2M25 27l2 2M13 29l2-2M25 17l2-2"/></g><circle cx="20" cy="22" r="5.5" fill="none" stroke="#ffd700" stroke-width="2"/><circle cx="20" cy="22" r="1.6" fill="#ffd700"/></svg>',
+  pionero:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 44" width="80" height="88"><path d="M20 2 L37 8 V22 C37 32 29 39 20 42 C11 39 3 32 3 22 V8 Z" fill="rgba(232,241,255,.16)" stroke="#e8f1ff" stroke-width="2"/><path d="M20 2 L37 8 V22 C37 32 29 39 20 42" fill="none" stroke="#ffd700" stroke-width="2"/><path d="M14 33V11" stroke="#e8f1ff" stroke-width="2.2" stroke-linecap="round"/><path d="M14.5 12h13l-3.5 4.5 3.5 4.5h-13z" fill="#ffd700"/></svg>'
+};
+var emblemaImg=null;
+function cargarEmblema(tipo){ return new Promise(function(r){ var i=new Image(); i.onload=function(){ r(i); }; i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(EMBLEMAS[tipo]); }); }
+
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function texto(t,x,y,size,peso,color,alin,fam){ ctx.font=(peso||800)+' '+size+'px '+(fam||'"Barlow Condensed"'); ctx.fillStyle=color||TIZA; ctx.textAlign=alin||'left'; ctx.fillText(t,x,y); }
+
+// ---- un cuadro del video ----
+function cuadro(ms){
+  var t=clamp(ms/DUR,0,1);
+  // progreso del recorrido: 0 en la intro, 0..1 durante el vuelo
+  var pv=clamp((ms-T_INTRO)/(T_VUELO_FIN-T_INTRO),0,1), pe=ease(pv);
+  var dist=pe*total, pos=puntoEn(dist);
+  var ahead=puntoEn(Math.min(total,dist+total*0.06)).p;
+  var bTgt=rumbo(pos.p,ahead);
+  cuadro.b = cuadro.b==null ? rumbo(coords[0],puntoEn(total*0.06).p) : lerpAng(cuadro.b,bTgt,0.06);
+  var cam;
+  if(ms<T_INTRO){ // baja desde lo alto hacia el inicio
+    var k=ease(ms/T_INTRO);
+    cam={center:coords[0], zoom:lerp(11.2,14.1,k), pitch:lerp(25,54,k), bearing:cuadro.b};
+  } else if(ms<T_VUELO_FIN){
+    cam={center:pos.p, zoom:14.1, pitch:54, bearing:cuadro.b};
+  } else { // se aleja hasta ver todo el viaje
+    var k2=ease(clamp((ms-T_VUELO_FIN)/T_ALEJA,0,1));
+    cam={center:[lerp(coords[coords.length-1][0],camFinal.center.lng,k2),lerp(coords[coords.length-1][1],camFinal.center.lat,k2)],
+      zoom:lerp(14.1,camFinal.zoom,k2), pitch:lerp(54,38,k2), bearing:lerpAng(cuadro.b,camFinal.bearing,k2)};
+  }
+  map.jumpTo(cam);
+  var hecho=coords.slice(0,pos.i); hecho.push(pos.p);
+  if(ms>=T_VUELO_FIN) hecho=coords;
+  return {punta:pos.p, pe:pe, hecho:hecho};
+}
+// La línea recorrida se dibuja en el mismo canvas que se graba (sincrónico, cuadro a cuadro).
+function dibujarLinea(hecho){
+  if(hecho.length<2) return;
+  // Con la cámara inclinada, los puntos que quedan detrás o muy lejos en el horizonte se proyectan
+  // mal (salía una raya cruzando la pantalla): esos puntos cortan el trazo en vez de unirse.
+  var cielo=H*0.12, pts=hecho.map(function(c){ var q=map.project(c), x=q.x*2, y=q.y*2; return (isFinite(x)&&isFinite(y)&&y>cielo&&y<H*1.3&&x>-W*0.5&&x<W*1.5)?[x,y]:null; });
+  function trazo(w,color,alfa,blur){ ctx.save(); ctx.globalAlpha=alfa; ctx.strokeStyle=color; ctx.lineWidth=w; ctx.lineCap='round'; ctx.lineJoin='round'; if(blur){ ctx.shadowColor=color; ctx.shadowBlur=blur; } ctx.beginPath(); var abierto=false; for(var i=0;i<pts.length;i++){ var p=pts[i]; if(!p){ abierto=false; continue; } if(!abierto){ ctx.moveTo(p[0],p[1]); abierto=true; } else ctx.lineTo(p[0],p[1]); } ctx.stroke(); ctx.restore(); }
+  trazo(26,NARANJA,.35,24); trazo(14,'#16090a',.55,0); trazo(9,NARANJA,1,0);
+  var a=pts[0]; if(a){ ctx.fillStyle=TIZA; ctx.beginPath(); ctx.arc(a[0],a[1],12,0,Math.PI*2); ctx.fill(); }
+}
+
+function componer(ms, punta, pe, hecho){
+  ctx.clearRect(0,0,W,H);
+  ctx.drawImage(map.getCanvas(),0,0,W,H);
+  dibujarLinea(hecho);
+  // viñeta arriba y abajo para que el texto se lea siempre
+  var g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(10,15,29,.85)'); g.addColorStop(.18,'rgba(10,15,29,0)'); g.addColorStop(.72,'rgba(10,15,29,0)'); g.addColorStop(1,'rgba(10,15,29,.9)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  var final=ms>=T_VUELO_FIN;
+  // Pistero en la punta del recorrido
+  if(!final || ms<T_VUELO_FIN+T_ALEJA){
+    var p=map.project(punta), w=150, h=126;
+    ctx.save(); ctx.globalAlpha=final?clamp(1-(ms-T_VUELO_FIN)/600,0,1):1;
+    ctx.fillStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(p.x*2,p.y*2+8,w*.32,h*.1,0,0,Math.PI*2); ctx.fill();
+    ctx.drawImage(caraImg,p.x*2-w/2,p.y*2-h*.95,w,h); ctx.restore();
+  }
+  // ---- intro ----
+  if(ms<T_INTRO+500){
+    var a=ms<T_INTRO-300?1:clamp(1-(ms-(T_INTRO-300))/800,0,1);
+    ctx.save(); ctx.globalAlpha=a;
+    ctx.fillStyle='rgba(10,15,29,.55)'; ctx.fillRect(0,0,W,H);
+    var cy=760, aparece=clamp(ms/500,0,1);
+    ctx.drawImage(caraImg,W/2-170,cy-430+(1-aparece)*40,340,286);
+    texto(D.fecha.toUpperCase(),W/2,cy-50,42,600,NIEBLA,'center');
+    texto(D.desde,W/2,cy+70,128,800,TIZA,'center');
+    texto('→ '+D.hasta,W/2,cy+200,128,800,NARANJA,'center');
+    ctx.restore();
+  }
+  // ---- durante el vuelo: km en grande ----
+  if(ms>=T_INTRO-200 && !final){
+    var a2=clamp((ms-(T_INTRO-200))/500,0,1);
+    ctx.save(); ctx.globalAlpha=a2;
+    texto(D.desde+' → '+D.hasta,80,118,46,700,NIEBLA,'left');
+    texto(kmTxt(D.km*pe),72,330,190,800,TIZA,'left');
+    texto('KILÓMETROS',80,395,46,700,NARANJA,'left');
+    // barra de avance
+    ctx.fillStyle='rgba(255,255,255,.18)'; rr(80,H-150,W-160,10,5); ctx.fill();
+    ctx.fillStyle=NARANJA; rr(80,H-150,(W-160)*pe,10,5); ctx.fill();
+    marca(H-70,1);
+    ctx.restore();
+  }
+  // ---- cierre ----
+  if(final){
+    var k=clamp((ms-(T_VUELO_FIN+700))/700,0,1), sube=(1-ease(k))*60;
+    ctx.save(); ctx.globalAlpha=k;
+    // título
+    texto('¡LLEGAMOS!',80,170,64,800,NARANJA,'left');
+    texto(D.desde+' → '+D.hasta,80,270,96,800,TIZA,'left');
+    texto(D.fecha,82,330,40,600,NIEBLA,'left','Barlow');
+    // panel de datos
+    var py=1330+sube;
+    ctx.fillStyle='rgba(10,15,29,.82)'; rr(60,py,W-120,330,36); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=2; rr(60,py,W-120,330,36); ctx.stroke();
+    var cols=[[kmTxt(D.km),'KM'],[tiempoTxt(D.km),'TIEMPO'],['16,0','KM/H PROM.']];
+    cols.forEach(function(c,i){ var x=110+i*305; texto(c[0],x,py+150,120,800,TIZA,'left'); texto(c[1],x+4,py+210,36,700,NIEBLA,'left'); });
+    // sello
+    var sx=110, sy=py+245;
+    ctx.drawImage(emblemaImg,sx,sy,48,53);
+    texto(D.sello.toUpperCase(),sx+64,sy+42,40,700,D.tipo==='pionero'?PLATINO:ORO,'left');
+    // Pistero con globo
+    var fx=W-330, fy=py-300+sube;
+    ctx.drawImage(caraImg,fx,fy,260,218);
+    ctx.fillStyle=TIZA; rr(fx-250,fy-20,300,96,30); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(fx+20,fy+70); ctx.lineTo(fx+60,fy+70); ctx.lineTo(fx+40,fy+105); ctx.closePath(); ctx.fill();
+    texto('¡Buen viaje!',fx-100,fy+45,52,800,NOCHE,'center');
+    marca(H-90,1);
+    ctx.restore();
+  }
+}
+function marca(y,a){
+  ctx.save(); ctx.globalAlpha*=a;
+  ctx.strokeStyle=TIZA; ctx.lineWidth=5; ctx.beginPath(); ctx.arc(110,y-18,34,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle=NARANJA; ctx.lineWidth=6; ctx.strokeRect(84,y-34,52,32);
+  texto('Libre Pedal',164,y,58,800,TIZA,'left');
+  texto('librepedal.cl',W-80,y,40,600,NIEBLA,'right','Barlow');
+  ctx.restore();
+}
+
+function esperarMosaicos(maxMs){
+  return new Promise(function(r){ var t0=performance.now(); (function mirar(){ try{ map.redraw(); }catch(e){} if(map.areTilesLoaded() || performance.now()-t0>maxMs) return r(); setTimeout(mirar,40); })(); });
+}
+async function generar(){
+  var FPS=30, N=Math.round(DUR/1000*FPS);
+  est('Precargando el mapa…');
+  for(var k=0;k<N;k+=10){ cuadro.b=(k===0?null:cuadro.b); cuadro(k*1000/FPS); map.redraw(); await esperarMosaicos(2500); }
+  var muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width:W,height:H},fastStart:'in-memory'});
+  var enc=new VideoEncoder({output:function(ch,meta){ muxer.addVideoChunk(ch,meta); },error:function(e){ est('Error: '+e.message); }});
+  enc.configure({codec:'avc1.640028',width:W,height:H,bitrate:9000000,framerate:FPS});
+  cuadro.b=null;
+  for(var i=0;i<=N;i++){
+    var ms=Math.min(DUR,i*1000/FPS), c=cuadro(ms);
+    await esperarMosaicos(1200);
+    componer(ms,c.punta,c.pe,c.hecho);
+    var fr=new VideoFrame(document.getElementById('out'),{timestamp:Math.round(i*1e6/FPS),duration:Math.round(1e6/FPS)});
+    enc.encode(fr,{keyFrame:i%60===0}); fr.close();
+    while(enc.encodeQueueSize>8) await new Promise(function(r){ setTimeout(r,10); });
+    if(i%15===0) est('Generando '+Math.round(i/N*100)+'%');
+  }
+  await enc.flush(); muxer.finalize();
+  var blob=new Blob([muxer.target.buffer],{type:'video/mp4'});
+  est('Guardando '+(blob.size/1e6).toFixed(1)+' MB…');
+  var r=await fetch('/guardar?nombre='+D.id+'.mp4',{method:'POST',body:blob});
+  est(r.ok ? 'Listo: '+D.id+'.mp4 ('+(blob.size/1e6).toFixed(1)+' MB)' : 'No se pudo guardar');
+  window.__listo=D.id+'.mp4';
+}
+async function iniciar(id){
+  D=datos.find(function(d){ return d.id===id; });
+  coords=D.coords; cum=[0]; total=0;
+  for(var i=1;i<coords.length;i++){ total+=hav(coords[i-1],coords[i]); cum.push(total); }
+  caraImg=await cargarImg(D.cara); emblemaImg=await cargarEmblema(D.tipo);
+  await document.fonts.load('800 80px "Barlow Condensed"'); await document.fonts.load('600 40px "Barlow"');
+  bounds=coords.reduce(function(b,c){ return b.extend(c); }, new maplibregl.LngLatBounds(coords[0],coords[0]));
+  if(map) map.remove();
+  map=new maplibregl.Map({container:'mapa',style:'https://tiles.openfreemap.org/styles/'+(D.estilo||'liberty'),center:coords[0],zoom:11,pitch:25,
+    attributionControl:false,interactive:false,pixelRatio:2,preserveDrawingBuffer:true,fadeDuration:0});
+  // Si el navegador está oculto no dibuja cuadros por su cuenta: se fuerza el dibujo a mano.
+  var empuje=setInterval(function(){ try{ map.redraw(); }catch(e){} },80);
+  await new Promise(function(r){ map.on('load',r); });
+  map.addSource('dem',{type:'raster-dem',url:'https://tiles.mapterhorn.com/tilejson.json'});
+  try{ map.setTerrain({source:'dem',exaggeration:1.5}); }catch(e){}
+  // Sombras de relieve (como el modo aventura de la app) para que se note la geografía.
+  try{ var antes, ls=map.getStyle().layers; for(var j=0;j<ls.length;j++){ if(ls[j].type==='symbol'){ antes=ls[j].id; break; } }
+    var oscuro=D.estilo==='dark';
+    map.addLayer({id:'relieve',type:'hillshade',source:'dem',paint:{'hillshade-exaggeration':oscuro?0.6:0.5,'hillshade-shadow-color':oscuro?'#000000':'#6b4a2b','hillshade-highlight-color':oscuro?'#4a5d80':'#fbf1db','hillshade-accent-color':oscuro?'#1b2740':'#8a6a3a'}},antes);
+  }catch(e){}
+  map.addSource('todo',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}});
+  map.addSource('hecho',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[coords[0]]}}});
+  map.addLayer({id:'todo',type:'line',source:'todo',paint:{'line-color':'#ffffff','line-width':3,'line-opacity':.35,'line-dasharray':[1,2]},layout:{'line-cap':'round'}});
+  var cf=map.cameraForBounds(bounds,{padding:{top:200,bottom:340,left:40,right:40},bearing:-12});
+  camFinal={center:maplibregl.LngLat.convert(cf.center),zoom:cf.zoom,bearing:-12};
+  await esperarMosaicos(8000); clearInterval(empuje);
+  var c0=cuadro(0); map.redraw(); componer(0,c0.punta,c0.pe,c0.hecho);
+  est('Listo para grabar: '+D.desde+' → '+D.hasta);
+}
+
+fetch('ejemplos/datos.json').then(function(r){ return r.json(); }).then(async function(d){
+  datos=d;
+  var ui=document.getElementById('ui');
+  d.forEach(function(x){ var b=document.createElement('button'); b.textContent='Grabar '+x.desde+' → '+x.hasta; b.onclick=async function(){ await iniciar(x.id); await generar(); }; ui.appendChild(b); });
+  var q=new URLSearchParams(location.search).get('ver'); if(q){ await iniciar(q); }
+  est('Elige un ejemplo');
+});
+window.grabarEjemplo=async function(id){ window.__listo=null; await iniciar(id); await generar(); };
+</script>
+</body>
+</html>
