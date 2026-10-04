@@ -27,3 +27,18 @@ Reemplaza el texto "opción B" de `HANDOFF-2026-10-04-NOCHE.md` §3.1. Usar tal 
 - Votación: recién cuando Premium cobre (pantalla 3).
 - Botón "Compartir mi huella" (crecimiento orgánico).
 - Mockup: pantallas 2 y 2b. Técnico: comuna por reverse-geocoding que ya existe; contadores por comuna los agrega el worker/agente.
+
+## Estado del código (2026-10-04) — rama `feature/bienvenida-fondo`, SIN mergear
+- Programado: `bienvenida-huella.js` (+ estilos, `auth-sesion.js`, `index.html`, `sw.js`, `firestore.rules`),
+  tests `tests/bienvenida-huella.test.mjs` 32 OK. Suite 42/43 (falla solo `iconos-lucide`, preexistente).
+- Probado en navegador (viewport móvil): bienvenida, Dejar mi huella y Mapa de huellas se ven bien.
+- **Fundador** = primeros 1.000 (promesa que YA está en producción en "Socios Fundadores") **o** primer año
+  desde el 24-sep-2026 (Play 8.800). Confirmar fecha de lanzamiento con Inty.
+- **Falta antes de mergear:**
+  1. Generar las voces: `node scripts/gen-voz-bienvenida.js` (18 mp3, 848 caracteres, una sola vez). Necesita
+     `MI-ELEVENLABS.txt` (gitignored), que NO está en la máquina flgan.
+  2. Publicar `firestore.rules` en la consola de Firebase (no se despliega solo con el merge).
+  3. Probar con una cuenta real en el teléfono (número de ciclista, sello Fundador, guardar huella, contador).
+  4. Subir versión en los 3 lugares y ✓ de Inty.
+- Pendiente aparte: distintivo de los **testers** (más que Fundador + Premium gratis). Inty pasará los correos:
+  NO guardarlos en el repo (es público); van a Firestore, escritos solo por el admin.
