@@ -44,7 +44,7 @@ ok(J("_ptPrecio('l')") === '$990' && J("_ptPrecio('c')") === 'Gratis', 'precio e
 
 // 4) con el cobro activo: probar no guarda, y nunca se guarda lo que no se tiene
 J('TIENDA_COBRO_ACTIVO=true');
-ok(!J("_ptTiene('acc','corona')") && J("_ptTiene('acc','camara')"), 'sin comprar: legendario bloqueado, común libre');
+ok(!J("_ptTiene('acc','corona')") && J("_ptTiene('acc','luz')"), 'sin comprar: legendario bloqueado, común (luz) libre');
 J("_ptElegir('acc','corona')");
 ok(J('_pistOpts().acc') === '' && J('_ptPrueba && _ptPrueba.id') === 'corona', 'tocar algo no comprado lo PRUEBA sin guardarlo');
 ok(J("_ptOpts().acc") === 'corona', 'la prueba se ve en el Pistero de arriba');

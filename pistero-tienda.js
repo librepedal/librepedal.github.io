@@ -29,14 +29,14 @@ var PIST_RAREZA={
 var PIST_TIER={
   casco:{dorado:'r',cromo:'r',cobre:'r',perla:'r',neon:'r',atardecer:'r',oceano:'r',arcoiris:'e',galaxia:'l'},
   acabado:{metal:'r',perla:'e',carbono:'e',neon:'l'},
-  diseno:{rayo:'r',cuadros:'r',estrellas:'r',lunares:'r',ondas:'r',zigzag:'r',corazones:'r',numero:'r',llamas:'e',tigre:'e',camuflaje:'e'},
-  acc:{gato:'r',oso:'r',conejo:'r',flor:'r',lazo:'r',brote:'r',estrella:'r',diablo:'r',vikingo:'e',unicornio:'e',helice:'e',pinchos:'e',dino:'e',corona:'l',aureola:'l',alas:'l'},
+  diseno:{doble:'r',chile:'r',rayo:'r',cuadros:'r',estrellas:'r',lunares:'r',ondas:'r',zigzag:'r',corazones:'r',numero:'r',llamas:'e',tigre:'e',camuflaje:'e'},
+  acc:{camara:'r',cresta:'r',antena:'r',gato:'r',oso:'r',conejo:'r',flor:'r',lazo:'r',brote:'r',estrella:'r',diablo:'r',vikingo:'e',unicornio:'e',helice:'e',pinchos:'e',dino:'e',corona:'l',aureola:'l',alas:'l'},
   gadget:{gopro:'r',espejo:'r',banderin:'r'},
   lentes:{aviador:'r',cuadrados:'r',gato:'r',corazon:'r',estrella:'r',escudo:'e',mascara:'e'},
   peloCol:{'#f472b6':'r','#a78bfa':'r','#3b82f6':'r','#34d399':'r','#ef4444':'r'},
   marca:{barro:'r',curita:'r',corazon:'r',brillos:'r',guerrero:'r'},
   aro:{estrella:'r',corazon:'r',colgante:'r',doble:'r'},
-  cuello:{bufanda:'r',maillot:'r',pajarita:'e',collar:'e'},
+  cuello:{buff:'r',bufanda:'r',maillot:'r',pajarita:'e',collar:'e'},
   biciTipo:{bmx:'r',playera:'r'}
 };
 function _ptTier(k,id){ if(!id) return 'c'; var m=PIST_TIER[k]; return (m&&m[id])||'c'; }

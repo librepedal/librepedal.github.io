@@ -28,7 +28,10 @@ var _BICI_G={
   cicloviaje:{r:15.5,tw:3.4,rw:[29,88],fw:[95,88],bb:[60,90],st:[51,62],ht:[85,57],hb:[88,68],sd:[48,55.5],hip:[49,52],sh:[63,37],head:[67,23],inc:4},
   urbana:    {r:15.5,tw:3.2,rw:[30,88],fw:[94,88],bb:[60,90],st:[50,62],ht:[84,56],hb:[87,68],sd:[47,55.5],hip:[48,52],sh:[56,33],head:[60,19],inc:0},
   bmx:       {r:12,  tw:3.8,rw:[36,92],fw:[88,92],bb:[60,93],st:[55,74],ht:[83,66],hb:[85,76],sd:[52,70.5],hip:[53,64],sh:[63,45],head:[66,31],inc:4},
-  playera:   {r:15.5,tw:5.4,rw:[30,88],fw:[95,88],bb:[58,90],st:[48,62],ht:[86,58],hb:[88,68],sd:[46,55.5],hip:[46,51],sh:[53,33],head:[57,19],inc:-3}
+  playera:   {r:15.5,tw:5.4,rw:[30,88],fw:[95,88],bb:[58,90],st:[48,62],ht:[86,58],hb:[88,68],sd:[46,55.5],hip:[46,51],sh:[53,33],head:[57,19],inc:-3},
+  gravel:    {r:15.5,tw:3.6,rw:[30,88],fw:[95,88],bb:[60,90],st:[52,62],ht:[85,58],hb:[88,69],sd:[49,55.5],hip:[50,52],sh:[68,39],head:[73,25],inc:7},
+  // triciclo adaptado: dos ruedas atrás (la lejana asoma), cuadro muy bajo para subirse fácil
+  triciclo:  {r:14,  tw:3.4,rw:[30,89],fw:[96,89],bb:[60,90],st:[48,64],ht:[86,58],hb:[88,70],sd:[45,57.5],hip:[46,54],sh:[54,35],head:[58,21],inc:0}
 };
 // ropa por tipo: hasta = cuánto del muslo cubre (0..1; 2 = pierna completa); ap = holgura; calzado
 var _BICI_ROPA={
@@ -37,7 +40,9 @@ var _BICI_ROPA={
   cicloviaje:{pierna:'#8a7556',hasta:.86,ap:.5, calcetin:'',       zap:'',       suela:'#3f3a33',extra:'buff',sandalia:1},
   urbana:    {pierna:'#2f5592',hasta:2,  ap:.4, calcetin:'',       zap:'#f8fafc',suela:'#94a3b8',extra:'mochila'},
   bmx:       {pierna:'#1f2937',hasta:2,  ap:.6, calcetin:'',       zap:'#dc2626',suela:'#f8fafc',extra:'capucha'},
-  playera:   {pierna:'#0ea5e9',hasta:.62,ap:.7,calcetin:'',       zap:'',       suela:'#7c5a2e',extra:'flores',sandalia:1}
+  playera:   {pierna:'#0ea5e9',hasta:.62,ap:.7,calcetin:'',       zap:'',       suela:'#7c5a2e',extra:'flores',sandalia:1},
+  gravel:    {pierna:'#1f2937',hasta:.78,ap:.2, calcetin:'#f59e0b',zap:'#4b5563',suela:'#111827',extra:''},
+  triciclo:  {pierna:'#64748b',hasta:2,  ap:.5, calcetin:'',       zap:'#f8fafc',suela:'#94a3b8',extra:''}
 };
 /* ===== TALLER: lo que se puede comprar para la bici y el traje (catálogo inicial) =====
    Cada cosa es independiente y se combina con todo (igual que el casco).
@@ -53,13 +58,19 @@ var PIST_TRAJE=[{id:'',n:'Clásico'},{id:'equipo',n:'Equipo'},{id:'retro',n:'Ret
 // Seguridad (luces) y quitar cosas: siempre gratis.
 var PIST_TIER_BICI={
   biciSkin:{degrade:'r',retro:'r',chile:'r',camo:'e',llamas:'e',galaxia:'l'},
-  biciAcab:{mate:'r',metal:'r',carbono:'e',neon:'l'},
+  biciAcab:{metal:'r',carbono:'e',neon:'l'},
   biciNeum:{cafe:'r',blanca:'r',rojo:'r',neon:'e'},
   biciAros:{negro:'r',cuadro:'r',dorado:'e'},
   biciCarga:{canasto:'r',alforjas:'e',bikepacking:'e',caja:'r'},
   biciExtra:{banderin:'r',patito:'r',dorsal:'e'},
-  traje:{equipo:'r',retro:'r',enduro:'r',chile:'r',montana:'e',lider:'e',campeon:'l'}
+  traje:{equipo:'r',retro:'r',enduro:'r',chile:'r',montana:'e',lider:'e',campeon:'l'},
+  mascota:{quiltro:'r',negro:'r',gato:'r'}
+  // vehículos nuevos: gravel 'r'; handbike y triciclo SIEMPRE gratis (inclusión); bicolor gratis (es color libre)
 };
+// mascota en el canasto (si la bici no trae canasto, la mascota trae el suyo)
+var PIST_MASCOTA=[{id:'',n:'Sin mascota'},{id:'quiltro',n:'Quiltro'},{id:'negro',n:'Perro negro'},{id:'gato',n:'Gato'}];
+// vehículos nuevos del mockup (en la app irían en PIST_BICI de pistero-armario.js)
+var PIST_BICI_NUEVOS=[{id:'gravel',n:'Gravel'},{id:'triciclo',n:'Triciclo adaptado'},{id:'handbike',n:'Handbike'}];
 // trajes: polera (null = la del Pistero), short, manga, patrón
 var _BICI_TRAJE={
   equipo: {pol:null,     sh:'#111827',pat:'equipo'},
@@ -73,9 +84,11 @@ var _BICI_TRAJE={
 // Solo valores del catálogo: estos campos vienen de Firestore (los escribe el cliente de
 // otro usuario) y se insertan tal cual en el SVG — misma barrera que _pistNormal.
 function _biciOpts(o,tipo){
-  var C={biciSkin:PIST_BICI_SKIN,biciAcab:PIST_BICI_ACAB,biciNeum:PIST_NEUM,biciAros:PIST_AROS,biciCarga:PIST_CARGA,biciExtra:PIST_EXTRA,traje:PIST_TRAJE}, b={};
+  var C={biciSkin:PIST_BICI_SKIN,biciAcab:PIST_BICI_ACAB,biciNeum:PIST_NEUM,biciAros:PIST_AROS,biciCarga:PIST_CARGA,biciExtra:PIST_EXTRA,traje:PIST_TRAJE,mascota:PIST_MASCOTA}, b={};
   for(var k in C){ var v=o&&o[k]; b[k]=C[k].some(function(it){return it.id===v;})?v:''; }
-  if(b.biciCarga==='') b.biciCarga={cicloviaje:'alforjas',urbana:'canasto'}[tipo]||'nada';
+  // segundo color (bicolor): solo '#rrggbb'
+  b.biciCol2=(o&&typeof o.biciCol2==='string'&&/^#[0-9a-fA-F]{6}$/.test(o.biciCol2))?o.biciCol2:'';
+  if(b.biciCarga==='') b.biciCarga={cicloviaje:'alforjas',urbana:'canasto',triciclo:'nada'}[tipo]||'nada';
   if(b.biciExtra==='') b.biciExtra={cicloviaje:'banderin',urbana:'luces'}[tipo]||'nada';
   return b;
 }
@@ -147,8 +160,8 @@ function _biciRueda(c,G,tipo,anim,dur,col,B){
   // volumen del neumático: sombra abajo-derecha, brillo arriba-izquierda
   s+='<path d="'+_bArc(c,r+tw*.18,-20,110)+'" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="'+(tw*.45).toFixed(2)+'"/><path d="'+_bArc(c,r+tw*.12,190,260)+'" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="'+(tw*.3).toFixed(2)+'" stroke-linecap="round"/>';
   if(tipo==='mtb') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(r+tw/2).toFixed(1)+'" fill="none" stroke="'+nc+'" stroke-width="1.7" stroke-dasharray="1.4 1.2"/>';
-  if(tipo==='bmx'||tipo==='cicloviaje') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(r+tw/2-.2).toFixed(1)+'" fill="none" stroke="'+nc+'" stroke-width="1.1" stroke-dasharray="1 1.2"/>';
-  if(B.biciNeum==='cafe') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr+tw*.22).toFixed(1)+'" fill="none" stroke="#a0703c" stroke-width="'+(tw*.45).toFixed(2)+'"/>';
+  if(tipo==='bmx'||tipo==='cicloviaje'||tipo==='gravel') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(r+tw/2-.2).toFixed(1)+'" fill="none" stroke="'+nc+'" stroke-width="1.1" stroke-dasharray="1 1.2"/>';
+  if(B.biciNeum==='cafe'||(tipo==='gravel'&&!B.biciNeum)) s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr+tw*.22).toFixed(1)+'" fill="none" stroke="#a0703c" stroke-width="'+(tw*.45).toFixed(2)+'"/>';
   if(B.biciNeum==='blanca'||(tipo==='playera'&&!B.biciNeum)) s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr+Math.min(1.1,tw*.22)).toFixed(1)+'" fill="none" stroke="#f5ead4" stroke-width="'+Math.min(1.5,tw*.4).toFixed(2)+'"/>';
   if(tipo==='cicloviaje'||tipo==='urbana') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr+.7).toFixed(1)+'" fill="none" stroke="#9ca3af" stroke-width=".5" opacity=".8"/>';
   if(tipo==='ruta') s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(rr-2).toFixed(1)+'" fill="none" stroke="'+aro+'" stroke-width="4"/>';
@@ -187,11 +200,14 @@ function _bZapato(R,c,piel){
 }
 
 function _pistBiciSVG(opts, cfg){
-  cfg=cfg||{}; var o=_pistNormal(opts), tipo=o.biciTipo||'ruta';
-  if(tipo==='moto') return _pistMotoSVG(o,cfg);
-  if(tipo==='auto') return _pistAutoSVG(o,cfg);
-  var G=_BICI_G[tipo]||_BICI_G.ruta, R=Object.assign({},_BICI_ROPA[tipo]||_BICI_ROPA.ruta), Y=_bPersona(o), B=_biciOpts(opts,tipo);
-  var col=o.biciCol||_lpColCasco(o.casco), osc=_lpShade(col,-.45), cla=_lpShade(col,.5);
+  cfg=cfg||{}; var o=_pistNormal(opts), modelo=o.biciTipo||'ruta';
+  if(modelo==='moto') return _pistMotoSVG(o,cfg);
+  if(modelo==='auto') return _pistAutoSVG(o,cfg);
+  if(modelo==='handbike') return _pistHandbikeSVG(o,cfg,opts);
+  // modelos que se dibujan sobre la base de otro (tipo) + sus piezas propias (modelo)
+  var tipo={gravel:'ruta',triciclo:'urbana'}[modelo]||modelo;
+  var G=_BICI_G[modelo]||_BICI_G.ruta, R=Object.assign({},_BICI_ROPA[modelo]||_BICI_ROPA.ruta), Y=_bPersona(o), B=_biciOpts(opts,modelo);
+  var col=o.biciCol||_lpColCasco(o.casco), osc=_lpShade(col,-.45), cla=_lpShade(col,.5), col2=B.biciCol2;
   // traje: cambia la polera y, si el tipo usa short, el short (los jeans/pantalones se quedan)
   var TJ=_BICI_TRAJE[B.traje]||null;
   if(TJ){ if(TJ.pol){ Y.polera=TJ.pol; Y.poleraS=_lpShade(TJ.pol,-.3); } if(R.hasta<=1){ R.pierna=TJ.sh; if(TJ.holgado){ R.hasta=.94; R.ap=.7; } } }
@@ -292,7 +308,8 @@ function _pistBiciSVG(opts, cfg){
   if(B.biciCarga==='alforjas') s+='<rect x="'+(rw[0]-13)+'" y="'+(rk-1)+'" width="16" height="15" rx="3" fill="'+_lpShade('#b45309',-.3)+'"/><rect x="'+(fw[0]-1)+'" y="'+(fw[1]-12)+'" width="10" height="11" rx="2.4" fill="'+_lpShade('#b45309',-.3)+'"/>';
 
   // ---- ruedas ----
-  s+=_biciRueda(rw,G,tipo,anim,dur*.75,col,B)+_biciRueda(fw,G,tipo,anim,dur*.75,col,B);
+  // triciclo: la rueda trasera del lado lejano asoma detrás (más oscura, sin sombra propia)
+  s+=(modelo==='triciclo'?'<g opacity=".6">'+_biciRueda([rw[0]-4,rw[1]-1.6],G,'triciclo',anim,dur*.75,_lpShade(col,-.3),B)+'</g>':'')+_biciRueda(rw,G,modelo,anim,dur*.75,col,B)+_biciRueda(fw,G,modelo,anim,dur*.75,col,B);
   if(tipo==='bmx') s+='<path d="'+_bCap([rw[0]-3,rw[1]],[rw[0]+3,rw[1]],1.5,1.5)+'" fill="#cbd5e1" stroke="#64748b" stroke-width=".5"/><path d="'+_bCap([fw[0]-3,fw[1]],[fw[0]+3,fw[1]],1.5,1.5)+'" fill="#cbd5e1" stroke="#64748b" stroke-width=".5"/>';
   if(tipo==='urbana'||tipo==='playera'||tipo==='cicloviaje'){
     var fc=tipo==='playera'?col:'#1f2937', fco=tipo==='playera'?osc:'#0b0f17';
@@ -325,7 +342,7 @@ function _pistBiciSVG(opts, cfg){
   function pase(fn){ tubos.forEach(function(t,i){ s+=fn(t[0],t[1],i); }); }
   pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="'+borde+'" stroke-width="'+(w+1.5).toFixed(1)+'" stroke-linecap="round" stroke-linejoin="round"/>'; });
   if(ac==='neon') pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="'+cla+'" stroke-width="'+(w+4).toFixed(1)+'" stroke-linecap="round" opacity=".22"/>'; });
-  pase(function(d,w,i){ var c=tinta; if(sk==='chile') c=(i===1?'#d52b1e':(i===0?'#f8fafc':(i===2?'#0039a6':'#d52b1e')));
+  pase(function(d,w,i){ var c=tinta; if(col2&&!sk&&(i===0||i===4)) c=col2; if(sk==='chile') c=(i===1?'#d52b1e':(i===0?'#f8fafc':(i===2?'#0039a6':'#d52b1e')));
     return '<path d="'+d+'" fill="none" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round"/>'; });
   if(sk==='camo'){ pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="#2f3b1c" stroke-width="'+(w*.8).toFixed(1)+'" stroke-dasharray="3.4 2.6 1.6 4"/><path d="'+d+'" fill="none" stroke="#a89f72" stroke-width="'+(w*.6).toFixed(1)+'" stroke-dasharray="1.8 5.2 2.4 3" stroke-dashoffset="2"/>'; }); }
   if(sk==='galaxia'){ pase(function(d,w){ return '<path d="'+d+'" fill="none" stroke="#fff" stroke-width=".55" stroke-dasharray=".1 3.3" stroke-linecap="round" opacity=".9"/>'; }); }
@@ -356,7 +373,7 @@ function _pistBiciSVG(opts, cfg){
   if(tipo==='mtb'){ var mid=_bL(hb,fw,.45);
     s+='<path d="M'+_bP(hb)+' L'+_bP(_bL(hb,fw,.55))+'" stroke="#e5e7eb" stroke-width="2.6" stroke-linecap="round"/><path d="M'+_bP(mid)+' L'+_bP(fw)+'" stroke="#111827" stroke-width="4.2" stroke-linecap="round"/>'
       +'<path d="'+_bCap([hb[0]-2.4,hb[1]+.4],[hb[0]+2.6,hb[1]+1],1.6,1.6)+'" fill="#111827"/>'; }
-  else s+=_bTubo('M'+_bP(hb)+' Q'+_bP([hb[0]+(tipo==='ruta'?5:4),(hb[1]+fw[1])/2+2])+' '+_bP(fw),tipo==='bmx'?3:2.3,tipo==='playera'?col:osc,'#0b0f17',tipo==='playera'?cla:col);
+  else s+=_bTubo('M'+_bP(hb)+' Q'+_bP([hb[0]+(tipo==='ruta'?5:4),(hb[1]+fw[1])/2+2])+' '+_bP(fw),tipo==='bmx'?3:2.3,col2||(tipo==='playera'?col:osc),'#0b0f17',col2?_lpShade(col2,.45):(tipo==='playera'?cla:col));
 
   // ---- CARGA (producto, sirve en cualquier bici): alforjas, caja de reparto, bikepacking ----
   var alf='#b45309', alfO='#78350f', rk2=rk;
@@ -392,6 +409,12 @@ function _pistBiciSVG(opts, cfg){
       +'<path d="M'+_bP(_bL(tri[0],tri[1],.1))+' L'+_bP(_bL(tri[0],tri[1],.85))+'" stroke="rgba(255,255,255,.18)" stroke-width="1" stroke-linecap="round"/>';
     s+='<path d="M'+(sd[0]-4)+' '+(sd[1]-1.4)+' L'+(sd[0]-15)+' '+(sd[1]-4.4)+' Q'+(sd[0]-18.4)+' '+(sd[1]-2.2)+' '+(sd[0]-15)+' '+(sd[1]+1.4)+' L'+(sd[0]-4)+' '+(sd[1]+3.2)+' Z" fill="#374151" stroke="#111827" stroke-width=".6"/>'
       +'<path d="M'+(sd[0]-7)+' '+(sd[1]-2.2)+' l0 5 M'+(sd[0]-11)+' '+(sd[1]-3.2)+' l0 5.2" stroke="#111827" stroke-width=".8"/><path d="M'+(sd[0]-14.6)+' '+(sd[1]-3.4)+' l9.6 2.6" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>'; }
+  // triciclo adaptado: canasto trasero grande de rejilla, de fábrica (entre las dos ruedas de atrás)
+  if(modelo==='triciclo'){ var tb=[rw[0]-12,rw[1]-G.r-12];
+    s+='<path d="M'+_bP([tb[0]+4,tb[1]+11])+' L'+_bP(rw)+' M'+_bP([tb[0]+18,tb[1]+11])+' L'+_bP(rw)+' M'+_bP([tb[0]+21,tb[1]+6])+' L'+_bP([st[0]-1,st[1]+4])+'" stroke="#475569" stroke-width="1.3" stroke-linecap="round"/>'
+      +'<rect x="'+tb[0]+'" y="'+tb[1]+'" width="22" height="11.6" rx="1.6" fill="rgba(148,163,184,.25)" stroke="#94a3b8" stroke-width="1.1"/>'
+      +'<path d="M'+(tb[0]+4.4)+' '+tb[1]+' l0 11.6 M'+(tb[0]+8.8)+' '+tb[1]+' l0 11.6 M'+(tb[0]+13.2)+' '+tb[1]+' l0 11.6 M'+(tb[0]+17.6)+' '+tb[1]+' l0 11.6 M'+tb[0]+' '+(tb[1]+5.8)+' l22 0" stroke="#94a3b8" stroke-width=".55"/>'
+      +'<path d="M'+(tb[0]-.6)+' '+(tb[1]+.2)+' l23.2 0" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round"/>'; }
   // banderín (extra): mástil flexible desde la parrilla o el eje, flamea
   if(B.biciExtra==='banderin'){ var mx=rw[0]-(conParrilla?12:3), my=conParrilla?rk2-1:rw[1]-2, top=rk2-31;
     var fl=['M'+mx+' '+top+' Q'+(mx-5)+' '+(top+1)+' '+(mx-10)+' '+(top+3)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top+3)+' '+(mx-10)+' '+(top+2)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top-1)+' '+(mx-10)+' '+(top+4)+' L'+mx+' '+(top+6)+' Z'];
@@ -418,6 +441,16 @@ function _pistBiciSVG(opts, cfg){
       +'<path d="M'+(bx+8.6)+' '+by+' l3.4 0 l-1.6 9.4 l-2.6 0 Z" fill="rgba(0,0,0,.18)"/>'
       +'<path d="M'+(bx+.6)+' '+(by+3)+' l10.8 0 M'+(bx+1.1)+' '+(by+6)+' l9.8 0 M'+(bx+4)+' '+by+' l.2 9.4 M'+(bx+8)+' '+by+' l-.3 9.4" stroke="#7c5a2e" stroke-width=".55"/>'
       +'<path d="M'+(bx-.8)+' '+(by+.2)+' l13.6 0" stroke="#7c5a2e" stroke-width="1.3" stroke-linecap="round"/><path d="M'+(bx-.4)+' '+(by-.4)+' l12 0" stroke="rgba(255,255,255,.3)" stroke-width=".5"/>'; }
+  // MASCOTA (producto): va en el canasto; si la bici no trae canasto, la mascota trae el suyo.
+  // En el triciclo va en el canasto trasero.
+  if(B.mascota){
+    var mb;
+    if(modelo==='triciclo') mb=[rw[0]-1,rw[1]-G.r-12.6];
+    else { var bx2=ht[0]+2.4, by2=ht[1]-7.6; mb=[bx2+6,by2];
+      if(B.biciCarga!=='canasto') s+='<path d="M'+bx2+' '+by2+' l12 0 l-1.6 9.4 l-8.8 0 Z" fill="#c08a4d" stroke="#7c5a2e" stroke-width=".8" stroke-linejoin="round"/>'
+        +'<path d="M'+(bx2+8.6)+' '+by2+' l3.4 0 l-1.6 9.4 l-2.6 0 Z" fill="rgba(0,0,0,.18)"/><path d="M'+(bx2+.6)+' '+(by2+3)+' l10.8 0 M'+(bx2+1.1)+' '+(by2+6)+' l9.8 0 M'+(bx2+4)+' '+by2+' l.2 9.4 M'+(bx2+8)+' '+by2+' l-.3 9.4" stroke="#7c5a2e" stroke-width=".55"/>'; }
+    s+=_bMascota(B.mascota,mb,anim);
+  }
   // EXTRAS: luces (delantera fija + trasera que parpadea) · patito con timbre
   if(B.biciExtra==='luces'){ var lf=[ht[0]+1.2,ht[1]+2.4], lr=_bL(st,sd,.25);
     s+='<path d="M'+_bP([lf[0]+3.6,lf[1]+.6])+' l13 -3.6 l0 8.4 Z" fill="rgba(253,230,138,.22)"/><rect x="'+lf[0].toFixed(1)+'" y="'+lf[1].toFixed(1)+'" width="4" height="2.6" rx=".9" fill="#1f2937"/><rect x="'+(lf[0]+2.6).toFixed(1)+'" y="'+(lf[1]+.4).toFixed(1)+'" width="1.4" height="1.8" rx=".5" fill="#fde68a"/>'
@@ -489,6 +522,106 @@ function _pistBiciSVG(opts, cfg){
   var inc=G.inc+aero*8, cab=_bCabeza(o,cfg.expr,HEAD,52);
   var hv=F.map(function(f){ return _bC(f.head); });
   s+='<g transform="translate('+hv[0]+')">'+_bAT('translate',hv,anim,dur)+(inc?'<g transform="rotate('+inc+' '+_bP(HEAD)+')">'+cab+'</g>':cab)+'</g>';
+  return '<svg viewBox="-4 -14 132 124" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>';
+}
+
+/* ===== MASCOTAS: perro (quiltro / negro) con orejas al viento y gato con cola que se mece =====
+   p = centro del borde superior del canasto; mira hacia adelante (derecha). */
+function _bMascota(id,p,anim){
+  var t='<g transform="translate('+_bC(p)+') scale(1.3)">';
+  if(id==='gato'){
+    var c='#f59e0b', cs='#b45309';
+    var cola=['M-3.4 -1 Q-8 -4 -6.4 -9.4','M-3.4 -1 Q-9 -6 -9 -10.4','M-3.4 -1 Q-7 -3 -4.6 -9'];
+    t+=_bAP(cola,'none',anim,1.4,' stroke="'+c+'" stroke-width="1.8" stroke-linecap="round"');
+    t+='<ellipse cx="-1.4" cy="0" rx="1.3" ry=".9" fill="'+c+'"/><ellipse cx="2.6" cy="0" rx="1.3" ry=".9" fill="'+c+'"/>'
+      +'<ellipse cx="0" cy="-2.2" rx="3.4" ry="2.8" fill="'+cs+'"/><ellipse cx="-.3" cy="-2.6" rx="2.8" ry="2.2" fill="'+c+'"/>'
+      +'<path d="M-.4 -8.4 L.2 -11.4 L2 -8.8 Z M3 -8.6 L4.8 -11 L5 -7.8 Z" fill="'+c+'" stroke="'+cs+'" stroke-width=".4" stroke-linejoin="round"/><path d="M.5 -9 L.6 -10.4 L1.4 -9.1 Z" fill="#fda4af"/>'
+      +'<circle cx="2.2" cy="-6.2" r="3.3" fill="'+cs+'"/><circle cx="1.9" cy="-6.6" r="2.8" fill="'+c+'"/>'
+      +'<path d="M.4 -8.6 l.6 1.4 M2 -9.3 l.2 1.4" stroke="'+cs+'" stroke-width=".55" stroke-linecap="round"/>'
+      +'<ellipse cx="3.3" cy="-6.8" rx=".7" ry=".9" fill="#16a34a"/><ellipse cx="3.5" cy="-7" rx=".25" ry=".6" fill="#111827"/>'
+      +'<path d="M5.1 -5.6 l.6 -.1 l-.3 .6 Z" fill="#f472b6"/><path d="M5.3 -5.2 l2.6 -.6 M5.3 -4.9 l2.6 .3 M5.2 -4.6 l2.2 1" stroke="#fff" stroke-width=".3" opacity=".9"/>';
+  } else {
+    var dc=id==='negro'?'#262b36':'#a0703c', dcs=id==='negro'?'#111827':'#6b4423', hoc=id==='negro'?'#4b5563':'#f1d9b5';
+    t+='<ellipse cx="-1.6" cy="0" rx="1.4" ry="1" fill="'+dc+'"/><ellipse cx="2.6" cy="0" rx="1.4" ry="1" fill="'+dc+'"/>'
+      +'<ellipse cx="0" cy="-2.4" rx="3.8" ry="3.1" fill="'+dcs+'"/><ellipse cx="-.4" cy="-2.9" rx="3.1" ry="2.4" fill="'+dc+'"/>'
+      +'<path d="M-2.4 -4.4 Q.6 -3.2 3.6 -4.6" fill="none" stroke="#dc2626" stroke-width="1.1" stroke-linecap="round"/><circle cx="1" cy="-3.6" r=".7" fill="#facc15"/>'
+      +'<circle cx="1.8" cy="-6.6" r="3.5" fill="'+dcs+'"/><circle cx="1.5" cy="-7" r="3" fill="'+dc+'"/>'
+      +'<ellipse cx="4.9" cy="-5.8" rx="2.2" ry="1.6" fill="'+hoc+'"/><circle cx="6.8" cy="-6.2" r=".8" fill="#111827"/><circle cx="6.6" cy="-6.5" r=".25" fill="#fff"/>'
+      +'<circle cx="3" cy="-7.8" r=".6" fill="#111827"/><circle cx="3.15" cy="-8" r=".2" fill="#fff"/>'
+      +'<path d="M5 -4.5 q.3 2 1.3 .6 l-.2 -.6 Z" fill="#f472b6" stroke="#be185d" stroke-width=".25"/>';
+    // oreja caída que flamea con el viento
+    t+='<g><path d="M-.2 -9.2 Q-3.6 -10 -3.8 -6.2 Q-2.2 -6.6 .6 -7.6 Z" fill="'+dcs+'"/>'
+      +(anim?'<animateTransform attributeName="transform" type="rotate" values="0 0 -9;-16 0 -9;6 0 -9;-10 0 -9;0 0 -9" dur=".6s" repeatCount="indefinite"/>':'')+'</g>';
+  }
+  return t+'</g>';
+}
+
+/* ===== HANDBIKE (inclusión, siempre gratis): se pedalea con los brazos =====
+   Pistero va recostado entre las dos ruedas traseras, piernas estiradas en el apoyapiés,
+   y las dos manos giran la biela delante del pecho (las dos manijas van juntas, como en
+   una handbike real). Codos con articulación, torso que acompaña cada vuelta. */
+function _pistHandbikeSVG(o,cfg,opts){
+  var anim=cfg.pedal!==false, Y=_bPersona(o), B=_biciOpts(opts,'handbike');
+  var col=o.biciCol||_lpColCasco(o.casco), osc=_lpShade(col,-.45), cla=_lpShade(col,.5);
+  var TJ=_BICI_TRAJE[B.traje]||null; if(TJ&&TJ.pol){ Y.polera=TJ.pol; Y.poleraS=_lpShade(TJ.pol,-.3); }
+  var dur=cfg.cadencia||1, N=16, s='', LUZ=' transform="translate(-.5 -.6)"';
+  var rw=[36,88], rwL=[31.6,86.4], fw=[104,95], CR=[66,56], rc=6.5, HIP=[46,75], SH=[40,52], HEAD=[43.6,38];
+  var Gr={r:15,tw:3}, Gf={r:8.6,tw:2.8};
+  function somb(c){ return _lpShade(c,-.24); }
+  // sombra + ruedas (la trasera lejana asoma)
+  s+='<ellipse cx="68" cy="104.6" rx="48" ry="3.2" fill="rgba(0,0,0,.28)"/>';
+  if(cfg.rapido) s+='<g stroke="rgba(255,255,255,.75)" stroke-width="1.6" stroke-linecap="round"><path d="M2 66 L16 66"/><path d="M6 78 L22 78"/></g>';
+  s+='<g opacity=".6">'+_biciRueda(rwL,Gr,'handbike',anim,dur*.6,col,B)+'</g>';
+  // poses: la mano recorre el círculo de la biela; el torso acompaña
+  var dmax=0,k; for(k=0;k<N;k++){ var th0=k*2*Math.PI/N, h0=[CR[0]+rc*Math.cos(th0),CR[1]+rc*Math.sin(th0)]; dmax=Math.max(dmax,Math.hypot(h0[0]-SH[0],h0[1]-SH[1])+1.4); }
+  var La=dmax/2+.8, F=[];
+  for(k=0;k<N;k++){
+    var th=k*2*Math.PI/N, f={}, mv=Math.cos(th)*1.1, H=[CR[0]+rc*Math.cos(th),CR[1]+rc*Math.sin(th)];
+    var sh=[SH[0]+mv,SH[1]+Math.sin(th)*.4], shF=[sh[0]-1.6,sh[1]+.6], HF=[H[0]-1.2,H[1]-.6];
+    var par=function(key,A,Bp,ra,rm,rb,lado,t){ f[key]=_bLimb(A,Bp,ra,rm,rb,lado,t); f[key+'_i']=_bLimb(A,Bp,ra*.7,rm*.7,rb*.7,lado,t); };
+    [['n',sh,H],['f',shF,HF]].forEach(function(pp){ var E=_bCodo(pp[1],pp[2],La); par(pp[0]+'bra',pp[1],E,3,2.9,2.4,1,.4); par(pp[0]+'ant',E,pp[2],2.5,2.5,2,1,.32); par(pp[0]+'man',pp[1],_bL(pp[1],E,.5),3.7,3.6,3.2,1,.5); f[pp[0]+'H']=_bC(pp[2]); });
+    f.torso=_bLimb([HIP[0]-1,HIP[1]-2],sh,6.2,6.6,5.6,-1,.5); f.torso_i=_bLimb([HIP[0]-1,HIP[1]-2],sh,4.4,4.7,4,-1,.5);
+    f.cuello=_bCap(sh,_bL(sh,[HEAD[0]+mv*.8,HEAD[1]],.35),2.6,2.5);
+    f.head=_bC([mv*.8,Math.sin(th)*.5]); f.crank=(th*180/Math.PI).toFixed(1);
+    F.push(f);
+  }
+  function col_(x){ return F.map(function(f){ return f[x]; }); }
+  function vol(key,c){ return _bAP(col_(key),somb(c),anim,dur)+_bAP(col_(key+'_i'),c,anim,dur,LUZ); }
+  function brazo(x){ var cp=x==='n'?Y.piel:Y.pielS, cpo=x==='n'?Y.polera:Y.poleraS;
+    return vol(x+'bra',cp)+vol(x+'ant',cp)+vol(x+'man',cpo)
+      +'<circle r="2.5" fill="'+(x==='n'?'#1f2937':'#111827')+'" cx="0" cy="0" transform="translate('+F[0][x+'H']+')">'+_bAT('translate',col_(x+'H'),anim,dur)+'</circle>'; }
+  // brazo lejano detrás de todo
+  s+=brazo('f');
+  // cuadro: viga baja de la silla al tubo de dirección, horquilla, brazo de la biela
+  var cuadro='M40 84 L92 80', tubDir='M93 70 L95.6 81', boom='M93.4 71 L'+_bP(CR);
+  s+=_bTubo(cuadro,4.4,col,osc,cla)+_bTubo(tubDir,3.6,col,osc,cla)+_bTubo('M95.6 81 Q100 86 '+_bP(fw),2.4,osc,'#0b0f17',col)+_bTubo(boom,3.4,col,osc,cla);
+  // cadena de la biela a la rueda delantera
+  s+='<path d="M'+_bP([CR[0],CR[1]-5])+' L'+_bP([fw[0],fw[1]-2.6])+' M'+_bP([CR[0],CR[1]+5])+' L'+_bP([fw[0],fw[1]+2.6])+'" fill="none" stroke="#4b5563" stroke-width="1.1" stroke-dasharray="1.2 .7">'+(anim?'<animate attributeName="stroke-dashoffset" values="0;-3.8" dur="'+(dur/2)+'s" repeatCount="indefinite"/>':'')+'</path>';
+  s+=_biciRueda(rw,Gr,'handbike',anim,dur*.6,col,B)+_biciRueda(fw,Gf,'handbike',anim,dur*.45,col,B);
+  // asiento tipo butaca con respaldo reclinado
+  s+='<path d="M38 82 Q36 70 33 57 L38.4 56 Q41.6 69 44 79 L56 79.4 Q57 83 54 84 L40 84.6 Z" fill="#1f2937" stroke="#0b0f17" stroke-width=".7" stroke-linejoin="round"/>'
+    +'<path d="M35.6 60 Q37.6 70 40.2 80" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.2" stroke-linecap="round"/>';
+  // piernas estiradas en el apoyapiés (con correa)
+  var pc=TJ?TJ.sh:'#1f2937', knee=[64,72.4], ank=[82.4,78.6];
+  s+='<path d="'+_bLimb(HIP,knee,5,4.6,3.6,-1,.4)+'" fill="'+somb(pc)+'"/><path d="'+_bLimb(HIP,knee,3.5,3.2,2.5,-1,.4)+'" fill="'+pc+'"'+LUZ+'/>'
+    +'<path d="'+_bLimb(knee,ank,3.6,3.4,2.6,1,.35)+'" fill="'+somb(pc)+'"/><path d="'+_bLimb(knee,ank,2.5,2.4,1.8,1,.35)+'" fill="'+pc+'"'+LUZ+'/>'
+    +'<path d="M84 76 Q88 76 88.4 82 L83 83.4" fill="none" stroke="#374151" stroke-width="1.6" stroke-linecap="round"/>'
+    +'<g transform="translate(84.6 79.4) rotate(-64)">'+_bZapato({zap:'#f8fafc',suela:'#94a3b8'},function(x){return x;},Y.piel)+'</g>'
+    +'<path d="M82.6 77.4 l3.4 2.6" stroke="#111827" stroke-width="1.2" stroke-linecap="round"/>';
+  // torso + cuello (se mecen con la biela)
+  s+=_bAP(col_('torso'),somb(Y.polera),anim,dur)+_bAP(col_('torso_i'),Y.polera,anim,dur,LUZ)+_bAP(col_('cuello'),Y.pielS,anim,dur);
+  // biela con manijas (gira) — delante del torso, detrás del brazo cercano
+  s+='<g transform="rotate('+F[0].crank+' '+_bP(CR)+')">'+(anim?'<animateTransform attributeName="transform" type="rotate" from="0 '+_bP(CR)+'" to="360 '+_bP(CR)+'" dur="'+dur+'s" repeatCount="indefinite"/>':'')
+    +'<circle cx="'+CR[0]+'" cy="'+CR[1]+'" r="5" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-dasharray=".9 .7"/><path d="M'+_bP(CR)+' l'+rc+' 0" stroke="#374151" stroke-width="2.2" stroke-linecap="round"/>'
+    +'<path d="'+_bCap([CR[0]+rc,CR[1]-1.6],[CR[0]+rc,CR[1]+1.6],1.4,1.4)+'" fill="#111827"/></g><circle cx="'+CR[0]+'" cy="'+CR[1]+'" r="1.4" fill="#111827"/>';
+  s+=brazo('n');
+  // banderín alto de seguridad (de serie en las handbike: van bajas y así las ven los autos)
+  var mx=26, top=24;
+  var fl=['M'+mx+' '+top+' Q'+(mx-5)+' '+(top+1)+' '+(mx-10)+' '+(top+3)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top+3)+' '+(mx-10)+' '+(top+2)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top-1)+' '+(mx-10)+' '+(top+4)+' L'+mx+' '+(top+6)+' Z'];
+  s+='<path d="M36 88 L'+mx+' 84 M'+mx+' 84 L'+mx+' '+top+'" stroke="#e5e7eb" stroke-width=".8"/>'+_bAP(fl,'#f97316',anim,.8);
+  // cabeza
+  var cab=_bCabeza(o,cfg.expr,HEAD,50), hv=col_('head');
+  s+='<g transform="translate('+hv[0]+')">'+_bAT('translate',hv,anim,dur)+'<g transform="rotate(-6 '+_bP(HEAD)+')">'+cab+'</g></g>';
   return '<svg viewBox="-4 -14 132 124" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>';
 }
 
