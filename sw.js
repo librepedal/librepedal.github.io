@@ -40,6 +40,7 @@ const CORE = [
   './pistero-apariencia.js',
   './pistero-tienda.js',
   './pistero-bici.js',
+  './pistero-bici-atras.js',
   './pistero-sonidos.js',
   './sonidos/perro-ladrido.ogg',
   './sonidos/gato-maullido.ogg',

@@ -1003,3 +1003,13 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .sbv-cara{width:34px;height:29px;flex:none}.sbv-cara svg{width:100%;height:100%}
 .pt-pistero.en-bici{width:130px;height:118px}
 @media (prefers-reduced-motion:reduce){.sbv-globo{transition:none}}
+
+/* Sobrevuelo en primera persona: Pistero de espaldas, cabeza en capa aparte (pistero-bici-atras.js) */
+.sbv-rider.atras{width:80px;height:88px}
+.sbv-rider.atras .sbv-bici{position:relative;width:80px;height:88px;transform-origin:50% 96%}
+.sbv-cuerpo,.sbv-cuerpo svg{width:100%;height:100%;display:block}
+.sbv-cabeza{position:absolute}.sbv-cabeza svg{width:100%;height:100%;display:block}
+.sbv-bici.esfuerzo{animation:sbvBalanceo var(--cad,.9s) ease-in-out infinite}
+@keyframes sbvBalanceo{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+@media (prefers-reduced-motion:reduce){.sbv-bici.esfuerzo{animation:none}}
+.sbv-cabeza{transition:transform .14s ease-in;transform-origin:50% 70%}.sbv-cabeza.girando{transform:scaleX(.06)}

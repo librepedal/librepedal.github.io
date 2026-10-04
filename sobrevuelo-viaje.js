@@ -60,11 +60,15 @@ function _sbvAnalizar(coords){
   var hueco=total*0.09, ok=[];
   ev.forEach(function(e){ if(ok.length<7 && ok.every(function(x){ return Math.abs(x.d-e.d)>=hueco || (x.pri===9&&e.pri===9&&x.d!==e.d); })) ok.push(e); });
   ok.sort(function(a,b){ return a.d-b.d; });
-  return {cum:cum,total:total,eventos:ok};
+  // pendiente por punto (±50 m) con la altura suavizada; null si la ruta no trae altura
+  var pend=null;
+  if(typeof as!=='undefined' && as){ pend=[]; for(i=0;i<n;i++){ var i0=i, i1=i; while(i0>0 && cum[i]-cum[i0]<50) i0--; while(i1<n-1 && cum[i1]-cum[i]<50) i1++; pend.push((as[i0]!==null&&as[i1]!==null&&cum[i1]>cum[i0])?(as[i1]-as[i0])/(cum[i1]-cum[i0]):null); } }
+  return {cum:cum,total:total,eventos:ok,vel:vel.length?vel:null,pend:pend};
 }
 // rumbo (0 = norte, sentido horario) de a hacia b, en grados
 function _sbvRumbo(a,b){ var d=Math.PI/180, y=Math.sin((b[1]-a[1])*d)*Math.cos(b[0]*d), x=Math.cos(a[0]*d)*Math.sin(b[0]*d)-Math.sin(a[0]*d)*Math.cos(b[0]*d)*Math.cos((b[1]-a[1])*d); return (Math.atan2(y,x)/d+360)%360; }
 function _sbvGiro(de,a){ return ((a-de+540)%360)-180; }
+function _sbvMarcadorAtrasHTML(A){ return '<div class="sbv-rider atras"><div class="sbv-globo"><span class="sbv-cara"></span><span class="sbv-txt"></span></div><div class="sbv-bici"><div class="sbv-cuerpo">'+A.svg+'</div><div class="sbv-cabeza" style="left:'+A.cab.l+'%;top:'+A.cab.t+'%;width:'+A.cab.w+'%;height:'+A.cab.h+'%"></div></div></div>'; }
 function _sbvMarcadorHTML(svg){ return '<div class="sbv-rider"><div class="sbv-globo"><span class="sbv-cara"></span><span class="sbv-txt"></span></div><div class="sbv-bici">'+svg+'</div></div>'; }
 // Anima a Pistero en su bici recorriendo `coords` sobre `mp`. Encuadra toda la ruta y
 // avanza a velocidad uniforme por distancia real; se detiene un instante en cada
@@ -88,12 +92,35 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     _sbvSonido=(typeof pistSonidoViaje==='function')?pistSonidoViaje(veh):null;
     if(opts.mascota && typeof pistSonar==='function') pistSonar('mascota',opts.mascota);
     function bici(expr,rapido,pose){ return conBici?_pistBiciSVG(opts,{expr:expr||'feliz',rapido:!!rapido,cadencia:rapido?0.5:0.85,pose:pose||'',vehiculo:veh}):((typeof _pistoNuevo==='function')?_pistoNuevo(expr||'feliz'):''); }
-    _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:_sbvMarcadorHTML(bici('feliz'))}}).addTo(mp);
+    // en primera persona Pistero va DE ESPALDAS hacia donde avanza la ruta (cámara detrás)
+    var primera=!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var deEspaldas=primera && typeof _pistAtrasSVG==='function', gesto=null, gestoNuevo=null, gestoDesde=0;
+    function cuerpo(G){ return _pistAtrasSVG(opts,{vehiculo:veh,cadencia:G.cad,rapido:G.rapido}); }
+    _sbvMarker=mlMarker([coords[0][0],coords[0][1]],{icon:{html:deEspaldas?_sbvMarcadorAtrasHTML(cuerpo({cad:.68,rapido:0})):_sbvMarcadorHTML(bici('feliz'))}}).addTo(mp);
     var el=(_sbvMarker._ml&&_sbvMarker._ml.getElement)?_sbvMarker._ml.getElement():null;
-    var cajaBici=el&&el.querySelector('.sbv-bici'), globo=el&&el.querySelector('.sbv-globo');
+    var cajaBici=el&&el.querySelector('.sbv-bici'), globo=el&&el.querySelector('.sbv-globo'), cajaCuerpo=el&&el.querySelector('.sbv-cuerpo'), cajaCabeza=el&&el.querySelector('.sbv-cabeza');
+    // cara + pedalada según esfuerzo y velocidad del tramo actual (cambia solo si se sostiene 0,5 s)
+    // Pistero mira al camino (se le ve la nuca) y GIRA la cabeza hacia la cámara solo cuando
+    // pasa algo (subida, bajada, cima, pausa, llegada…): pone su gesto ~2 s y vuelve a mirar
+    // adelante. El giro es un "aplastado" horizontal corto; la pedalada no se reinicia.
+    var girarT=null, caraVisible='';
+    function cabeza(html){ if(!cajaCabeza) return; cajaCabeza.classList.add('girando'); setTimeout(function(){ cajaCabeza.innerHTML=html; cajaCabeza.classList.remove('girando'); },140); }
+    function girar(expr,ms){
+      if(!cajaCabeza || typeof _pistoDe!=='function') return;
+      clearTimeout(girarT); if(caraVisible!==expr){ cabeza(_pistoDe(opts,expr)); caraVisible=expr; }
+      girarT=setTimeout(function(){ caraVisible=''; cabeza(typeof _pistNucaSVG==='function'?_pistNucaSVG(opts):_pistoDe(opts,'feliz')); },ms);
+    }
+    function ponerGesto(G,forzar){
+      var cambiaCuerpo=!gesto || gesto.cad!==G.cad || gesto.rapido!==G.rapido;
+      if(cajaCabeza && forzar) cajaCabeza.innerHTML=(typeof _pistNucaSVG==='function')?_pistNucaSVG(opts):_pistoDe(opts,G.expr);
+      else if(gesto && gesto.expr!==G.expr) girar(G.expr,2200);
+      if(cajaCuerpo && cambiaCuerpo) cajaCuerpo.innerHTML=cuerpo(G).svg;
+      if(cajaBici){ cajaBici.classList.toggle('esfuerzo',!!G.sway); cajaBici.style.setProperty('--cad',(G.cad||.9)+'s'); }
+      gesto=G;
+    }
+    if(deEspaldas) ponerGesto({expr:'feliz',cad:.68,sway:0,rapido:0},true);
     // Cámara en primera persona: sigue a Pistero de cerca, inclinada y girando hacia donde
     // avanza (con más camino visible adelante). Con movimiento reducido: vista general.
-    var primera=!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     var Z=total>40000?14.6:(total>15000?15.4:16.2), PITCH=58, camB=null, intro=primera?2200:0;
     function puntoEn(d){ var k=1; while(k<coords.length-1 && cum[k]<d) k++; var q=coords[k-1], r=coords[k], L=cum[k]-cum[k-1], ff=L>0?Math.min(1,Math.max(0,(d-cum[k-1])/L)):0; return [q[0]+(r[0]-q[0])*ff, q[1]+(r[1]-q[1])*ff]; }
     function rumboEn(d){ return _sbvRumbo(puntoEn(Math.max(0,d-25)), puntoEn(Math.min(total,d+70))); }
@@ -107,7 +134,8 @@ function reproducirSobrevuelo(coords, modo, onEnd){
       if(cara && typeof _pistoDe==='function') cara.innerHTML=_pistoDe(opts,e.expr);
       if(txt) txt.textContent=e.txt;
       globo.classList.remove('on'); void globo.offsetWidth; globo.classList.add('on');
-      if(cajaBici) cajaBici.innerHTML=bici(e.expr,e.rapido,e.pose);
+      if(deEspaldas){ girar(e.expr,PAUSA+900); gestoNuevo=null; }
+      else if(cajaBici) cajaBici.innerHTML=bici(e.expr,e.rapido,e.pose);
       if(_sbvSonido) _sbvSonido.momento(e);
       globoHasta=ts+PAUSA+900;
     }
@@ -118,12 +146,16 @@ function reproducirSobrevuelo(coords, modo, onEnd){
       if(prog>1) prog=1;
       var target=prog*total;
       if(sigEv<eventos.length && target>=eventos[sigEv].d){ target=eventos[sigEv].d; prog=target/total; mostrarGlobo(eventos[sigEv],ts); espera=PAUSA; sigEv++; }
-      if(globo && globoHasta && ts>globoHasta){ globo.classList.remove('on'); globoHasta=0; if(cajaBici) cajaBici.innerHTML=bici('feliz'); }
+      if(globo && globoHasta && ts>globoHasta){ globo.classList.remove('on'); globoHasta=0; if(!deEspaldas && cajaBici) cajaBici.innerHTML=bici('feliz'); }
       while(seg<coords.length-1 && cum[seg]<target) seg++;
       var a=coords[seg-1], b=coords[seg];
       var segLen=cum[seg]-cum[seg-1], f=segLen>0?Math.min(1,Math.max(0,(target-cum[seg-1])/segLen)):0;
       var lat=a[0]+(b[0]-a[0])*f, lon=a[1]+(b[1]-a[1])*f;
       if(_sbvMarker) _sbvMarker.setLatLng([lat,lon]);
+      if(deEspaldas && !globoHasta && intro<=0 && typeof _pistGestoEsfuerzo==='function'){
+        var gp=A.pend?A.pend[seg]:null, vp=A.vel?A.vel[seg]:null, G=_pistGestoEsfuerzo(gp,vp);
+        if(!gesto || G.expr!==gesto.expr || G.cad!==gesto.cad){ if(!gestoNuevo || gestoNuevo.expr!==G.expr || gestoNuevo.cad!==G.cad){ gestoNuevo=G; gestoDesde=ts; } else if(ts-gestoDesde>500){ ponerGesto(G); gestoNuevo=null; } } else gestoNuevo=null;
+      }
       if(primera && intro<=0){ var rb=rumboEn(target); camB=(camB===null)?rb:(camB+_sbvGiro(camB,rb)*Math.min(1,dt/450)+360)%360; try{ mp.jumpTo({center:[lon,lat],zoom:Z,pitch:PITCH,bearing:camB,padding:PAD}); }catch(e){ console.warn('[sobrevuelo] cámara', e); } }
       // mira hacia donde avanza (solo cambia si el giro es claro, para no "temblar")
       var dl=primera?0:b[1]-a[1]; if(Math.abs(dl)>1e-6){ var m=dl>0?1:-1; if(m!==mirando && cajaBici){ mirando=m; cajaBici.style.transform='scaleX('+m+')'; } }
