@@ -119,13 +119,42 @@ td code{color:#ffd2bd;font-size:.8rem}
 @keyframes sello{0%{opacity:0;transform:scale(1.4)}60%{opacity:1;transform:scale(.96)}100%{opacity:1;transform:none}}
 @keyframes rueda{to{stroke-dashoffset:0}}
 @media (prefers-reduced-motion:reduce){.wel.run *{animation:none!important;opacity:1!important}}
+.hx{font-size:.8rem;line-height:1.45;color:var(--sub)}
+.hx b{display:block;color:var(--txt);font-size:.9rem;margin-bottom:3px}
+.loc{display:flex;align-items:center;gap:7px;font-size:.8rem;border:1px solid var(--line);border-radius:999px;padding:6px 11px;justify-self:start}
+.loc svg{width:15px;height:15px;color:var(--p)}
+.loc u{color:#ffd2bd;text-decoration:none;font-weight:700;font-size:.72rem;margin-left:4px}
+.mapa{height:46%;border-bottom:1px solid var(--line);flex:none}
+.mapa svg{width:100%;height:100%;display:block}
+.mapa .tierra{fill:#13202a}.mapa .mar{fill:#0b1830}.mapa .lago{fill:#0f2440}
+.mapa .cord{fill:none;stroke:rgba(255,255,255,.08);stroke-width:14;stroke-linecap:round}
+.mapa .ruta{fill:none;stroke:rgba(255,255,255,.14);stroke-width:2;stroke-dasharray:5 5}
+.mapa .com circle{fill:var(--p);opacity:.85}
+.mapa .fun circle{fill:rgba(255,215,0,.25);stroke:var(--g);stroke-width:2.2}
+.mapa .obra circle:first-child{fill:rgba(255,255,255,.06);stroke:#fff;stroke-width:2;stroke-dasharray:3 3}
+.mapa .obra circle:last-child{fill:#fff}
+.mapa .yo circle:nth-child(2){fill:var(--g)}
+.mapa .yo path{stroke:#16090a;stroke-width:2.2;stroke-linecap:round}
+.mapa .pulso{fill:none;stroke:var(--g);stroke-width:2;transform-origin:146px 138px;animation:pulso 1.8s ease-out infinite}
+.mapa text{fill:var(--g);font-size:12px;font-weight:700;font-family:var(--f-ui)}
+@keyframes pulso{from{transform:scale(1);opacity:.9}to{transform:scale(2.6);opacity:0}}
+.gold{color:var(--g)}
+.cnt{display:flex;justify-content:space-between;font-size:.8rem;color:var(--sub)}
+.cnt b{color:var(--txt);font-variant-numeric:tabular-nums}
+.leg{display:flex;flex-wrap:wrap;gap:10px;font-size:.7rem;color:var(--sub)}
+.leg span{display:flex;align-items:center;gap:5px}
+.leg i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.leg .lf{background:rgba(255,215,0,.25);border:2px solid var(--g)}
+.leg .lc{background:var(--p)}
+.leg .lo{border:2px dashed #fff}
+@media (prefers-reduced-motion:reduce){.mapa .pulso{animation:none}}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
 
 <div class="wrap">
 <header>
   <h1>Bienvenida, fondo de la comunidad y ayuda</h1>
-  <p>Mockup para aprobar antes de programar. La bienvenida lleva primero a dejar una idea para el fondo de la comunidad; las 5 más repetidas se votan en vivo. Cada duda frecuente tiene una respuesta lista, con pasos y un botón que lleva directo a la pantalla donde se resuelve. Solo lo que no tiene respuesta llega al equipo.</p>
+  <p>Mockup para aprobar antes de programar. La bienvenida invita a dejar una huella: una idea para lo que construiremos con el fondo de la comunidad, marcada en el mapa. Los Fundadores (primer año) quedan en dorado para siempre. Cada duda frecuente tiene una respuesta lista con un botón que lleva directo a la pantalla donde se resuelve.</p>
 </header>
 
 <section class="phones">
@@ -161,34 +190,60 @@ td code{color:#ffd2bd;font-size:.8rem}
   </div>
 
   <div class="cap">
-    <h2>2 · Ideas de la comunidad</h2>
-    <div class="phone" aria-label="Ideas de la comunidad">
+    <h2>2 · Dejar mi huella</h2>
+    <div class="phone" aria-label="Dejar mi huella">
       <div class="sb"><span>9:41</span><span>4G</span></div>
       <div class="scr">
-        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg><h3>Fondo de la comunidad</h3></div>
+        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg><h3>Dejar mi huella</h3></div>
         <div class="body">
-          <div class="meta"><div class="mrow"><span>Fondo de tu país · 2026</span><b>$148.200</b></div><small>10% de lo que pagan los suscritos de tu país · se invierte aquí, en la idea ganadora, el 31 de diciembre · monto de ejemplo</small></div>
-          <div class="lbl">¿En qué usarías el fondo?</div>
-          <div class="ta">Arreglar ciclovías y poner bebederos en las rutas.</div>
-          <button class="btn pri" type="button">Enviar mi idea</button>
-          <div class="fine">Puedes dejar 2 ideas · te queda 1</div>
-          <div class="lbl">Las 5 más propuestas en tu país · en vivo</div>
-          <div class="faq">
-            <label class="v"><span class="rd on"></span><span>Mejorar ciclovías y bebederos<small>412 ideas parecidas</small></span></label>
-            <label class="v"><span class="rd"></span><span>Bicis para quien no tiene<small>297 ideas parecidas</small></span></label>
-            <label class="v"><span class="rd"></span><span>Reforestar zonas naturales<small>233 ideas parecidas</small></span></label>
-            <label class="v"><span class="rd"></span><span>Talleres de mecánica gratis<small>181 ideas parecidas</small></span></label>
-            <label class="v"><span class="rd"></span><span>Apoyo a deportistas<small>158 ideas parecidas</small></span></label>
-          </div>
-          <button class="btn sec" type="button">Votar por esta</button>
+          <div class="hx"><b>Nuestra huella es lo que vamos a construir juntos.</b> Con el fondo de la comunidad haremos realidad lo que más se pida. Empieza con tu idea.</div>
+          <div class="lbl">¿Qué cambiarías en tus rutas?</div>
+          <div class="ta">Un bebedero y un punto de reparación en la ruta a Lago Ranco.</div>
+          <div class="loc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg><span>Futrono, Los Ríos</span><u>Cambiar</u></div>
+          <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>Tu idea es privada. En el mapa solo se ve cuántas huellas hay en cada comuna, nunca tu texto ni tu ubicación exacta.</span></div>
+          <button class="btn pri" type="button">Marcar mi huella</button>
+          <div class="fine">Puedes dejar 2 ideas</div>
         </div>
       </div>
     </div>
-    <p>Todos opinan. Las ideas que dicen lo mismo se agrupan y aparecen con un título neutro, nunca con el texto de la persona. Cifras de ejemplo.</p>
+    <p>El lugar se detecta solo (comuna, no la ubicación exacta) y se puede cambiar. No aparece ningún monto mientras el fondo esté en cero.</p>
   </div>
 
   <div class="cap">
-    <h2>3 · Votar sin suscripción</h2>
+    <h2>2b · Mapa de huellas</h2>
+    <div class="phone" aria-label="Mapa de huellas">
+      <div class="sb"><span>9:41</span><span>4G</span></div>
+      <div class="scr">
+        <div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg><h3>Mapa de huellas</h3></div>
+        <div class="mapa">
+          <svg viewBox="0 0 300 250" aria-hidden="true">
+            <path class="tierra" d="M0 0 H300 V250 H0 Z"/>
+            <path class="mar" d="M0 0 H58 C66 30 50 55 62 85 C74 115 52 140 64 170 C74 200 58 225 66 250 H0 Z"/>
+            <path class="cord" d="M240 0 C230 60 255 120 238 180 C228 220 246 240 240 250"/>
+            <ellipse class="lago" cx="150" cy="118" rx="34" ry="13" transform="rotate(-12 150 118)"/>
+            <ellipse class="lago" cx="176" cy="178" rx="26" ry="11" transform="rotate(8 176 178)"/>
+            <path class="ruta" d="M70 40 C120 70 110 100 150 132 S 200 170 230 215"/>
+            <g class="com"><circle cx="96" cy="58" r="4"/><circle cx="208" cy="196" r="4"/><circle cx="120" cy="205" r="4"/><circle cx="84" cy="150" r="4"/><circle cx="188" cy="70" r="4"/></g>
+            <g class="fun"><circle cx="112" cy="84" r="6"/><circle cx="214" cy="150" r="6"/><circle cx="90" cy="118" r="6"/></g>
+            <g class="obra"><circle cx="196" cy="100" r="11"/><circle cx="196" cy="100" r="4.5"/></g>
+            <g class="yo"><circle class="pulso" cx="146" cy="138" r="9"/><circle cx="146" cy="138" r="8"/><path d="M146 133v10M141 138h10" /></g>
+            <text x="160" y="142">Tú</text>
+          </svg>
+        </div>
+        <div class="body">
+          <div class="msg eq"><span><b class="gold">Tu huella de Fundador quedó marcada para siempre.</b> Eres el Fundador N° 38 de Chile.</span></div>
+          <div class="cnt"><span><b>3</b> huellas en Futrono</span><span><b>38</b> en Chile</span></div>
+          <div class="leg"><span><i class="lf"></i>Fundadores</span><span><i class="lc"></i>Comunidad</span><span><i class="lo"></i>Obras del fondo</span></div>
+          <button class="btn sec" type="button">Compartir mi huella</button>
+          <div class="fine">Cuando la comunidad crezca, el 10% de Premium hará realidad lo que más se pida, y quedará marcado aquí como obra.</div>
+        </div>
+      </div>
+    </div>
+    <p>Fundadores (primer año) en dorado y permanentes; quienes llegan después, en naranja. Las obras que se hagan con el fondo aparecen como la huella grande de la comunidad. Cifras y obra de ejemplo.</p>
+  </div>
+
+  <div class="cap">
+    <h2>3 · Votar (cuando Premium cobre)</h2>
     <div class="phone" aria-label="Votar es para suscritos">
       <div class="home" style="background:linear-gradient(#141b2c,#0a0f1d)"></div>
       <div class="sb"><span>9:41</span><span>4G</span></div>

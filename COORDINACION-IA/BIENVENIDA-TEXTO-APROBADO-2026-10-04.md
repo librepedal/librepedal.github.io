@@ -18,3 +18,12 @@ Reemplaza el texto "opción B" de `HANDOFF-2026-10-04-NOCHE.md` §3.1. Usar tal 
 - **Fundador:** se entrega durante el primer año desde el lanzamiento (aprobado por Inty).
 - Mockup con animación (botón "Ver de nuevo"): `disenos-ui/bandeja-y-bienvenida/mockup.html`, pantalla 1.
 - En análisis: la pantalla a la que lleva "Dejar mi huella" (la pantalla 2 actual muestra dinero y votación: no va al inicio).
+
+## "Dejar mi huella" — concepto aprobado por Inty (2026-10-04)
+- **La huella de la comunidad = lo que se construya con el fondo.** En el mapa aparece como "obra" (marca grande).
+- **La huella de cada persona = su marca en el mapa**, por comuna (nunca ubicación exacta; el texto de la idea sigue privado, máx. 2).
+  - **Fundadores (primer año): dorado y permanente**, distintos de quienes llegan después (naranja). "Eres el Fundador N° X de <país>".
+- Sin montos mientras el fondo esté en $0; solo una línea: "Cuando la comunidad crezca, el 10% de Premium hará realidad lo que más se pida".
+- Votación: recién cuando Premium cobre (pantalla 3).
+- Botón "Compartir mi huella" (crecimiento orgánico).
+- Mockup: pantallas 2 y 2b. Técnico: comuna por reverse-geocoding que ya existe; contadores por comuna los agrega el worker/agente.
