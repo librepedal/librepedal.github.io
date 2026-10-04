@@ -33,11 +33,11 @@ var _BICI_G={
 // ropa por tipo: hasta = cuánto del muslo cubre (0..1; 2 = pierna completa); ap = holgura; calzado
 var _BICI_ROPA={
   ruta:      {pierna:'#111827',hasta:.72,ap:0,  calcetin:'#f8fafc',zap:'#f8fafc',suela:'#111827',extra:'franja'},
-  mtb:       {pierna:'#3f4a3a',hasta:.94,ap:1.2,calcetin:'#1f2937',zap:'#374151',suela:'#111827',extra:'hidra'},
-  cicloviaje:{pierna:'#8a7556',hasta:.86,ap:.9, calcetin:'',       zap:'',       suela:'#3f3a33',extra:'buff',sandalia:1},
+  mtb:       {pierna:'#3f4a3a',hasta:.94,ap:.7,calcetin:'#1f2937',zap:'#374151',suela:'#111827',extra:'hidra'},
+  cicloviaje:{pierna:'#8a7556',hasta:.86,ap:.5, calcetin:'',       zap:'',       suela:'#3f3a33',extra:'buff',sandalia:1},
   urbana:    {pierna:'#2f5592',hasta:2,  ap:.4, calcetin:'',       zap:'#f8fafc',suela:'#94a3b8',extra:'mochila'},
   bmx:       {pierna:'#1f2937',hasta:2,  ap:.6, calcetin:'',       zap:'#dc2626',suela:'#f8fafc',extra:'capucha'},
-  playera:   {pierna:'#0ea5e9',hasta:.62,ap:1.2,calcetin:'',       zap:'',       suela:'#7c5a2e',extra:'flores',sandalia:1}
+  playera:   {pierna:'#0ea5e9',hasta:.62,ap:.7,calcetin:'',       zap:'',       suela:'#7c5a2e',extra:'flores',sandalia:1}
 };
 var _biciUid=0;
 function _bP(p){ return p[0].toFixed(1)+' '+p[1].toFixed(1); }
@@ -62,7 +62,7 @@ function _bCap(A,B,ra,rb){
 // (pantorrilla atrás de la canilla, cuádriceps arriba del muslo, espalda redonda del torso)
 function _bLimb(A,B,ra,rm,rb,lado,t){
   var dx=B[0]-A[0], dy=B[1]-A[1], d=Math.sqrt(dx*dx+dy*dy)||1, nx=-dy/d, ny=dx/d, M=_bL(A,B,t||.4);
-  var k1=rm*(lado>0?1.42:1.12), k2=rm*(lado<0?1.42:1.12);
+  var k1=rm*(lado>0?1.28:1), k2=rm*(lado<0?1.28:1);
   return 'M'+_bP([A[0]+nx*ra,A[1]+ny*ra])+' Q'+_bP([M[0]+nx*k1,M[1]+ny*k1])+' '+_bP([B[0]+nx*rb,B[1]+ny*rb])
     +' A'+rb+' '+rb+' 0 0 0 '+_bP([B[0]-nx*rb,B[1]-ny*rb])
     +' Q'+_bP([M[0]-nx*k2,M[1]-ny*k2])+' '+_bP([A[0]-nx*ra,A[1]-ny*ra])+' A'+ra+' '+ra+' 0 0 0 '+_bP([A[0]+nx*ra,A[1]+ny*ra])+' Z';
@@ -147,6 +147,8 @@ function _pistBiciSVG(opts, cfg){
   var anim=cfg.pedal!==false, dur=cfg.cadencia||0.9, rc=7, N=16, s='';
   var aero=(cfg.rapido&&(tipo==='ruta'||tipo==='mtb'))?1:0;
   var SH=[G.sh[0]+aero*3,G.sh[1]+aero*4], HEAD=[G.head[0]+aero*4,G.head[1]+aero*4.5];
+  // pelvis: el glúteo se asienta SOBRE el sillín (lo aplasta un poco) y de ahí salen el muslo y el torso
+  var GL=[G.hip[0]-1.8,G.sd[1]-2.4-4.2+1.6], HIP=[GL[0]+1.8,GL[1]-.8];
 
   // ---- manubrio: define dónde va la mano ----
   var ht=G.ht, bar='', barExtra='', S, hand;
@@ -173,17 +175,17 @@ function _pistBiciSVG(opts, cfg){
   // largo de pierna: que en el punto más bajo quede apenas flectada (como un ciclista bien ajustado)
   function pedal(t){ return [G.bb[0]+rc*Math.cos(t),G.bb[1]+rc*Math.sin(t)]; }
   function tobillo(t){ var P=pedal(t), fa=8+12*Math.sin(t-Math.PI/4), v=_bRot([-2,-2.6],fa); return {P:P,fa:fa,T:[P[0]+v[0],P[1]+v[1]]}; }
-  var dmax=0, k; for(k=0;k<N;k++){ var tt=tobillo(k*2*Math.PI/N).T; dmax=Math.max(dmax,Math.hypot(tt[0]-G.hip[0],tt[1]-G.hip[1])); }
+  var dmax=0, k; for(k=0;k<N;k++){ var tt=tobillo(k*2*Math.PI/N).T; dmax=Math.max(dmax,Math.hypot(tt[0]-HIP[0],tt[1]-HIP[1])); }
   var L=dmax/2+.9, La=Math.max(Math.hypot(hand[0]-SH[0],hand[1]-SH[1])/2+1.6,11), ap=R.ap;
   var F=[];
   for(k=0;k<N;k++){
     var th=k*2*Math.PI/N, bob=Math.sin(2*th-.6)*.5, f={};
-    f.hip=[G.hip[0],G.hip[1]+bob*.25]; f.sh=[SH[0]+bob*.25,SH[1]+bob]; f.head=[bob*.3,bob*1.15];
+    f.hip=[HIP[0],HIP[1]+bob*.25]; f.gl=_bC([0,bob*.25]); f.ta=[GL[0]+.6,GL[1]-2.2+bob*.25]; f.sh=[SH[0]+bob*.25,SH[1]+bob]; f.head=[bob*.3,bob*1.15];
     [['n',th],['f',th+Math.PI]].forEach(function(pp){
       var x=pp[0], A=tobillo(pp[1]), K=_biciRodilla(f.hip,A.T,L);
-      f[x+'mus']=_bLimb(f.hip,K,4.6,4.4,3.4,-1,.42); f[x+'can']=_bLimb(K,A.T,3.3,3.1,2,1,.32);
-      if(R.hasta<=1) f[x+'ropa']=_bLimb(f.hip,_bL(f.hip,K,R.hasta),4.9+ap,4.6+ap,3.9+ap*.8,-1,.45);
-      else { f[x+'ropa']=_bLimb(f.hip,K,4.9+ap,4.6+ap,3.6+ap*.5,-1,.42); f[x+'ropa2']=_bLimb(K,A.T,3.6+ap*.5,3.3+ap*.5,2.5+ap*.4,1,.32); }
+      f[x+'mus']=_bLimb(f.hip,K,4.3,3.9,3,-1,.4); f[x+'can']=_bLimb(K,A.T,3,3,1.9,1,.32);
+      if(R.hasta<=1) f[x+'ropa']=_bLimb(f.hip,_bL(f.hip,K,R.hasta),4.7+ap,4.25+ap,4.65-1.3*R.hasta+ap*.6,-1,.42);
+      else { f[x+'ropa']=_bLimb(f.hip,K,4.7+ap,4.25+ap,3.3+ap*.5,-1,.4); f[x+'ropa2']=_bLimb(K,A.T,3.3+ap*.5,3.2+ap*.5,2.5+ap*.4,1,.32); }
       if(R.calcetin) f[x+'cal']=_bCap(_bL(K,A.T,.7),A.T,2.3,2.1);
       f[x+'pie']=_bC(A.P); f[x+'rot']=A.fa.toFixed(1);
     });
@@ -191,7 +193,7 @@ function _pistBiciSVG(opts, cfg){
       var x=pp[0], H=pp[1], Sh=pp[2], E=_bCodo(Sh,H,La);
       f[x+'bra']=_bLimb(Sh,E,3,2.9,2.4,1,.4); f[x+'ant']=_bLimb(E,H,2.5,2.5,2,1,.32); f[x+'man']=_bLimb(Sh,_bL(Sh,E,.55),3.7,3.6,3.2,1,.5);
     });
-    f.torso=_bLimb(f.hip,f.sh,6.2,6.3,5.4,-1,.56);
+    f.torso=_bLimb(f.ta,f.sh,5.6,6.1,5.4,-1,.56);
     f.cuello=_bCap(f.sh,_bL(f.sh,[HEAD[0]+f.head[0],HEAD[1]+f.head[1]],.35),2.6,2.5);
     f.esp=_bC([bob*.2,bob*.65]);
     F.push(f);
@@ -322,18 +324,21 @@ function _pistBiciSVG(opts, cfg){
     +'<path d="M'+_bP(bb)+' l'+rc+' 0 M'+_bP(bb)+' l-'+rc+' 0" stroke="#374151" stroke-width="2" stroke-linecap="round"/>'+_bGira(bb,anim,dur)+'</g><circle cx="'+bb[0]+'" cy="'+bb[1]+'" r="1.4" fill="#111827"/>';
 
   // ---- torso + accesorio de espalda (se mecen con el cuerpo) ----
-  var hip=G.hip, shp=SH, ta=_bAng(hip,shp), td=Math.hypot(shp[0]-hip[0],shp[1]-hip[1]), bn=[(shp[1]-hip[1])/td,-(shp[0]-hip[0])/td];
+  var hip=HIP, shp=SH, ta=_bAng(hip,shp), td=Math.hypot(shp[0]-hip[0],shp[1]-hip[1]), bn=[(shp[1]-hip[1])/td,-(shp[0]-hip[0])/td];
   var esp='';
   if(R.extra==='mochila'||R.extra==='hidra'){ var m=_bL(hip,shp,R.extra==='hidra'?.6:.55), mo=R.extra==='hidra'?4.6:5.6, mc=[m[0]+bn[0]*mo,m[1]+bn[1]*mo];
     esp+='<g transform="translate('+_bC(mc)+') rotate('+ta.toFixed(1)+')">'+(R.extra==='hidra'
       ?'<rect x="-5.4" y="-3" width="10.8" height="6" rx="2.6" fill="#334155" stroke="#0f172a" stroke-width=".6"/><path d="M-3 0 L3 0" stroke="#f97316" stroke-width="1"/>'
       :'<rect x="-6.8" y="-4" width="13.6" height="8" rx="2.6" fill="'+osc+'" stroke="#0b0f17" stroke-width=".6"/><rect x="-4" y="-5.2" width="6" height="2.6" rx="1" fill="'+col+'" stroke="#0b0f17" stroke-width=".5"/>')+'</g>'; }
   s+='<g transform="translate('+F[0].esp+')">'+_bAT('translate',col_('esp'),anim,dur)+esp+'</g>';
+  // glúteo (con el color del short/pantalón) y encima el torso: la polera cae sobre la pretina
+  s+='<g transform="translate('+F[0].gl+')">'+_bAT('translate',col_('gl'),anim,dur)+'<ellipse cx="'+GL[0].toFixed(1)+'" cy="'+GL[1].toFixed(1)+'" rx="5.6" ry="4.3" fill="'+R.pierna+'" transform="rotate(12 '+_bP(GL)+')"/>'
+    +'<path d="'+_bArc(GL,3.4,195,265)+'" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.2" stroke-linecap="round"/></g>';
   s+=_bAP(col_('torso'),Y.polera,anim,dur);
   var det='';
   det+='<path d="M'+_bP([hip[0]+bn[0]*4.4,hip[1]+bn[1]*4.4])+' L'+_bP([shp[0]+bn[0]*3.8,shp[1]+bn[1]*3.8])+'" stroke="rgba(255,255,255,.22)" stroke-width="2.2" stroke-linecap="round"/>';
   if(R.extra==='franja') det+='<path d="M'+_bP(_bL(hip,shp,.12))+' L'+_bP(_bL(shp,hip,.1))+'" stroke="#f8fafc" stroke-width="1.6" stroke-linecap="round" opacity=".9"/>'
-    +'<path d="'+_bCap([hip[0]+bn[0]*4.6,hip[1]+bn[1]*4.6],[hip[0]+bn[0]*4.6+(shp[0]-hip[0])*.25,hip[1]+bn[1]*4.6+(shp[1]-hip[1])*.25],1.6,1.4)+'" fill="'+Y.poleraS+'"/>';
+    +'<path d="'+_bCap([hip[0]+bn[0]*3+(shp[0]-hip[0])*.1,hip[1]+bn[1]*3+(shp[1]-hip[1])*.1],[hip[0]+bn[0]*3.4+(shp[0]-hip[0])*.32,hip[1]+bn[1]*3.4+(shp[1]-hip[1])*.32],1.3,1.2)+'" fill="'+Y.poleraS+'" opacity=".8"/>';
   if(R.extra==='mochila'||R.extra==='hidra') det+='<path d="M'+_bP([shp[0]+bn[0]*2,shp[1]+bn[1]*2-1])+' Q'+_bP(_bL(hip,shp,.6))+' '+_bP([hip[0]+(shp[0]-hip[0])*.25,hip[1]+(shp[1]-hip[1])*.25+1.6])+'" fill="none" stroke="'+(R.extra==='hidra'?'#0f172a':osc)+'" stroke-width="1.3" stroke-linecap="round"/>';
   if(R.extra==='capucha') det+='<path d="'+_bCap([shp[0]+bn[0]*3.6,shp[1]+bn[1]*3.6],[shp[0]+bn[0]*4.4-(shp[0]-hip[0])*.28,shp[1]+bn[1]*4.4-(shp[1]-hip[1])*.28],3.2,2.6)+'" fill="'+Y.poleraS+'"/>'
     +'<path d="M'+_bP(_bL(hip,shp,.82))+' l1.2 4" stroke="#f8fafc" stroke-width=".7" stroke-linecap="round"/>';
@@ -394,8 +399,10 @@ function _pistMotoSVG(o,cfg){
   v+='<path d="M58 57 Q62 47 75 47.5 L85 51 Q86 61 77 66 L60 66 Z" fill="'+col+'" stroke="'+osc+'" stroke-width="1"/>'
     +'<path d="M63 52 Q68 49.4 76 50" fill="none" stroke="'+cla+'" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>'
     +'<path d="M62 61 L80 57" stroke="#f8fafc" stroke-width="1.8" stroke-linecap="round"/><path d="M63 63.6 L79 60" stroke="'+osc+'" stroke-width="1" stroke-linecap="round"/>';
+  // glúteo apoyado en el asiento (la chaqueta termina en la cintura, así asoma)
+  v+='<ellipse cx="45.4" cy="52.6" rx="6.6" ry="4.5" fill="#1f2937" transform="rotate(8 45.4 52.6)"/><path d="'+_bArc([45.4,52.6],3.6,195,265)+'" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.2" stroke-linecap="round"/>';
   // pierna cercana: rodilla contra el estanque, bota en el pedalín
-  v+='<path d="'+_bLimb(hip,knee,6,5.8,4.6,-1,.45)+'" fill="#1f2937"/><path d="'+_bLimb(knee,[peg[0]+.4,peg[1]-2],4.4,4.2,3.2,1,.35)+'" fill="#1f2937"/>'
+  v+='<path d="'+_bLimb(hip,knee,5.4,4.9,4.2,-1,.42)+'" fill="#1f2937"/><path d="'+_bLimb(knee,[peg[0]+.4,peg[1]-2],4.4,4.2,3.2,1,.35)+'" fill="#1f2937"/>'
     +'<path d="M62 64 l3.6 1.6" stroke="#64748b" stroke-width="1" stroke-linecap="round"/>'
     +'<g transform="translate('+_bC(peg)+') rotate(-6)">'+_bZapato({bota:'#111827'},function(x){return x;},Y.piel)+'</g><path d="M56 78.6 L64 78.6" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>';
   // parabrisas + foco + manubrio + espejo
@@ -404,7 +411,7 @@ function _pistMotoSVG(o,cfg){
     +'<path d="M85 45 L80 42" stroke="#1f2937" stroke-width="2.4" stroke-linecap="round"/><path d="M82 43 L79 33" stroke="#4b5563" stroke-width=".8"/><ellipse cx="78.6" cy="32" rx="2.4" ry="1.6" fill="#1f2937"/>';
   // torso con chaqueta: hombreras, franja reflectante, cuello alto
   var bn=[(sh[1]-hip[1]),-(sh[0]-hip[0])], bl=Math.hypot(bn[0],bn[1]); bn=[bn[0]/bl,bn[1]/bl];
-  v+='<path d="'+_bLimb(hip,sh,7,7,6.2,-1,.55)+'" fill="'+Y.polera+'"/>'
+  v+='<path d="'+_bLimb([49.4,47.4],sh,6.4,6.8,6.2,-1,.55)+'" fill="'+Y.polera+'"/>'
     +'<path d="'+_bCap(_bL(hip,sh,.78),sh,5.4,5.6)+'" fill="'+Y.poleraS+'"/>'
     +'<path d="M'+_bP(_bL(hip,sh,.38))+' L'+_bP([_bL(hip,sh,.38)[0]+5,_bL(hip,sh,.38)[1]+1.6])+'" stroke="#e5e7eb" stroke-width="1.6" stroke-linecap="round"/>'
     +'<path d="M'+_bP([hip[0]+bn[0]*5,hip[1]+bn[1]*5])+' L'+_bP([sh[0]+bn[0]*4.6,sh[1]+bn[1]*4.6])+'" stroke="rgba(255,255,255,.2)" stroke-width="2.4" stroke-linecap="round"/>'
