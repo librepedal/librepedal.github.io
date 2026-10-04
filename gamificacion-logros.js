@@ -221,6 +221,9 @@ function _vehParaNube(){
         kmBase: num(d.kmBase)||0,
         fecha: (typeof d.fecha==='string' && d.fecha) ? d.fecha : null,
         avisado: !!d.avisado,
+        // v2 (2026-10-04): intervalo del manual del usuario (null = el de VEH_ITEMS).
+        umbralKmUser: (num(d.umbralKmUser)>0) ? num(d.umbralKmUser) : null,
+        umbralMesesUser: (num(d.umbralMesesUser)>0) ? num(d.umbralMesesUser) : null,
         historial: (Array.isArray(d.historial)?d.historial:[]).slice(-30).map(function(hi){
           return {
             fecha: (hi && typeof hi.fecha==='string') ? hi.fecha : null,
@@ -246,11 +249,24 @@ function _docParaNube(){
         vence: (typeof d.vence==='string' && d.vence) ? d.vence : null,
         avisado30: !!d.avisado30,
         avisado7: !!d.avisado7,
-        avisadoVencido: !!d.avisadoVencido
+        avisadoVencido: !!d.avisadoVencido,
+        // v2 (2026-10-04): último vencimiento marcado como hecho/pagado, y si la fecha la
+        // escribió el usuario a mano (no se recalcula).
+        hecho: (typeof d.hecho==='string' && d.hecho) ? d.hecho : null,
+        manual: !!d.manual
       };
     });
   }catch(e){}
   return out;
+}
+// Configuración del vehículo (v2, 2026-10-04): tipo, dígito de patente, auto nuevo + CHI,
+// pago en cuotas, notificaciones y fecha del último odómetro. Solo valores válidos.
+function _vehCfgParaNube(){
+  const c=us.vehCfg; if(!c || typeof c!=='object') return null;
+  const dig=(typeof c.digito==='number' && c.digito>=0 && c.digito<=9 && Math.floor(c.digito)===c.digito) ? c.digito : null;
+  const fechaOk=function(v){ return (typeof v==='string' && /^\d{4}-\d{2}-\d{2}/.test(v)) ? v : null; };
+  return { tipo: c.tipo==='moto'?'moto':'auto', digito: dig, nuevo: !!c.nuevo, chiFecha: fechaOk(c.chiFecha),
+           cuotas: !!c.cuotas, notif: c.notif!==false, odoFecha: fechaOk(c.odoFecha) };
 }
 /* Nada de esto se sube hasta haber leído la nube. Es la misma trampa que ya costó
    kilómetros el 2026-07-20, y con la mantención muerde más fuerte: `historial` es un ARRAY,
@@ -283,6 +299,8 @@ async function sincronizarStats(){
     datos.veh=_vehParaNube();
     datos.vehKm=(typeof us.vehKm==='number'&&isFinite(us.vehKm))?us.vehKm:0;
     datos.doc=_docParaNube();
+    const _cfgNube=_vehCfgParaNube(); if(_cfgNube) datos.vehCfg=_cfgNube;
+    if(us.mantCfg && typeof us.mantCfg==='object') datos.mantCfg={vel: us.mantCfg.vel==='10-menos'?'10-menos':'11-12'};
   }
   try{
     await db.collection('users').doc(cu).set(datos,{merge:true});
@@ -394,8 +412,16 @@ function _restaurarDesdeNube(nube){
         us.veh[k]={kmBase:Number(dn.kmBase)||0, fecha:dn.fecha||null, avisado:!!dn.avisado,
                     historial:Array.isArray(dn.historial)?dn.historial:[],
                     umbralKm:(dl&&dl.umbralKm!==undefined)?dl.umbralKm:null,
-                    umbralMeses:(dl&&dl.umbralMeses!==undefined)?dl.umbralMeses:null};
+                    umbralMeses:(dl&&dl.umbralMeses!==undefined)?dl.umbralMeses:null,
+                    // v2: el intervalo del manual viaja con el registro que gana; si la nube
+                    // no lo trae, se conserva el que ya tenía el teléfono.
+                    umbralKmUser:(Number(dn.umbralKmUser)>0)?Number(dn.umbralKmUser):((dl&&Number(dl.umbralKmUser)>0)?Number(dl.umbralKmUser):null),
+                    umbralMesesUser:(Number(dn.umbralMesesUser)>0)?Number(dn.umbralMesesUser):((dl&&Number(dl.umbralMesesUser)>0)?Number(dl.umbralMesesUser):null)};
         restaurado=true;
+      } else if(dl && !(Number(dl.umbralKmUser)>0) && Number(dn.umbralKmUser)>0){
+        // El teléfono gana el registro pero no tiene el intervalo del manual: se rescata.
+        dl.umbralKmUser=Number(dn.umbralKmUser);
+        if(!(Number(dl.umbralMesesUser)>0) && Number(dn.umbralMesesUser)>0) dl.umbralMesesUser=Number(dn.umbralMesesUser);
       }
     });
     try{ if(typeof _vehData==='function') _vehData(); }catch(e){}
@@ -412,11 +438,30 @@ function _restaurarDesdeNube(nube){
       const dn=nube.doc[k]; if(!dn || typeof dn!=='object') return;
       const dl=us.doc[k];
       if((!dl || !dl.vence) && dn.vence){
-        us.doc[k]={vence:dn.vence, avisado30:!!dn.avisado30, avisado7:!!dn.avisado7, avisadoVencido:!!dn.avisadoVencido};
+        us.doc[k]={vence:dn.vence, avisado30:!!dn.avisado30, avisado7:!!dn.avisado7, avisadoVencido:!!dn.avisadoVencido,
+                   hecho:(typeof dn.hecho==='string'&&dn.hecho)?dn.hecho:null, manual:!!dn.manual};
         restaurado=true;
+      } else if(dl && typeof dn.hecho==='string' && dn.hecho && (!dl.hecho || dn.hecho>dl.hecho)){
+        // v2: "ya lo hice / pagué" es un avance que nunca se pierde -- gana el más nuevo.
+        // Con eso el vencimiento se recalcula al ciclo siguiente (_docRecalcular).
+        dl.hecho=dn.hecho;
+        // sin restaurado=true: no son kilómetros, no debe disparar "Recuperé tus kilómetros".
       }
     });
     try{ if(typeof _docData==='function') _docData(); }catch(e){}
+  }
+  // Configuración del vehículo (v2): misma regla que los documentos -- si el teléfono ya
+  // la tiene, se respeta; solo se rescata cuando el teléfono no tiene nada.
+  if(nube.vehCfg && typeof nube.vehCfg==='object' && (!us.vehCfg || typeof us.vehCfg!=='object')){
+    const c=nube.vehCfg;
+    us.vehCfg={tipo:c.tipo==='moto'?'moto':'auto',
+               digito:(typeof c.digito==='number'&&c.digito>=0&&c.digito<=9)?c.digito:null,
+               nuevo:!!c.nuevo, chiFecha:(typeof c.chiFecha==='string')?c.chiFecha:null,
+               cuotas:!!c.cuotas, notif:c.notif!==false, odoFecha:(typeof c.odoFecha==='string')?c.odoFecha:null};
+    // sin restaurado=true, por lo mismo: es configuración, no kilómetros.
+  }
+  if(nube.mantCfg && typeof nube.mantCfg==='object' && (!us.mantCfg || typeof us.mantCfg!=='object')){
+    us.mantCfg={vel: nube.mantCfg.vel==='10-menos'?'10-menos':'11-12'};
   }
   return restaurado;
 }
@@ -430,6 +475,11 @@ function sincronizarAlEntrar(){
         try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
         try{ if(typeof au==='function') au(); }catch(e){}
         try{ h('Recuperé tus kilómetros desde tu cuenta. Bienvenido de vuelta.'); }catch(e){}
+      } else if(nube){
+        // v2 (2026-10-04): la configuración del vehículo y los "ya lo pagué" se rescatan
+        // sin marcar "restaurado" (no son km, no van con el aviso hablado) -- igual hay que
+        // dejarlos guardados en el teléfono.
+        try{ localStorage.setItem('lp_u_'+cu, JSON.stringify(us)); }catch(e){}
       }
       // Recién acá se habilita la subida de la mantención: ya se leyó la nube y, si tenía
       // algo mejor, ya está fusionado en `us.mant`. Antes de este punto una subida habría
