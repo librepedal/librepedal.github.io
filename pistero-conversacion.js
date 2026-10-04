@@ -8,7 +8,7 @@ const FAQ_APP=[
   {r:/qu[eé] es (el )?modo fantasma/, a:"El modo fantasma te oculta del mapa de otros ciclistas. Lo activas y desactivas cuando quieras desde el botón de arriba, junto a tu nivel."},
   {r:/c[oó]mo funciona el sos|qu[eé] hace el bot[oó]n sos/, a:"El botón SOS abre WhatsApp con tu ubicación lista para mandar a tus contactos de emergencia. No reemplaza a Carabineros ni al SAMU, pero avisa rápido a quien tú elijas."},
   {r:/qu[eé] es (la )?cicloguia|d[oó]nde busco hostales|d[oó]nde busco alojamiento/, a:"La CicloGuía tiene hostales, camping y panoramas cerca tuyo, con comentarios de otros ciclistas. También puedes publicar un alojamiento nuevo marcándolo en el mapa."},
-  {r:/qu[eé] es (el )?taller macgyver|c[oó]mo arreglo (la bici|un pinchazo|la cadena)/, a:"El Taller MacGyver tiene diecisiete trucos para reparar tu bici con lo que tengas a mano: pinchazos, cadena, frenos y más. Lo encuentras en la sección Taller."},
+  {r:/qu[eé] es (el )?taller macgyver|c[oó]mo arreglo (la bici|un pinchazo|la cadena)/, a:"En el Taller eliges el síntoma y te doy la guía paso a paso si lo puedes arreglar tú, como un pinchazo o la cadena salida, o te mando al taller si es frenos o dirección. También lleva la mantención de tu bici por kilómetros."},
   {r:/qu[eé] es (el )?seguimiento en vivo|c[oó]mo comparto mi ubicaci[oó]n/, a:"El seguimiento en vivo genera un link temporal para que alguien te siga en tiempo real mientras pedaleas. Lo activas desde Ajustes y se desactiva solo cuando terminas."},
   {r:/qu[eé] son los segmentos|c[oó]mo compito por un r[eé]cord/, a:"Los segmentos son tramos fijos donde compites por el mejor tiempo con otros ciclistas, con tabla de líderes. Se marcan automático cuando pasas por uno."},
   {r:/qu[eé] cascos hay|c[oó]mo cambio (mi casco|de casco)|c[oó]mo personalizo mi (personaje|perfil|avatar)/, a:"Tienes dieciocho cascos, lentes, tono de piel, color de ojos y labios, vello facial, peinados y pañoletas para armar tu personaje a tu gusto. Entra a Perfil y toca Personalizar para probártelos."},
@@ -207,7 +207,7 @@ function handleVoiceCommand(raw){
      soltó la cadena". Solo funcionaba diciendo "taller" o "necesito arreglar la bici".
      Ahora se busca la RAÍZ (arregl/repar/compon) y los síntomas concretos, que es como
      habla alguien parado al lado de su bici en la ruta. Cubierto por tests/taller.test.mjs. */
-  if(/taller|arregl|repar|compone|mecanic|pinch|ponch|se me (solt|corto|rompi|salio|corri)|cadena[^.]{0,14}(rota|salida|suelta|cortada)|(rueda|neumatico|llanta|camara)[^.]{0,14}(pinch|desinfl|rota)|freno (no|suelto|malo)|bicicleta rota|no funciona mi bici|se me quedo la bici/.test(t)){ cv('mac'); h("El taller MacGyver. Cuéntame qué le pasó y te busco el truco."); return; }
+  if(/taller|arregl|repar|compone|mecanic|pinch|ponch|se me (solt|corto|rompi|salio|corri)|cadena[^.]{0,14}(rota|salida|suelta|cortada)|(rueda|neumatico|llanta|camara)[^.]{0,14}(pinch|desinfl|rota)|freno (no|suelto|malo)|bicicleta rota|no funciona mi bici|se me quedo la bici/.test(t)){ cv('mac'); h("Te abrí el Taller. Elige el síntoma y te digo si lo arreglas tú o si va al taller."); return; }
   if(/gu[ií]a|hospedaje|hostal|hostel|alojamiento|d[oó]nde.{0,15}(dormir|acampar)|\bacampar\b|camping/.test(t)){ cv('gui'); h("La CicloGuía."); return; }
   if(/estadistica|grafico|progreso|mi avance|mi rendimiento|como voy/.test(t)){ cv('stats'); h("Tus estadísticas."); return; }
   // "ojos"/"piel"/"labios" sueltos quedan afuera a propósito: un ciclista real los
@@ -289,7 +289,7 @@ const tutorialSteps=[
   {view:'map', sel:'#fabReportar', d:'Reporta a la comunidad: peligros, picadas o miradores. Ganas Darma.'},
   {view:'map', sel:'button[onclick="toggleRadarOnMap()"]', d:'Ciclistas: mira a otros pedaleros en el mapa, cada uno con su casco.'},
   {view:'chat', sel:'#v-chat .quick-links', d:'Social: tus amigos, solicitudes y chats privados.'},
-  {view:'mac', sel:'#v-mac .section-info', d:'Taller MacGyver: trucos para reparar tu bici en plena ruta.'},
+  {view:'mac', sel:'#v-mac .section-info', d:'Taller: guía paso a paso según el síntoma, derivación al taller cuando es de seguridad, y la mantención de tu bici o vehículo.'},
   {view:'customize', sel:'#estilosGrid', d:'En Perfil armas tu personaje y eliges el estilo de la esfera. ¡A rodar!'}
 ];
 let tutorialIdx=0;

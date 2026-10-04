@@ -76,8 +76,11 @@ function _renderTaller(){
   bici.style.display = esVehiculo ? 'none' : '';
   veh.style.display = esVehiculo ? '' : 'none';
   if(esVehiculo){
+    if(typeof renderVehiculoCfg==='function') renderVehiculoCfg();
     if(typeof renderMantencionVehiculo==='function') renderMantencionVehiculo();
     if(typeof renderDocumentacion==='function') renderDocumentacion();
+  } else {
+    if(typeof _tallerRenderNotifFila==='function') _tallerRenderNotifFila();
   }
 }
 function renderActividadGrid(){

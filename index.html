@@ -315,6 +315,10 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="es-modo-rapido" id="esModoRapido"></div>
 <div id="esferaWrap"></div>
 <button class="es-classic" onclick="cerrarEsfera()"><i class="fas fa-bars"></i> Menú clásico</button>
+<!-- 2026-10-04: recuadro "N cosas por hacer" del Taller (taller-avisos.js). Oculto si no
+     hay nada pendiente; lo actualiza _tallerActualizarBanner() al abrir la app y tras
+     cada cambio en Taller. -->
+<button id="esTallerAviso" type="button" onclick="_tallerAbrir()" style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(192px + env(safe-area-inset-bottom,0px));z-index:5;width:min(330px,calc(100% - 32px));min-height:52px;box-sizing:border-box;display:none;align-items:center;gap:10px;text-align:left;background:rgba(10,18,30,0.92);color:#e7edf6;border:2px solid #eab308;border-radius:16px;padding:8px 12px;cursor:pointer"><i class="fas fa-screwdriver-wrench" style="color:#eab308;font-size:1.1rem"></i><span style="flex:1;min-width:0"><span id="esTallerAvisoT1" style="display:block;font-weight:800;font-size:0.9rem"></span><span id="esTallerAvisoT2" style="display:block;font-size:0.75rem;color:#c9d4e3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span></span><i class="fas fa-chevron-right" style="color:#c9d4e3"></i></button>
 <div class="es-bottom">
   <div class="es-ind es-dato"><span class="es-ind-v" id="esKm">0</span><span class="es-ind-l">km</span></div>
   <!-- Antes "Avisos" y "Mensajes" eran DOS botones que llevaban al mismo lugar en el
@@ -768,6 +772,9 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
      Motorizado ve una pantalla completamente distinta, no una mezcla. -->
 <div id="tallerBici">
 <div class="section-info"><h4><i class="fas fa-wrench"></i> Taller</h4><p>Elige el síntoma. Te doy la guía real (herramientas, pasos, torque) o te derivo al taller — tu seguridad no se improvisa.</p></div>
+<!-- 2026-10-04: activar avisos del teléfono para la mantención de la bici (taller-avisos.js).
+     Solo se ve en la app instalada; en el navegador queda oculta. -->
+<div id="tallerNotifFila" style="display:none;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;font-size:0.85rem"></div>
 <!-- 2026-08-23: Mantención preventiva — pedido de Inty tras "Arregla mi bici" en
      Pistero: no solo reactivo (síntoma → arreglo), también proactivo por km, como
      ya hace cualquier bici real. Va COLAPSADO por defecto (mismo <details> que el
@@ -804,7 +811,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <summary><span class="soc-ic"><i class="fas fa-link"></i> </span><span><b>Se salió la cadena <span style="color:#35c46a;font-size:0.7rem">· puedes tú</span></b><small>Sin herramientas, en 20 segundos</small></span></summary>
   <div style="margin-top:9px;font-size:0.83rem;line-height:1.5;color:#d6deea">
     Pon los cambios en el plato y piñón <b>chicos</b>. Apoya la cadena sobre el plato delantero y gira el pedal hacia atrás con la mano, guiándola, hasta que enganche.
-    <p style="margin:8px 0 0;color:#e7a33e">⚠️ Si se sale seguido, es desgaste o ajuste → al taller.</p>
+    <p style="margin:8px 0 0;color:#e7a33e"><i class="fas fa-triangle-exclamation"></i> Si se sale seguido, es desgaste o ajuste → al taller.</p>
   </div>
 </details>
 
@@ -820,7 +827,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <summary><span class="soc-ic"><i class="fas fa-hand"></i> </span><span><b>Frenos <span style="color:#ef4d5a;font-size:0.7rem">· al taller</span></b><small>Frenan poco, esponjosos, rozan, pastillas gastadas</small></span></summary>
   <div style="margin-top:9px;font-size:0.83rem;line-height:1.5">
     <div style="background:rgba(239,77,90,0.14);border:1px solid #ef4d5a;border-radius:10px;padding:10px 12px;color:#ffd9dd">
-      🛑 <b>Esto no es DIY.</b> Un freno mal armado es un accidente. No se improvisa (nada de nudos ni trucos). Te llevo al taller cercano.
+      <i class="fas fa-circle-stop"></i> <b>Esto no es DIY.</b> Un freno mal armado es un accidente. No se improvisa (nada de nudos ni trucos). Te llevo al taller cercano.
     </div>
     <a class="ab taller-cercano-link" style="margin-top:8px;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Ver taller más cercano</a>
   </div>
@@ -830,7 +837,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <summary><span class="soc-ic"><i class="fas fa-person-biking"></i> </span><span><b>Dirección / horquilla <span style="color:#ef4d5a;font-size:0.7rem">· al taller</span></b><small>Holgura, ruido o juego al frenar</small></span></summary>
   <div style="margin-top:9px;font-size:0.83rem;line-height:1.5">
     <div style="background:rgba(239,77,90,0.14);border:1px solid #ef4d5a;border-radius:10px;padding:10px 12px;color:#ffd9dd">
-      🛑 <b>Siempre al mecánico.</b> Dirección, horquilla y potencia son lo que te sostiene. Cualquier juego o ruido ahí se revisa en taller.
+      <i class="fas fa-circle-stop"></i> <b>Siempre al mecánico.</b> Dirección, horquilla y potencia son lo que te sostiene. Cualquier juego o ruido ahí se revisa en taller.
     </div>
     <a class="ab taller-cercano-link" style="margin-top:8px;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://www.google.com/maps/search/taller+de+bicicletas+cerca+de+m%C3%AD" target="_blank"><i class="fas fa-location-dot"></i> Ver taller más cercano</a>
   </div>
@@ -843,6 +850,13 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </div>
 <div id="tallerVehiculo" style="display:none">
 <div class="section-info"><h4><i class="fas fa-car-side"></i> Taller</h4><p>Tu vehículo, al día — mantención por kilometraje y documentos sin vencer.</p></div>
+<!-- 2026-10-04: configuración del vehículo (mantencion-vehiculo.js, renderVehiculoCfg):
+     tipo auto/moto, odómetro real, último dígito de la patente (calcula la Revisión
+     Técnica), auto nuevo + CHI, permiso en cuotas y notificaciones. -->
+<details class="soc-group" id="vehCfgGroup">
+  <summary><span class="soc-ic"><i class="fas fa-car"></i> </span><span><b>Mi vehículo</b><small id="vehCfgResumen">Configúralo una vez</small></span></summary>
+  <div style="margin-top:9px" id="vehCfg"></div>
+</details>
 <details class="soc-group" id="vehGroup" open>
   <summary><span class="soc-ic"><i class="fas fa-gauge-high"></i> </span><span><b>Mantención del vehículo</b><small id="vehResumen">Cargando…</small></span></summary>
   <div style="margin-top:9px" id="vehLista"></div>
@@ -994,7 +1008,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.801'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.803'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1327,6 +1341,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 <script>
 </script>
 <script src="mantencion-vehiculo.js"></script>
+<script src="taller-avisos.js"></script>
 <script>
 </script>
 <script src="gamificacion-darma.js"></script>
