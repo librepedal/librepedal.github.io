@@ -81,6 +81,7 @@ async function verPerfilUsuario(userId, volverA){
     if(userId!==cu){ html+='<button class="ab sec" style="margin-top:6px" onclick="abrirChatAmigo(\''+userId+'\')"><i class="fas fa-comment"></i> Enviar mensaje</button>'; }
     html+='<div id="perfilComunidadSlot"></div>';
     c.innerHTML=html;
+    if(typeof pioInsigniaPerfil==='function') pioInsigniaPerfil(userId);
     if(typeof renderPerfilComunidad==='function') renderPerfilComunidad(userId, userId===cu);
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudo cargar el perfil.</p>'; }
 }

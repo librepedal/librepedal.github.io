@@ -510,6 +510,12 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
     <button class="ab" onclick="exportarUsuariosAdmin()"><i class="fas fa-arrow-down"></i> Exportar lista de usuarios (.csv)</button>
     <button class="ab sec" onclick="mostrarTodosRegistrados()"><i class="fas fa-users"></i> Ver todos los registrados</button>
     <button class="ab" style="background:#6366f1;color:#fff" onclick="verAnaliticasAdmin()"><i class="fas fa-chart-column"></i> Analíticas de uso</button>
+    <h4 style="margin-top:14px;font-size:0.82rem;color:var(--g)"><i class="fas fa-flag"></i> Pioneros (testers del comienzo)</h4>
+    <p style="font-size:0.72rem;color:#9fb3c8;margin:2px 0 6px">Pega sus correos (separados por coma o en líneas). Reciben el distintivo Pionero y Premium gratis. El correo no se guarda.</p>
+    <textarea id="pioCorreos" rows="3" placeholder="correo1@gmail.com, correo2@gmail.com"></textarea>
+    <button class="ab" style="margin-top:6px" onclick="pioAdminMarcar()">Marcar como Pioneros</button>
+    <p id="pioEstado" style="font-size:0.74rem;color:var(--g);margin:4px 0 0"></p>
+    <p id="pioTotal" style="font-size:0.72rem;color:#9fb3c8;margin:2px 0 0"></p>
     <h4 style="margin-top:14px;font-size:0.82rem;color:var(--g)"><i class="fas fa-bullseye"></i> Crear reto</h4>
     <input type="text" id="retoTitulo" placeholder="Título (ej: 500km en julio)" maxlength="80">
     <input type="text" id="retoDesc" placeholder="Descripción breve (opcional)" maxlength="200">
@@ -1443,6 +1449,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 </script>
 <script src="prevuelo-intro-pistero.js"></script>
 <script src="bienvenida-huella.js"></script>
+<script src="pioneros.js"></script>
 <script>
 </script>
 <script src="pistero-diag.js"></script>

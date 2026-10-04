@@ -42,3 +42,14 @@ Reemplaza el texto "opción B" de `HANDOFF-2026-10-04-NOCHE.md` §3.1. Usar tal 
   4. Subir versión en los 3 lugares y ✓ de Inty.
 - Pendiente aparte: distintivo de los **testers** (más que Fundador + Premium gratis). Inty pasará los correos:
   NO guardarlos en el repo (es público); van a Firestore, escritos solo por el admin.
+
+## Pioneros (testers del comienzo) — programado 2026-10-04, misma rama
+- Nombre elegido por Inty: **Pionero** (por encima de Fundador). Premium gratis para siempre desde que
+  Premium empiece a cobrar (mensaje ya enviado a los testers por WhatsApp).
+- `pioneros.js` + `pioneros/{cu}` en Firestore (solo admin escribe). **El correo no se guarda**: el admin pega
+  los correos en Panel Admin → "Pioneros" y se convierten al id de cuenta (misma transformación que
+  worker-auth `cuDeEmail`). Funciona desde el teléfono, sin computador.
+- Se ve en: sello de la bienvenida (platino + banderín dorado), perfil de ciclista, mapa de huellas (marca propia).
+- `_esPremium()` (voz-motor.js) devuelve true para Pioneros.
+- Tests `tests/pioneros.test.mjs` 20 OK. Suite 43/44 (solo `iconos-lucide`, preexistente).
+- Sin probar aún con datos reales: la marca de Pioneros en el mapa y el Panel Admin (necesitan las reglas publicadas).

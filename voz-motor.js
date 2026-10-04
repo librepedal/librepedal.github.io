@@ -308,6 +308,8 @@ var GATE_PREMIUM_ACTIVO = false;
 // campo tal cual llega de la nube es seguro.
 function _esPremium(){
   if(!GATE_PREMIUM_ACTIVO) return true;
+  // Pioneros (testers del comienzo, pioneros.js): Premium gratis para siempre (promesa de Inty, 2026-10-04).
+  if(typeof _lpPionero!=='undefined' && _lpPionero) return true;
   return !!(typeof us!=='undefined' && us.premium && us.premium.activo && (!us.premium.expira || us.premium.expira > Date.now()));
 }
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }

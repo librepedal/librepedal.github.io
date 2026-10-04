@@ -173,10 +173,12 @@ async function bhMostrarBienvenida(alCerrar){
   }
   if(cerrado) return;
   var yo = await yoP;
+  var pio = (typeof pioCargarMiEstado === 'function') ? await pioCargarMiEstado() : false;
   var sello = capa.querySelector('#bhSello');
   if(yo && yo.num){
-    sello.innerHTML = _bhEscudo() + '<span><small>Ciclista</small><b>N° ' + yo.num.toLocaleString('es-CL') + '</b>'
-      + (yo.fundador ? '<em>Fundador</em>' : '') + '</span>';
+    if(pio) sello.classList.add('bh-sello-pio');
+    sello.innerHTML = (pio ? pioEmblema() : _bhEscudo()) + '<span><small>Ciclista</small><b>N° ' + yo.num.toLocaleString('es-CL') + '</b>'
+      + (pio ? '<em>Pionero</em>' : (yo.fundador ? '<em>Fundador</em>' : '')) + '</span>';
     sello.hidden = false; sello.classList.add('bh-sellar');
   }
   setTimeout(function(){ ver(capa.querySelector('.bh-btns')); }, yo && yo.num ? 900 : 0);
@@ -261,13 +263,14 @@ async function _bhGuardar(slot, texto, lugar, comuna, zona, fundador){
   // exige que no cambien): "Futrono" y "futrono" son la misma huella en el mapa.
   var previa = null;
   if(slot === 1){ try{ var zd = await db.collection("huellasZona").doc(zona).get(); if(zd.exists) previa = zd.data(); }catch(e){} }
+  var pio = (typeof pioSoyPionero === 'function') && pioSoyPionero();
   var intentar = async function(fund){
     var b = db.batch();
     b.set(db.collection("huellas").doc(cu + "_" + slot), {
-      user: cu, texto: texto, pais: lugar.pais, comuna: comuna, zona: zona, fundador: !!fund, ts: FV.serverTimestamp()
+      user: cu, texto: texto, pais: lugar.pais, comuna: comuna, zona: zona, fundador: !!fund, pionero: pio, ts: FV.serverTimestamp()
     });
     if(slot === 1){
-      var z = { pais: previa ? previa.pais : lugar.pais, comuna: previa ? previa.comuna : comuna, n: FV.increment(1), nf: FV.increment(fund ? 1 : 0) };
+      var z = { pais: previa ? previa.pais : lugar.pais, comuna: previa ? previa.comuna : comuna, n: FV.increment(1), nf: FV.increment(fund ? 1 : 0), np: FV.increment(pio ? 1 : 0) };
       if(!(previa && previa.lat != null) && lugar.lat !== null){ z.lat = lugar.lat; z.lon = lugar.lon; }
       b.set(db.collection("huellasZona").doc(zona), z, { merge: true });
     }
@@ -309,6 +312,7 @@ async function bhAbrirMapa(alSalir, info){
       if(z.lat == null) return;
       var com = (z.n || 0) - (z.nf || 0);
       if(com > 0) L.circleMarker([z.lat, z.lon], { radius: 4 + Math.min(10, Math.sqrt(com) * 2), color: '#fc4c02', fillColor: '#fc4c02', fillOpacity: .85, weight: 0 }).addTo(_bhMapa);
+      if(z.np > 0) L.circleMarker([z.lat, z.lon], { radius: 10 + Math.min(10, Math.sqrt(z.np) * 2), color: '#e8f1ff', fillColor: '#ffd700', fillOpacity: .55, weight: 3 }).addTo(_bhMapa);
       if(z.nf > 0) L.circleMarker([z.lat, z.lon], { radius: 6 + Math.min(10, Math.sqrt(z.nf) * 2), color: '#ffd700', fillColor: '#ffd700', fillOpacity: .25, weight: 2.4 }).addTo(_bhMapa);
     });
     obras.forEach(function(ob){
@@ -324,16 +328,19 @@ async function bhAbrirMapa(alSalir, info){
 
   var msg = '';
   if(info.recien){
-    msg = info.fundador
+    msg = (typeof pioSoyPionero === 'function' && pioSoyPionero())
+      ? '<div class="bh-msg"><b>Tu huella de Pionero quedó marcada para siempre.</b> Estuviste desde el comienzo, y el mapa lo va a mostrar siempre.</div>'
+      : info.fundador
       ? '<div class="bh-msg"><b>Tu huella de Fundador quedó marcada para siempre.</b>' + (_bhYo && _bhYo.num ? ' Eres el ciclista N° ' + _bhYo.num.toLocaleString('es-CL') + ' de Libre Pedal.' : '') + '</div>'
       : '<div class="bh-msg"><b>Tu huella quedó marcada.</b> Ya eres parte de lo que pide la comunidad.</div>';
-    _bhDecir(info.fundador ? 'h1' : 'h2', info.fundador ? 'Tu huella de Fundador quedó marcada para siempre.' : 'Tu huella quedó marcada.');
+    if(typeof pioSoyPionero === 'function' && pioSoyPionero()) _bhDecir('h3', 'Tu huella de Pionero quedó marcada para siempre.');
+    else _bhDecir(info.fundador ? 'h1' : 'h2', info.fundador ? 'Tu huella de Fundador quedó marcada para siempre.' : 'Tu huella quedó marcada.');
   }
   var el = capa.querySelector('#bhMapaInfo');
   el.innerHTML = msg
     + '<div class="bh-cnt">' + (mia ? '<span><b>' + (mia.n || 0) + '</b> ' + ((mia.n || 0) === 1 ? 'huella' : 'huellas') + ' en ' + _bhEsc(mia.comuna || '') + '</span>' : '<span></span>')
     + '<span><b>' + totPais + '</b> en tu país</span></div>'
-    + '<div class="bh-leg"><span><i class="bh-lf"></i>Fundadores</span><span><i class="bh-lc"></i>Comunidad</span><span><i class="bh-lo"></i>Obras del fondo</span></div>'
+    + '<div class="bh-leg"><span><i class="bh-lp"></i>Pioneros</span><span><i class="bh-lf"></i>Fundadores</span><span><i class="bh-lc"></i>Comunidad</span><span><i class="bh-lo"></i>Obras del fondo</span></div>'
     + (mia ? '<button type="button" class="bh-btn bh-sec" id="bhCompartir">Compartir mi huella</button>'
            : '<button type="button" class="bh-btn bh-pri" id="bhDejar">Dejar mi huella</button>')
     + '<p class="bh-fine">Cuando la comunidad crezca, el 10% de Premium hará realidad lo que más se pida, y quedará marcado aquí como obra.</p>';

@@ -26,7 +26,8 @@ const FRASES = {
   b6: 'Vamos a dejar una huella que nadie podrá borrar.',
   b7: 'Bienvenido a Libre Pedal.',
   h1: 'Tu huella de Fundador quedó marcada para siempre.',
-  h2: 'Tu huella quedó marcada.'
+  h2: 'Tu huella quedó marcada.',
+  h3: 'Tu huella de Pionero quedó marcada para siempre.'
 };
 // Pistera saluda en femenino solo donde el texto lo pide.
 const FRASES_C = Object.assign({}, FRASES, { b7: 'Bienvenida a Libre Pedal.' });

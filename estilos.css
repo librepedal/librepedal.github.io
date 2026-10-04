@@ -996,3 +996,11 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 @keyframes bhRueda{to{stroke-dashoffset:0}}
 @keyframes bhPulso{to{box-shadow:0 0 0 16px rgba(255,215,0,0)}}
 @media (prefers-reduced-motion:reduce){.bh-capa *{animation:none!important}.bh-x{opacity:1}}
+/* Pioneros (pioneros.js): por encima de Fundador -> platino con borde dorado */
+.bh-sello-pio{border-color:#e8f1ff;background:linear-gradient(135deg,#1c2230,#16140c);box-shadow:0 0 0 1px rgba(255,215,0,.35) inset}
+.bh-sello-pio em{color:#e8f1ff}
+.bh-lp{background:var(--g,#ffd700);border:2px solid #e8f1ff}
+.pio-insignia{display:inline-flex;align-items:center;gap:6px;border:1px solid #e8f1ff;background:linear-gradient(135deg,rgba(232,241,255,.12),rgba(255,215,0,.1));color:#e8f1ff;border-radius:999px;padding:4px 12px 4px 6px;font-weight:800;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase}
+.pio-insignia svg{width:22px;height:24px}
+.pio-perfil{display:grid;justify-items:center;gap:4px;margin:10px 0}
+.pio-perfil small{color:#9fb3c8;font-size:.72rem}

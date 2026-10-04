@@ -192,7 +192,9 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
     },600);
   }
   };
+  if(typeof pioCargarMiEstado==='function') pioCargarMiEstado();
   if(typeof bhIniciar==='function') bhIniciar(nombre,_seguirTrasBienvenida); else _seguirTrasBienvenida();
+  if(cu===ADMIN_ID && typeof pioAdminContar==='function') pioAdminContar();
 }
 
 async function _completarLoginVerificado(cuVal, nombre, e_val){

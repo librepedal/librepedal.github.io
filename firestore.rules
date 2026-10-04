@@ -222,6 +222,9 @@ service cloud.firestore {
     function esMiHuella(id) {
       return id == request.auth.uid + '_1' || id == request.auth.uid + '_2';
     }
+    function esPionero() {
+      return exists(/databases/$(database)/documents/pioneros/$(request.auth.uid));
+    }
     function fundadorPosible() {
       return request.time < timestamp.date(2027, 9, 24)
         || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('createdAt', request.time) < timestamp.date(2027, 9, 24);
@@ -229,7 +232,8 @@ service cloud.firestore {
     match /huellas/{id} {
       allow read: if signedIn() && (esMiHuella(id) || isAdmin());
       allow create: if signedInReal() && esMiHuella(id)
-        && request.resource.data.keys().hasOnly(['user', 'texto', 'pais', 'comuna', 'zona', 'fundador', 'ts'])
+        && request.resource.data.keys().hasOnly(['user', 'texto', 'pais', 'comuna', 'zona', 'fundador', 'pionero', 'ts'])
+        && request.resource.data.get('pionero', false) == esPionero()
         && request.resource.data.user == request.auth.uid
         && request.resource.data.texto is string
         && request.resource.data.texto.size() >= 8 && request.resource.data.texto.size() <= 280
@@ -254,20 +258,31 @@ service cloud.firestore {
       let f = getAfter(/databases/$(database)/documents/huellas/$(request.auth.uid + '_1')).data.fundador;
       return (f == true && request.resource.data.nf == prev + 1) || (f == false && request.resource.data.nf == prev);
     }
+    function npSube(prev) {
+      return (esPionero() && request.resource.data.get('np', 0) == prev + 1) || (!esPionero() && request.resource.data.get('np', 0) == prev);
+    }
     function zonaCampos() {
-      return request.resource.data.keys().hasOnly(['pais', 'comuna', 'n', 'nf', 'lat', 'lon'])
+      return request.resource.data.keys().hasOnly(['pais', 'comuna', 'n', 'nf', 'np', 'lat', 'lon'])
         && strOk('pais', 3) && strOk('comuna', 60)
         && numOk('lat', -90, 90) && numOk('lon', -180, 180);
     }
     match /huellasZona/{zona} {
       allow read: if true;
       allow create: if signedInReal() && zonaCampos() && primeraHuellaAhora(zona)
-        && request.resource.data.n == 1 && nfSube(0);
+        && request.resource.data.n == 1 && nfSube(0) && npSube(0);
       allow update: if signedInReal() && zonaCampos() && primeraHuellaAhora(zona)
-        && request.resource.data.n == resource.data.n + 1 && nfSube(resource.data.get('nf', 0))
+        && request.resource.data.n == resource.data.n + 1 && nfSube(resource.data.get('nf', 0)) && npSube(resource.data.get('np', 0))
         && request.resource.data.pais == resource.data.pais && request.resource.data.comuna == resource.data.comuna
         && (!('lat' in resource.data) || (request.resource.data.lat == resource.data.lat && request.resource.data.lon == resource.data.lon));
       allow delete: if isAdmin();
+    }
+
+    // Pioneros (2026-10-04, pioneros.js): los testers del comienzo. Distintivo por encima
+    // de Fundador + Premium gratis. Solo el admin los marca; lectura pública (el distintivo
+    // se ve en el perfil y en el mapa). El doc no guarda el correo, solo existe.
+    match /pioneros/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Obras del fondo de la comunidad: la huella grande. Solo el admin las publica.
