@@ -1,0 +1,61 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pistero v2 — armario</title>
+<style>
+body{margin:0;background:#0b1220;color:#e5e7eb;font-family:system-ui,sans-serif;padding:16px}
+h1{font-size:1.3rem;margin:0 0 4px}h2{font-size:.95rem;color:#fc4c02;margin:22px 0 8px}
+p{color:#9fb3c8;font-size:.8rem;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.c{background:#141f33;border:1px solid #2a3348;border-radius:12px;padding:6px;text-align:center}
+.c svg{width:100%;height:auto;display:block}.c b{display:block;font-size:.68rem;font-weight:500;color:#cdd6e6;margin-top:2px}
+.hero{display:flex;gap:12px;flex-wrap:wrap}.hero .c{width:170px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips span{width:26px;height:26px;border-radius:50%;display:inline-block;border:1px solid #2a3348}
+.big .c{width:150px}
+</style></head><body>
+<h1>Pistero v2 — armario nuevo</h1>
+<p>Vista previa generada con el mismo código de la app (pistero-armario.js + pistero-apariencia.js).</p>
+<div id="out"></div>
+<script>var cu=null;</script>
+<script src="../../pistero-personalizacion-datos.js"></script>
+<script src="../../pistero-armario.js"></script>
+<script src="../../pistero-apariencia.js"></script>
+<script>
+var out=document.getElementById('out');
+function P(o,e){ return _pistoDe(o,e||'feliz'); }
+function card(svg,n){ return '<div class="c">'+svg+'<b>'+n+'</b></div>'; }
+function sec(t,html,cls){ out.insertAdjacentHTML('beforeend','<h2>'+t+'</h2><div class="'+(cls||'grid')+'">'+html+'</div>'); }
+var looks=[
+ ['Pistera ciudad',{casco:'rosa',diseno:'corazones',disenoCol:'#ffffff',pelo:'largo',peloCol:'#7a5232',pest:'si',aro:'perla',labios:'#e75480',cuello:'panoleta',pano:'#1e40af',acc:'flor'}],
+ ['Ruta pro',{casco:'negro',diseno:'rayo',disenoCol:'#facc15',lentes:'escudo',lentesCol:'#fc4c02',gadget:'gopro',cuello:'maillot',pano:'#dc2626'}],
+ ['MTB barro',{casco:'militar',diseno:'camuflaje',disenoCol:'#111827',gadget:'visera',lentes:'mascara',lentesCol:'#f59e0b',marca:'barro',pelo:'rizado',peloCol:'#1c130c',piel:'moreno'}],
+ ['Unicornio',{casco:'perla',diseno:'estrellas',disenoCol:'#ec4899',acc:'unicornio',pelo:'coletas',peloCol:'#f472b6',pest:'largas',marca:'brillos',ojosCol:'#6d28d9'}],
+ ['Vikinga',{casco:'cromo',diseno:'',acc:'vikingo',pelo:'trenzas',peloCol:'#d0a63a',marca:'guerrero',disenoCol:'#1e40af',piel:'porcelana',ojosCol:'#1d4ed8'}],
+ ['Galaxia',{casco:'galaxia',diseno:'',acc:'aureola',pelo:'afro',peloCol:'#1c130c',piel:'ebano',aro:'argolla',lentes:'corazon',lentesCol:'#ec4899'}],
+ ['Chile',{casco:'blanco',diseno:'chile',cuello:'panoleta',pano:'#d52b1e',pelo:'corto',peloCol:'#1c130c',piel:'trigueno',acc:'estrella'}],
+ ['Gatita',{casco:'lila',diseno:'lunares',disenoCol:'#ffffff',acc:'gato',pelo:'melena',peloCol:'#1c130c',lentes:'gato',lentesCol:'#16203a',labios:'#c81d3a',pest:'si'}]
+];
+sec('Looks armados',looks.map(function(l){return card(P(l[1]),l[0]);}).join(''),'hero big');
+// Antes / después del pelo
+sec('Pelo — antes (moño con cola en gancho, se reemplaza)','<div class="c" id="viejo"></div>','hero');
+sec('Pelo — ahora',PIST_PELO.map(function(p){return card(P({casco:'azul',pelo:p.id,peloCol:'#7a5232',pest:p.id?'si':''}),p.n);}).join(''));
+sec('Pelo — colores',PIST_PELO_COL.map(function(c){return card(P({pelo:'ondulado',peloCol:c.id}),c.n);}).join(''));
+sec('Casco — colores y acabados',PIST_CASCO.map(function(h){return card(P({casco:h.id}),h.n);}).join(''));
+sec('Casco — diseños',PIST_DISENO.map(function(d){return card(P({casco:'negro',diseno:d.id,disenoCol:'#fc4c02'}),d.n);}).join(''));
+sec('Accesorios de casco',PIST_ACC.map(function(a){return card(P({casco:'celeste',acc:a.id}),a.n);}).join(''));
+sec('Equipo',PIST_GADGET.map(function(a){return card(P({casco:'naranja',diseno:'',gadget:a.id}),a.n);}).join(''));
+sec('Lentes',PIST_LENTES.map(function(a){return card(P({lentes:a.id,lentesCol:'#1e40af'}),a.n);}).join(''));
+sec('Cara',PIST_MARCA.map(function(a){return card(P({marca:a.id,piel:'medio'}),a.n);}).join(''));
+sec('Ojos',PIST_OJOS_COL.map(function(a){return card(P({ojosCol:a.id,pest:'si'}),a.n);}).join(''));
+sec('Pestañas',PIST_PEST.map(function(a){return card(P({pest:a.id}),a.n);}).join(''));
+sec('Labial',PIST_LABIOS.map(function(a){return card(P({labios:a.id}),a.n);}).join(''));
+sec('Aros',PIST_ARO.map(function(a){return card(P({aro:a.id,pelo:'corto'}),a.n);}).join(''));
+sec('Cuello',PIST_CUELLO.map(function(a){return card(P({cuello:a.id,pano:a.id?'#16a34a':''}),a.n);}).join(''));
+sec('Piel',PIST_PIEL.map(function(a){return card(P({piel:a.id,pelo:'melena',peloCol:'#1c130c'}),a.n);}).join(''));
+sec('Expresiones (con look)',['feliz','contento','hablando','sorprendido','pensando','enojado','cansado','dormido','guino'].map(function(e){return card(P(looks[0][1],e),e);}).join(''));
+</script>
+<script>
+// pelo viejo, para comparar (copiado de la versión anterior)
+(function(){ var col='#7a5232'; var viejo='<g fill="'+col+'"><path d="M13 53 Q11 60 15 60 Q14 56 18 53 Z"/><path d="M87 53 Q89 60 85 60 Q86 56 82 53 Z"/><path d="M84 50 Q98 58 94 74 Q90 82 84 80 Q90 70 82 58 Q80 53 84 50 Z"/><circle cx="83" cy="49" r="7"/><circle cx="83" cy="49" r="7" fill="rgba(0,0,0,.14)"/><circle cx="83" cy="49" r="4.6"/></g>';
+ var s=P({casco:'azul',pest:'si'}).replace('<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">','<svg viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg">'+viejo);
+ document.getElementById('viejo').innerHTML=s+'<b>Moño con cola (viejo)</b>'; })();
+</script>
+</body></html>

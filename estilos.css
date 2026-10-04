@@ -928,3 +928,12 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .pacc:active{transform:scale(.97)}
 
 .pist-swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px}.pist-sw{background:#141f33;border:1.5px solid #2a3348;border-radius:10px;padding:4px 3px 4px;text-align:center;cursor:pointer;transition:border-color .15s}.pist-sw.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p) inset}.pist-sw-ico{width:32px;height:27px;margin:0 auto}.pist-sw-ico svg{width:100%;height:100%}.pist-sw-lbl{font-size:.56rem;color:#cdd6e6;margin-top:2px;line-height:1.1}
+/* Pistero v2 — armario: sub-títulos, colores en círculo y "Sorpréndeme" */
+.pist-sub{font-size:.66rem;color:#9fb3c8;margin:10px 0 5px;font-weight:600;letter-spacing:.02em}
+.pist-chip-row{display:flex;flex-wrap:wrap;gap:7px}
+.pist-chip{width:30px;height:30px;border-radius:50%;padding:3px;border:1.5px solid #2a3348;background:#141f33;cursor:pointer;transition:border-color .15s,transform .15s}
+.pist-chip span{display:block;width:100%;height:100%;border-radius:50%;box-shadow:inset 0 -3px 5px rgba(0,0,0,.25),inset 0 2px 3px rgba(255,255,255,.25)}
+.pist-chip.sel{border-color:var(--p);box-shadow:0 0 0 1px var(--p);transform:scale(1.08)}
+.pist-sw{transition:border-color .15s,transform .12s}.pist-sw:active,.pist-chip:active{transform:scale(.94)}
+.pist-sw.sel{background:linear-gradient(180deg,#1b2a45,#141f33)}
+.pist-toolbar{display:flex;align-items:center;gap:10px;margin:0 0 10px}.pist-toolbar .ab{width:auto;margin:0;padding:8px 14px}.pist-toolbar span{font-size:.66rem;color:#9fb3c8}
