@@ -1,0 +1,51 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bici de Pistero v2</title>
+<style>
+body{margin:0;background:#0b1220;color:#e5e7eb;font-family:system-ui,sans-serif;padding:16px}
+h1{font-size:1.3rem;margin:0 0 4px}h2{font-size:.95rem;color:#fc4c02;margin:22px 0 8px}
+p{color:#9fb3c8;font-size:.8rem;margin:0 0 10px}
+.fila{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.c{background:#141f33;border:1px solid #2a3348;border-radius:12px;padding:6px;text-align:center}
+.c svg{width:100%;height:auto;display:block}.c b{display:block;font-size:.7rem;font-weight:500;color:#cdd6e6;margin-top:2px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:760px}
+.vs .c b{font-size:.8rem}.viejo{opacity:.85}
+.chico{display:flex;gap:8px;flex-wrap:wrap}.chico .c{width:84px}
+</style></head><body>
+<h1>Bici de Pistero — v2 (mockup para aprobar)</h1>
+<p>Arriba: antes y después de cada tipo. Abajo: las bicis pedaleando, a tamaño chico como en el sobrevuelo y con distintos looks/colores.</p>
+<div id="out"></div>
+<script>var cu=null;</script>
+<script src="../../pistero-personalizacion-datos.js"></script>
+<script src="../../pistero-armario.js"></script>
+<script src="../../pistero-apariencia.js"></script>
+<script src="../../pistero-bici.js"></script>
+<script>var _vSVG=_pistBiciSVG, _vG=_BICI_G, _vRueda=_biciRueda;</script>
+<script src="bici-v2.js"></script>
+<script>
+// v1 usa los mismos nombres globales: se le prestan los suyos mientras dibuja
+function _biciViejo(o,c){ var g=_BICI_G, r=_biciRueda; _BICI_G=_vG; _biciRueda=_vRueda; try{ return _vSVG(o,c); } finally { _BICI_G=g; _biciRueda=r; } }
+</script>
+<script>
+var out=document.getElementById('out');
+function card(svg,n,cls){ return '<div class="c '+(cls||'')+'">'+svg+'<b>'+n+'</b></div>'; }
+function sec(t,html,cls){ out.insertAdjacentHTML('beforeend','<h2>'+t+'</h2><div class="'+(cls||'fila')+'">'+html+'</div>'); }
+var looks=[
+ {casco:'azul'},
+ {casco:'negro',diseno:'rayo',disenoCol:'#facc15',lentes:'escudo',lentesCol:'#fc4c02',cuello:'maillot',pano:'#dc2626'},
+ {casco:'militar',diseno:'camuflaje',disenoCol:'#111827',lentes:'mascara',lentesCol:'#f59e0b',pelo:'rizado',peloCol:'#1c130c',piel:'moreno'},
+ {casco:'rosa',diseno:'corazones',disenoCol:'#ffffff',pelo:'largo',peloCol:'#7a5232',pest:'si',labios:'#e75480',cuello:'panoleta',pano:'#1e40af'},
+ {casco:'perla',diseno:'estrellas',disenoCol:'#ec4899',acc:'unicornio',pelo:'coletas',peloCol:'#f472b6',pest:'largas',ojosCol:'#6d28d9'},
+ {casco:'blanco',diseno:'chile',cuello:'panoleta',pano:'#d52b1e',pelo:'corto',peloCol:'#1c130c',piel:'trigueno'}
+];
+PIST_BICI.forEach(function(b){
+  var o={casco:'azul',biciTipo:b.id};
+  sec(b.n,card(_biciViejo(o,{pedal:false}),'Antes','viejo')+card(_pistBiciSVG(o,{pedal:false}),'Ahora'),'vs');
+});
+sec('Pedaleando, con distintos looks y colores',
+  PIST_BICI.map(function(b,i){ return card(_pistBiciSVG(Object.assign({},looks[i+1],{biciTipo:b.id}),{expr:['contento','emocionado','feliz','guino','feliz'][i]}),b.n); }).join('')
+  +card(_pistBiciSVG(Object.assign({},looks[1],{biciTipo:'ruta',biciCol:'#111827'}),{expr:'sorprendido',rapido:true,cadencia:.45}),'Ruta a fondo')
+  +card(_pistBiciSVG(Object.assign({},looks[2],{biciTipo:'mtb',biciCol:'#f97316'}),{expr:'cansado',cadencia:1.4}),'MTB en subida')
+  +card(_pistBiciSVG(Object.assign({},looks[5],{biciTipo:'urbana',biciCol:'#10b981'}),{expr:'contento'}),'Urbana verde'));
+sec('Tamaño chico (como se ve en el sobrevuelo)',PIST_BICI.map(function(b,i){ return card(_pistBiciSVG(Object.assign({},looks[i+1],{biciTipo:b.id}),{}),b.n); }).join(''),'chico');
+</script>
+</body></html>
