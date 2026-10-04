@@ -28,6 +28,7 @@ async function _mostrarBienvenidaFundador(){
         '<div><i class="fas fa-users" style="color:var(--p);width:22px"></i> Comunidad que se cuida (SOS y zonas rojas)</div>'+
         '<div><i class="fas fa-face-smile" style="color:var(--p);width:22px"></i> Personaliza tu Pistero en Perfil</div>'+
       '</div>'+
+      (typeof _ideaFondoTarjetaHTML==='function'?_ideaFondoTarjetaHTML():'')+
       '<button class="bg" onclick="_cerrarBienvenida()"><i class="fas fa-bicycle"></i> \u00a1A pedalear!</button>';
     um.classList.add('on');
   }catch(e){}

@@ -424,6 +424,35 @@ service cloud.firestore {
       allow delete: if signedIn() && id == request.auth.uid;
     }
 
+    // Ideas para el fondo de la comunidad (2026-10-04, ideas-fondo.js). UNA idea por
+    // usuario: el doc id ES su uid (mismo candado anti-relleno que /votacionComunidad).
+    match /ideasFondo/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedInReal() && id == request.auth.uid
+        && request.resource.data.user == request.auth.uid
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() >= 8 && request.resource.data.texto.size() <= 280
+        && strOk('nombre', 60) && strOk('categoria', 20) && strOk('clave', 120)
+        && request.resource.data.keys().hasOnly(['user', 'nombre', 'texto', 'categoria', 'clave', 'ts']);
+      allow delete: if (signedIn() && id == request.auth.uid) || isAdmin();
+    }
+
+    // Votos del fondo: UN voto por suscriptor (doc id = su uid). Solo vota quien tiene
+    // users/{uid}.premium.activo -- campo que escribe SOLO el worker de compras (ver
+    // premiumSinTocar), así que nadie puede votar sin suscripción llamando la API directo.
+    function suscripcionActiva() {
+      let p = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('premium', {});
+      return p.get('activo', false) == true && (!('expira' in p) || p.expira > request.time.toMillis());
+    }
+    match /votosFondo/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedInReal() && id == request.auth.uid && suscripcionActiva()
+        && request.resource.data.idea is string && request.resource.data.idea.size() <= 120
+        && exists(/databases/$(database)/documents/ideasFondo/$(request.resource.data.idea))
+        && request.resource.data.keys().hasOnly(['idea', 'ts']);
+      allow delete: if signedIn() && id == request.auth.uid;
+    }
+
     // Sorteo de comunidad (una participación por usuario; lista pública para transparencia)
     match /sorteoComunidad/{id} {
       allow read: if true;

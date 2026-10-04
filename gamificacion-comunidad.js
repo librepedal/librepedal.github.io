@@ -111,6 +111,8 @@ async function mostrarComunidad(){
     });
     html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(252,76,2,0.08));border:1px solid var(--g)"><h4 style="color:var(--g);font-size:0.9rem;margin:0 0 6px"><i class="fas fa-gift"></i> Sorteo de la comunidad</h4><p style="font-size:0.78rem;color:#9fb3c8;margin:0 0 8px">Se ofrece <strong style="color:#dfe7ff">2 veces al año</strong>. Para que sea justo: una participación por persona, y el premio y la fecha se anuncian a toda la comunidad antes de sortear.</p>'+(yaParticipo?'<button class="ab sec" disabled onclick="return false"><i class="fas fa-circle-check"></i> Ya estás participando</button>':'<button class="ab" onclick="participarSorteo()"><i class="fas fa-champagne-glasses"></i> Anotarme al sorteo</button>')+'</div>';
   }
+  // Ideas para el fondo (ideas-fondo.js): propuestas de la comunidad + votos de suscriptores.
+  if(typeof _ideasFondoSeccionHTML==='function') html+=await _ideasFondoSeccionHTML();
     // Frases de la comunidad: cada ciclista puede aportar su frase para que Pistero la
   // diga en la app. Queda en revisión hasta que el admin la aprueba (no sale de inmediato).
   html+='<div style="margin-top:16px;padding:12px;border-radius:10px;background:var(--gl)">'+

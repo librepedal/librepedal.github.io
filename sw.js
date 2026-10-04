@@ -26,6 +26,7 @@ const CORE = [
   './gamificacion-ranking.js',
   './gamificacion-retos.js',
   './gamificacion-comunidad.js',
+  './ideas-fondo.js',
   './novedades.js',
   './social.js',
   './segmentos.js',

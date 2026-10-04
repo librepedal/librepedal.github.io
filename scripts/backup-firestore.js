@@ -17,7 +17,7 @@ const OUT_ROOT = path.join(__dirname, '..', '..', 'LibrePedal-Backups');
 const COLECCIONES_SIMPLES = [
   'users', 'chat', 'reportes', 'routeAlerts', 'guiComments', 'recommendations',
   'hostels', 'repairTips', 'routes', 'trips', 'friendRequests', 'diarios',
-  'alojo', 'votacionComunidad', 'sorteoComunidad', 'frasesComunidad',
+  'alojo', 'votacionComunidad', 'ideasFondo', 'votosFondo', 'sorteoComunidad', 'frasesComunidad',
   'novedades', 'liveTracking', 'segmentos', 'segmentoTiempos', 'retos', 'rodadas'
 ];
 
