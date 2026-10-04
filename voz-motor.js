@@ -417,6 +417,15 @@ function _reproducirVoz(item){
       _vozArchivoEL(item, durEst, _idEL, miGen);
       return;
     }
+    // 2026-10-04 (voz-trozos.js): frases del copiloto con números armadas con trozos
+    // PREGRABADOS de la misma voz, para no pagar ElevenLabs en vivo en cada viaje. Si
+    // faltan los trozos (o el primero falla), sigue igual que antes, en vivo.
+    const _planT=(typeof vtPlanDisponible==='function') ? vtPlanDisponible(item.t) : null;
+    if(_planT){
+      vozTimerFin=setTimeout(_vozSiguiente, 12000);
+      _vozTrozos(item, durEst, _planT, miGen, function(){ _vozElevenRuntime(item, durEst, miGen, false, { idEL:_idEL, idAz:_id }); });
+      return;
+    }
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
     _vozElevenRuntime(item, durEst, miGen, false, { idEL:_idEL, idAz:_id });
     return;

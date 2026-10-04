@@ -52,6 +52,7 @@ const CORE = [
   './abanico-reporte.js',
   './prevuelo-intro-pistero.js',
   './pistero-copiloto.js',
+  './voz-trozos.js',
   './recomendacion-rutas.js',
   './sos-comunitario.js',
   './pistero-ciclistas-cerca.js',

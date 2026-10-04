@@ -4,6 +4,12 @@ Rama `fix/pistero-copiloto`, SIN mergear. Aprobado por Inty (tabla de frases en 
 
 **Decisión de Inty: NO publicar hasta tener las frases pregrabadas** (para no gastar ElevenLabs en vivo).
 
+Programado (2026-10-04): `voz-trozos.js` arma las frases con números con trozos pregrabados POR
+personalidad (sin mezclar timbres); solo el nombre de un lugar va en vivo (caché 24 h del worker).
+Generador: `node scripts/gen-voz-trozos.js` (166 trozos; `--solo=cercano` = 3.974 caracteres;
+todas las personalidades = 55.636 caracteres, una sola vez). Sin los audios, la app se comporta igual que hoy.
+Test `tests/voz-trozos.test.mjs` 32 OK (barre todo lo que puede decir el copiloto).
+
 Falta antes de mergear:
 1. Pregrabar las frases fijas nuevas: "Un tercio. Buen ritmo.", "Mitad del camino.", "Dos tercios. Queda poco.",
    "5 km. Buen ritmo.", "15 km. Vas bien.", "Grabando. Vamos.", "Empieza una subida.", "Bajada larga.",
