@@ -4,6 +4,31 @@ Registro de qué se hizo, por versión. La IA que edite: **agrega tu entrada arr
 
 ---
 
+## PAGOS — 2026-10-05 — Claude (sesión intyrivera.a) · rama `fix/worker-pagos`: worker de Flow al repo, con 3 errores de plata corregidos — NO publicado
+
+El worker `librepedal-pagos` (cobro del Premium con Flow, a nombre de Ciber Stak SpA) solo
+existía en un correo entre cuentas y en Cloudflare (versión 1 publicada, $2.990). Ahora vive en
+`worker-pagos/` (no se publica con la web: deploy-seguro.sh solo copia la raíz y carpetas
+explícitas). La versión 2 del correo tenía:
+1. **GRAVE:** `JSON.parse(st.optional)`. La especificación oficial de Flow (`es-openApiFlow.yaml`,
+   PaymentStatus) muestra `optional` como OBJETO → el parse fallaba, el error se tragaba y
+   **Flow cobraba sin activar el premium**. Ahora acepta objeto o texto.
+2. Plan dúo: el amigo se buscaba por `usersPrivate.email`, que cualquiera puede escribir. Ahora se
+   usa `cuDeEmail` (misma regla que worker-auth) y se exige que `users/{uid}` exista.
+3. Confirmaciones simultáneas podían sumar días dos veces. Ahora cada cuenta se acredita en un
+   commit atómico de Firestore con precondición (`aplicadoA` + `updateTime`).
+Extra: valida que la cuenta exista ANTES de cobrar; pagos cobrados que no se pueden acreditar
+quedan en `pagos/{flowOrder}` con `estado: "revisar"` (para devolver desde Flow);
+`FLOW_PAYMENT_METHOD` opcional para dejar solo tarjetas. `tests/worker-pagos.test.mjs`: 55
+casos contra Flow y Firestore simuladas (firma HMAC verificada, concurrencia, reintentos).
+
+**Contexto tributario (no tocar sin Inty):** el modelo de emisión de boletas declarado al SII
+("No emito boleta cuando recibo un pago electrónico", comprobante N° 45417021951) rige desde el
+**2026-11-01**. Por eso `wrangler.toml` deja `FLOW_ENV = "sandbox"`: nada de cobros reales antes.
+Falta (con OK de Inty): llaves de sandbox de Flow, desplegar el worker con wrangler (el CI de la web no lo publica), botón en la web.
+
+---
+
 ## SEGURIDAD — 2026-08-19 — Inty (consola de Google Cloud) + Claude (sesión intyrivera, verificación) · claves de Firebase restringidas por origen — CERRADO
 
 **Hallazgo (de una sesión anterior, ver EN-USO.md):** la clave web de Firebase

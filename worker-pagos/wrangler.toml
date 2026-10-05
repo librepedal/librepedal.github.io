@@ -1,0 +1,18 @@
+name = "librepedal-pagos"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Variables normales. Los secretos (FLOW_API_KEY, FLOW_SECRET_KEY, GCP_SA_JSON) van en
+# Cloudflare como "Secret", nunca acá: este repo es público.
+#
+# FLOW_ENV queda en "sandbox" A PROPÓSITO: el modelo de emisión de boletas declarado al
+# SII (comprobante N° 45417021951) rige recién desde el 2026-11-01. Hasta esa fecha solo
+# se prueba en sandbox (con las llaves de sandbox de Flow). Pasar a "produccion" es una
+# decisión de Inty, no un cambio de rutina.
+[vars]
+FLOW_ENV = "sandbox"
+FIREBASE_PROJECT_ID = "librepedal-cb983"
+PUBLIC_URL = "https://librepedal-pagos.librepedal.workers.dev"
+APP_RETURN_URL = "https://librepedal.cl/"
+PREMIUM_INDIVIDUAL = "3000"
+PREMIUM_DUO = "4000"

@@ -1,0 +1,5 @@
+{
+  "name": "librepedal-pagos-worker",
+  "private": true,
+  "type": "module"
+}
