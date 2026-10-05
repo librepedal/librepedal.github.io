@@ -28,7 +28,8 @@
 //   duo         $4.000  -> premium para quien paga y para la cuenta de emailAmigo
 //
 // Rutas:
-//   POST /pago/crear      { uid, email, plan?: "individual"|"duo", emailAmigo? }  -> { url }
+//   POST /pago/crear      { email, uid?, plan?: "individual"|"duo", emailAmigo? }  -> { url }
+//                         (sin uid, la cuenta se busca por el correo: así paga la landing)
 //   POST /flow/confirmar  (lo llama Flow, servidor a servidor) -> verifica y acredita
 //   GET|POST /flow/volver (vuelve el navegador del usuario) -> redirige a la app
 //
@@ -155,19 +156,27 @@ function configOk(env) {
 async function crearPago(request, env, cors) {
   if (!configOk(env)) return json({ error: "pagos_no_configurados" }, 503, cors);
   const datos = await request.json().catch(() => ({}));
-  const uid = typeof datos.uid === "string" ? datos.uid.trim() : "";
+  const uidPedido = typeof datos.uid === "string" ? datos.uid.trim() : "";
   const plan = typeof datos.plan === "string" ? datos.plan : "individual";
   const limpio = (e) => (typeof e === "string" ? e.trim() : "");
   const email = limpio(datos.email);
   const emailAmigo = limpio(datos.emailAmigo);
-  if (!UID_OK.test(uid) || !esEmail(email)) return json({ error: "faltan_uid_o_email" }, 400, cors);
+  if ((uidPedido && !UID_OK.test(uidPedido)) || !esEmail(email)) return json({ error: "faltan_uid_o_email" }, 400, cors);
   if (!Object.prototype.hasOwnProperty.call(planes(env), plan)) return json({ error: "plan_invalido" }, 400, cors);
   const p = planes(env)[plan];
 
   const token = await googleToken(env);
   // Antes de cobrar: la cuenta que recibe el premium tiene que existir. Si no, el pago
   // quedaría cobrado sin nadie a quien acreditarlo.
-  if (!(await firestoreGet(docUrl(env, `users/${uid}`), token))) return json({ error: "cuenta_inexistente" }, 404, cors);
+  // Desde la landing no hay sesión de Firebase: llega solo el correo y la cuenta se busca
+  // con la misma regla que el amigo del dúo (cuDeEmail). Si viene uid (desde la app), se usa ese.
+  let uid = uidPedido;
+  if (uid) {
+    if (!(await firestoreGet(docUrl(env, `users/${uid}`), token))) return json({ error: "cuenta_inexistente" }, 404, cors);
+  } else {
+    uid = await uidPorEmail(env, token, email);
+    if (!uid) return json({ error: "cuenta_inexistente" }, 404, cors);
+  }
 
   // Dúo: la segunda cuenta se busca ANTES de cobrar, para que nadie pague por un correo equivocado.
   let amigoUid = null;
@@ -239,7 +248,7 @@ async function volver(request, env) {
     const s = Number(st.status);
     resultado = s === FLOW_PAGADA ? "pagado" : s === 3 || s === 4 ? "rechazado" : "pendiente";
   }
-  const destino = new URL(env.APP_RETURN_URL || "https://librepedal.cl/");
+  const destino = new URL(env.APP_RETURN_URL || "https://librepedal.cl/landing.html");
   destino.searchParams.set("pago", resultado);
   return Response.redirect(destino.toString(), 303);
 }

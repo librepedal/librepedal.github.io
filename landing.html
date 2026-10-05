@@ -72,6 +72,36 @@
   footer a:hover{color:var(--ink)}
   .cierre{text-align:center}
   .cierre h2{margin-bottom:8px}
+
+  /* PREMIUM (2026-10-05, mockup aprobado: claude.ai/artifact/JUkrbDtrGYn2n6fow36fxc).
+     Solo en el navegador: dentro de la app de Play no se dibuja (política de pagos de
+     Google para Chile). Se enciende el 2026-11-01 (modelo de emisión SII). */
+  #premium[hidden]{display:none}
+  .prem-incluye{display:grid;gap:14px 18px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-bottom:14px}
+  .prem-incluye>div{display:flex;gap:11px;align-items:flex-start;min-width:0}
+  .prem-incluye b{display:block;font-size:.94rem}
+  .prem-incluye span{color:var(--sub);font-size:.85rem}
+  .prem-siguen{color:var(--g);font-size:.86rem;font-weight:600;margin-bottom:26px}
+  .prem-correo{display:grid;gap:6px;max-width:420px;margin-bottom:20px;font-size:.88rem;font-weight:600}
+  .prem-correo span,.prem-plan label span{font-weight:400;color:var(--sub);font-size:.8rem}
+  #premium input{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--edge);border-radius:10px;padding:11px 12px;width:100%}
+  #premium input[aria-invalid="true"]{border-color:#ff8a7a}
+  #premium input:focus-visible,#premium button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+  .prem-plan{display:flex;flex-direction:column;gap:14px}
+  .prem-plan h3{margin-bottom:0}
+  .prem-precio{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .prem-precio b{font-size:2rem;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .prem-precio span{color:var(--sub);font-size:.9rem}
+  .prem-plan .prem-cuentas{color:var(--c);font-size:.88rem;font-weight:600;margin-top:-6px}
+  .prem-plan label{display:grid;gap:6px;font-size:.85rem;font-weight:600}
+  .prem-plan .btn{width:100%;justify-content:center;margin-top:auto;cursor:pointer;font-family:inherit}
+  .prem-plan .btn[disabled]{opacity:.75;cursor:progress}
+  .prem-error{color:#ff8a7a;font-size:.88rem;margin-top:14px}
+  .prem-letra{margin-top:22px;display:grid;gap:4px;font-size:.84rem;color:var(--sub);padding-left:16px;border-left:3px solid var(--p)}
+  .prem-aviso{border-radius:18px;padding:clamp(22px,5vw,34px);margin-bottom:24px;border:1px solid rgba(46,204,113,.45);background:linear-gradient(135deg,rgba(46,204,113,.12),rgba(34,211,238,.06))}
+  .prem-aviso.malo{border-color:rgba(255,138,122,.45);background:rgba(255,138,122,.07)}
+  .prem-aviso h3{font-size:1.2rem;margin-bottom:6px}
+  .prem-aviso p{color:#cfd9e8}
 </style>
 </head>
 <body>
@@ -111,7 +141,7 @@
 <section id="todo">
   <div class="wrap">
     <h2>Lo que encuentras en la ruta</h2>
-    <p class="lead">Todo lo que sigue lo marcaron ciclistas que pasaron antes que tú. Sin cuentas premium ni funciones bloqueadas.</p>
+    <p class="lead">Todo lo que sigue lo marcaron ciclistas que pasaron antes que tú, y es gratis para todos.</p>
     <div class="grid">
 
       <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 11h4M19 9v4"/></svg></span>Comunidad que reporta</h3><p>Perros sueltos, hoyos, controles, miradores y puntos de agua marcados por otros ciclistas. Hospedajes, "te doy alojo", chat y rodadas grupales.</p></div>
@@ -168,6 +198,53 @@
       <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M4 19h16"/></svg></span>A tus redes en dos toques</h3><p>Se manda al compartir de tu teléfono: Instagram, TikTok, WhatsApp, lo que uses. Sin conectar cuentas ni dar permisos raros.</p></div>
       <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg></span>Tu año, contado</h3><p>Kilómetros, subidas, rutas y récords del año en un resumen que se comparte de una.</p></div>
     </div>
+  </div>
+</section>
+
+<!-- PREMIUM: oculta por defecto (hidden). La enciende el script lp-premium-logica de abajo
+     solo en el navegador y desde el 2026-11-01. Nunca dentro de la app de Play. -->
+<section class="modos" id="premium" hidden>
+  <div class="wrap">
+    <h2>Libre Pedal Premium</h2>
+    <p class="lead">Todo lo de la ruta es gratis y lo va a seguir siendo. Premium suma extras para los que andan más: más Pistero y más herramientas de viaje.</p>
+    <div id="premAviso"></div>
+    <div class="prem-incluye">
+      <div><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10v4"/></svg></span><p><b>Las 14 voces de Pistero</b><span>Cada personalidad te habla con su propia voz. Sin Premium, una voz más simple.</span></p></div>
+      <div><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/></svg></span><p><b>Chat con Pistero sin límite</b><span>Pregúntale lo que quieras, las veces que quieras. Gratis: 10 mensajes al día.</span></p></div>
+      <div><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 18 9 9l4 5 3-4 5 8z"/><path d="M14 4c2 0 4 1 5 3"/><path d="m18 3 1 4-4 .5"/></svg></span><p><b>Sobrevuelo 3D de tu viaje</b><span>Al terminar, recorre la ruta completa desde el aire.</span></p></div>
+      <div><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h2M12 14h2M8 17h2"/></svg></span><p><b>Viajes de varios días ilimitados</b><span>Guarda todos los viajes que planifiques. Gratis: uno a la vez.</span></p></div>
+      <div><span class="ico"><svg viewBox="0 0 24 24"><path d="m10 8 6 4-6 4z"/><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 20l6-6"/></svg></span><p><b>Video sin marca, si quieres</b><span>Tu video siempre es gratis. Con Premium eliges si quitas la marca Libre Pedal o la dejas.</span></p></div>
+    </div>
+    <p class="prem-siguen">Siguen gratis para todos: navegación, mapa y mapas sin señal, comunidad, seguridad, estadísticas y el video de tu ruta.</p>
+    <label class="prem-correo" for="premEmail">Tu correo de Libre Pedal<span>El mismo con el que entras a la app. Ahí queda tu Premium.</span>
+      <input id="premEmail" type="email" autocomplete="email" inputmode="email" placeholder="tucorreo@gmail.com">
+    </label>
+    <div class="grid">
+      <div class="card prem-plan">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10v4"/></svg></span>Individual</h3>
+        <div class="prem-precio"><b>$3.000</b><span>por 30 días</span></div>
+        <p class="prem-cuentas">1 cuenta</p>
+        <p>Todo Premium en tu cuenta durante 30 días.</p>
+        <button class="btn btn-p" type="button" data-plan="individual">Pagar $3.000</button>
+      </div>
+      <div class="card prem-plan">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="9.5" r="2.5"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0"/><path d="M13.5 15.2A4.5 4.5 0 0 1 21 18.5"/></svg></span>Dúo</h3>
+        <div class="prem-precio"><b>$4.000</b><span>por 30 días</span></div>
+        <p class="prem-cuentas">2 cuentas · $2.000 cada una</p>
+        <p>Todo Premium para ti y para la persona con la que sales a pedalear, cada uno en su cuenta.</p>
+        <label for="premAmigo">Correo de tu acompañante<span>Tiene que haber entrado al menos una vez a Libre Pedal.</span>
+          <input id="premAmigo" type="email" autocomplete="off" inputmode="email" placeholder="correo@gmail.com">
+        </label>
+        <button class="btn btn-p" type="button" data-plan="duo">Pagar $4.000</button>
+      </div>
+    </div>
+    <p class="prem-error" id="premError" role="alert" hidden></p>
+    <div class="prem-letra">
+      <span>Pago único. No se renueva solo: cuando terminen los 30 días, vuelves a la versión gratis.</span>
+      <span>Precios con IVA incluido. Pagas con tarjeta de débito o crédito a través de Flow.</span>
+      <span>Lo cobra Ciber Stak SpA, la empresa detrás de Libre Pedal.</span>
+    </div>
+    <p class="libre">Si ya pagaste, todo se activa solo en tu cuenta; no tienes que hacer nada más.</p>
   </div>
 </section>
 
@@ -237,6 +314,86 @@
 })();
 </script>
 <script src="logo-sound.js"></script>
+<script id="lp-premium-logica">
+/* Premium en la landing (2026-10-05). Lógica pura arriba (la prueba tests/landing-premium.test.mjs
+   la ejecuta tal cual), cableado del DOM abajo. El cobro lo hace worker-pagos/worker.js. */
+var LP_PREMIUM = {
+  // 2026-11-01 00:00 hora de Chile (horario de verano, UTC-3): desde ahí rige el modelo de
+  // emisión de boletas declarado al SII (comprobante 45417021951). Antes, oculto.
+  ACTIVA_DESDE: Date.parse('2026-11-01T00:00:00-03:00'),
+  WORKER: 'https://librepedal-pagos.librepedal.workers.dev',
+  // Dentro de la app de Play (Capacitor carga librepedal.cl) NUNCA se muestra: en Chile
+  // Google no permite llevar al usuario a otro medio de pago (política de pagos de Play).
+  esNativo: function(w){
+    try{
+      if(w.Capacitor && typeof w.Capacitor.isNativePlatform==='function' && w.Capacitor.isNativePlatform()) return true;
+      if(w.androidBridge) return true;
+    }catch(e){ return true; }
+    return false;
+  },
+  // ?premium=ver deja revisarla antes del 1 de noviembre (solo en el navegador).
+  visible: function(w, ahora){
+    if(LP_PREMIUM.esNativo(w)) return false;
+    var forzar=false; try{ forzar=new URLSearchParams(w.location.search).get('premium')==='ver'; }catch(e){}
+    return forzar || ahora>=LP_PREMIUM.ACTIVA_DESDE;
+  },
+  esEmail: function(e){ return typeof e==='string' && e.length<=120 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e); },
+  mensajeError: function(codigo, email, amigo){
+    switch(codigo){
+      case 'faltan_uid_o_email': return 'Escribe tu correo de Libre Pedal, el mismo con el que entras a la app.';
+      case 'cuenta_inexistente': return email+' no tiene cuenta en Libre Pedal. Entra una vez a la app con ese correo y vuelve a intentarlo. No se te cobró nada.';
+      case 'falta_email_amigo': return 'Escribe el correo de tu acompañante.';
+      case 'amigo_sin_cuenta': return amigo+' todavía no tiene cuenta en Libre Pedal. Pídele que entre una vez a la app y vuelve a intentarlo. No se te cobró nada.';
+      case 'amigo_es_el_mismo': return 'El correo de tu acompañante tiene que ser distinto al tuyo.';
+      default: return 'No pudimos iniciar el pago. No se te cobró nada. Intenta de nuevo en unos minutos.';
+    }
+  },
+  // Lo que devuelve worker-pagos en /flow/volver (?pago=pagado|pendiente|rechazado).
+  mensajeVuelta: function(pago){
+    if(pago==='pagado') return { ok:true, titulo:'Listo, tu Premium está activo', texto:'Queda activo por 30 días. Si pagaste el plan dúo, tu acompañante también lo tiene. El comprobante de tu pago con tarjeta vale como boleta.' };
+    if(pago==='pendiente') return { ok:true, titulo:'Tu pago se está procesando', texto:'Cuando se apruebe, el Premium se activa solo en tu cuenta. No tienes que hacer nada más.' };
+    if(pago==='rechazado') return { ok:false, titulo:'El pago no se completó', texto:'No se te cobró nada. Puedes intentarlo de nuevo.' };
+    return null;
+  }
+};
+(function(){
+  var sec=document.getElementById('premium');
+  if(!sec || !LP_PREMIUM.visible(window, Date.now())) return;
+  sec.hidden=false;
+  var email=document.getElementById('premEmail'), amigo=document.getElementById('premAmigo');
+  var err=document.getElementById('premError'), aviso=document.getElementById('premAviso');
+  var pago=null; try{ pago=new URLSearchParams(location.search).get('pago'); }catch(e){}
+  var m=LP_PREMIUM.mensajeVuelta(pago);
+  if(m){
+    var d=document.createElement('div'); d.className='prem-aviso'+(m.ok?'':' malo');
+    var h=document.createElement('h3'); h.textContent=m.titulo;
+    var p=document.createElement('p'); p.textContent=m.texto;
+    d.appendChild(h); d.appendChild(p); aviso.appendChild(d);
+    d.scrollIntoView({block:'center'});
+    try{ var u=new URL(location.href); u.searchParams.delete('pago'); history.replaceState(null,'',u.toString()); }catch(e){}
+  }
+  function mostrarError(t){ err.textContent=t; err.hidden=!t; }
+  function marcar(input, mal){ if(mal) input.setAttribute('aria-invalid','true'); else input.removeAttribute('aria-invalid'); }
+  var botones=sec.querySelectorAll('button[data-plan]');
+  botones.forEach(function(b){ b.addEventListener('click', async function(){
+    var plan=b.getAttribute('data-plan'), e=email.value.trim(), a=amigo.value.trim();
+    mostrarError(''); marcar(email,false); marcar(amigo,false);
+    if(!LP_PREMIUM.esEmail(e)){ marcar(email,true); email.focus(); return mostrarError(LP_PREMIUM.mensajeError('faltan_uid_o_email')); }
+    if(plan==='duo' && !LP_PREMIUM.esEmail(a)){ marcar(amigo,true); amigo.focus(); return mostrarError(LP_PREMIUM.mensajeError('falta_email_amigo')); }
+    var texto=b.textContent; botones.forEach(function(x){ x.disabled=true; }); b.textContent='Te estamos llevando a Flow…';
+    try{
+      var res=await fetch(LP_PREMIUM.WORKER+'/pago/crear',{ method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(plan==='duo'?{email:e, plan:plan, emailAmigo:a}:{email:e, plan:plan}) });
+      var data=await res.json().catch(function(){ return {}; });
+      if(res.ok && data.url && /^https:\/\/(www|sandbox)\.flow\.cl\//.test(data.url)){ location.href=data.url; return; }
+      if(data.error==='cuenta_inexistente') marcar(email,true);
+      if(data.error==='amigo_sin_cuenta'||data.error==='amigo_es_el_mismo') marcar(amigo,true);
+      mostrarError(LP_PREMIUM.mensajeError(data.error, e, a));
+    }catch(x){ mostrarError(LP_PREMIUM.mensajeError('red')); }
+    botones.forEach(function(x){ x.disabled=false; }); b.textContent=texto;
+  }); });
+})();
+</script>
 
 </body>
 </html>

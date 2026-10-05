@@ -33,7 +33,7 @@ const env = {
   GCP_SA_JSON: JSON.stringify({ client_email: 'sa@prueba.iam.gserviceaccount.com', private_key: privateKey }),
   FIREBASE_PROJECT_ID: PROYECTO,
   PUBLIC_URL: 'https://pagos.prueba',
-  APP_RETURN_URL: 'https://librepedal.cl/',
+  APP_RETURN_URL: 'https://librepedal.cl/landing.html',
 };
 
 // ---------- Firestore simulada ----------
@@ -298,7 +298,7 @@ console.log('worker-pagos: cobro del Premium con Flow (simulado)');
   const res = await worker.fetch(new Request('https://pagos.prueba/flow/volver', {
     method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token: tok }),
   }), env);
-  t('volver: 303 a la app con ?pago=pagado', res.status === 303 && res.headers.get('Location') === 'https://librepedal.cl/?pago=pagado');
+  t('volver: 303 a la landing con ?pago=pagado', res.status === 303 && res.headers.get('Location') === 'https://librepedal.cl/landing.html?pago=pagado');
   t('volver NO acredita nada (eso solo lo hace confirmar)', premiumDe('ana_gmail_com') === null);
 }
 
@@ -309,6 +309,24 @@ console.log('worker-pagos: cobro del Premium con Flow (simulado)');
   delete env.FLOW_PAYMENT_METHOD;
   t('paymentMethod enviado a Flow', flowOrdenes.get(tokenDe(r.data.url)).params.paymentMethod === '1');
   t('firma válida con paymentMethod', firmasMalas === 0);
+}
+
+{ // 17. Desde la landing (sin uid): la cuenta se busca por el correo, igual que el amigo del dúo
+  reiniciar(); crearUsuario('ana_gmail_com'); crearUsuario('beto_gmail_com');
+  const r = await crear({ email: ' Ana@Gmail.com ', plan: 'individual' });
+  t('landing: crear solo con correo -> 200', r.status === 200);
+  const o = flowOrdenes.get(tokenDe(r.data.url));
+  t('landing: la cuenta se resolvió a ana_gmail_com', JSON.parse(o.params.optional).uid === 'ana_gmail_com');
+  t('landing: correo sin cuenta -> cuenta_inexistente, sin orden en Flow',
+    (await crear({ email: 'nadie@gmail.com' })).data.error === 'cuenta_inexistente' && flowOrdenes.size === 1);
+  const d = await crear({ email: 'ana@gmail.com', plan: 'duo', emailAmigo: 'ana@gmail.com' });
+  t('landing: dúo consigo misma -> amigo_es_el_mismo', d.data.error === 'amigo_es_el_mismo');
+  const d2 = await crear({ email: 'ana@gmail.com', plan: 'duo', emailAmigo: 'beto@gmail.com' });
+  const o2 = flowOrdenes.get(tokenDe(d2.data.url));
+  t('landing: dúo resuelve las dos cuentas', JSON.parse(o2.params.optional).uid === 'ana_gmail_com' && JSON.parse(o2.params.optional).amigoUid === 'beto_gmail_com');
+  o2.status = 2;
+  await confirmarFlow(tokenDe(d2.data.url));
+  t('landing: dúo acredita a las dos', premiumDe('ana_gmail_com')?.activo && premiumDe('beto_gmail_com')?.activo);
 }
 
 { // 16. Sin secretos configurados: no se cobra nada
