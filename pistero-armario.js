@@ -94,12 +94,11 @@ var PIST_PELO_COL=[
   {id:'#34d399',n:'Menta'},{id:'#ef4444',n:'Rojo fuego'}
 ];
 var PIST_LENTES=[
-  {id:'',n:'Sin lentes'},{id:'deportivas',n:'Deportivas'},{id:'redondas',n:'Redondas'},{id:'aviador',n:'Aviador'},
-  {id:'escudo',n:'Escudo'},{id:'mascara',n:'Antiparras'},{id:'cuadrados',n:'Retro'},{id:'gato',n:'Ojo de gato'},
-  {id:'corazon',n:'Corazón'},{id:'estrella',n:'Estrella'}
+  {id:'',n:'Sin lentes'},{id:'escudo',n:'Escudo'},{id:'radar',n:'Radar'},{id:'sinmarco',n:'Sin marco'},
+  {id:'media',n:'Media montura'},{id:'completo',n:'Marco completo'},{id:'foto',n:'Fotocromáticas'}
 ];
 var PIST_LENTES_COL=[
-  {id:'#16203a',n:'Negro'},{id:'#1e40af',n:'Azul'},{id:'#fc4c02',n:'Naranja'},{id:'#ec4899',n:'Rosa'},
+  {id:'',n:'Del modelo'},{id:'#16203a',n:'Negro'},{id:'#1e40af',n:'Azul'},{id:'#fc4c02',n:'Naranja'},{id:'#ec4899',n:'Rosa'},
   {id:'#166534',n:'Verde'},{id:'#6d28d9',n:'Morado'},{id:'#b8860b',n:'Dorado'},{id:'#94a3b8',n:'Plata'},
   {id:'#0ea5e9',n:'Turquesa'},{id:'#dc2626',n:'Rojo'},{id:'#f59e0b',n:'Ámbar'}
 ];
@@ -130,7 +129,7 @@ var PIST_PANO=[
   {id:'#38bdf8',n:'Celeste'},{id:'#f8fafc',n:'Blanco'}
 ];
 
-var PIST_DEF={casco:'azul',piel:'claro',lentes:'',lentesCol:'#16203a',bigote:'',acc:'',pelo:'',peloCol:'#4a3222',pest:'',aro:'',pano:'',
+var PIST_DEF={casco:'azul',piel:'claro',lentes:'',lentesCol:'',bigote:'',acc:'',pelo:'',peloCol:'#4a3222',pest:'',aro:'',pano:'',
   diseno:'franja',disenoCol:'#fc4c02',gadget:'',marca:'',ojosCol:'',labios:'',cuello:'',
   acabado:'',accCol:'',gadgetCol:'',marcoCol:'',aroCol:'',biciTipo:'ruta',biciCol:'',
   biciCol2:'',motorTipo:'auto',biciSkin:'',biciAcab:'',biciNeum:'',biciAros:'',biciCarga:'',biciExtra:'',traje:'',mascota:'',estela:'',bandera:''};
@@ -293,20 +292,60 @@ function _aroSVG(id,col){
   if(id==='doble'){ var d=col||'#cbd5e1'; return '<g fill="none" stroke="'+d+'" stroke-width="1.4"><circle cx="15" cy="68" r="2.4"/><circle cx="85" cy="68" r="2.4"/><circle cx="14.6" cy="72.4" r="2.6"/><circle cx="85.4" cy="72.4" r="2.6"/></g>'; }
   return '';
 }
+// ===== LENTES DE CICLISMO (2026-10-05, aprobados por Inty) =====
+// Cada modelo sale de un lente real: Escudo = Oakley Sutro · Radar = Oakley Radar EV Path ·
+// Sin marco = POC Elicit · Media montura = Decathlon Perf / POC Aspire · Marco completo = Oakley
+// Jawbreaker / Decathlon · Fotocromáticas = POC Aspire Photochromic.
+// Estilo: "V" desde el puente hacia afuera (nunca caídos), sin patillas (Pistero no tiene orejas),
+// espejo con transparencia (se ven los ojos), sol en el cristal, sombra sobre la cara.
+// Medidas (tests/lentes-geometria.test.mjs): tapan los ojos (40,63)/(60,63) rx 6.2 ry 7.6 con margen,
+// no suben al casco (y>=54), no salen de la cara y no tapan la sonrisa.
+// Ids antiguos -> modelo más parecido (nadie pierde lo que ya tenía puesto).
+var PIST_LENTES_VIEJOS={deportivas:'radar',mascara:'sinmarco',cuadrados:'completo',redondas:'foto',aviador:'media',gato:'media',corazon:'radar',estrella:'escudo'};
+var _LENTE_IRIS={
+  fuego:[[0,'#fff3a3',.35],[.35,'#ffffff',0],[.7,'#ff2d6f',.22],[1,'#7c1d6f',.3]],
+  arcoiris:[[0,'#ffd166',.32],[.25,'#06d6a0',.22],[.5,'#ffffff',0],[.72,'#118ab2',.24],[1,'#c026d3',.32]],
+  verde:[[0,'#d9f99d',.3],[.4,'#ffffff',0],[1,'#22d3ee',.28]],
+  violeta:[[0,'#f0abfc',.3],[.45,'#ffffff',0],[1,'#60a5fa',.26]],
+  humo:[[0,'#ffffff',.14],[.5,'#ffffff',0],[1,'#94a3b8',.16]],
+  claro:[[0,'#ffffff',.25],[.5,'#e0f2fe',.08],[1,'#ffffff',.2]]
+};
+function _lpEsp(d){ return d.replace(/(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g,function(_,x,y){ return (Math.round((100-parseFloat(x))*100)/100)+' '+y; }); }
+var _LENTE_FORMA={
+  escudo:'M50 56 C48.2 55 46.4 54.3 43.6 54.2 L27.6 54.1 Q24.8 54.1 24.8 56.8 C25 61.6 26 66.6 28.8 70.2 C31.8 73.2 38.4 73.6 42.8 71.8 C45 71 46.4 69.4 47.4 67.4 Q50 63.8 52.6 67.4 C53.6 69.4 55 71 57.2 71.8 C61.6 73.6 68.2 73.2 71.2 70.2 C74 66.6 75 61.6 75.2 56.8 Q75.2 54.1 72.4 54.1 L56.4 54.2 C53.6 54.3 51.8 55 50 56 Z',
+  radar:'M50 56 C48.2 55 46.4 54.3 43.6 54.2 L28.4 54.1 Q25.8 54.1 26 56.6 C26.4 61 27.2 65.2 29.6 68.4 C31.6 70.6 34 71.6 36.6 72.6 C39.6 73.4 42.6 72.6 44.6 71 C46 69.8 46.9 68 47.8 66.2 Q50 63.4 52.2 66.2 C53.1 68 54 69.8 55.4 71 C57.4 72.6 60.4 73.4 63.4 72.6 C66 71.6 68.4 70.6 70.4 68.4 C72.8 65.2 73.6 61 74 56.6 Q74.2 54.1 71.6 54.1 L56.4 54.2 C53.6 54.3 51.8 55 50 56 Z',
+  sinmarco:'M50 56.2 C48.2 55.1 46.4 54.4 43.6 54.25 L27.8 54.15 Q25.2 54.2 25.4 57.4 C25.8 62.6 27.4 67.2 30.6 70.4 C34 73.2 40.4 73.4 44 71.6 C45.8 70.6 47 68.8 47.9 66.8 Q50 64.6 52.1 66.8 C53 68.8 54.2 70.6 56 71.6 C59.6 73.4 66 73.2 69.4 70.4 C72.6 67.2 74.2 62.6 74.6 57.4 Q74.8 54.2 72.2 54.15 L56.4 54.25 C53.6 54.4 51.8 55.1 50 56.2 Z',
+  media:'M48.2 57 C47.6 55.6 46.4 54.4 44 54.25 L29.8 54.15 Q27.2 54.1 27.4 57 C27.8 62.4 29 67.4 32.4 70.6 C35.6 73.4 41.2 73.4 44.4 71 C46.8 69.2 48 65.6 48.2 61.6 Z',
+  completo:'M48 57.2 C47.4 55.8 46.2 54.6 43.8 54.4 L30.4 54.25 Q27.8 54.2 28 57.2 C28.4 62.4 29.4 67.2 32.6 70.4 C35.8 73.2 41.2 73.2 44.2 70.8 C46.6 69 47.8 65.4 48 61.4 Z'
+};
+_LENTE_FORMA.media+=' '+_lpEsp(_LENTE_FORMA.media); _LENTE_FORMA.completo+=' '+_lpEsp(_LENTE_FORMA.completo); _LENTE_FORMA.foto=_LENTE_FORMA.radar;
+var _LENTE_MODELO={ // color de mica y de marco propios de cada modelo (si el usuario no elige otro)
+  escudo:{col:'#ff6a1a',f:'#121722',iris:'fuego'}, radar:{col:'#5b21b6',f:'#111827',iris:'arcoiris'},
+  sinmarco:{col:'#15803d',f:'#cbd5e1',iris:'verde'}, media:{col:'#7e22ce',f:'#141a26',iris:'violeta'},
+  completo:{col:'#334155',f:'#1f2430',iris:'humo'}, foto:{col:'#b6c3d4',f:'#f1f5f9',iris:'claro',op:[.5,.3,.16]}
+};
+// Barra superior: sigue el borde (plano sobre los ojos, "V" desde el puente). x0 = punta exterior izquierda.
+function _lenteBarra(x0){ var a=(x0+2.6).toFixed(1), b=(100-x0-2.6).toFixed(1), c=100-x0;
+  return 'M'+x0+' 55.4 Q'+x0+' 54.1 '+a+' 54.1 L43.6 54.2 C46.4 54.3 48.2 55 50 56 C51.8 55 53.6 54.3 56.4 54.2 L'+b+' 54.1 Q'+c+' 54.1 '+c+' 55.4'; }
+var _LENTE_LUZ='M28.4 53.35 L43.6 53.45 C46.4 53.55 48.2 54.25 50 55.2 C51.8 54.25 53.6 53.55 56.4 53.45 L71.6 53.35';
 function _lentesSVG(id, col, marco){
-  col=col||'#16203a';
-  function M(def){ return marco||def; }
-  var brillo='<path d="M32 60.5 L36 58.6 M52 60.5 L56 58.6" stroke="rgba(255,255,255,.55)" stroke-width="1.1" stroke-linecap="round"/>', f;
-  if(id==='deportivas') return '<path d="M28 58 Q50 56 72 58 Q73 63 70 68 Q50 66 30 68 Q27 63 28 58 Z" fill="'+col+'" opacity=".92"'+(marco?' stroke="'+marco+'" stroke-width="1.6"':'')+'/><path d="M29 58.5 Q50 56.5 71 58.5" stroke="rgba(255,255,255,.45)" stroke-width="1.2" fill="none"/><path d="M48 61.5 L52 61.5" stroke="'+M('#0b1220')+'" stroke-width="2"/>';
-  if(id==='redondas'){ f=M('#3a3f52'); return '<g stroke="'+f+'" stroke-width="1.8" fill="'+col+'" fill-opacity=".55"><circle cx="40" cy="63" r="8"/><circle cx="60" cy="63" r="8"/></g><path d="M48 63 L52 63" stroke="'+f+'" stroke-width="1.8"/><path d="M32 62 L26.5 60.5" stroke="'+f+'" stroke-width="1.6" fill="none"/><path d="M68 62 L73.5 60.5" stroke="'+f+'" stroke-width="1.6" fill="none"/>'; }
-  if(id==='aviador'){ f=M('#c9a227'); return '<g stroke="'+f+'" stroke-width="1.3"><path d="M31 59.5 Q41 58.5 48.5 60.5 Q48.5 68 40 68.5 Q31.5 68 31 60.5 Z" fill="'+col+'" opacity=".85"/><path d="M69 59.5 Q59 58.5 51.5 60.5 Q51.5 68 60 68.5 Q68.5 68 69 60.5 Z" fill="'+col+'" opacity=".85"/><path d="M48.5 60.5 Q50 60 51.5 60.5" fill="none"/><path d="M31 60 L26.5 58.5" fill="none"/><path d="M69 60 L73.5 58.5" fill="none"/></g>'; }
-  if(id==='escudo') return '<path d="M25 57 Q50 52.5 75 57 Q76.5 65 71 70.5 Q61 72.5 53 67.5 Q50 65.5 47 67.5 Q39 72.5 29 70.5 Q23.5 65 25 57 Z" fill="'+col+'" opacity=".93"'+(marco?' stroke="'+marco+'" stroke-width="1.8"':'')+'/><path d="M27 58 Q50 54 73 58" stroke="rgba(255,255,255,.5)" stroke-width="1.3" fill="none"/><path d="M31 66 Q37 62 44 60" stroke="rgba(255,255,255,.25)" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
-  if(id==='mascara'){ f=M('#111827'); return '<path d="M26 61 L13 58 M74 61 L87 58" stroke="'+f+'" stroke-width="3.2" stroke-linecap="round"/><rect x="25.5" y="54.5" width="49" height="16" rx="7.5" fill="'+col+'" opacity=".88" stroke="'+f+'" stroke-width="2.2"/><path d="M29 59 Q38 56.5 47 58" stroke="rgba(255,255,255,.55)" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M47.5 70.5 Q50 66.5 52.5 70.5" fill="'+f+'"/>'; }
-  if(id==='cuadrados'){ f=M('#2b2f3d'); return '<g stroke="'+f+'" stroke-width="2" fill="'+col+'" fill-opacity=".5"><rect x="31.5" y="56.5" width="16" height="13" rx="2.2"/><rect x="52.5" y="56.5" width="16" height="13" rx="2.2"/></g><path d="M47.5 61.5 Q50 60 52.5 61.5" stroke="'+f+'" stroke-width="2" fill="none"/><path d="M31.5 59 L26 58 M68.5 59 L74 58" stroke="'+f+'" stroke-width="1.6"/>'+brillo; }
-  if(id==='gato'){ f=M('#111827'); return '<g fill="'+col+'" fill-opacity=".7" stroke="'+f+'" stroke-width="1.7" stroke-linejoin="round"><path d="M27 55.5 Q38 57.5 48 59.5 Q48 67.5 40.5 68.5 Q32.5 68.5 31 61.5 Z"/><path d="M73 55.5 Q62 57.5 52 59.5 Q52 67.5 59.5 68.5 Q67.5 68.5 69 61.5 Z"/></g><path d="M48 60 Q50 59 52 60" stroke="'+f+'" stroke-width="1.7" fill="none"/>'+brillo; }
-  if(id==='corazon'){ f=M('#be185d'); return '<g fill="'+col+'" fill-opacity=".78" stroke="'+f+'" stroke-width="1.5"><path d="'+_lpHeart(40,62.5,6.6)+'"/><path d="'+_lpHeart(60,62.5,6.6)+'"/></g><path d="M46.5 60.5 Q50 59 53.5 60.5" stroke="'+f+'" stroke-width="1.5" fill="none"/><path d="M31 59 L26.5 58 M69 59 L73.5 58" stroke="'+f+'" stroke-width="1.4"/>'+brillo; }
-  if(id==='estrella'){ f=M('#ca8a04'); return '<g fill="'+col+'" fill-opacity=".78" stroke="'+f+'" stroke-width="1.4" stroke-linejoin="round"><path d="'+_lpStar(40,63.5,9.5,4.6)+'"/><path d="'+_lpStar(60,63.5,9.5,4.6)+'"/></g><path d="M47.5 61 Q50 60 52.5 61" stroke="'+f+'" stroke-width="1.4" fill="none"/>'; }
-  return '';
+  id=PIST_LENTES_VIEJOS[id]||id;
+  var M=_LENTE_MODELO[id], D=_LENTE_FORMA[id]; if(!M||!D) return '';
+  var u=++_lpUid, c=(_LP_HEX.test(col||'')?col:M.col), f=(_LP_HEX.test(marco||'')?marco:M.f), op=M.op||[.95,.74,.5];
+  var defs='<defs><linearGradient id="lT'+u+'" gradientUnits="userSpaceOnUse" x1="0" y1="53" x2="0" y2="73"><stop offset="0" stop-color="'+_lpShade(c,-.5)+'" stop-opacity="'+op[0]+'"/><stop offset=".5" stop-color="'+c+'" stop-opacity="'+op[1]+'"/><stop offset="1" stop-color="'+_lpShade(c,.45)+'" stop-opacity="'+op[2]+'"/></linearGradient>'
+    +'<linearGradient id="lI'+u+'" gradientUnits="userSpaceOnUse" x1="22" y1="54" x2="78" y2="73">'+_LENTE_IRIS[M.iris].map(function(s){ return '<stop offset="'+s[0]+'" stop-color="'+s[1]+'" stop-opacity="'+s[2]+'"/>'; }).join('')+'</linearGradient>'
+    +'<linearGradient id="lF'+u+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+_lpShade(f,.42)+'"/><stop offset=".5" stop-color="'+f+'"/><stop offset="1" stop-color="'+_lpShade(f,-.3)+'"/></linearGradient>'
+    +'<clipPath id="lC'+u+'"><path d="'+D+'"/></clipPath></defs>';
+  var F='url(#lF'+u+')';
+  var sol='<path d="M31.8 61.4 Q33.8 57.6 39.4 57" fill="none" stroke="#fff" stroke-opacity=".82" stroke-width="1.15" stroke-linecap="round"/><path d="M34 64.4 Q34.6 62.8 36.2 61.9" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width=".8" stroke-linecap="round"/><path d="M60.6 57.6 Q64.8 57.8 67.2 60.2" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width=".85" stroke-linecap="round"/>';
+  var s=defs+'<path d="'+D+'" transform="translate(.45 1.35)" fill="#7a4a2a" fill-opacity=".17"/><path d="'+D+'" fill="url(#lT'+u+')"/><g clip-path="url(#lC'+u+')"><path d="'+D+'" fill="url(#lI'+u+')"/>'+sol+'</g>';
+  if(id==='escudo') s+='<path d="'+D+'" fill="none" stroke="'+F+'" stroke-width="1.7" stroke-linejoin="round"/><path d="'+_lenteBarra(25)+'" fill="none" stroke="'+F+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="'+_LENTE_LUZ+'" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width=".5" stroke-linecap="round"/><path d="M47 67.6 Q50 63.2 53 67.6" fill="none" stroke="'+F+'" stroke-width="2" stroke-linecap="round"/>';
+  else if(id==='radar') s+='<path d="'+D+'" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width=".5"/><path d="'+_lenteBarra(26)+'" fill="none" stroke="'+F+'" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="'+_LENTE_LUZ+'" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width=".5" stroke-linecap="round"/><path d="M30 54.1 L35 54.15 M65 54.15 L70 54.1" stroke="#fc4c02" stroke-width="1.1" stroke-linecap="round"/>';
+  else if(id==='sinmarco') s+='<path d="'+D+'" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width=".55"/><path d="M47.4 56.9 Q50 55.4 52.6 56.9" fill="none" stroke="'+F+'" stroke-width="1.4" stroke-linecap="round"/>';
+  else if(id==='media') s+='<path d="'+D+'" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width=".5"/><path d="M27.4 56.4 Q27.2 54.1 29.8 54.15 L44 54.25 C46.4 54.4 47.6 55.6 48.2 57 Q50 56 51.8 57 C52.4 55.6 53.6 54.4 56 54.25 L70.2 54.15 Q72.8 54.1 72.6 56.4" fill="none" stroke="'+F+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M30.4 53.4 L44 53.5 C46 53.6 47 54.4 47.6 55.4 M52.4 55.4 C53 54.4 54 53.6 56 53.5 L69.6 53.4" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width=".5" stroke-linecap="round"/>';
+  else if(id==='completo') s+='<path d="'+D+'" fill="none" stroke="'+F+'" stroke-width="2" stroke-linejoin="round"/><path d="M47.6 57.6 Q50 56.2 52.4 57.6" fill="none" stroke="'+F+'" stroke-width="2.2" stroke-linecap="round"/><path d="M35.4 71.6 L37.4 72.2 M39.8 72.4 L41.8 72.1 M58.2 72.1 L60.2 72.4 M62.6 72.2 L64.6 71.6" stroke="#0b0f17" stroke-width=".9" stroke-linecap="round"/>';
+  else if(id==='foto') s+='<path d="'+D+'" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width=".55"/><path d="'+_lenteBarra(26)+'" fill="none" stroke="'+F+'" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".92"/><path d="M28.4 54.6 L43.6 54.7 C46.4 54.8 48.2 55.5 50 56.4 C51.8 55.5 53.6 54.8 56.4 54.7 L71.6 54.6" fill="none" stroke="#94a3b8" stroke-opacity=".5" stroke-width=".45" stroke-linecap="round"/>';
+  return s+'<path d="M43.4 57.2 L43.85 58.75 L45.4 59.2 L43.85 59.65 L43.4 61.2 L42.95 59.65 L41.4 59.2 L42.95 58.75 Z" fill="#fff" fill-opacity=".92"/>';
 }
 function _pestanasSVG(tipo){
   var k=(tipo==='largas')?1.5:1;
@@ -343,6 +382,8 @@ function _pistNormal(o){
   // los campos undefined (p.ej. un doc de Firestore viejo) NO pisan el default
   var r=Object.assign({},PIST_DEF); o=o||{}; for(var k in o){ if(o[k]!==undefined && o[k]!==null) r[k]=o[k]; }
   if(r.pelo==='mono') r.pelo='cola';
+  // lentes de antes del 2026-10-05 -> el modelo de ciclismo más parecido (ver PIST_LENTES_VIEJOS)
+  if(PIST_LENTES_VIEJOS[r.lentes]) r.lentes=PIST_LENTES_VIEJOS[r.lentes];
   // Quien eligió cromo/cobre/dorado/perla/neón antes de v2 no tenía acabado aparte:
   // se le da el acabado que esa opción traía incluido.
   if(o.acabado===undefined||o.acabado===null){ var hd=PIST_CASCO.find(function(h){return h.id===r.casco;}); r.acabado=(hd&&(hd.fx==='metal'||hd.fx==='perla'||hd.fx==='neon'))?hd.fx:''; }

@@ -32,7 +32,7 @@ var PIST_TIER={
   diseno:{doble:'r',chile:'r',rayo:'r',cuadros:'r',estrellas:'r',lunares:'r',ondas:'r',zigzag:'r',corazones:'r',numero:'r',llamas:'e',tigre:'e',camuflaje:'e'},
   acc:{camara:'r',cresta:'r',antena:'r',gato:'r',oso:'r',conejo:'r',flor:'r',lazo:'r',brote:'r',estrella:'r',diablo:'r',vikingo:'e',unicornio:'e',helice:'e',pinchos:'e',dino:'e',corona:'l',aureola:'l',alas:'l'},
   gadget:{gopro:'r',espejo:'r',banderin:'r'},
-  lentes:{aviador:'r',cuadrados:'r',gato:'r',corazon:'r',estrella:'r',escudo:'e',mascara:'e'},
+  lentes:{sinmarco:'r',media:'r',escudo:'e',radar:'e'},   // Marco completo y Fotocromáticas: gratis
   peloCol:{'#f472b6':'r','#a78bfa':'r','#3b82f6':'r','#34d399':'r','#ef4444':'r'},
   marca:{barro:'r',curita:'r',corazon:'r',brillos:'r',guerrero:'r'},
   aro:{estrella:'r',corazon:'r',colgante:'r',doble:'r'},
