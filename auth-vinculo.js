@@ -107,7 +107,7 @@ window.onload = async function(){
     setTimeout(function(){
       h(saludoBienvenida(nombreUsuario));
       _esperarFinVoz(function(){
-        if(typeof abrirEsfera==='function') abrirEsfera();
+        _abrirEsferaSiSigueEnInicio();
         if(manosLibresOn) _iniciarEscuchaContinua();
       });
     },500);

@@ -811,6 +811,9 @@ body{padding-bottom:calc(var(--lp-nav-h,70px) + 12px)}
 body[data-vista="map"] #micBtn{display:flex;align-items:center;justify-content:center;width:58px;height:58px;bottom:calc(84px + env(safe-area-inset-bottom,0px));border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff8a4c,#fc4c02 60%,#c43a00);box-shadow:0 6px 16px rgba(252,76,2,.45),0 0 0 3px rgba(10,15,29,.85);color:#fff;opacity:1}
 /* en el Mapa es un micrófono, no otra cara: Pistero ya está en la barra de abajo */
 body[data-vista="map"] #micBtn .orb-cara{display:none}
+/* En "Pregúntale a Pistero" sus respuestas ya salen en el chat: el globo de subtítulos y el botón web de
+   instalar tapaban la caja para escribir (revisión 2026-10-05). */
+body[data-vista="pistero"] #pisteroBubble,body[data-vista="pistero"] #pwaInstall{display:none!important}
 body[data-vista="map"] #micBtn i.mic-ico{display:block;font-size:1.5rem;line-height:1}
 body[data-vista="map"] #micBtn.listening{box-shadow:0 0 0 3px rgba(10,15,29,.85),0 0 0 7px rgba(252,76,2,.45),0 6px 16px rgba(252,76,2,.45)}
 body[data-vista="map"]{padding-bottom:calc(var(--lp-nav-h,70px) + 80px)}

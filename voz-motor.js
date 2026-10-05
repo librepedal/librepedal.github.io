@@ -355,6 +355,12 @@ function _durEstVoz(txt){ return Math.min(55000, Math.max(1800, txt.length*75));
    600ms no es adorno: sin él la esfera se abría EXACTO en la última sílaba del
    saludo y se sentía atropellado (lo notó Inty el 2026-08-17). Una persona
    deja pasar un instante entre que termina de hablar y hace lo siguiente. */
+// 2026-10-05: tras el saludo se abría la Esfera aunque el usuario ya se hubiera ido a otra pantalla
+// (lo sacaba de Ajustes o del Armario a mitad de camino). Solo se abre si sigue en Inicio.
+function _abrirEsferaSiSigueEnInicio(){
+  var v=document.body.getAttribute('data-vista');
+  if((!v||v==='dash') && typeof abrirEsfera==='function') abrirEsfera();
+}
 function _esperarFinVoz(cb, maxEsperaMs, respiroMs){
   var limite=Date.now()+(maxEsperaMs||20000);
   var respiro=(respiroMs==null)?600:respiroMs;

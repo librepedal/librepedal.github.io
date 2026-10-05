@@ -180,12 +180,12 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   if(localStorage.getItem('lp_tut_'+cu)!=='done'){
     setTimeout(function(){
       _pisteroIntroPrimeraVez(nombre);
-      _esperarFinVoz(function(){ if(cu) localStorage.setItem('lp_tut_'+cu,'done'); if(typeof abrirEsfera==='function') abrirEsfera(); });
+      _esperarFinVoz(function(){ if(cu) localStorage.setItem('lp_tut_'+cu,'done'); _abrirEsferaSiSigueEnInicio(); });
     }, 500);
   } else {
     setTimeout(function(){
       if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre));
-      _esperarFinVoz(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); });
+      _esperarFinVoz(_abrirEsferaSiSigueEnInicio);
     },600);
   }
 }
