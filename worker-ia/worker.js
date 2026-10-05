@@ -357,6 +357,101 @@ async function _limiteIP(env, ip) {
     return true;
   } catch (e) { return true; } // si la Cache API falla, no bloqueamos voz por un problema nuestro
 }
+// ===== Límite diario del chat para quien no es Premium (decisión de Inty, 2026-10-05) =====
+// Apagado mientras no exista la variable CHAT_GRATIS_POR_DIA (así publicar este código no
+// cambia nada); se enciende el 2026-11-01 junto con GATE_PREMIUM_ACTIVO de voz-motor.js.
+// Quién es el usuario lo dice el ID token de Firebase que manda la app, verificado acá con
+// las llaves públicas de Google (mismo issuer/audience que worker-auth). Sin token válido,
+// o con sesión anónima, el límite va por IP. Si es Premium (users/{uid}.premium, que solo
+// escribe worker-pagos) no hay límite.
+// El contador usa la Cache API, igual que _limiteIP: cada datacenter lleva el suyo. Es un
+// freno de costo "best-effort", no un control de seguridad -- mismo criterio de arriba.
+const FIREBASE_PROYECTO = "librepedal-cb983";
+const JWKS_SECURETOKEN = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
+// Sin link ni precio a propósito: este texto se ve dentro de la app de Play, y en Chile
+// Google no permite llevar al usuario a pagar fuera de Play.
+const MSJ_LIMITE_CHAT = "Por hoy llegamos al límite de conversación, compa. Mañana seguimos. La navegación y los avisos por voz siguen funcionando igual.";
+
+function _b64urlBytes(s) {
+  const b = atob(String(s).replace(/-/g, "+").replace(/_/g, "/") + "===".slice((String(s).length + 3) % 4));
+  return Uint8Array.from(b, (c) => c.charCodeAt(0));
+}
+let _jwksCache = null, _jwksHasta = 0;
+async function _jwks() {
+  if (_jwksCache && Date.now() < _jwksHasta) return _jwksCache;
+  const r = await fetch(JWKS_SECURETOKEN);
+  if (!r.ok) throw new Error("jwks " + r.status);
+  _jwksCache = (await r.json()).keys || [];
+  _jwksHasta = Date.now() + 60 * 60 * 1000;
+  return _jwksCache;
+}
+// Devuelve { uid, anonimo } si el token es un ID token real y vigente de este proyecto; si no, null.
+async function _usuarioDeIdToken(idToken) {
+  try {
+    if (typeof idToken !== "string" || idToken.length > 4096) return null;
+    const [h, p, s] = idToken.split(".");
+    if (!h || !p || !s) return null;
+    const cab = JSON.parse(new TextDecoder().decode(_b64urlBytes(h)));
+    if (cab.alg !== "RS256" || !cab.kid) return null;
+    const jwk = (await _jwks()).find((k) => k.kid === cab.kid);
+    if (!jwk) return null;
+    const llave = await crypto.subtle.importKey("jwk", { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: "RS256", ext: true },
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+    const ok = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", llave, _b64urlBytes(s), new TextEncoder().encode(h + "." + p));
+    if (!ok) return null;
+    const d = JSON.parse(new TextDecoder().decode(_b64urlBytes(p)));
+    const ahora = Math.floor(Date.now() / 1000);
+    if (d.iss !== "https://securetoken.google.com/" + FIREBASE_PROYECTO || d.aud !== FIREBASE_PROYECTO) return null;
+    if (!d.sub || typeof d.sub !== "string" || !(d.exp > ahora) || (d.iat && d.iat > ahora + 300)) return null;
+    const proveedor = d.firebase && d.firebase.sign_in_provider;
+    return { uid: d.sub, anonimo: proveedor === "anonymous" };
+  } catch (e) { return null; }
+}
+// users/{uid} es de lectura pública (firestore.rules), así que basta la API REST sin llave.
+async function _esPremiumUid(uid) {
+  if (!/^[A-Za-z0-9_]{3,200}$/.test(uid)) return false;
+  const clave = new Request("https://premium.interno.worker/" + encodeURIComponent(uid));
+  try {
+    const cache = caches.default;
+    const hit = await cache.match(clave);
+    if (hit) return (await hit.text()) === "1";
+    const r = await fetch("https://firestore.googleapis.com/v1/projects/" + FIREBASE_PROYECTO + "/databases/(default)/documents/users/" + uid + "?mask.fieldPaths=premium");
+    let es = false;
+    if (r.ok) {
+      const f = (((await r.json()).fields || {}).premium || {}).mapValue;
+      const pf = (f && f.fields) || {};
+      const expira = Number((pf.expira && (pf.expira.integerValue || pf.expira.doubleValue)) || 0);
+      es = !!(pf.activo && pf.activo.booleanValue === true) && (!expira || expira > Date.now());
+    }
+    await cache.put(clave, new Response(es ? "1" : "0", { headers: { "Cache-Control": "max-age=600" } }));
+    return es;
+  } catch (e) { return false; }
+}
+function _diaChile() {
+  try { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(new Date()); }
+  catch (e) { return new Date().toISOString().slice(0, 10); }
+}
+// true = puede seguir conversando (y deja contado este mensaje).
+async function _cuotaChat(quien, limite) {
+  const clave = new Request("https://chat.interno.worker/" + encodeURIComponent(quien) + "/" + _diaChile());
+  try {
+    const cache = caches.default;
+    const previo = await cache.match(clave);
+    const usados = previo ? parseInt(await previo.text(), 10) || 0 : 0;
+    if (usados >= limite) return false;
+    await cache.put(clave, new Response(String(usados + 1), { headers: { "Cache-Control": "max-age=93600" } }));
+    return true;
+  } catch (e) { return true; } // si la Cache API falla, no se le corta el chat a nadie
+}
+async function _chatPermitido(env, body, ip) {
+  const limite = parseInt(env.CHAT_GRATIS_POR_DIA || "0", 10);
+  if (!(limite > 0)) return true;
+  const u = await _usuarioDeIdToken(body && body.idToken);
+  if (u && !u.anonimo && (await _esPremiumUid(u.uid))) return true;
+  const quien = u && !u.anonimo ? "u:" + u.uid : "ip:" + (ip || "sin-ip");
+  return _cuotaChat(quien, limite);
+}
+
 async function _presupuestoDiario(env, chars) {
   if (!env.VOZ_CUOTA) return true;
   const hoy = new Date().toISOString().slice(0, 10);
@@ -991,6 +1086,9 @@ export default {
       // al modelo sin límite -- gratis por request pero no gratis en agregado ni en
       // latencia real para gente usando la app de verdad.
       if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      if (!(await _chatPermitido(env, body, clientIP))) {
+        return new Response(JSON.stringify({ respuesta: MSJ_LIMITE_CHAT, modelo: "limite", limite: true }), { headers: { ...cors, "Content-Type": "application/json" } });
+      }
       if (esIntentoSaltarReglas(body.mensaje)) {
         return new Response(JSON.stringify({ respuesta: "Mis reglas no cambian, compa: lo mío es tu ruta y Libre Pedal. ¿Te ayudo a planear la próxima salida?", modelo: "filtro" }), { headers: { ...cors, "Content-Type": "application/json" } });
       }

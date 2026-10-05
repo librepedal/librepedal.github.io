@@ -97,6 +97,16 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     coords=(coords||[]).filter(function(c){ return c && isFinite(c[0]) && isFinite(c[1]); });
     coords=_sbvLimpiar(coords,modo);
     if(coords.length<2){ if(typeof h==='function') h('No hay suficiente recorrido para el sobrevuelo.'); if(onEnd)onEnd(); return; }
+    // Premium (decisión de Inty, 2026-10-05): sin Premium el sobrevuelo es un adelanto del
+    // primer cuarto del recorrido. Mientras GATE_PREMIUM_ACTIVO sea false, _esPremium() da
+    // true para todos y nadie nota cambio. El aviso no menciona dónde pagar a propósito:
+    // dentro de la app de Play no se puede llevar a pagar fuera de Play (Chile).
+    var vistaPrevia=(typeof _esPremium==='function') && !_esPremium();
+    if(vistaPrevia){
+      coords=coords.slice(0, Math.max(2, Math.ceil(coords.length*0.25)));
+      var _finOriginal=onEnd;
+      onEnd=function(){ if(typeof h==='function') h('Ese fue un adelanto. El sobrevuelo completo es parte de Libre Pedal Premium.'); if(_finOriginal) _finOriginal(); };
+    }
     detenerSobrevuelo();
     var accent=(getComputedStyle(document.documentElement).getPropertyValue('--p')||'').trim()||'#fc4c02';
     _sbvLine=mlPolyline(coords,{color:accent,weight:5,opacity:0.95}).addTo(mp);

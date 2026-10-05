@@ -166,6 +166,13 @@ async function preguntarPistero(){
       hospedajes:hosp,
       historial:pisteroHistorial.slice(-12)
     };
+    // ID token de Firebase (2026-10-05): con él worker-ia sabe quién es y si es Premium, para
+    // el límite diario de chat de los que no lo son. Si no hay sesión o tarda, se manda sin
+    // token y el límite va por IP; nunca bloquea la pregunta.
+    try{
+      const _u=(typeof firebase!=='undefined' && firebase.auth)?firebase.auth().currentUser:null;
+      if(_u) payload.idToken=await Promise.race([_u.getIdToken(), new Promise(function(r){ setTimeout(function(){ r(null); },3000); })]);
+    }catch(e){}
     try{
       // Con fetch() plano y sin timeout, si el Worker se cuelga (no cae, solo no
       // contesta) la burbuja "Pistero está pensando…" quedaba pegada PARA SIEMPRE —

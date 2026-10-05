@@ -39,6 +39,19 @@ Falta (con OK de Inty): llaves de sandbox de Flow, desplegar el worker con wrang
   programas de enlaces externos). Mockup: https://claude.ai/artifact/JUkrbDtrGYn2n6fow36fxc — esperando ✓ de Inty
   (precios $3.000/$4.000 y los 10 mensajes por confirmar).
 
+**Hecho en la misma rama (dormido hasta el 1/11, nada cambia para nadie al publicarlo):**
+- `landing.html`: sección Premium (paga con el correo de Libre Pedal; el worker busca la cuenta con cuDeEmail).
+  Oculta dentro de la app y antes del 2026-11-01; `?premium=ver` la muestra en el navegador para revisarla.
+- Chat: `worker-ia` verifica el ID token de Firebase (llaves públicas de Google), mira `users/{uid}.premium` y
+  cuenta mensajes por día (hora de Chile). **Apagado hasta poner la variable `CHAT_GRATIS_POR_DIA = "10"` en
+  worker-ia** (requiere desplegar worker-ia con wrangler). La app ya manda el token (`pistero-chat-ia.js`).
+- Sobrevuelo: sin Premium, adelanto del primer 25 % (`sobrevuelo-viaje.js`).
+- Viajes multi-destino: sin Premium, uno sin terminar a la vez (`funciones-mapa-viajes.js`, `_puedeGuardarOtroViaje`).
+- Sobrevuelo y viajes dependen de `_esPremium()`: se encienden con `GATE_PREMIUM_ACTIVO = true` (voz-motor.js).
+- Ningún aviso dentro de la app dice dónde ni cuánto pagar (Play). Lo exige `tests/premium-bloqueos.test.mjs` (32 casos).
+- **Pendiente de otra lane:** la marca de agua del video (rama `feature/compartir-redes` está rediseñando el video).
+  Regla de Inty: marca siempre; Premium ofrece quitarla y viene puesta.
+
 ---
 
 ## SEGURIDAD — 2026-08-19 — Inty (consola de Google Cloud) + Claude (sesión intyrivera, verificación) · claves de Firebase restringidas por origen — CERRADO
