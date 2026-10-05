@@ -868,10 +868,11 @@ function _gpxDeRuta(pts, nombre){
   pts.forEach(function(p){ gpx+='<trkpt lat="'+p.lat+'" lon="'+p.lon+'">'; if(p.alt!=null&&!isNaN(p.alt)) gpx+='<ele>'+p.alt+'</ele>'; const ts=p.timestamp||p.t; if(ts) gpx+='<time>'+new Date(ts).toISOString()+'</time>'; gpx+='</trkpt>\n'; });
   return gpx+'</trkseg></trk>\n</gpx>';
 }
+// Devuelve true solo si el archivo de verdad se entregó (ver entregar-archivo.js).
 function _descargarGPX(gpx, nombre){
-  const blob=new Blob([gpx],{type:'application/gpx+xml'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=(nombre||'libre-pedal-ruta').replace(/[^\w-]+/g,'_').slice(0,50)+'.gpx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },3000);
+  return lpEntregarArchivo(gpx, (nombre||'libre-pedal-ruta').replace(/[^\w-]+/g,'_').slice(0,50)+'.gpx', 'application/gpx+xml');
 }
-function exportarDatosGPX(){ if(gpsPoints.length===0){ lpAviso("No hay una ruta activa para exportar"); return; } _descargarGPX(_gpxDeRuta(gpsPoints,'Ruta Libre Pedal'),'libre-pedal-ruta'); h("Ruta exportada en GPX con elevación y tiempo. Súbela a Strava, Komoot o Wikiloc."); }
+async function exportarDatosGPX(){ if(gpsPoints.length===0){ lpAviso("No hay una ruta activa para exportar"); return; } if(await _descargarGPX(_gpxDeRuta(gpsPoints,'Ruta Libre Pedal'),'libre-pedal-ruta')) h("Ruta exportada en GPX con elevación y tiempo. Súbela a Strava, Komoot o Wikiloc."); }
 // IMPORTAR GPX: trae a Libre Pedal una ruta de Strava/Wikiloc/Komoot (o de un amigo).
 // Lee tracks (<trkpt>) o rutas (<rtept>), con elevación y tiempo si los trae, y la guarda
 // en tu historial para verla, ver su perfil, hacerle video o pedalearla.
@@ -940,7 +941,7 @@ function compartirViaje(id){
   }catch(e){ lpAviso(txt); }
 }
 function exportarRutaGPX(id){
-  function armar(pts,nombre){ if(!pts||!pts.length){ lpAviso('Esa ruta no tiene puntos para exportar.'); return; } _descargarGPX(_gpxDeRuta(pts,nombre), nombre); h('Ruta exportada en GPX. Súbela a Strava, Komoot o Wikiloc.'); }
+  function armar(pts,nombre){ if(!pts||!pts.length){ lpAviso('Esa ruta no tiene puntos para exportar.'); return; } _descargarGPX(_gpxDeRuta(pts,nombre), nombre).then(function(ok){ if(ok) h('Ruta exportada en GPX. Súbela a Strava, Komoot o Wikiloc.'); }); }
   const r=_rutaPorId(id);
   if(r&&r.points&&r.points.length){ armar(r.points, r.nombreRuta||('Ruta '+new Date(r.startTime).toLocaleDateString())); return; }
   // Exportar GPX es siempre de TU historial (botón dentro de "tus rutas") -- _traerPuntosRuta

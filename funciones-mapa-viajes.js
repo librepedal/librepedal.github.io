@@ -130,7 +130,7 @@ async function sincronizarDiarioNube(){
     });
   }catch(e){}
 }
-function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null, extras:typeof selectedExtras!=='undefined'?selectedExtras:[], piel:typeof selectedPiel!=='undefined'?selectedPiel:null, ojos:typeof selectedOjos!=='undefined'?selectedOjos:null, labios:typeof selectedLabios!=='undefined'?selectedLabios:null, vello:typeof selectedVello!=='undefined'?selectedVello:null, peinado:typeof selectedPeinado!=='undefined'?selectedPeinado:null, panuelo:typeof selectedPanuelo!=='undefined'?selectedPanuelo:null, unlocked:(typeof getDesbloqueados==='function'?getDesbloqueados():[])}, stats:us, pistOpts:(function(){try{return JSON.parse(localStorage.getItem('lp_pist_'+(cu||'anon'))||'null');}catch(e){return null;}})(), rutas:(typeof rutasLocales==='function'?rutasLocales():[]), diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){} }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); h('Respaldo descargado: tus rutas, diario, perfil y estadísticas. Guárdalo a salvo.'); }
+function exportarMisDatos(){ const data={ app:'Libre Pedal', version:APP_VERSION, exportado:new Date().toISOString(), usuario:cu, nombre:nombreUsuario, perfil:{helmet:typeof selectedHelmet!=='undefined'?selectedHelmet:null, skin:typeof selectedSkin!=='undefined'?selectedSkin:null, lens:typeof selectedLens!=='undefined'?selectedLens:null, extras:typeof selectedExtras!=='undefined'?selectedExtras:[], piel:typeof selectedPiel!=='undefined'?selectedPiel:null, ojos:typeof selectedOjos!=='undefined'?selectedOjos:null, labios:typeof selectedLabios!=='undefined'?selectedLabios:null, vello:typeof selectedVello!=='undefined'?selectedVello:null, peinado:typeof selectedPeinado!=='undefined'?selectedPeinado:null, panuelo:typeof selectedPanuelo!=='undefined'?selectedPanuelo:null, unlocked:(typeof getDesbloqueados==='function'?getDesbloqueados():[])}, stats:us, pistOpts:(function(){try{return JSON.parse(localStorage.getItem('lp_pist_'+(cu||'anon'))||'null');}catch(e){return null;}})(), rutas:(typeof rutasLocales==='function'?rutasLocales():[]), diario:[] }; const pre='lp_diario_'+(cu||'anon')+'_'; Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).sort().forEach(function(k){ try{ data.diario.push(JSON.parse(localStorage.getItem(k))); }catch(e){ console.warn('[respaldo] entrada de diario ilegible, se omite', k, e); } }); lpEntregarArchivo(JSON.stringify(data,null,2),'LibrePedal-respaldo-'+new Date().toISOString().slice(0,10)+'.json','application/json').then(function(entregado){ if(entregado) h('Respaldo listo: tus rutas, diario, perfil y estadísticas. Guárdalo a salvo.'); }); }
 function importarMisDatos(input){
   const f=input.files&&input.files[0]; if(!f) return;
   const r=new FileReader();
@@ -233,11 +233,8 @@ async function exportarUsuariosAdmin(){
       rows.push([ d.nombre||'', emails[doc.id]||'' ]);
     });
     const csv=rows.map(function(r){ return r.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
-    const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a');
-    a.href=url; a.download='LibrePedal-usuarios-'+new Date().toISOString().slice(0,10)+'.csv';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    h('Descargado: '+( snap.size)+' usuarios en el CSV. Ábrelo en Excel.');
+    const entregado=await lpEntregarArchivo('﻿'+csv,'LibrePedal-usuarios-'+new Date().toISOString().slice(0,10)+'.csv','text/csv;charset=utf-8');
+    if(entregado) h('Descargado: '+( snap.size)+' usuarios en el CSV. Ábrelo en Excel.');
   }catch(e){ lpAviso('No se pudo exportar: '+(e.message||e)); }
 }
 

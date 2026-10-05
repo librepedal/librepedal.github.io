@@ -555,10 +555,7 @@ function grabarVideoRuta(){
     recorder.ondataavailable=function(e){ if(e.data&&e.data.size>0) videoChunks.push(e.data); };
     recorder.onstop=function(){
       const blob=new Blob(videoChunks,{type:mime.split(';')[0]});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.'+extension; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(function(){ URL.revokeObjectURL(url); },4000);
-      document.getElementById('video-status').innerText='¡Video descargado! Ya lo puedes compartir.';
+      lpEntregarArchivo(blob,'libre-pedal-ruta.'+extension,mime.split(';')[0]).then(function(entregado){ var st=document.getElementById('video-status'); if(st) st.innerText=entregado?'¡Video listo! Ya lo puedes compartir.':'El video no se guardó.'; });
       document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar y descargar';
       if(videoStream){ videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream=null; }
     };

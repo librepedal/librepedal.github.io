@@ -151,11 +151,7 @@ function mostrarResumenAnual(){
   document.body.appendChild(overlay);
   document.getElementById('wrappedCerrar').onclick=function(){ overlay.remove(); };
   document.getElementById('wrappedDescargar').onclick=function(){
-    canvas.toBlob(function(blob){
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download='libre-pedal-'+anio+'.png'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(function(){ URL.revokeObjectURL(url); },4000);
-    });
+    canvas.toBlob(function(blob){ lpEntregarArchivo(blob,'libre-pedal-'+anio+'.png','image/png'); });
   };
   if(navigator.share){
     document.getElementById('wrappedCompartir').onclick=function(){
