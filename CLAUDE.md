@@ -1,4 +1,16 @@
-# LibrePedal — reglas de coordinación (LÉELAS, son obligatorias)
+# LibrePedal — reglas obligatorias (se cargan solas en cada sesión)
+
+> 🛑 **Antes de cualquier cosa, cumple el PROTOCOLO OBLIGATORIO** (se importa aquí abajo y queda en tu
+> contexto). Investigar antes de hacer, referencias reales antes de diseñar, verificar uno mismo antes de
+> entregar, cero errores. Un incumplimiento es un error, no una opción.
+
+@COORDINACION-IA/PROTOCOLO-OBLIGATORIO.md
+@COORDINACION-IA/METODO-DE-TRABAJO-INTY.md
+@COORDINACION-IA/diseno-ui/METODO-TRABAJO-DISENO.md
+@COORDINACION-IA/diseno-ui/LEY-DISENO-BENCHMARK.md
+@COORDINACION-IA/vision-doctrina/PROMPT-MAESTRO-CALIDAD.md
+
+# Reglas de coordinación
 
 > 👉 **¿Retomas el proyecto? Empieza por `COORDINACION-IA/EMPEZAR-AQUI.md`** — estado
 > actual, qué hacer y por dónde, en 2 minutos. Este archivo son las reglas; ese es el mapa.

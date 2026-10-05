@@ -24,6 +24,17 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"scripts/recordatorio-protocolo.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }
