@@ -27,11 +27,15 @@ ciclismo, bicicleta, navegación bici, ruta ciclista, Waze bicicleta, Chile, com
 
 ## 2. Descripción completa (máx. 4000 caracteres)
 
+> ⚠️ 2026-10-05: corregida para que diga solo lo que la app hace hoy (personalidades reales, Taller actual,
+> sin "sumar tus propios trucos", cuyo formulario se quitó en v7.46). La ficha publicada en Play todavía tiene
+> el texto viejo: hay que pegar este en Play Console → Ficha de Play Store principal.
+
 ```
 Libre Pedal es tu copiloto en cada pedaleo. Te guía por voz como Waze, pero pensado para bicicleta, y te conecta con una comunidad real de ciclistas que reportan agua, talleres, miradores y peligros en el camino.
 
 🗣️ PISTERO: TU COPILOTO CON IA
-Pistero calcula la ruta y te avisa cada giro con voz natural, sin que tengas que mirar el teléfono. Pero no es solo un GPS que habla: pregúntale lo que quieras —de ciclismo, de tu viaje, de cómo usar la app o de cualquier otro tema— y te responde. Elige su personalidad (cercano, aventurero, entrenador, relajado, humorístico o guía turístico), y te avisa ANTES de que lleguen las subidas fuertes o la lluvia, no después.
+Pistero calcula la ruta y te avisa cada giro con voz natural, sin que tengas que mirar el teléfono. Pero no es solo un GPS que habla: pregúntale lo que quieras —de ciclismo, de tu viaje, de cómo usar la app o de cualquier otro tema— y te responde. Elige su personalidad entre 14 (el de siempre, compadre, entrenador, roquero, profe, veterano, hippie, cicletero, otaku y más), y te avisa ANTES de que lleguen las subidas fuertes o la lluvia, no después.
 
 🧭 UN COMPAÑERO, NO SOLO UNA HERRAMIENTA
 Todo gira alrededor de la Esfera: tu centro de acceso a la app, siempre a un toque. Escribe o dicta tu destino y arranca. Puedes planificar viajes con varias paradas.
@@ -54,8 +58,8 @@ Vista satelital real, capa topográfica y navegación 3D. Más de 4.000 puntos r
 - Conecta tu pulsómetro o potenciómetro por Bluetooth.
 - Personaliza tu propio personaje: más de 18 cascos, colores y accesorios. Cada ciclista se ve en el mapa con su propio casco, no con un pin genérico.
 
-🔧 TALLER MACGYVER
-17 trucos para reparar tu bicicleta con lo que tengas a mano si se te pincha o se te sale la cadena en medio de la ruta. Puedes sumar tus propios trucos para la comunidad.
+🔧 TALLER
+Guía paso a paso según lo que le pasa a tu bici (pinchazo, cadena, cambios, frenos), con aviso de cuándo conviene ir a un taller. Lleva la mantención de tu bici o vehículo con el odómetro real, y te avisa la revisión técnica, el permiso de circulación y el SOAP antes de que venzan. Además, consejos de la comunidad.
 
 🥾 TAMBIÉN PARA TREKKING Y VIAJES EN MOTO/AUTO
 Libre Pedal nació para ciclismo, pero Pistero te acompaña igual si sales a caminar o viajas en moto o auto: cambia el modo de actividad y la ruta, el lenguaje y los consejos se adaptan.
