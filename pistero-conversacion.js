@@ -277,7 +277,7 @@ const tutorialSteps=[
   {d:'¡Hola! Soy Pistero. Sube el volumen y te muestro la app en un minuto.'},
   {sel:'#btnEsferaHeader', d:'Tu Esfera: los accesos flotando. Gírala y toca un ícono. Este botón la reabre.'},
   {view:'dash', sel:'#quick-dest', d:'Escribe o dicta un destino del mundo y te guío paso a paso, aquí mismo en Inicio.'},
-  {sel:'#micBtn', d:'O toca el micrófono y dime un destino de viva voz: te guío como Waze.'},
+  {view:'map', sel:'#micBtn', d:'Pedaleando, toca mi cara en el Mapa y dime un destino de viva voz: te guío como Waze.'},
   {view:'pistero', sel:'#pisteroInput', d:'Este es mi chat. Escríbeme aquí cualquier pregunta —rutas, arreglos de bici, dónde alojar— y te respondo. Vivo en este botón de abajo, en cualquier pantalla.'},
   {view:'dash', sel:'.speed-display', d:'Tu velocidad en vivo. El GPS graba tu ruta solo: se guarda al detenerte, no prendas nada.'},
   {view:'dash', sel:'button[onclick="enviarSOS()"]', d:'SOS: guarda tus contactos y les mando tu ubicación por WhatsApp al toque.'},

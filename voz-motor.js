@@ -247,17 +247,20 @@ function calcularGastos(){
 /* ===== PISTERO TRAVIESO: aparece de sorpresa, saluda y se esconde ===== */
 (function(){
   const frasesTravieso=["¡Buuu! ¿Me extrañabas?","¿y si salimos a pedalear un rato?","Aquí vigilando que no se oxide la cadena.","Me aburrí de esperar, ¡vamos a rodar!","Revisa el aire de las ruedas","Tócame el micrófono y te llevo donde quieras.","¿Sabías que la primera vuelta en bici de la historia terminó en un árbol? Tú lo haces mejor."];
+  // 2026-10-05: antes cruzaba la pantalla un emoji de ciclista (genérico, y un Pistero más en pantalla).
+  // Ahora es el MISMO Pistero de la barra de abajo el que da un saltito mientras dice la frase.
   let peek=null;
-  function crear(){ peek=document.createElement('div'); peek.id='pisteroPeek'; peek.textContent='🚴'; peek.title='¡Pistero!'; peek.onclick=function(){ ocultar(); h('¡Me pillaste! Dime a dónde vamos.'); }; document.body.appendChild(peek); }
+  function crear(){ peek=document.querySelector('nav .nb-pist'); }
   function mostrar(){
     const tut=document.getElementById('tutorialOverlay');
     if(document.hidden||(tut&&tut.classList.contains('on'))||vozOcupada()){ prox(); return; } // ocupado: vuelve más rato
     if(!peek) crear();
-    peek.classList.add('peek');
+    if(!peek){ prox(); return; }
+    peek.classList.add('travieso');
     hAmbiente(frasesTravieso[Math.floor(Math.random()*frasesTravieso.length)]);
     setTimeout(ocultar,8000); prox();
   }
-  function ocultar(){ if(peek) peek.classList.remove('peek'); }
+  function ocultar(){ if(peek) peek.classList.remove('travieso'); }
   function prox(){ setTimeout(mostrar, 480000+Math.random()*420000); }
   prox();
 })();

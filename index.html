@@ -190,7 +190,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </div>
 </form>
 
-<button class="fab" id="micBtn" onclick="toggleMic()" title="Pistero — toca y habla" aria-label="Pistero, asistente de voz"><span class="orb-cara"></span></button>
+<button class="fab" id="micBtn" onclick="toggleMic()" title="Háblale a Pistero" aria-label="Háblale a Pistero"><span class="orb-cara"></span><i class="fas fa-microphone mic-ico"></i></button>
 <div id="saver" onclick="toggleSaver()">
   <div class="saver-spd"><span id="saverSpd">0</span><small>km/h</small></div>
   <div class="saver-km"><span id="saverKm">0.00</span> km</div>
@@ -344,7 +344,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <button class="es-globe" id="btnEsferaHeader" onclick="abrirEsfera()" title="Esfera de apps"><i class="fas fa-globe"></i> </button>
 <button class="es-globe" onclick="cv('ajustes')" title="Ajustes"><i class="fas fa-gear"></i> </button>
 <div class="uchip-wrap">
-<button class="uchip" onclick="toggleUserMenu(event)" aria-label="Menú de usuario"><span class="uchip-av lp-mi-pistero"><i class="fas fa-bicycle"></i></span><span class="uchip-lvl" id="nv">Novato</span><i class="fas fa-chevron-down uchip-caret"></i></button>
+<button class="uchip" onclick="toggleUserMenu(event)" aria-label="Menú de usuario"><span class="uchip-av"><i class="fas fa-bicycle"></i></span><span class="uchip-lvl" id="nv">Novato</span><i class="fas fa-chevron-down uchip-caret"></i></button>
 <div class="umenu" id="uMenu">
 <button id="ghostBtn" onclick="toggleGhost();cerrarUserMenu()"><i class="fas fa-ghost"></i> Modo fantasma: OFF</button>
 <button id="logoutBtn" class="umenu-danger" onclick="cerrarSesion()"><i class="fas fa-right-from-bracket"></i> Salir</button>
@@ -704,7 +704,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 </section>
 
 <section id="v-pistero" class="view">
-<div class="section-info"><h4><span class="lp-mi-pistero sec-pist"></span>Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
+<div class="section-info"><h4>Pregúntale a Pistero</h4><p>Tu copiloto con IA: rutas, arreglos de bici en ruta, planificar tu viaje con gastos, hospedajes de la comunidad y todo lo del ciclismo. Te conoce y te responde por voz.</p></div>
 <div id="pisteroChips">
   <!-- 2026-08-23: el chip "Trazar ruta" (llevaba a planificador-beta.html) sale por
        pedido de Inty tras revisar: no usaba a Pistero (era un location.href a una

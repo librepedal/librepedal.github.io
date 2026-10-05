@@ -618,6 +618,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 #pisteroPeek{position:fixed;bottom:90px;right:-70px;width:56px;height:56px;border-radius:50%;background:#0f1728;border:1.5px solid #12b3a6;box-shadow:0 6px 18px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:1200;cursor:pointer;transition:right .5s cubic-bezier(.34,1.56,.64,1);overflow:hidden}
 #pisteroPeek::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,0.42) 0%,rgba(255,255,255,0.06) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.24) 100%);pointer-events:none}
 #pisteroPeek.peek{right:12px}
+.nb-pist.travieso{animation:pistTravieso 1.6s ease-in-out 3;transform-origin:50% 90%}
+@keyframes pistTravieso{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-7px) rotate(-8deg)}40%{transform:translateY(0) rotate(0)}55%{transform:translateY(-4px) rotate(7deg)}70%{transform:translateY(0) rotate(0)}}
+@media (prefers-reduced-motion:reduce){.nb-pist.travieso{animation:none}}
 .music-btn span{display:none}
 .music-spotify{background:#1DB954}.music-youtube{background:#FF0000}.music-apple{background:#FA243C}
 .music-deezer{background:#A2C2E0;color:#000}.music-soundcloud{background:#FF5500}.music-amazon{background:#25D1DA;color:#000}
@@ -799,10 +802,18 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
 body.mic-tapando-boton #micBtn{opacity:.22;pointer-events:none}
 /* 2026-10-05: espacio final de la página = barra de abajo + lo que sobresale la cara de Pistero (#micBtn,
    80px a 78px del borde). Antes eran 70px fijos y lo último de cada pantalla quedaba bajo la cara. */
-body{padding-bottom:calc(var(--lp-nav-h,70px) + 96px)}
-body[data-vista="pistero"],body[data-vista="customize"]{padding-bottom:calc(var(--lp-nav-h,70px) + 12px)}
+body{padding-bottom:calc(var(--lp-nav-h,70px) + 12px)}
 .nav-manoslibres-btn{display:none!important}
-body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
+/* 2026-10-05: UN SOLO PISTERO EN PANTALLA (Inty: "hay tres pisteros casi todo el tiempo y eso está mal").
+   Pistero vive en la barra de abajo. La cara flotante (#micBtn, hablar sin manos) solo aparece en el
+   Mapa, donde de verdad se pedalea y no se puede escribir; en el resto se le habla desde su chat. */
+#micBtn{display:none}
+body[data-vista="map"] #micBtn{display:flex;align-items:center;justify-content:center;width:58px;height:58px;bottom:calc(84px + env(safe-area-inset-bottom,0px));border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff8a4c,#fc4c02 60%,#c43a00);box-shadow:0 6px 16px rgba(252,76,2,.45),0 0 0 3px rgba(10,15,29,.85);color:#fff;opacity:1}
+/* en el Mapa es un micrófono, no otra cara: Pistero ya está en la barra de abajo */
+body[data-vista="map"] #micBtn .orb-cara{display:none}
+body[data-vista="map"] #micBtn i.mic-ico{display:block;font-size:1.5rem;line-height:1}
+body[data-vista="map"] #micBtn.listening{box-shadow:0 0 0 3px rgba(10,15,29,.85),0 0 0 7px rgba(252,76,2,.45),0 6px 16px rgba(252,76,2,.45)}
+body[data-vista="map"]{padding-bottom:calc(var(--lp-nav-h,70px) + 80px)}
 /* Animaciones de la cara (compartidas mapa+esfera) */
 .lp-eye{transform-box:fill-box;transform-origin:center}
 /* --blink-delay: por defecto 0s (esfera/mic, un solo personaje, sin cambios). Los
