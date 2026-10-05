@@ -27,6 +27,18 @@ casos contra Flow y Firestore simuladas (firma HMAC verificada, concurrencia, re
 **2026-11-01**. Por eso `wrangler.toml` deja `FLOW_ENV = "sandbox"`: nada de cobros reales antes.
 Falta (con OK de Inty): llaves de sandbox de Flow, desplegar el worker con wrangler (el CI de la web no lo publica), botón en la web.
 
+**Decisiones de producto de Inty (mismo día) — Premium al lanzar:**
+- Premium = 5 extras: las 14 voces de Pistero · chat con Pistero sin límite (gratis ~10 mensajes/día, por calibrar) ·
+  sobrevuelo 3D completo · viajes de varios días ilimitados (gratis: 1 guardado) · quitar la marca del video.
+- **Todo lo que se comparte es gratis y lleva la marca Libre Pedal** (es publicidad): video de la ruta con todos los
+  estilos, foto para publicar, resumen del año. Premium solo OFRECE quitar la marca del video: viene puesta y cada uno
+  elige. Hoy `rutas.js` no pone marca en el video → hay que agregarla.
+- Siempre gratis: navegación, mapa y mapas sin señal, comunidad, seguridad, estadísticas, auto de apoyo
+  (la ficha de Play ya lo promete).
+- Venta solo en la web (landing), oculta dentro de la app de Play (política de pagos de Google: Chile no está en los
+  programas de enlaces externos). Mockup: https://claude.ai/artifact/JUkrbDtrGYn2n6fow36fxc — esperando ✓ de Inty
+  (precios $3.000/$4.000 y los 10 mensajes por confirmar).
+
 ---
 
 ## SEGURIDAD — 2026-08-19 — Inty (consola de Google Cloud) + Claude (sesión intyrivera, verificación) · claves de Firebase restringidas por origen — CERRADO
