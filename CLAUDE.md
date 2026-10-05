@@ -1,10 +1,10 @@
 # LibrePedal — reglas obligatorias (se cargan solas en cada sesión)
 
-> 🛑 **Antes de cualquier cosa, cumple el PROTOCOLO OBLIGATORIO** (se importa aquí abajo y queda en tu
+> 🛑 **Antes de cualquier cosa, cumple el PROTOCOLO DE EXCELENCIA de `AGENTS.md`** (se importa aquí abajo y queda en tu
 > contexto). Investigar antes de hacer, referencias reales antes de diseñar, verificar uno mismo antes de
 > entregar, cero errores. Un incumplimiento es un error, no una opción.
 
-@COORDINACION-IA/PROTOCOLO-OBLIGATORIO.md
+@AGENTS.md
 @COORDINACION-IA/METODO-DE-TRABAJO-INTY.md
 @COORDINACION-IA/diseno-ui/METODO-TRABAJO-DISENO.md
 @COORDINACION-IA/diseno-ui/LEY-DISENO-BENCHMARK.md
@@ -37,7 +37,7 @@ pongan a trabajar en paralelo, sin chocar y sin esperar permiso.** Protocolo:
 3. **Pushea tu rama seguido** para que la otra cuenta vea tu avance en el próximo latido.
 4. Si el reparto no te asigna algo claro, mejora tu área (ver `AUDITORIA-CEO-2026-08-14.md`)
    y deja nota en la coordinación de qué tomaste, para no duplicar.
-5. Antes de mergear a `main`: **tests 12/12 verdes + validado**. Nada roto a producción.
+5. Antes de mergear a `main`: **tests todos verdes (`node tests/run.mjs`) + validado**. Nada roto a producción.
 
 ## Las 5 reglas (sin excepción)
 
@@ -70,7 +70,7 @@ pongan a trabajar en paralelo, sin chocar y sin esperar permiso.** Protocolo:
 git fetch origin && git checkout main && git pull --ff-only origin main
 git checkout -b feature/mi-cosa            # tu rama = tu candado
 # ...trabajas, commiteas, pusheas la rama seguido...
-node tests/run.mjs                         # DEBE quedar 12/12 verde
+node tests/run.mjs                         # DEBE quedar todo verde
 git push -u origin feature/mi-cosa
 # Inty prueba y aprueba →  recién ahí:
 git checkout main && git pull --ff-only origin main
@@ -80,7 +80,7 @@ git merge feature/mi-cosa && git push      # esto dispara el deploy (~40s)
 ## Antes de un release (merge a main)
 - Sube la versión en los **3 lugares**: `APP_VERSION` (index.html), `version.txt`, y la
   caché de `sw.js` (`vNNN`). Las tres deben coincidir.
-- `node tests/run.mjs` → 12/12 verde.
+- `node tests/run.mjs` → todo verde.
 - Prueba en navegador y, si toca UI, en el teléfono real de Inty.
 - Verifica tras el deploy: `curl -s https://librepedal.cl/version.txt` debe dar la nueva.
 
