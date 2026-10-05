@@ -40,6 +40,8 @@ Luego `curl -s https://librepedal.cl/version.txt` → `8.809`. Después: AAB nue
    (quedan los datos de ley chilena del metro y medio y "Hecho en Chile").
 3. "Comunidad segura" (Play exige para contenido de usuarios): borrar cuenta y contenido propio
    dentro de la app, reportar y bloquear. Necesita mockup.
+   ⏳ Pieza 1/3 (reportar y bloquear) en mockup, esperando ✓ de Inty: https://claude.ai/artifact/3HbsG2Ap6xfu5tQcce9bLH
+   (fuente: disenos-ui/comunidad-segura/reportar-bloquear.html). Luego: pieza 2 borrar cuenta, pieza 3 aceptar reglas.
 4. SOS queda a medias bajo la barra en el primer vistazo de Inicio: propuesta de layout.
 5. Armario: tarjetas compactas y navegación en 3 grupos del mockup v3 (`disenos-ui/armario-v3/`,
    sin commitear) aún no implementadas.

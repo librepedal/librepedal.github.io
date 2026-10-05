@@ -1,0 +1,335 @@
+<title>Comunidad segura · Reportar y bloquear</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: documento oscuro de una columna (referencias → mockup vivo → decisiones), con el teléfono
+   en la estética real de Libre Pedal (tokens copiados de estilos.css). Un solo look oscuro, a propósito. */
+:root{
+  --d:#0a0f1d;          /* fondo de la app (--d) */
+  --surf:#141a2b;       /* --surf */
+  --surf2:#0f1524;      /* --surf-2 */
+  --line:rgba(255,255,255,0.09);
+  --p:#fc4c02;          /* naranja Libre Pedal (--p) */
+  --g:#ffd700;          /* dorado (--g) */
+  --r:#ff3333;          /* rojo (--r) */
+  --ok:#3ccf8e;
+  --tx:#e8eeff; --sub:#9fb3c8; --mute:#6f7f98;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-app:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-app);font-size:15px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 60px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:34px}
+h1,h2{font-family:var(--f-disp);letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);line-height:1}
+h1 span{color:var(--p)}
+h2{font-size:1.55rem;line-height:1.1}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p);font-weight:700}
+.lead{color:var(--sub);max-width:66ch;margin:10px 0 0}
+section{display:grid;gap:14px}
+/* requisitos de Play */
+.req{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.req div{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.req b{display:block;font-size:.92rem}
+.req span{font-size:.8rem;color:var(--sub)}
+.pill{display:inline-block;font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:20px;margin-bottom:6px}
+.pill.falta{background:rgba(255,51,51,.14);color:#ff8a8a}
+.pill.esta{background:rgba(252,76,2,.14);color:#ffb088}
+/* referencias */
+.refs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.ref{border-top:2px solid var(--p);background:var(--surf);border-radius:0 0 12px 12px;padding:14px 16px;display:grid;gap:8px;min-width:0}
+.ref h3{margin:0;font-size:1rem}
+.ref ul{margin:0;padding-left:18px;font-size:.84rem;color:var(--sub)}
+.ref .toma{font-size:.84rem;border-left:2px solid var(--g);padding-left:10px}
+.ref a{color:#ffd2bd;font-size:.78rem;word-break:break-word}
+/* zona del mockup */
+.stage{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:820px){.stage{grid-template-columns:1fr}}
+.phone{width:100%;max-width:360px;margin:0 auto;border-radius:34px;border:8px solid #1b2233;background:var(--d);overflow:hidden;position:relative;height:700px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.ph-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #222;background:rgba(10,15,29,.98)}
+.ph-hdr .logo{font-weight:900;letter-spacing:.04em;font-size:.95rem}.ph-hdr .logo i{font-style:normal;color:var(--p)}
+.ph-title{padding:12px 14px 6px;font-weight:800;font-size:1rem;color:var(--p);display:flex;gap:6px;align-items:center}
+.chm{flex:1;overflow:hidden;padding:8px 12px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+/* burbujas: copiadas de estilos.css (.ms .mb .ma) */
+.ms{margin-bottom:8px;max-width:85%}.ms.sf{margin-left:auto;text-align:right}
+.mb{display:inline-block;padding:6px 10px;border-radius:12px;line-height:1.25;font-size:.85rem;transition:box-shadow .2s,transform .2s}
+.ms.sf .mb{background:var(--p);color:#000}
+.ms.ot .mb{background:rgba(255,255,255,0.1);color:#fff}
+.ma{font-size:.62rem;color:#888;margin-bottom:2px}
+.ms.target .mb{cursor:pointer}
+.ms.target.press .mb{box-shadow:0 0 0 2px var(--p);transform:scale(.98)}
+.ms.oculto .mb{background:transparent;border:1px dashed #33405a;color:var(--mute);font-style:italic}
+.hint{display:block;width:max-content;margin-top:5px;background:#000c;border:1px solid var(--line);color:var(--sub);font-size:.72rem;padding:5px 10px;border-radius:20px;white-space:nowrap;pointer-events:none;transition:opacity .25s}
+.inp{display:flex;gap:8px;padding:10px 12px 12px}
+.inp div{flex:1;border:1px solid #2a3550;border-radius:14px;padding:10px 12px;color:var(--mute);font-size:.85rem}
+.inp span{width:44px;border:1px solid #2a3550;border-radius:14px;display:grid;place-items:center;color:var(--sub)}
+.nav{display:flex;justify-content:space-around;border-top:1px solid #1e2738;padding:8px 0 10px;font-size:.62rem;color:var(--mute)}
+.nav span{display:grid;justify-items:center;gap:2px}.nav .on{color:var(--p)}
+/* hoja inferior */
+.velo{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s}
+.velo.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surf);border-radius:20px 20px 0 0;border-top:1px solid var(--line);padding:8px 16px 18px;transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);display:grid;gap:4px;max-height:88%;overflow:auto}
+.sheet.on{transform:none}
+.grab{width:38px;height:4px;border-radius:4px;background:#334058;margin:2px auto 8px}
+.s-who{display:flex;gap:10px;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.s-who .av{width:38px;height:38px;border-radius:50%;background:#1b2740;display:grid;place-items:center;font-weight:800;color:var(--p)}
+.s-who b{display:block;font-size:.92rem}.s-who small{color:var(--sub);font-size:.74rem}
+.op{display:flex;gap:12px;align-items:center;padding:12px 4px;border-radius:10px;font-size:.92rem;cursor:pointer;color:var(--tx);background:none;border:0;width:100%;text-align:left;font-family:inherit}
+.op:hover,.op:focus-visible{background:rgba(255,255,255,.05);outline:none}
+.op.peligro{color:#ff8a8a}
+.op svg,.ic{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.s-h{font-weight:800;font-size:1rem;margin:2px 0}
+.s-p{font-size:.8rem;color:var(--sub);margin:0 0 6px}
+.mot{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;font-size:.86rem;cursor:pointer;border-radius:8px}
+.mot i{width:18px;height:18px;border-radius:50%;border:2px solid #44516b;flex:none;margin-top:1px}
+.mot.sel i{border-color:var(--p);box-shadow:inset 0 0 0 3px var(--surf),inset 0 0 0 9px var(--p)}
+.mot small{display:block;color:var(--sub);font-size:.72rem}
+.chk{display:flex;gap:10px;align-items:center;font-size:.84rem;padding:10px 4px;border-top:1px solid var(--line);margin-top:4px}
+.chk i{width:18px;height:18px;border-radius:5px;background:var(--p);display:grid;place-items:center;color:#000;font-style:normal;font-size:.7rem;font-weight:900}
+.ab{width:100%;min-height:44px;padding:12px 14px;border-radius:13px;font-weight:700;font-size:.88rem;border:1px solid rgba(255,255,255,0.10);background:linear-gradient(180deg,#182444,#131c2f);color:#dfe7ff;cursor:pointer;font-family:inherit;margin-top:6px}
+.ab.pri{background:var(--p);color:#111;border-color:transparent}
+.ab.rojo{background:#3a1416;color:#ff9a9a;border-color:#5a2226}
+.efx{margin:4px 0 6px;padding:0;list-style:none;display:grid;gap:7px;font-size:.82rem;color:var(--sub)}
+.efx li{display:flex;gap:9px}.efx li svg{width:16px;height:16px;margin-top:2px;stroke:var(--p)}
+.done{display:grid;justify-items:center;text-align:center;gap:6px;padding:10px 4px 4px}
+.done .ic{width:44px;height:44px;stroke:var(--ok)}
+/* controles bajo el teléfono */
+.ctr{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.ctr button{font:inherit;font-size:.78rem;background:var(--surf);color:var(--sub);border:1px solid var(--line);border-radius:20px;padding:6px 12px;cursor:pointer}
+.ctr button.on{color:#111;background:var(--p);border-color:var(--p)}
+.ctr button:focus-visible{outline:2px solid var(--g)}
+.nota{font-size:.74rem;color:var(--mute);text-align:center;margin:8px 0 0}
+/* decisiones */
+.dec{display:grid;gap:12px;min-width:0}
+.dec h3{margin:10px 0 0;font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;color:var(--g)}
+.dec p,.dec li{font-size:.88rem;color:var(--sub);margin:0}
+.dec ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.dec strong{color:var(--tx)}
+.preg{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.25);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.preg p{color:var(--tx)}
+/* perfil */
+.perfil{max-width:360px;margin:0 auto;background:var(--surf);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:6px;text-align:center}
+.perfil .av{width:70px;height:70px;border-radius:50%;background:#1b2740;margin:0 auto;display:grid;place-items:center;font-weight:900;font-size:1.4rem;color:var(--p)}
+.perfil h4{margin:4px 0 0;color:var(--p);font-size:1.05rem}
+.perfil .niv{color:var(--g);font-weight:800;font-size:.8rem}
+.perfil .rep{display:flex;gap:6px;justify-content:center;align-items:center;font-size:.8rem;color:var(--mute);margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.perfil .rep svg{width:15px;height:15px}
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;align-items:start}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Libre Pedal · Comunidad segura · pieza 1 de 3</div>
+  <h1>Reportar y <span>bloquear</span></h1>
+  <p class="lead">Hoy nadie puede reportar un mensaje ni bloquear a quien lo molesta, y Play lo exige en las apps donde los usuarios publican. Esta pieza agrega las dos cosas en el chat, los mensajes privados y el perfil. Después vienen “Borrar mi cuenta” (pieza 2) y “Aceptar las reglas antes de publicar” (pieza 3).</p>
+</header>
+
+<section>
+  <h2>Qué exige Google Play</h2>
+  <div class="req">
+    <div><span class="pill falta">Falta</span><b>Reportar contenido y usuarios</b><span>“un sistema dentro de la aplicación” para reportar.</span></div>
+    <div><span class="pill falta">Falta</span><b>Bloquear usuarios</b><span>Obligatorio si hay trato uno a uno (en Libre Pedal: mensajes privados y amigos).</span></div>
+    <div><span class="pill falta">Falta</span><b>Borrar la cuenta desde la app</b><span>Además de un enlace web. Desactivarla no basta. Pieza 2.</span></div>
+    <div><span class="pill esta">A medias</span><b>Aceptar las reglas antes de publicar</b><span>Hay términos, pero no se aceptan antes de escribir en la comunidad. Pieza 3.</span></div>
+  </div>
+  <p class="nota" style="text-align:left">Fuentes: <a style="color:#ffd2bd" href="https://support.google.com/googleplay/android-developer/answer/9876937?hl=es-419">política de contenido generado por usuarios</a> y <a style="color:#ffd2bd" href="https://support.google.com/googleplay/android-developer/answer/13327111?hl=es-419">requisito de eliminación de cuentas</a> de Google Play.</p>
+</section>
+
+<section>
+  <h2>Referencias reales</h2>
+  <div class="refs">
+    <div class="ref">
+      <h3>Strava: bloquear a un deportista</h3>
+      <ul>
+        <li>Lo saca de tus seguidores y te saca de los suyos.</li>
+        <li>Ya no ve tus actividades. Tus comentarios y los suyos quedan ocultos para el otro.</li>
+        <li>Borra la conversación entre ambos.</li>
+        <li>No le avisa a la persona bloqueada.</li>
+      </ul>
+      <div class="toma"><b>Lo que tomamos:</b> la lista de efectos, explicada antes de confirmar, y que el otro no se entere.</div>
+      <a href="https://support.strava.com/hc/en-us/articles/216918327-Manage-Followers-and-Block-Athletes">support.strava.com · Manage Followers and Block Athletes</a>
+    </div>
+    <div class="ref">
+      <h3>WhatsApp: “Bloquear y reportar”</h3>
+      <ul>
+        <li>Reportar y bloquear van juntos en un solo paso.</li>
+        <li>Al reportar, WhatsApp recibe los últimos 5 mensajes que esa persona te mandó.</li>
+        <li>La opción está al final de la información del contacto, sin protagonismo.</li>
+      </ul>
+      <div class="toma"><b>Lo que tomamos:</b> la casilla “También bloquear” en el mismo reporte, y que el reporte lleve el mensaje como evidencia.</div>
+      <a href="https://faq.whatsapp.com/1142481766359885/?locale=es_LA">faq.whatsapp.com · Cómo bloquear y reportar a una persona</a>
+    </div>
+    <div class="ref">
+      <h3>Strava: motivos del reporte</h3>
+      <ul>
+        <li>Pide elegir un motivo: spam o estafa, perfil falso, contenido inapropiado, contacto no deseado.</li>
+        <li>Lo revisa su equipo de Confianza y Seguridad, que puede ocultar el contenido o sancionar la cuenta.</li>
+      </ul>
+      <div class="toma"><b>Lo que tomamos:</b> pocos motivos, pensados para lo que pasa en Libre Pedal (no copiados).</div>
+      <a href="https://support.strava.com/en-us/articles/15402009-reporting-content-on-strava-for-violations-of-our-community-standards">support.strava.com · Reporting content</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Así se usaría</h2>
+  <div class="stage">
+    <div>
+      <div class="phone" id="tel" aria-label="Mockup del chat de la comunidad">
+        <div class="ph-hdr"><svg class="ic" viewBox="0 0 24 24" style="color:var(--p)"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span class="logo">LIBRE <i>PEDAL</i></span></div>
+        <div class="ph-title"><svg class="ic" viewBox="0 0 24 24" style="width:17px;height:17px"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Chat global de la comunidad</div>
+        <div class="chm">
+          <div class="ms ot"><div class="ma">Carla · 07:42</div><div class="mb">¿Alguien sabe si está abierto el camino al Huerquehue?</div></div>
+          <div class="ms ot"><div class="ma">Martín · 07:45</div><div class="mb">Abierto, pero hay barro después del puente.</div></div>
+          <div class="ms ot target" id="msgMalo"><div class="ma">Tomás · 07:51</div><div class="mb" id="mbMalo">Vendo repuestos al por mayor, escríbanme por privado, precios imbatibles!!!</div><span class="hint" id="hint">Mantén presionado el mensaje</span></div>
+          <div class="ms sf"><div class="mb">Gracias Martín 🙌</div><div class="ma" style="text-align:right;margin-top:3px">07:53</div></div>
+        </div>
+        <div class="inp"><div>Escribe a la comunidad...</div><span><svg class="ic" viewBox="0 0 24 24" style="width:17px;height:17px"><path d="M14.5 21.7a.5.5 0 0 0 .9-.1l6.5-19a.5.5 0 0 0-.6-.6l-19 6.5a.5.5 0 0 0-.1.9l7.9 3.2a2 2 0 0 1 1.1 1.1z"/><path d="m21.9 2.1-10.9 10.9"/></svg></span></div>
+        <div class="nav"><span>Inicio</span><span>Mapa</span><span>Pistero</span><span class="on">Social</span><span>Perfil</span></div>
+
+        <div class="velo" id="velo"></div>
+
+        <!-- 1: menú del mensaje -->
+        <div class="sheet" id="s1" role="dialog" aria-label="Opciones del mensaje">
+          <div class="grab"></div>
+          <div class="s-who"><div class="av">T</div><div><b>Tomás</b><small>“Vendo repuestos al por mayor, escríbanme…”</small></div></div>
+          <button class="op" data-ir="perfil"><svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Ver su perfil</button>
+          <button class="op" data-ir="2"><svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>Reportar este mensaje</button>
+          <button class="op peligro" data-ir="b"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg>Bloquear a Tomás</button>
+        </div>
+
+        <!-- 2: motivo del reporte -->
+        <div class="sheet" id="s2" role="dialog" aria-label="Motivo del reporte">
+          <div class="grab"></div>
+          <div class="s-h">¿Qué pasa con este mensaje?</div>
+          <p class="s-p">Tomás no sabrá que lo reportaste.</p>
+          <div class="mot"><i></i><div>Acoso, amenazas o insultos</div></div>
+          <div class="mot sel" id="motSpam"><i></i><div>Spam o ventas que nadie pidió</div></div>
+          <div class="mot"><i></i><div>Contenido sexual o violento</div></div>
+          <div class="mot"><i></i><div>Pone en riesgo a alguien<small>Comparte dónde está otra persona o empuja a hacer algo peligroso en ruta</small></div></div>
+          <div class="mot"><i></i><div>Se hace pasar por otra persona</div></div>
+          <div class="mot"><i></i><div>Otra cosa</div></div>
+          <div class="chk"><i>✓</i>También bloquear a Tomás</div>
+          <button class="ab pri" data-ir="3">Enviar reporte</button>
+        </div>
+
+        <!-- 3: listo -->
+        <div class="sheet" id="s3" role="dialog" aria-label="Reporte enviado">
+          <div class="grab"></div>
+          <div class="done">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+            <div class="s-h">Reporte enviado</div>
+            <p class="s-p">Lo revisa una persona del equipo de Libre Pedal, con el mensaje que reportaste. Bloqueaste a Tomás: ya no ves sus mensajes y no puede escribirte.</p>
+          </div>
+          <button class="ab" data-ir="0">Volver al chat</button>
+        </div>
+
+        <!-- b: confirmar bloqueo -->
+        <div class="sheet" id="sb" role="dialog" aria-label="Confirmar bloqueo">
+          <div class="grab"></div>
+          <div class="s-h">¿Bloquear a Tomás?</div>
+          <ul class="efx">
+            <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>No ves sus mensajes en el chat ni en privado.</li>
+            <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>No puede escribirte ni mandarte solicitud de amistad. Si eran amigos, deja de serlo.</li>
+            <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>No te ve en el mapa de ciclistas en vivo, ni tú a él.</li>
+            <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>No le avisamos. Lo puedes desbloquear en Ajustes › Privacidad.</li>
+          </ul>
+          <button class="ab rojo" data-ir="3b">Bloquear</button>
+          <button class="ab" data-ir="0">Cancelar</button>
+        </div>
+      </div>
+      <div class="ctr" id="ctr" aria-label="Pasos">
+        <button data-ir="auto">▶ Ver el recorrido</button>
+        <button data-ir="0">Chat</button><button data-ir="1">Menú</button><button data-ir="2">Motivo</button><button data-ir="3">Listo</button><button data-ir="b">Bloquear</button>
+      </div>
+      <p class="nota">Nombres y mensajes de ejemplo. Toca el mensaje de Tomás para abrir el menú.</p>
+    </div>
+
+    <div class="dec">
+      <h3>Dónde aparece</h3>
+      <ul>
+        <li><strong>Chat global y mensajes privados:</strong> mantener presionado un mensaje ajeno abre el menú. Hoy los mensajes no tienen ningún menú (<code>social.js</code>).</li>
+        <li><strong>Perfil de un ciclista:</strong> una línea discreta al final, “Reportar o bloquear”, como WhatsApp. No compite con “Enviar mensaje”.</li>
+        <li><strong>Reportes del mapa, recomendaciones, hospedajes y comentarios de la CicloGuía:</strong> la misma opción en su menú, con el motivo extra “Dato falso en el mapa”.</li>
+      </ul>
+      <h3>Por qué así</h3>
+      <ul>
+        <li>Una sola acción por pantalla: el menú tiene 3 opciones y el reporte, un botón.</li>
+        <li>“También bloquear” viene marcado, porque quien reporta casi siempre quiere dejar de ver a esa persona.</li>
+        <li>No se promete un plazo de respuesta que hoy nadie puede cumplir: dice “lo revisa una persona del equipo”.</li>
+        <li>Íconos del mismo set que usa la app (Lucide), sin emojis.</li>
+      </ul>
+      <h3>Por dentro (no se ve)</h3>
+      <ul>
+        <li>Cada reporte se guarda con el mensaje, el autor y el motivo en una colección que solo lee el admin. Tu panel de admin en Perfil gana una sección “Reportes” para ocultar el contenido o suspender la cuenta.</li>
+        <li>La lista de bloqueados vive en tu perfil privado. El chat, los mensajes, las solicitudes y el mapa en vivo la respetan.</li>
+      </ul>
+      <div class="preg">
+        <p><strong>2 decisiones tuyas:</strong></p>
+        <p>1. Si bloqueas a alguien, ¿sigues viendo sus avisos de peligro en el mapa? Recomiendo <strong>sí</strong>: un aviso de “perro suelto” o “camino cortado” puede servirte en ruta. Strava hace algo parecido con sus tablas de segmentos.</p>
+        <p>2. ¿Un mensaje se oculta solo al recibir 3 reportes de personas distintas, hasta que lo revises? Recomiendo <strong>sí</strong>: así no depende de que estés conectado.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>En el perfil de un ciclista</h2>
+  <div class="duo">
+    <div class="perfil">
+      <div class="av">T</div>
+      <h4>Tomás</h4>
+      <div class="niv">Explorador</div>
+      <button class="ab">Ver por dónde ha pedaleado</button>
+      <button class="ab">Enviar mensaje</button>
+      <div class="rep"><svg class="ic" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>Reportar o bloquear a Tomás</div>
+    </div>
+    <div class="dec">
+      <p>Abajo de todo y en gris, para que esté a mano sin asustar a nadie que solo entra a ver rutas. Al tocarlo se abre el mismo menú del chat, con “Reportar este perfil” en vez de “Reportar este mensaje”.</p>
+      <p>Si ya lo bloqueaste, la línea cambia a “Desbloquear a Tomás” y desaparece “Enviar mensaje”.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+  var tel=document.getElementById('tel'), velo=document.getElementById('velo'), hint=document.getElementById('hint');
+  var hojas={1:'s1',2:'s2',3:'s3',b:'sb'}, msg=document.getElementById('msgMalo'), mb=document.getElementById('mbMalo');
+  var bloqueado=false, timers=[];
+  function limpiar(){ timers.forEach(clearTimeout); timers=[]; }
+  function ir(p){
+    if(p==='3b'){ bloqueado=true; p='0'; }
+    if(p==='3'){ bloqueado=true; }
+    if(p==='0'&&!bloqueado){ msg.classList.remove('oculto'); mb.textContent='Vendo repuestos al por mayor, escríbanme por privado, precios imbatibles!!!'; }
+    if(bloqueado && (p==='0'||p==='3')){ msg.classList.add('oculto'); mb.textContent='Mensaje oculto: bloqueaste a Tomás'; }
+    Object.keys(hojas).forEach(function(k){ document.getElementById(hojas[k]).classList.toggle('on', String(k)===String(p)); });
+    velo.classList.toggle('on', !!hojas[p]);
+    hint.hidden=!(p==='0'&&!bloqueado);
+    document.querySelectorAll('#ctr button').forEach(function(b){ b.classList.toggle('on', b.dataset.ir===String(p)); });
+  }
+  function auto(){
+    limpiar(); bloqueado=false; ir('0');
+    var t=0; function paso(ms,f){ t+=ms; timers.push(setTimeout(f,t)); }
+    paso(900,function(){ msg.classList.add('press'); });
+    paso(700,function(){ msg.classList.remove('press'); ir('1'); });
+    paso(1700,function(){ ir('2'); });
+    paso(2600,function(){ ir('3'); });
+    paso(3200,function(){ ir('0'); });
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-ir]'); if(!b) return;
+    var p=b.dataset.ir;
+    if(p==='auto'){ auto(); return; }
+    limpiar();
+    if(p==='perfil'){ ir('0'); document.querySelector('.perfil').scrollIntoView({behavior:'smooth',block:'center'}); return; }
+    if(p==='0' && b.closest('#ctr')) bloqueado=false;
+    ir(p);
+  });
+  msg.addEventListener('click',function(){ if(!bloqueado){ limpiar(); ir('1'); } });
+  velo.addEventListener('click',function(){ limpiar(); ir('0'); });
+  ir('0');
+})();
+</script>
