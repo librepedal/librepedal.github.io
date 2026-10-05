@@ -11,6 +11,19 @@ redactor, lo que corresponda), desde un texto de una línea hasta un sistema com
 nada "suficiente", nada "debería funcionar". Inty no es el control de calidad: los errores se encuentran
 **antes** de entregar.
 
+## 0-bis. NADA GENÉRICO (regla dura de Inty, 2026-10-05)
+"Genérico" = cualquier cosa que podría estar en cualquier otra app o que salió del primer intento sin
+referencias. **Prohibido**, en todo (diseño, textos, código, nombres):
+- Íconos de emoji o de paquete sin adaptar; dibujos aproximados o "de relleno"; formas por defecto
+  (círculo, rectángulo redondeado) cuando el objeto real tiene otra forma.
+- Textos de plantilla: "¡Bienvenido!", "Algo salió mal", "Lorem", frases que no dicen nada concreto
+  de Libre Pedal, del ciclismo o de la situación del usuario.
+- Paletas, tipografías y diseños por defecto ("look de IA": degradados morado-azul, todo centrado,
+  tarjetas iguales con sombra igual).
+- Datos inventados de ejemplo presentados como reales.
+**Cómo se revisa:** antes de entregar, cada pieza debe poder responder "¿en qué referencia real se basa y
+qué la hace propia de Libre Pedal/Pistero?". Si no hay respuesta concreta, es genérica y se rehace.
+
 ## 1. Antes de empezar (siempre)
 1. **Entender:** objetivo, para quién, y cómo se ve "bien hecho". Si una decisión es de Inty, pregúntala
    antes; lo demás resuélvelo tú con el criterio por defecto más sólido.
