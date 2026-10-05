@@ -33,10 +33,11 @@ Luego `curl -s https://librepedal.cl/version.txt` → `8.809`. Después: AAB nue
 `fix/google-signin-a-main` + los plugins de archivos.
 
 ## Decisiones pendientes de Inty (no se tocaron sin su OK)
-1. Beneficios de fundador "acceso anticipado" y "prioridad en sorteos": no están implementados y el
-   sorteo no tiene bases. ¿Se implementan o se quitan del texto?
-2. Landing: promete "imagen lista para Instagram" (solo existe el mockup de compartir-redes) y "sin
-   cuentas premium ni funciones bloqueadas" (choca con el plan Premium).
+1. ✅ (Inty, 2026-10-05) Beneficios de fundador: se quitaron "acceso anticipado" y "prioridad en sorteos"
+   (no existían). Quedan los reales: insignia y doble Darma.
+2. ✅ (Inty, 2026-10-05) Landing: "sin cuentas premium" → "lo esencial (mapa, navegación, SOS y comunidad) es
+   gratis"; se sacó la tarjeta de la imagen para Instagram hasta que exista; textos de público sin "Chile"
+   (quedan los datos de ley chilena del metro y medio y "Hecho en Chile").
 3. "Comunidad segura" (Play exige para contenido de usuarios): borrar cuenta y contenido propio
    dentro de la app, reportar y bloquear. Necesita mockup.
 4. SOS queda a medias bajo la barra en el primer vistazo de Inicio: propuesta de layout.

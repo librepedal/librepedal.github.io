@@ -31,7 +31,7 @@ async function mostrarFundadores(){
   }
   const pctF=Math.round((cupoUsado/LP_FUNDADORES_CUPO)*100);
   html+='<div style="background:var(--gl);padding:12px;border-radius:10px;margin-bottom:12px"><div style="font-size:0.78rem;color:#9fb3c8;text-align:center">Los <strong style="color:var(--p)">primeros '+LP_FUNDADORES_CUPO+'</strong> ciclistas son Socios Fundadores — un lugar que no se vuelve a dar.</div></div>';
-  html+='<h4 style="color:var(--p);font-size:0.85rem;margin:0 0 6px">Beneficios de por vida</h4><ul style="font-size:0.76rem;color:#cdd6e6;line-height:1.6;margin:0 0 6px;padding-left:18px"><li>Insignia de fundador única (no se vuelve a dar)</li><li>Más Darma por cada acción</li><li>Acceso anticipado a lo nuevo</li><li>Entradas extra y prioridad en los sorteos de la comunidad</li></ul>';
+  html+='<h4 style="color:var(--p);font-size:0.85rem;margin:0 0 6px">Beneficios de por vida</h4><ul style="font-size:0.76rem;color:#cdd6e6;line-height:1.6;margin:0 0 6px;padding-left:18px"><li>Insignia de fundador única (no se vuelve a dar)</li><li>Más Darma por cada acción</li></ul>';
   // Condición real del sorteo, a la vista y no en letra chica: los premios se pagan de un
   // fondo que hoy no existe, no de la nada. Decirlo acá (pegado al beneficio) es lo que
   // separa esto de una promesa sin respaldo -- ver tarea #149/#210 del hub.
