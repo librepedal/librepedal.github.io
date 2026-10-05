@@ -908,9 +908,9 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <!-- 2026-10-04 Tienda/armario de Pistero (pistero-tienda.js): Pistero grande arriba y fijo,
      pestañas chicas por categoría (cada una muestra SOLO lo suyo), rareza + precio por pieza,
      tocar = probar. Reemplaza los acordeones del armario v2. -->
+<div class="pt-lanza" id="ptLanza"><b>Lanzamiento:</b> todo el armario gratis por tiempo limitado. Los precios que ves son los que tendrá después.</div>
 <div class="pt-tienda" id="pistTienda">
 <div class="pt-escena">
-<div class="pt-lanza" id="ptLanza"><b>Lanzamiento:</b> todo el armario gratis por tiempo limitado. Los precios que ves son los que tendrá después.</div>
 <div class="pt-top"><div id="customize-preview-svg" class="pt-pistero" onclick="_ptCambiarGesto()" title="Tócalo"></div>
 <div class="pt-top-der"><div class="character-name" id="customizeCharacterName">Tu Personaje</div><button type="button" class="ab sec pt-sorpresa" onclick="_ptPrueba=null;_pistSorpresa()"><i class="fas fa-dice"></i> Sorpréndeme</button></div></div>
 <div class="pt-compra" id="ptCompra"></div>
@@ -1008,7 +1008,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.808'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.809'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1294,6 +1294,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 <script src="pistero-apariencia.js"></script>
 <script src="pistero-tienda.js"></script>
 <script src="pistero-bici.js"></script>
+<script src="pistero-piezas.js"></script>
 <script src="pistero-bici-atras.js"></script>
 <script src="pistero-sonidos.js"></script>
 <script>

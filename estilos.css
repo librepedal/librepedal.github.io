@@ -968,7 +968,10 @@ body[data-vista="map"]{padding-bottom:calc(var(--lp-nav-h,70px) + 80px)}
 .pist-chip-libre input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
 /* ===== Tienda / armario de Pistero (pistero-tienda.js) ===== */
 .pt-tienda{--rc:#3a465e;--rr:#3b82f6;--re:#a855f7;--rl:#f59e0b;margin:10px 0}
-.pt-escena{padding:8px 0 6px}
+.pt-escena{padding:8px 0 6px;position:sticky;top:var(--lp-hdr-h,60px);z-index:6;background:var(--d);box-shadow:0 10px 14px -12px rgba(0,0,0,.7)}
+/* 2026-10-05: el Pistero (junto a Sorpréndeme) y las pestañas quedan FIJOS bajo la cabecera mientras se
+   eligen piezas: cada pieza se ve puesta al instante (pedido de Inty). Funciona porque main ya no tiene
+   overflow propio (ver regla de main). */
 .pt-lanza{font-size:.66rem;color:#fde68a;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:6px 9px;margin-bottom:8px;line-height:1.35}
 .pt-top{display:flex;align-items:center;gap:12px;background:radial-gradient(120% 140% at 30% 20%,#1d2c48,#0c1422 70%);border:1px solid rgba(252,76,2,.3);border-radius:16px;padding:8px 12px}
 .pt-pistero{position:relative;width:118px;height:100px;flex:none;cursor:pointer}

@@ -132,7 +132,9 @@ function _ptPreview(){
 function _ptCard(G,it,o,actual){
   var t=_ptTier(G.k,it.id), sel=(actual===it.id), tiene=_ptTiene(G.k,it.id), prueba=_ptPrueba&&_ptPrueba.k===G.k&&_ptPrueba.id===it.id;
   var m={}; m[G.k]=it.id; if(G.k==='cuello'&&it.id&&!o.pano) m.pano='#fc4c02';
-  var mix=Object.assign({},o,m), svg=_ptEncuadre(G.svg?G.svg(mix):_pistoDe(mix,'feliz'));
+  // solo la pieza (pistero-piezas.js); el Pistero completo es únicamente el grande de arriba
+  var mix=Object.assign({},o,m), pieza=(typeof _ptPiezaSVG==='function')?_ptPiezaSVG(G.k,it.id,mix):'';
+  var svg=pieza||_ptEncuadre(G.svg?G.svg(mix):_pistoDe(mix,'feliz'));
   return '<button type="button" class="pt-card r-'+t+(sel?' sel':'')+(prueba?' prueba':'')+(tiene?'':' lock')+'" onclick="_ptElegir(\''+G.k+'\',\''+it.id+'\')" title="'+it.n+'">'
     +'<span class="pt-card-img">'+svg+'</span><span class="pt-card-n">'+it.n+'</span>'
     +'<span class="pt-card-p">'+(sel?'<i class="fas fa-check"></i> Puesto':(t==='c'?'Gratis':(tiene&&TIENDA_COBRO_ACTIVO?'Tuyo':_ptPrecio(t))))+'</span></button>';

@@ -21,7 +21,9 @@ if (m) {
   debe('bici contiene todas las piezas medidas', contiene(m[2], [-6.4, -4.1, 124.4, 114.5]));
 }
 debe('ya no hay recortes distintos por pestaña', !/PIST_ZOOM/.test(T) && !/G\.zoom/.test(T));
-debe('cada tarjeta pasa por el encuadre común', T.includes("svg=_ptEncuadre(G.svg?G.svg(mix):_pistoDe(mix,'feliz'))"));
+// 2026-10-05 (Inty): las tarjetas muestran SOLO la pieza (pistero-piezas.js, ver tests/pistero-piezas.test.mjs).
+// Las que siguen usando al personaje (traje, auto/moto, dorsal) pasan por el encuadre común.
+debe('las tarjetas con personaje pasan por el encuadre común', T.includes("pieza||_ptEncuadre(G.svg?G.svg(mix):_pistoDe(mix,'feliz'))"));
 debe('la imagen de la tarjeta tiene alto fijo', /\.pt-card-img\{width:100%;height:68px;/.test(CSS));
 console.log(`  tienda-encuadre: ${ok} OK` + (fail ? `, ${fail} FALLAS` : ''));
 process.exit(fail ? 1 : 0);

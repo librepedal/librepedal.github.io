@@ -288,7 +288,7 @@ var PIST_GRUPOS=[
   {g:'pistOjosColGrid',k:'ojosCol',l:function(){return PIST_OJOS_COL;},chip:1,libre:1,vacio:'#16203a'},
   {g:'pistPestGrid',k:'pest',l:function(){return PIST_PEST;},zoom:_PIST_CARA},
   {g:'pistLentesGrid',k:'lentes',l:function(){return PIST_LENTES;},zoom:_PIST_CARA},
-  {g:'pistLentesColGrid',k:'lentesCol',l:function(){return PIST_LENTES_COL;},chip:1,libre:1},
+  {g:'pistLentesColGrid',k:'lentesCol',l:function(){return PIST_LENTES_COL;},chip:1,libre:1,vacio:_PIST_ORIGINAL},
   {g:'pistMarcoColGrid',k:'marcoCol',l:function(){return PIST_PIEZA_COL;},chip:1,libre:1,vacio:_PIST_ORIGINAL},
   {g:'pistMarcaGrid',k:'marca',l:function(){return PIST_MARCA;},zoom:_PIST_CARA},
   {g:'pistLabiosGrid',k:'labios',l:function(){return PIST_LABIOS;},chip:1,libre:1,vacio:'#c98a73'},

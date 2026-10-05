@@ -298,7 +298,7 @@ function _pistBiciSVG(opts, cfg){
   var sombraPiso='<ellipse cx="62" cy="'+(rw[1]+G.r+2)+'" rx="46" ry="3.2" fill="rgba(0,0,0,.28)"/>'; s+=sombraPiso;
   if(cfg.rapido) s+='<g stroke="rgba(255,255,255,.75)" stroke-width="1.6" stroke-linecap="round"><path d="M2 58 L16 58"/><path d="M6 68 L22 68"/><path d="M0 78 L12 78"/></g>';
 
-  s+=pierna('f')+brazo('f');
+  if(!cfg.sinJinete) s+=pierna('f')+brazo('f'); // sinJinete: miniaturas del Taller, solo la bici
 
   // ---- detrás de las ruedas: parrillas, alforjas del lado lejano ----
   if(tipo==='urbana'){
@@ -472,6 +472,7 @@ function _pistBiciSVG(opts, cfg){
   s+='<g><circle cx="'+bb[0]+'" cy="'+bb[1]+'" r="'+plato+'" fill="none" stroke="#6b7280" stroke-width="1.7" stroke-dasharray=".9 .7"/><circle cx="'+bb[0]+'" cy="'+bb[1]+'" r="'+(plato-1.6)+'" fill="none" stroke="#9ca3af" stroke-width="1.1"/>'
     +'<path d="M'+_bP(bb)+' l'+rc+' 0 M'+_bP(bb)+' l-'+rc+' 0" stroke="#374151" stroke-width="2" stroke-linecap="round"/>'+_bGira(bb,anim,dur)+'</g><circle cx="'+bb[0]+'" cy="'+bb[1]+'" r="1.4" fill="#111827"/>';
 
+  var _sinJ=s.length; // desde aquí hasta la cabeza todo es el ciclista (se quita con cfg.sinJinete)
   // ---- torso + accesorio de espalda (se mecen con el cuerpo) ----
   var hip=HIP, shp=SH, ta=_bAng(hip,shp), td=Math.hypot(shp[0]-hip[0],shp[1]-hip[1]), bn=[(shp[1]-hip[1])/td,-(shp[0]-hip[0])/td];
   var esp='';
@@ -541,6 +542,7 @@ function _pistBiciSVG(opts, cfg){
   var inc=pose==='sinmanos'?0:(pose==='caballito'?-4:(G.inc+aero*8+(pose==='pie'?4:0))), cab=_bCabeza(o,cfg.expr,HEAD,52);
   var hv=F.map(function(f){ return _bC(f.head); });
   s+='<g transform="translate('+hv[0]+')">'+_bAT('translate',hv,anim,dur)+(inc?'<g transform="rotate('+inc+' '+_bP(HEAD)+')">'+cab+'</g>':cab)+'</g>';
+  if(cfg.sinJinete) s=s.slice(0,_sinJ);
   // caballito: todo (menos la sombra del piso) gira sobre el punto donde la rueda trasera toca el suelo
   if(pose==='caballito') s=sombraPiso+'<g transform="rotate(-15 '+_bP([rw[0]+G.r*.25,rw[1]+G.r])+')">'+s.replace(sombraPiso,'')+'</g>';
   return '<svg viewBox="-4 -14 132 124" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>';
