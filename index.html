@@ -338,7 +338,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <header>
 <div style="display:flex;align-items:center;gap:4px">
 <button class="es-globe" id="btnAtras" onclick="volverAtras()" title="Atrás" style="display:none"><i class="fas fa-arrow-left"></i></button>
-<h2 style="margin:0;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:1.18rem"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></h2>
+<h2 class="hdr-logo" style="margin:0;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:1.18rem;white-space:nowrap"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></h2>
 </div>
 <div class="hdr-right">
 <button class="es-globe" id="btnEsferaHeader" onclick="abrirEsfera()" title="Esfera de apps"><i class="fas fa-globe"></i> </button>
@@ -1008,7 +1008,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.807'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.808'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1429,6 +1429,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 
 </script>
 <script src="pwa-wakelock.js"></script>
+<script src="layout-medidas.js"></script>
 <script>
 
 </script>
