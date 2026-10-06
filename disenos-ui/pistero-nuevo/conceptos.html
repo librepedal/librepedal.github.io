@@ -1,0 +1,198 @@
+<title>Pistero nuevo · tres caminos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: documento oscuro; arriba el Pistero de hoy y las referencias, luego un bloque por concepto con el
+   personaje grande + los tamaños reales en que vive en la app (barra de abajo 40px, mapa 64px). */
+:root{
+  --d:#0a0f1d; --surf:#141a2b; --surf2:#0f1524; --line:rgba(255,255,255,0.09);
+  --p:#fc4c02; --g:#ffd700; --tx:#e8eeff; --sub:#9fb3c8; --mute:#6f7f98;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-app:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-app);font-size:15px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 60px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:34px}
+h1,h2,h3{font-family:var(--f-disp);letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.8rem);line-height:1} h1 span{color:var(--p)}
+h2{font-size:1.6rem} h3{font-size:1.15rem}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p);font-weight:700}
+.lead{color:var(--sub);max-width:68ch;margin:10px 0 0}
+section{display:grid;gap:14px}
+.refs{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.ref{border-top:2px solid var(--p);background:var(--surf);border-radius:0 0 12px 12px;padding:12px 14px;display:grid;gap:6px;min-width:0}
+.ref p{margin:0;font-size:.85rem;color:var(--sub)} .ref b{font-size:.95rem}
+.ref a{color:#ffd2bd;font-size:.76rem;word-break:break-word}
+.concepto{background:var(--surf2);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:22px;align-items:center}
+@media (max-width:760px){.concepto{grid-template-columns:1fr}}
+.grande{background:radial-gradient(circle at 50% 40%,#1b2540,#0f1524 70%);border-radius:14px;display:grid;place-items:center;padding:10px}
+.grande svg{width:100%;max-width:260px;height:auto}
+.info{display:grid;gap:10px;min-width:0}
+.info p{margin:0;color:var(--sub);font-size:.9rem}
+.info .tag{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--g);font-weight:700}
+.tamanos{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.tamanos figure{margin:0;display:grid;justify-items:center;gap:4px}
+.tamanos figcaption{font-size:.68rem;color:var(--mute)}
+.nav{display:flex;align-items:center;justify-content:space-around;width:230px;background:#0b1120;border:1px solid #1e2738;border-radius:12px;padding:6px 4px;font-size:.6rem;color:var(--mute)}
+.nav span{display:grid;justify-items:center;gap:1px}
+.nav .on{color:var(--p)}
+.nav .av{width:40px;height:40px;display:grid;place-items:center;background:rgba(252,76,2,.12);border-radius:12px}
+.nav .av svg{width:38px;height:38px}
+.ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.claro{background:#f3efe8;border-radius:12px;padding:6px;display:grid;place-items:center}
+.claro svg,.mapa svg{width:64px;height:64px}
+.mapa{background:#cfe3c8;border-radius:12px;padding:6px;display:grid;place-items:center}
+.hoy{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.hoy .grande{width:180px}
+.preg{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.25);border-radius:12px;padding:12px 14px;display:grid;gap:8px;max-width:72ch}
+.preg p{margin:0}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Libre Pedal · Pistero desde cero · paso 1: elegir camino</div>
+  <h1>Un Pistero <span>nuevo</span></h1>
+  <p class="lead">Tres caminos distintos para elegir antes de dibujar el definitivo. Cada uno se muestra grande y en los tamaños en que vive en la app: la barra de abajo (40 px), un marcador del mapa y sobre fondo claro. Cuando elijas uno, lo desarrollo completo con sus expresiones, las piezas del armario y la bici.</p>
+</header>
+
+<section>
+  <h2>Por qué no convence el de hoy</h2>
+  <div class="hoy">
+    <div class="grande" id="hoyPist"><svg style="width:100%;height:auto" viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg"><path d="M16 50 Q16 78 50 80 Q84 78 84 50 Z" fill="#f4c9a0"/><path d="M22 74 Q50 84 78 74 Q66 80 50 80 Q34 80 22 74 Z" fill="rgba(0,0,0,.06)"/><defs><clipPath id="c1"><path d="M12 54 A38 36 0 0 1 88 54 Z"/></clipPath></defs><path d="M12 54 A38 36 0 0 1 88 54 Z" fill="#00aaff"/><g clip-path="url(#c1)"><g transform="translate(.7 1)" opacity=".22"><path d="M50 22 L50 52" stroke="#000" stroke-width="6" stroke-linecap="round"/></g><g transform="translate(-.4 -.5)" opacity=".3"><path d="M50 22 L50 52" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g><path d="M50 22 L50 52" stroke="#fc4c02" stroke-width="6" stroke-linecap="round"/></g><g clip-path="url(#c1)"><path d="M66 22 Q86 32 84 52" fill="none" stroke="rgba(0,0,0,.14)" stroke-width="9" stroke-linecap="round"/></g><g fill="rgba(255,255,255,.13)"><ellipse cx="38.35" cy="31.6" rx="2.8" ry="8" transform="rotate(28 38.35 31.6)"/><ellipse cx="62.35" cy="31.6" rx="2.8" ry="8" transform="rotate(-28 62.35 31.6)"/><ellipse cx="24.85" cy="43.6" rx="2.2" ry="6" transform="rotate(48 24.85 43.6)"/><ellipse cx="75.85" cy="43.6" rx="2.2" ry="6" transform="rotate(-48 75.85 43.6)"/></g><g fill="rgba(0,0,0,.42)"><ellipse cx="38" cy="31" rx="2.8" ry="8" transform="rotate(28 38 31)"/><ellipse cx="62" cy="31" rx="2.8" ry="8" transform="rotate(-28 62 31)"/><ellipse cx="24.5" cy="43" rx="2.2" ry="6" transform="rotate(48 24.5 43)"/><ellipse cx="75.5" cy="43" rx="2.2" ry="6" transform="rotate(-48 75.5 43)"/></g><path d="M12 54 Q50 45 88 54 Z" fill="rgba(0,0,0,.13)"/><g clip-path="url(#c1)"><path d="M21 42 Q27 26 45 21" stroke="rgba(255,255,255,.14)" stroke-width="7" fill="none" stroke-linecap="round"/></g><path d="M21.6 41 Q27.4 26.6 44 21.8" stroke="rgba(255,255,255,.6)" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="19.6" cy="46.4" r="1.2" fill="rgba(255,255,255,.5)"/><circle cx="50" cy="19.6" r=".9" fill="rgba(255,255,255,.4)"/><path d="M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z" fill="rgba(0,0,0,0.3)"/><g fill="none" stroke="#1f2937" stroke-width="1.3" stroke-linecap="round" opacity=".55"><path d="M18.5 56 Q20 70 31 78.6"/><path d="M81.5 56 Q80 70 69 78.6"/></g><rect x="47.6" y="79.2" width="4.8" height="2.6" rx="1" fill="#1f2937" opacity=".55"/><g class="lp-eye lp-parpadeo"><ellipse cx="40" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="37.8" cy="60" r="2.5" fill="#fff"/><circle cx="42" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g><g class="lp-eye lp-parpadeo"><ellipse cx="60" cy="63" rx="6.2" ry="7.6" fill="#16203a"/><g class="lp-iris"><circle cx="57.8" cy="60" r="2.5" fill="#fff"/><circle cx="62" cy="65.5" r="1.2" fill="#fff" opacity=".85"/></g></g><ellipse cx="30" cy="71" rx="5.5" ry="3.2" fill="#ff9db0" opacity=".55"/><ellipse cx="70" cy="71" rx="5.5" ry="3.2" fill="#ff9db0" opacity=".55"/><path d="M43 73 Q50 79 57 73" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></div>
+    <p class="lead" style="margin:0;max-width:52ch">Cabeza de círculo perfecto, ojos de punto, cachetes rosados y casco como tapa de olla: es la fórmula de South Park. Funciona chico, pero no tiene nada que diga ciclismo ni Libre Pedal. Los tres caminos de abajo salen de otras reglas.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Referencias</h2>
+  <div class="refs">
+    <div class="ref"><b>Michelin: Bibendum</b><p>El personaje está hecho del producto: nació de una pila de neumáticos de bicicleta en 1894. La idea para el camino A es la misma: Pistero hecho de su casco.</p><a href="https://www.michelinman.com/why-michelin/michelin-man-origin">michelinman.com · origen de Bibendum</a></div>
+    <div class="ref"><b>Duolingo: Duo</b><p>Sus ilustraciones se arman con solo tres formas (rectángulo redondeado, círculo y triángulo redondeado), sin puntas, y con la menor cantidad de formas posible. Son las reglas del camino B.</p><a href="https://www.nathanmagyar.com/blog/how-to-draw-duo/">How to draw Duo · Nathan Magyar</a></div>
+    <div class="ref"><b>Headspace</b><p>Paleta corta, colores planos, formas curvas sin bordes duros y personajes de proporciones variadas. Es el lenguaje del camino C, más adulto.</p><a href="https://www.kimp.io/headspace-brand/">Identidad visual de Headspace · Kimp</a></div>
+  </div>
+</section>
+
+<section class="concepto">
+  <div class="grande" data-c="A"></div>
+  <div class="info">
+    <div class="tag">Camino A · Casco vivo</div>
+    <h3>Pistero es su casco</h3>
+    <p>La cáscara naranja con ventilaciones es la cabeza, y la visera oscura es la cara: los ojos y la boca brillan detrás del vidrio. No tiene piel ni pelo, así que sirve igual para cualquier persona. La silueta se reconoce aunque mida 40 px.</p>
+    <p><strong style="color:var(--tx)">Cambia el armario:</strong> los colores y diseños pintan la cáscara; los lentes pasan a ser el color y el reflejo de la visera; el pelo y la piel desaparecen.</p>
+    <div class="tamanos" data-t="A"></div>
+  </div>
+</section>
+
+<section class="concepto">
+  <div class="grande" data-c="B"></div>
+  <div class="info">
+    <div class="tag">Camino B · Geométrico</div>
+    <h3>Formas simples, mucha expresión</h3>
+    <p>Cabeza de cuadrado redondeado en vez de círculo, ojos alargados con brillo, cejas gruesas que mueven la expresión y una boca abierta. El casco es un triángulo redondeado con tres ventilaciones que baja hasta las sienes, con las correas a la vista.</p>
+    <p><strong style="color:var(--tx)">Cambia el armario:</strong> se mantiene casi todo (casco, colores, lentes, pelo y piel), redibujado con estas formas.</p>
+    <div class="tamanos" data-t="B"></div>
+  </div>
+</section>
+
+<section class="concepto">
+  <div class="grande" data-c="C"></div>
+  <div class="info">
+    <div class="tag">Camino C · De ruta</div>
+    <h3>Un ciclista de verdad, de perfil</h3>
+    <p>Proporciones más adultas, de tres cuartos mirando hacia donde va, con lentes envolventes de ciclismo y el casco de ruta con ventilaciones. Colores planos con una sola sombra. Se parece más a las ilustraciones de las marcas de ciclismo que a un dibujo animado.</p>
+    <p><strong style="color:var(--tx)">Cambia el armario:</strong> todo se redibuja de perfil. Es el camino que más trabajo lleva.</p>
+    <div class="tamanos" data-t="C"></div>
+  </div>
+</section>
+
+<div class="preg">
+  <p><strong>Para decidir:</strong> ¿cuál camino sigo, A, B o C? También sirve “B pero con algo de A”. Con tu elección dibujo el definitivo, primero solo la cabeza con 4 expresiones, para tu aprobación.</p>
+</div>
+</div>
+
+<script>
+(function(){
+var P='#fc4c02', PS='#c43a00', PL='#ff8a4c';
+/* ---------- A · Casco vivo ---------- */
+function A(){ return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">'
+ +'<ellipse cx="100" cy="182" rx="58" ry="7" fill="rgba(0,0,0,.28)"/>'
+ // cáscara: domo con cola corta atrás y borde inferior que sube adelante
+ +'<path d="M26 128 C22 82 52 34 104 30 C150 27 182 62 178 112 C177 128 170 140 158 146 L44 150 C33 146 27 139 26 128 Z" fill="'+P+'"/>'
+ +'<path d="M40 74 C58 46 84 36 108 36 C136 36 158 50 170 76 C148 58 126 52 104 52 C80 52 58 60 40 74 Z" fill="'+PL+'" opacity=".55"/>'
+ // ventilaciones (rectángulos redondeados que siguen la curva)
+ +'<g fill="#7a2400"><rect x="62" y="50" width="12" height="34" rx="6" transform="rotate(-28 68 67)"/><rect x="94" y="40" width="12" height="36" rx="6"/><rect x="126" y="50" width="12" height="34" rx="6" transform="rotate(28 132 67)"/></g>'
+ +'<path d="M100 31 L100 76" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".9"/>'
+ // visera = cara
+ +'<path d="M38 104 C60 92 140 92 164 104 C170 118 166 138 154 146 C130 156 70 156 48 146 C36 138 33 118 38 104 Z" fill="#0d1424"/>'
+ +'<path d="M46 108 C70 99 132 99 156 108 C150 104 128 98 100 98 C74 98 54 102 46 108 Z" fill="#2c3a5c"/>'
+ +'<path d="M128 104 C142 106 152 112 156 120 L150 122 C146 114 138 109 128 108 Z" fill="#fff" opacity=".22"/>'
+ // ojos LED y boca
+ +'<rect x="68" y="110" width="16" height="22" rx="8" fill="#eaf6ff"/><rect x="116" y="110" width="16" height="22" rx="8" fill="#eaf6ff"/>'
+ +'<circle cx="79" cy="116" r="3.2" fill="#0d1424"/><circle cx="127" cy="116" r="3.2" fill="#0d1424"/>'
+ +'<path d="M88 138 Q100 146 112 138" fill="none" stroke="#eaf6ff" stroke-width="4" stroke-linecap="round"/>'
+ // correa y hebilla
+ +'<path d="M48 148 C56 166 76 176 100 176 C124 176 144 166 152 148" fill="none" stroke="#1f2937" stroke-width="5" stroke-linecap="round"/>'
+ +'<rect x="92" y="170" width="16" height="10" rx="3" fill="#94a3b8"/>'
+ +'</svg>'; }
+/* ---------- B · Geométrico ---------- */
+function B(){ return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">'
+ +'<ellipse cx="100" cy="186" rx="56" ry="6" fill="rgba(0,0,0,.28)"/>'
+ // hombros con polera
+ +'<path d="M40 186 C42 160 62 150 100 150 C138 150 158 160 160 186 Z" fill="'+P+'"/>'
+ +'<path d="M84 150 L100 166 L116 150" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>'
+ +'<rect x="88" y="138" width="24" height="18" rx="8" fill="#e6b48c"/>'
+ // cabeza: cuadrado redondeado
+ +'<rect x="46" y="58" width="108" height="94" rx="40" fill="#f2c9a2"/>'
+ +'<path d="M46 110 C46 136 66 152 100 152 C134 152 154 136 154 110 C150 132 130 144 100 144 C70 144 50 132 46 110 Z" fill="#e6b48c"/>'
+ // correas por los costados de la cara
+ +'<path d="M50 90 C52 114 60 132 74 144 M150 90 C148 114 140 132 126 144" fill="none" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>'
+ // casco: triángulo redondeado con tres ventilaciones, baja hasta las sienes
+ +'<path d="M38 90 C32 52 62 24 100 24 C138 24 168 52 162 90 C148 80 128 75 100 75 C72 75 52 80 38 90 Z" fill="'+P+'"/>'
+ +'<path d="M52 56 C66 40 82 34 100 34 C118 34 134 40 148 56 C132 46 116 42 100 42 C84 42 68 46 52 56 Z" fill="'+PL+'" opacity=".6"/>'
+ +'<g fill="#7a2400" transform="translate(0 -6)"><rect x="62" y="50" width="12" height="26" rx="6" transform="rotate(-22 68 63)"/><rect x="94" y="44" width="12" height="28" rx="6"/><rect x="126" y="50" width="12" height="26" rx="6" transform="rotate(22 132 63)"/></g>'
+ +'<path d="M38 90 C52 80 72 75 100 75 C128 75 148 80 162 90" fill="none" stroke="'+PS+'" stroke-width="5" stroke-linecap="round"/>'
+ // cejas, ojos, nariz, boca
+ +'<rect x="66" y="92" width="22" height="7" rx="3.5" fill="#3b2416" transform="rotate(-6 77 95)"/><rect x="112" y="90" width="22" height="7" rx="3.5" fill="#3b2416" transform="rotate(6 123 93)"/>'
+ +'<rect x="70" y="102" width="14" height="22" rx="7" fill="#1b2340"/><rect x="116" y="102" width="14" height="22" rx="7" fill="#1b2340"/>'
+ +'<circle cx="80" cy="108" r="3.4" fill="#fff"/><circle cx="126" cy="108" r="3.4" fill="#fff"/>'
+ +'<path d="M100 114 L106 126 L96 126 Z" fill="#e0a57c" stroke="#e0a57c" stroke-width="3" stroke-linejoin="round"/>'
+ +'<path d="M84 132 C88 144 112 144 116 132 Z" fill="#5a1f1a"/><path d="M92 139 C96 136 104 136 108 139 C104 142 96 142 92 139 Z" fill="#e35d5d"/>'
+ +'</svg>'; }
+/* ---------- C · De ruta (tres cuartos, mirando a la derecha) ---------- */
+function C(){ var piel='#e9b68f', pielS='#cf9672';
+ return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">'
+ +'<ellipse cx="100" cy="188" rx="60" ry="6" fill="rgba(0,0,0,.28)"/>'
+ // hombros adelantados (postura de ruta) y maillot
+ +'<path d="M28 188 C30 158 52 142 84 140 L120 142 C146 146 166 162 170 188 Z" fill="'+P+'"/>'
+ +'<path d="M30 176 C70 166 120 166 168 178" stroke="#fff" stroke-width="5" fill="none" opacity=".9"/>'
+ +'<path d="M84 140 C88 150 104 154 120 142" fill="none" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>'
+ // cuello
+ +'<path d="M88 118 L86 146 C96 150 110 150 118 144 L116 118 Z" fill="'+pielS+'"/>'
+ // cara de tres cuartos: frente, nariz, mentón
+ +'<path d="M62 92 C62 64 82 50 106 50 C130 50 146 66 148 88 C149 96 154 102 156 108 C157 112 152 114 148 114 C148 124 142 134 130 138 C116 142 96 140 82 132 C68 124 62 110 62 92 Z" fill="'+piel+'"/>'
+ +'<path d="M62 92 C62 110 68 124 82 132 C74 120 70 106 72 92 Z" fill="'+pielS+'" opacity=".7"/>'
+ // oreja asomando bajo el casco
+ +'<path d="M70 98 C62 96 60 108 68 112 C72 113 74 110 74 106 Z" fill="'+pielS+'"/>'
+ // casco de ruta con ventilaciones y cola
+ +'<path d="M50 84 C48 50 78 30 112 30 C140 30 160 46 162 72 L150 78 C122 70 86 72 58 86 Z" fill="'+P+'"/>'
+ +'<g fill="#7a2400"><path d="M76 46 C84 40 94 38 102 38 L100 46 C92 46 84 48 78 52 Z"/><path d="M110 37 C122 37 134 42 142 50 L136 54 C130 48 120 44 110 44 Z"/><path d="M68 60 C78 54 92 52 104 52 L102 58 C90 58 80 60 70 66 Z"/></g>'
+ +'<path d="M58 86 C86 72 122 70 150 78" fill="none" stroke="'+PS+'" stroke-width="4"/>'
+ +'<path d="M66 92 C70 108 76 118 84 126" fill="none" stroke="#1f2937" stroke-width="3.5" stroke-linecap="round"/>'
+ // lentes envolventes (media montura, espejo)
+ +'<path d="M84 88 C100 84 132 84 156 90 C156 100 150 108 138 108 C128 108 120 102 116 96 C112 104 104 108 96 106 C88 104 84 96 84 88 Z" fill="#1e3a8a"/>'
+ +'<path d="M84 88 C100 84 132 84 156 90" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/>'
+ +'<path d="M92 92 C100 90 108 90 112 92 L110 96 C104 94 98 95 94 97 Z M124 92 C134 91 144 92 150 95 L148 99 C140 96 132 96 126 97 Z" fill="#7dd3fc" opacity=".7"/>'
+ // nariz y sonrisa
+ +'<path d="M146 108 C146 112 142 114 138 113" fill="none" stroke="'+pielS+'" stroke-width="3" stroke-linecap="round"/>'
+ +'<path d="M118 122 C126 128 136 128 142 122" fill="none" stroke="#7a3b24" stroke-width="3.5" stroke-linecap="round"/>'
+ +'</svg>'; }
+var F={A:A,B:B,C:C};
+document.querySelectorAll('[data-c]').forEach(function(el){ el.innerHTML=F[el.dataset.c](); });
+var navIc='<svg class="ico" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>';
+var mapIc='<svg class="ico" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+document.querySelectorAll('[data-t]').forEach(function(el){ var s=F[el.dataset.t]();
+  el.innerHTML='<figure><div class="nav"><span>'+navIc+'Inicio</span><span>'+mapIc+'Mapa</span><span class="on"><span class="av">'+s+'</span>Pistero</span></div><figcaption>Barra de abajo · 40 px</figcaption></figure>'
+   +'<figure><div class="mapa">'+s+'</div><figcaption>En el mapa · 64 px</figcaption></figure>'
+   +'<figure><div class="claro">'+s+'</div><figcaption>Fondo claro</figcaption></figure>'; });
+})();
+</script>
