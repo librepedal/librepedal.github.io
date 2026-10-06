@@ -73,4 +73,8 @@ puede confundir a otra sesión, corrígelo o márcalo como viejo en ese momento.
 - Lentes de Pistero: borde superior que **sube** hacia afuera (nunca caído: se ve triste), transparencia que deja
   ver los ojos, reflejo de sol en el cristal; nada sobre el casco. Referencia: lentes de ciclismo reales
   (media montura, barra superior gruesa, espejo iridiscente, arco de nariz).
+- Piezas que tocan el cuerpo (cuello: buff, pañoleta, bufanda, maillot, corbatín, collar): en la bici/cuerpo van **sobre el
+  cuello real** y se animan con él (`_bCuelloPieza` en pistero-bici.js), nunca pegadas a la cabeza (flotaban; Inty 2026-10-06).
+- Colores de casco: nada de arcoíris ni degradados multicolor (Inty 2026-10-06: "espantoso"). Paletas sacadas de cascos
+  reales (POC, Kask, Thousand), no inventadas.
 - Público de toda Sudamérica: no nombrar "Chile" en textos de la app dirigidos a todos.
