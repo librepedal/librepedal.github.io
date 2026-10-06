@@ -27,11 +27,11 @@ h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance} h1{font-size:clamp(2
 .nav .av{width:30px;height:30px;border-radius:9px;background:rgba(252,76,2,.12);display:grid;place-items:center}.nav .av svg{width:28px;height:28px}
 .ico{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* elegir modelo */
-.prev{background:radial-gradient(circle at 50% 40%,#1b2540,#0f1524 70%);border-radius:18px;display:grid;place-items:center;height:210px}
-.prev svg{height:190px;width:auto}
+.prev{background:radial-gradient(circle at 50% 40%,#1b2540,#0f1524 70%);border-radius:18px;display:grid;place-items:center;height:170px}
+.prev svg{height:156px;width:auto}
 .modelos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .mod{background:var(--surf);border:1.5px solid var(--line);border-radius:14px;padding:8px 6px;text-align:center;font-size:.78rem;cursor:pointer;display:grid;gap:2px;justify-items:center}
-.mod svg{width:84px;height:84px}
+.mod svg{width:56px;height:56px}
 .mod small{color:var(--mute);font-size:.66rem}
 .mod.on{border-color:var(--p);background:linear-gradient(180deg,rgba(252,76,2,.12),var(--surf))}
 .btn{background:var(--p);color:#111;border:0;border-radius:13px;padding:12px;font-weight:800;font-size:.85rem;text-align:center}
@@ -52,6 +52,13 @@ h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance} h1{font-size:clamp(2
 .msg{max-width:85%;font-size:.8rem;padding:8px 11px;border-radius:14px}
 .msg.pi{background:rgba(255,255,255,.08)}.msg.yo{background:var(--p);color:#111;margin-left:auto}
 .tels .tel{transition:none}
+.ras{background-repeat:no-repeat;border-radius:12px;margin:0 auto;mix-blend-mode:lighten}
+.pop:has(.ras){filter:none}
+.timbre{animation:timbre 2.4s ease-in-out infinite;transform-origin:50% 10%}
+@keyframes timbre{0%,55%,100%{transform:rotate(0)}60%{transform:rotate(-9deg)}66%{transform:rotate(8deg)}72%{transform:rotate(-6deg)}78%{transform:rotate(4deg)}84%{transform:rotate(0)}}
+.condor{animation:condor 3.6s ease-in-out infinite}
+@keyframes condor{0%,100%{transform:translate(0,0)}50%{transform:translate(4px,-8px)}}
+.modelos{grid-template-columns:1fr 1fr}
 @media (prefers-reduced-motion:reduce){.pop,.burb{animation:none}}
 .nota{font-size:.78rem;color:var(--mute)}
 </style>
@@ -59,7 +66,7 @@ h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance} h1{font-size:clamp(2
 <header>
   <div class="eyebrow">Libre Pedal · Pistero · maquetas</div>
   <h1>Cada uno elige <span>su Pistero</span></h1>
-  <p class="lead">Los modelos conviven: el Pistero de siempre y el Casco vivo (y los que vengan). Todos de frente. En Inicio, Pistero sale por encima de la pantalla y te habla.</p>
+  <p class="lead">Cuatro modelos para elegir, cada uno con su forma de moverse: el Casco vivo parpadea y habla, el Timbre se balancea y suena, el Cóndor planea de lado y el Clásico es el de siempre. El que elijas es el que sale de la pantalla en Inicio.</p>
 </header>
 <div class="tels">
   <div class="col">
@@ -74,7 +81,7 @@ h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance} h1{font-size:clamp(2
       </div>
       <div class="nav" id="nav1"></div>
     </div></div>
-    <h2>1 · Elegir modelo</h2><p>En el Armario, arriba de todo. Toca un modelo y se ve grande.</p>
+    <h2>1 · Elegir modelo</h2><p>En el Armario, arriba de todo. Toca un modelo: se ve grande, animado, y es el que asoma en Inicio.</p>
   </div>
   <div class="col">
     <div class="tel">
@@ -165,13 +172,18 @@ function pisteroFrenteSVG(o){
 
 var CLASICO="<svg viewBox=\"0 0 100 84\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M16 50 Q16 78 50 80 Q84 78 84 50 Z\" fill=\"#f4c9a0\"/><path d=\"M22 74 Q50 84 78 74 Q66 80 50 80 Q34 80 22 74 Z\" fill=\"rgba(0,0,0,.06)\"/><defs><clipPath id=\"c1\"><path d=\"M12 54 A38 36 0 0 1 88 54 Z\"/></clipPath></defs><path d=\"M12 54 A38 36 0 0 1 88 54 Z\" fill=\"#00aaff\"/><g clip-path=\"url(#c1)\"><g transform=\"translate(.7 1)\" opacity=\".22\"><path d=\"M50 22 L50 52\" stroke=\"#000\" stroke-width=\"6\" stroke-linecap=\"round\"/></g><g transform=\"translate(-.4 -.5)\" opacity=\".3\"><path d=\"M50 22 L50 52\" stroke=\"#fff\" stroke-width=\"6\" stroke-linecap=\"round\"/></g><path d=\"M50 22 L50 52\" stroke=\"#fc4c02\" stroke-width=\"6\" stroke-linecap=\"round\"/></g><g clip-path=\"url(#c1)\"><path d=\"M66 22 Q86 32 84 52\" fill=\"none\" stroke=\"rgba(0,0,0,.14)\" stroke-width=\"9\" stroke-linecap=\"round\"/></g><g fill=\"rgba(255,255,255,.13)\"><ellipse cx=\"38.35\" cy=\"31.6\" rx=\"2.8\" ry=\"8\" transform=\"rotate(28 38.35 31.6)\"/><ellipse cx=\"62.35\" cy=\"31.6\" rx=\"2.8\" ry=\"8\" transform=\"rotate(-28 62.35 31.6)\"/><ellipse cx=\"24.85\" cy=\"43.6\" rx=\"2.2\" ry=\"6\" transform=\"rotate(48 24.85 43.6)\"/><ellipse cx=\"75.85\" cy=\"43.6\" rx=\"2.2\" ry=\"6\" transform=\"rotate(-48 75.85 43.6)\"/></g><g fill=\"rgba(0,0,0,.42)\"><ellipse cx=\"38\" cy=\"31\" rx=\"2.8\" ry=\"8\" transform=\"rotate(28 38 31)\"/><ellipse cx=\"62\" cy=\"31\" rx=\"2.8\" ry=\"8\" transform=\"rotate(-28 62 31)\"/><ellipse cx=\"24.5\" cy=\"43\" rx=\"2.2\" ry=\"6\" transform=\"rotate(48 24.5 43)\"/><ellipse cx=\"75.5\" cy=\"43\" rx=\"2.2\" ry=\"6\" transform=\"rotate(-48 75.5 43)\"/></g><path d=\"M12 54 Q50 45 88 54 Z\" fill=\"rgba(0,0,0,.13)\"/><g clip-path=\"url(#c1)\"><path d=\"M21 42 Q27 26 45 21\" stroke=\"rgba(255,255,255,.14)\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/></g><path d=\"M21.6 41 Q27.4 26.6 44 21.8\" stroke=\"rgba(255,255,255,.6)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"19.6\" cy=\"46.4\" r=\"1.2\" fill=\"rgba(255,255,255,.5)\"/><circle cx=\"50\" cy=\"19.6\" r=\".9\" fill=\"rgba(255,255,255,.4)\"/><path d=\"M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z\" fill=\"rgba(0,0,0,0.3)\"/><g fill=\"none\" stroke=\"#1f2937\" stroke-width=\"1.3\" stroke-linecap=\"round\" opacity=\".55\"><path d=\"M18.5 56 Q20 70 31 78.6\"/><path d=\"M81.5 56 Q80 70 69 78.6\"/></g><rect x=\"47.6\" y=\"79.2\" width=\"4.8\" height=\"2.6\" rx=\"1\" fill=\"#1f2937\" opacity=\".55\"/><g class=\"lp-eye lp-parpadeo\"><ellipse cx=\"40\" cy=\"63\" rx=\"6.2\" ry=\"7.6\" fill=\"#16203a\"/><g class=\"lp-iris\"><circle cx=\"37.8\" cy=\"60\" r=\"2.5\" fill=\"#fff\"/><circle cx=\"42\" cy=\"65.5\" r=\"1.2\" fill=\"#fff\" opacity=\".85\"/></g></g><g class=\"lp-eye lp-parpadeo\"><ellipse cx=\"60\" cy=\"63\" rx=\"6.2\" ry=\"7.6\" fill=\"#16203a\"/><g class=\"lp-iris\"><circle cx=\"57.8\" cy=\"60\" r=\"2.5\" fill=\"#fff\"/><circle cx=\"62\" cy=\"65.5\" r=\"1.2\" fill=\"#fff\" opacity=\".85\"/></g></g><ellipse cx=\"30\" cy=\"71\" rx=\"5.5\" ry=\"3.2\" fill=\"#ff9db0\" opacity=\".55\"/><ellipse cx=\"70\" cy=\"71\" rx=\"5.5\" ry=\"3.2\" fill=\"#ff9db0\" opacity=\".55\"/><path d=\"M43 73 Q50 79 57 73\" stroke=\"#7a4a2a\" stroke-width=\"2.4\" fill=\"none\" stroke-linecap=\"round\"/></svg>";
 (function(){
-  var MOD=[{n:'Casco vivo',d:'Nuevo',svg:function(){return pisteroFrenteSVG({});}},{n:'Clásico',d:'El de siempre',svg:function(){return CLASICO;}}];
+  function crop(img,x,y,w,h,W,cls){ var H=Math.round(W*h/w); return '<div class="ras '+(cls||'')+'" style="width:'+W+'px;height:'+H+'px;background-image:url('+img+');background-size:'+(1376/w*100).toFixed(1)+'% auto;background-position:'+(x/(1376-w)*100).toFixed(1)+'% '+(y/(768-h)*100).toFixed(1)+'%"></div>'; }
+  var MOD=[
+    {n:'Casco vivo',d:'Parpadea y habla',svg:function(big){ return pisteroFrenteSVG({expr:big?'hablando':'feliz'}); }},
+    {n:'Timbre',d:'Se balancea y suena',svg:function(big){ return crop('../gemini/modelo-timbre.jpg',100,225,300,320,big?150:56,'timbre'); }},
+    {n:'Cóndor',d:'Planea de lado',svg:function(big){ return big?crop('../gemini/modelo-condor.jpg',975,170,360,420,150,'condor'):crop('../gemini/modelo-condor.jpg',80,160,250,460,32,''); }},
+    {n:'Clásico',d:'El de siempre',svg:function(){ return CLASICO; }}];
   var sel=0;
-  function pintar(){ document.getElementById('prev').innerHTML=MOD[sel].svg();
+  function pintar(){ document.getElementById('prev').innerHTML=MOD[sel].svg(true); var p=document.getElementById('pop'); if(p) p.innerHTML=sel===0?pisteroFrenteSVG({expr:'riendo'}):MOD[sel].svg(true);
     document.getElementById('modelos').innerHTML=MOD.map(function(m,i){ return '<div class="mod'+(i===sel?' on':'')+'" data-i="'+i+'">'+m.svg()+m.n+'<small>'+m.d+'</small></div>'; }).join(''); }
   document.getElementById('modelos').addEventListener('click',function(e){ var c=e.target.closest('.mod'); if(c){ sel=+c.dataset.i; pintar(); } });
   pintar();
-  document.getElementById('pop').innerHTML=pisteroFrenteSVG({expr:'riendo'});
+  pintar();
   // la ventana del efecto termina justo en el borde superior de la tarjeta: Pistero sale de ahí
   function medir(){ var tel=document.getElementById('popw').parentElement, card=tel.querySelector('.card'); var y=card.getBoundingClientRect().top-tel.getBoundingClientRect().top-9; document.getElementById('popw').style.height=(230+y)+'px'; }
   medir(); window.addEventListener('resize',medir);
