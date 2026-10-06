@@ -78,6 +78,9 @@ puede confundir a otra sesión, corrígelo o márcalo como viejo en ese momento.
 - Personajes o ilustraciones NUEVAS (p. ej. un Pistero rediseñado): no se dibujan como SVG a mano de una (Inty 2026-10-06:
   "fracaso monumental"). Primero panel de imágenes de referencia reales (ilustradores, mascotas de marca), luego
   exploración con generador de imágenes para elegir estilo, y recién ahí vectorizar para la app.
+- Modelos de Pistero (Inty 2026-10-06): siempre una CARA CON CASCO de frente, SIN rasgos humanos (ni piel, nariz,
+  orejas; androides, robots, pantallas, luz, como el Casco vivo). Ni objetos ni animales. Cada uno con su estilo de
+  animación; el usuario elige su modelo.
 - Colores de casco: nada de arcoíris ni degradados multicolor (Inty 2026-10-06: "espantoso"). Paletas sacadas de cascos
   reales (POC, Kask, Thousand), no inventadas.
 - Público de toda Sudamérica: no nombrar "Chile" en textos de la app dirigidos a todos.
