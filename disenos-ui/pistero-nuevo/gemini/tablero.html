@@ -1,0 +1,45 @@
+<title>Pistero casco vivo · Gemini</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: tablero oscuro; la imagen principal grande arriba, debajo las hojas generadas en una grilla de 2. */
+:root{ --d:#0a0f1d; --surf:#141a2b; --line:rgba(255,255,255,0.09); --p:#fc4c02; --g:#ffd700; --tx:#e8eeff; --sub:#9fb3c8;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif; --f-app:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-app);font-size:15px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 60px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:26px}
+h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance} h1{font-size:clamp(2rem,6vw,2.8rem);line-height:1} h1 span{color:var(--p)} h2{font-size:1.35rem}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p);font-weight:700}
+.lead{color:var(--sub);max-width:70ch;margin:8px 0 0}
+figure{margin:0;background:var(--surf);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid}
+figure img{width:100%;height:auto;display:block}
+figcaption{padding:10px 14px;display:grid;gap:2px} figcaption b{font-size:.95rem} figcaption span{font-size:.82rem;color:var(--sub)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.sig{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.25);border-radius:12px;padding:12px 14px;max-width:72ch}
+.sig p{margin:0 0 6px} .sig ol{margin:0;padding-left:20px;color:var(--sub)}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Libre Pedal · Pistero nuevo · generado con Gemini</div>
+  <h1>Pistero, <span>casco vivo</span></h1>
+  <p class="lead">Un casco de ruta real es la cabeza y la visera oscura es la cara: los ojos y la sonrisa son luces LED. Referencias: Astro Bot (PlayStation), EVE (Pixar) y los cascos de Daft Punk. Todo lo de esta página salió de Gemini con prompts escritos a partir de esas referencias.</p>
+</header>
+
+<figure><img src="gemini-descarga-tamano-completo.jpeg" alt="Pistero: casco de ruta naranja con visera oscura, ojos y sonrisa LED"><figcaption><b>El personaje</b><span>Casco de ruta con ventilaciones reales, franja blanca y correa. Imagen en tamaño original.</span></figcaption></figure>
+
+<div class="grid">
+  <figure><img src="captura-02-expresiones.jpg" alt="Seis expresiones de Pistero"><figcaption><b>Expresiones</b><span>Feliz, riendo, con sueño, sorprendido, concentrado y guiño. El casco no cambia, solo los LED: se puede animar en la app.</span></figcaption></figure>
+  <figure><img src="captura-06-tipos-de-casco.jpg" alt="Seis tipos de casco"><figcaption><b>Tipos de casco</b><span>Ruta, aero, montaña con visera, integral, urbano y BMX. Con la misma cara en todos: la variedad que pediste.</span></figcaption></figure>
+  <figure><img src="captura-05-icono-frente.jpg" alt="Pistero de frente"><figcaption><b>De frente, para el ícono</b><span>Formas simples que se leen en la barra de abajo.</span></figcaption></figure>
+  <figure><img src="captura-04-pedaleando-v2.jpg" alt="Pistero pedaleando"><figcaption><b>Pedaleando</b><span>Sin piel a la vista: manga larga, guantes y calzas.</span></figcaption></figure>
+</div>
+
+<div class="sig">
+  <p><strong>Lo que sigue (ya en curso):</strong></p>
+  <ol>
+    <li>Pasar la cabeza a vector, por capas: cáscara (cambia de color con el armario), ventilaciones, franja, visera y LED (cambian con la expresión).</li>
+    <li>Las 6 expresiones animadas, con parpadeo.</li>
+    <li>Los 6 tipos de casco como piezas del armario.</li>
+    <li>El cuerpo sobre la bici.</li>
+  </ol>
+</div>
+</div>
