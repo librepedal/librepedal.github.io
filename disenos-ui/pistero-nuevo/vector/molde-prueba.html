@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><title>Molde prueba</title>
+<style>body{margin:0;background:#0a0f1d;color:#ccd;font:12px system-ui}.w{display:flex;gap:10px;padding:10px;flex-wrap:wrap}.w>div{background:#141a2b;border-radius:12px;padding:6px;text-align:center;width:180px}.w svg{width:100%;height:auto}</style>
+<div class="w" id="a"></div>
+<script src="molde.js"></script>
+<script>
+var c=[['Orbe + molde',{modelo:'orbe',molde:true}],['Orbe',{modelo:'orbe'}],['Orbe + lentes',{modelo:'orbe',lentes:true}],['Orbe casco naranja',{modelo:'orbe',casco:'#fc4c02'}],['Slime + molde',{modelo:'slime',molde:true}],['Slime',{modelo:'slime'}],['Slime + lentes',{modelo:'slime',lentes:true,casco:'#2f5e3b'}]];
+document.getElementById('a').innerHTML=c.map(function(x){ return '<div>'+pisteroMoldeSVG(x[1])+x[0]+'</div>'; }).join('')+'<div style="width:auto"><div style="width:40px;height:40px">'+pisteroMoldeSVG({modelo:'orbe'})+'</div>40px</div>';
+</script>
