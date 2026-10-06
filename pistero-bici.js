@@ -185,7 +185,47 @@ function _bPersona(o){
   return {piel:piel,pielS:_lpShade(piel,-.2),polera:polera,poleraS:_lpShade(polera,-.3)};
 }
 function _bCabeza(o,expr,c,hw){
+  // 2026-10-06 (Inty: "el cuello se le despega del cuerpo"): la pieza de cuello (buff, pañoleta, bufanda,
+  // maillot, corbatín, collar) está dibujada para el Pistero SIN cuerpo, bajo el mentón; sobre la bici quedaba
+  // flotando delante de la cara. Aquí la cabeza va sin ella y _bCuelloPieza la dibuja sobre el cuello real.
+  if(o&&(o.cuello||o.pano)) o=Object.assign({},o,{cuello:'',pano:''});
   return _pistoDe(o,expr||'feliz').replace('<svg viewBox="0 0 100 84"','<svg x="'+(c[0]-hw/2).toFixed(1)+'" y="'+(c[1]-hw*0.6).toFixed(1)+'" width="'+hw+'" height="'+(hw*0.84).toFixed(1)+'" viewBox="0 0 100 84"');
+}
+// Pieza de cuello sobre el cuello del ciclista. bases/tops: por cuadro, la base del cuello (hombro) y su punta
+// (hacia la cabeza). Se anima igual que el cuello, así nunca se separa del cuerpo. Mirando a la derecha: n = frente.
+function _bCuelloPieza(o,bases,tops,anim,dur){
+  var tipo=o&&o.cuello; if(!tipo) return '';
+  var col=o.pano||'#fc4c02', osc=_lpShade(col,-.3), cla=_lpShade(col,.4);
+  // u = a lo largo del cuello (hacia la cabeza), n = hacia el frente. La cabeza tapa casi todo el cuello,
+  // así que las piezas se apoyan en la clavícula (algo bajo la base) para que se vean, como en una persona real.
+  function geo(b,t){ var dx=t[0]-b[0], dy=t[1]-b[1], d=Math.sqrt(dx*dx+dy*dy)||1, u=[dx/d,dy/d], n=[-u[1],u[0]]; if(n[0]<0) n=[-n[0],-n[1]];
+    return function(k,m){ return [b[0]+n[0]*k+u[0]*m, b[1]+n[1]*k+u[1]*m]; }; }
+  function cuadros(fn){ return bases.map(function(b,i){ return fn(geo(b,tops[i]),i,b,tops[i]); }); }
+  function capa(vals,fill,extra){ return _bAP(vals,fill,anim,dur,extra); }
+  function M(pts){ return 'M'+pts.map(_bP).join(' L')+' Z'; }
+  var out='', N=bases.length;
+  if(tipo==='bufanda') out+=capa(cuadros(function(p,i){ var w=Math.sin(i*2*Math.PI/N)*1.1; return M([p(-2.6,1.6),p(-10.5,-1.8+w),p(-9.6,-5+w),p(-1.8,-1.4)]); }),osc,' stroke="'+_lpShade(col,-.45)+'" stroke-width=".4" stroke-linejoin="round"');
+  if(tipo==='buff'||tipo==='bufanda'){ var r=tipo==='bufanda'?4.1:3.8;
+    out+=capa(cuadros(function(p,i,b,t){ return _bCap(p(0,-1.6),_bL(b,t,.8),r,r-.4); }),col);
+    out+=capa(cuadros(function(p){ return 'M'+_bP(p(-r+.7,-.2))+' L'+_bP(p(r-.7,-.2)); }),'none',' stroke="'+cla+'" stroke-width="1" stroke-linecap="round"'+(tipo==='buff'?' stroke-dasharray="1.6 1"':''));
+    if(tipo==='bufanda') out+=capa(cuadros(function(p){ return 'M'+_bP(p(-r+.6,-2.4))+' L'+_bP(p(r-.6,-2.4)); }),'none',' stroke="'+osc+'" stroke-width=".7" stroke-linecap="round"');
+  } else if(tipo==='panoleta'){
+    out+=capa(cuadros(function(p,i,b,t){ return _bCap(p(0,-.6),_bL(b,t,.7),3.4,3); }),col);
+    out+=capa(cuadros(function(p){ return M([p(1.2,0),p(5.2,-1),p(3.8,-7.4)]); }),col,' stroke="'+osc+'" stroke-width=".45" stroke-linejoin="round"');
+    out+=capa(cuadros(function(p){ return 'M'+_bP(p(1.8,-1.2))+' L'+_bP(p(3.7,-5.6)); }),'none',' stroke="'+cla+'" stroke-width=".6" stroke-linecap="round" stroke-dasharray="1 .8"');
+  } else if(tipo==='maillot'){
+    out+=capa(cuadros(function(p,i,b,t){ return _bCap(p(0,-1.2),_bL(b,t,.45),3.4,3.1); }),col);
+    out+=capa(cuadros(function(p){ return 'M'+_bP(p(-3,.4))+' Q'+_bP(p(0,1.4))+' '+_bP(p(3.1,.6)); }),'none',' stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".9"');
+    out+=capa(cuadros(function(p){ return 'M'+_bP(p(3,.4))+' L'+_bP(p(4.6,-5.6)); }),'none',' stroke="#d1d5db" stroke-width=".9" stroke-linecap="round"');
+  } else if(tipo==='pajarita'){
+    out+=capa(cuadros(function(p){ var c=p(3.4,-.6); function q(k,m){ return [c[0]+(p(k,m)[0]-p(0,0)[0]), c[1]+(p(k,m)[1]-p(0,0)[1])]; }
+      return M([c,q(.9,2.8),q(2.2,3)])+' '+M([c,q(.9,-2.8),q(2.2,-3)]); }),col,' stroke="rgba(0,0,0,.3)" stroke-width=".45" stroke-linejoin="round"');
+    out+=capa(cuadros(function(p){ var c=p(3.6,-.6); return _bCap(c,[c[0]+.01,c[1]+.01],1,1); }),osc);
+  } else if(tipo==='collar'){
+    out+=capa(cuadros(function(p){ return 'M'+_bP(p(-3,1))+' Q'+_bP(p(.6,-4.2))+' '+_bP(p(4.2,-2.6)); }),'none',' stroke="#f5c518" stroke-width="1.1" stroke-dasharray="1.2 .7" stroke-linecap="round"');
+    out+=capa(cuadros(function(p){ var e=p(4.4,-3.6); return _bCap(e,[e[0]+.01,e[1]+.01],1.3,1.3); }),col,' stroke="#f5c518" stroke-width=".5"');
+  }
+  return out;
 }
 // calzado con el origen en la planta (bajo el metatarso): así gira sobre el pedal/pedalín
 function _bZapato(R,c,piel){
@@ -271,7 +311,7 @@ function _pistBiciSVG(opts, cfg){
       par(x+'bra',Sh,E,3,2.9,2.4,1,.4); par(x+'ant',E,H,2.5,2.5,2,1,.32); par(x+'man',Sh,_bL(Sh,E,.55),3.7,3.6,3.2,1,.5);
     });
     f.torso=_bLimb(f.ta,f.sh,5.6,6.1,5.4,-1,.56);
-    f.cuello=_bCap(f.sh,_bL(f.sh,[HEAD[0]+f.head[0],HEAD[1]+f.head[1]],.35),2.6,2.5);
+    f.cuT=_bL(f.sh,[HEAD[0]+f.head[0],HEAD[1]+f.head[1]],.35); f.cuello=_bCap(f.sh,f.cuT,2.6,2.5);
     f.esp=_bC([bob*.2,bob*.65]);
     F.push(f);
   }
@@ -537,6 +577,8 @@ function _pistBiciSVG(opts, cfg){
   s+=_bAP(col_('cuello'),Y.pielS,anim,dur);
 
   s+=pierna('n')+brazo('n');
+  // la pieza de cuello va sobre el hombro cercano (de lado, el pañuelo se ve por encima del hombro)
+  s+=_bCuelloPieza(o,col_('sh'),col_('cuT'),anim,dur);
 
   // ---- cabeza: el Pistero del usuario (se mece con el cuerpo; inclinada según la postura) ----
   var inc=pose==='sinmanos'?0:(pose==='caballito'?-4:(G.inc+aero*8+(pose==='pie'?4:0))), cab=_bCabeza(o,cfg.expr,HEAD,52);
@@ -562,13 +604,6 @@ function _bEstela(id,p,anim){
     return '<g opacity="0">'+forma
       +'<animateTransform attributeName="transform" type="translate" values="'+p[0]+' '+y+';'+(p[0]-32)+' '+(y+dx)+'" dur="'+dur+'s" begin="'+(k*dur/n).toFixed(2)+'s" repeatCount="indefinite"/>'
       +'<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.12;.7;1" dur="'+dur+'s" begin="'+(k*dur/n).toFixed(2)+'s" repeatCount="indefinite"/></g>';
-  }
-  if(id==='arcoiris'){
-    // cinta arcoíris ondulada que corre hacia atrás
-    ['#ef4444','#f97316','#facc15','#22c55e','#3b82f6','#8b5cf6'].forEach(function(c,j){ var y=p[1]-7+j*2.3;
-      s+='<path d="M'+p[0]+' '+y+' q-8 -3 -16 0 t-16 0 t-6 0" fill="none" stroke="'+c+'" stroke-width="2.4" stroke-linecap="round" opacity=".85" stroke-dasharray="8 3">'
-        +(anim?'<animate attributeName="stroke-dashoffset" values="0;22" dur=".7s" repeatCount="indefinite"/>':'')+'</path>'; });
-    return s;
   }
   if(id==='fuego'){
     var fr=['M'+p[0]+' '+(p[1]+8)+' q-9 -2 -16 -10 q6 2 8 -1 q-6 -3 -6 -10 q7 6 14 6 Z','M'+p[0]+' '+(p[1]+8)+' q-11 -1 -18 -8 q6 1 8 -3 q-7 -4 -5 -11 q6 7 15 7 Z','M'+p[0]+' '+(p[1]+8)+' q-8 -3 -14 -12 q6 3 8 0 q-5 -3 -7 -8 q8 5 13 5 Z'];
@@ -662,7 +697,7 @@ function _pistHandbikeSVG(o,cfg,opts){
     var par=function(key,A,Bp,ra,rm,rb,lado,t){ f[key]=_bLimb(A,Bp,ra,rm,rb,lado,t); f[key+'_i']=_bLimb(A,Bp,ra*.7,rm*.7,rb*.7,lado,t); };
     [['n',sh,H],['f',shF,HF]].forEach(function(pp){ var E=_bCodo(pp[1],pp[2],La); par(pp[0]+'bra',pp[1],E,3,2.9,2.4,1,.4); par(pp[0]+'ant',E,pp[2],2.5,2.5,2,1,.32); par(pp[0]+'man',pp[1],_bL(pp[1],E,.5),3.7,3.6,3.2,1,.5); f[pp[0]+'H']=_bC(pp[2]); });
     f.torso=_bLimb([HIP[0]-1,HIP[1]-2],sh,6.2,6.6,5.6,-1,.5); f.torso_i=_bLimb([HIP[0]-1,HIP[1]-2],sh,4.4,4.7,4,-1,.5);
-    f.cuello=_bCap(sh,_bL(sh,[HEAD[0]+mv*.8,HEAD[1]],.35),2.6,2.5);
+    f.shN=sh; f.cuT=_bL(sh,[HEAD[0]+mv*.8,HEAD[1]],.35); f.cuello=_bCap(sh,f.cuT,2.6,2.5);
     f.head=_bC([mv*.8,Math.sin(th)*.5]); f.crank=(th*180/Math.PI).toFixed(1);
     F.push(f);
   }
@@ -696,7 +731,7 @@ function _pistHandbikeSVG(o,cfg,opts){
   s+='<g transform="rotate('+F[0].crank+' '+_bP(CR)+')">'+(anim?'<animateTransform attributeName="transform" type="rotate" from="0 '+_bP(CR)+'" to="360 '+_bP(CR)+'" dur="'+dur+'s" repeatCount="indefinite"/>':'')
     +'<circle cx="'+CR[0]+'" cy="'+CR[1]+'" r="5" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-dasharray=".9 .7"/><path d="M'+_bP(CR)+' l'+rc+' 0" stroke="#374151" stroke-width="2.2" stroke-linecap="round"/>'
     +'<path d="'+_bCap([CR[0]+rc,CR[1]-1.6],[CR[0]+rc,CR[1]+1.6],1.4,1.4)+'" fill="#111827"/></g><circle cx="'+CR[0]+'" cy="'+CR[1]+'" r="1.4" fill="#111827"/>';
-  s+=brazo('n');
+  s+=brazo('n')+_bCuelloPieza(o,col_('shN'),col_('cuT'),anim,dur);
   // banderín alto de seguridad (de serie en las handbike: van bajas y así las ven los autos)
   var mx=26, top=24;
   var fl=['M'+mx+' '+top+' Q'+(mx-5)+' '+(top+1)+' '+(mx-10)+' '+(top+3)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top+3)+' '+(mx-10)+' '+(top+2)+' L'+mx+' '+(top+6)+' Z','M'+mx+' '+top+' Q'+(mx-5)+' '+(top-1)+' '+(mx-10)+' '+(top+4)+' L'+mx+' '+(top+6)+' Z'];

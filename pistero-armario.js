@@ -34,7 +34,7 @@ var PIST_CASCO=[
   {id:'cromo',c:'#b8c2cf',n:'Cromo',fx:'metal'},{id:'cobre',c:'#c26a3d',n:'Cobre',fx:'metal'},
   {id:'perla',c:'#f8fafc',n:'Perla',fx:'perla'},{id:'neon',c:'#39ff14',n:'Neón',fx:'neon'},
   {id:'atardecer',c:'#f97316',n:'Atardecer',fx:'atardecer',css:'linear-gradient(180deg,#7c3aed,#ec4899,#f97316)'},
-  {id:'arcoiris',c:'#ef4444',n:'Arcoíris',fx:'arcoiris',css:'linear-gradient(90deg,#ef4444,#f97316,#facc15,#22c55e,#3b82f6,#8b5cf6)'},
+  // (2026-10-06) se quitó el casco "Arcoíris": a Inty le pareció espantoso. Quien lo tenía vuelve al azul (_pistNormal).
   {id:'galaxia',c:'#1e1b4b',n:'Galaxia',fx:'galaxia',css:'radial-gradient(circle at 35% 35%,#7c3aed,#312e81 55%,#0f0a2e)'},
   {id:'oceano',c:'#0369a1',n:'Océano',fx:'oceano',css:'linear-gradient(180deg,#22d3ee,#1e3a8a)'}
 ];
@@ -67,7 +67,7 @@ var PIST_EXTRA=[{id:'',n:'El de fábrica'},{id:'nada',n:'Nada'},{id:'luces',n:'L
 var PIST_TRAJE=[{id:'',n:'Clásico'},{id:'equipo',n:'Equipo'},{id:'retro',n:'Retro de lana'},{id:'enduro',n:'Enduro'},{id:'chile',n:'Selección Chile'},{id:'montana',n:'Rey de la montaña'},{id:'lider',n:'Líder amarillo'},{id:'campeon',n:'Campeón mundial'},
   {id:'huaso',n:'Huaso (Fiestas Patrias)'},{id:'pascuero',n:'Viejo Pascuero'},{id:'heroe',n:'Superhéroe'},{id:'dino',n:'Dinosaurio'}];
 var PIST_MASCOTA=[{id:'',n:'Sin mascota'},{id:'quiltro',n:'Quiltro'},{id:'negro',n:'Perro negro'},{id:'gato',n:'Gato'}];
-var PIST_ESTELA=[{id:'',n:'Sin estela'},{id:'chispas',n:'Chispas'},{id:'hojas',n:'Hojas de otoño'},{id:'nieve',n:'Nieve'},{id:'burbujas',n:'Burbujas'},{id:'arcoiris',n:'Arcoíris'},{id:'fuego',n:'Fuego'}];
+var PIST_ESTELA=[{id:'',n:'Sin estela'},{id:'chispas',n:'Chispas'},{id:'hojas',n:'Hojas de otoño'},{id:'nieve',n:'Nieve'},{id:'burbujas',n:'Burbujas'},{id:'fuego',n:'Fuego'}];
 var PIST_BANDERA=[{id:'',n:'Banderín Libre Pedal'},{id:'chile',n:'Chile'},{id:'argentina',n:'Argentina'},{id:'peru',n:'Perú'},{id:'bolivia',n:'Bolivia'},{id:'colombia',n:'Colombia'},{id:'mexico',n:'México'},{id:'uruguay',n:'Uruguay'},{id:'espana',n:'España'},{id:'arcoiris',n:'Diversidad'}];
 var PIST_ARO_COL=[{id:'',n:'Oro'},{id:'#d1d5db',n:'Plata'},{id:'#e8a598',n:'Oro rosa'},{id:'#111827',n:'Negro'},{id:'#ec4899',n:'Rosa'},{id:'#2563eb',n:'Azul'},{id:'#16a34a',n:'Verde'},{id:'#dc2626',n:'Rojo'}];
 var PIST_DISENO=[
@@ -142,8 +142,7 @@ function _lpColCasco(id){ var h=PIST_CASCO.find(function(x){return x.id===id;});
 var _LP_DOME='M12 54 A38 36 0 0 1 88 54 Z';
 function _cascoFxDefs(fx,ac,u){
   var d='';
-  if(fx==='arcoiris') d+='<linearGradient id="g'+u+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ef4444"/><stop offset=".2" stop-color="#f97316"/><stop offset=".4" stop-color="#facc15"/><stop offset=".6" stop-color="#22c55e"/><stop offset=".8" stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>';
-  else if(fx==='atardecer') d+='<linearGradient id="g'+u+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset=".45" stop-color="#ec4899"/><stop offset="1" stop-color="#f97316"/></linearGradient>';
+  if(fx==='atardecer') d+='<linearGradient id="g'+u+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset=".45" stop-color="#ec4899"/><stop offset="1" stop-color="#f97316"/></linearGradient>';
   else if(fx==='oceano') d+='<linearGradient id="g'+u+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#1e3a8a"/></linearGradient>';
   else if(fx==='galaxia') d+='<radialGradient id="g'+u+'" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#7c3aed"/><stop offset=".55" stop-color="#312e81"/><stop offset="1" stop-color="#0f0a2e"/></radialGradient>';
   if(ac==='metal'||ac==='perla') d+='<linearGradient id="m'+u+'" x1="0" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="'+(ac==='perla'?'.85':'.75')+'"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="'+(ac==='perla'?'.08':'.32')+'"/></linearGradient>';
@@ -172,7 +171,7 @@ function _disenoSVG(id,a){
 }
 function _cascoSVG(col,x){
   var u=++_lpUid, def=(typeof PIST_CASCO!=='undefined'&&PIST_CASCO.find(function(h){return h.id===x.casco && h.c===col;}))||null;
-  var fx=def&&def.fx, ac=x.acabado||'', grad=(fx==='arcoiris'||fx==='atardecer'||fx==='oceano'||fx==='galaxia');
+  var fx=def&&def.fx, ac=x.acabado||'', grad=(fx==='atardecer'||fx==='oceano'||fx==='galaxia');
   var s='<defs><clipPath id="c'+u+'"><path d="'+_LP_DOME+'"/></clipPath>'+_cascoFxDefs(grad?fx:'',ac,u)+'</defs><path d="'+_LP_DOME+'" fill="'+(grad?'url(#g'+u+')':col)+'"/>';
   if(fx==='galaxia') s+='<g fill="#fff"><circle cx="30" cy="32" r=".9"/><circle cx="44" cy="24" r=".7"/><circle cx="62" cy="30" r="1"/><circle cx="72" cy="42" r=".7"/><circle cx="24" cy="46" r=".7"/><circle cx="54" cy="44" r=".6"/><path d="'+_lpStar(38,38,1.8,.6)+'"/><path d="'+_lpStar(66,22,1.5,.5)+'"/></g><ellipse cx="58" cy="36" rx="12" ry="5" fill="#ec4899" opacity=".25" transform="rotate(-20 58 36)"/>';
   if(ac==='carbono') s+='<path d="'+_LP_DOME+'" fill="url(#p'+u+')"/>';

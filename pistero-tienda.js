@@ -27,7 +27,7 @@ var PIST_RAREZA={
 };
 // Rareza por pieza; lo que no aparece es Común (gratis).
 var PIST_TIER={
-  casco:{dorado:'r',cromo:'r',cobre:'r',perla:'r',neon:'r',atardecer:'r',oceano:'r',arcoiris:'e',galaxia:'l'},
+  casco:{dorado:'r',cromo:'r',cobre:'r',perla:'r',neon:'r',atardecer:'r',oceano:'r',galaxia:'l'},
   acabado:{metal:'r',perla:'e',carbono:'e',neon:'l'},
   diseno:{doble:'r',chile:'r',rayo:'r',cuadros:'r',estrellas:'r',lunares:'r',ondas:'r',zigzag:'r',corazones:'r',numero:'r',llamas:'e',tigre:'e',camuflaje:'e'},
   acc:{camara:'r',cresta:'r',antena:'r',gato:'r',oso:'r',conejo:'r',flor:'r',lazo:'r',brote:'r',estrella:'r',diablo:'r',vikingo:'e',unicornio:'e',helice:'e',pinchos:'e',dino:'e',corona:'l',aureola:'l',alas:'l'},
@@ -48,7 +48,7 @@ var PIST_TIER={
   bandera:{argentina:'r',peru:'r',bolivia:'r',colombia:'r',mexico:'r',uruguay:'r',espana:'r',arcoiris:'r'},  // Chile gratis
   mascota:{quiltro:'r',negro:'r',gato:'r'},
   traje:{equipo:'r',retro:'r',enduro:'r',chile:'r',montana:'e',lider:'e',campeon:'l',huaso:'r',pascuero:'r',heroe:'e',dino:'e'},
-  estela:{chispas:'r',hojas:'r',nieve:'r',burbujas:'r',arcoiris:'e',fuego:'l'}
+  estela:{chispas:'r',hojas:'r',nieve:'r',burbujas:'r',fuego:'l'}
 };
 // Pestañas del Taller: ahí el Pistero grande de arriba se muestra en su bici.
 var PIST_TABS_BICI=['bici','pintura','ruedas','carga','traje','estela'];

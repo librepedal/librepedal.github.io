@@ -78,8 +78,12 @@ const svgMalo = vm.runInContext('_pistoDe', ctx)({ peloCol: '"/><image href=x on
 ok(!/onerror|<script|<image/.test(svgMalo), 'el SVG final no contiene marcado inyectado');
 
 // 4) Los ids de <defs> no chocan entre miniaturas (son únicos por dibujo).
-const a = vm.runInContext('_pistoDe', ctx)({ casco: 'arcoiris' }), b = vm.runInContext('_pistoDe', ctx)({ casco: 'arcoiris' });
+const a = vm.runInContext('_pistoDe', ctx)({ casco: 'atardecer' }), b = vm.runInContext('_pistoDe', ctx)({ casco: 'atardecer' });
 ok(a.match(/id="g(\d+)"/)[1] !== b.match(/id="g(\d+)"/)[1], 'gradientes con id único por dibujo');
+
+// 5) (2026-10-06) Casco y estela 'Arcoíris' se quitaron: quien los tenía guardados vuelve al default.
+const sinArco = vm.runInContext('_pistNormal', ctx)({ casco: 'arcoiris', estela: 'arcoiris' });
+ok(sinArco.casco === 'azul' && sinArco.estela === '', 'casco y estela arcoíris guardados vuelven al default');
 
 console.log(fallos ? `  ${fallos}/${total} chequeos FALLARON` : `  ✓ armario de Pistero: ${total} chequeos OK (${opciones} opciones)`);
 process.exit(fallos ? 1 : 0);

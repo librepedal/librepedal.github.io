@@ -90,7 +90,6 @@ var PS={
   hojas:function(t){ for(var i=0;i<5;i++) _psRuido(t+i*.11,.1,{filtro:'highpass',ff:2800,v:.06,forma:_psCampana}); },
   nieve:function(t){ [2093,2637,3136,2349,2794].forEach(function(f,i){ _psTono(f,t+i*.12,.5,{v:.04}); }); },
   burbujas:function(t){ for(var i=0;i<6;i++) _psTono(500+Math.random()*400,t+i*.09,.08,{a:1400+Math.random()*600,v:.08}); },
-  arcoiris:function(t){ [523,659,784,1047,1319,1568].forEach(function(f,i){ _psTono(f,t+i*.07,.6,{v:.06,tipo:'triangle'}); }); },
   fuego:function(t){ _psRuido(t,1,{filtro:'lowpass',ff:500,fa:1400,v:.2,forma:_psCampana}); PS.chispas(t+.15); },
   fanfarria:function(t){ [[523,0],[659,.12],[784,.24],[1047,.4]].forEach(function(n){ _psTono(n[0],t+n[1],n[1]===.4?.7:.2,{tipo:'triangle',v:.08}); }); },
   moto:function(t){ var ac=_psAC(), os=ac.createOscillator(), bq=ac.createBiquadFilter(), g=ac.createGain(), lfo=ac.createOscillator(), lg=ac.createGain();
@@ -106,7 +105,7 @@ var _PS_PIEZA={
   biciExtra:{patito:'patito',luces:'luces',banderin:'viento',dorsal:'papel',nada:'clic'},
   biciCarga:{canasto:'mimbre',alforjas:'cierre',bikepacking:'cierre',caja:'caja',nada:'clic'},
   mascota:{quiltro:'perro',negro:'perroNegro',gato:'gato'},
-  estela:{chispas:'chispas',hojas:'hojas',nieve:'nieve',burbujas:'burbujas',arcoiris:'arcoiris',fuego:'fuego'},
+  estela:{chispas:'chispas',hojas:'hojas',nieve:'nieve',burbujas:'burbujas',fuego:'fuego'},
   biciAcab:{metal:'brillo',neon:'brillo',carbono:'brillo'},
   motorTipo:{moto:'moto',auto:'auto'},
   biciTipo:{handbike:'cadena',triciclo:'timbre',bmx:'clic',gravel:'cadena'}
