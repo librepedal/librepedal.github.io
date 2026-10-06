@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><title>Ciber capas</title>
+<style>body{margin:0;background:#0f1630;color:#ccd;font:13px system-ui;padding:16px}#o{width:340px;height:340px}.b{display:flex;gap:8px;flex-wrap:wrap}.b button{background:#141a2b;color:#e8eeff;border:1px solid #2a3550;border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer}.chico{width:44px;height:44px;display:inline-block;background:#0b1120;border-radius:12px}</style>
+<div id="o"></div>
+<div class="b"><button data-e="reposo">Reposo</button><button data-e="hablar">Hablar</button><button data-e="feliz">Feliz</button><button data-e="sorpresa">Sorpresa</button><button data-e="dormir">Dormir</button></div>
+<p>En la barra: <span class="chico" id="c"></span></p>
+<script>/* prueba: el panel del navegador limita requestAnimationFrame a ~3 cuadros/s; aquí se fuerza ~60 */ if(/rafx/.test(location.search)) window.requestAnimationFrame=function(cb){ return setTimeout(function(){ cb(performance.now()); },16); };</script><script src="ciber-capas.js"></script>
+<script>var A=[]; Promise.all([crearCiberCapas(document.getElementById('o'),'../gemini/ciber-capa-casco.jpg','../gemini/ciber-capa-cabeza.jpg'),crearCiberCapas(document.getElementById('c'),'../gemini/ciber-capa-casco.jpg','../gemini/ciber-capa-cabeza.jpg')]).then(function(r){ A=r; });
+document.querySelector('.b').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) A.forEach(function(x){ x.estado(b.dataset.e); }); });</script>
