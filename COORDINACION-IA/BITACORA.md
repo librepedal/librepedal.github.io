@@ -49,6 +49,7 @@ Falta (con OK de Inty): llaves de sandbox de Flow, desplegar el worker con wrang
 - Viajes multi-destino: sin Premium, uno sin terminar a la vez (`funciones-mapa-viajes.js`, `_puedeGuardarOtroViaje`).
 - Sobrevuelo y viajes dependen de `_esPremium()`: se encienden con `GATE_PREMIUM_ACTIVO = true` (voz-motor.js).
 - Ningún aviso dentro de la app dice dónde ni cuánto pagar (Play). Lo exige `tests/premium-bloqueos.test.mjs` (32 casos).
+- **Desplegado 2026-10-06 00:5x (con OK de Inty):** `worker-pagos` publicado con wrangler desde esta rama (commit con el worker = c6480ae), versión e607bd07. Modo **sandbox** (FLOW_ENV), llaves FLOW_API_KEY/FLOW_SECRET_KEY = las del sandbox de Flow. Falta el secreto GCP_SA_JSON: hasta entonces responde 503 pagos_no_configurados y no crea órdenes. El worker vivo ya NO es la v1 del correo.
 - **Pendiente de otra lane:** la marca de agua del video (rama `feature/compartir-redes` está rediseñando el video).
   Regla de Inty: marca siempre; Premium ofrece quitarla y viene puesta.
 
