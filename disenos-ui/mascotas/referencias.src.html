@@ -1,0 +1,118 @@
+<title>Mascotas de Libre Pedal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: una columna de lectura; las especies en grilla de fichas con foto real arriba */
+:root{
+  --bg:#f6f4ef; --fg:#14181f; --mute:#5b6270; --line:#dcd8cf; --card:#ffffff; --acc:#d94300; --acc-bg:#fde9df;
+  --f-disp:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0a0f1d;--fg:#eef0f4;--mute:#9aa3b5;--line:#232b3d;--card:#121a2c;--acc:#fc6a2a;--acc-bg:#2a1710;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a0f1d;--fg:#eef0f4;--mute:#9aa3b5;--line:#232b3d;--card:#121a2c;--acc:#fc6a2a;--acc-bg:#2a1710;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--f-body)}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 56px}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,6vw,46px);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+h2{font-size:24px;font-weight:800;margin-block:44px 6px}
+h3{font-size:19px;font-weight:600}
+p{margin:0;max-width:68ch}
+.lead{color:var(--mute);margin-top:10px}
+.sec-sub{color:var(--mute);margin-bottom:18px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.ficha{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.ficha img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;max-width:100%}
+.ficha .tx{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.sci{font-style:italic;color:var(--mute);font-size:14px}
+.cria{background:var(--acc-bg);border-radius:8px;padding:8px 10px;font-size:14.5px}
+.cria b{color:var(--acc)}
+.cred{font-size:12px;color:var(--mute)}
+.cred a{color:inherit}
+.tag{display:inline-block;font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:99px;padding:2px 9px;color:var(--mute)}
+.apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.app{border-top:3px solid var(--fg);padding-top:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.app ul{margin:0;padding-left:18px;color:var(--fg)}
+.app li{margin-bottom:4px}
+.app a{color:var(--mute);font-size:13px}
+.prop{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.prop div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.prop h3{margin-bottom:6px}
+.etapas{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.etapas span{font-size:13px;font-weight:700;background:var(--acc-bg);color:var(--acc);border-radius:99px;padding:3px 10px}
+ol.dec{padding-left:22px;max-width:70ch}
+ol.dec li{margin-bottom:10px}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Libre Pedal · panel de referencias</div>
+  <h1>Mascotas para cuidar mientras pedaleas</h1>
+  <p class="lead">Una mascota que el usuario adopta de bebé, alimenta y cuida, y que crece con lo que pedalea, al estilo de Pou. Abajo están los animales reales en que se basaría cada una, cómo lo resuelven las mejores apps y una propuesta para decidir antes de dibujar.</p>
+
+  <h2>Los animales</h2>
+  <p class="sec-sub">Cinco son del sur de Chile y el perro es de acá. Fotos reales con licencia libre. El dibujo saldrá de estas fotos, no de un animal genérico.</p>
+  <div class="grid">
+    <article class="ficha"><img src="{{pudu}}" alt="Pudú hembra entre pastos, Chiloé">
+      <div class="tx"><h3>Pudú</h3><div class="sci">Pudu puda</div>
+      <p>El ciervo más chico del mundo. Orejas redondas, patas cortas color canela y pelaje café rojizo.</p>
+      <div class="cria"><b>De bebé:</b> nace con manchas blancas en el lomo y las pierde cerca de los cinco meses. La mascota podría perderlas al crecer.</div>
+      <div class="cred">Foto: Charles J. Sharp, Chiloé · <a href="https://commons.wikimedia.org/wiki/File:Southern_pudu_(Pudu_puda)_female_Chiloe.jpg">CC BY-SA 4.0</a></div></div></article>
+
+    <article class="ficha"><img src="{{zorro}}" alt="Zorro culpeo de pie en un camino de tierra">
+      <div class="tx"><h3>Zorro culpeo</h3><div class="sci">Lycalopex culpaeus</div>
+      <p>El zorro más grande de Chile. Cara gris, orejas altas en punta y patas color canela.</p>
+      <div class="cria"><b>De bebé:</b> cachorro de orejas enormes para su cabeza; al crecer se le estira el hocico.</div>
+      <div class="cred">Foto: Charles J. Sharp, Lo Barnechea · <a href="https://commons.wikimedia.org/wiki/File:Culpeo_(Lycalopex_culpaeus_culpaeus)_Lo_Barnechea_2.jpg">CC BY-SA 4.0</a></div></div></article>
+
+    <article class="ficha"><img src="{{nutria}}" alt="Huillín asomado entre rocas">
+      <div class="tx"><h3>Nutria: huillín</h3><div class="sci">Lontra provocax</div>
+      <p>La nutria de río del sur de Chile, en peligro de extinción. Pelaje café oscuro mojado, bigotes largos y cuerpo alargado.</p>
+      <div class="cria"><b>De bebé:</b> cría chica y redonda; de adulta se alarga y nada.</div>
+      <div class="cred">Foto: Henrik Kibak · <a href="https://commons.wikimedia.org/wiki/File:Lontra_provocax_73250032.jpg">CC BY 4.0</a></div></div></article>
+
+    <article class="ficha"><img src="{{rana}}" alt="Ranita de Darwin café en el agua, con el hocico en punta">
+      <div class="tx"><h3>Rana: ranita de Darwin</h3><div class="sci">Rhinoderma darwinii</div>
+      <p>Vive en los bosques del sur. Hocico en punta, como una hoja, y colores de hojarasca (café o verde).</p>
+      <div class="cria"><b>De bebé:</b> el papá cría a los renacuajos dentro de su saco vocal, en la garganta, durante seis a ocho semanas. La mascota podría partir como renacuajo.</div>
+      <div class="cred">Foto: Mono Andes · <a href="https://commons.wikimedia.org/wiki/File:Rhinoderma_darwinii_1.jpg">CC BY-SA 2.0</a></div></div></article>
+
+    <article class="ficha"><img src="{{gato}}" alt="Güiña entre helechos">
+      <div class="tx"><h3>Gato: güiña <span class="tag">o gato de casa</span></h3><div class="sci">Leopardus guigna</div>
+      <p>El gato silvestre del bosque del sur. Pelaje con manchas negras y cola con anillos.</p>
+      <div class="cria"><b>De bebé:</b> gatito con las manchas apenas marcadas; se le notan más al crecer.</div>
+      <div class="cred">Foto: Jim Sanderson · <a href="https://commons.wikimedia.org/wiki/File:Guigna_Jim_Sanderson_cropped.JPG">CC BY-SA 3.0</a></div></div></article>
+
+    <article class="ficha"><img src="{{perro}}" alt="Perro quiltro de pelo largo blanco y canela">
+      <div class="tx"><h3>Perro: quiltro <span class="tag">o fox terrier chileno</span></h3><div class="sci">Canis familiaris</div>
+      <p>El perro de la calle chilena, ya presente en la tienda del Taller. La otra opción es el fox terrier chileno (ratonero), blanco con negro y canela.</p>
+      <div class="cria"><b>De bebé:</b> cachorro de orejas caídas y patas grandes.</div>
+      <div class="cred">Foto: Germancontreras, Santiago · <a href="https://commons.wikimedia.org/wiki/File:Perro_callejero,_Santiago_Chile_2016.jpg">CC BY-SA 4.0</a> · ratonero: <a href="https://commons.wikimedia.org/wiki/File:Chilean_Fox_Terrier.jpg">CC0</a></div></div></article>
+  </div>
+
+  <h2>Cómo lo hacen las mejores apps</h2>
+  <p class="sec-sub">Lo que sirve de cada una para una app de bicicleta.</p>
+  <div class="apps">
+    <div class="app"><h3>Pou</h3><ul><li>Barras de comida, salud, energía y diversión.</li><li>Se le da de comer, se baña y se acuesta.</li><li>Monedas de minijuegos para comprar ropa y decorar su casa.</li></ul><a href="https://en.wikipedia.org/wiki/Pou_(video_game)">Wikipedia</a></div>
+    <div class="app"><h3>Tamagotchi</h3><ul><li>Huevo, bebé, niño, adolescente y adulto.</li><li>Si el hambre o el ánimo quedan en cero 15 minutos, cuenta como descuido.</li><li>Los descuidos deciden en qué adulto se convierte.</li></ul><a href="https://tamagotchi.fandom.com/wiki/Care">Wiki Tamagotchi</a></div>
+    <div class="app"><h3>Finch</h3><ul><li>Un pajarito que crece de bebé a adulto cuando el usuario cumple sus metas.</li><li>La idea: cuidarte a ti es cuidarlo a él.</li><li>Con las metas gana piedras para ropa y muebles.</li></ul><a href="https://www.pastemagazine.com/article/finch-app-mental-health-virtual-pet-self-care">Paste Magazine</a></div>
+    <div class="app"><h3>Pokémon GO: compañero</h3><ul><li>Un corazón cada 2 km caminados juntos, máximo 3 por día por caminar.</li><li>Niveles: bueno (1), gran (70), ultra (150) y mejor compañero (300 corazones).</li><li>El más parecido a lo nuestro: crece con la distancia real.</li></ul><a href="https://bulbapedia.bulbagarden.net/wiki/Buddy_Pok%C3%A9mon">Bulbapedia</a></div>
+  </div>
+
+  <h2>Propuesta para Libre Pedal</h2>
+  <p class="sec-sub">Un punto de partida para que decidas; nada está dibujado ni programado todavía.</p>
+  <div class="prop">
+    <div><h3>Crece con lo que pedaleas</h3><p>Como el compañero de Pokémon GO: los kilómetros pedaleados le dan cariño y lo hacen crecer.</p><div class="etapas"><span>Cría</span><span>Joven</span><span>Adulto</span></div></div>
+    <div><h3>La comida se gana pedaleando</h3><p>Cada salida da comidita según la distancia. Que no se compre con plata: así cuidarla depende de pedalear y no de pagar.</p></div>
+    <div><h3>Cuidados</h3><p>Darle de comer, hacerle cariño y dejarla dormir. Si pasa días sin salir, se pone triste o se queda durmiendo.</p></div>
+    <div><h3>Nunca se muere</h3><p>Si llueve, hay una lesión o no es seguro salir, nadie debería sentirse presionado a pedalear. La mascota espera y se alegra cuando vuelves.</p></div>
+  </div>
+
+  <h2>Lo que falta decidir</h2>
+  <ol class="dec">
+    <li><b>Gato:</b> ¿güiña (silvestre, del sur) o gato de casa?</li>
+    <li><b>Perro:</b> ¿quiltro o fox terrier chileno?</li>
+    <li><b>Crecimiento:</b> ¿por kilómetros, por días pedaleados o por las dos cosas?</li>
+    <li><b>Descuido:</b> ¿te parece que nunca se muera, solo que se ponga triste?</li>
+    <li><b>Dónde vive:</b> ¿pantalla propia, junto a Pistero o acompañándote en el mapa durante el viaje?</li>
+    <li><b>Por cuál partimos:</b> se dibuja una a la vez con Gemini, a partir de su foto, y te la muestro antes de seguir.</li>
+  </ol>
+</div>

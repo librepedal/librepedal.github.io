@@ -1,5 +1,7 @@
 # 🚀 EMPEZAR AQUÍ — cualquier cuenta Claude que retome LibrePedal
 
+> 🐾 **2026-10-06: mascotas virtuales (pudú, zorro, huillín, ranita, güiña, Yorkshire) en la rama `feature/mascotas`.** Si sigues con eso, lee `TRASPASO-2026-10-06-MASCOTAS.md`.
+
 > 🔴 **2026-10-04 tarde: hay errores reportados por Inty en el teléfono (skins que no aparecen, bienvenida antigua, login con Google lento).** Lee primero `TRASPASO-2026-10-04-TARDE.md`.
 
 Punto de entrada único. Léelo y en 2 minutos sabes el estado y qué hacer. Actualizado

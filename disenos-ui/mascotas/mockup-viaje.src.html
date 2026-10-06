@@ -1,0 +1,176 @@
+<title>Pudú en viaje</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: el teléfono con la vista de viaje (Pistero real de la app + el pudú) y al lado los controles para probar modos y velocidad. En teléfono se apilan. */
+:root{
+  --bg:#070b16; --app:#0a0f1d; --panel:#121a2c; --panel2:#18223a; --line:#232b3d; --fg:#eef0f4; --mute:#9aa3b5; --acc:#fc4c02;
+  --f-disp:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif; --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--f-body)}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:22px 48px}
+h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance}
+h1{font-size:clamp(26px,4.5vw,36px);font-weight:800}
+.lead{color:var(--mute);margin:6px 0 18px;max-width:72ch}
+.grid{display:grid;grid-template-columns:390px 1fr;gap:22px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.phone{background:var(--app);border:1px solid var(--line);border-radius:28px;overflow:hidden;max-width:390px;width:100%;margin-inline:auto}
+.hud{display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
+.hud b{font:800 22px var(--f-disp);font-variant-numeric:tabular-nums}
+.hud span{display:block;font-size:11px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+.ej{font-size:11px;color:var(--mute);background:var(--panel2);border-radius:99px;padding:2px 8px}
+.escena{position:relative;height:300px;overflow:hidden;background:linear-gradient(#1b2b47 0%,#284563 55%,#3b5a4a 56%,#2f4a3c 100%)}
+.cerro{position:absolute;left:0;width:200%;height:90px;bottom:132px;background-repeat:repeat-x;background-size:390px 90px;
+  background-image:radial-gradient(120px 70px at 90px 90px,#21384f 98%,transparent 100%),radial-gradient(150px 85px at 280px 90px,#1d3247 98%,transparent 100%)}
+.camino{position:absolute;left:0;right:0;bottom:0;height:70px;background:#3a3f4a}
+.linea{position:absolute;left:0;width:200%;bottom:32px;height:4px;background:repeating-linear-gradient(90deg,#d9d3c3 0 26px,transparent 26px 60px)}
+.bici{position:absolute;left:50%;bottom:44px;width:236px;transform:translateX(-46%);z-index:2}
+.bici svg{display:block;width:100%;height:auto}
+#corre{position:absolute;z-index:3;bottom:20px;left:calc(50% - 152px);height:84px;width:auto;transform-origin:50% 100%}
+#sombra{position:absolute;z-index:2;bottom:18px;left:calc(50% - 132px);width:60px;height:8px;border-radius:50%;background:rgba(0,0,0,.35)}
+.tarjeta{display:flex;align-items:center;gap:10px;margin:12px;padding:10px 12px;background:var(--panel);border-radius:16px}
+.tarjeta canvas{height:44px;width:auto}
+.tarjeta p{margin:0;font-size:13.5px}
+.tarjeta small{color:var(--mute)}
+.ctrl{display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.card h2{font-size:18px;margin-bottom:8px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+button{font:700 13px var(--f-body);color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--acc);background:#2a1710}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+label{display:grid;gap:4px;font-size:14px}
+input[type=range]{width:100%;accent-color:var(--acc)}
+.nota{color:var(--mute);font-size:13.5px;margin:8px 0 0;max-width:68ch}
+.cuadros{display:flex;gap:10px;margin-top:8px}
+.cuadros figure{margin:0;flex:1;background:var(--panel2);border-radius:12px;padding:6px;text-align:center;font-size:12px;color:var(--mute);min-width:0}
+.cuadros canvas{width:100%;height:auto}
+</style>
+
+<div class="wrap">
+  <h1>Pudú en viaje</h1>
+  <p class="lead">Así se vería el pudú acompañándote en la app mientras pedaleas. Pistero y la bici son los mismos de la app (el mismo código de <code>pistero-bici.js</code>), con el canasto de la bici urbana. Prueba los dos modos y cambia la velocidad para ver cómo corre.</p>
+  <div class="grid">
+    <div class="phone">
+      <div class="hud"><div><span>Velocidad</span><b id="vel">18</b> km/h</div><span class="ej">datos de ejemplo</span><div style="text-align:right"><span>Recorrido</span><b id="dist">0,0</b> km</div></div>
+      <div class="escena" id="escena">
+        <div class="cerro" id="cerro"></div>
+        <div class="camino"></div><div class="linea" id="linea"></div>
+        <div class="bici" id="bici"></div>
+        <div id="sombra"></div>
+        <canvas id="corre"></canvas>
+      </div>
+      <div class="tarjeta"><canvas id="mini"></canvas><p><b>Pudú</b> <span id="txtModo">va corriendo a tu lado</span><br><small id="txtEne">Energía 100 · corriendo gasta 3 por km</small></p></div>
+    </div>
+    <div class="ctrl">
+      <div class="card"><h2>Cómo te acompaña</h2>
+        <div class="seg"><button id="bCor" aria-pressed="true">Corriendo al lado</button><button id="bCan" aria-pressed="false">En el canasto</button></div>
+        <p class="nota">Si su energía baja de 15, el pudú deja de correr y se sube solo al canasto. Prueba "Cansarlo".</p>
+        <div class="seg" style="margin-top:8px"><button id="bCansar">Cansarlo</button><button id="bRes">Recargar energía</button></div>
+      </div>
+      <div class="card"><h2>Velocidad</h2>
+        <label for="rVel">Ritmo de pedaleo: <span id="lVel">18 km/h</span><input id="rVel" type="range" min="6" max="32" value="18"></label>
+        <p class="nota">El galope del pudú va al mismo ritmo que el pedaleo de Pistero: más rápido, más saltitos.</p>
+      </div>
+      <div class="card"><h2>Cómo está hecho el galope</h2>
+        <p class="nota" style="margin-top:0">Son dos cuadros de Gemini que se alternan, como el galope real: patas estiradas en el aire y patas recogidas bajo el cuerpo. Encima le sumo un saltito, una inclinación y una sombra que se achica cuando está en el aire.</p>
+        <div class="cuadros"><figure><canvas id="fA"></canvas>Cuadro 1 · estiradas</figure><figure><canvas id="fB"></canvas>Cuadro 2 · recogidas</figure></div>
+        <p class="nota">Si te gusta la dirección, la versión final necesitaría 4 a 6 cuadros por animal para que la carrera se vea aún más fluida.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>var cu=null;</script>
+{{SCRIPTS}}
+<script>
+const IMG={{IMG}};
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* fondo azul fuera: relleno desde los bordes (igual que el prototipo) */
+function sinFondo(src){return new Promise(res=>{const im=new Image();im.onload=()=>{
+  const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);
+  const d=g.getImageData(0,0,c.width,c.height),p=d.data,W=c.width,H=c.height;
+  const fondo=i=>{const r=p[i],gg=p[i+1],b=p[i+2],l=(r+gg+b)/3;return (b>r+12&&b>gg-4&&l<125)||l<28};
+  const vis=new Uint8Array(W*H),st=[];for(let x=0;x<W;x++)st.push(x,(H-1)*W+x);for(let y=0;y<H;y++)st.push(y*W,y*W+W-1);
+  while(st.length){const k=st.pop();if(vis[k])continue;vis[k]=1;if(!fondo(k*4))continue;p[k*4+3]=0;const x=k%W,y=(k/W)|0;
+    if(x>0)st.push(k-1);if(x<W-1)st.push(k+1);if(y>0)st.push(k-W);if(y<H-1)st.push(k+W)}
+  for(let k=0;k<W*H;k++){if(!p[k*4+3])continue;const x=k%W,y=(k/W)|0;let n=0;
+    if(x>0&&!p[(k-1)*4+3])n++;if(x<W-1&&!p[(k+1)*4+3])n++;if(y>0&&!p[(k-W)*4+3])n++;if(y<H-1&&!p[(k+W)*4+3])n++;if(n)p[k*4+3]=255-n*55}
+  g.putImageData(d,0,0);let x0=W,y0=H,x1=0,y1=0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(p[(y*W+x)*4+3]>40){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+  const o=document.createElement('canvas');o.width=x1-x0+1;o.height=y1-y0+1;o.getContext('2d').drawImage(c,x0,y0,o.width,o.height,0,0,o.width,o.height);res(o)};im.src=src})}
+const copia=(dst,src)=>{dst.width=src.width;dst.height=src.height;dst.getContext('2d').drawImage(src,0,0)};
+
+/* la mascota en el canasto entra por el mismo gancho que usa la app para el perro y el gato */
+PIST_MASCOTA.push({id:'pudu',n:'Pudú'});
+let PNG_SENTADO='';
+const _mascotaApp=_bMascota;
+_bMascota=function(id,p,anim){
+  if(id!=='pudu')return _mascotaApp(id,p,anim);
+  const h=17,w=h*0.82,x=p[0]-w/2+.6,y=p[1]+6-h;
+  const vaiven=anim&&!reduce?'<animateTransform attributeName="transform" type="translate" values="0 0;0 -.5;0 0" dur=".45s" repeatCount="indefinite"/>':'';
+  return '<g><image href="'+PNG_SENTADO+'" x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h+'" preserveAspectRatio="xMidYMax meet"/>'+vaiven+'</g>'
+   +'<path d="M'+(p[0]-6)+' '+p[1]+' l12 0 l-1.6 9.4 l-8.8 0 Z" fill="#c08a4d" stroke="#7c5a2e" stroke-width=".8" stroke-linejoin="round"/>'
+   +'<path d="M'+(p[0]+2.6)+' '+p[1]+' l3.4 0 l-1.6 9.4 l-2.6 0 Z" fill="rgba(0,0,0,.18)"/>'
+   +'<path d="M'+(p[0]-5.4)+' '+(p[1]+3)+' l10.8 0 M'+(p[0]-4.9)+' '+(p[1]+6)+' l9.8 0 M'+(p[0]-2)+' '+p[1]+' l.2 9.4 M'+(p[0]+2)+' '+p[1]+' l-.3 9.4" stroke="#7c5a2e" stroke-width=".55"/>'
+   +'<path d="M'+(p[0]-6.8)+' '+(p[1]+.2)+' l13.6 0" stroke="#7c5a2e" stroke-width="1.3" stroke-linecap="round"/>';
+};
+const PISTERO={casco:'azul',biciTipo:'urbana',biciCol:'#10b981'};
+let S={modo:'corriendo',vel:18,ene:100,km:0};
+function dibujarBici(){
+  const cad=Math.max(.35,1.6-S.vel/22);
+  $('bici').innerHTML=_pistBiciSVG(Object.assign({},PISTERO,{mascota:S.modo==='canasto'?'pudu':''}),{expr:S.modo==='canasto'?'feliz':'contento',cadencia:cad,rapido:S.vel>26,pedal:!reduce});
+}
+function ui(){
+  $('bCor').setAttribute('aria-pressed',S.modo==='corriendo');$('bCan').setAttribute('aria-pressed',S.modo==='canasto');
+  $('corre').hidden=$('sombra').hidden=S.modo!=='corriendo';
+  $('txtModo').textContent=S.modo==='corriendo'?'va corriendo a tu lado':'va en el canasto';
+  $('txtEne').textContent='Energía '+Math.round(S.ene)+' · '+(S.modo==='corriendo'?'corriendo gasta 3 por km':'en el canasto gasta 1 por km');
+  $('vel').textContent=S.vel;$('lVel').textContent=S.vel+' km/h';
+  copia($('mini'),S.modo==='corriendo'?F.A:F.S);
+  dibujarBici();
+}
+let F={};
+(async()=>{
+  F.A=await sinFondo(IMG['pudu-corriendo']);F.B=await sinFondo(IMG['pudu-corriendo2']);F.S=await sinFondo(IMG['pudu-sentado']);
+  const t=document.createElement('canvas');copia(t,F.S);PNG_SENTADO=t.toDataURL('image/png');
+  copia($('fA'),F.A);copia($('fB'),F.B);
+  ui();requestAnimationFrame(loop);
+})();
+$('bCor').onclick=()=>{if(S.ene<15){alertaCansado();return}S.modo='corriendo';ui()};
+$('bCan').onclick=()=>{S.modo='canasto';ui()};
+$('bCansar').onclick=()=>{S.ene=16;ui()};
+$('bRes').onclick=()=>{S.ene=100;ui()};
+$('rVel').oninput=e=>{S.vel=+e.target.value;ui()};
+function alertaCansado(){$('txtModo').textContent='está muy cansado para correr: va en el canasto'}
+
+/* galope: dos cuadros alternados + saltito, inclinación y sombra, al ritmo del pedaleo */
+const cv=$('corre'),ctx=cv.getContext('2d');let ult=0,fase=0,cuadro='';
+function loop(t){
+  const dt=Math.min(.05,(t-ult)/1000||0);ult=t;
+  const kmh=S.vel, periodo=Math.max(.26,.62-kmh*.011);
+  if(!reduce)fase=(fase+dt/periodo)%1;
+  // fondo que avanza
+  const avance=(t/1000)*kmh*7;
+  $('linea').style.transform='translateX('+(-(avance%60))+'px)';
+  $('cerro').style.transform='translateX('+(-((avance*.25)%390))+'px)';
+  S.km+=dt*kmh/3600*30; $('dist').textContent=S.km.toFixed(1).replace('.',',');
+  if(S.modo==='corriendo'){
+    S.ene=Math.max(0,S.ene-dt*kmh/3600*30*3);
+    if(S.ene<15){S.modo='canasto';ui();$('txtModo').textContent='se cansó y se subió al canasto';}
+    const enAire=fase<.5, k=enAire?'A':'B';
+    if(k!==cuadro){cuadro=k;copia(cv,F[k])}
+    const s=Math.sin(fase*Math.PI*2);
+    const alto=enAire?Math.sin(fase*2*Math.PI)*9:0;          // sube solo en el cuadro estirado
+    const rot=enAire?-4+fase*6:3-(fase-.5)*4;                  // nariz arriba al saltar, abajo al aterrizar
+    const sq=enAire?1:1-.05*Math.sin((fase-.5)*2*Math.PI);     // se aplasta un poco al aterrizar
+    cv.style.transform='translateY('+(-alto).toFixed(1)+'px) rotate('+rot.toFixed(1)+'deg) scale('+(2-sq).toFixed(3)+','+sq.toFixed(3)+')';
+    const so=1-alto/22;$('sombra').style.transform='scale('+so.toFixed(2)+')';$('sombra').style.opacity=(.35*so).toFixed(2);
+    if(Math.round(t/250)%4===0)$('txtEne').textContent='Energía '+Math.round(S.ene)+' · corriendo gasta 3 por km';
+  }
+  requestAnimationFrame(loop);
+}
+</script>

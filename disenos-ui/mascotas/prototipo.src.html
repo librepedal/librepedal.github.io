@@ -1,0 +1,286 @@
+<title>Pudú: prototipo de mascota</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: a la izquierda el teléfono con la sección "Mi mascota" tal como iría en la app; a la derecha el simulador y las reglas. En teléfono se apilan. Tema oscuro de la app. */
+:root{
+  --bg:#070b16; --app:#0a0f1d; --panel:#121a2c; --panel2:#18223a; --line:#232b3d; --fg:#eef0f4; --mute:#9aa3b5;
+  --acc:#fc4c02; --ok:#3fbf7f; --warn:#e8a33a; --bad:#e5544b; --blue:#5b9cf5;
+  --f-disp:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif; --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--f-body)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:22px 48px}
+h1,h2,h3{font-family:var(--f-disp);margin:0;text-wrap:balance}
+h1{font-size:clamp(26px,4.5vw,36px);font-weight:800}
+.lead{color:var(--mute);margin:6px 0 18px;max-width:72ch}
+.grid{display:grid;grid-template-columns:390px 1fr;gap:22px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+/* teléfono */
+.phone{background:var(--app);border:1px solid var(--line);border-radius:28px;padding:16px;max-width:390px;width:100%;margin-inline:auto}
+.top{display:flex;justify-content:space-between;align-items:center}
+.top h2{font-size:20px}
+.etapa{font-size:12px;font-weight:700;color:var(--acc);background:#2a1710;border-radius:99px;padding:3px 10px}
+.escena{position:relative;margin-top:10px;height:250px;border-radius:20px;background:radial-gradient(120% 90% at 50% 100%,#1f3a2a 0%,#13241c 45%,#0d1626 100%);overflow:hidden}
+.escena canvas{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);height:auto;width:auto;max-height:200px;max-width:88%}
+.escena .zzz{position:absolute;right:20%;top:18%;font:800 26px var(--f-disp);color:#cfd8ff;opacity:.9}
+.globo{position:absolute;z-index:2;left:12px;top:12px;max-width:62%;background:rgba(255,255,255,.93);color:#14181f;border-radius:14px 14px 14px 4px;padding:7px 11px;font-size:13.5px;font-weight:700}
+.falta{position:absolute;right:10px;bottom:10px;font-size:11px;background:rgba(0,0,0,.55);color:var(--warn);border-radius:99px;padding:2px 8px}
+@media (prefers-reduced-motion:no-preference){.vivo{animation:resp 2.6s ease-in-out infinite}.feliz{animation:salto .5s ease-out}}
+@keyframes resp{0%,100%{transform:translateX(-50%) scaleY(1)}50%{transform:translateX(-50%) scaleY(1.025)}}
+@keyframes salto{0%{transform:translateX(-50%) translateY(0)}40%{transform:translateX(-50%) translateY(-18px)}100%{transform:translateX(-50%) translateY(0)}}
+.barras{display:grid;gap:8px;margin-top:12px}
+.barra{display:grid;grid-template-columns:72px 1fr 34px;align-items:center;gap:8px;font-size:13px}
+.barra .t{height:10px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.barra .t i{display:block;height:100%;border-radius:99px;transition:width .35s}
+.barra b{font-variant-numeric:tabular-nums;text-align:right;color:var(--mute);font-weight:700}
+.acciones{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+button{font:700 13px var(--f-body);color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:9px 6px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--acc)}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button:disabled{opacity:.4;cursor:not-allowed}
+.acciones button{display:flex;flex-direction:column;align-items:center;gap:2px}
+.acciones small{font-weight:400;color:var(--mute);font-size:11px}
+.despensa{margin-top:12px;background:var(--panel);border-radius:16px;padding:10px 12px}
+.despensa h3,.crec h3,.acomp h3{font:700 11px var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-bottom:8px}
+.comidas{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.comidas button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 4px}
+.comidas .n{font-size:18px;font-variant-numeric:tabular-nums}
+.crec{margin-top:12px;background:var(--panel);border-radius:16px;padding:10px 12px;display:grid;gap:8px}
+.req{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:13px}
+.req .t{grid-column:1/-1;height:7px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.req .t i{display:block;height:100%;background:var(--acc)}
+.req b{font-variant-numeric:tabular-nums}
+.acomp{margin-top:12px;background:var(--panel);border-radius:16px;padding:10px 12px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button[aria-pressed="true"]{border-color:var(--acc);background:#2a1710}
+.mini{position:relative;height:120px;margin-top:10px;border-radius:12px;background:linear-gradient(#16223a,#0e1626);overflow:hidden}
+.mini canvas{position:absolute;bottom:14px;height:92px;width:auto}
+.mini .suelo{position:absolute;left:0;right:0;bottom:12px;height:2px;background:#2c3a55}
+.mini .falta{top:8px;bottom:auto;left:8px;right:auto}.mini .bici{position:absolute;bottom:14px;left:50%;width:120px;height:70px;transform:translateX(-30%)}
+/* simulador */
+.sim{display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.card h2{font-size:18px;margin-bottom:8px}
+.fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dia{font:800 15px var(--f-disp)}
+.log{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:260px;overflow:auto;font-size:13.5px}
+.log li{border-left:3px solid var(--line);padding-left:9px}
+.log li.ok{border-color:var(--ok)}.log li.warn{border-color:var(--warn)}.log li.bad{border-color:var(--bad)}
+.reglas{display:grid;gap:10px;font-size:14px}
+.reglas p{margin:0;max-width:70ch}
+.reglas b{color:var(--fg)}
+.ref{color:var(--mute);font-size:12.5px}
+.ref a{color:inherit}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td,th{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left}
+th{color:var(--mute);font-weight:700}
+.tw{overflow-x:auto}
+</style>
+
+<div class="wrap">
+  <h1>Pudú: prototipo de mascota</h1>
+  <p class="lead">Así funcionaría la mascota dentro de Libre Pedal, de punta a punta, con el pudú. A la izquierda está la sección "Mi mascota" como la vería el usuario. A la derecha hay un simulador para pedalear o dejar pasar días sin tener que salir de verdad. Todas las cifras son una propuesta para ajustar.</p>
+
+  <div class="grid">
+    <!-- TELÉFONO -->
+    <div class="phone" aria-label="Sección Mi mascota">
+      <div class="top"><h2 id="nombre">Pudú</h2><span class="etapa" id="etapa">Cría</span></div>
+      <div class="escena" id="escena">
+        <div class="globo" id="globo"></div>
+        <canvas id="cv"></canvas>
+        <div class="zzz" id="zzz" hidden>z z z</div>
+        <span class="falta" id="falta" hidden>arte pendiente</span>
+      </div>
+      <div class="barras">
+        <div class="barra"><span>Pancita</span><div class="t"><i id="bPan"></i></div><b id="nPan"></b></div>
+        <div class="barra"><span>Cariño</span><div class="t"><i id="bCar"></i></div><b id="nCar"></b></div>
+        <div class="barra"><span>Energía</span><div class="t"><i id="bEne"></i></div><b id="nEne"></b></div>
+      </div>
+      <div class="acciones">
+        <button id="aCar">Cariño<small id="cCar"></small></button>
+        <button id="aDor">Dormir<small>hasta mañana</small></button>
+        <button id="aBan">Bañar<small id="cBan">si está sucio</small></button>
+        <button id="aSal">Salir<small>a pedalear</small></button>
+      </div>
+      <div class="despensa">
+        <h3>Despensa · se llena pedaleando</h3>
+        <div class="comidas">
+          <button id="fBro"><span class="n" id="nBro">0</span>Brote<small>+10 pancita</small></button>
+          <button id="fHel"><span class="n" id="nHel">0</span>Helecho<small>+20 pancita</small></button>
+          <button id="fAve"><span class="n" id="nAve">0</span>Avellana<small>+35 y cariño</small></button>
+        </div>
+      </div>
+      <div class="crec">
+        <h3 id="crecT">Para crecer a joven</h3>
+        <div class="req"><span>Kilómetros juntos</span><b id="rKm"></b><span class="t"><i id="pKm"></i></span></div>
+        <div class="req"><span>Días pedaleados</span><b id="rDi"></b><span class="t"><i id="pDi"></i></span></div>
+      </div>
+      <div class="acomp">
+        <h3>Cómo te acompaña en la bici</h3>
+        <div class="seg"><button id="mCan" aria-pressed="true">En el canasto</button><button id="mCor" aria-pressed="false">Corriendo al lado</button></div>
+        <div class="mini" id="mini"><div class="suelo"></div>
+          <svg class="bici" viewBox="0 0 120 70" aria-hidden="true"><g fill="none" stroke="#7f8aa3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="50" r="17"/><circle cx="96" cy="50" r="17"/><path d="M24 50 L48 22 L80 22 L96 50 M48 22 L62 50 L80 22 M62 50 L24 50 M44 14 L52 14 M48 14 L48 22 M80 22 L86 10 L94 10"/></g><path d="M86 6 h22 l-3 14 h-16 z" fill="#c08a4d" stroke="#7c5a2e" stroke-width="1.5" id="canasto"/></svg>
+          <canvas id="cvMini"></canvas><svg class="bici" style="z-index:2" viewBox="0 0 120 70" aria-hidden="true" id="frenteCanasto"><path d="M84 8 h26 l-3 14 h-20 z" fill="#c08a4d" stroke="#7c5a2e" stroke-width="1.5"/><path d="M86 13 h22 M87 17.5 h19" stroke="#7c5a2e" stroke-width="1"/></svg><span class="falta">bici de esquema: en la app va la de Pistero</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIMULADOR Y REGLAS -->
+    <div class="sim">
+      <div class="card">
+        <h2>Simulador</h2>
+        <div class="fila" style="margin-bottom:10px"><span class="dia" id="dia">Día 1</span><span class="ref" id="hoy"></span></div>
+        <div class="fila">
+          <button data-km="3">Pedalear 3 km</button><button data-km="8">Pedalear 8 km</button><button data-km="15">Pedalear 15 km</button>
+          <button id="sDia">Pasar al día siguiente</button><button id="sRes">Empezar de nuevo</button>
+        </div>
+        <p class="ref" style="margin:10px 0 0">Prueba esto: dale de comer, pedalea unos días y fíjate cuándo crece. Después deja pasar 3 días sin pedalear y mira cómo se deteriora y cómo se recupera.</p>
+      </div>
+      <div class="card"><h2>Lo que pasó</h2><ul class="log" id="log"></ul></div>
+      <div class="card reglas">
+        <h2>Reglas (propuesta)</h2>
+        <p><b>La comida se gana pedaleando, nunca con plata.</b> Cada km pedaleado da 1 brote, cada 5 km un helecho y cada salida de 10 km o más una avellana. Son plantas que come el pudú real.</p>
+        <p><b>Crece con km y con días, las dos cosas.</b> Para pasar a joven necesita 25 km y 5 días distintos pedaleados; para adulto, 120 km y 20 días. Si sale con la pancita bajo 35, esos km le cuentan la mitad, y para dar el salto necesita pancita y cariño sobre 35. Así el crecimiento depende de cuidarlo, no solo de pedalear.</p>
+        <p><b>Se deteriora, pero nunca se muere.</b> Cada día la pancita baja 20 y el cariño 15. Con la pancita bajo 35 tiene hambre. Si pasan 3 días sin pedalear, o la pancita y el cariño quedan bajo 15, se ve descuidado: sucio y decaído. Las barras nunca bajan de 0. Se recupera comiendo, con cariño y con un baño.</p>
+        <p><b>Acompañar cansa.</b> En el canasto gasta 1 de energía por km. Corriendo al lado gasta 3, pero le da 1 de cariño por km, porque le encanta correr contigo. Con menos de 15 de energía no puede correr y se va al canasto solo. Dormir lo deja en 100 al otro día.</p>
+        <p><b>El cariño tiene tope.</b> Máximo 5 caricias al día (+8 cada una), para que no se gane tocando sin parar.</p>
+        <div class="tw"><table>
+          <tr><th>Estado</th><th>Cuándo</th><th>Arte</th></tr>
+          <tr><td>Contento</td><td>Ninguno de los de abajo</td><td>Listo en las 3 etapas</td></tr>
+          <tr><td>Con hambre</td><td>Pancita bajo 35</td><td>Cría lista; joven y adulto pendientes</td></tr>
+          <tr><td>Descuidado</td><td>3 días sin pedalear, o pancita y cariño bajo 15</td><td>Cría lista; joven y adulto pendientes</td></tr>
+          <tr><td>Durmiendo</td><td>Después de tocar Dormir</td><td>Pendiente</td></tr>
+        </table></div>
+        <p class="ref">Referencias: compañero de <a href="https://bulbapedia.bulbagarden.net/wiki/Buddy_Pok%C3%A9mon">Pokémon GO</a> (crece con la distancia, con tope diario), <a href="https://www.pastemagazine.com/article/finch-app-mental-health-virtual-pet-self-care">Finch</a> (cuidarte a ti lo hace crecer) y Pou (barras y despensa). Dieta del pudú: <a href="https://www.lifeder.com/venado-conejo/">Lifeder</a>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const IMG={{IMG}};
+const R={kmJoven:25,diasJoven:5,kmAdulto:120,diasAdulto:20,bajaPan:20,bajaCar:15,hambre:35,critico:15,diasDescuido:3,caricias:5};
+const ETAPAS=['cria','joven','adulto'], NOM={cria:'Cría',joven:'Joven',adulto:'Adulto'};
+const $=id=>document.getElementById(id);
+let S;
+function nuevo(){return{dia:1,etapa:'cria',pan:70,car:60,ene:100,sucio:false,durmiendo:false,km:0,kmCrec:0,dias:0,pedaleoHoy:false,sinPedalear:0,caricias:0,bro:4,hel:1,ave:0,modo:'canasto',salir:false,log:[]}}
+function guardar(){try{localStorage.setItem('pudu-proto',JSON.stringify(S))}catch(e){}}
+function cargar(){try{const t=localStorage.getItem('pudu-proto');if(t)return JSON.parse(t)}catch(e){}return null}
+const cl=v=>Math.max(0,Math.min(100,Math.round(v)));
+function log(t,c){S.log.unshift({t:'Día '+S.dia+': '+t,c:c||''});S.log=S.log.slice(0,40)}
+
+function estado(){
+  if(S.durmiendo)return'durmiendo';
+  if(S.sucio||S.sinPedalear>=R.diasDescuido||(S.pan<R.critico&&S.car<R.critico))return'descuidado';
+  if(S.pan<R.hambre)return'hambre';
+  return'contento';
+}
+const FRASE={contento:['¡Me encanta salir contigo!','¿Pedaleamos hoy?','Estoy feliz y con la pancita llena.'],hambre:['Tengo hambre... ¿me das un brote?','Mi pancita suena.'],descuidado:['Te extrañé mucho...','Me siento sucio y triste. ¿Me cuidas?'],durmiendo:['Zzz... mañana seguimos.']};
+
+/* recorte del fondo azul: relleno desde los bordes */
+const CACHE={};
+function sinFondo(key){
+  if(CACHE[key])return CACHE[key];
+  return CACHE[key]=new Promise(res=>{const im=new Image();im.onload=()=>{
+    const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);
+    const d=g.getImageData(0,0,c.width,c.height),p=d.data,W=c.width,H=c.height;
+    const fondo=(i)=>{const r=p[i],gg=p[i+1],b=p[i+2];const lum=(r+gg+b)/3;return (b>r+12&&b>gg-4&&lum<125)||lum<28};
+    const vis=new Uint8Array(W*H),st=[];
+    for(let x=0;x<W;x++){st.push(x,(H-1)*W+x)}for(let y=0;y<H;y++){st.push(y*W,y*W+W-1)}
+    while(st.length){const k=st.pop();if(vis[k])continue;vis[k]=1;if(!fondo(k*4))continue;p[k*4+3]=0;
+      const x=k%W,y=(k/W)|0;if(x>0)st.push(k-1);if(x<W-1)st.push(k+1);if(y>0)st.push(k-W);if(y<H-1)st.push(k+W)}
+    // suaviza el borde
+    for(let k=0;k<W*H;k++){if(p[k*4+3]===0)continue;const x=k%W,y=(k/W)|0;let n=0;
+      if(x>0&&p[(k-1)*4+3]===0)n++;if(x<W-1&&p[(k+1)*4+3]===0)n++;if(y>0&&p[(k-W)*4+3]===0)n++;if(y<H-1&&p[(k+W)*4+3]===0)n++;if(n)p[k*4+3]=255-n*55}
+    g.putImageData(d,0,0);
+    // recorta al contenido
+    let x0=W,y0=H,x1=0,y1=0;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(p[(y*W+x)*4+3]>40){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+    const o=document.createElement('canvas');o.width=x1-x0+1;o.height=y1-y0+1;o.getContext('2d').drawImage(c,x0,y0,o.width,o.height,0,0,o.width,o.height);res(o)};im.src=IMG[key]});
+}
+async function pintar(cv,key,filtro){const src=await sinFondo(key);cv.width=src.width;cv.height=src.height;const g=cv.getContext('2d');g.filter=filtro||'none';g.drawImage(src,0,0)}
+
+function imagenEstado(){
+  const e=estado(),et=S.etapa;let key='pudu-'+(et==='cria'?'cria':et),filtro='none',falta=false;
+  if(et==='cria'&&(e==='hambre'||e==='descuidado'))key='pudu-'+e;
+  else if(e==='hambre'){filtro='saturate(.7)';falta=true}
+  else if(e==='descuidado'){filtro='saturate(.35) brightness(.8)';falta=true}
+  if(e==='durmiendo'){filtro='brightness(.55) saturate(.6)';falta=true}
+  return{key,filtro,falta};
+}
+let ultimoKey='';
+function render(anim){
+  const e=estado(),im=imagenEstado();
+  $('etapa').textContent=NOM[S.etapa];
+  const cv=$('cv');const sig=im.key+im.filtro;if(sig!==ultimoKey){ultimoKey=sig;pintar(cv,im.key,im.filtro)}
+  cv.className=e==='durmiendo'||e==='descuidado'?'':'vivo';
+  if(anim){cv.classList.remove('vivo');void cv.offsetWidth;cv.classList.add('feliz');setTimeout(()=>{cv.classList.remove('feliz');render()},520)}
+  $('zzz').hidden=e!=='durmiendo';$('falta').hidden=!im.falta;
+  const fr=FRASE[e];$('globo').textContent=fr[S.dia%fr.length];
+  const bar=(b,n,v)=>{$(b).style.width=v+'%';$(b).style.background=v<R.critico?'var(--bad)':v<R.hambre?'var(--warn)':'var(--ok)';$(n).textContent=v};
+  bar('bPan','nPan',S.pan);bar('bCar','nCar',S.car);bar('bEne','nEne',S.ene);$('bEne').style.background=S.ene<15?'var(--bad)':'var(--blue)';
+  $('nBro').textContent=S.bro;$('nHel').textContent=S.hel;$('nAve').textContent=S.ave;
+  $('fBro').disabled=!S.bro||S.durmiendo;$('fHel').disabled=!S.hel||S.durmiendo;$('fAve').disabled=!S.ave||S.durmiendo;
+  $('cCar').textContent=(R.caricias-S.caricias)+' hoy';$('aCar').disabled=S.caricias>=R.caricias||S.durmiendo;
+  $('aDor').disabled=S.durmiendo;$('aBan').disabled=!S.sucio;$('cBan').textContent=S.sucio?'¡está sucio!':'está limpio';
+  const meta=S.etapa==='cria'?[R.kmJoven,R.diasJoven,'Para crecer a joven']:S.etapa==='joven'?[R.kmAdulto,R.diasAdulto,'Para crecer a adulto']:null;
+  if(meta){$('crecT').textContent=meta[2];$('rKm').textContent=Math.floor(S.kmCrec)+' / '+meta[0];$('rDi').textContent=S.dias+' / '+meta[1];
+    $('pKm').style.width=Math.min(100,S.kmCrec/meta[0]*100)+'%';$('pDi').style.width=Math.min(100,S.dias/meta[1]*100)+'%'}
+  else{$('crecT').textContent='¡Ya es adulto!';$('rKm').textContent=Math.floor(S.kmCrec)+' km';$('rDi').textContent=S.dias+' días';$('pKm').style.width='100%';$('pDi').style.width='100%'}
+  $('mCan').setAttribute('aria-pressed',S.modo==='canasto');$('mCor').setAttribute('aria-pressed',S.modo==='corriendo');
+  const mk='pudu-'+(S.modo==='canasto'?'sentado':'corriendo');const mc=$('cvMini');
+  if(mc.dataset.k!==mk){mc.dataset.k=mk;pintar(mc,mk)}
+  if(S.modo==='canasto'){mc.style.height='42px';mc.style.left='calc(50% + 42px)';mc.style.bottom='62px'}else{mc.style.height='58px';mc.style.left='calc(50% - 150px)';mc.style.bottom='14px'}
+  $('frenteCanasto').style.display=S.modo==='canasto'?'':'none';
+  $('dia').textContent='Día '+S.dia;$('hoy').textContent=S.pedaleoHoy?'Hoy ya pedaleaste':'Hoy no has pedaleado';
+  $('log').innerHTML=S.log.map(l=>'<li class="'+l.c+'">'+l.t+'</li>').join('')||'<li>Aún no pasa nada. Usa el simulador o cuida al pudú.</li>';
+  guardar();
+}
+
+function crecer(avisar){
+  const sig=S.etapa==='cria'&&S.kmCrec>=R.kmJoven&&S.dias>=R.diasJoven?'joven':S.etapa==='joven'&&S.kmCrec>=R.kmAdulto&&S.dias>=R.diasAdulto?'adulto':null;
+  const bien=estado()!=='descuidado'&&S.pan>=R.hambre&&S.car>=R.hambre;
+  if(sig&&bien){S.etapa=sig;log('¡El pudú creció! Ahora es '+NOM[sig].toLowerCase()+'.'+(sig==='joven'?' Se le empiezan a borrar las manchas.':' Le salieron sus cuernitos.'),'ok');return true}
+  if(sig&&avisar)log('Ya pedaleó lo suficiente para crecer, pero necesita pancita y cariño sobre 35. ¡Cuídalo y crecerá!','warn');
+  return false;
+}
+function pedalear(km){
+  if(S.durmiendo){S.durmiendo=false}
+  let modo=S.modo;if(modo==='corriendo'&&S.ene<15){modo='canasto';log('Estaba muy cansado para correr y se subió al canasto.','warn')}
+  const conHambre=S.pan<R.hambre, cuenta=conHambre?km/2:km;
+  S.km+=km;S.kmCrec+=cuenta;
+  const bro=km,hel=Math.floor(km/5),ave=km>=10?1:0;S.bro+=bro;S.hel+=hel;S.ave+=ave;
+  S.ene=cl(S.ene-km*(modo==='corriendo'?3:1));if(modo==='corriendo')S.car=cl(S.car+km);
+  if(!S.pedaleoHoy){S.pedaleoHoy=true;S.dias++}
+  const estabaDesc=S.sinPedalear>=R.diasDescuido;S.sinPedalear=0;
+  log('Pedaleaste '+km+' km con el pudú '+(modo==='canasto'?'en el canasto':'corriendo al lado')+'. Ganaste '+bro+' brotes'+(hel?', '+hel+' helecho'+(hel>1?'s':''):'')+(ave?' y 1 avellana':'')+'.'+(conHambre?' Salió con hambre: los km le contaron la mitad para crecer.':''),conHambre?'warn':'ok');
+  if(estabaDesc)log('¡Volvieron a salir! Ya no se siente abandonado, pero sigue sucio: báñalo.','ok');
+  const creció=crecer(true);render(creció);
+}
+function pasarDia(){
+  if(!S.pedaleoHoy)S.sinPedalear++;
+  S.pan=cl(S.pan-R.bajaPan);S.car=cl(S.car-R.bajaCar);
+  S.ene=S.durmiendo?100:cl(S.ene+30);
+  if(S.durmiendo)log('Durmió toda la noche y despertó con la energía llena.','ok');
+  S.durmiendo=false;S.dia++;S.pedaleoHoy=false;S.caricias=0;
+  if(S.sinPedalear>=R.diasDescuido&&!S.sucio){S.sucio=true;log(S.sinPedalear+' días sin salir: el pudú se ve descuidado y sucio.','bad')}
+  else if(S.pan<R.hambre)log('El pudú amaneció con hambre.','warn');
+  else log('Nuevo día. La pancita y el cariño bajaron un poco.');
+  render();
+}
+function comer(tipo){
+  const t={bro:['brote',10,0],hel:['helecho',20,0],ave:['avellana',35,10]}[tipo];if(!S[tipo])return;
+  S[tipo]--;S.pan=cl(S.pan+t[1]);S.car=cl(S.car+t[2]);log('Le diste '+(tipo==='ave'?'una ':'un ')+t[0]+'. Pancita '+S.pan+'.','ok');
+  const c=crecer();render(true);
+}
+$('fBro').onclick=()=>comer('bro');$('fHel').onclick=()=>comer('hel');$('fAve').onclick=()=>comer('ave');
+$('aCar').onclick=()=>{S.caricias++;S.car=cl(S.car+8);log('Le hiciste cariño. Cariño '+S.car+'.','ok');crecer();render(true)};
+$('aDor').onclick=()=>{S.durmiendo=true;log('Lo acostaste a dormir. Mañana tendrá energía llena.');render()};
+$('aBan').onclick=()=>{S.sucio=false;S.car=cl(S.car+5);log('Lo bañaste. ¡Quedó limpiecito!','ok');crecer();render(true)};
+$('aSal').onclick=()=>pedalear(5);
+document.querySelectorAll('[data-km]').forEach(b=>b.onclick=()=>pedalear(+b.dataset.km));
+$('sDia').onclick=pasarDia;
+$('sRes').onclick=()=>{S=nuevo();ultimoKey='';$('cvMini').dataset.k='';render()};
+$('mCan').onclick=()=>{S.modo='canasto';render()};$('mCor').onclick=()=>{S.modo='corriendo';render()};
+S=cargar()||nuevo();render();
+</script>

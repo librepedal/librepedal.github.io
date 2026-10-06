@@ -1,0 +1,83 @@
+<title>Mascotas Libre Pedal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: pestañas por animal arriba; debajo tres bandas (crece, cuidado, acompaña) con tarjetas de imagen. Tema oscuro fijo, el de la app. */
+:root{
+  --bg:#0a0f1d; --panel:#121a2c; --line:#232b3d; --fg:#eef0f4; --mute:#9aa3b5; --acc:#fc4c02; --ok:#3fbf7f; --warn:#e8a33a;
+  --f-disp:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:24px 56px}
+h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance}
+h1{font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-.02em}
+.lead{color:var(--mute);margin:6px 0 20px;max-width:70ch}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:10px;z-index:2}
+.tab{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:5px 14px 5px 5px;font:700 14px var(--f-body);cursor:pointer}
+.tab img{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:50% 35%}
+.tab[aria-selected="true"]{border-color:var(--acc);background:#2a1710}
+.tab:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:18px 0 4px}
+.head h2{font-size:28px;font-weight:800}
+.sci{font-style:italic;color:var(--mute)}
+.nota{color:var(--mute);margin:0 0 6px;max-width:75ch}
+.band{margin-top:22px}
+.band h3{font:700 12px var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin:0 0 10px}
+.row{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+figure img{display:block;width:100%;aspect-ratio:16/9.3;object-fit:cover;max-width:100%;cursor:zoom-in}
+figcaption{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;font-size:14px}
+.pill{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.pill.ok{background:rgba(63,191,127,.15);color:var(--ok)}
+.pill.rev{background:rgba(232,163,58,.15);color:var(--warn)}
+dialog{border:0;padding:0;background:transparent;max-width:96vw}
+dialog::backdrop{background:rgba(0,0,0,.85)}
+dialog img{display:block;max-width:96vw;max-height:88vh;border-radius:10px}
+dialog p{color:var(--fg);text-align:center;margin:8px 0 0}
+@media (prefers-reduced-motion:no-preference){figure img{transition:transform .2s}figure:hover img{transform:scale(1.03)}}
+</style>
+
+<div class="wrap">
+  <h1>Mascotas de Libre Pedal</h1>
+  <p class="lead">Seis animales de Chile para adoptar de cría y cuidar pedaleando. Cada uno crece en tres etapas, muestra cuándo tiene hambre o está descuidado y acompaña a Pistero en el canasto o corriendo al lado. Toca una imagen para verla en grande.</p>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <main id="ficha"></main>
+</div>
+<dialog id="dlg"><img id="dlgImg" alt=""><p id="dlgTxt"></p></dialog>
+
+<script>
+const IMG = {{IMG}};
+const A = [
+ {id:'pudu',n:'Pudú',s:'Pudu puda',nota:'El ciervo más chico del mundo. La cría nace con manchas blancas que pierde al crecer; el macho adulto tiene cuernitos cortos sin ramas.',ok:['cria','joven']},
+ {id:'zorro',n:'Zorro culpeo',s:'Lycalopex culpaeus',nota:'Cachorro gris de orejas enormes; de adulto, cabeza rojiza y cola gruesa con la punta oscura.'},
+ {id:'huillin',n:'Huillín',s:'Lontra provocax',nota:'La nutria de río del sur, en peligro. De adulto se para en dos patas a vigilar.'},
+ {id:'rana',n:'Ranita de Darwin',s:'Rhinoderma darwinii',nota:'Parte como renacuajo, porque el papá cría a los renacuajos en la garganta. De adulta tiene la nariz en punta como una hoja. Como renacuajo no corre: nada en el aire.'},
+ {id:'guina',n:'Güiña',s:'Leopardus guigna',nota:'El gato silvestre del bosque del sur: manchas negras y cola con anillos.'},
+ {id:'yorkie',n:'Yorkshire',s:'Canis familiaris',nota:'Nace negro con fuego y de adulto pasa a azul acero y dorado, como la raza real.'}
+];
+const BANDS = [
+ ['Crece contigo',[['cria','Cría'],['joven','Joven'],['adulto','Adulto']]],
+ ['Cuidado (cría)',[['cria','Contenta'],['hambre','Con hambre'],['descuidado','Descuidada']]],
+ ['Te acompaña (cría)',[['sentado','En el canasto'],['corriendo','Corriendo al lado']]]
+];
+const tabs=document.getElementById('tabs'), ficha=document.getElementById('ficha');
+const dlg=document.getElementById('dlg');
+function show(id){
+  const a=A.find(x=>x.id===id);
+  [...tabs.children].forEach(t=>t.setAttribute('aria-selected',t.dataset.id===id));
+  ficha.innerHTML='<div class="head"><h2>'+a.n+'</h2><span class="sci">'+a.s+'</span></div><p class="nota">'+a.nota+'</p>'+
+   BANDS.map(([t,items])=>'<section class="band"><h3>'+t+'</h3><div class="row">'+items.map(([k,l])=>{
+     const ok=(a.ok||[]).includes(k)&&t==='Crece contigo';
+     return '<figure><img loading="lazy" src="'+IMG[a.id+'-'+k]+'" alt="'+a.n+': '+l+'" data-cap="'+a.n+' · '+l+'"><figcaption>'+l+'<span class="pill '+(ok?'ok':'rev')+'">'+(ok?'Aprobada':'Por revisar')+'</span></figcaption></figure>';
+   }).join('')+'</div></section>').join('');
+  try{localStorage.setItem('masc',id)}catch(e){}
+}
+A.forEach(a=>{const b=document.createElement('button');b.className='tab';b.role='tab';b.dataset.id=a.id;
+  b.innerHTML='<img src="'+IMG[a.id+'-cria']+'" alt="">'+a.n;b.onclick=()=>show(a.id);tabs.appendChild(b)});
+ficha.addEventListener('click',e=>{const i=e.target.closest('figure img');if(!i)return;
+  document.getElementById('dlgImg').src=i.src;document.getElementById('dlgTxt').textContent=i.dataset.cap;dlg.showModal()});
+dlg.addEventListener('click',()=>dlg.close());
+let ini='pudu';try{ini=localStorage.getItem('masc')||ini}catch(e){}
+show(A.some(a=>a.id===ini)?ini:'pudu');
+</script>
