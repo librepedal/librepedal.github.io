@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><title>Orbe animado</title>
+<style>body{margin:0;background:#0a0f1d;color:#ccd;font:13px system-ui;padding:16px}#o{width:340px;height:340px}.b{display:flex;gap:8px;flex-wrap:wrap}.b button{background:#141a2b;color:#e8eeff;border:1px solid #2a3550;border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer}.chico{width:44px;height:44px;display:inline-block;background:#0b1120;border-radius:12px}</style>
+<div id="o"></div>
+<div class="b"><button data-e="reposo">Reposo</button><button data-e="hablar">Hablar</button><button data-e="feliz">Feliz</button><button data-e="sorpresa">Sorpresa</button><button data-e="dormir">Dormir</button></div>
+<p>En la barra de abajo: <span class="chico" id="c"></span></p>
+<script src="orbe-animado.js"></script>
+<script>var o=crearOrbe(document.getElementById('o')); var c=crearOrbe(document.getElementById('c'));
+document.querySelector('.b').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b){ o.estado(b.dataset.e); c.estado(b.dataset.e); } });</script>
