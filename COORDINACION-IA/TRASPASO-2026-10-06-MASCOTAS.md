@@ -22,9 +22,13 @@ Las páginas `.html` publicadas llevan las imágenes en base64 y se arman desde 
 - **Hecho y pendiente de revisión:** de cada animal, cría, joven y adulto de frente; cría con hambre y descuidada; cría sentada (canasto) y corriendo. Del pudú hay un segundo cuadro del galope (`pudu-cria-corriendo2.png`).
 - **Prototipo de lógica** (las cifras están en DECISIONES): ya probado con simulación. Se corrigió que crecía con el cariño en 0.
 - **Mockup en viaje:** usa el `_pistBiciSVG` real. El pudú entra al canasto por el gancho `_bMascota` de `pistero-bici.js` (en el mockup se agrega `pudu` a `PIST_MASCOTA` y se envuelve `_bMascota`). Corriendo, alterna los 2 cuadros con saltito, inclinación y sombra, al ritmo de la velocidad.
-- **La última pregunta de Inty fue ver el movimiento de correr.** Todavía no responde sobre el mockup.
+- **Respuesta de Inty al mockup:** "no está mal", pero lo quiere más fluido y con más cosas que hacer (ver pendiente 0).
 
 ## 4) Pendientes (en orden)
+0. **LO PRIMERO: movimiento.** Inty vio el mockup en viaje: "no está mal, pero hay que mejorar esos movimientos, que sea más fluido y que haga otras cosas, no quiero monotonía". Plan propuesto:
+   - **Fluidez:** galope de 6 a 8 cuadros (Gemini, mismo chat y misma cámara; recortar y alinear por la base), con interpolación y velocidad variable (acelera, frena).
+   - **Variedad:** un repertorio de acciones que aparecen al azar cada pocos segundos o ante eventos del viaje: saltito de alegría, mirar a Pistero, olfatear el camino, adelantarse y esperar, quedarse atrás y alcanzar, trotar lento en subida, detenerse al frenar, celebrar al llegar, asomarse en el canasto a mirar el paisaje y dormirse en el canasto si está cansado. Cada acción necesita sus propios cuadros.
+   - Antes de pedir el arte: referencias reales de animación de mascotas acompañantes (videos de pudú corriendo, juegos con mascota que sigue al jugador) y mostrarle a Inty la lista de acciones para que elija.
 1. Que Inty revise el mockup en viaje, la galería y el prototipo. Anotar lo que apruebe en DECISIONES.
 2. El galope final necesita de 4 a 6 cuadros por animal (ahora son 2, solo del pudú).
 3. Arte que falta: joven y adulto sentados y corriendo (24 imágenes); hambre y descuido de joven y adulto si Inty los quiere; estado "durmiendo" y "contento" de cada animal.

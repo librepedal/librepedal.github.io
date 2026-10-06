@@ -50,3 +50,6 @@ Lecciones con Gemini (chat de mascotas: https://gemini.google.com/app/0e72d9e974
 - Descarga: el canvas → localhost falla (Chrome bloquea red local); se guarda con zoom + save_to_disk (1062×593).
 
 Datos reales: la cría nace con manchas blancas que pierde cerca de los 5 meses (CNN Chile, 2025-12-17).
+
+## Movimiento (Inty, 2026-10-06)
+- Mockup en viaje: "no está mal". Pide **más fluido** y que **haga otras cosas, sin monotonía**. Ver el plan en COORDINACION-IA/TRASPASO-2026-10-06-MASCOTAS.md, pendiente 0.
