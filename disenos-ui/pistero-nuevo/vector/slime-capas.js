@@ -4,18 +4,25 @@
    Diferencia con el orbe: el cuerpo es un resorte poco amortiguado (tiembla y se asienta), se apoya en el suelo
    y el casco se hunde/rebota con la coronilla de la gelatina.
    crearSlimeCapas(el, urlCasco, urlCuerpo) -> Promise<{estado(nombre)}> */
-function _recortarFondo(url, esFondo){
+function _recortarFondo(url, esFondo, despues){
   return new Promise(function(ok,mal){ var im=new Image(); im.onload=function(){
     var c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight; var x=c.getContext('2d'); x.drawImage(im,0,0);
     var d=x.getImageData(0,0,c.width,c.height), p=d.data;
     for(var i=0;i<p.length;i+=4){ var a=esFondo(p[i],p[i+1],p[i+2],p,i); if(a<1) p[i+3]=Math.round(255*Math.max(0,a)); }
+    if(despues) despues(p,c.width,c.height);
     x.putImageData(d,0,0); ok(c.toDataURL('image/png')); }; im.onerror=mal; im.src=url; });
 }
 function _sinVerde(r,g,b,p,i){ var m=Math.max(r,b), v=g-m; if(v<=18) return 1; p[i+1]=m; return 1-(v-18)/70; }
 function _sinMarino(r,g,b){ // fondo ~ (22,30,64); la gelatina es naranja: distancia de color al fondo
   var d=Math.sqrt((r-22)*(r-22)+(g-30)*(g-30)+(b-64)*(b-64)); return d<26?0:(d<70?(d-26)/44:1); }
+function _rellenarVentilacionesSlime(p,W,H){ // inundación desde los bordes: lo transparente conectado al borde es fondo; lo demás, hueco del casco
+  var N=W*H, fuera=new Uint8Array(N), cola=new Int32Array(N), n=0, k;
+  function poner(q){ if(!fuera[q]&&p[q*4+3]<250){ fuera[q]=1; cola[n++]=q; } }
+  for(k=0;k<W;k++){ poner(k); poner((H-1)*W+k); } for(k=0;k<H;k++){ poner(k*W); poner(k*W+W-1); }
+  for(var h=0;h<n;h++){ var q=cola[h], x=q%W; if(x>0) poner(q-1); if(x<W-1) poner(q+1); if(q>=W) poner(q-W); if(q<N-W) poner(q+W); }
+  for(q=0;q<N;q++){ var i=q*4; if(!fuera[q]&&p[i+3]<255){ var a=p[i+3]/255; p[i]=Math.round(p[i]*a+34*(1-a)); p[i+1]=Math.round(p[i+1]*a+31*(1-a)); p[i+2]=Math.round(p[i+2]*a+33*(1-a)); p[i+3]=255; } } }
 function crearSlimeCapas(el, urlCasco, urlCuerpo){
-  return Promise.all([_recortarFondo(urlCasco,_sinVerde),_recortarFondo(urlCuerpo,_sinMarino)]).then(function(r){
+  return Promise.all([_recortarFondo(urlCasco,_sinVerde,_rellenarVentilacionesSlime),_recortarFondo(urlCuerpo,_sinMarino)]).then(function(r){
   var casco=r[0], cuerpoImg=r[1], u='sc'+Math.random().toString(36).slice(2,6);
   var CX=688, SUELO=678, TOPE=132;     // eje, base y coronilla de la gelatina (medidos sobre la imagen)
   var EY=382, EX=[578,797], MY=458;    // ojos y boca (de la imagen de referencia aprobada)
