@@ -513,7 +513,9 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* La vista de chat se acota a la pantalla (menos barra superior ~51 + barra inferior 60
    + respiro). Así .cc (flex:1) llena el resto y la fila de entrada queda SIEMPRE visible
    sobre la barra, sin scroll de página. dvh corrige la barra dinámica del navegador móvil. */
-#v-pistero.view.on,#v-chat.view.on{display:flex;flex-direction:column;height:calc(100vh - 130px);height:calc(100dvh - var(--lp-hdr-h,60px) - var(--lp-nav-h,70px) - 20px);padding-bottom:8px}
+#v-pistero.view.on,#v-chat.view.on{display:flex;flex-direction:column;height:calc(100vh - 130px);height:calc(100dvh - var(--lp-hdr-h,60px) - var(--lp-nav-h,70px) - 32px);padding-bottom:8px}
+/* 2026-10-06: -32 = 20 del padding de main + 12 del espacio final del body (body padding-bottom = barra + 12px).
+   Con -20 sobraban 12px y la pantalla de Pistero se movía al arrastrar el dedo. */
 .cm{flex:1;overflow-y:auto;padding:8px;background:#0b1120;border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:6px}
 .ms{margin-bottom:8px;max-width:85%}.ms.sf{margin-left:auto;text-align:right}
 .mb{display:inline-block;padding:6px 10px;border-radius:12px;line-height:1.2;font-size:0.85rem}
@@ -1050,3 +1052,9 @@ body[data-vista="map"]{padding-bottom:calc(var(--lp-nav-h,70px) + 80px)}
 /* Esqueleto animado: el balanceo y la inclinación los mueve JS; el giro de cabeza usa scale (no choca con rotate) */
 .sbv-bici.con-rig{animation:none!important}.sbv-bici.con-rig .sbv-incl{transition:none}
 .sbv-bici.con-rig .sbv-cabeza{transition:scale .2s cubic-bezier(.4,0,.2,1);transform:none}.sbv-bici.con-rig .sbv-cabeza.girando{transform:none;scale:0 1}
+
+/* 2026-10-06: a 375px la cabecera con la flecha Atrás no cabía: el botón "Novato" se salía 3px por la derecha
+   y TODAS las pantallas (menos Inicio) se podían correr hacia el lado al hacer scroll con el dedo.
+   Se achica el espacio entre botones (los botones mantienen sus 44px para tocar) y el logo puede encogerse. */
+header>div:first-child{min-width:0;flex:0 1 auto}
+@media (max-width:420px){.hdr-right{gap:0}header{padding-left:8px;padding-right:8px}}
