@@ -21,22 +21,22 @@ ul{margin:0;padding-left:18px;display:grid;gap:8px;color:var(--sub)}ul b{color:v
 </style>
 <div class="wrap">
 <header><div class="eyebrow">Libre Pedal · Pistero cyberpunk · animación</div><h1>Una pantalla con <span>casco</span></h1>
-<p class="lead">El casco y la cabeza los dibujó Gemini por separado, a partir del androide cyberpunk que elegiste, con el casco limpio, sin visera. La cara es una pantalla: los ojos y la boca son líneas de luz cian, hechas en código para que se animen. Se recorre sola por sus estados; toca uno para verlo.</p></header>
+<p class="lead">El casco y la cabeza los dibujó Gemini por separado, a partir del androide cyberpunk que elegiste, con el casco limpio, sin visera. La cara es una pantalla con un visor de lado a lado, como Gort de <i>El día que la Tierra se detuvo</i>: una ranura angosta y una sola luz adentro que se mueve al mirar. El visor y la boca son líneas de luz cian, hechas en código para que se animen. Se recorre sola por sus estados; toca uno para verlo.</p></header>
 <div class="escena"><div class="esc"><div id="o"></div><div class="b" id="b"><button data-e="reposo">Reposo</button><button data-e="hablar">Hablar</button><button data-e="feliz">Feliz</button><button data-e="sorpresa">Sorpresa</button><button data-e="dormir">Dormir</button></div><div class="barra">En la barra de abajo: <span id="c"></span></div></div>
 <div><ul>
 <li><b>Se mueve a saltos:</b> cambia de pose de golpe, a 12 cuadros por segundo, como el anime de animación limitada. No flota, no tiembla y no gira con motores.</li>
-<li><b>Interferencias:</b> cada tanto la pantalla falla, con una doble imagen naranja y cian y una franja corrida.</li>
-<li><b>Parpadeo de tubo de TV:</b> los ojos se aplastan en una línea y vuelven.</li>
+<li><b>Interferencias:</b> cada tanto la pantalla falla, con una doble imagen naranja y cian.</li>
+<li><b>Visor tipo Gort:</b> una sola luz con el centro blanco recorre la ranura cuando mira a los lados. Al hablar late con la voz. Al sorprenderse la ranura se abre, como cuando Gort levanta su visor. Para parpadear la ranura se cierra en una línea.</li>
 <li><b>Hablar:</b> la boca es una onda de sonido que sigue la voz.</li>
-<li><b>Feliz, sorpresa y dormir:</b> en feliz los ojos se vuelven ^ ^ y rebota a saltos; en sorpresa los ojos crecen y la boca forma una "O"; al dormir la pantalla queda en líneas tenues y una franja de barrido la recorre lento.</li>
+<li><b>Feliz, sorpresa y dormir:</b> en feliz el visor se curva hacia arriba y rebota a saltos; en sorpresa la ranura se abre y la boca forma una "O"; al dormir el visor y la boca quedan en líneas tenues que laten lento.</li>
 </ul>
 <p class="ref">Cada modelo se mueve a su manera: el orbe flota, el slime tiembla, el androide se mueve con motores y el cyberpunk va a saltos digitales.</p></div></div>
 </div>
 <script>
 /* Androide cyberpunk con capas de Gemini (casco limpio y cabeza de pantalla negra, dibujados por Gemini) + animación digital.
-   Marco 1376x768 = el de las imágenes de Gemini. La cara es una pantalla: ojos y boca de líneas de barrido cian, en vector.
+   Marco 1376x768 = el de las imágenes de Gemini. La cara es una pantalla: visor de lado a lado y boca de líneas de barrido cian, en vector.
    Diferencia con los otros modelos: se mueve "a saltos" (12 cuadros por segundo, como animación limitada de anime),
-   la pantalla tiene interferencias (corte horizontal y doble imagen cian/naranja) y parpadea apagándose como un tubo de TV.
+   la pantalla tiene interferencias (doble imagen cian/naranja) y parpadea apagándose como un tubo de TV.
    crearCiberCapas(el, urlCasco, urlCabeza) -> Promise<{estado(nombre)}> */
 function _recortarCiber(url, alfa, despues){
   return new Promise(function(ok,mal){ var im=new Image(); im.onload=function(){
@@ -81,14 +81,19 @@ function crearCiberCapas(el, urlCasco, urlCabeza){
   var pose={x:0,y:0,r:0}, prox=1.2, poseObj={x:0,y:0,r:0}, glitch=0, proxGlitch=2.5, parp=0, proxParp=2.2, mir=0;
   // un ojo = forma rellena de líneas de barrido (máscara de franjas) + brillo
   function forma(d){ return '<path d="'+d+'" fill="'+CIAN+'" mask="url(#'+u+'m)"/>'; }
-  function ojoD(x, tipo, alto){ var w=30, h=26*alto;
-    if(tipo==='feliz') return 'M'+(x-34)+' '+(EY+10)+' L'+x+' '+(EY-18)+' L'+(x+34)+' '+(EY+10)+' L'+(x+34)+' '+(EY+22)+' L'+x+' '+(EY-6)+' L'+(x-34)+' '+(EY+22)+' Z';
-    if(tipo==='dormir') return 'M'+(x-30)+' '+(EY+6)+' H'+(x+30)+' V'+(EY+12)+' H'+(x-30)+' Z';
-    if(tipo==='grande'){ w=38; h=36; }
-    if(h<4) return 'M'+(x-w-6)+' '+(EY-2)+' H'+(x+w+6)+' V'+(EY+3)+' H'+(x-w-6)+' Z'; // se apaga en una línea, como un tubo de TV
-    return 'M'+(x-w)+' '+EY+' A'+w+' '+h+' 0 1 1 '+(x+w)+' '+EY+' A'+w+' '+h+' 0 1 1 '+(x-w)+' '+EY+' Z'
-      +' M'+(x-w-16)+' '+(EY-h*.55)+' L'+(x-w-6)+' '+EY+' L'+(x-w-16)+' '+(EY+h*.55)+' L'+(x-w-11)+' '+(EY+h*.55)+' L'+(x-w-1)+' '+EY+' L'+(x-w-11)+' '+(EY-h*.55)+' Z'
-      +' M'+(x+w+16)+' '+(EY-h*.55)+' L'+(x+w+6)+' '+EY+' L'+(x+w+16)+' '+(EY+h*.55)+' L'+(x+w+11)+' '+(EY+h*.55)+' L'+(x+w+1)+' '+EY+' L'+(x+w+11)+' '+(EY-h*.55)+' Z'; }
+  // ojos = un visor de lado a lado (idea de Inty), con Gort de "El día que la Tierra se detuvo" (1951) como referencia:
+  // una ranura angosta en una cabeza lisa y UNA luz adentro que se corre al mirar; la ranura se abre al sorprenderse.
+  function capsula(x0,x1,y,hh){ hh=Math.max(2.5,hh); return 'M'+(x0+hh)+' '+(y-hh)+' H'+(x1-hh)+' A'+hh+' '+hh+' 0 0 1 '+(x1-hh)+' '+(y+hh)+' H'+(x0+hh)+' A'+hh+' '+hh+' 0 0 1 '+(x0+hh)+' '+(y-hh)+' Z'; }
+  function visor(tipo, alto, mir, color, voz){ var x0=CX-106, x1=CX+106, hh=11*alto;
+    var capa=function(d,op){ return '<path d="'+d+'" fill="'+color+'"'+(op<1?' opacity="'+op+'"':'')+' mask="url(#'+u+'m)"/>'; };
+    if(tipo==='feliz') return capa('M'+x0+' '+(EY+14)+' Q'+CX+' '+(EY-36)+' '+x1+' '+(EY+14)+' L'+x1+' '+(EY+26)+' Q'+CX+' '+(EY-24)+' '+x0+' '+(EY+26)+' Z',1);
+    if(tipo==='dormir') return capa(capsula(x0,x1,EY+6,2.5),.25)+capa(capsula(CX-30,CX+30,EY+6,2.5),.8);
+    if(tipo==='grande') hh=22*alto;                        // la ranura se abre, como cuando Gort levanta el visor
+    var w=(tipo==='grande'?96:70)*(1+.25*(voz||0)), c=CX+Math.max(-1,Math.min(1,mir))*60;
+    return capa(capsula(x0,x1,EY,hh),.3)                    // la ranura, tenue
+      +capa(capsula(Math.max(x0,c-w*.9),Math.min(x1,c+w*.9),EY,hh),.35) // halo de la luz
+      +capa(capsula(Math.max(x0,c-w/2),Math.min(x1,c+w/2),EY,hh),1)  // la luz
+      +(hh>4?'<path d="'+capsula(c-w*.28,c+w*.28,EY,hh*.45)+'" fill="#e6fdff" opacity="'+(.85+.15*(voz||0)).toFixed(2)+'"/>':''); } // centro blanco, como el brillo que sale de la ranura de Gort
   function bocaD(tipo, t){ var w=62;
     if(tipo==='onda'){ var s='M'+(CX-w)+' '+MY, k; for(k=0;k<=16;k++){ var xx=CX-w+k*w/8, a=(1-Math.pow((k-8)/8,2))*(10+16*Math.abs(Math.sin(t*9+k*.9))); s+=' L'+xx.toFixed(1)+' '+(MY-a).toFixed(1); }
       for(k=16;k>=0;k--){ var xx2=CX-w+k*w/8, a2=(1-Math.pow((k-8)/8,2))*(10+16*Math.abs(Math.sin(t*9+k*.9+.4))); s+=' L'+xx2.toFixed(1)+' '+(MY+a2).toFixed(1); } return s+' Z'; }
@@ -98,8 +103,8 @@ function crearCiberCapas(el, urlCasco, urlCabeza){
   function cuadro(now){
     var t=(now-t0)/1000, te=t-tEst, n=Math.floor(t*12);
     if(n!==cuadroN){ cuadroN=n; var dt=1/12; // todo cambia a 12 cuadros por segundo: movimiento a saltos
-      var tipoOjo='normal', tipoBoca='sonrisa', alto=1, brillo=1;
-      if(est==='hablar') tipoBoca='onda';
+      var tipoOjo='normal', tipoBoca='sonrisa', alto=1, brillo=1, voz=0;
+      if(est==='hablar'){ tipoBoca='onda'; voz=Math.abs(Math.sin(t*9)); }
       if(est==='feliz'){ tipoOjo='feliz'; poseObj={x:0,y:(Math.floor(te*6)%2? -8:4),r:0}; if(te>1.6){ est='reposo'; tEst=t; } }
       if(est==='sorpresa'){ tipoOjo='grande'; tipoBoca='o'; poseObj={x:0,y:-10,r:0}; if(te<.25) glitch=.2; if(te>1.5){ est='reposo'; tEst=t; } }
       if(est==='dormir'){ tipoOjo='dormir'; tipoBoca='linea'; brillo=.35+.25*(Math.floor(t*2)%2); poseObj={x:0,y:8,r:-3}; }
@@ -111,12 +116,10 @@ function crearCiberCapas(el, urlCasco, urlCabeza){
       if(parp>0){ alto=[.04,.3,.04][3-parp]; parp--; }
       proxGlitch-=dt; if(proxGlitch<0){ glitch=.18; proxGlitch=3+Math.random()*4; }
       var gl=glitch>0; glitch-=dt;
-      var ojos=ojoD(EX[0]+mir*12,tipoOjo,alto)+' '+ojoD(EX[1]+mir*12,tipoOjo,alto), boca=bocaD(tipoBoca,t);
-      var cara='<g filter="url(#'+u+'g)" opacity="'+brillo.toFixed(2)+'">'+forma(ojos)+forma(boca)+'</g>';
-      if(gl){ var dy=Math.round(Math.random()*60)-30; // interferencia: doble imagen naranja/cian y un corte corrido
-        cara='<g opacity=".55" transform="translate(-7 0)">'+forma(ojos).replace(CIAN,'#ff7a1a')+forma(boca).replace(CIAN,'#ff7a1a')+'</g>'+cara
-          +'<rect x="548" y="'+(EY+dy)+'" width="280" height="6" fill="'+CIAN+'" opacity=".5"/>'; }
-      if(est==='dormir') cara+='<rect x="548" y="'+(300+((t*60)%260)).toFixed(0)+'" width="280" height="10" fill="'+CIAN+'" opacity=".12"/>';
+      var boca=bocaD(tipoBoca,t);
+      var cara='<g filter="url(#'+u+'g)" opacity="'+brillo.toFixed(2)+'">'+visor(tipoOjo,alto,mir,CIAN,voz)+forma(boca)+'</g>';
+      if(gl){ // interferencia: doble imagen naranja/cian (sin franja que cruce la cara)
+        cara='<g opacity=".55" transform="translate(-7 0)">'+visor(tipoOjo,alto,mir,'#ff7a1a',voz)+forma(boca).replace(CIAN,'#ff7a1a')+'</g>'+cara; }
       pant.innerHTML=cara;
       todo.setAttribute('transform','translate('+(pose.x+(gl?4:0)).toFixed(1)+' '+pose.y.toFixed(1)+') rotate('+pose.r.toFixed(2)+' '+CX+' '+PIV+')');
       cascoG.setAttribute('transform',gl?'translate(-3 0)':'');
