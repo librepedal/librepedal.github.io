@@ -21,11 +21,15 @@ function crearOrbe(el){
    +  '</g></g>'
    +'</g>'
    +'<g id="'+u+'casco">'
-   +  '<path d="M44 112 C40 72 66 48 100 46 C134 48 160 72 156 112 C150 106 128 100 100 100 C72 100 50 106 44 112 Z" fill="#243250"/>'
-   +  '<path d="M56 74 C70 58 86 52 100 52 C114 52 130 58 144 74 C130 64 116 60 100 60 C84 60 70 64 56 74 Z" fill="#3a4b70" opacity=".8"/>'
-   +  '<rect x="70" y="62" width="9" height="26" rx="4.5" fill="#121a2e" transform="rotate(-12 74 75)"/><rect x="72" y="76" width="5" height="10" rx="2.5" fill="#ff8a3d" opacity=".75" transform="rotate(-12 74 75)"/><rect x="121" y="62" width="9" height="26" rx="4.5" fill="#121a2e" transform="rotate(12 125 75)"/><rect x="123" y="76" width="5" height="10" rx="2.5" fill="#ff8a3d" opacity=".75" transform="rotate(12 125 75)"/><rect x="85" y="56" width="9" height="30" rx="4.5" fill="#121a2e"/><rect x="87" y="73" width="5" height="12" rx="2.5" fill="#ff8a3d" opacity=".75"/><rect x="106" y="56" width="9" height="30" rx="4.5" fill="#121a2e"/><rect x="108" y="73" width="5" height="12" rx="2.5" fill="#ff8a3d" opacity=".75"/>'
-   +  '<rect x="97" y="48" width="6" height="40" rx="3" fill="#fc4c02"/>'
-   +  '<path d="M46 110 C70 102 130 102 154 110" fill="none" stroke="#141c33" stroke-width="4" stroke-linecap="round"/>'
+   +  '<defs><linearGradient id="'+u+'k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4d75"/><stop offset=".6" stop-color="#243250"/><stop offset="1" stop-color="#18223b"/></linearGradient></defs>'
+   +  '<path d="M51.1 136.4 A50 50 0 1 1 148.9 136.4 C150 118 138 110 124 108 C114 106.5 106 106 100 106 C94 106 86 106.5 76 108 C62 110 50 118 51.1 136.4 Z" fill="url(#'+u+'k)"/>'
+   +  '<path d="M86.8 83.0 Q72.6 92.0 62.0 111.0 L63.8 111.0 Q75.6 92.0 88.0 83.0 Z" fill="#0f1628"/>'
+   +  '<path d="M91.2 83.0 Q81.8 92.0 74.7 111.0 L76.9 111.0 Q85.5 92.0 92.7 83.0 Z" fill="#0f1628"/>'
+   +  '<path d="M108.8 83.0 Q118.2 92.0 125.3 111.0 L127.5 111.0 Q121.9 92.0 110.3 83.0 Z" fill="#0f1628"/>'
+   +  '<path d="M113.2 83.0 Q127.4 92.0 138.0 111.0 L139.8 111.0 Q130.4 92.0 114.4 83.0 Z" fill="#0f1628"/>'
+   +  '<path d="M100 78 Q104 96 102 108 L98 108 Q96 96 100 78 Z" fill="#fc4c02"/>'
+   +  '<path d="M70 87 Q100 75 130 87" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".22"/>'
+   +  '<path d="M51.1 136.4 C50 118 62 110 76 108 C86 106.5 94 106 100 106 C106 106 114 106.5 124 108 C138 110 150 118 148.9 136.4" fill="none" stroke="#0d1424" stroke-width="3" stroke-linecap="round"/>'
    +'</g></svg>';
   var $=function(id){ return el.querySelector('#'+u+id); };
   var cuerpo=$('cuerpo'), casco=$('casco'), cara=$('cara'), ojoI=$('ojoI'), ojoD=$('ojoD'), boca=$('boca'), halo=$('halo'), sombra=$('sombra');
