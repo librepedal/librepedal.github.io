@@ -1,0 +1,168 @@
+<title>Acciones del pudú</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: una columna de lectura; arriba la corrección del galope, abajo el menú de acciones en fichas marcables, y al final la elección para copiar. Mismos tokens que el panel de referencias de mascotas. */
+:root{
+  --bg:#f6f4ef; --fg:#14181f; --mute:#5b6270; --line:#dcd8cf; --card:#ffffff; --acc:#d94300; --acc-bg:#fde9df; --ok:#1f7a4d; --ok-bg:#e2f3e9;
+  --f-disp:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0a0f1d;--fg:#eef0f4;--mute:#9aa3b5;--line:#232b3d;--card:#121a2c;--acc:#fc6a2a;--acc-bg:#2a1710;--ok:#5fd39a;--ok-bg:#10281c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a0f1d;--fg:#eef0f4;--mute:#9aa3b5;--line:#232b3d;--card:#121a2c;--acc:#fc6a2a;--acc-bg:#2a1710;--ok:#5fd39a;--ok-bg:#10281c;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--f-body)}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 56px}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,6vw,44px);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+h2{font-size:24px;font-weight:800;margin-block:40px 6px}
+h3{font-size:18px;font-weight:600;line-height:1.25}
+p{margin:0;max-width:68ch}
+.lead{color:var(--mute);margin-top:10px}
+.sub{color:var(--mute);margin-bottom:16px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:8px}
+a{color:inherit}
+
+/* galope */
+.galope{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:14px}
+@media (max-width:760px){.galope{grid-template-columns:1fr}}
+.caja{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.caja.mal{border-color:var(--line)}
+.caja .rot{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.caja.mal .rot{color:var(--mute)}
+.caja.bien .rot{color:var(--ok)}
+.tira{display:flex;gap:6px;overflow-x:auto}
+.tira div{flex:1 0 64px;border-radius:8px;border:1px solid var(--line);padding:6px 4px;text-align:center;font-size:12px;line-height:1.25;color:var(--mute)}
+.tira div.aire{background:var(--acc-bg);border-color:transparent;color:var(--fg)}
+.tira b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc)}
+.fuente{font-size:13px;color:var(--mute)}
+ul.plan{margin:6px 0 0;padding-left:20px;display:grid;gap:6px;max-width:72ch}
+
+/* acciones */
+.filtros{display:flex;flex-wrap:wrap;gap:8px;margin-block:4px 16px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;border-radius:99px;padding:3px 10px;border:1px solid var(--line);color:var(--mute)}
+.chip.hoy{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.chip.nuevo{background:var(--acc-bg);color:var(--acc);border-color:transparent}
+.grupo{font:800 15px var(--f-disp);letter-spacing:.02em;margin-block:26px 10px;color:var(--mute)}
+.acciones{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.acc{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;min-width:0;cursor:pointer}
+.acc:has(input:checked){border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.acc input{position:absolute;opacity:0;pointer-events:none}
+.acc:has(input:focus-visible){outline:2px solid var(--acc);outline-offset:3px}
+.cab{display:flex;align-items:flex-start;gap:10px}
+.cab h3{flex:1}
+.marca{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;margin-top:1px}
+.acc:has(input:checked) .marca{background:var(--acc);border-color:var(--acc)}
+.marca svg{width:14px;height:14px;opacity:0}
+.acc:has(input:checked) .marca svg{opacity:1}
+.cuando{font-size:14.5px}
+.cuando b{font-weight:700}
+.ref{font-size:13.5px;color:var(--mute);border-top:1px dashed var(--line);padding-top:8px}
+.ref i{font-style:normal;font-weight:700;color:var(--fg)}
+.fotos{display:flex;gap:8px}
+.fotos figure{margin:0;flex:0 1 140px;background:#0b1430;border-radius:10px;padding:4px;text-align:center;font-size:11px;color:#c9d0e0;min-width:0}
+.fotos img{display:block;width:100%;height:96px;object-fit:contain;border-radius:7px}
+
+/* elección */
+.eleccion{margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px}
+.eleccion textarea{width:100%;min-height:120px;font:14px/1.5 var(--f-body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.fila{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+button{font:700 14px var(--f-body);color:#fff;background:var(--acc);border:0;border-radius:10px;padding:9px 14px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+#estado{font-size:13.5px;color:var(--mute)}
+.cuenta{font-variant-numeric:tabular-nums}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Mascotas · movimiento</p>
+  <h1>Acciones del pudú</h1>
+  <p class="lead">Dijiste que el pudú en viaje "no está mal", pero que lo querías más fluido y sin monotonía. Aquí hay dos cosas: un arreglo al galope (con las imágenes que ya tenemos) y un menú de cosas que puede hacer en el viaje, cada una sacada del pudú real o de un juego con mascota que acompaña. Marca las que quieres y copia tu elección al final.</p>
+
+  <h2>1 · El galope estaba mal planteado</h2>
+  <p class="sub">En el mockup el pudú solo despega en el cuadro de patas estiradas y con las patas recogidas queda pegado al suelo. En un galope real también va en el aire con las patas recogidas.</p>
+  <div class="galope">
+    <div class="caja mal">
+      <span class="rot">Como está hoy</span>
+      <div class="tira"><div class="aire"><b>Aire</b>estiradas</div><div>suelo<br>recogidas</div><div class="aire"><b>Aire</b>estiradas</div><div>suelo<br>recogidas</div></div>
+      <p>Un solo vuelo por zancada. Se ve como un salto repetido, con la misma altura cada vez: de ahí la sensación de monotonía.</p>
+    </div>
+    <div class="caja bien">
+      <span class="rot">Propuesta</span>
+      <div class="tira"><div>apoyo<br>traseras</div><div class="aire"><b>Aire</b>estiradas</div><div>apoyo<br>delanteras</div><div class="aire"><b>Aire</b>recogidas</div></div>
+      <p>Dos vuelos por zancada (galope "rotatorio"): uno largo y estirado, otro corto y recogido, y entre medio los apoyos. Así se mueven los ciervos chicos.</p>
+      <p class="fuente">Fuente: Biancardi y Minetti, <a href="https://journals.biologists.com/jeb/article/215/23/4144/11268/Biomechanical-determinants-of-transverse-and">J. Exp. Biol. 2012</a>: el corzo usa galope rotatorio, con fase recogida y fase estirada. Del pudú no hay estudio de marcha; lo asumo igual por ser un ciervo chico.</p>
+    </div>
+  </div>
+  <ul class="plan">
+    <li><b>Ya, con las 2 imágenes de hoy:</b> los dos vuelos, cambio de velocidad suave (acelera y frena, sin saltos) y altura de cada salto un poco distinta.</li>
+    <li><b>Con arte nuevo:</b> 6 cuadros del galope en el mismo chat de Gemini y la misma cámara (los 4 de arriba más 2 de transición), alineados por las patas.</li>
+  </ul>
+
+  <h2>2 · Qué más puede hacer</h2>
+  <p class="sub">Aparecería una acción cada 8 a 15 segundos, elegida al azar sin repetir la anterior, además de las que se activan con algo del viaje (frenar, subir, sumar un km).</p>
+  <div class="filtros"><span class="chip hoy">Se hace con el arte de hoy</span><span class="chip nuevo">Necesita cuadros nuevos de Gemini</span></div>
+
+  <p class="grupo">Del pudú real</p>
+  <div class="acciones" id="lista1"></div>
+
+  <p class="grupo">De juegos con mascota que acompaña</p>
+  <div class="acciones" id="lista2"></div>
+
+  <p class="grupo">En el canasto</p>
+  <div class="acciones" id="lista3"></div>
+
+  <div class="eleccion">
+    <h3>Tu elección <span class="cuenta" id="cuenta"></span></h3>
+    <textarea id="texto" readonly aria-label="Texto con las acciones elegidas"></textarea>
+    <div class="fila"><button id="copiar" type="button">Copiar elección</button><span id="estado">Pégala en el chat con Claude.</span></div>
+  </div>
+
+  <p class="fuente" style="margin-top:24px">Datos del pudú: <a href="https://en.wikipedia.org/wiki/Pudu">Wikipedia (Pudu)</a> y <a href="https://fox29.com/news/meet-the-worlds-smallest-deer-which-barks-and-runs-in-a-zig-zag-pattern">FOX 29 sobre el pudú del zoológico de Queens</a>. Juegos: <a href="https://www.siliconera.com/pokemon-go-buddy-adventure-brings-the-walking-pokemon-feature-to-the-mobile-game/">Pokémon GO, Aventura con tu compañero</a>, <a href="https://bulbapedia.bulbagarden.net/wiki/Walking_Pok%C3%A9mon">Pokémon que caminan contigo (HeartGold/SoulSilver)</a>, <a href="https://automaton-media.com/en/news/20221128-16928/">Pokémon Escarlata/Púrpura</a>, <a href="https://www.thesixthaxis.com/2021/11/02/pikmin-bloom-now-available-to-download-in-europe/">Pikmin Bloom</a>.</p>
+</div>
+
+<script>
+const IMG={{IMG}};
+const A=[
+ [1,'zigzag','Zigzag cuando aceleras','hoy','Si subes la velocidad de golpe o vas en bajada, corre unos segundos en zigzag, adelante y atrás del camino.','El pudú huye corriendo en zigzag (Wikipedia, FOX 29).'],
+ [1,'tronco','Salta un tronco caído','hoy','De vez en cuando aparece un tronco en el camino y lo salta con un salto alto y largo.','El pudú es buen saltador y trepa troncos caídos (Wikipedia, FOX 29).'],
+ [1,'olfatea','Se para a olfatear el aire','nuevo','Se detiene un segundo con la cabeza en alto, olfatea y vuelve a correr para alcanzarte.','"Moves slowly and stops often, smelling the air" (Wikipedia, Pudu).'],
+ [1,'patas','Se para en dos patas a comer','nuevo','Al pasar junto a un arbusto, se para sobre las patas traseras para alcanzar una hoja.','Por ser tan chico se para en las patas traseras para alcanzar hojas (Wikipedia).'],
+ [1,'ladra','Ladra si frenas de golpe','nuevo','En una frenada brusca da un ladrido corto, con la boca abierta. Falta buscar una grabación real con licencia libre.','El pudú ladra cuando se asusta (Wikipedia, FOX 29).'],
+ [2,'brote','Encuentra un brote cada km','nuevo','Al completar cada km se agacha a comerse un brote del camino, que va a su pancita (la regla de 1 brote por km del prototipo).','Pikmin Bloom: tus Pikmin recogen fruta mientras caminas.'],
+ [2,'adelanta','Se adelanta y te espera','hoy','Corre más rápido, se adelanta, se sienta y te espera; cuando pasas, vuelve a correr.','Pokémon Escarlata/Púrpura: la mascota se queda atrás y corre para alcanzarte.'],
+ [2,'atras','Se queda atrás y te alcanza','hoy','Se distrae, queda un poco atrás y te alcanza con un galope rápido.','Pokémon Escarlata/Púrpura (lo mismo, al revés).'],
+ [2,'mira','Se miran con Pistero','nuevo','El pudú gira la cabeza hacia Pistero y Pistero lo mira de vuelta (Pistero ya puede girar la cabeza).','HeartGold/SoulSilver: te das vuelta y tu Pokémon reacciona.'],
+ [2,'semaforo','Se sienta cuando paras','hoy','Si te detienes, deja de correr y se sienta a tu lado hasta que vuelves a pedalear.','Pokémon GO: el compañero se queda junto a ti en el mapa.'],
+ [2,'subida','Trota lento en las subidas','hoy','En subida baja el ritmo, inclina el cuerpo hacia adelante y da zancadas más cortas.','Galope a velocidad variable, del arreglo de arriba.'],
+ [2,'celebra','Celebra cada 5 km y al llegar','hoy','Da dos o tres saltitos en el lugar cuando cumples 5 km y cuando terminas el viaje.','Pokémon GO: el compañero se pone "emocionado" cuando lo cuidas.'],
+ [3,'asoma','Se asoma a mirar el paisaje','nuevo','En el canasto se estira por el borde y mira hacia adelante o hacia un lado.','Perros reales que van en canasto de bici; se suma a lo que ya hace hoy en el canasto (se mece).'],
+ [3,'duerme','Se duerme si está cansado','nuevo','Con poca energía se acurruca y se duerme en el canasto. Este arte ya estaba pendiente ("durmiendo").','La regla del prototipo: con energía bajo 15 se sube al canasto.']
+];
+const chk='<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+for(const [g,id,t,arte,cuando,ref] of A){
+  const l=document.createElement('label');l.className='acc';
+  l.innerHTML='<input type="checkbox" id="c-'+id+'" data-t="'+t+'"><div class="cab"><h3>'+t+'</h3><span class="marca">'+chk+'</span></div>'
+   +'<span class="chip '+arte+'" style="align-self:flex-start">'+(arte==='hoy'?'Arte de hoy':'Cuadros nuevos')+'</span>'
+   +'<p class="cuando">'+cuando+'</p><p class="ref"><i>Referencia:</i> '+ref+'</p>';
+  document.getElementById('lista'+g).appendChild(l);
+}
+/* fotos del arte que ya existe, solo en las fichas que lo usan tal cual */
+const fot={adelanta:['pudu-corriendo','corriendo','pudu-sentado','sentado'],semaforo:['pudu-sentado','sentado']};
+for(const id in fot){const f=fot[id],d=document.createElement('div');d.className='fotos';
+  for(let i=0;i<f.length;i+=2)d.innerHTML+='<figure><img alt="Pudú cría, '+f[i+1]+'" src="'+IMG[f[i]]+'">'+f[i+1]+'</figure>';
+  document.getElementById('c-'+id).closest('.acc').appendChild(d)}
+
+const cajas=[...document.querySelectorAll('.acc input')];
+function armar(){
+  const si=cajas.filter(c=>c.checked).map(c=>'- '+c.dataset.t);
+  const no=cajas.filter(c=>!c.checked).map(c=>'- '+c.dataset.t);
+  document.getElementById('cuenta').textContent='· '+si.length+' de '+cajas.length;
+  document.getElementById('texto').value=si.length?'Acciones del pudú que quiero:\n'+si.join('\n')+(no.length?'\n\nNo quiero:\n'+no.join('\n'):''):'Todavía no marcas ninguna acción.';
+  try{localStorage.setItem('acc-pudu',JSON.stringify(cajas.filter(c=>c.checked).map(c=>c.id)))}catch(e){}
+}
+try{(JSON.parse(localStorage.getItem('acc-pudu')||'[]')).forEach(id=>{const c=document.getElementById(id);if(c)c.checked=true})}catch(e){}
+cajas.forEach(c=>c.addEventListener('change',armar));armar();
+document.getElementById('copiar').onclick=()=>{
+  const ta=document.getElementById('texto'),est=document.getElementById('estado');
+  navigator.clipboard.writeText(ta.value).then(()=>{est.textContent='Copiado. Pégalo en el chat.'},()=>{ta.focus();ta.select();est.textContent='Copia el texto seleccionado con Ctrl+C.'});
+};
+</script>
