@@ -75,6 +75,9 @@ puede confundir a otra sesión, corrígelo o márcalo como viejo en ese momento.
   (media montura, barra superior gruesa, espejo iridiscente, arco de nariz).
 - Piezas que tocan el cuerpo (cuello: buff, pañoleta, bufanda, maillot, corbatín, collar): en la bici/cuerpo van **sobre el
   cuello real** y se animan con él (`_bCuelloPieza` en pistero-bici.js), nunca pegadas a la cabeza (flotaban; Inty 2026-10-06).
+- Personajes o ilustraciones NUEVAS (p. ej. un Pistero rediseñado): no se dibujan como SVG a mano de una (Inty 2026-10-06:
+  "fracaso monumental"). Primero panel de imágenes de referencia reales (ilustradores, mascotas de marca), luego
+  exploración con generador de imágenes para elegir estilo, y recién ahí vectorizar para la app.
 - Colores de casco: nada de arcoíris ni degradados multicolor (Inty 2026-10-06: "espantoso"). Paletas sacadas de cascos
   reales (POC, Kask, Thousand), no inventadas.
 - Público de toda Sudamérica: no nombrar "Chile" en textos de la app dirigidos a todos.
