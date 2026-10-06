@@ -1,0 +1,11 @@
+<!doctype html><meta charset="utf-8"><title>Frente prueba</title>
+<style>body{margin:0;background:#141a2b;color:#ccd;font:12px system-ui}.w{display:flex;gap:10px;padding:10px;flex-wrap:wrap;align-items:flex-start}.w>div{background:#0b1120;border-radius:10px;padding:6px;text-align:center}</style>
+<div class="w"><img src="../gemini/captura-05-icono-frente.jpg" style="width:600px"><div style="width:320px">x</div></div>
+<div class="w" id="e"></div>
+<script src="pistero-frente.js"></script>
+<script>
+document.querySelector('.w>div').innerHTML=pisteroFrenteSVG({});
+var e=document.getElementById('e'); ['feliz','riendo','sorprendido','sueno','concentrado','guino','hablando'].forEach(function(x){ e.innerHTML+='<div><div style="width:130px">'+pisteroFrenteSVG({expr:x})+'</div>'+x+'</div>'; });
+[40,64].forEach(function(p){ e.innerHTML+='<div><div style="width:'+p+'px">'+pisteroFrenteSVG({})+'</div>'+p+'px</div>'; });
+e.innerHTML+='<div style="background:#f3efe8"><div style="width:64px">'+pisteroFrenteSVG({color:'#243250'})+'</div></div>';
+</script>

@@ -1,0 +1,183 @@
+<title>Pistero · maquetas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: tres teléfonos lado a lado (se apilan en pantallas chicas), estética real de Libre Pedal; el del medio
+   tiene a Pistero saliendo por encima del marco. Un solo look oscuro. */
+:root{ --d:#0a0f1d; --surf:#141a2b; --surf2:#0f1524; --line:rgba(255,255,255,0.09); --p:#fc4c02; --g:#ffd700; --tx:#e8eeff; --sub:#9fb3c8; --mute:#6f7f98;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif; --f-app:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-app);font-size:15px;line-height:1.5;margin:0;padding-inline:16px;padding-block:28px 60px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:26px}
+h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance} h1{font-size:clamp(2rem,6vw,2.8rem);line-height:1} h1 span{color:var(--p)}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p);font-weight:700}
+.lead{color:var(--sub);max-width:70ch;margin:8px 0 0}
+.tels{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;padding-top:70px;justify-items:center}
+.col{display:grid;gap:10px;justify-items:center;width:100%;max-width:330px}
+.col p{margin:0;font-size:.85rem;color:var(--sub);text-align:center}
+.col h2{font-size:1.2rem}
+.tel{position:relative;width:100%;max-width:320px;height:640px;border-radius:38px;border:9px solid #1b2233;background:var(--d);box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.pant{position:absolute;inset:0;border-radius:29px;overflow:hidden;display:flex;flex-direction:column}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #1d2536}
+.logo{font-weight:900;letter-spacing:.04em;font-size:.9rem}.logo i{font-style:normal;color:var(--p)}
+.chip{font-size:.66rem;background:rgba(252,76,2,.14);border:1px solid rgba(252,76,2,.4);color:#ffd9c6;border-radius:20px;padding:4px 9px;font-weight:700}
+.cont{flex:1;padding:12px;display:grid;gap:10px;align-content:start}
+.tit{font-weight:800;font-size:.95rem}
+.nav{display:flex;justify-content:space-around;border-top:1px solid #1e2738;padding:7px 0 10px;font-size:.58rem;color:var(--mute)}
+.nav span{display:grid;justify-items:center;gap:2px}.nav .on{color:var(--p)}
+.nav .av{width:30px;height:30px;border-radius:9px;background:rgba(252,76,2,.12);display:grid;place-items:center}.nav .av svg{width:28px;height:28px}
+.ico{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* elegir modelo */
+.prev{background:radial-gradient(circle at 50% 40%,#1b2540,#0f1524 70%);border-radius:18px;display:grid;place-items:center;height:210px}
+.prev svg{height:190px;width:auto}
+.modelos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mod{background:var(--surf);border:1.5px solid var(--line);border-radius:14px;padding:8px 6px;text-align:center;font-size:.78rem;cursor:pointer;display:grid;gap:2px;justify-items:center}
+.mod svg{width:84px;height:84px}
+.mod small{color:var(--mute);font-size:.66rem}
+.mod.on{border-color:var(--p);background:linear-gradient(180deg,rgba(252,76,2,.12),var(--surf))}
+.btn{background:var(--p);color:#111;border:0;border-radius:13px;padding:12px;font-weight:800;font-size:.85rem;text-align:center}
+/* inicio con pop-out */
+.card{position:relative;background:linear-gradient(180deg,#152038,#101829);border:1px solid #24304a;border-radius:18px;padding:84px 14px 14px;margin-top:70px}
+.card b{display:block;font-size:.98rem}.card span{font-size:.78rem;color:var(--sub)}
+.inp{border:1px solid #2a3550;border-radius:12px;padding:10px;color:var(--mute);font-size:.8rem;margin-top:8px}
+.km{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.km div{background:var(--surf);border-radius:12px;padding:8px;text-align:center;font-size:.62rem;color:var(--mute)}.km b{display:block;color:var(--p);font-size:1rem}
+.popw{position:absolute;left:-40px;right:-40px;top:-230px;overflow:hidden;z-index:5;pointer-events:none}
+.pop{position:absolute;left:50%;bottom:-26px;width:210px;margin-left:-105px;filter:drop-shadow(0 18px 18px rgba(0,0,0,.55));animation:sale 3.2s cubic-bezier(.2,.9,.25,1.2) infinite;transform-origin:50% 90%}
+.pop svg{width:100%;height:auto;display:block}
+@keyframes sale{0%{transform:translateY(240px) scale(.9)}18%{transform:translateY(-6px) scale(1.03) rotate(-3deg)}28%{transform:translateY(0) scale(1) rotate(0)}70%{transform:translateY(0) rotate(0)}80%{transform:translateY(0) rotate(4deg)}88%{transform:translateY(0) rotate(-2deg)}100%{transform:translateY(0)}}
+.burb{position:absolute;right:-14px;top:-66px;z-index:7;background:#fff;color:#111;font-size:.72rem;font-weight:700;padding:7px 10px;border-radius:14px 14px 14px 4px;max-width:140px;box-shadow:0 8px 20px rgba(0,0,0,.4);animation:burb 3.2s infinite}
+@keyframes burb{0%,22%{opacity:0;transform:translateY(8px)}30%,90%{opacity:1;transform:none}100%{opacity:0}}
+/* chat */
+.chathdr{display:flex;gap:10px;align-items:center;background:var(--surf);border-radius:16px;padding:8px 10px}
+.chathdr svg{width:58px;height:58px;flex:none}.chathdr small{display:block;color:var(--ok,#3ccf8e);font-size:.68rem}
+.msg{max-width:85%;font-size:.8rem;padding:8px 11px;border-radius:14px}
+.msg.pi{background:rgba(255,255,255,.08)}.msg.yo{background:var(--p);color:#111;margin-left:auto}
+.tels .tel{transition:none}
+@media (prefers-reduced-motion:reduce){.pop,.burb{animation:none}}
+.nota{font-size:.78rem;color:var(--mute)}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Libre Pedal · Pistero · maquetas</div>
+  <h1>Cada uno elige <span>su Pistero</span></h1>
+  <p class="lead">Los modelos conviven: el Pistero de siempre y el Casco vivo (y los que vengan). Todos de frente. En Inicio, Pistero sale por encima de la pantalla y te habla.</p>
+</header>
+<div class="tels">
+  <div class="col">
+    <div class="tel"><div class="pant">
+      <div class="hdr"><span class="logo">LIBRE <i>PEDAL</i></span><span class="chip">Armario</span></div>
+      <div class="cont">
+        <div class="tit">Elige tu Pistero</div>
+        <div class="prev" id="prev"></div>
+        <div class="modelos" id="modelos"></div>
+        <div class="btn">Usar este Pistero</div>
+        <div class="nota">Después eliges casco, color y lo demás en el Armario, como hoy.</div>
+      </div>
+      <div class="nav" id="nav1"></div>
+    </div></div>
+    <h2>1 · Elegir modelo</h2><p>En el Armario, arriba de todo. Toca un modelo y se ve grande.</p>
+  </div>
+  <div class="col">
+    <div class="tel">
+      <div class="pant">
+        <div class="hdr"><span class="logo">LIBRE <i>PEDAL</i></span><span class="chip">Novato</span></div>
+        <div class="cont">
+          <div class="card"><b>¿A dónde pedaleamos hoy?</b><span>Escribe tu destino y te guío.</span><div class="inp">¿A dónde vamos?</div></div>
+          <div class="km"><div><b>12,4</b>km hoy</div><div><b>3</b>viajes</div><div><b>#18</b>ranking</div></div>
+        </div>
+        <div class="nav" id="nav2"></div>
+      </div>
+      <div class="popw" id="popw"><div class="pop" id="pop"></div></div>
+      <div class="burb">¡Hola! ¿Salimos a rodar?</div>
+    </div>
+    <h2>2 · Sale de la pantalla</h2><p>Pistero asoma desde la tarjeta, pasa por encima del marco del teléfono y saluda.</p>
+  </div>
+  <div class="col">
+    <div class="tel"><div class="pant">
+      <div class="hdr"><span class="logo">LIBRE <i>PEDAL</i></span><span class="chip">Pistero</span></div>
+      <div class="cont">
+        <div class="chathdr" id="chathdr"></div>
+        <div class="msg yo">¿Cómo está el camino al lago?</div>
+        <div class="msg pi">Abierto. Después del puente hay barro, baja la velocidad ahí.</div>
+        <div class="msg yo">¿Y el viento?</div>
+        <div class="msg pi">De frente unos 18 km/h. Te va a costar la subida, pero llegas.</div>
+      </div>
+      <div class="nav" id="nav3"></div>
+    </div></div>
+    <h2>3 · Chat</h2><p>Arriba, Pistero de frente con la boca LED moviéndose mientras habla.</p>
+  </div>
+</div>
+</div>
+<script>
+/* Pistero "casco vivo" DE FRENTE (para el ícono, el chat y la selección de modelo). Calcado de la versión
+   frontal generada en Gemini (disenos-ui/pistero-nuevo/gemini/captura-05-icono-frente.jpg). Simétrico.
+   o.color = color del casco · o.expr = feliz|riendo|sorprendido|sueno|concentrado|guino|hablando */
+function pisteroFrenteSVG(o){
+  o=o||{};
+  var C=o.color||'#fc4c02';
+  function tono(hex,k){ var n=parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255;
+    function f(c){ return Math.max(0,Math.min(255,Math.round(k<0?c*(1+k):c+(255-c)*k))); }
+    return '#'+((1<<24)+(f(r)<<16)+(f(g)<<8)+f(b)).toString(16).slice(1); }
+  var CS=tono(C,-.2), CO=tono(C,-.42), CL=tono(C,.34), LED=o.led||'#d9fbff';
+  var u='pf'+Math.random().toString(36).slice(2,7);
+  var CASC='M30 106 C26 60 58 20 100 18 C142 20 174 60 170 106 C171 115 167 121 160 119 C156 111 150 106 142 105 L58 105 C50 106 44 111 40 119 C33 121 29 115 30 106 Z';
+  var VIS='M44 104 L156 104 C161 121 158 139 146 147 C136 153 124 151 118 145 C112 139 106 135 100 135 C94 135 88 139 82 145 C76 151 64 153 54 147 C42 139 39 121 44 104 Z';
+  var s='<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">';
+  s+='<defs><filter id="'+u+'g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    +'<linearGradient id="'+u+'v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3440"/><stop offset=".55" stop-color="#2a2232"/><stop offset="1" stop-color="#1c1a2a"/></linearGradient>'
+    +'<clipPath id="'+u+'k"><path d="'+CASC+'"/></clipPath></defs>';
+  // cabeza oscura y correas
+  s+='<path d="M46 108 C46 150 68 178 100 182 C132 178 154 150 154 108 Z" fill="#141b2e"/>';
+  s+='<path d="M40 114 C46 140 62 164 88 178 M160 114 C154 140 138 164 112 178" fill="none" stroke="#3a3d58" stroke-width="4.5" stroke-linecap="round"/>';
+  s+='<rect x="92" y="174" width="16" height="9" rx="3" fill="#4a4e6c"/>';
+  // cáscara con sombra baja y brillo alto
+  s+='<path d="'+CASC+'" fill="'+C+'"/>';
+  s+='<g clip-path="url(#'+u+'k)"><path d="M20 84 C60 96 140 96 180 84 L180 130 L20 130 Z" fill="'+CS+'"/>'
+    +'<path d="M44 56 C62 32 82 24 100 24 C118 24 138 32 156 56 C138 42 120 36 100 36 C80 36 62 42 44 56 Z" fill="'+CL+'" opacity=".55"/>'
+    +'<path d="M28 96 C70 102 130 102 172 96 L172 112 L28 112 Z" fill="'+CO+'" opacity=".5"/></g>';
+  // ventilaciones con relieve (centro, internas, externas)
+  var V=[['M92 34 Q100 26 108 34 L108 76 Q100 84 92 76 Z',100,55],
+         ['M70 40 Q77 33 84 39 L86 78 Q78 86 72 78 Z',78,60],['M130 39 Q123 33 116 40 L114 78 Q122 86 128 78 Z',122,60],
+         ['M50 58 Q55 50 62 54 L66 84 Q58 92 52 84 Z',58,72],['M150 58 Q145 50 138 54 L134 84 Q142 92 148 84 Z',142,72]];
+  V.forEach(function(v){ var d=v[0];
+    s+='<path d="'+d+'" fill="none" stroke="'+CL+'" stroke-width="3" stroke-linejoin="round" opacity=".6"/>'
+      +'<path d="'+d+'" fill="'+CO+'" transform="translate(0 1.8)"/><path d="'+d+'" fill="#2e3050"/>'
+      +'<path d="'+d+'" fill="#4b4e6e" opacity=".5" transform="translate('+v[1]+' '+(v[2]-1.5)+') scale(.8) translate('+(-v[1])+' '+(-v[2])+')"/>'; });
+  s+='<rect x="94.5" y="19" width="11" height="9" rx="3" fill="#f6eee8"/>';
+  // visera
+  s+='<path d="'+VIS+'" fill="url(#'+u+'v)" opacity=".95"/>';
+  s+='<path d="M44 104 L156 104 L157 110 L43 110 Z" fill="'+C+'" opacity=".3"/>';
+  s+='<path d="M140 106 L156 105 C159 120 157 132 151 140 C148 128 144 116 140 106 Z" fill="#fff" opacity=".14"/>';
+  // LED
+  var e=o.expr||'feliz', W=' fill="none" stroke="'+LED+'" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"', led='';
+  var parp=o.parpadeo!==false?'<animateTransform attributeName="transform" type="scale" values="1 1;1 1;1 .08;1 1" keyTimes="0;.92;.96;1" dur="4.2s" repeatCount="indefinite" additive="sum"/>':'';
+  function ojos(){ return '<g transform-origin="100 124"><rect x="73.5" y="111" width="13" height="26" rx="6.5"/><rect x="113.5" y="111" width="13" height="26" rx="6.5"/>'+parp+'</g>'; }
+  function arco(x){ return '<path d="M'+(x-8)+' 128 Q'+x+' 115 '+(x+8)+' 128"'+W+'/>'; }
+  if(e==='feliz') led=ojos()+'<path d="M90 157 Q100 165 110 157"'+W+'/>';
+  else if(e==='riendo') led=arco(80)+arco(120)+'<path d="M88 154 L112 154 Q110 168 100 168 Q90 168 88 154 Z"/>';
+  else if(e==='sorprendido') led='<circle cx="80" cy="124" r="9"/><circle cx="120" cy="124" r="9"/><circle cx="100" cy="160" r="5"/>';
+  else if(e==='sueno') led='<path d="M72 126 Q80 131 88 126 M112 126 Q120 131 128 126"'+W+'/><path d="M94 159 L106 159"'+W+'/>';
+  else if(e==='concentrado') led='<rect x="69" y="119" width="22" height="8" rx="4" transform="rotate(8 80 123)"/><rect x="109" y="119" width="22" height="8" rx="4" transform="rotate(-8 120 123)"/><path d="M92 159 L108 159"'+W+'/>';
+  else if(e==='guino') led='<rect x="73.5" y="111" width="13" height="26" rx="6.5"/>'+arco(120)+'<path d="M90 157 Q100 165 110 157"'+W+'/>';
+  else if(e==='hablando') led=ojos()+'<ellipse cx="100" cy="159" rx="8" ry="4"><animate attributeName="ry" values="2;6;3;7;2" dur=".6s" repeatCount="indefinite"/></ellipse>';
+  s+='<g fill="'+LED+'" filter="url(#'+u+'g)">'+led+'</g></svg>';
+  return s;
+}
+
+var CLASICO="<svg viewBox=\"0 0 100 84\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M16 50 Q16 78 50 80 Q84 78 84 50 Z\" fill=\"#f4c9a0\"/><path d=\"M22 74 Q50 84 78 74 Q66 80 50 80 Q34 80 22 74 Z\" fill=\"rgba(0,0,0,.06)\"/><defs><clipPath id=\"c1\"><path d=\"M12 54 A38 36 0 0 1 88 54 Z\"/></clipPath></defs><path d=\"M12 54 A38 36 0 0 1 88 54 Z\" fill=\"#00aaff\"/><g clip-path=\"url(#c1)\"><g transform=\"translate(.7 1)\" opacity=\".22\"><path d=\"M50 22 L50 52\" stroke=\"#000\" stroke-width=\"6\" stroke-linecap=\"round\"/></g><g transform=\"translate(-.4 -.5)\" opacity=\".3\"><path d=\"M50 22 L50 52\" stroke=\"#fff\" stroke-width=\"6\" stroke-linecap=\"round\"/></g><path d=\"M50 22 L50 52\" stroke=\"#fc4c02\" stroke-width=\"6\" stroke-linecap=\"round\"/></g><g clip-path=\"url(#c1)\"><path d=\"M66 22 Q86 32 84 52\" fill=\"none\" stroke=\"rgba(0,0,0,.14)\" stroke-width=\"9\" stroke-linecap=\"round\"/></g><g fill=\"rgba(255,255,255,.13)\"><ellipse cx=\"38.35\" cy=\"31.6\" rx=\"2.8\" ry=\"8\" transform=\"rotate(28 38.35 31.6)\"/><ellipse cx=\"62.35\" cy=\"31.6\" rx=\"2.8\" ry=\"8\" transform=\"rotate(-28 62.35 31.6)\"/><ellipse cx=\"24.85\" cy=\"43.6\" rx=\"2.2\" ry=\"6\" transform=\"rotate(48 24.85 43.6)\"/><ellipse cx=\"75.85\" cy=\"43.6\" rx=\"2.2\" ry=\"6\" transform=\"rotate(-48 75.85 43.6)\"/></g><g fill=\"rgba(0,0,0,.42)\"><ellipse cx=\"38\" cy=\"31\" rx=\"2.8\" ry=\"8\" transform=\"rotate(28 38 31)\"/><ellipse cx=\"62\" cy=\"31\" rx=\"2.8\" ry=\"8\" transform=\"rotate(-28 62 31)\"/><ellipse cx=\"24.5\" cy=\"43\" rx=\"2.2\" ry=\"6\" transform=\"rotate(48 24.5 43)\"/><ellipse cx=\"75.5\" cy=\"43\" rx=\"2.2\" ry=\"6\" transform=\"rotate(-48 75.5 43)\"/></g><path d=\"M12 54 Q50 45 88 54 Z\" fill=\"rgba(0,0,0,.13)\"/><g clip-path=\"url(#c1)\"><path d=\"M21 42 Q27 26 45 21\" stroke=\"rgba(255,255,255,.14)\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/></g><path d=\"M21.6 41 Q27.4 26.6 44 21.8\" stroke=\"rgba(255,255,255,.6)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"19.6\" cy=\"46.4\" r=\"1.2\" fill=\"rgba(255,255,255,.5)\"/><circle cx=\"50\" cy=\"19.6\" r=\".9\" fill=\"rgba(255,255,255,.4)\"/><path d=\"M12 54 Q50 66 88 54 L88 48 Q50 60 12 48 Z\" fill=\"rgba(0,0,0,0.3)\"/><g fill=\"none\" stroke=\"#1f2937\" stroke-width=\"1.3\" stroke-linecap=\"round\" opacity=\".55\"><path d=\"M18.5 56 Q20 70 31 78.6\"/><path d=\"M81.5 56 Q80 70 69 78.6\"/></g><rect x=\"47.6\" y=\"79.2\" width=\"4.8\" height=\"2.6\" rx=\"1\" fill=\"#1f2937\" opacity=\".55\"/><g class=\"lp-eye lp-parpadeo\"><ellipse cx=\"40\" cy=\"63\" rx=\"6.2\" ry=\"7.6\" fill=\"#16203a\"/><g class=\"lp-iris\"><circle cx=\"37.8\" cy=\"60\" r=\"2.5\" fill=\"#fff\"/><circle cx=\"42\" cy=\"65.5\" r=\"1.2\" fill=\"#fff\" opacity=\".85\"/></g></g><g class=\"lp-eye lp-parpadeo\"><ellipse cx=\"60\" cy=\"63\" rx=\"6.2\" ry=\"7.6\" fill=\"#16203a\"/><g class=\"lp-iris\"><circle cx=\"57.8\" cy=\"60\" r=\"2.5\" fill=\"#fff\"/><circle cx=\"62\" cy=\"65.5\" r=\"1.2\" fill=\"#fff\" opacity=\".85\"/></g></g><ellipse cx=\"30\" cy=\"71\" rx=\"5.5\" ry=\"3.2\" fill=\"#ff9db0\" opacity=\".55\"/><ellipse cx=\"70\" cy=\"71\" rx=\"5.5\" ry=\"3.2\" fill=\"#ff9db0\" opacity=\".55\"/><path d=\"M43 73 Q50 79 57 73\" stroke=\"#7a4a2a\" stroke-width=\"2.4\" fill=\"none\" stroke-linecap=\"round\"/></svg>";
+(function(){
+  var MOD=[{n:'Casco vivo',d:'Nuevo',svg:function(){return pisteroFrenteSVG({});}},{n:'Clásico',d:'El de siempre',svg:function(){return CLASICO;}}];
+  var sel=0;
+  function pintar(){ document.getElementById('prev').innerHTML=MOD[sel].svg();
+    document.getElementById('modelos').innerHTML=MOD.map(function(m,i){ return '<div class="mod'+(i===sel?' on':'')+'" data-i="'+i+'">'+m.svg()+m.n+'<small>'+m.d+'</small></div>'; }).join(''); }
+  document.getElementById('modelos').addEventListener('click',function(e){ var c=e.target.closest('.mod'); if(c){ sel=+c.dataset.i; pintar(); } });
+  pintar();
+  document.getElementById('pop').innerHTML=pisteroFrenteSVG({expr:'riendo'});
+  // la ventana del efecto termina justo en el borde superior de la tarjeta: Pistero sale de ahí
+  function medir(){ var tel=document.getElementById('popw').parentElement, card=tel.querySelector('.card'); var y=card.getBoundingClientRect().top-tel.getBoundingClientRect().top-9; document.getElementById('popw').style.height=(230+y)+'px'; }
+  medir(); window.addEventListener('resize',medir);
+  document.getElementById('chathdr').innerHTML=pisteroFrenteSVG({expr:'hablando'})+'<div><b>Pistero</b><small>hablando…</small></div>';
+  var home='<svg class="ico" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>', pin='<svg class="ico" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>', soc='<svg class="ico" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>', per='<svg class="ico" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+  function nav(on){ var it=[['Inicio',home],['Mapa',pin],['Pistero',null],['Social',soc],['Perfil',per]]; return it.map(function(x){ return '<span class="'+(x[0]===on?'on':'')+'">'+(x[1]||'<span class="av">'+pisteroFrenteSVG({})+'</span>')+x[0]+'</span>'; }).join(''); }
+  document.getElementById('nav1').innerHTML=nav('Perfil'); document.getElementById('nav2').innerHTML=nav('Inicio'); document.getElementById('nav3').innerHTML=nav('Pistero');
+})();
+</script>
