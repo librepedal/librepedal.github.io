@@ -1,5 +1,7 @@
 # 🚀 EMPEZAR AQUÍ — cualquier cuenta Claude que retome LibrePedal
 
+> 🟣 **2026-10-06: rediseño de Pistero en 5 modelos a elegir (orbe, slime, androide, cyberpunk, vidrio), arte de Gemini + animación por capas.** Lee `TRASPASO-2026-10-06-PISTERO-MODELOS.md` (estado, reglas de Inty, cómo producir con Gemini y qué sigue).
+
 > 🟠 **2026-10-05: revisión de punta a punta lista en la rama `feature/armario-piezas` (v8.809), esperando que Inty la publique.** Lee primero `TRASPASO-2026-10-05-REVISION.md`.
 
 > 🔴 **2026-10-04 tarde: hay errores reportados por Inty en el teléfono (skins que no aparecen, bienvenida antigua, login con Google lento).** Lee primero `TRASPASO-2026-10-04-TARDE.md`.
