@@ -37,7 +37,7 @@ Falta (con OK de Inty): llaves de sandbox de Flow, desplegar el worker con wrang
   (la ficha de Play ya lo promete).
 - Venta solo en la web (landing), oculta dentro de la app de Play (política de pagos de Google: Chile no está en los
   programas de enlaces externos). Mockup: https://claude.ai/artifact/JUkrbDtrGYn2n6fow36fxc — esperando ✓ de Inty
-  (precios $3.000/$4.000 y los 10 mensajes por confirmar).
+  **Confirmado por Inty (2026-10-05): $3.000 / $4.000 dúo, 10 mensajes de chat gratis al día, y los avisos dentro de la app pueden nombrar "Libre Pedal Premium" pero sin link, precio ni dónde pagar.**
 
 **Hecho en la misma rama (dormido hasta el 1/11, nada cambia para nadie al publicarlo):**
 - `landing.html`: sección Premium (paga con el correo de Libre Pedal; el worker busca la cuenta con cuDeEmail).
