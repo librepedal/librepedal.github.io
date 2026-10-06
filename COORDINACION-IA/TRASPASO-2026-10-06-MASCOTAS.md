@@ -28,6 +28,7 @@ Las páginas `.html` publicadas llevan las imágenes en base64 y se arman desde 
 0. **LO PRIMERO: movimiento.** Inty vio el mockup en viaje: "no está mal, pero hay que mejorar esos movimientos, que sea más fluido y que haga otras cosas, no quiero monotonía". Plan propuesto:
    - **Fluidez:** galope de 6 a 8 cuadros (Gemini, mismo chat y misma cámara; recortar y alinear por la base), con interpolación y velocidad variable (acelera, frena).
    - **Variedad:** un repertorio de acciones que aparecen al azar cada pocos segundos o ante eventos del viaje: saltito de alegría, mirar a Pistero, olfatear el camino, adelantarse y esperar, quedarse atrás y alcanzar, trotar lento en subida, detenerse al frenar, celebrar al llegar, asomarse en el canasto a mirar el paisaje y dormirse en el canasto si está cansado. Cada acción necesita sus propios cuadros.
+   - **Hecho (2026-10-06, 2.ª cuenta):** panel de acciones para que Inty elija → https://claude.ai/artifact/TjWPRCuacaeGaULvXnXDTC (`acciones.src.html`). Siguiente: con su elección, arreglar el galope (dos vuelos) en el mockup y pedir a Gemini solo los cuadros de las acciones elegidas.
    - Antes de pedir el arte: referencias reales de animación de mascotas acompañantes (videos de pudú corriendo, juegos con mascota que sigue al jugador) y mostrarle a Inty la lista de acciones para que elija.
 1. Que Inty revise el mockup en viaje, la galería y el prototipo. Anotar lo que apruebe en DECISIONES.
 2. El galope final necesita de 4 a 6 cuadros por animal (ahora son 2, solo del pudú).

@@ -53,3 +53,5 @@ Datos reales: la cría nace con manchas blancas que pierde cerca de los 5 meses 
 
 ## Movimiento (Inty, 2026-10-06)
 - Mockup en viaje: "no está mal". Pide **más fluido** y que **haga otras cosas, sin monotonía**. Ver el plan en COORDINACION-IA/TRASPASO-2026-10-06-MASCOTAS.md, pendiente 0.
+- Panel para elegir acciones: https://claude.ai/artifact/TjWPRCuacaeGaULvXnXDTC (fuente `acciones.src.html`, con las jpg `pudu-corriendo` y `pudu-sentado`). Son 14 acciones con su referencia y con lo que necesita cada una (arte de hoy o cuadros nuevos). **Esperando la elección de Inty.**
+- Corrección del galope: los ciervos chicos usan galope rotatorio, con DOS vuelos (patas estiradas y patas recogidas), según Biancardi y Minetti, J. Exp. Biol. 2012 (corzo). El mockup solo despega con las patas estiradas. Se arregla con las 2 imágenes de hoy: dos vuelos, velocidad suave y altura variable.
