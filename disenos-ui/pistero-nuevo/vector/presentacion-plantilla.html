@@ -1,0 +1,89 @@
+<title>Pistero vector · casco vivo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: tablero oscuro; comparación Gemini/vector arriba, luego expresiones vivas, colores y la app. */
+:root{ --d:#0a0f1d; --surf:#141a2b; --line:rgba(255,255,255,0.09); --p:#fc4c02; --g:#ffd700; --tx:#e8eeff; --sub:#9fb3c8; --mute:#6f7f98;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif; --f-app:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-app);font-size:15px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 60px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:28px}
+h1,h2{font-family:var(--f-disp);margin:0;text-wrap:balance} h1{font-size:clamp(2rem,6vw,2.8rem);line-height:1} h1 span{color:var(--p)} h2{font-size:1.4rem}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p);font-weight:700}
+.lead{color:var(--sub);max-width:70ch;margin:8px 0 0}
+section{display:grid;gap:12px}
+.par{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.par figure{margin:0;background:var(--surf);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.par .img{aspect-ratio:726/815;max-width:100%;background-repeat:no-repeat;background-color:#131a2e}
+.par figcaption{padding:8px 12px;font-size:.85rem;color:var(--sub)}
+.par svg{width:100%;height:auto;display:block}
+.exprs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.exprs div{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;font-size:.8rem;color:var(--sub)}
+.exprs svg{width:100%;height:auto}
+.cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.cols div{background:var(--surf);border-radius:12px;padding:6px;text-align:center;font-size:.72rem;color:var(--sub)}
+.cols svg{width:100%;height:auto}
+.app{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end}
+.app figure{margin:0;display:grid;gap:4px;justify-items:center;font-size:.72rem;color:var(--mute)}
+.nav{display:flex;align-items:center;justify-content:space-around;width:260px;background:#0b1120;border:1px solid #1e2738;border-radius:12px;padding:6px 4px;font-size:.62rem;color:var(--mute)}
+.nav span{display:grid;justify-items:center;gap:1px}.nav .on{color:var(--p)}
+.nav .av{width:44px;height:44px;display:grid;place-items:center;background:rgba(252,76,2,.12);border-radius:12px}
+.nav .av svg{width:40px;height:40px}
+.ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.marca{width:72px;height:72px;background:#cfe3c8;border-radius:12px;display:grid;place-items:center}.marca svg{width:64px;height:64px}
+.claro{width:72px;height:72px;background:#f3efe8;border-radius:12px;display:grid;place-items:center}.claro svg{width:64px;height:64px}
+.burbuja{display:flex;gap:10px;align-items:center;background:var(--surf);border-radius:14px;padding:10px 14px;max-width:360px}
+.burbuja svg{width:56px;height:56px;flex:none}.burbuja p{margin:0;font-size:.85rem}
+.sig{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.25);border-radius:12px;padding:12px 14px;max-width:72ch}
+.sig p{margin:0 0 6px}.sig ol{margin:0;padding-left:20px;color:var(--sub)}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Libre Pedal · Pistero nuevo · paso 2: vector para la app</div>
+  <h1>Del dibujo de Gemini <span>a la app</span></h1>
+  <p class="lead">La imagen de Gemini se calcó en vector, capa por capa: cáscara (cambia de color con el armario), ventilaciones con relieve, franja, visera y luces LED (cambian con la expresión). Así se puede animar, cambiar de color y se ve nítido en cualquier tamaño.</p>
+</header>
+<section>
+  <h2>Gemini y el vector</h2>
+  <div class="par">
+    <figure><div class="img" id="ref"></div><figcaption>Imagen original de Gemini</figcaption></figure>
+    <figure id="vec"></figure>
+  </div>
+</section>
+<section>
+  <h2>Expresiones (en vivo: parpadea y habla)</h2>
+  <div class="exprs" id="exprs"></div>
+</section>
+<section>
+  <h2>Colores del casco</h2>
+  <div class="cols" id="cols"></div>
+</section>
+<section>
+  <h2>En la app</h2>
+  <div class="app" id="app"></div>
+</section>
+<div class="sig">
+  <p><strong>Lo que sigue:</strong></p>
+  <ol>
+    <li>Los otros tipos de casco (aero, montaña, integral, urbano y BMX) como piezas del armario.</li>
+    <li>El cuerpo sobre la bici, sin piel a la vista, como en la imagen de Gemini.</li>
+    <li>Cambiar el Pistero de toda la app por este, con tu OK.</li>
+  </ol>
+</div>
+</div>
+<script>
+%%JS%%
+(function(){
+  var ref=document.getElementById('ref');
+  ref.style.backgroundImage='url(personaje.jpeg)'; ref.style.backgroundSize='275.5% auto'; ref.style.backgroundPosition='50.2% 48.2%';
+  document.getElementById('vec').innerHTML=pisteroCascoSVG({})+'<figcaption>Vector (lo que usaría la app)</figcaption>';
+  var N={feliz:'Feliz',riendo:'Riendo',sorprendido:'Sorprendido',sueno:'Con sueño',concentrado:'Concentrado',guino:'Guiño',hablando:'Hablando'};
+  var ex=document.getElementById('exprs'); Object.keys(N).forEach(function(e){ ex.innerHTML+='<div>'+pisteroCascoSVG({expr:e})+N[e]+'</div>'; });
+  var C=[['Naranja','#fc4c02'],['Marino','#243250'],['Gris granito','#6e7378'],['Granate','#7d2431'],['Azul plomo','#46617a'],['Verde bosque','#2f5e3b'],['Lavanda','#b7a6d8'],['Flamenco','#efa3a7'],['Arena','#d6c09a'],['Azul polvo','#a6c4dc'],['Crema','#eee2cb'],['Terracota','#c5664a'],['Negro','#20242e'],['Blanco','#f1f5f9'],['Azul','#00aaff'],['Amarillo','#facc15']];
+  var co=document.getElementById('cols'); C.forEach(function(c){ co.innerHTML+='<div>'+pisteroCascoSVG({color:c[1]})+c[0]+'</div>'; });
+  var home='<svg class="ico" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>', pin='<svg class="ico" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+  document.getElementById('app').innerHTML='<figure><div class="nav"><span>'+home+'Inicio</span><span>'+pin+'Mapa</span><span class="on"><span class="av">'+pisteroCascoSVG({})+'</span>Pistero</span></div>Barra de abajo</figure>'
+   +'<figure><div class="marca">'+pisteroCascoSVG({})+'</div>En el mapa</figure>'
+   +'<figure><div class="claro">'+pisteroCascoSVG({})+'</div>Fondo claro</figure>'
+   +'<figure><div class="burbuja">'+pisteroCascoSVG({expr:'hablando'})+'<p>En 300 metros gira a la derecha. Después viene una subida de 2 km.</p></div>Pistero hablando</figure>';
+})();
+</script>

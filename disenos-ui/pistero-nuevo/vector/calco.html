@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>Calco Pistero</title>
+<style>
+body{margin:0;background:#141a2b;font:13px system-ui;color:#ccd}
+.wrap{display:flex;gap:10px;padding:10px;flex-wrap:wrap}
+.cuadro{position:relative;width:726px;height:815px;overflow:hidden;background:#131a2e}
+.cuadro img{position:absolute;left:-640px;top:-145px;width:2000px;height:1116px}
+.cuadro svg{position:absolute;inset:0;width:726px;height:815px}
+#sobre svg{opacity:.55}
+.mini{display:flex;gap:12px;align-items:center}
+.mini>div{background:#0b1120;padding:6px;border-radius:10px}
+.mini .claro{background:#f3efe8}
+</style>
+<div class="wrap" id="exprs"></div>
+<div class="wrap mini" id="minis"></div>
+<div class="wrap">
+  <div class="cuadro" id="sobre"><img src="../gemini/gemini-descarga-tamano-completo.jpeg"><div class="s"></div></div>
+  <div class="cuadro" id="solo"><div class="s"></div></div>
+</div>
+<script src="pistero-casco.js"></script>
+<script>
+var s=pisteroCascoSVG({});
+document.querySelectorAll('.s').forEach(function(d){ d.innerHTML=s; });
+var m=document.getElementById('minis'); [40,64,120].forEach(function(px){ m.innerHTML+='<div><div style="width:'+px+'px;height:'+px+'px">'+s+'</div></div>'; }); m.innerHTML+='<div class="claro"><div style="width:64px;height:64px">'+s+'</div></div>';
+var x=document.getElementById('exprs'); ['feliz','riendo','sorprendido','sueno','concentrado','guino','hablando'].forEach(function(e){ x.innerHTML+='<div style="background:#0b1120;border-radius:10px;padding:4px"><div style="width:180px;height:202px">'+pisteroCascoSVG({expr:e})+'</div><div style="text-align:center">'+e+'</div></div>'; });
+</script>
