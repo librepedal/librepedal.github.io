@@ -4,11 +4,12 @@
    Diferencia con el orbe y el slime: se mueve como un servo (gira rápido, se pasa un poquito, frena en seco y queda
    quieto), no flota ni tiembla.
    crearViniloCapas(el, urlCasco, urlCabeza) -> Promise<{estado(nombre)}> */
-function _recortarCapa(url, alfa){
+function _recortarCapa(url, alfa, despues){
   return new Promise(function(ok,mal){ var im=new Image(); im.onload=function(){
     var c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight; var x=c.getContext('2d'); x.drawImage(im,0,0);
     var d=x.getImageData(0,0,c.width,c.height), p=d.data, W=c.width;
     for(var i=0;i<p.length;i+=4){ var a=alfa(p[i],p[i+1],p[i+2],p,i,(i/4)%W,Math.floor(i/4/W)); if(a<1) p[i+3]=Math.round(255*Math.max(0,a)); }
+    if(despues) despues(p,W,c.height);
     x.putImageData(d,0,0); ok(c.toDataURL('image/png')); }; im.onerror=mal; im.src=url; });
 }
 // casco: fuera el verde y fuera las correas (todo lo que cuelga bajo el borde del casco)
@@ -16,8 +17,14 @@ function _vCasco(r,g,b,p,i,x,y){ if(y>366) return 0; var m=Math.max(r,b), v=g-m;
   p[i+1]=m; return 1-(v-18)/70; }
 // cabeza: fuera el azul marino del fondo (el cuello y la polera los saca la máscara redonda del mentón)
 function _vCabeza(r,g,b,p,i,x,y){ var d=Math.sqrt((r-14)*(r-14)+(g-22)*(g-22)+(b-48)*(b-48)); return d<24?0:(d<60?(d-24)/36:1); }
+function _rellenarVentilaciones(p,W,H){ // inundación desde los bordes: lo transparente conectado al borde es fondo; lo demás, hueco del casco
+  var N=W*H, fuera=new Uint8Array(N), cola=new Int32Array(N), n=0, k;
+  function poner(q){ if(!fuera[q]&&p[q*4+3]<250){ fuera[q]=1; cola[n++]=q; } }
+  for(k=0;k<W;k++){ poner(k); poner((H-1)*W+k); } for(k=0;k<H;k++){ poner(k*W); poner(k*W+W-1); }
+  for(var h=0;h<n;h++){ var q=cola[h], x=q%W; if(x>0) poner(q-1); if(x<W-1) poner(q+1); if(q>=W) poner(q-W); if(q<N-W) poner(q+W); }
+  for(q=0;q<N;q++){ var i=q*4; if(!fuera[q]&&p[i+3]<255){ var a=p[i+3]/255; p[i]=Math.round(p[i]*a+34*(1-a)); p[i+1]=Math.round(p[i+1]*a+31*(1-a)); p[i+2]=Math.round(p[i+2]*a+33*(1-a)); p[i+3]=255; } } }
 function crearViniloCapas(el, urlCasco, urlCabeza){
-  return Promise.all([_recortarCapa(urlCasco,_vCasco),_recortarCapa(urlCabeza,_vCabeza)]).then(function(r){
+  return Promise.all([_recortarCapa(urlCasco,_vCasco,_rellenarVentilaciones),_recortarCapa(urlCabeza,_vCabeza)]).then(function(r){
   var casco=r[0], cabeza=r[1], u='vc'+Math.random().toString(36).slice(2,6);
   var CX=688, PIV=600, EY=391, EX=[581,795], RI=43, MY=508;   // medidos sobre la imagen (cuencas de los ojos y boca)
   var hojas=7;
