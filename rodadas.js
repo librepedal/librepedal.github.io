@@ -23,9 +23,9 @@ async function crearRodada(){
       const r=rutasLocales()[Number(idx)];
       if(r) data.ruta={nombreRuta:r.nombreRuta||'Ruta sin nombre', distance:r.distance||0, subida:(r.elevDEM&&r.elevDEM.subida)||null};
     }
-    await db.collection('rodadas').add(data);
+    const _conf=await lpEscrituraConTope(db.collection('rodadas').add(data));
     document.getElementById('rodadaTitulo').value=''; document.getElementById('rodadaDesc').value=''; document.getElementById('rodadaPunto').value=''; document.getElementById('rodadaFecha').value=''; if(selRuta) selRuta.value='';
-    h('Rodada creada. Ya se avisa a la comunidad.');
+    h(_conf?'Rodada creada. Ya se avisa a la comunidad.':'Sin señal ahora: la rodada quedó guardada en el teléfono y se avisa a la comunidad apenas vuelva la conexión.');
     verRodadas();
   }catch(e){ lpAviso('No se pudo crear la rodada.'); }
   finally{ _creandoRodada=false; }
