@@ -35,12 +35,12 @@ app intacto; con una ruta de 5 puntos usa el sobrevuelo de siempre; la pegada qu
 - Pruebas: `tests/worker-sobrevuelo.test.mjs` (58, sin red: Valhalla y KV simulados, incluye el cliente contra el worker).
   Se comprobó que fallan al quitar: la validación de largo, el no-guardar-fallos y el chequeo de tipos (un `null` pasaba
   como latitud 0 — error real encontrado por las pruebas y corregido en worker y cliente).
-- **Sin publicar.** `wrangler deploy --dry-run` OK (6 KB, KV enlazado). No probado: el worker real en Cloudflare.
+- **PUBLICADO por Inty el 2026-10-07** (cuenta intyrivera@gmail.com). Probado en vivo con la traza sintética Futrono→Llifén y el cliente real: 1.ª vez 4 s (Valhalla 4/4, 21,4 km), 2.ª vez 63 ms desde lo guardado; CORS, GET 405 y punto null 400 OK. En PowerShell usar `npx.cmd` (la política de scripts bloquea npx.ps1) y aprobar "Authorize" en el navegador.
   Publicar (con OK de Inty y su sesión de Cloudflare): `cd worker-sobrevuelo && npx --yes wrangler@4 deploy`, y probar con
   `curl -X POST ... -H "Origin: https://librepedal.cl"` una ruta de prueba (no de un usuario).
 
 ## Antes de publicar (decisiones de Inty + pasos del release)
-1. **Publicar el worker** (arriba). Mientras no esté, la app funciona igual (pega directo como antes).
+1. ~~Publicar el worker~~ hecho (2026-10-07).
 2. Probar en el teléfono de Inty (y en la app de Play).
 3. Subir versión en los 3 lugares (APP_VERSION, version.txt, caché de sw.js) — obligatorio porque sw.js cambió.
 4. Los Pistero nuevos (Cyberpunk, Orbe, Slime, Androide) se conectan cuando lleguen a `main` (código listo en `feature/sobrevuelo-3d`).
