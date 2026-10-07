@@ -149,6 +149,7 @@ function planear(N){
   if(N.hayCima) C.push({d:N.cum[N.imax],pri:10,expr:'orgulloso',txt:'¡Cima!',sub:'lo más alto del viaje',dur:4200,cima:true,pose:'puno'});
   C.push({d:T,pri:10,expr:'contento',txt:'¡Llegamos!',sub:D.dur?'en '+durTxt(D.dur):'',dur:2600,pose:'brazos',fin:true});
   C.sort(function(a,b){ return b.pri-a.pri; });
+  C=C.filter(function(c){ return isFinite(c.d); });   /* un momento sin lugar válido (NaN) bloqueaba a todos los demás en el filtro de distancia */
   var hueco=T/9, M=[]; C.forEach(function(c){ if(M.length<7 && M.every(function(m){ return Math.abs(m.d-c.d)>=hueco; })) M.push(c); });
   // las pausas reales se muestran SIEMPRE (con su parada), aunque haya otro momento cerca
   (N.pausas||[]).forEach(function(p){ M.push({d:p.d,pri:9,expr:'pensando',txt:'Pausa para respirar',sub:durTxt(p.dur),dur:2400,pausa:true}); });
