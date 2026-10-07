@@ -264,16 +264,16 @@ function vientoIniciar(){ if(!sonidoListo()||SON.viento) return; try{ var ac=_ps
   for(var i=0;i<n;i++) dd[i]=Math.random()*2-1; var src=ac.createBufferSource(); src.buffer=b; src.loop=true;
   var bq=ac.createBiquadFilter(); bq.type='bandpass'; bq.frequency.value=500; bq.Q.value=.7; var g=ac.createGain(); g.gain.value=.0001;
   src.connect(bq); bq.connect(g); g.connect(_psOut()); src.start(); SON.viento={src:src,bq:bq,g:g}; }catch(e){ console.warn('[sobrevuelo] viento', e); } }
-function vientoParar(){ if(!SON.viento) return; try{ var ac=_psAC(), v=SON.viento; v.g.gain.setTargetAtTime(.0001,ac.currentTime,.25); setTimeout(function(){ try{ v.src.stop(); }catch(e){} },900); }catch(e){} SON.viento=null; }
+function vientoParar(){ SON.intento=false; if(!SON.viento) return; try{ var ac=_psAC(), v=SON.viento; v.g.gain.setTargetAtTime(.0001,ac.currentTime,.25); setTimeout(function(){ try{ v.src.stop(); }catch(e){} },900); }catch(e){} SON.viento=null; }
 function sonidoCuadro(ts,gp,vReal){
   if(!sonidoListo()){ if(SON.viento) vientoParar(); return; }
-  if(!SON.viento) vientoIniciar(); if(!SON.viento) return;
-  var ac=_psAC(), rapidez=vReal!=null?Math.min(1,vReal/45):Math.min(1,Math.max(0,(ritmoAct-.6)/1.1)), quieto=espera>0||ritmoAct<.08;
+  if(!SON.viento){ if(SON.intento) return; SON.intento=true; vientoIniciar(); if(!SON.viento) return; }
+  var ac=SON.viento.src.context, rapidez=vReal!=null?Math.min(1,vReal/45):Math.min(1,Math.max(0,(ritmoAct-.6)/1.1)), quieto=espera>0||ritmoAct<.08;
   SON.viento.g.gain.setTargetAtTime(quieto?.0001:.03+.17*rapidez*rapidez,ac.currentTime,.4);
   SON.viento.bq.frequency.setTargetAtTime(380+1100*rapidez,ac.currentTime,.4);
   // latido en la subida dura, al mismo ritmo que el anillo del rostro (1,15 s → 0,42 s)
   var esf=Math.max(0,Math.min(1,(gp||0)/.1));
-  if(esf>.45 && !quieto && ts>=SON.proxLatido){ var t0=ac.currentTime+.01; _psTono(62,t0,.13,{v:.22}); _psTono(56,t0+.17,.11,{v:.14}); SON.proxLatido=ts+(1150-esf*730); }
+  if(esf>.45 && !quieto && ts>=SON.proxLatido && ac.state==='running'){   /* audio sin desbloquear: no insistir en cada latido */ var t0=ac.currentTime+.01; _psTono(62,t0,.13,{v:.22}); _psTono(56,t0+.17,.11,{v:.14}); SON.proxLatido=ts+(1150-esf*730); }
 }
 function sonarMomento(m){ if(!sonidoListo()||typeof pistSonarNombre!=='function') return;
   if(m.d<100||m.fin) pistSonarNombre('timbre'); else if(m.cima) pistSonarNombre('fanfarria'); else if(m.expr==='adrenalina') pistSonarNombre('viento'); }
@@ -513,7 +513,7 @@ function montarCapas(){
   m.addLayer({id:'hoy-halo',type:'line',source:'hoy',layout:{'line-cap':'round','line-join':'round',visibility:vh},paint:{'line-color':'#0a0f1d','line-width':9,'line-opacity':.6}});
   m.addLayer({id:'hoy',type:'line',source:'hoy',layout:{'line-cap':'round','line-join':'round',visibility:vh},paint:{'line-color':'#fc4c02','line-width':5,'line-opacity':.95}});
   // "Propuesta": tramos seguidos del mismo color de pendiente (uno de 12 m solo se perdía al alejar)
-  N.run=[]; var feats=[], i0=0; for(var i=1;i<=N.c.length;i++){ if(i===N.c.length || colorPend(N.pend[i])!==colorPend(N.pend[i0+1])){ var cc=colorPend(N.pend[i0+1]); feats.push({type:'Feature',properties:{a:i0,b:i-1,col:cc,neo:neon(cc,.72)},geometry:{type:'LineString',coordinates:N.c.slice(i0,i)}}); for(var k=i0;k<i-1;k++) N.run[k]=i0; i0=i-1; } }
+  N.run=[]; var feats=[], i0=0; for(var i=1;i<=N.c.length;i++){ if(i===N.c.length || colorPend(N.pend[i])!==colorPend(N.pend[i0+1]) || i-i0>=60)   /* tramos de máx. 60 puntos: la cabeza que se redibuja en cada cuadro queda corta */{ var cc=colorPend(N.pend[i0+1]); feats.push({type:'Feature',properties:{a:i0,b:i-1,col:cc,neo:neon(cc,.72)},geometry:{type:'LineString',coordinates:N.c.slice(i0,i)}}); for(var k=i0;k<i-1;k++) N.run[k]=i0; i0=i-1; } }
   m.addSource('ruta',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:N.c}}});
   m.addSource('tramos',{type:'geojson',data:{type:'FeatureCollection',features:feats}});
   m.addSource('cabeza',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[N.c[0],N.c[0]]}}});
@@ -542,7 +542,7 @@ function montarCapas(){
   m.addLayer({id:'chispa',type:'circle',source:'chispa',layout:{visibility:vis},paint:{'circle-color':'#ffffff','circle-radius':Wz(3,7),'circle-blur':.7,'circle-pitch-alignment':'map'}});
   if(modo==='nuevo'){
     var cima=document.createElement('div'); cima.innerHTML='<div class="hito">▲ '+Math.round(N.max)+' m</div>';
-    if(D.cimaM) D.cimaM.remove(); D.cimaM=new maplibregl.Marker({element:cima.firstChild,anchor:'bottom',offset:[0,-4]}).setLngLat(N.c[N.imax]).addTo(m);
+    if(D.cimaM) D.cimaM.remove(); D.cimaM=sinOclusion(new maplibregl.Marker({element:cima.firstChild,anchor:'bottom',offset:[0,-4]}).setLngLat(N.c[N.imax]).addTo(m));
   } else if(D.cimaM){ D.cimaM.remove(); D.cimaM=null; }
   N._ini=null; crearMarcador(); crearMascota(); pintar(16,performance.now());
 }
@@ -571,6 +571,9 @@ function encuadrar(ms){ var c=D[modo].c, b=c.reduce(function(b,p){ return [[Math
 }
 
 // ---------- Pistero: de espaldas (esqueleto animado) o de costado (con su cara) según la cámara ----------
+// MapLibre revisa con readPixels si el relieve tapa cada marcador (en cada cuadro). Los nuestros se ven siempre
+// enteros (opacityWhenCovered 1), así que ese chequeo solo gasta: se apaga (método interno _updateOpacity de 4.7.1).
+function sinOclusion(mk){ if(mk && typeof mk._updateOpacity==='function') mk._updateOpacity=function(){}; return mk; }
 function crearRostro(){
   var el=document.createElement('div'); el.className='cara-mk';
   el.innerHTML='<div class="cm-pin"></div><div class="cm-in"><div class="cm-halo"></div><div class="cm-anillo"></div><div class="cm-caras"><div class="cm-c on"></div><div class="cm-c"></div></div><div class="cm-gota"></div></div>';
@@ -578,7 +581,7 @@ function crearRostro(){
   if(personaje.capas){ el.classList.add('modelo'); var host=document.createElement('div'); host.className='cm-modelo'; el.querySelector('.cm-caras').appendChild(host);
     personaje.crear(host).then(function(api){ if(cajas.host===host){ cajas.api=api; api.estadoRuta(cajas.expr||'feliz'); } }); }
   else capas[0].innerHTML=cara('feliz');
-  marcador=new maplibregl.Marker({element:el,anchor:'bottom',opacityWhenCovered:'1'}).setLngLat(D.nuevo.c[0]).addTo(mapa);
+  marcador=sinOclusion(new maplibregl.Marker({element:el,anchor:'bottom',opacityWhenCovered:'1'}).setLngLat(D.nuevo.c[0]).addTo(mapa));
   cajas={el:el,inn:el.querySelector('.cm-in'),capas:capas,act:0,expr:'feliz',bob:0,host:el.querySelector('.cm-modelo'),api:null};
 }
 // cambia de cara con fundido cruzado (dos capas: la nueva aparece encima mientras la anterior se apaga)
@@ -695,7 +698,7 @@ function pintar(dt,ts,mover){
     // giro del rumbo pausado: máx. 35°/s, así no "tironea" en las curvas
     var gb=giro(cam.b,brg)*(1-Math.exp(-dt/1100)), mx=35*dt/1000; cam.b=(cam.b+Math.max(-mx,Math.min(mx,gb))+360)%360;
     // inclinación: la de la toma, pero nunca tanta como para que el cerro tape (baja rápido, sube lento)
-    var bear=(cam.b+cam.off+360)%360, pS=Math.min(P.pitch,pitchSeguro(p,bear,cam.z,P.pitch));
+    var bear=(cam.b+cam.off+360)%360, pS=Math.min(P.pitch,(cam.nPS=(cam.nPS||0)+1)%2&&cam.pSeg!=null?cam.pSeg:(cam.pSeg=pitchSeguro(p,bear,cam.z,P.pitch)));   /* línea de vista cada 2 cuadros */
     cam.pitch=suave(cam.pitch,pS,dt,pS<cam.pitch?350:1500);
     var J={center:p,zoom:cam.z,pitch:cam.pitch,bearing:bear,padding:paddingPara(cam.y)};
     if(intro){ var f=Math.min(1,intro.t/intro.dur), e=f<.5?4*f*f*f:1-Math.pow(-2*f+2,3)/2, F=intro.de;
@@ -806,7 +809,8 @@ function perfilBase(W,H,dpr,encendido){ var N=D.nuevo, cv=document.createElement
   return cv; }
 function dibujarPerfil(){
   var cv=$('cv'), N=D.nuevo; if(!N||!N.alt) return;
-  if(LIVIANO && modo==='nuevo'){ var dpr0=window.devicePixelRatio||1, W0=cv.clientWidth, H0=cv.clientHeight, k0=W0+'x'+H0+'@'+dpr0;
+  if(modo==='nuevo'){ var dpr0=window.devicePixelRatio||1,   /* perfil pre-dibujado SIEMPRE (antes solo en modo liviano: ~8.400 polígonos por cuadro en 100 km) */
+     W0=cv.clientWidth, H0=cv.clientHeight, k0=W0+'x'+H0+'@'+dpr0;
     if(!perfilCache||perfilCache.k!==k0){ perfilCache={k:k0,apag:perfilBase(W0,H0,dpr0,false),enc:perfilBase(W0,H0,dpr0,true)}; }
     if(cv.width!==W0*dpr0){ cv.width=W0*dpr0; cv.height=H0*dpr0; }
     var c0=cv.getContext('2d'); c0.setTransform(1,0,0,1,0,0); c0.clearRect(0,0,cv.width,cv.height); c0.drawImage(perfilCache.apag,0,0);

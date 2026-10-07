@@ -169,3 +169,16 @@ y frenan si la red se atrasa; Mapbox recomienda menos capas y fuentes separadas 
   completo), fecha y luz, 4 datos y 3 hitos, librepedal.cl. Web Share con archivo en el teléfono; si no, descarga PNG.
 - Causas raíz encontradas al probar: la foto del mapa salía negra sin `preserveDrawingBuffer`; y el lienzo 2D acelerado
   por GPU perdía lo dibujado al exportar en el Chrome de prueba → lienzo `willReadFrequently` (en memoria).
+
+## v13 (2026-10-07) — robustez y rendimiento
+- **Ruta larga (101 km, prueba sintética)**: lista en ~15 s, 17/18 tramos pegados. Las tomas se miden en TIEMPO de
+  vuelo (mín. ~3,5 s; normales ~6 s): antes eran 112 cambios en 80 s. Una toma de evento corta pide tiempo a cualquier
+  vecina que tenga de sobra; solo se funde si no hay otra opción.
+- **Bucle infinito arreglado** en la fusión de tomas: por decimales flotantes quitaba trocitos para siempre (umbral 1 m
+  + tope de vueltas con aviso en consola).
+- **Rendimiento** (perfilado con el Profiler de Chrome): 13,6 → 4,2 ms de cómputo por cuadro en 101 km. Causas: el perfil
+  se redibujaba entero en modo completo (~8.400 polígonos por cuadro), MapLibre leía píxeles de la GPU para ver si el
+  relieve tapaba cada marcador (se apaga: nuestros marcadores se ven siempre), y el sonido despertaba el audio en cada
+  cuadro. Tramos de neón de máx. 60 puntos; línea de vista cada 2 cuadros.
+- **Pausa al salir de la app** (batería y calor), **tocar el mapa pausa/sigue**, **movimiento reducido** (sistema): una
+  sola toma tranquila, sin giro en la cima ni temblores.
