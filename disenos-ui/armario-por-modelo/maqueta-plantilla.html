@@ -176,7 +176,7 @@ var M=[
    piezas:['Antena con resorte','Calcomanías reflectantes',{n:'Ojo de otro color',v:'ojo'}]},
   {id:'casco', n:'Casco vivo', mov:'Parpadea y habla con su visor LED',
    estilos:[['Naranja','#fc4c02'],['Azul','#2f80ed'],['Verde','#22c55e'],['Rojo','#e11d48'],['Negro','#2a2f3a']],
-   piezas:['Cejas','Calcomanías reflectantes','Luz frontal y direccionales']},
+   piezas:[{n:'Cejas',v:'cejas'},{n:'Calcomanías reflectantes',v:'calcos'},{n:'Luz frontal y direccionales',v:'luces'}]},
   {id:'clasico', n:'Clásico', mov:'El Pistero de siempre'}
 ];
 var porId={}; M.forEach(function(m){ porId[m.id]=m; });
@@ -205,8 +205,8 @@ var FONDOS=[
 var S={modelo:'ciber', estilo:{}, fondo:'noche', tab:'estilos', cat:'pelo', cl:Object.assign({},BASE)};
 M.forEach(function(m){ S.estilo[m.id]=0; }); S.puestas={}; var PZ={}; window.__PZ=PZ;
 // piezas vector puestas: se agregan al SVG del modelo cuando su animación ya está lista
-function aplicarPiezas(id){ var a=inst[id]; if(!a||!a.listo) return; var lib=(window.PIEZAS_VECTOR||{})[id]||{}, on=S.puestas[id]||{}; PZ[id]=PZ[id]||{};
-  Object.keys(lib).forEach(function(v){ if(on[v] && !PZ[id][v]){ PZ[id][v]=lib[v](a.el); } else if(!on[v] && PZ[id][v]){ PZ[id][v].quitar(); delete PZ[id][v]; } }); aplicarEstilo(id); }
+function aplicarPiezas(id){ var a=inst[id]; if(!a||(porId[id].fn&&!a.listo)) return; var lib=(window.PIEZAS_VECTOR||{})[id]||{}, on=S.puestas[id]||{}; PZ[id]=PZ[id]||{};
+  Object.keys(lib).forEach(function(v){ if(v.charAt(0)==='_') return; if(typeof lib[v]==='object'){ if(on[v]) PZ[id][v]=lib[v]; else delete PZ[id][v]; return; } if(on[v] && !PZ[id][v]){ PZ[id][v]=lib[v](a.el); } else if(!on[v] && PZ[id][v]){ PZ[id][v].quitar(); delete PZ[id][v]; } }); aplicarEstilo(id); if(!porId[id].fn && a.ult) pintarSvg(id,a.ult); }
 // orden barajado (pieza 1: ninguno gana por ir primero)
 var orden=M.map(function(m){ return m.id; }); for(var i=orden.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=orden[i]; orden[i]=orden[j]; orden[j]=t; }
 S.modelo=orden[0];
@@ -224,7 +224,9 @@ function instDe(id){
 var EXPR_CASCO={reposo:'feliz',hablar:'hablando',feliz:'riendo',sorpresa:'sorprendido'};
 var EXPR_CL={reposo:'feliz',hablar:'contento',feliz:'emocionado',sorpresa:'sorprendido'};
 function pintarSvg(id,e){ var a=inst[id]; if(!a) return;
-  if(id==='casco') a.el.innerHTML=pisteroFrenteSVG({expr:EXPR_CASCO[e]||'feliz',color:porId.casco.estilos[S.estilo.casco][1]});
+  if(id==='casco'){ var ex=EXPR_CASCO[e]||'feliz', col=porId.casco.estilos[S.estilo.casco][1], sv=pisteroFrenteSVG({expr:ex,color:col}), pz=PZ.casco||{}, lib=(window.PIEZAS_VECTOR||{}).casco||{}, uu='pc'+Math.random().toString(36).slice(2,6), extra='';
+    Object.keys(pz).forEach(function(k){ if(pz[k]&&pz[k].svg) extra+=pz[k].svg(ex,col,uu); });
+    if(extra) sv=sv.replace('</svg>','<defs>'+lib._defs(uu)+'</defs>'+extra+'</svg>'); a.el.innerHTML=sv; }
   else a.el.innerHTML=svgClasico(S.cl,EXPR_CL[e]||'feliz'); }
 // Estilos de los modelos por capas: el filtro va SOLO a la imagen de su capa (casco o cuerpo); la cara (SVG animado) no se toca
 function capaDe(id){ var a=inst[id]; if(!a) return null; var ims=a.el.querySelectorAll('image');

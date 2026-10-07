@@ -226,5 +226,43 @@ var PIEZAS_VECTOR = (function(){
     return { quitar:function(){ parar(); g.remove(); fb.remove(); ojo.style.filter=''; } };
   }
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, estela:orbeEstela }, vinilo:{ ojo:viniloOjo } };
+  // ---------- Casco vivo (vector, lib-frente.js, marco 200x200) ----------
+  // Sus piezas se dibujan DENTRO de su propio SVG, en su mismo estilo (LED con brillo). Cada pieza entrega el trozo de SVG
+  // para la expresión actual: svg(expr,color,u). Medidas de lib-frente: cáscara y 18–119, visera 104–153 (borde de arriba
+  // en y 104), ojos LED en x 80 / 120 (y 111–137), boca en y 157.
+  var LEDC='#d9fbff';
+  // el modelo se redibuja en cada expresión: las animaciones siguen su reloj en vez de partir de cero
+  function fase(dur){ return ' begin="-'+((Date.now()/1000)%dur).toFixed(2)+'s"'; }
+  // Cejas: el mismo LED de la cara, sobre la visera. En una cara de pocos trazos las cejas son lo que más cambia la expresión.
+  function cascoCejas(expr){
+    var W=' fill="none" stroke="'+LEDC+'" stroke-width="3.4" stroke-linecap="round"', s='';
+    function par(dI,dD){ return '<path d="'+dI+'"'+W+'/><path d="'+dD+'"'+W+'/>'; }
+    if(expr==='sorprendido') s=par('M71 107 Q80 101 89 107','M111 107 Q120 101 129 107');          // bien arriba y curvas
+    else if(expr==='riendo') s=par('M71 108 Q80 103.5 89 108','M111 108 Q120 103.5 129 108');
+    else if(expr==='concentrado') s=par('M70 105.5 L89 109.5','M130 105.5 L111 109.5');            // bajan hacia el centro
+    else if(expr==='sueno') s=par('M72 109 L88 109','M112 109 L128 109');                         // planas y bajas
+    else if(expr==='guino') s=par('M71 107.5 Q80 104 89 107.5','M111 109.5 Q120 108 129 109.5');  // la del guiño baja
+    else if(expr==='hablando') s='<g>'+par('M71 108 Q80 104.5 89 108','M111 108 Q120 104.5 129 108')+'<animateTransform attributeName="transform" type="translate" values="0 0;0 -1.2;0 0;0 -0.6;0 0" dur=".9s" repeatCount="indefinite"/></g>';
+    else s=par('M71 108 Q80 104.5 89 108','M111 108 Q120 104.5 129 108');                         // feliz
+    return s; }
+  // Calcomanías reflectantes: alas a los costados de la cáscara, como los kits de vinilo reflectante 3M para cascos.
+  // Mate plateado; cuando les llega una luz (como un foco de auto de noche) devuelven un destello blanco.
+  function cascoCalcos(expr,color,u){
+    function ala(esp){ // ala de 3 plumas en la franja baja de la cáscara (y 81–101), bajo las ventilaciones; esp=-1 izquierda
+      var tr=esp<0?'':' transform="translate(200 0) scale(-1 1)"';
+      return '<g'+tr+'><path d="M60 100 C52 101 42 99 34 94 C40 95 46 95 51 94 C45 92 40 89 37 85 C44 88 50 89 55 89 C52 87 50 84 49 81 C55 85 60 89 63 94 C64 97 63 99 60 100 Z"/></g>'; }
+    var forma=ala(-1)+ala(1);
+    return '<g fill="#c9ced6" opacity=".92">'+forma+'</g>'
+      +'<g fill="#ffffff" filter="url(#'+u+'cg)" opacity="0">'+forma
+      +'<animate attributeName="opacity" values="0;0;1;.2;0" keyTimes="0;.86;.9;.95;1" dur="5.5s"'+fase(5.5)+' repeatCount="indefinite"/></g>'; }
+  // Luz frontal y direccionales: como el casco Lumos (luz blanca adelante, direccionales ámbar a los costados que parpadean al doblar).
+  function cascoLuces(expr,color,u){
+    var blink=function(desde){ return '<animate attributeName="opacity" values="0;1;0;1;0;1;0;0" keyTimes="0;'+desde+';'+(desde+.06)+';'+(desde+.12)+';'+(desde+.18)+';'+(desde+.24)+';'+(desde+.3)+';1" dur="8s"'+fase(8)+' repeatCount="indefinite"/>'; };
+    return '<rect x="86" y="97" width="28" height="5" rx="2.5" fill="#fffbe8" filter="url(#'+u+'cg)"/>'
+      +'<g fill="#ffb020" filter="url(#'+u+'cg)"><rect x="29" y="105" width="8" height="6" rx="3" opacity="0">'+blink(.1)+'</rect>'
+      +'<rect x="163" y="105" width="8" height="6" rx="3" opacity="0">'+blink(.55)+'</rect></g>'; }
+  var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
+
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, estela:orbeEstela }, vinilo:{ ojo:viniloOjo },
+           casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
