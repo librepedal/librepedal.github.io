@@ -45,7 +45,8 @@ function crearOrbeCapas(el, urlCasco, urlOrbe){
   var S=5.12, EY=650, EX=[449,595], MY=722;
   var est='reposo', tEst=0, t0=performance.now(), last=t0;
   var cy=0, cv=0, by=0, sx=1, sy=1, mx=0, mxObj=0, prox=2+Math.random()*2, parp=0, proxParp=1.5;
-  function bocaD(ab, son){ var w=68, c=MY+44*son; // SOBREVUELO: son<0 = boca hacia abajo if(ab<.05) return 'M'+(CX-w)+' '+MY+' Q'+CX+' '+c+' '+(CX+w)+' '+MY;
+  // SOBREVUELO: son<0 = boca hacia abajo; wj = ancho (boca chica de jadeo)
+  function bocaD(ab, son, wj){ var w=wj||68, c=MY+44*son; if(ab<.05) return 'M'+(CX-w)+' '+MY+' Q'+CX+' '+c+' '+(CX+w)+' '+MY;
     var h=ab*52; return 'M'+(CX-w*.8)+' '+MY+' Q'+CX+' '+(MY-h*.35)+' '+(CX+w*.8)+' '+MY+' Q'+CX+' '+(MY+h+20*son)+' '+(CX-w*.8)+' '+MY+' Z'; }
   function cuadro(now){
     var dt=Math.min(.05,(now-last)/1000); last=now; var t=(now-t0)/1000, te=t-tEst;
@@ -62,18 +63,19 @@ function crearOrbeCapas(el, urlCasco, urlOrbe){
       ojoEsc=1+.6*a; ab=.7*a; son=0; haloO=.9; if(te>1.4){ est='reposo'; tEst=t; } }
     if(est==='dormir'){ objSy=1+.035*Math.sin(t*1.2); objSx=1-.025*Math.sin(t*1.2); objY=2; forma='cerrado'; son=.3; haloO=.25+.08*Math.sin(t*1.2); haloK=.9; }
     // ===== SOBREVUELO: estados persistentes según la ruta =====
-    var haloCol='#fc4c02', tinteO=0, tinteCol='#ff2d2d', extra='', vib=0, guinoD=false, ceja=0;
+    var jadeo=false, haloCol='#fc4c02', tinteO=0, tinteCol='#ff2d2d', extra='', vib=0, guinoD=false, ceja=0;
     if(est.indexOf('r:')===0){ var re=est.slice(2), salto=function(f,h){ var ph=(te*f)%1; return -h*Math.max(0,Math.sin(ph*Math.PI*2)); };
       if(re==='feliz'){ /* respira y mira alrededor (como en reposo) */ }
       if(re==='contento'){ forma='feliz'; son=1.25; objY=salto(1.6,10); haloO=.75; haloK=1.06; }
       if(re==='guino'){ guinoD=true; son=1.2; haloO=.7; mxObj=4; }
-      if(re==='preocupado'){ ojoEsc=.85; ceja=1; son=-.25; objSy=.98; objSx=1.01; haloO=.4; mxObj=6; }
-      if(re==='cansado'){ forma='mitad'; ab=.28+.14*Math.abs(Math.sin(te*2.6)); son=0; objSy=.95+.02*Math.sin(te*2.6); objSx=1.04; objY=3; haloO=.42; extra='gota'; }
-      if(re==='enojado'){ forma='enojado'; son=-.15; ab=0; vib=1.6; objSy=1.02; objSx=.99; haloCol='#ff3b1f'; haloO=.8; tinteO=.18; }
-      if(re==='agotado'){ forma='caido'; ab=.45+.25*Math.abs(Math.sin(te*2)); son=0; objY=10; objSy=.92+.02*Math.sin(te*2); objSx=1.07; haloCol='#e0301e'; haloO=.25+.15*Math.abs(Math.sin(te*5)); tinteO=.28; extra='gota2'; }
+      if(re==='preocupado'){ ojoEsc=.8; ceja=1; son=-.45; objSy=.97; objSx=1.02; objY=2; haloO=.35; mxObj=7; }   // cejas muy arriba al centro, boca hacia abajo, se encoge y mira de reojo
+      if(re==='cansado'){ jadeo=true; forma='mitad'; ab=.45+.25*Math.abs(Math.sin(te*2.6));   // jadea con la boca abierta (lo que lo separa de preocupado)
+         son=0; objSy=.95+.02*Math.sin(te*2.6); objSx=1.04; objY=3; haloO=.42; extra='gota'; }
+      if(re==='enojado'){ forma='enojado'; son=-.3; ab=0; vib=2.2; objSy=1.02; objSx=.99; haloCol='#ff3b1f'; haloO=.85; tinteO=.26; }
+      if(re==='agotado'){ jadeo=true; forma='caido'; ab=.45+.25*Math.abs(Math.sin(te*2)); son=0; objY=10; objSy=.92+.02*Math.sin(te*2); objSx=1.07; haloCol='#e0301e'; haloO=.25+.15*Math.abs(Math.sin(te*5)); tinteO=.28; extra='gota2'; }
       if(re==='emocionado'){ forma='feliz'; ab=.35; son=1.3; objY=salto(2.4,7); haloO=.85; haloK=1.08; }
       if(re==='adrenalina'){ ojoEsc=1.35; ab=.75; son=1.15; objSx=.94; objSy=1.08; vib=1.2; haloCol='#ffb347'; haloO=.95; haloK=1.18; extra='estela'; }
-      if(re==='sorprendido'){ ojoEsc=1.6; ab=.6; son=0; objY=-6; haloO=.9; }
+      if(re==='sorprendido'){ jadeo=true; ojoEsc=1.6; ab=.75; son=0; objY=-6; haloO=.9; }
       if(re==='orgulloso'){ forma='feliz'; son=1.4; objSy=1.05; objSx=.97; objY=salto(.9,6); haloCol='#ffc94d'; haloO=.95; haloK=1.15; extra='destellos'; }
       if(re==='pensando'){ mxObj=-8; ceja=-1; son=.1; haloO=.45+.15*Math.sin(te*1.5); extra='puntos'; }
       if(re!=='feliz' && re!=='guino' && re!=='preocupado' && re!=='pensando') mxObj=0;
@@ -89,7 +91,8 @@ function crearOrbeCapas(el, urlCasco, urlOrbe){
     frente.setAttribute('transform',cuerpo.getAttribute('transform'));
     var techo=(1-sy)*(2*R);
     cascoG.setAttribute('transform','translate(0 '+((cy*S)+techo).toFixed(1)+') rotate('+(mx*.25).toFixed(2)+' '+CX+' 560)');
-    cara.setAttribute('transform','translate('+(mx*S).toFixed(1)+' '+(est==='r:pensando'?-14:0)+') translate('+CX+' '+EY+') scale('+(1-Math.abs(mx)/60).toFixed(3)+' 1) translate(-'+CX+' -'+EY+')');
+    var kc=est.indexOf('r:')===0?1.45:1; // SOBREVUELO: cara 45 % más grande para que se lea en el rostro chico
+    cara.setAttribute('transform','translate('+(mx*S).toFixed(1)+' '+(est==='r:pensando'?-14:0)+') translate(0 '+(kc>1?18:0)+') translate('+CX+' '+(EY+20)+') scale('+((1-Math.abs(mx)/60)*kc).toFixed(3)+' '+kc+') translate(-'+CX+' -'+(EY+20)+')');
     h1.setAttribute('stop-color',haloCol); h2.setAttribute('stop-color',haloCol); [tinte,tinte2].forEach(function(tt){ tt.setAttribute('opacity',tinteO.toFixed(2)); tt.setAttribute('fill',tinteCol); });
     var ex='';
     if(extra==='gota'||extra==='gota2'){ [0,.5].slice(0,extra==='gota2'?2:1).forEach(function(o,k){ var ph=((te*.7)+o)%1, gx=CX+(k?-210:205), gy=CY-60+ph*190; ex+='<path d="M'+gx+' '+(gy-20)+' q14 22 0 34 q-14 -12 0 -34z" opacity="'+(1-ph).toFixed(2)+'"/>'; }); }
@@ -100,7 +103,7 @@ function crearOrbeCapas(el, urlCasco, urlOrbe){
     halo.setAttribute('opacity',haloO.toFixed(2)); halo.setAttribute('r',(R*1.45*haloK).toFixed(0));
     sombra.setAttribute('rx',(230*(1+by/60)).toFixed(0)); sombra.setAttribute('opacity',(.35*(1+by/80)).toFixed(2));
     [ojoI,ojoD].forEach(function(o,i){ var x=EX[i];
-      var cj=ceja?'<path d="M'+(x-30)+' '+(EY-58+(i?1:-1)*0)+' L'+(x+30)+' '+(EY-58+(ceja>0?(i?14:-14):(i?-10:10)))+'" fill="none" stroke-width="12" stroke-linecap="round" transform="'+(i?'':'')+'"/>':'';
+      var cj=ceja?'<path d="M'+(x-32)+' '+(EY-40)+' L'+(x+32)+' '+(EY-40+(ceja>0?(i?24:-24):(i?-12:12)))+'" fill="none" stroke-width="16" stroke-linecap="round" transform="'+(i?'':'')+'"/>':'';
       if(guinoD && i===1){ o.innerHTML='<path d="M'+(x-30)+' '+(EY+14)+' Q'+x+' '+(EY-38)+' '+(x+30)+' '+(EY+14)+'" fill="none" stroke-width="17" stroke-linecap="round"/>'; return; }
       if(forma==='mitad'){ o.innerHTML=cj+'<path d="M'+(x-24)+' '+(EY-2)+' L'+(x+24)+' '+(EY-2)+' Q'+(x+24)+' '+(EY+26)+' '+x+' '+(EY+26)+' Q'+(x-24)+' '+(EY+26)+' '+(x-24)+' '+(EY-2)+' Z" stroke="none"/>'; return; }
       if(forma==='caido'){ o.innerHTML='<path d="M'+(x-28)+' '+(EY+10)+' Q'+x+' '+(EY+30)+' '+(x+28)+' '+(EY+10)+'" fill="none" stroke-width="13" stroke-linecap="round"/><path d="M'+(x-24)+' '+(EY-6)+' L'+(x+24)+' '+(EY+6)+'" fill="none" stroke-width="9" stroke-linecap="round" opacity=".7" transform="'+(i?'scale(-1 1) translate('+(-2*x)+' 0)':'')+'"/>'; return; }
@@ -109,7 +112,8 @@ function crearOrbeCapas(el, urlCasco, urlOrbe){
       if(forma==='feliz') o.innerHTML='<path d="M'+(x-30)+' '+(EY+14)+' Q'+x+' '+(EY-38)+' '+(x+30)+' '+(EY+14)+'" fill="none" stroke-width="17" stroke-linecap="round"/>';
       else if(forma==='cerrado') o.innerHTML='<path d="M'+(x-30)+' '+(EY+4)+' Q'+x+' '+(EY+24)+' '+(x+30)+' '+(EY+4)+'" fill="none" stroke-width="15" stroke-linecap="round"/>';
       else o.innerHTML='<ellipse cx="'+x+'" cy="'+EY+'" rx="'+(23*Math.min(1.5,ojoEsc>1?ojoEsc:1)).toFixed(1)+'" ry="'+(26*ojoEsc).toFixed(1)+'" stroke="none"/>'; });
-    boca.setAttribute('d',bocaD(ab,son)); boca.setAttribute('fill',ab>.05?'#fffaf0':'none');
+    // SOBREVUELO: jadeo = boca chica y redonda (no sonrisa)
+    boca.setAttribute('d',bocaD(ab,son,jadeo?30:0)); boca.setAttribute('fill',ab>.05?'#fffaf0':'none');
     requestAnimationFrame(cuadro);
   }
   requestAnimationFrame(cuadro);
