@@ -99,5 +99,73 @@ var PIEZAS_VECTOR = (function(){
     return { quitar:function(){ vivo=false; g.remove(); } };
   }
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas } };
+  // ---------- Orbe: datos medidos en lib-orbe.js (marco 1024; orbe CX 522, CY 647, R 293) ----------
+  var OCX=522, OCY=647, OR=293;
+  function orbeGrupos(el){ var svg=el.querySelector('svg'); if(!svg) return null;
+    var cuerpo=[].filter.call(svg.children,function(g){ return g.tagName==='g' && g.querySelector('circle') && g.querySelector('image'); })[0];
+    return cuerpo?{svg:svg,cuerpo:cuerpo}:null; }
+  function bucle(el,f){ var vivo=true, ult=performance.now();
+    function c(now){ if(!vivo) return; var dt=Math.min(.05,(now-ult)/1000); ult=now; f(dt,now);
+      if(el.isConnected && !document.hidden) requestAnimationFrame(c); else setTimeout(function(){ ult=performance.now(); requestAnimationFrame(c); },250); }
+    requestAnimationFrame(c); return function(){ vivo=false; }; }
+  function brillo(defs,u){ var f=nodo('filter',{id:u,x:'-50%',y:'-50%',width:'200%',height:'200%'});
+    f.appendChild(nodo('feGaussianBlur',{stdDeviation:'6',result:'b'})); var m=nodo('feMerge',{}); m.appendChild(nodo('feMergeNode',{'in':'b'})); m.appendChild(nodo('feMergeNode',{'in':'SourceGraphic'})); f.appendChild(m); defs.appendChild(f); return f; }
+
+  // ---------- Orbe · Chispas ----------
+  // Como una bengala (estrellita): trazos cortos muy brillantes, centro blanco que pasa a naranjo, a veces se bifurcan,
+  // viven una fracción de segundo y caen un poco. Salen del borde visible del orbe (no de arriba: ahí está el casco).
+  // Chisporrotea de a poco en reposo y revienta cuando celebra o se sorprende.
+  function orbeChispas(el){
+    var G=orbeGrupos(el); if(!G) return null; var u='pzc'+(++uid), f=brillo(defsDe(G.svg),u+'f');
+    var g=nodo('g',{'class':'pieza-chispas',filter:'url(#'+u+'f)'}); G.svg.appendChild(g);
+    var ch=[], prox=.4;
+    function sale(n){ for(var i=0;i<n;i++){
+      var a=(-35+Math.random()*250)*Math.PI/180, sx=OCX+Math.cos(a)*OR*.98, sy=OCY+Math.sin(a)*OR*.98, v=420+Math.random()*520;
+      var abre=(Math.random()-.5)*.7, dx=Math.cos(a+abre), dy=Math.sin(a+abre);
+      var l=nodo('line',{stroke:'#fffaf0','stroke-width':(9+Math.random()*5).toFixed(1),'stroke-linecap':'round'}); g.appendChild(l);
+      var rama=Math.random()<.35?nodo('line',{stroke:'#ffd28a','stroke-width':'6','stroke-linecap':'round'}):null; if(rama) g.appendChild(rama);
+      ch.push({x:sx,y:sy,vx:dx*v,vy:dy*v,t:0,vida:.18+Math.random()*.22,l:l,rama:rama,giro:(Math.random()<.5?-1:1)*(.5+Math.random()*.5)}); } }
+    var parar=bucle(el,function(dt){
+      if(!reduce){ prox-=dt; if(prox<0){ sale(1+Math.floor(Math.random()*2)); prox=.9+Math.random()*1.6; } }
+      g.setAttribute('transform',G.cuerpo.getAttribute('transform')||''); // salen del orbe donde esté (salta, respira)
+      ch=ch.filter(function(c){ if(!reduce) c.t+=dt; var k=c.t/c.vida; if(k>=1){ c.l.remove(); if(c.rama) c.rama.remove(); return false; }
+        if(!reduce){ c.vy+=520*dt; c.x+=c.vx*dt; c.y+=c.vy*dt; }
+        var sp=Math.sqrt(c.vx*c.vx+c.vy*c.vy)||1, L=34+30*(1-k), col=k<.35?'#fffaf0':(k<.7?'#ffd28a':'#ff8a3c');
+        c.l.setAttribute('x1',c.x.toFixed(1)); c.l.setAttribute('y1',c.y.toFixed(1)); c.l.setAttribute('x2',(c.x-c.vx/sp*L).toFixed(1)); c.l.setAttribute('y2',(c.y-c.vy/sp*L).toFixed(1));
+        c.l.setAttribute('stroke',col); c.l.setAttribute('opacity',(1-k*k).toFixed(2));
+        if(c.rama){ var ra=Math.atan2(c.vy,c.vx)+c.giro, rl=L*.55; c.rama.setAttribute('x1',c.x.toFixed(1)); c.rama.setAttribute('y1',c.y.toFixed(1));
+          c.rama.setAttribute('x2',(c.x+Math.cos(ra)*rl).toFixed(1)); c.rama.setAttribute('y2',(c.y+Math.sin(ra)*rl).toFixed(1)); c.rama.setAttribute('opacity',(k>.3?(1-k):0).toFixed(2)); }
+        return true; });
+    });
+    if(reduce){ sale(6); ch.forEach(function(c){ c.t=c.vida*.3; c.x+=c.vx*.06; c.y+=c.vy*.06; }); } // movimiento reducido: chispas quietas
+    return { estado:function(n){ if(!reduce && (n==='feliz'||n==='sorpresa')) sale(n==='feliz'?16:10); },
+             quitar:function(){ parar(); g.remove(); f.remove(); } };
+  }
+
+  // ---------- Orbe · Estela de luz ----------
+  // Como una foto de exposición larga: una luz que se mueve deja un rastro continuo que se apaga hacia atrás. Va DETRÁS del
+  // orbe (el orbe tapa su posición actual): el rastro asoma cuando se mueve (respira, salta al celebrar, se sorprende).
+  // Quieto no deja estela, igual que en la foto. El ancho es el del orbe: se ve apenas se mueve más de ~2 % de su tamaño.
+  function orbeEstela(el){
+    var G=orbeGrupos(el); if(!G) return null; var u='pze'+(++uid), defs=defsDe(G.svg), f=brillo(defs,u+'f');
+    var gr=nodo('radialGradient',{id:u+'g',cx:'.5',cy:'.5',r:'.5'});
+    gr.appendChild(nodo('stop',{offset:'0','stop-color':'#ffe2b8','stop-opacity':'.9'})); gr.appendChild(nodo('stop',{offset:'.6','stop-color':'#ff9a4a','stop-opacity':'.55'})); gr.appendChild(nodo('stop',{offset:'1','stop-color':'#ff7a2a','stop-opacity':'0'}));
+    defs.appendChild(gr);
+    var g=nodo('g',{'class':'pieza-estela',filter:'url(#'+u+'f)'}); G.svg.insertBefore(g,G.cuerpo);
+    // fantasmas del orbe en sus posiciones de antes: el más reciente más fuerte, los viejos se apagan (exposición larga)
+    var N=7, fant=[]; for(var i=0;i<N;i++){ var c=nodo('circle',{cx:OCX,r:(OR*.97).toFixed(0),fill:'url(#'+u+'g)',opacity:'0'}); g.appendChild(c); fant.push(c); }
+    var hist=[], DUR=.6;
+    var parar=bucle(el,function(dt,now){
+      var m=/translate\(0 (-?[\d.]+)\)/.exec(G.cuerpo.getAttribute('transform')||''), y=OCY+(m?+m[1]:0), t=now/1000;
+      hist.push({t:t,y:y}); while(hist.length&&hist[0].t<t-DUR) hist.shift();
+      fant.forEach(function(c,i){ var edad=(i+1)/N*DUR, h=null;
+        for(var k=hist.length-1;k>=0;k--){ if(t-hist[k].t>=edad){ h=hist[k]; break; } }
+        var sep=h?Math.abs(h.y-y):0; // solo asoma lo que el orbe ya no tapa
+        if(reduce||!h||sep<5){ c.setAttribute('opacity','0'); return; }
+        c.setAttribute('cy',h.y.toFixed(1)); c.setAttribute('opacity',((1-edad/DUR)*.75*Math.min(1,sep/40)).toFixed(2)); });
+    });
+    return { quitar:function(){ parar(); g.remove(); f.remove(); gr.remove(); } };
+  }
+
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, estela:orbeEstela } };
 })();

@@ -167,7 +167,7 @@ var M=[
    piezas:['Cables de luz','Grafitis del casco','Visor partido']},
   {id:'orbe', n:'Orbe', mov:'Flota; su cara es de luz', fn:'crearOrbeCapas', capa:'cuerpo',
    estilos:[['Ámbar','#ff9a3c',''],['Celeste','#38bdf8','hue-rotate(170deg)'],['Verde','#4ade80','hue-rotate(95deg)'],['Rosa','#f472b6','hue-rotate(-45deg) saturate(1.2)']],
-   piezas:['Estela de luz','Chispas','Visera']},
+   piezas:[{n:'Estela de luz',v:'estela'},{n:'Chispas',v:'chispas'},'Visera']},
   {id:'slime', n:'Slime', mov:'Gelatina que tiembla y se derrite al cansarse', fn:'crearSlimeCapas', capa:'cuerpo',
    estilos:[['Naranja','#ff8a3d',''],['Lima','#a3e635','hue-rotate(60deg)'],['Uva','#a855f7','hue-rotate(-110deg) saturate(1.1)'],['Celeste','#38bdf8','hue-rotate(165deg)']],
    piezas:[{n:'Burbujas',v:'burbujas'},'Fruta adentro',{n:'Gotitas',v:'gotitas'}]},
@@ -216,7 +216,7 @@ function svgClasico(o,e){ try{ return _pistoDe(o,e||'feliz'); }catch(err){ conso
 function instDe(id){
   if(inst[id]) return inst[id];
   var el=document.createElement('div'); el.className='mod m-'+id; var m=porId[id];
-  var api={el:el, ult:'reposo', real:null, poner:function(e){ api.ult=e; if(api.real) api.real(e); }};
+  var api={el:el, ult:'reposo', real:null, poner:function(e){ api.ult=e; if(api.real) api.real(e); var pz=PZ[id]||{}; Object.keys(pz).forEach(function(k){ if(pz[k]&&pz[k].estado) pz[k].estado(e); }); }};
   if(m.fn){ window[m.fn](el,IMG[id][0],IMG[id][1]).then(function(a){ api.real=a.estado; a.estado(api.ult); api.listo=true; aplicarEstilo(id); aplicarPiezas(id); }); }
   else { el.classList.add('svgmod'); api.poner=function(e){ api.ult=e; pintarSvg(id,e); }; }
   inst[id]=api; return api;
