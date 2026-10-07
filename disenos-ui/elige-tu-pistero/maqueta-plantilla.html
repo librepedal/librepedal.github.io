@@ -1,0 +1,227 @@
+<title>Maqueta Elige tu Pistero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Un teléfono que se puede tocar (la app real) y a su lado los pasos del recorrido. Look oscuro único, el de Libre Pedal. */
+:root{
+  --d:#0a0f1d; --surf:#141a2b; --surf2:#0f1524; --br:rgba(255,255,255,.09); --line:rgba(159,179,200,.16);
+  --p:#fc4c02; --p2:#ff6a1f; --p-suave:rgba(252,76,2,.14); --ok:#39ff88;
+  --tx:#e8eeff; --sub:#9fb3c8; --mute:#6f7f98;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-txt:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-app:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-txt);font-size:16px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:1060px;margin:0 auto;display:grid;gap:30px}
+h1,h2{font-family:var(--f-disp);font-weight:800;margin:0;text-wrap:balance}
+h1{font-size:clamp(2.1rem,6.5vw,3.2rem);line-height:1}
+h1 span{color:var(--p)}
+p{margin:0;max-width:66ch}
+.eyebrow{font-family:var(--f-disp);font-weight:600;font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p)}
+.lead{color:var(--sub)}
+.escena{display:grid;grid-template-columns:minmax(0,372px) minmax(0,1fr);gap:40px;align-items:start}
+.pasos{display:grid;gap:12px;align-content:start}
+.paso{all:unset;cursor:pointer;display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 12px;padding:16px;border-radius:16px;border:1px solid var(--line);background:var(--surf2)}
+.paso:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.paso .n{grid-row:span 2;font-family:var(--f-disp);font-weight:800;font-size:2.2rem;line-height:1;color:var(--mute)}
+.paso b{font-family:var(--f-disp);font-size:1.25rem;font-weight:800}
+.paso span{color:var(--sub);font-size:.94rem}
+.paso.on{border-color:rgba(252,76,2,.55);background:var(--p-suave)}
+.paso.on .n{color:var(--p)}
+.nota{color:var(--sub);font-size:.92rem}
+.mide{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:6px}
+.mide b{font-family:var(--f-disp);font-size:1.1rem}
+.mide ul{margin:0;padding-left:18px;color:var(--sub);font-size:.92rem}
+
+/* ---------- teléfono ---------- */
+.tel{width:372px;max-width:100%;aspect-ratio:372/780;border-radius:44px;border:10px solid #1b2233;background:var(--d);box-shadow:0 30px 70px rgba(0,0,0,.6);position:relative;overflow:hidden;font-family:var(--f-app);font-size:14px;line-height:1.4}
+.pant{position:absolute;inset:0;display:flex;flex-direction:column}
+.pant[hidden]{display:none!important}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;background:rgba(10,15,29,.98);border-bottom:1px solid #222;flex:none}
+.logo{font-weight:900;letter-spacing:.05em;font-size:.98rem}.logo i{font-style:normal;color:var(--p)}
+.chip{font-size:.66rem;background:rgba(252,76,2,.14);border:1px solid rgba(252,76,2,.42);color:#ffd9c6;border-radius:20px;padding:4px 9px;font-weight:700}
+.cont{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 14px 16px;display:flex;flex-direction:column;gap:10px}
+.t1{font-size:1.25rem;font-weight:800}
+.t2{color:var(--sub);font-size:.82rem}
+.stage{position:relative;display:grid;place-items:center;background:radial-gradient(70% 70% at 50% 45%,#1a2440,#0f1524 80%);border:1px solid var(--br);border-radius:20px}
+.stage .mod{width:100%;height:100%}
+.stage .mod svg{width:100%!important;height:100%!important;max-width:100%;max-height:100%;display:block}
+#st-elegir{height:196px;flex:none}#st-elegir .hueco{width:184px;height:184px}
+#st-listo{height:300px;background:none;border:0}#st-listo .hueco{width:270px;height:270px}
+#st-armario{height:132px;width:132px;flex:none}#st-armario .hueco{width:124px;height:124px}
+.hueco{display:grid;place-items:center}
+/* el Cyberpunk dibuja fuera de su viewBox (237 de alto en 184): se achica para que la barbilla no se corte */
+.mod.m-ciber svg{transform:scale(.76);transform-origin:50% 42%}
+.nombre{display:grid;gap:1px;text-align:center}
+.nombre b{font-size:1.05rem}
+.nombre span{color:var(--sub);font-size:.78rem}
+.tira{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mini{all:unset;cursor:pointer;display:grid;justify-items:center;gap:3px;padding:7px 4px 6px;border-radius:13px;background:var(--surf);border:1.5px solid var(--br);min-width:0}
+.mini:focus-visible{outline:2px solid var(--p);outline-offset:1px}
+.mini .cara{width:46px;height:46px;display:grid;place-items:center;overflow:hidden}
+.mini .cara img,.mini .cara svg{width:100%;height:100%;object-fit:contain;display:block}
+.mini small{font-size:.66rem;color:#cfd8ea;font-weight:600;text-align:center;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mini.on{border-color:var(--p);background:linear-gradient(180deg,#24180f,#141a2b)}
+.gratis{display:flex;align-items:center;gap:8px;font-size:.74rem;color:#fde68a;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:7px 10px;line-height:1.3}
+.btn{all:unset;cursor:pointer;text-align:center;min-height:46px;display:grid;place-items:center;border-radius:13px;font-weight:700;font-size:.92rem;color:#fff;background:linear-gradient(180deg,var(--p2),var(--p));box-shadow:0 6px 18px rgba(252,76,2,.28)}
+.btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.btn.sec{background:linear-gradient(180deg,#1a2438,#151d30);border:1px solid var(--br);box-shadow:none;color:#dfe7ff;font-weight:650;min-height:40px;font-size:.84rem}
+.peq{color:var(--mute);font-size:.72rem;text-align:center}
+.listo{justify-content:center;align-items:center;text-align:center;gap:6px}
+.listo .t1{font-size:1.45rem}
+.tarj{display:flex;gap:12px;align-items:center;background:var(--surf);border:1px solid var(--br);border-radius:16px;padding:10px}
+.tarj .der{display:grid;gap:4px;min-width:0;flex:1}
+.tarj .der b{font-size:1rem}
+.tarj .der span{color:var(--sub);font-size:.76rem}
+.piezas{border:1.5px dashed var(--line);border-radius:14px;padding:14px;color:var(--mute);font-size:.78rem;display:grid;gap:4px}
+.piezas b{color:var(--sub);font-size:.86rem}
+.nav{flex:none;display:flex;justify-content:space-around;border-top:1px solid #222;background:rgba(10,15,29,.99);padding:6px 0 14px}
+.nav span{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:48px;color:#666;font-size:.55rem;font-weight:700;position:relative;padding:4px 6px}
+.nav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav .on{color:var(--p)}
+.nav .on::after{content:'';position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--p);box-shadow:0 0 8px var(--p)}
+.nav .pist{width:28px;height:23px}
+@keyframes salta{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}
+.entra{animation:salta .55s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.svgmod{animation:flota 2.6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.entra,.svgmod{animation:none}}
+@media (max-width:820px){ .escena{grid-template-columns:minmax(0,1fr);justify-items:center} .pasos{width:100%} }
+</style>
+
+<main class="wrap">
+  <header style="display:grid;gap:8px">
+    <div class="eyebrow">Libre Pedal · Pistero · pieza 1 de 3 · maqueta</div>
+    <h1>Elige tu <span>Pistero</span></h1>
+    <p class="lead">El teléfono se puede tocar: elige un modelo, confírmalo y míralo en el Armario. Los seis modelos son los reales, animados con su propio estilo. Todos gratis durante la prueba.</p>
+  </header>
+
+  <section class="escena">
+    <div class="tel" id="tel">
+      <!-- 1 · primera vez -->
+      <div class="pant" id="s-elegir">
+        <div class="hdr"><span class="logo">LIBRE <i>PEDAL</i></span><span class="chip">Paso 1 de 3</span></div>
+        <div class="cont">
+          <div><div class="t1">Elige tu Pistero</div><div class="t2">Va contigo en cada viaje: te guía, te avisa y celebra contigo.</div></div>
+          <div class="stage" id="st-elegir"><div class="hueco"></div></div>
+          <div class="nombre"><b class="j-nombre"></b><span class="j-mov"></span></div>
+          <div class="tira" id="tira-elegir"></div>
+          <div class="gratis">Lanzamiento: todos los modelos gratis por tiempo limitado.</div>
+          <button class="btn" id="b-usar" type="button"></button>
+          <div class="peq">Lo puedes cambiar cuando quieras en el Armario.</div>
+        </div>
+      </div>
+      <!-- 2 · confirmación -->
+      <div class="pant" id="s-listo" hidden>
+        <div class="hdr"><span class="logo">LIBRE <i>PEDAL</i></span><span class="chip">Listo</span></div>
+        <div class="cont listo">
+          <div class="stage" id="st-listo"><div class="hueco"></div></div>
+          <div class="t1" id="t-listo"></div>
+          <div class="t2" style="max-width:260px">Lo vas a ver en Inicio y en el sobrevuelo de cada viaje.</div>
+          <button class="btn" id="b-empezar" type="button" style="width:100%;margin-top:14px">Empezar a pedalear</button>
+        </div>
+      </div>
+      <!-- 3 · en el Armario (Perfil) -->
+      <div class="pant" id="s-armario" hidden>
+        <div class="hdr"><span class="logo">LIBRE <i>PEDAL</i></span><span class="chip">Novato</span></div>
+        <div class="cont">
+          <div class="t1" style="font-size:1.05rem">Perfil y personaje</div>
+          <div class="tarj">
+            <div class="stage" id="st-armario"><div class="hueco"></div></div>
+            <div class="der"><span>Tu Pistero</span><b class="j-nombre"></b><span class="j-mov"></span>
+              <button class="btn sec" id="b-cambiar" type="button" aria-expanded="false">Cambiar modelo</button></div>
+          </div>
+          <div class="tira" id="tira-armario" hidden></div>
+          <div class="piezas"><b>Armario de <span class="j-nombre"></span></b>Casco, acabado, lentes y estela de cada modelo: es la pieza 2, la diseñamos después de esta.</div>
+        </div>
+        <div class="nav">
+          <span><svg viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Inicio</span>
+          <span><svg viewBox="0 0 24 24"><path d="M18 8c0 3.613-3.869 7.429-5.393 8.795a1 1 0 0 1-1.214 0C9.87 15.429 6 11.613 6 8a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.714 14h-3.71a1 1 0 0 0-.948.683l-2.004 6A1 1 0 0 0 3 22h18a1 1 0 0 0 .948-1.316l-2-6a1 1 0 0 0-.949-.684h-3.712"/></svg>Mapa</span>
+          <span><span class="pist" id="nav-pist"></span>Pistero</span>
+          <span><svg viewBox="0 0 24 24"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg>Social</span>
+          <span class="on"><svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pasos">
+      <button class="paso on" type="button" data-p="elegir"><span class="n">1</span><b>Primera vez</b><span>Al abrir la app por primera vez. Una sola pantalla, como en Finch: tocas un modelo, lo ves grande con su animación y lo eliges.</span></button>
+      <button class="paso" type="button" data-p="listo"><span class="n">2</span><b>Confirmación</b><span>Una frase con su nombre, como el compañero de Pokémon GO. El modelo celebra.</span></button>
+      <button class="paso" type="button" data-p="armario"><span class="n">3</span><b>En el Armario</b><span>Arriba del Perfil: tu Pistero y "Cambiar modelo". Cambiarlo no quita nada.</span></button>
+      <div class="mide"><b>Qué se cuenta en cada paso (sin datos personales)</b>
+        <ul><li>Paso 1: qué modelos se tocan y cuál se elige primero.</li><li>Paso 3: cada cambio de modelo, para saber cuántos días se mantiene cada uno.</li><li>En los viajes: km pedaleados con cada modelo.</li></ul></div>
+      <p class="nota">Orden de los modelos en la grilla: se baraja para cada persona, así ninguno gana solo por estar primero.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+{{LIBS}}
+</script>
+<script>
+(function(){
+var IMG={{IMGS}}, TH={{THUMBS}}, CLASICO={{CLASICO}};
+var M=[
+  {id:'ciber', n:'Cyberpunk', mov:'Se mueve a saltos, con visor y boca de luz', fn:'crearCiberCapas'},
+  {id:'orbe', n:'Orbe', mov:'Flota; su cara es de luz', fn:'crearOrbeCapas'},
+  {id:'slime', n:'Slime', mov:'Gelatina que tiembla y se derrite al cansarse', fn:'crearSlimeCapas'},
+  {id:'vinilo', n:'Androide de vinilo', mov:'Servos, ojos de diafragma y boca LED', fn:'crearViniloCapas'},
+  {id:'casco', n:'Casco vivo', mov:'Parpadea y habla con su visor LED'},
+  {id:'clasico', n:'Clásico', mov:'El Pistero de siempre'}
+];
+var porId={}; M.forEach(function(m){ porId[m.id]=m; });
+var EXPR={ casco:{reposo:'feliz',hablar:'hablando',feliz:'riendo',sorpresa:'sorprendido',dormir:'sueno'},
+           clasico:{reposo:'feliz',hablar:'contento',feliz:'emocionado',sorpresa:'sorprendido',dormir:'pensando'} };
+function svgDe(id,e){ var x=EXPR[id][e]||'feliz'; return id==='casco'?pisteroFrenteSVG({expr:x}):(CLASICO[x]||CLASICO.feliz); }
+// una sola animación por modelo (se mueve entre pantallas): así el teléfono no carga 18 animaciones
+var inst={};
+var actual=M[0].id, pant='elegir';
+function instCapas(id){
+  if(inst[id]) return inst[id];
+  var el=document.createElement('div'); el.className='mod m-'+id; var m=porId[id];
+  var api={el:el, ult:'reposo', real:null, poner:function(e){ api.ult=e; if(api.real) api.real(e); }};
+  if(m.fn){ window[m.fn](el,IMG[id][0],IMG[id][1]).then(function(a){ api.real=a.estado; a.estado(api.ult); }); }
+  else { el.classList.add('svgmod'); api.poner=function(e){ api.ult=e; el.innerHTML=svgDe(id,e); }; api.poner('reposo'); }
+  inst[id]=api; return api;
+}
+var $=function(s){ return document.querySelector(s); };
+function mostrar(id,donde,estado){
+  var a=instCapas(id), h=$('#st-'+donde+' .hueco');
+  if(a.el.parentNode!==h){ h.innerHTML=''; h.appendChild(a.el); a.el.classList.remove('entra'); void a.el.offsetWidth; a.el.classList.add('entra'); }
+  a.poner(estado||'reposo');
+}
+function textos(){ var m=porId[actual];
+  document.querySelectorAll('.j-nombre').forEach(function(e){ e.textContent=m.n; });
+  document.querySelectorAll('.j-mov').forEach(function(e){ e.textContent=m.mov; });
+  $('#b-usar').textContent='Usar a '+m.n; $('#t-listo').textContent='¡'+m.n+' ya es tu Pistero!';
+  $('#nav-pist').innerHTML=TH[actual]?'<img src="'+TH[actual]+'" alt="" style="width:100%;height:100%;object-fit:contain">':svgDe(actual,'reposo');
+  document.querySelectorAll('.mini').forEach(function(b){ b.classList.toggle('on',b.dataset.id===actual); b.setAttribute('aria-pressed',b.dataset.id===actual); });
+}
+// orden barajado por persona (para que ninguno gane solo por ir primero)
+var orden=M.map(function(m){ return m.id; }); for(var i=orden.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=orden[i]; orden[i]=orden[j]; orden[j]=t; }
+actual=orden[0];
+function tira(cont,donde){ cont.innerHTML='';
+  orden.forEach(function(id){ var m=porId[id], b=document.createElement('button'); b.type='button'; b.className='mini'; b.dataset.id=id;
+    b.innerHTML='<span class="cara">'+(TH[id]?'<img src="'+TH[id]+'" alt="">':svgDe(id,'reposo'))+'</span><small>'+m.n+'</small>';
+    b.addEventListener('click',function(){ actual=id; textos(); mostrar(id,donde,'feliz'); setTimeout(function(){ if(actual===id) instCapas(id).poner('reposo'); },1600); });
+    cont.appendChild(b); }); }
+tira($('#tira-elegir'),'elegir'); tira($('#tira-armario'),'armario');
+function ir(p){ pant=p; ['elegir','listo','armario'].forEach(function(x){ $('#s-'+x).hidden=(x!==p); });
+  document.querySelectorAll('.paso').forEach(function(b){ b.classList.toggle('on',b.dataset.p===p); });
+  mostrar(actual,p,p==='listo'?'feliz':'reposo'); textos(); }
+$('#b-usar').addEventListener('click',function(){ ir('listo'); });
+$('#b-empezar').addEventListener('click',function(){ ir('armario'); });
+$('#b-cambiar').addEventListener('click',function(){ var t=$('#tira-armario'); t.hidden=!t.hidden; this.setAttribute('aria-expanded',!t.hidden); this.textContent=t.hidden?'Cambiar modelo':'Listo'; });
+document.querySelectorAll('.paso').forEach(function(b){ b.addEventListener('click',function(){ ir(b.dataset.p); }); });
+// el modelo a la vista vive: reposo, habla, se alegra, se sorprende (como en sus páginas aprobadas)
+var seq=['reposo','hablar','reposo','feliz','reposo','sorpresa'], k=0;
+setInterval(function(){ k=(k+1)%seq.length; if(pant!=='listo') instCapas(actual).poner(seq[k]); },2600);
+ir('elegir');
+// los modelos por capas recortan sus imágenes al crearse (un tirón en el teléfono): se preparan de a uno en segundo plano
+var cola=orden.filter(function(id){ return porId[id].fn && !inst[id]; });
+(function sig(){ var id=cola.shift(); if(!id) return; instCapas(id); setTimeout(sig,700); })();
+})();
+</script>
