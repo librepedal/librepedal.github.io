@@ -225,7 +225,7 @@ function cerebro(dt){
         if(!P.salto&&dx<70&&dx>0&&P.g>20){P.salto={t:0,dur:clamp(150/(P.g+60),.5,.75)}}
         if(a.obj.x<-80){quitarObjeto(a.obj);terminar()} break;}
       case 'dospatas': case 'brote': {const destino=a.obj.x+a.obj.w/2-casa()-(a.id==='brote'?62:44);
-        if(!a.llego){relObj=destino;maxAde=220; if(Math.abs(P.rel-destino)<10){a.llego=a.t}}
+        if(!a.llego){relObj=Math.min(destino,90);maxAde=220; if(Math.abs(P.rel-destino)<12){a.llego=a.t}}  // se adelanta un poco y deja que el camino le traiga el brote o el chilco: así come dentro de la pantalla
         else{quieto=true;pose=a.id==='brote'?'come':'dospatas';P.rel=lerp(P.rel,a.obj.x+a.obj.w/2-casa()-(a.id==='brote'?62:44),.2);
           if(a.id==='brote'&&a.t-a.llego>1.3&&!a.comido){a.comido=1;a.obj.el.style.opacity=0;S.pan=Math.min(100,S.pan+10);aviso('Brote: +10 pancita')}
           if(a.t-a.llego>(a.id==='brote'?1.7:1.9)||P.rel<-140){if(a.id==='brote')quitarObjeto(a.obj);else a.obj.suelto=1;terminar()}}
