@@ -303,8 +303,18 @@ function encuadrar(ms){ var c=D[modo].c, b=c.reduce(function(b,p){ return [[Math
 }
 
 // ---------- Pistero: de espaldas (esqueleto animado) o de costado (con su cara) según la cámara ----------
+function crearRostro(){
+  var el=document.createElement('div'); el.className='cara-mk';
+  el.innerHTML='<div class="cm-pin"></div><div class="cm-in"><div class="cm-anillo"></div><div class="cm-caras"><div class="cm-c on"></div><div class="cm-c"></div></div><div class="cm-gota"></div></div>';
+  var capas=el.querySelectorAll('.cm-c'); capas[0].innerHTML=cara('feliz');
+  marcador=new maplibregl.Marker({element:el,anchor:'bottom',opacityWhenCovered:'1'}).setLngLat(D.nuevo.c[0]).addTo(mapa);
+  cajas={el:el,inn:el.querySelector('.cm-in'),capas:capas,act:0,expr:'feliz',bob:0};
+}
+// cambia de cara con fundido cruzado (dos capas: la nueva aparece encima mientras la anterior se apaga)
+function rostroCara(ex){ if(cajas.expr===ex) return; var sig=1-cajas.act, A=cajas.capas[cajas.act], B=cajas.capas[sig]; B.innerHTML=cara(ex); B.classList.add('on'); A.classList.remove('on'); cajas.act=sig; cajas.expr=ex; cajas.el.dataset.expr=ex; }
 function crearMarcador(){
   if(marcador) marcador.remove();
+  if(modo==='nuevo'){ crearRostro(); return; }
   var A=_pistAtrasSVG(opts,{vehiculo:veh,cadencia:.68}); rig=(typeof _pistAtrasRig==='function')?_pistAtrasRig(opts,veh):null;
   var div=document.createElement('div');
   div.innerHTML='<div class="sbv-rider atras">'+(modo==='nuevo'?'<div class="sbv-sombra"></div>':'')+'<div class="sbv-bici"><div class="sbv-incl"><div class="sbv-cuerpo">'+(rig?rig.svg:A.svg)+'</div><div class="sbv-cabeza" style="left:'+A.cab.l+'%;top:'+A.cab.t+'%;width:'+A.cab.w+'%;height:'+A.cab.h+'%">'+(typeof _pistNucaSVG==='function'?_pistNucaSVG(opts):'')+'</div></div></div><div class="sbv-asoma"></div><div class="sbv-lado"></div></div>';
@@ -330,7 +340,7 @@ function dibujarCuadro(k){ if(MASC.ultCuadro===k) return; var s=MASC.F[k], c=MAS
 // ---------- primer plano (cara grande de Pistero con el dato del momento) ----------
 function primerPlano(m,ts){
   var pp=$('pp'); if(!pp) return;
-  pp.querySelector('.pp-cara').innerHTML=cara(m.expr);
+  pp.querySelector('.pp-cara').innerHTML='';
   pp.querySelector('.pp-txt').textContent=m.txt; pp.querySelector('.pp-sub').textContent=m.sub||'';
   var pm=pp.querySelector('.pp-masc'); pm.innerHTML=''; var conM=(m.cima||m.fin||m.d<100); if(conM && mascotaCanasto()) pm.innerHTML='<div class="pp-masc-svg">'+mascotaSVG(mascotaCanasto())+'</div>'; else if(conM && mascotaElegida()==='pudu' && MASC.F.cara){ var F=MASC.F.cara, hh=Math.round(F.height*.9), c=document.createElement('canvas'); c.width=F.width; c.height=hh; c.getContext('2d').drawImage(F,0,0,F.width,hh,0,0,F.width,hh); pm.appendChild(c); }
   pp.className='pp on '+m.expr; void pp.offsetWidth; document.body.classList.add('pp-on');
@@ -430,6 +440,22 @@ function pintar(dt,ts,mover){
 function mover2(p,brg){ return mover(p,brg,1); }
 function haciaDerecha(p,brg){ try{ var a=mapa.project(p), b=mapa.project(mover(p,brg,25)); return b.x>=a.x; }catch(e){ return true; } }
 function pintarPistero(dt,ts,d,gp,vp,brg){
+  if(modo==='nuevo' && cajas.capas){
+    // la cara que toca (la del momento si hay viñeta); color del anillo = color neón de la pendiente
+    rostroCara(exprAct);
+    var col=colorPend(gp||0), esf=Math.max(0,Math.min(1,(gp||0)/.1));
+    cajas.el.style.setProperty('--c',col);
+    // pulso: 1,15 s en plano → 0,42 s en la subida más dura (late más rápido con el esfuerzo)
+    cajas.el.style.setProperty('--lat',(1.15-esf*.73).toFixed(2)+'s');
+    cajas.el.classList.toggle('suda',esf>.45);
+    // se mece (más en la subida) y se inclina hacia el lado de la curva
+    var L=D[modo], gi=giro(rumboEn(L,d-10),rumboEn(L,d+45));
+    incl+=(Math.max(-12,Math.min(12,gi*.2))-incl)*Math.min(1,dt/350);
+    cajas.bob+=dt/1000*(1.6+esf*2.2);
+    var dy=reduce?0:Math.sin(cajas.bob*Math.PI*2)*(1.5+esf*2.5), rot=incl+(reduce?0:Math.sin(cajas.bob*Math.PI)*esf*4);
+    cajas.inn.style.transform='translateY('+dy.toFixed(1)+'px) rotate('+rot.toFixed(1)+'deg)';
+    return;
+  }
   var L=D[modo], G=(typeof _pistGestoEsfuerzo==='function')?_pistGestoEsfuerzo(gp,vp):{cad:.68,rapido:0,pose:''};
   if(poseTemp) G=Object.assign({},G,{pose:poseTemp,cad:0});
   // ¿la cámara lo ve de espaldas o de costado? (ángulo entre la cámara y el avance)

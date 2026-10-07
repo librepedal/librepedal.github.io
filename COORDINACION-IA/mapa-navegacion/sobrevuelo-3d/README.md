@@ -91,3 +91,10 @@ para que un cerro no deje a Pistero transparente.
   el panel tapaba la huella y Pistero chocaba con el título). Panel compacto si la altura < 700 px.
 - Cambiar Satélite/Calles con el sobrevuelo andando ya no rompe la animación (antes: error setData y se congelaba).
 - Relieve sombreado con fuente propia (`dem-sombra`), como pide MapLibre.
+
+## v6 (2026-10-07) — Pistero como ROSTRO (Inty: "ya no anda en bicicleta, aparece como un rostro mostrando las caras")
+- Marcador = la cara de Pistero (`_pistoDe` + agotado/adrenalina/orgulloso) en un círculo con anillo del color
+  neón de la pendiente; el anillo **late** (1,15 s en plano → 0,42 s en la subida más dura); gota de sudor con
+  esfuerzo fuerte; se mece y se inclina en las curvas; caras con fundido cruzado; hilo de luz al punto exacto.
+- La viñeta ya no repite la cara (está en el mapa): solo texto con barra del color del estado.
+- Se mantiene la secuencia de tomas y el rastro neón (aprobados).

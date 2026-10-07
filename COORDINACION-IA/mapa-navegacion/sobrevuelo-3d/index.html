@@ -89,6 +89,23 @@ body.corriendo .leyenda,body.corriendo .capa{opacity:0;pointer-events:none}
 .pp.orgulloso .pp-marco{--ring:#ffd700}
 @media (prefers-reduced-motion:reduce){.pp{transition:opacity .2s;transform:none}}
 @media (max-height:700px){ .perfil{height:64px} .dato{padding:5px 8px} .dato b{font-size:.92rem} .ctrl{margin-top:6px} .btn{padding:9px 12px} .pp-marco{width:52px;height:52px} }
+/* ROSTRO de Pistero sobre el rastro (sin bici). Raíz del marcador SIN position (la pone MapLibre) */
+.cara-mk{width:68px;height:84px;pointer-events:none;--c:#39ff88;--lat:1.15s}
+.cm-pin{position:absolute;left:50%;bottom:0;width:3px;height:20px;margin-left:-1.5px;border-radius:2px;background:linear-gradient(to top,#fff,var(--c) 45%,var(--c));box-shadow:0 0 8px var(--c)}
+.cm-in{position:absolute;left:1px;top:0;width:66px;height:66px;transform-origin:50% 100%}
+.cm-anillo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 32%,#1e293b,#0a0f1d 75%);box-shadow:0 0 0 3px var(--c),0 0 16px var(--c),0 6px 14px rgba(0,0,0,.55);animation:cmLate var(--lat) ease-in-out infinite;transition:box-shadow .5s}
+@keyframes cmLate{0%,40%,100%{box-shadow:0 0 0 3px var(--c),0 0 14px var(--c),0 6px 14px rgba(0,0,0,.55)}12%{box-shadow:0 0 0 4px var(--c),0 0 32px var(--c),0 6px 14px rgba(0,0,0,.55)}24%{box-shadow:0 0 0 3px var(--c),0 0 22px var(--c),0 6px 14px rgba(0,0,0,.55)}}
+.cm-caras{position:absolute;inset:0;border-radius:50%;overflow:hidden}
+.cm-c{position:absolute;left:-13%;top:-9%;width:126%;height:106%;opacity:0;transform:scale(.96);transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1)}
+.cm-c.on{opacity:1;transform:none}
+.cm-c svg{width:100%;height:100%;display:block}
+/* gota de sudor que cae en el esfuerzo fuerte */
+.cm-gota{position:absolute;right:-2px;top:10px;width:9px;height:12px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#7fd0ff;box-shadow:0 0 6px #7fd0ff;opacity:0}
+.cara-mk.suda .cm-gota{animation:cmGota 1.4s ease-in infinite}
+@keyframes cmGota{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(26px)}}
+.pp{padding:10px 16px;border-left:3px solid var(--ring,#39ff88)}
+.pp.cansado,.pp.enojado{--ring:#ff8a1f}.pp.agotado{--ring:#ff2d6f}.pp.adrenalina,.pp.emocionado,.pp.sorprendido{--ring:#22d3ff}.pp.orgulloso{--ring:#ffd700}.pp.contento{--ring:#39ff88}
+@media (prefers-reduced-motion:reduce){.cm-anillo,.cara-mk.suda .cm-gota{animation:none}}
 </style>
 </head>
 <body>
@@ -99,7 +116,7 @@ body.corriendo .leyenda,body.corriendo .capa{opacity:0;pointer-events:none}
   <div class="seg" id="modo"><button data-m="hoy">Hoy</button><button data-m="nuevo" class="on">Propuesta</button></div>
 </div>
 <div class="nota" id="nota"></div>
-<div class="pp" id="pp"><div class="pp-marco"><div class="pp-cara"></div></div><div class="pp-texto"><b class="pp-txt"></b><span class="pp-sub"></span></div><div class="pp-masc"></div></div>
+<div class="pp" id="pp"><div class="pp-cara" hidden></div><div class="pp-texto"><b class="pp-txt"></b><span class="pp-sub"></span></div><div class="pp-masc"></div></div>
 <div class="capa"><div class="seg" id="capa"><button data-c="sat" class="on">Satélite</button><button data-c="calles">Calles</button></div></div>
 <div class="panel">
   <div class="datos">
