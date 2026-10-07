@@ -480,12 +480,17 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <button class="ab sec" style="margin:0" id="btnCrashToggle" onclick="toggleDeteccionCaidas()"><i class="fas fa-tower-broadcast"></i> Detección de caídas: ON</button>
   <button class="ab sec" style="margin:0" onclick="mostrarAlertaCaida()"><i class="fas fa-flask"></i> Probar alerta</button>
 </div>
+<!-- 2026-10-07 (Inty: "ocúltalos en la app por ahora"): el WebView de Android (app de Play) NO tiene Bluetooth web
+     (MDN browser-compat-data: webview_android version_added:false), así que ahí estos botones nunca conectaban.
+     Se oculta todo el bloque donde no hay navigator.bluetooth (ver _bleMostrarBloque en seguridad-sensores.js). -->
+<div id="bloqueSensoresBLE">
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-signal"></i> Sensores Bluetooth</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Conecta un pulsómetro o potenciómetro estándar BLE para ver tus datos en vivo mientras pedaleas.</p>
 <div class="quick-links">
   <button class="ab sec" style="margin:0" onclick="conectarPulsometro()"><i class="fas fa-heart"></i> Conectar pulsómetro</button>
   <button class="ab sec" style="margin:0" onclick="conectarPotenciometro()"><i class="fas fa-bolt"></i> Conectar potenciómetro</button>
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()"><i class="fas fa-plug"></i> Desconectar</button>
+</div>
 </div>
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-star"></i> Ayúdanos a crecer</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Contanos qué tal te va con la app — tu opinión nos ayuda a mejorarla.</p>
