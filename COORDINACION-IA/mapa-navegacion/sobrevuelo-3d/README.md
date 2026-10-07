@@ -111,3 +111,14 @@ y frenan si la red se atrasa; Mapbox recomienda menos capas y fuentes separadas 
   caché de 600 mosaicos, destello en 1 capa (antes 2), perfil de altura pre-dibujado (antes ~1.800 polígonos por
   cuadro), latido del rostro con transform/opacity (antes animaba una sombra difuminada → repintado).
 - Probado: 15 s en Chrome sin GPU, precarga 8 % → 49 % → vuelo, sin errores. Falta probar en GPU real (panel/teléfono).
+
+## v8 (2026-10-07) — expresiones acordes a lo que pasa + preparado para todos los personajes
+- **Contrato de expresiones** (`EXPRESIONES-PERSONAJES.md`): 12 estados, cuándo los pide la ruta y respaldo si falta.
+  En código: `PERSONAJES[id]={tiene(estado), cara(estado)}`; hoy está Pistero; listo para conectar el Pistero nuevo
+  (orbe, feature/armario-piezas) y las mascotas (feature/mascotas) cuando tengan su arte (no se dibujan a mano).
+- **Cara según la ruta** (ya no la impone la viñeta): partida y llegada contento, cima orgulloso, cansado desde 3,5 %,
+  enojado/agotado en lo duro o con mucho subido en el día, guiño al terminar una cuesta, adrenalina/emocionado en bajada.
+- **Causa raíz corregida**: en tramos que cambian rápido (bajada −4 → −12 → −4 % en 3 s) la cara alternaba entre dos
+  estados y la espera de estabilidad se reiniciaba siempre → nunca cambiaba. Ahora por familias (bajada / subida):
+  dentro de la familia la espera no se reinicia y el cambio toma 0,3 s; a ×2/×4 la espera se acorta.
+- Probado recorriendo la ruta completa con reloj simulado (ventana mínima, sin dibujar casi nada) a ×1 y ×2.

@@ -175,7 +175,16 @@ function paddingPara(y){ var Z=zonaLibre(), py=Z.arriba+Z.libre*y, top=Math.max(
 function suaveS(x){ x=Math.max(0,Math.min(1,x)); return x*x*x*(x*(x*6-15)+10); } // smootherstep
 
 // ---------- caras: las 10 de la app + 3 nuevas armadas sobre su misma cara ----------
-function cara(expr){
+// ===== Personajes: el sobrevuelo pide un ESTADO y el personaje entrega su cara para ese estado =====
+// Lista completa y qué pasa en la ruta para cada uno: EXPRESIONES-PERSONAJES.md. Un personaje = {id, cara(estado)}.
+// Si a un personaje le falta un estado, se usa el más cercano de RESPALDO (nunca queda sin cara).
+var ESTADOS=['feliz','contento','guino','preocupado','cansado','enojado','agotado','emocionado','adrenalina','sorprendido','orgulloso','pensando'];
+var RESPALDO={agotado:'cansado',enojado:'cansado',adrenalina:'emocionado',orgulloso:'contento',guino:'feliz',sorprendido:'emocionado',preocupado:'pensando',pensando:'feliz',contento:'feliz',cansado:'feliz',emocionado:'feliz'};
+var PERSONAJES={ pistero:{id:'pistero', tiene:function(e){ return true; }, cara:function(e){ return caraPistero(e); }} };
+// cuando lleguen (desde sus ramas): PERSONAJES['pistero-nuevo'] (orbe, feature/armario-piezas) y cada mascota (feature/mascotas)
+var personaje=PERSONAJES.pistero;
+function cara(expr){ var e=expr, n=0; while(!personaje.tiene(e) && RESPALDO[e] && n++<4) e=RESPALDO[e]; return personaje.cara(e); }
+function caraPistero(expr){
   if(typeof _pistoDe!=='function') return '';
   function mas(base,extra){ var s=_pistoDe(opts,base); return s.replace(/<\/svg>\s*$/,extra+'</svg>'); }
   var gota=function(x,y,s){ return '<path d="M'+x+' '+y+' q'+(2.6*s)+' '+(4.6*s)+' 0 '+(7.4*s)+' q'+(-2.6*s)+' '+(-2.8*s)+' 0 '+(-7.4*s)+'z" fill="#7fd0ff" stroke="#3b9fd6" stroke-width=".6"/>'; };
@@ -185,20 +194,27 @@ function cara(expr){
   return _pistoDe(opts,expr);
 }
 // qué cara pone según lo que da la ruta (pendiente, cuánto lleva subido en esta cuesta, bajada)
-function caraSegun(g,ganCuesta,gAdelante,act){
+function caraSegun(g,ganCuesta,gAdelante,act,x){
+  x=x||{};
+  if(x.faltan!=null && x.faltan<120) return 'contento';                                // llegando: alegría aunque el final suba
+  if(x.cima) return 'orgulloso';                                                      // en la cima (lo más alto del viaje)
+  if(x.recorrido!=null && x.recorrido<250) return 'contento';                         // partiendo
   // bandas con histéresis: para entrar a un estado hay que pasar el umbral; para salir, bajar de uno menor
   var sube=act==='cansado'||act==='enojado'||act==='agotado', baja=act==='emocionado'||act==='adrenalina';
-  if(g>(sube?0.07:0.085)) return ganCuesta>25?'agotado':'enojado';
-  if(g>(sube?0.03:0.045)) return ganCuesta>45?'agotado':'cansado';
-  if(g<(baja?-0.05:-0.07)) return 'adrenalina';
+  if(g>(sube?0.07:0.085)) return ganCuesta>25||x.subidoDia>220?'agotado':'enojado';   // aprieta; tarde en el día, ya no da más
+  if(g>(sube?0.025:0.035)) return ganCuesta>45||x.subidoDia>260?'agotado':'cansado';   // un 3,5 % sostenido en bici ya cansa
+  if(g<(baja?-0.05:-0.07)) return 'adrenalina';   // (las curvas NO compiten aquí: alternaban con la adrenalina y la cara no cambiaba)
   if(g<(baja?-0.02:-0.035)) return 'emocionado';
-  if(gAdelante>0.06 && g<0.02) return 'preocupado';          // ve venir la cuesta
+  if(x.curva>55) return 'sorprendido';                                                // curva cerrada en plano
+  if(gAdelante>0.06 && g<0.02) return 'preocupado';                                   // ve venir la cuesta
+  if(x.faltan!=null && x.faltan<600) return 'contento';                               // ya se ve la llegada
+  if(x.trasCuesta) return 'guino';                                                    // recién terminó una cuesta: respira y sonríe
   return 'feliz';
 }
 
 // ---------- estado ----------
 var mapa, modo='nuevo', capa='sat', D={}, marcador=null, rig=null, cajas={}, opts=(typeof _pistOpts==='function')?_pistOpts():{}, veh=(typeof _pistVehiculo==='function')?_pistVehiculo(opts,'ciclismo'):'';
-var ritmoAct=0, intro=null, espTot=1, prog=0, corriendo=false, ultimo=null, velX=1, incl=0, cam=null, espera=0, sigM=0, ppHasta=0, exprAct='feliz', exprCand=null, vista='atras', caraHasta=0, poseTemp=null, poseHasta=0, ganCuesta=0, ultAlt=null;
+var huboCuesta=0, ritmoAct=0, intro=null, espTot=1, prog=0, corriendo=false, ultimo=null, velX=1, incl=0, cam=null, espera=0, sigM=0, ppHasta=0, exprAct='feliz', exprCand=null, vista='atras', caraHasta=0, poseTemp=null, poseHasta=0, ganCuesta=0, ultAlt=null;
 var MASC={on:true, F:{}, d:0, fase:0, mk:null, cv:null, ultCuadro:''};
 // mascota = la que eligió el usuario (opts.mascota). Las de la app (quiltro, perro negro, gato) van en el
 // canasto: se ven en la bici de costado y, de espaldas, asomadas junto al manubrio. Las nuevas de
@@ -234,7 +250,7 @@ function cargarMascota(){ return Promise.all(['pudu-cria-corriendo','pudu-cria-c
 
 function precargarInicio(){ if(modo!=='nuevo'||!LIVIANO) return; var d=prog*D.nuevo.total; tilesTramo(d-200,d+2600); cargaInicial={t0:performance.now(),hasta:d+1300}; cargaInicial.f0=Math.max(1,faltanHasta(cargaInicial.hasta)); }
 function arrancarIntro(){ var c=mapa.getCenter(); intro={t:0,dur:2800,de:{c:[c.lng,c.lat],z:mapa.getZoom(),pitch:mapa.getPitch(),b:mapa.getBearing()}}; }
-function reiniciarEstado(){ intro=null; ritmoAct=0; cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); document.body.classList.remove('pp-on'); }
+function reiniciarEstado(){ intro=null; ritmoAct=0; huboCuesta=0; cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); document.body.classList.remove('pp-on'); }
 function iniciar(){
   mapa=new maplibregl.Map({container:'mapa',style:SAT,center:D.nuevo.c[0],zoom:12,pitch:0,maxPitch:85,attributionControl:{compact:true},pixelRatio:LIVIANO?Math.min(window.devicePixelRatio||1,1.5):(window.devicePixelRatio||1),maxTileCacheSize:LIVIANO?600:null});
   mapa.on('style.load',montarCapas); window._demo=mapa;
@@ -460,9 +476,17 @@ function pintar(dt,ts,mover){
     if(mapa._elevationFreeze && !mapa.isMoving()) mapa._elevationFreeze=false; // ver nota en encuadrar()
     if(mover) mapa.jumpTo(J);
     // ---- cara según la ruta (cambia solo si se mantiene ~0,6 s) ----
-    var ex=caraSegun(gp,ganCuesta,N.pend[Math.min(N.pend.length-1,i+14)],exprAct);
-    if(ts<ppHasta){ var pp=$('pp'); ex=(pp&&pp.classList[2])||ex; }
-    if(ex!==exprAct){ if(!exprCand||exprCand.e!==ex) exprCand={e:ex,t:ts}; else if(ts-exprCand.t>1200){ exprAct=ex; exprCand=null; caraHasta=ts+1700; } }
+    var curvaAd=Math.abs(giro(rumboEn(N,d+20),rumboEn(N,d+140)));
+    if(ganCuesta>15) huboCuesta=ts; var trasCuesta=gp<0.02 && ts-huboCuesta<4000 && huboCuesta>0;
+    var ex=caraSegun(gp,ganCuesta,N.pend[Math.min(N.pend.length-1,i+14)],exprAct,{curva:curvaAd,faltan:N.total-d,subidoDia:N.sub[i],trasCuesta:trasCuesta,cima:Math.abs(d-N.cum[N.imax])<150,recorrido:d});
+    // familias: dentro de la misma (bajada / subida) la espera NO se reinicia y el cambio es rápido (0,3 s);
+    // antes, en una bajada que pasa de −4 % a −12 % y vuelve en 3 s, la cara alternaba y nunca cambiaba
+    var fam=function(e){ return /emocionado|adrenalina|sorprendido/.test(e)?'baja':/cansado|enojado|agotado/.test(e)?'sube':e; };
+    if(ex!==exprAct){
+      if(!exprCand||fam(exprCand.e)!==fam(ex)) exprCand={e:ex,t:ts}; else exprCand.e=ex;
+      var esp=fam(ex)===fam(exprAct)?300:Math.max(300,1000/velX);
+      if(ts-exprCand.t>esp){ exprAct=exprCand.e; exprCand=null; caraHasta=ts+1700; }
+    } else exprCand=null;
     if(D.cimaM) D.cimaM.getElement().style.visibility=Math.abs(d-N.cum[N.imax])<260?'hidden':'visible';
     // ---- mascota ----
     pintarMascota(dt,ts,d,gp,brg);
