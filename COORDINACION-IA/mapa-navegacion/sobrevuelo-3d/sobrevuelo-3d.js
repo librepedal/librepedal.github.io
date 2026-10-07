@@ -181,8 +181,11 @@ function suaveS(x){ x=Math.max(0,Math.min(1,x)); return x*x*x*(x*(x*6-15)+10); }
 var ESTADOS=['feliz','contento','guino','preocupado','cansado','enojado','agotado','emocionado','adrenalina','sorprendido','orgulloso','pensando'];
 var RESPALDO={agotado:'cansado',enojado:'cansado',adrenalina:'emocionado',orgulloso:'contento',guino:'feliz',sorprendido:'emocionado',preocupado:'pensando',pensando:'feliz',contento:'feliz',cansado:'feliz',emocionado:'feliz'};
 var PERSONAJES={ pistero:{id:'pistero', tiene:function(e){ return true; }, cara:function(e){ return caraPistero(e); }} };
-// cuando lleguen (desde sus ramas): PERSONAJES['pistero-nuevo'] (orbe, feature/armario-piezas) y cada mascota (feature/mascotas)
-var personaje=PERSONAJES.pistero;
+PERSONAJES.ciber={id:'ciber', nombre:'Pistero Cyberpunk', capas:true, tiene:function(e){ return ESTADOS.indexOf(e)>=0; },
+  crear:function(host){ return crearCiberCapas(host,'personajes/ciber-capa-casco.jpg','personajes/ciber-capa-cabeza.jpg').then(function(api){
+    api.svg.setAttribute('viewBox','458 104 460 460'); return api; }); }};   // encuadre: casco + visor + boca dentro del círculo
+// siguen (desde sus ramas): Orbe, Slime, Vinilo, Vidrio (feature/armario-piezas) y cada mascota (feature/mascotas)
+var personaje=PERSONAJES[(new URLSearchParams(location.search)).get('p')||'ciber']||PERSONAJES.pistero;
 function cara(expr){ var e=expr, n=0; while(!personaje.tiene(e) && RESPALDO[e] && n++<4) e=RESPALDO[e]; return personaje.cara(e); }
 function caraPistero(expr){
   if(typeof _pistoDe!=='function') return '';
@@ -256,12 +259,15 @@ function iniciar(){
   mapa.on('style.load',montarCapas); window._demo=mapa;
   window._ir=function(p){ reiniciarEstado(); prog=p; while(sigM<D.nuevo.momentos.length && D.nuevo.momentos[sigM].d<p*D[modo].total) sigM++; MASC.d=p*D[modo].total; pintar(16,performance.now(),true); };
   window._ver=function(ix,avance){ var N=D.nuevo, m=N.momentos[ix]; window._ir(Math.min(1,(m.d+1)/N.total)); var ts=performance.now(); primerPlano(m,ts); exprAct=m.expr; caraHasta=ts+5000; if(m.cima){ espTot=2800; espera=2800*(1-(avance||0)); } cam=null; pintar(16,ts,true); };
+  window._cara=function(e){ exprAct=e; rostroCara(e); };
   window._tomas=function(){ return D.nuevo.seq.map(function(p){ return p.t+' '+Math.round(p.d0)+'-'+Math.round(p.d1); }).concat(D.nuevo.momentos.map(function(m){ return 'cara '+m.expr+' @'+Math.round(m.d)+' '+m.txt; })); };
   mapa.once('load',function(){ $('cargando').style.display='none'; encuadrar(0); dibujarPerfil(); });
   $('modo').onclick=function(e){ var m=e.target.dataset.m; if(!m||m===modo) return; modo=m; marcarSeg('modo','m',m); reiniciar(); };
   $('capa').onclick=function(e){ var c=e.target.dataset.c; if(!c||c===capa) return; capa=c; marcarSeg('capa','c',c); mapa.setStyle(c==='sat'?SAT:CALLES,{diff:false}); };
   $('play').onclick=function(){ if(prog>=1){ prog=0; reiniciarEstado(); } corriendo=!corriendo; actualizarBoton(); if(corriendo){ ultimo=null; ultimoPinto=null; precargarInicio(); if(prog===0 && modo==='nuevo') arrancarIntro(); requestAnimationFrame(frame); } };
   var sm=$('mascota'); if(sm){ var lst=(typeof PIST_MASCOTA!=='undefined'?PIST_MASCOTA:[]).map(function(m){ return [m.id,m.n]; }).concat([['pudu',MASC_CORREN.pudu]]); sm.innerHTML=lst.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join(''); sm.value=opts.mascota||''; /* Inty 2026-10-07: por ahora sin mascota (queda lista para después) */ opts.mascota=sm.value; sm.onchange=function(){ opts.mascota=sm.value; if(mapa) montarDeNuevo(); }; }
+  var sp=$('personaje'); if(sp){ sp.innerHTML=Object.keys(PERSONAJES).map(function(k){ return '<option value="'+k+'">'+(PERSONAJES[k].nombre||'Pistero')+'</option>'; }).join(''); sp.value=personaje.id;
+    sp.onchange=function(){ personaje=PERSONAJES[sp.value]; if(mapa&&modo==='nuevo'){ crearMarcador(); pintar(16,performance.now(),false); } }; }
   $('vel').onclick=function(){ velX=velX===1?2:velX===2?4:1; this.textContent='×'+velX; };
   var pf=$('perfil'), arrastrando=false;
   function irA(ev){ var r=pf.getBoundingClientRect(); window._ir(Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))); }
@@ -351,12 +357,15 @@ function encuadrar(ms){ var c=D[modo].c, b=c.reduce(function(b,p){ return [[Math
 function crearRostro(){
   var el=document.createElement('div'); el.className='cara-mk';
   el.innerHTML='<div class="cm-pin"></div><div class="cm-in"><div class="cm-halo"></div><div class="cm-anillo"></div><div class="cm-caras"><div class="cm-c on"></div><div class="cm-c"></div></div><div class="cm-gota"></div></div>';
-  var capas=el.querySelectorAll('.cm-c'); capas[0].innerHTML=cara('feliz');
+  var capas=el.querySelectorAll('.cm-c');
+  if(personaje.capas){ el.classList.add('modelo'); var host=document.createElement('div'); host.className='cm-modelo'; el.querySelector('.cm-caras').appendChild(host);
+    personaje.crear(host).then(function(api){ if(cajas.host===host){ cajas.api=api; api.estadoRuta(cajas.expr||'feliz'); } }); }
+  else capas[0].innerHTML=cara('feliz');
   marcador=new maplibregl.Marker({element:el,anchor:'bottom',opacityWhenCovered:'1'}).setLngLat(D.nuevo.c[0]).addTo(mapa);
-  cajas={el:el,inn:el.querySelector('.cm-in'),capas:capas,act:0,expr:'feliz',bob:0};
+  cajas={el:el,inn:el.querySelector('.cm-in'),capas:capas,act:0,expr:'feliz',bob:0,host:el.querySelector('.cm-modelo'),api:null};
 }
 // cambia de cara con fundido cruzado (dos capas: la nueva aparece encima mientras la anterior se apaga)
-function rostroCara(ex){ if(cajas.expr===ex) return; var sig=1-cajas.act, A=cajas.capas[cajas.act], B=cajas.capas[sig]; B.innerHTML=cara(ex); B.classList.add('on'); A.classList.remove('on'); cajas.act=sig; cajas.expr=ex; cajas.el.dataset.expr=ex; }
+function rostroCara(ex){ if(cajas.expr===ex) return; if(personaje.capas){ var e=ex,n=0; while(!personaje.tiene(e)&&RESPALDO[e]&&n++<4) e=RESPALDO[e]; cajas.expr=ex; cajas.el.dataset.expr=ex; if(cajas.api) cajas.api.estadoRuta(e); return; } var sig=1-cajas.act, A=cajas.capas[cajas.act], B=cajas.capas[sig]; B.innerHTML=cara(ex); B.classList.add('on'); A.classList.remove('on'); cajas.act=sig; cajas.expr=ex; cajas.el.dataset.expr=ex; }
 function crearMarcador(){
   if(marcador) marcador.remove();
   if(modo==='nuevo'){ crearRostro(); return; }

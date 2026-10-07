@@ -29,3 +29,17 @@ gota de sudor con esfuerzo fuerte. Cada personaje entrega **una cara por estado,
 (mismo encuadre que `.cm-c` en `index.html`).
 
 Para conectar un personaje: `PERSONAJES['id']={id, tiene(estado), cara(estado) → SVG o <img>}` en `sobrevuelo-3d.js`.
+
+## Estado por personaje
+| Personaje | Arte | Los 12 estados | Dónde |
+|---|---|---|---|
+| Pistero actual | vector de la app | ✅ (10 de la app + agotado/adrenalina/orgulloso armadas sobre su cara) | `sobrevuelo-3d.js` `caraPistero` |
+| Pistero Cyberpunk (aprobado) | casco y cabeza de Gemini (feature/armario-piezas) | ✅ 2026-10-07, en su lenguaje: visor-ranura tipo Gort, boca LED, 12 cuadros/s, interferencia | `personajes/ciber-capas.js` (copia + extensión marcada SOBREVUELO, para fusionar en su rama) |
+| Orbe · Slime · Vinilo · Vidrio | Gemini | pendiente (uno a la vez, con OK de Inty) | feature/armario-piezas |
+| Mascotas (6) | Gemini | pendiente | feature/mascotas |
+
+Cyberpunk, cómo se ve cada estado: feliz = luz que recorre la ranura y sonrisa · contento = ranura en arco · guiño = media
+ranura en arco · preocupado = ranura quebrada hacia arriba · cansado = ranura a medio cerrar, más tenue, jadeo · enojado =
+ranura en V naranja y dientes de LED · agotado = "batería baja": rojo que parpadea, jadeo, cabeza caída, interferencias ·
+emocionado = arco, boca que ríe y una línea de viento · adrenalina = ranura abierta, luz que barre, grito, viento ·
+sorprendido = ranura abierta y boca en O · orgulloso = arco dorado con destellos · pensando = luz a un lado y puntos.
