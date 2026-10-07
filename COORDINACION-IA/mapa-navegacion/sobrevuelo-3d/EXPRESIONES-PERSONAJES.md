@@ -35,8 +35,11 @@ Para conectar un personaje: `PERSONAJES['id']={id, tiene(estado), cara(estado) �
 |---|---|---|---|
 | Pistero actual | vector de la app | ✅ (10 de la app + agotado/adrenalina/orgulloso armadas sobre su cara) | `sobrevuelo-3d.js` `caraPistero` |
 | Pistero Cyberpunk (aprobado) | casco y cabeza de Gemini (feature/armario-piezas) | ✅ 2026-10-07, en su lenguaje: visor-ranura tipo Gort, boca LED, 12 cuadros/s, interferencia | `personajes/ciber-capas.js` (copia + extensión marcada SOBREVUELO, para fusionar en su rama) |
-| Orbe · Slime · Vinilo · Vidrio | Gemini | pendiente (uno a la vez, con OK de Inty) | feature/armario-piezas |
-| Mascotas (6) | Gemini | pendiente | feature/mascotas |
+| Pistero Orbe (movimiento aprobado) | casco y orbe de Gemini | ✅ 2026-10-07 (cara de luz 45 % más grande, cejas de luz, jadeo, tinte rojo, halo de color) | `personajes/orbe-capas.js` |
+| Pistero Slime | casco y gelatina de Gemini | ✅ 2026-10-07 (cejas, párpados de gelatina, jadeo, se derrite, tinte) | `personajes/slime-capas.js` |
+| Pistero Androide de vinilo | casco y cabeza de Gemini | ✅ 2026-10-07 (diafragma, párpados de vinilo, cejas y boca LED, servo, LED que fallan) | `personajes/vinilo-capas.js` |
+| Pistero Vidrio | Gemini | ⏸ espera que Inty apruebe la forma `vidrio4-compacto.jpg` y sus capas (la capa actual es la cápsula que Inty rechazó) | feature/armario-piezas |
+| Mascotas (6) | Gemini | ⏸ por ahora sin mascota en el sobrevuelo (Inty 2026-10-07); necesitarán sus caras por estado desde Gemini | feature/mascotas |
 
 Cyberpunk, cómo se ve cada estado: feliz = luz que recorre la ranura y sonrisa · contento = ranura en arco · guiño = media
 ranura en arco · preocupado = ranura quebrada hacia arriba · cansado = ranura a medio cerrar, más tenue, jadeo · enojado =
