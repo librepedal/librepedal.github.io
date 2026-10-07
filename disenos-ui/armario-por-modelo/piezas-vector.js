@@ -268,6 +268,28 @@ var PIEZAS_VECTOR = (function(){
              _th:function(){ return th; } };
   }
 
+  // ---------- Androide · Calcomanías reflectantes (arte de Gemini + destello) ----------
+  // Referencia real: los adhesivos reflectantes MSA Scotchlite "tetraedro" para casco (triángulos en hilera, material 3M):
+  // de día gris plateado mate; de noche devuelven la luz hacia quien la apunta. Gemini los dibujó editando la capa del casco;
+  // se separaron por diferencia (gemini/vinilo-calcos.png, x 410 y 225). Gemini puso 3 por lado, pero el de más afuera queda
+  // sobre el borde sombreado y sale roto al separarlo: quedan los 2 limpios de cada lado. Destello: la misma capa pasada
+  // a blanco, que se prende un instante cada 5,5 s (mismo ritmo que las calcomanías del Casco vivo). No se tiñe con el estilo.
+  var CAL={x:410,y:225,w:560,h:110};
+  function viniloCalcos(el){
+    var svg=el.querySelector('svg'), src=(window.PIEZAS_IMG||{}).viniloCalcos; if(!svg||!src) return null;
+    var casco=svg.querySelector('g[id$="casco"]'); if(!casco) return null;
+    var u='pzr'+(++uid), f=nodo('filter',{id:u,x:'-20%',y:'-20%',width:'140%',height:'140%'});
+    f.appendChild(nodo('feColorMatrix',{type:'matrix',values:'0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0',result:'b'}));
+    f.appendChild(nodo('feGaussianBlur',{'in':'b',stdDeviation:'2.5',result:'h'})); var m=nodo('feMerge',{}); m.appendChild(nodo('feMergeNode',{'in':'h'})); m.appendChild(nodo('feMergeNode',{'in':'b'})); f.appendChild(m);
+    defsDe(svg).appendChild(f);
+    var g=nodo('g',{'class':'pieza-calcos'}), at={'class':'pieza-img',href:src,x:CAL.x,y:CAL.y,width:CAL.w,height:CAL.h};
+    g.appendChild(nodo('image',at));
+    var brillo=nodo('g',{filter:'url(#'+u+')',opacity:'0'}); brillo.appendChild(nodo('image',at));
+    if(!reduce) brillo.appendChild(nodo('animate',{attributeName:'opacity',values:'0;0;1;.2;0',keyTimes:'0;.86;.9;.95;1',dur:'5.5s',begin:'-'+((Date.now()/1000)%5.5).toFixed(2)+'s',repeatCount:'indefinite'}));
+    g.appendChild(brillo); casco.appendChild(g);
+    return { quitar:function(){ g.remove(); f.remove(); } };
+  }
+
   // ---------- Androide · Ojo de otro color ----------
   // Sus ojos son diafragmas de cámara (lib-vinilo.js: iris naranjo encendido, hojas, brillo). Referencia real: el
   // TRATAMIENTO de los lentes de cámara: un lente multicapa refleja pequeños destellos violeta y verde, y cada tratamiento
@@ -337,6 +359,6 @@ var PIEZAS_VECTOR = (function(){
       +lado(-1,.1)+lado(1,.55); }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena },
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena, calcos:viniloCalcos },
            casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
