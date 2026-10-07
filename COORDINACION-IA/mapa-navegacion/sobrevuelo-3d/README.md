@@ -145,3 +145,17 @@ y frenan si la red se atrasa; Mapbox recomienda menos capas y fuentes separadas 
   (17,6 km pegada vs 17,5 km del camino) y Futrono sin horas (21,4 km vs 21,39 km).
 - Arreglos encontrados al probar: sin horas `limpiarHoy` dividía por 0 y dejaba 1 punto; el archivo se perdía si se
   limpiaba el selector antes de leerlo; comparar largos contra el GPS crudo (con zigzag) daba falso "no cuadra".
+
+## v11 (2026-10-07) — velocidad y pausas reales + sonido
+- **Velocidad real** (si la ruta trae horas): las horas de la traza se llevan a la línea pegada por fracción de distancia;
+  velocidad en ventana ±250 m (con ±80 m un salto del GPS daba un falso pico). El panel muestra "Velocidad" en vez de
+  altura (la altura ya está en el perfil). Cara: adrenalina >38 km/h, emocionado >28 km/h en plano.
+- **Pausas reales**: se quedó dentro de 30 m por 60 s o más (un teléfono parado igual graba cada pocos segundos: buscar
+  "huecos" de tiempo no las encuentra). Siempre se muestran: el vuelo se detiene, cara "pensando" y viñeta
+  "Pausa para respirar · 4 min".
+- Momento "¡Volando! N km/h, lo más rápido del viaje" (si ≥30 km/h). Resumen: "Lo más rápido" y "Pausas".
+- **Sonido con el motor de la app** (`pistero-sonidos.js`, sintetizado, compresor + volumen .14): viento continuo que
+  sube con la velocidad, latido grave en subidas duras al ritmo del anillo, timbre al partir y llegar, fanfarria en la
+  cima, ráfaga en bajada/volando. Botón de parlante dibujado a medida; preferencia guardada (`lp_sbv_sonido`).
+- Probado con `pruebas/prueba-pausa-y-velocidad.gpx` (sintético: pausa de 4 min en el km 8,3 y tramo a 40 km/h en el km 13).
+  Sonido verificado por las llamadas (timbre, viento, fanfarria, viento, timbre), no escuchado.

@@ -113,9 +113,9 @@ body.corriendo .leyenda,body.corriendo .capa{opacity:0;pointer-events:none}
 .cara-mk.modelo .cm-anillo{background:radial-gradient(circle at 50% 30%,#1b2333,#05070c 72%)}
 #personaje{max-width:150px;font-size:.78rem;padding:11px 8px}
 /* RESUMEN del viaje al terminar (como el cierre de Relive/Strava): reemplaza los datos del panel */
-.resumen{position:absolute;left:12px;right:12px;bottom:calc(150px + env(safe-area-inset-bottom));z-index:6;max-width:520px;margin:0 auto;background:rgba(10,15,29,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--br);border-radius:18px;padding:14px;opacity:0;transform:translateY(14px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+.resumen{position:absolute;left:12px;right:12px;bottom:calc(176px + env(safe-area-inset-bottom));max-height:calc(100% - 260px);overflow:auto;z-index:6;max-width:520px;margin:0 auto;background:rgba(10,15,29,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--br);border-radius:18px;padding:14px;opacity:0;transform:translateY(14px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);pointer-events:none}
 body.fin .resumen{opacity:1;transform:none;pointer-events:auto}
-body.fin .datos,body.fin .leyenda,body.fin .nota{opacity:0;pointer-events:none}
+body.fin .datos,body.fin .leyenda,body.fin .nota,body.fin .pp{opacity:0;pointer-events:none}   /* el resumen ya dice el tiempo: la viñeta de llegada se va */
 .rs-tit b{display:block;font:800 1.15rem/1.15 system-ui;letter-spacing:-.01em}.rs-tit span{font:600 .74rem system-ui;color:var(--tx2)}
 .rs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
 .rs-dato{background:var(--surf);border:1px solid var(--br);border-radius:12px;padding:7px 8px}.rs-dato small{display:block;font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em}.rs-dato b{font-size:.95rem;font-variant-numeric:tabular-nums}
@@ -124,10 +124,11 @@ body.fin .datos,body.fin .leyenda,body.fin .nota{opacity:0;pointer-events:none}
 .rs-hitos li span{color:var(--tx2)}.rs-hitos li b{font-weight:700;text-align:right}
 .rs-hitos li.sube{border-color:#ff8a1f}.rs-hitos li.empina{border-color:#ff2d6f}.rs-hitos li.baja{border-color:#22d3ff}.rs-hitos li.cima{border-color:#ffd700}
 @media (max-width:380px){.rs-grid{grid-template-columns:repeat(2,1fr)}}
-@media (max-height:700px){.resumen{bottom:calc(120px + env(safe-area-inset-bottom));padding:10px}.rs-hitos li{padding:4px 8px}}
+@media (max-height:700px){.resumen{bottom:calc(150px + env(safe-area-inset-bottom));padding:10px}.rs-hitos li{padding:4px 8px}}
 .tu-ruta{cursor:pointer;color:var(--tx);font:700 .78rem system-ui;padding:9px 10px;white-space:nowrap}
 body.corriendo .tu-ruta{opacity:.4;pointer-events:none}
 @media (max-width:420px){.titulo span{display:block;font-size:.66rem}}
+.son{display:flex;align-items:center;justify-content:center;padding:9px 11px}.son .tacha{display:none}.son.mudo .onda{display:none}.son.mudo .tacha{display:inline}.son.mudo{color:var(--tx2)}
 </style>
 </head>
 <body>
@@ -145,13 +146,13 @@ body.corriendo .tu-ruta{opacity:.4;pointer-events:none}
 <div class="panel">
   <div class="datos">
     <div class="dato"><small>Recorrido</small><b id="dKm">0,0<i>km</i></b></div>
-    <div class="dato"><small>Altura</small><b id="dAlt">–<i>m</i></b></div>
+    <div class="dato"><small id="lAlt">Altura</small><b id="dAlt">–<i>m</i></b></div>
     <div class="dato"><small>Pendiente</small><b id="dPend">–<i>%</i></b></div>
     <div class="dato"><small>Subido</small><b id="dSub">0<i>m</i></b></div>
   </div>
   <div class="leyenda" id="leyenda"><span><i style="background:#39ff88;box-shadow:0 0 6px #39ff88"></i>plano</span><span><i style="background:#ffe14d;box-shadow:0 0 6px #ffe14d"></i>3–6 %</span><span><i style="background:#ff8a1f;box-shadow:0 0 6px #ff8a1f"></i>6–9 %</span><span><i style="background:#ff2d6f;box-shadow:0 0 6px #ff2d6f"></i>+9 %</span><span><i style="background:#22d3ff;box-shadow:0 0 6px #22d3ff"></i>bajada</span></div>
   <div class="perfil" id="perfil"><canvas id="cv"></canvas></div>
-  <div class="ctrl"><button class="btn play" id="play">▶ Ver sobrevuelo</button><select class="btn vel" id="personaje" aria-label="Personaje elegido en Elige tu Pistero (demo)"></select><select class="btn vel" id="mascota" aria-label="Mascota elegida en el Taller (demo)" hidden></select><button class="btn vel" id="vel">×1</button></div>
+  <div class="ctrl"><button class="btn play" id="play">▶ Ver sobrevuelo</button><select class="btn vel" id="personaje" aria-label="Personaje elegido en Elige tu Pistero (demo)"></select><select class="btn vel" id="mascota" aria-label="Mascota elegida en el Taller (demo)" hidden></select><button class="btn vel son" id="sonido" aria-label="Sonido del sobrevuelo"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" stroke="none"/><path class="onda" d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path class="onda" d="M18.2 6.5a8 8 0 0 1 0 11"/><path class="tacha" d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg></button><button class="btn vel" id="vel">×1</button></div>
 </div>
 
 <!-- Pistero real de la app (mismos archivos que index.html) -->
@@ -161,6 +162,7 @@ body.corriendo .tu-ruta{opacity:.4;pointer-events:none}
 <script src="../../../pistero-apariencia.js"></script>
 <script src="../../../pistero-bici.js"></script>
 <script src="../../../pistero-bici-atras.js"></script>
+<script src="../../../pistero-sonidos.js"></script>
 <script src="personajes/ciber-capas.js"></script>
 <script src="personajes/orbe-capas.js"></script>
 <script src="personajes/slime-capas.js"></script>

@@ -140,11 +140,14 @@ function planear(N){
   var falta=function(m){ return m<40?'¡ya casi arriba!':'quedan '+(m>=1000?fmt(m/1000,1)+' km':Math.round(m/10)*10+' m')+' de cuesta'; };
   subidas.forEach(function(s){ if(s.gan<8) return; var dura=s.gmax>.08||N.sub[s.b]>160; C.push({d:s.dura,pri:5+Math.min(4,s.gan/15),dura:dura,txt:'',sub:falta(s.d1-s.dura),dur:2200,tipo:'sube'}); });
   bajadas.forEach(function(b){ if(-b.gan<10) return; C.push({d:b.d0+60,pri:4+Math.min(3,-b.gan/20),txt:'',sub:'por '+(b.d1-b.d0>=1000?fmt((b.d1-b.d0)/1000,1)+' km':Math.round((b.d1-b.d0)/10)*10+' m'),dur:1900,tipo:'baja'}); });
+  if(N.vel){ var iv=0; for(var q=0;q<N.vel.length;q++) if(N.vel[q]>N.vel[iv]) iv=q; if(N.vel[iv]>=30) C.push({d:N.cum[iv],pri:7.5,expr:'adrenalina',txt:'¡Volando!',sub:Math.round(N.vel[iv])+' km/h, lo más rápido del viaje',dur:1900}); N.vMax={v:N.vel[iv],d:N.cum[iv]}; }
   C.push({d:30,pri:9,expr:'contento',txt:'¡Partimos!',sub:fmt(T/1000,1)+' km y +'+Math.round(N.sub[N.sub.length-1])+' m por delante',dur:2000});
   C.push({d:N.cum[N.imax],pri:10,expr:'orgulloso',txt:'¡Cima!',sub:'lo más alto del viaje',dur:4200,cima:true,pose:'puno'});
   C.push({d:T,pri:10,expr:'contento',txt:'¡Llegamos!',sub:D.dur?'en '+durTxt(D.dur):'',dur:2600,pose:'brazos',fin:true});
   C.sort(function(a,b){ return b.pri-a.pri; });
   var hueco=T/9, M=[]; C.forEach(function(c){ if(M.length<7 && M.every(function(m){ return Math.abs(m.d-c.d)>=hueco; })) M.push(c); });
+  // las pausas reales se muestran SIEMPRE (con su parada), aunque haya otro momento cerca
+  (N.pausas||[]).forEach(function(p){ M.push({d:p.d,pri:9,expr:'pensando',txt:'Pausa para respirar',sub:durTxt(p.dur),dur:2400,pausa:true}); });
   M.sort(function(a,b){ return a.d-b.d; });
   // frases y caras sin repetir; el cansancio se acumula (cuesta dura o mucho subido → agotado)
   var ns=0, na=0, nb=0, prev='';
@@ -216,7 +219,10 @@ function caraPistero(expr){
 function caraSegun(g,ganCuesta,gAdelante,act,x){
   x=x||{};
   if(x.faltan!=null && x.faltan<120) return 'contento';                                // llegando: alegría aunque el final suba
-  if(x.cima) return 'orgulloso';                                                      // en la cima (lo más alto del viaje)
+  if(x.cima) return 'orgulloso';
+  if(x.pausa) return 'pensando';                                                        // parado: respira y mira alrededor
+  if(x.vel!=null && x.vel>38 && g<0.02) return 'adrenalina';                          // velocidad real alta
+  if(x.vel!=null && x.vel>28 && g<0.02 && g>-0.035) return 'emocionado';                                                      // en la cima (lo más alto del viaje)
   if(x.recorrido!=null && x.recorrido<250) return 'contento';                         // partiendo
   // bandas con histéresis: para entrar a un estado hay que pasar el umbral; para salir, bajar de uno menor
   var sube=act==='cansado'||act==='enojado'||act==='agotado', baja=act==='emocionado'||act==='adrenalina';
@@ -245,7 +251,42 @@ function mascotaSVG(id){ return typeof _bMascota==='function'?'<svg viewBox="-9 
 
 // prepara todo lo que el vuelo necesita a partir de los puntos grabados (crudo) y la línea pegada al camino
 // ~5 s por km, pero acotado a 45–80 s (Relive deja sus videos en torno a un minuto); un viaje de 100 km ya no dura 8 min
+// ---------- sonido ----------
+// viento continuo que sube con la velocidad · latido grave en las subidas duras (al ritmo del anillo) · timbre al partir
+// y al llegar · fanfarria en la cima · ráfaga en la bajada y al ir volando. Todo por _psOut() (compresor + volumen .14).
+var SON={on:(function(){ try{ return localStorage.getItem('lp_sbv_sonido')!=='0'; }catch(e){ return true; } })(), viento:null, proxLatido:0};
+function sonidoListo(){ return SON.on && typeof _psAC==='function' && typeof _psSilencio==='function' && !_psSilencio(); }
+function vientoIniciar(){ if(!sonidoListo()||SON.viento) return; try{ var ac=_psAC(), n=ac.sampleRate*2, b=ac.createBuffer(1,n,ac.sampleRate), dd=b.getChannelData(0);
+  for(var i=0;i<n;i++) dd[i]=Math.random()*2-1; var src=ac.createBufferSource(); src.buffer=b; src.loop=true;
+  var bq=ac.createBiquadFilter(); bq.type='bandpass'; bq.frequency.value=500; bq.Q.value=.7; var g=ac.createGain(); g.gain.value=.0001;
+  src.connect(bq); bq.connect(g); g.connect(_psOut()); src.start(); SON.viento={src:src,bq:bq,g:g}; }catch(e){ console.warn('[sobrevuelo] viento', e); } }
+function vientoParar(){ if(!SON.viento) return; try{ var ac=_psAC(), v=SON.viento; v.g.gain.setTargetAtTime(.0001,ac.currentTime,.25); setTimeout(function(){ try{ v.src.stop(); }catch(e){} },900); }catch(e){} SON.viento=null; }
+function sonidoCuadro(ts,gp,vReal){
+  if(!sonidoListo()){ if(SON.viento) vientoParar(); return; }
+  if(!SON.viento) vientoIniciar(); if(!SON.viento) return;
+  var ac=_psAC(), rapidez=vReal!=null?Math.min(1,vReal/45):Math.min(1,Math.max(0,(ritmoAct-.6)/1.1)), quieto=espera>0||ritmoAct<.08;
+  SON.viento.g.gain.setTargetAtTime(quieto?.0001:.03+.17*rapidez*rapidez,ac.currentTime,.4);
+  SON.viento.bq.frequency.setTargetAtTime(380+1100*rapidez,ac.currentTime,.4);
+  // latido en la subida dura, al mismo ritmo que el anillo del rostro (1,15 s → 0,42 s)
+  var esf=Math.max(0,Math.min(1,(gp||0)/.1));
+  if(esf>.45 && !quieto && ts>=SON.proxLatido){ var t0=ac.currentTime+.01; _psTono(62,t0,.13,{v:.22}); _psTono(56,t0+.17,.11,{v:.14}); SON.proxLatido=ts+(1150-esf*730); }
+}
+function sonarMomento(m){ if(!sonidoListo()||typeof pistSonarNombre!=='function') return;
+  if(m.d<100||m.fin) pistSonarNombre('timbre'); else if(m.cima) pistSonarNombre('fanfarria'); else if(m.expr==='adrenalina') pistSonarNombre('viento'); }
 function durVuelo(){ return Math.max(45000,Math.min(80000,D.nuevo.total/1000*5000)); }
+// Lleva las horas de la traza grabada a la línea pegada al camino (por fracción de distancia) y saca la velocidad
+// (ventana ±80 m) y las pausas reales (más de 45 s casi sin moverse). Sin horas: N.vel=null y no hay pausas.
+function tiemposReales(N,crudo){
+  N.vel=null; N.pausas=[]; var L=limpiarHoy(crudo); if(L.length<3||!L.every(function(p){ return p.t>0; })) return;
+  var cc=[0]; for(var i=1;i<L.length;i++) cc.push(cc[i-1]+hav([L[i-1].lon,L[i-1].lat],[L[i].lon,L[i].lat]));
+  var k=N.total/Math.max(1,cc[cc.length-1]), j=1, t=[];
+  for(i=0;i<N.c.length;i++){ var dc=N.cum[i]/k; while(j<L.length-1&&cc[j]<dc) j++; var f=Math.max(0,Math.min(1,(dc-cc[j-1])/Math.max(1e-6,cc[j]-cc[j-1]))); t.push(L[j-1].t+(L[j].t-L[j-1].t)*f); }
+  N.t=t; N.vel=N.c.map(function(_,i2){ var a=i2,b=i2; while(a>0&&N.cum[i2]-N.cum[a]<250) a--; while(b<N.c.length-1&&N.cum[b]-N.cum[i2]<250) b++;   /* ±250 m: un salto del GPS no hace un falso pico */ var dt=(t[b]-t[a])/1000; return dt>0?Math.min(90,(N.cum[b]-N.cum[a])/dt*3.6):0; });
+  // pausas: pasos de la traza con mucho tiempo y poca distancia (se juntan si están seguidas)
+  // pausa = se quedó dentro de un círculo de 30 m por 60 s o más (el teléfono parado igual graba puntos cada pocos segundos)
+  for(i=0;i<L.length-1;i++){ var j2=i+1; while(j2<L.length&&hav([L[i].lon,L[i].lat],[L[j2].lon,L[j2].lat])<30) j2++; var dur=L[j2-1].t-L[i].t;
+    if(dur>=60000){ N.pausas.push({d:cc[i]*k,dur:dur}); i=j2-1; } }
+}
 function prepararRuta(crudo, pegada){
   D.hoy=linea(limpiarHoy(crudo).map(function(p){ return [p.lon,p.lat]; }));
   D.dur=(crudo[crudo.length-1].t&&crudo[0].t)?crudo[crudo.length-1].t-crudo[0].t:0; /* duración real (horas de los puntos), 0 si no hay */
@@ -254,6 +295,7 @@ function prepararRuta(crudo, pegada){
     var N=D.nuevo; N.alt=suavizar(suavizar(a,N.cum,60),N.cum,60); N.pend=pendientes(N.alt,N.cum,100);
     var sub=0, ref=N.alt[0]; N.sub=N.alt.map(function(h){ if(h>ref+2){ sub+=h-ref; ref=h; } else if(h<ref-2) ref=h; return sub; });
     N.min=Math.min.apply(null,N.alt); N.max=Math.max.apply(null,N.alt); N.imax=N.alt.indexOf(N.max);
+    tiemposReales(N,crudo);
     return demPrecargar(N.c).then(function(){ ladoBajo(N); planear(N); });
   });
 }
@@ -338,6 +380,8 @@ function mostrarResumen(){ var R=D.nuevo.resumen, el=$('resumen'); if(!R||!el) r
   hitos.push(['Lo más empinado',fmt(R.pendMax*100,0)+' % en el km '+fmt(R.dPendMax/1000,1),'empina']);
   if(R.bMax) hitos.push(['La mejor bajada','−'+Math.round(-R.bMax.gan)+' m desde el km '+fmt(R.bMax.d0/1000,1),'baja']);
   hitos.push(['La cima',Math.round(R.altMax)+' m en el km '+fmt(R.dCima/1000,1),'cima']);
+  var N2=D.nuevo; if(N2.vMax&&N2.vMax.v>=15) hitos.push(['Lo más rápido',Math.round(N2.vMax.v)+' km/h en el km '+fmt(N2.vMax.d/1000,1),'baja']);
+  if(N2.pausas&&N2.pausas.length){ var tp=N2.pausas.reduce(function(a2,b2){ return a2+b2.dur; },0); hitos.push(['Pausas',N2.pausas.length+' ('+durTxt(tp)+' en total)','cima']); }
   el.innerHTML='<div class="rs-tit"><b>'+RUTA.nombre+'</b><span>Así fue tu viaje</span></div>'
     +'<div class="rs-grid">'+fila('Distancia',kmTxt(R.dist))+fila('Tiempo',R.dur?durTxt(R.dur):'–')+fila('Subiste','+'+Math.round(R.sub)+' m')+fila('Subiendo',kmTxt(R.kmSube))+'</div>'
     +'<ul class="rs-hitos">'+hitos.map(function(h){ return '<li class="'+h[2]+'"><span>'+h[0]+'</span><b>'+h[1]+'</b></li>'; }).join('')+'</ul>';
@@ -350,6 +394,7 @@ function iniciar(){
   window._ir=function(p){ reiniciarEstado(); prog=p; while(sigM<D.nuevo.momentos.length && D.nuevo.momentos[sigM].d<p*D[modo].total) sigM++; MASC.d=p*D[modo].total; pintar(16,performance.now(),true); };
   window._ver=function(ix,avance){ var N=D.nuevo, m=N.momentos[ix]; window._ir(Math.min(1,(m.d+1)/N.total)); var ts=performance.now(); primerPlano(m,ts); exprAct=m.expr; caraHasta=ts+5000; if(m.cima){ espTot=2800; espera=2800*(1-(avance||0)); } cam=null; pintar(16,ts,true); };
   window._fin=function(){ window._ir(1); mostrarResumen(); };
+  window._dbgN=function(){ var N=D.nuevo; return JSON.stringify({pausas:N.pausas,vMax:N.vMax,conT:!!N.t}); };
   window._cara=function(e){ exprAct=e; rostroCara(e); };
   window._tomas=function(){ return D.nuevo.seq.map(function(p){ return p.t+' '+Math.round(p.d0)+'-'+Math.round(p.d1); }).concat(D.nuevo.momentos.map(function(m){ return 'cara '+m.expr+' @'+Math.round(m.d)+' '+m.txt; })); };
   mapa.once('load',function(){ $('cargando').style.display='none'; encuadrar(0); dibujarPerfil(); });
@@ -360,6 +405,8 @@ function iniciar(){
   var sp=$('personaje'); if(sp){ sp.innerHTML=Object.keys(PERSONAJES).map(function(k){ return '<option value="'+k+'">'+(PERSONAJES[k].nombre||'Pistero')+'</option>'; }).join(''); sp.value=personaje.id;
     sp.onchange=function(){ personaje=PERSONAJES[sp.value]; if(mapa&&modo==='nuevo'){ crearMarcador(); pintar(16,performance.now(),false); } }; }
   $('gpx').onchange=function(){ var inp=this; if(inp.files&&inp.files[0]) usarGPX(inp.files[0],function(){ inp.value=''; }); };   /* se limpia DESPUÉS de leer (antes se perdía el archivo) */
+  var bs=$('sonido'); if(bs){ var pintaS=function(){ bs.setAttribute('aria-pressed',SON.on); bs.classList.toggle('mudo',!SON.on); bs.title=SON.on?'Sonido: sí':'Sonido: no'; }; pintaS();
+    bs.onclick=function(){ SON.on=!SON.on; try{ localStorage.setItem('lp_sbv_sonido',SON.on?'1':'0'); }catch(e){} if(!SON.on) vientoParar(); pintaS(); }; }
   $('vel').onclick=function(){ velX=velX===1?2:velX===2?4:1; this.textContent='×'+velX; };
   var pf=$('perfil'), arrastrando=false;
   function irA(ev){ var r=pf.getBoundingClientRect(); window._ir(Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))); }
@@ -372,7 +419,7 @@ function iniciar(){
 }
 function marcarSeg(id,k,v){ [].forEach.call($(id).children,function(b){ b.classList.toggle('on',b.dataset[k]===v); }); }
 function actualizarCarga(){ var b=$('play'); if(!b) return; if(cargaInicial){ var f=faltanHasta(cargaInicial.hasta), tot=Math.max(1,PRE.total); b.textContent='Preparando el vuelo · '+Math.round(100*Math.max(0,1-f/cargaInicial.f0))+' %'; } else actualizarBoton(); }
-function actualizarBoton(){ document.body.classList.toggle('corriendo',corriendo); $('play').textContent=corriendo?'❚❚ Pausa':(prog>=1?'↺ Ver de nuevo':'▶ '+(prog>0?'Seguir':'Ver sobrevuelo')); }
+function actualizarBoton(){ if(!corriendo) vientoParar(); document.body.classList.toggle('corriendo',corriendo); $('play').textContent=corriendo?'❚❚ Pausa':(prog>=1?'↺ Repetir':'▶ '+(prog>0?'Seguir':'Ver sobrevuelo')); }
 function nota(){ $('nota').innerHTML=modo==='hoy'
   ? '<b>Así funciona hoy.</b> La línea es el GPS tal cual se graba (aquí con el error típico de un teléfono, simulado): zigzaguea y se sale del camino. Pistero va anclado por el <b>centro</b>, así que flota corrido de la línea. Mapa plano, sin relieve.'
   : '<b>Propuesta.</b> Huella neón pegada al camino, relieve real, tomas que cambian según la ruta (aérea, lateral, bajada, giro en la cima), y primeros planos de Pistero.'; }
@@ -528,9 +575,10 @@ function frame(ts){
     prog=Math.min(1,prog+dt/durVuelo()*ritmoAct*velX);
   }
   if(modo==='nuevo'){ var m=L.momentos[sigM], dd=prog*L.total;
-    if(m && espera<=0 && dd>=m.d-1){ primerPlano(m,ts); if(m.cima||m.fin){ espera=m.dur/Math.min(2,velX); espTot=espera; } sigM++; } }
+    if(m && espera<=0 && dd>=m.d-1){ primerPlano(m,ts); if(m.cima||m.fin||m.pausa){ espera=(m.pausa?1600:m.dur)/Math.min(2,velX); espTot=espera; } sonarMomento(m); sigM++; } }
   pintar(dt,ts,true);
-  if(prog>=1 && espera<=0){ corriendo=false; actualizarBoton(); setTimeout(function(){ if(modo==='nuevo') mostrarResumen(); else encuadrar(1800); },900); return; }
+  if(modo==='nuevo'){ var iS=enD(D.nuevo,prog*D.nuevo.total).i; sonidoCuadro(ts,D.nuevo.pend[iS],D.nuevo.vel?D.nuevo.vel[iS]:null); }
+  if(prog>=1 && espera<=0){ vientoParar(); corriendo=false; actualizarBoton(); setTimeout(function(){ if(modo==='nuevo') mostrarResumen(); else encuadrar(1800); },900); return; }
   if(!window._manual) requestAnimationFrame(frame);
 }
 // modo grabación (solo para hacer el video cuadro a cuadro): avanza dt ms de reloj simulado
@@ -560,7 +608,7 @@ function pintar(dt,ts,mover){
       if(fin-a0>5){ var pa=enD(N,a0); seg=[pa.p]; for(var j=pa.i+1;j<N.c.length && N.cum[j]<fin;j++) seg.push(N.c[j]); seg.push(enD(N,fin).p); } }
     if(seg.length<2||seg[0]===seg[1]) seg=[p,mover2(p,brg)];
     mapa.getSource('pulso').setData({type:'Feature',geometry:{type:'LineString',coordinates:seg}});
-    $('dAlt').innerHTML=Math.round(h)+'<i>m</i>'; $('dPend').innerHTML=(gp>=0?'':'−')+fmt(Math.abs(gp*100),1)+'<i>%</i>'; $('dSub').innerHTML=Math.round(N.sub[i])+'<i>m</i>';
+    if(N.vel){ $('lAlt').textContent='Velocidad'; $('dAlt').innerHTML=Math.round(N.vel[i])+'<i>km/h</i>'; } else { $('lAlt').textContent='Altura'; $('dAlt').innerHTML=Math.round(h)+'<i>m</i>'; } $('dPend').innerHTML=(gp>=0?'':'−')+fmt(Math.abs(gp*100),1)+'<i>%</i>'; $('dSub').innerHTML=Math.round(N.sub[i])+'<i>m</i>';
     // cuánto lleva subido en esta cuesta (para pasar de cansado a agotado)
     if(ultAlt===null) ultAlt=h; if(gp>0.03) ganCuesta+=Math.max(0,h-ultAlt); else if(gp<0.01) ganCuesta=Math.max(0,ganCuesta-Math.abs(h-ultAlt)*2-dt*.004); ultAlt=h;
     // ---- director de tomas ----
@@ -586,7 +634,8 @@ function pintar(dt,ts,mover){
     // ---- cara según la ruta (cambia solo si se mantiene ~0,6 s) ----
     var curvaAd=Math.abs(giro(rumboEn(N,d+20),rumboEn(N,d+140)));
     if(ganCuesta>15) huboCuesta=ts; var trasCuesta=gp<0.02 && ts-huboCuesta<4000 && huboCuesta>0;
-    var ex=caraSegun(gp,ganCuesta,N.pend[Math.min(N.pend.length-1,i+14)],exprAct,{curva:curvaAd,faltan:N.total-d,subidoDia:N.sub[i],trasCuesta:trasCuesta,cima:Math.abs(d-N.cum[N.imax])<150,recorrido:d});
+    var vReal=N.vel?N.vel[i]:null, enPausa=(N.pausas||[]).some(function(pz){ return Math.abs(pz.d-d)<70; });
+    var ex=caraSegun(gp,ganCuesta,N.pend[Math.min(N.pend.length-1,i+14)],exprAct,{vel:vReal,pausa:enPausa,curva:curvaAd,faltan:N.total-d,subidoDia:N.sub[i],trasCuesta:trasCuesta,cima:Math.abs(d-N.cum[N.imax])<150,recorrido:d});
     // familias: dentro de la misma (bajada / subida) la espera NO se reinicia y el cambio es rápido (0,3 s);
     // antes, en una bajada que pasa de −4 % a −12 % y vuelve en 3 s, la cara alternaba y nunca cambiaba
     var fam=function(e){ return /emocionado|adrenalina|sorprendido/.test(e)?'baja':/cansado|enojado|agotado/.test(e)?'sube':e; };
