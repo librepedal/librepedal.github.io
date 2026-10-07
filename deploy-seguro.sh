@@ -136,7 +136,7 @@ fi
 echo "→ publicando..."
 cd "$OUT"
 CLOUDFLARE_API_TOKEN="$TOK" CLOUDFLARE_ACCOUNT_ID="$ACC" \
-  npx wrangler pages deploy . --project-name=librepedal --branch=main --commit-dirty=true
+  npx wrangler pages deploy . --project-name=librepedal --branch="${LP_PAGES_BRANCH:-main}" --commit-dirty=true  # LP_PAGES_BRANCH: solo la vista previa (deploy-prueba.yml); producción = main
 
 echo "→ verificando que los secretos NO estén públicos..."
 sleep 10

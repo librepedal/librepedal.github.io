@@ -1,0 +1,29 @@
+name: Vista previa (no es librepedal.cl)
+
+# Publica la rama prueba/* en una dirección de VISTA PREVIA de Cloudflare Pages
+# (https://prueba.librepedal.pages.dev), para que Inty pruebe en su teléfono ANTES
+# de publicar. No toca librepedal.cl: eso sigue saliendo solo de main.
+# Ojo: usa la misma base de datos (Firebase) que producción.
+
+on:
+  push:
+    branches: ['prueba/**']
+
+jobs:
+  vista-previa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Publicar vista previa con deploy-seguro
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          LP_PAGES_BRANCH: prueba
+        run: |
+          printf 'TOKEN = %s\nACCOUNT_ID = %s\n' "$CF_TOKEN" "$CF_ACCOUNT" > MI-CLOUDFLARE.txt
+          chmod +x deploy-seguro.sh || true
+          bash deploy-seguro.sh
+          rm -f MI-CLOUDFLARE.txt
