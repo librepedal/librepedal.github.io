@@ -190,7 +190,10 @@ PERSONAJES.orbe={id:'orbe', nombre:'Pistero Orbe', capas:true, tiene:function(e)
 PERSONAJES.slime={id:'slime', nombre:'Pistero Slime', capas:true, tiene:function(e){ return ESTADOS.indexOf(e)>=0; },
   crear:function(host){ return crearSlimeCapas(host,'personajes/slime-capa-casco.jpg','personajes/slime-capa-cuerpo.jpg').then(function(api){
     api.svg.setAttribute('viewBox','463 150 450 450'); return api; }); }};
-// siguen (desde sus ramas): Vinilo, Vidrio (feature/armario-piezas) y cada mascota (feature/mascotas)
+PERSONAJES.vinilo={id:'vinilo', nombre:'Pistero Androide', capas:true, tiene:function(e){ return ESTADOS.indexOf(e)>=0; },
+  crear:function(host){ return crearViniloCapas(host,'personajes/vinilo-capa-casco.jpg','personajes/vinilo-capa-cabeza.jpg').then(function(api){
+    api.svg.setAttribute('viewBox','463 170 450 450'); return api; }); }};
+// siguen (desde sus ramas): Vidrio (feature/armario-piezas) y cada mascota (feature/mascotas)
 var personaje=PERSONAJES[(new URLSearchParams(location.search)).get('p')||'ciber']||PERSONAJES.pistero;
 function cara(expr){ var e=expr, n=0; while(!personaje.tiene(e) && RESPALDO[e] && n++<4) e=RESPALDO[e]; return personaje.cara(e); }
 function caraPistero(expr){
