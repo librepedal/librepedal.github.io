@@ -80,6 +80,7 @@ p{margin:0;max-width:66ch}
 .it .vis svg{width:88%;height:88%}
 .it small{font-size:.64rem;color:#cfd8ea;font-weight:600;text-align:center;line-height:1.15}
 .it.on{border-color:var(--p);background:linear-gradient(180deg,#24180f,#141a2b)}
+.it .vis.pz{background:radial-gradient(70% 70% at 50% 45%,#1a2440,#0f1524 80%)}.it .vis.pz img{width:78%;height:78%;object-fit:contain}.it .pz-est{color:var(--ok);font-size:.58rem;letter-spacing:.04em;text-transform:uppercase}
 .pend{all:unset;display:grid;justify-items:center;gap:4px;padding:10px 6px;border-radius:12px;border:1.5px dashed var(--line);color:var(--mute);text-align:center;min-width:0}
 .pend .vis{width:58px;height:58px;display:grid;place-items:center;opacity:.35;filter:grayscale(1)}
 .pend .vis img,.pend .vis svg{width:100%;height:100%;object-fit:contain}
@@ -163,19 +164,19 @@ var $=function(s){ return document.querySelector(s); };
 var M=[
   {id:'ciber', n:'Cyberpunk', mov:'Se mueve a saltos, con visor y boca de luz', fn:'crearCiberCapas', capa:'casco',
    estilos:[['Naranja y cian','linear-gradient(135deg,#ff7a1a 50%,#22e6e6 50%)',''],['Verde y magenta','linear-gradient(135deg,#3ee06a 50%,#e639c8 50%)','hue-rotate(120deg)'],['Lima y violeta','linear-gradient(135deg,#c6f432 50%,#7c5cff 50%)','hue-rotate(60deg)'],['Rosa y verde','linear-gradient(135deg,#ff3d8b 50%,#2ee08a 50%)','hue-rotate(-60deg)']],
-   piezas:['Cables','Grafitis del casco','Visor partido']},
+   piezas:['Cables de luz','Grafitis del casco','Visor partido']},
   {id:'orbe', n:'Orbe', mov:'Flota; su cara es de luz', fn:'crearOrbeCapas', capa:'cuerpo',
    estilos:[['Ámbar','#ff9a3c',''],['Celeste','#38bdf8','hue-rotate(170deg)'],['Verde','#4ade80','hue-rotate(95deg)'],['Rosa','#f472b6','hue-rotate(-45deg) saturate(1.2)']],
-   piezas:['Anillo de luz','Chispas','Visera']},
+   piezas:['Estela de luz','Chispas','Visera']},
   {id:'slime', n:'Slime', mov:'Gelatina que tiembla y se derrite al cansarse', fn:'crearSlimeCapas', capa:'cuerpo',
    estilos:[['Naranja','#ff8a3d',''],['Lima','#a3e635','hue-rotate(60deg)'],['Uva','#a855f7','hue-rotate(-110deg) saturate(1.1)'],['Celeste','#38bdf8','hue-rotate(165deg)']],
-   piezas:['Burbujas','Algo tragado adentro','Gotitas']},
+   piezas:[{n:'Burbujas',v:'burbujas'},'Fruta adentro','Gotitas']},
   {id:'vinilo', n:'Androide de vinilo', mov:'Servos, ojos de diafragma y boca LED', fn:'crearViniloCapas', capa:'casco',
    estilos:[['Naranja','#f08a4b',''],['Celeste','#38bdf8','hue-rotate(175deg)'],['Menta','#5eead4','hue-rotate(140deg) saturate(.9)'],['Grafito','#3a3f4a','grayscale(1) brightness(.34) contrast(1.15)']],
-   piezas:['Antena','Calcomanías del casco','Ojo de otro color']},
+   piezas:['Antena con resorte','Calcomanías reflectantes','Ojo de otro color']},
   {id:'casco', n:'Casco vivo', mov:'Parpadea y habla con su visor LED',
    estilos:[['Naranja','#fc4c02'],['Azul','#2f80ed'],['Verde','#22c55e'],['Rojo','#e11d48'],['Negro','#2a2f3a']],
-   piezas:['Cejas','Pegatinas','Luz trasera']},
+   piezas:['Cejas','Calcomanías reflectantes','Luz frontal y direccionales']},
   {id:'clasico', n:'Clásico', mov:'El Pistero de siempre'}
 ];
 var porId={}; M.forEach(function(m){ porId[m.id]=m; });
@@ -202,7 +203,10 @@ var FONDOS=[
 ];
 // ---------- estado ----------
 var S={modelo:'ciber', estilo:{}, fondo:'noche', tab:'estilos', cat:'pelo', cl:Object.assign({},BASE)};
-M.forEach(function(m){ S.estilo[m.id]=0; });
+M.forEach(function(m){ S.estilo[m.id]=0; }); S.puestas={}; var PZ={};
+// piezas vector puestas: se agregan al SVG del modelo cuando su animación ya está lista
+function aplicarPiezas(id){ var a=inst[id]; if(!a||!a.listo) return; var lib=(window.PIEZAS_VECTOR||{})[id]||{}, on=S.puestas[id]||{}; PZ[id]=PZ[id]||{};
+  Object.keys(lib).forEach(function(v){ if(on[v] && !PZ[id][v]){ PZ[id][v]=lib[v](a.el); } else if(!on[v] && PZ[id][v]){ PZ[id][v].quitar(); delete PZ[id][v]; } }); }
 // orden barajado (pieza 1: ninguno gana por ir primero)
 var orden=M.map(function(m){ return m.id; }); for(var i=orden.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=orden[i]; orden[i]=orden[j]; orden[j]=t; }
 S.modelo=orden[0];
@@ -213,7 +217,7 @@ function instDe(id){
   if(inst[id]) return inst[id];
   var el=document.createElement('div'); el.className='mod m-'+id; var m=porId[id];
   var api={el:el, ult:'reposo', real:null, poner:function(e){ api.ult=e; if(api.real) api.real(e); }};
-  if(m.fn){ window[m.fn](el,IMG[id][0],IMG[id][1]).then(function(a){ api.real=a.estado; a.estado(api.ult); aplicarEstilo(id); }); }
+  if(m.fn){ window[m.fn](el,IMG[id][0],IMG[id][1]).then(function(a){ api.real=a.estado; a.estado(api.ult); api.listo=true; aplicarEstilo(id); aplicarPiezas(id); }); }
   else { el.classList.add('svgmod'); api.poner=function(e){ api.ult=e; pintarSvg(id,e); }; }
   inst[id]=api; return api;
 }
@@ -268,9 +272,12 @@ function panel(){
         b.addEventListener('click',function(){ S.cl[C.k]=id; pintarSvg('clasico','feliz'); navPist(); panel(); }); g.appendChild(b); });
     } else {
       var g2=document.createElement('div'); g2.className='grid'; p.appendChild(g2);
-      m.piezas.forEach(function(n){ var d=document.createElement('div'); d.className='pend';
-        d.innerHTML='<span class="vis">'+(TH[S.modelo]?'<img src="'+TH[S.modelo]+'" alt="">':pisteroFrenteSVG({expr:'feliz'}))+'</span><b>'+n+'</b><span>Por dibujar</span>'; g2.appendChild(d); });
-      var av2=document.createElement('div'); av2.className='aviso'; av2.textContent='Estas 3 piezas se dibujan solo para el '+m.n+' después de tu OK. Antes se busca cómo es cada cosa en la vida real.'; p.appendChild(av2);
+      m.piezas.forEach(function(pz){ var n=pz.n||pz, v=pz.v, lib=(window.PIEZAS_VECTOR||{})[S.modelo]||{}, cara=(TH[S.modelo]?'<img src="'+TH[S.modelo]+'" alt="">':pisteroFrenteSVG({expr:'feliz'}));
+        if(v && lib[v]){ var on=!!(S.puestas[S.modelo]||{})[v], b=document.createElement('button'); b.type='button'; b.className='it'+(on?' on':''); b.setAttribute('aria-pressed',on);
+          b.innerHTML='<span class="vis pz">'+cara+'</span><small>'+n+'</small><small class="pz-est">'+(on?'Puesta':'Probar')+'</small>';
+          b.addEventListener('click',function(){ var p=S.puestas[S.modelo]=S.puestas[S.modelo]||{}; p[v]=!p[v]; aplicarPiezas(S.modelo); instDe(S.modelo).poner('feliz'); panel(); }); g2.appendChild(b); return; }
+        var d=document.createElement('div'); d.className='pend'; d.innerHTML='<span class="vis">'+cara+'</span><b>'+n+'</b><span>Por dibujar</span>'; g2.appendChild(d); });
+      var av2=document.createElement('div'); av2.className='aviso'; av2.textContent='Las piezas de '+m.n+' solo le quedan a él. Las que dicen “Por dibujar” vienen en las próximas entregas.'; p.appendChild(av2);
     }
   } else {
     var g3=document.createElement('div'); g3.className='grid'; p.appendChild(g3);

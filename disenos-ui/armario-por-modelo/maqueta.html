@@ -80,6 +80,7 @@ p{margin:0;max-width:66ch}
 .it .vis svg{width:88%;height:88%}
 .it small{font-size:.64rem;color:#cfd8ea;font-weight:600;text-align:center;line-height:1.15}
 .it.on{border-color:var(--p);background:linear-gradient(180deg,#24180f,#141a2b)}
+.it .vis.pz{background:radial-gradient(70% 70% at 50% 45%,#1a2440,#0f1524 80%)}.it .vis.pz img{width:78%;height:78%;object-fit:contain}.it .pz-est{color:var(--ok);font-size:.58rem;letter-spacing:.04em;text-transform:uppercase}
 .pend{all:unset;display:grid;justify-items:center;gap:4px;padding:10px 6px;border-radius:12px;border:1.5px dashed var(--line);color:var(--mute);text-align:center;min-width:0}
 .pend .vis{width:58px;height:58px;display:grid;place-items:center;opacity:.35;filter:grayscale(1)}
 .pend .vis img,.pend .vis svg{width:100%;height:100%;object-fit:contain}
@@ -598,6 +599,52 @@ function pisteroFrenteSVG(o){
   s+='<g fill="'+LED+'" filter="url(#'+u+'g)">'+led+'</g></svg>';
   return s;
 }
+
+/* Piezas propias que son luz o efecto (vector, como las caras): se agregan al SVG que ya armó cada modelo
+   (crearXCapas) sin tocar su código. Cada pieza: PIEZAS_VECTOR[modelo][pieza](elModelo) -> {quitar()}.
+   Referencias reales en PIEZAS.md. */
+var PIEZAS_VECTOR = (function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function nodo(tag, at){ var n=document.createElementNS(NS,tag); for(var k in at) n.setAttribute(k,at[k]); return n; }
+  function defsDe(svg){ var d=svg.querySelector('defs'); if(!d){ d=nodo('defs',{}); svg.insertBefore(d,svg.firstChild); } return d; }
+  var uid=0;
+
+  // ---------- Slime · Burbujas ----------
+  // Aire atrapado en gelatina: esfera transparente con borde claro, brillo arriba a la izquierda y un reflejo tenue abajo
+  // (la luz que la burbuja concentra). Suben lento y se desvanecen arriba; quedan DENTRO de la gelatina (máscara con la
+  // misma imagen del cuerpo) y DEBAJO de la cara. Van en el grupo "frente" del Slime: se mueven y tiemblan con él.
+  function slimeBurbujas(el){
+    var svg=el.querySelector('svg'); if(!svg) return null;
+    var frente=[].filter.call(svg.querySelectorAll('g[clip-path]'),function(g){ return g.querySelector('image'); })[0]; if(!frente) return null;
+    var img=frente.querySelector('image'), cara=img.nextElementSibling, u='pzb'+(++uid);
+    var defs=defsDe(svg);
+    var f=nodo('filter',{id:u+'b',x:'0',y:'0',width:'1',height:'1'}); f.appendChild(nodo('feColorMatrix',{type:'matrix',values:'0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'}));
+    var m=nodo('mask',{id:u+'m',maskUnits:'userSpaceOnUse',x:'0',y:'0',width:'1376',height:'768'});
+    m.appendChild(nodo('image',{href:img.getAttribute('href'),x:'0',y:'0',width:'1376',height:'768',filter:'url(#'+u+'b)'}));
+    defs.appendChild(f); defs.appendChild(m);
+    var g=nodo('g',{mask:'url(#'+u+'m)','class':'pieza-burbujas'});
+    // [x, y de partida, radio, segundos en subir, desfase] — a los lados y abajo, lejos de los ojos (EY 382) y la boca (MY 458)
+    // radios pensados para la tarjeta del Perfil (el Slime mide ~124 px: radio 34 = ~6 px en pantalla)
+    var B=[[462,610,34,9,0],[548,560,18,7,2.1],[912,600,38,10,1.2],[972,540,20,8,4.6],[660,640,16,6.5,3.3],[770,628,26,8.5,5.4],[850,520,15,7.5,.6]];
+    B.forEach(function(b){
+      var x=b[0], y=b[1], r=b[2], dur=b[3], del=b[4], sube=60+r*2.2;
+      var gb=nodo('g',{opacity:reduce?'.8':'0'});
+      gb.appendChild(nodo('circle',{cx:x,cy:y,r:r,fill:'rgba(255,240,222,.10)',stroke:'rgba(255,246,232,.62)','stroke-width':Math.max(1.6,r*.14)}));
+      gb.appendChild(nodo('ellipse',{cx:x-r*.38,cy:y-r*.4,rx:r*.3,ry:r*.2,fill:'#fff',opacity:'.9',transform:'rotate(-35 '+(x-r*.38)+' '+(y-r*.4)+')'}));
+      gb.appendChild(nodo('path',{d:'M'+(x-r*.55)+' '+(y+r*.42)+' Q'+x+' '+(y+r*.82)+' '+(x+r*.55)+' '+(y+r*.42),fill:'none',stroke:'rgba(255,214,170,.55)','stroke-width':Math.max(1.2,r*.12),'stroke-linecap':'round'}));
+      if(!reduce){
+        gb.appendChild(nodo('animateTransform',{attributeName:'transform',type:'translate',values:'0 0; '+(r*.5).toFixed(1)+' '+(-sube*.5).toFixed(1)+'; '+(-r*.3).toFixed(1)+' '+(-sube).toFixed(1),dur:dur+'s',begin:(-del)+'s',repeatCount:'indefinite',calcMode:'spline',keySplines:'.4 0 .6 1; .4 0 .6 1'}));
+        gb.appendChild(nodo('animate',{attributeName:'opacity',values:'0;.95;.95;0',keyTimes:'0;.15;.75;1',dur:dur+'s',begin:(-del)+'s',repeatCount:'indefinite'}));
+      }
+      g.appendChild(gb);
+    });
+    frente.insertBefore(g,cara);
+    return { quitar:function(){ g.remove(); f.remove(); m.remove(); } };
+  }
+
+  return { slime:{ burbujas:slimeBurbujas } };
+})();
 
 </script>
 <script>
@@ -1551,19 +1598,19 @@ var $=function(s){ return document.querySelector(s); };
 var M=[
   {id:'ciber', n:'Cyberpunk', mov:'Se mueve a saltos, con visor y boca de luz', fn:'crearCiberCapas', capa:'casco',
    estilos:[['Naranja y cian','linear-gradient(135deg,#ff7a1a 50%,#22e6e6 50%)',''],['Verde y magenta','linear-gradient(135deg,#3ee06a 50%,#e639c8 50%)','hue-rotate(120deg)'],['Lima y violeta','linear-gradient(135deg,#c6f432 50%,#7c5cff 50%)','hue-rotate(60deg)'],['Rosa y verde','linear-gradient(135deg,#ff3d8b 50%,#2ee08a 50%)','hue-rotate(-60deg)']],
-   piezas:['Cables','Grafitis del casco','Visor partido']},
+   piezas:['Cables de luz','Grafitis del casco','Visor partido']},
   {id:'orbe', n:'Orbe', mov:'Flota; su cara es de luz', fn:'crearOrbeCapas', capa:'cuerpo',
    estilos:[['Ámbar','#ff9a3c',''],['Celeste','#38bdf8','hue-rotate(170deg)'],['Verde','#4ade80','hue-rotate(95deg)'],['Rosa','#f472b6','hue-rotate(-45deg) saturate(1.2)']],
-   piezas:['Anillo de luz','Chispas','Visera']},
+   piezas:['Estela de luz','Chispas','Visera']},
   {id:'slime', n:'Slime', mov:'Gelatina que tiembla y se derrite al cansarse', fn:'crearSlimeCapas', capa:'cuerpo',
    estilos:[['Naranja','#ff8a3d',''],['Lima','#a3e635','hue-rotate(60deg)'],['Uva','#a855f7','hue-rotate(-110deg) saturate(1.1)'],['Celeste','#38bdf8','hue-rotate(165deg)']],
-   piezas:['Burbujas','Algo tragado adentro','Gotitas']},
+   piezas:[{n:'Burbujas',v:'burbujas'},'Fruta adentro','Gotitas']},
   {id:'vinilo', n:'Androide de vinilo', mov:'Servos, ojos de diafragma y boca LED', fn:'crearViniloCapas', capa:'casco',
    estilos:[['Naranja','#f08a4b',''],['Celeste','#38bdf8','hue-rotate(175deg)'],['Menta','#5eead4','hue-rotate(140deg) saturate(.9)'],['Grafito','#3a3f4a','grayscale(1) brightness(.34) contrast(1.15)']],
-   piezas:['Antena','Calcomanías del casco','Ojo de otro color']},
+   piezas:['Antena con resorte','Calcomanías reflectantes','Ojo de otro color']},
   {id:'casco', n:'Casco vivo', mov:'Parpadea y habla con su visor LED',
    estilos:[['Naranja','#fc4c02'],['Azul','#2f80ed'],['Verde','#22c55e'],['Rojo','#e11d48'],['Negro','#2a2f3a']],
-   piezas:['Cejas','Pegatinas','Luz trasera']},
+   piezas:['Cejas','Calcomanías reflectantes','Luz frontal y direccionales']},
   {id:'clasico', n:'Clásico', mov:'El Pistero de siempre'}
 ];
 var porId={}; M.forEach(function(m){ porId[m.id]=m; });
@@ -1590,7 +1637,10 @@ var FONDOS=[
 ];
 // ---------- estado ----------
 var S={modelo:'ciber', estilo:{}, fondo:'noche', tab:'estilos', cat:'pelo', cl:Object.assign({},BASE)};
-M.forEach(function(m){ S.estilo[m.id]=0; });
+M.forEach(function(m){ S.estilo[m.id]=0; }); S.puestas={}; var PZ={};
+// piezas vector puestas: se agregan al SVG del modelo cuando su animación ya está lista
+function aplicarPiezas(id){ var a=inst[id]; if(!a||!a.listo) return; var lib=(window.PIEZAS_VECTOR||{})[id]||{}, on=S.puestas[id]||{}; PZ[id]=PZ[id]||{};
+  Object.keys(lib).forEach(function(v){ if(on[v] && !PZ[id][v]){ PZ[id][v]=lib[v](a.el); } else if(!on[v] && PZ[id][v]){ PZ[id][v].quitar(); delete PZ[id][v]; } }); }
 // orden barajado (pieza 1: ninguno gana por ir primero)
 var orden=M.map(function(m){ return m.id; }); for(var i=orden.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=orden[i]; orden[i]=orden[j]; orden[j]=t; }
 S.modelo=orden[0];
@@ -1601,7 +1651,7 @@ function instDe(id){
   if(inst[id]) return inst[id];
   var el=document.createElement('div'); el.className='mod m-'+id; var m=porId[id];
   var api={el:el, ult:'reposo', real:null, poner:function(e){ api.ult=e; if(api.real) api.real(e); }};
-  if(m.fn){ window[m.fn](el,IMG[id][0],IMG[id][1]).then(function(a){ api.real=a.estado; a.estado(api.ult); aplicarEstilo(id); }); }
+  if(m.fn){ window[m.fn](el,IMG[id][0],IMG[id][1]).then(function(a){ api.real=a.estado; a.estado(api.ult); api.listo=true; aplicarEstilo(id); aplicarPiezas(id); }); }
   else { el.classList.add('svgmod'); api.poner=function(e){ api.ult=e; pintarSvg(id,e); }; }
   inst[id]=api; return api;
 }
@@ -1656,9 +1706,12 @@ function panel(){
         b.addEventListener('click',function(){ S.cl[C.k]=id; pintarSvg('clasico','feliz'); navPist(); panel(); }); g.appendChild(b); });
     } else {
       var g2=document.createElement('div'); g2.className='grid'; p.appendChild(g2);
-      m.piezas.forEach(function(n){ var d=document.createElement('div'); d.className='pend';
-        d.innerHTML='<span class="vis">'+(TH[S.modelo]?'<img src="'+TH[S.modelo]+'" alt="">':pisteroFrenteSVG({expr:'feliz'}))+'</span><b>'+n+'</b><span>Por dibujar</span>'; g2.appendChild(d); });
-      var av2=document.createElement('div'); av2.className='aviso'; av2.textContent='Estas 3 piezas se dibujan solo para el '+m.n+' después de tu OK. Antes se busca cómo es cada cosa en la vida real.'; p.appendChild(av2);
+      m.piezas.forEach(function(pz){ var n=pz.n||pz, v=pz.v, lib=(window.PIEZAS_VECTOR||{})[S.modelo]||{}, cara=(TH[S.modelo]?'<img src="'+TH[S.modelo]+'" alt="">':pisteroFrenteSVG({expr:'feliz'}));
+        if(v && lib[v]){ var on=!!(S.puestas[S.modelo]||{})[v], b=document.createElement('button'); b.type='button'; b.className='it'+(on?' on':''); b.setAttribute('aria-pressed',on);
+          b.innerHTML='<span class="vis pz">'+cara+'</span><small>'+n+'</small><small class="pz-est">'+(on?'Puesta':'Probar')+'</small>';
+          b.addEventListener('click',function(){ var p=S.puestas[S.modelo]=S.puestas[S.modelo]||{}; p[v]=!p[v]; aplicarPiezas(S.modelo); instDe(S.modelo).poner('feliz'); panel(); }); g2.appendChild(b); return; }
+        var d=document.createElement('div'); d.className='pend'; d.innerHTML='<span class="vis">'+cara+'</span><b>'+n+'</b><span>Por dibujar</span>'; g2.appendChild(d); });
+      var av2=document.createElement('div'); av2.className='aviso'; av2.textContent='Las piezas de '+m.n+' solo le quedan a él. Las que dicen “Por dibujar” vienen en las próximas entregas.'; p.appendChild(av2);
     }
   } else {
     var g3=document.createElement('div'); g3.className='grid'; p.appendChild(g3);
