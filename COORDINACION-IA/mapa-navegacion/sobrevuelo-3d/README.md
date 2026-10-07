@@ -79,3 +79,15 @@ para que un cerro no deje a Pistero transparente.
 - **Introducción**: al dar play baja desde la vista general hasta Pistero en 2,8 s antes de partir.
 - **Viñetas sobrias**: tarjeta oscura translúcida con anillo de color del estado; fundido + 10 px, sin rebote ni temblor.
 - MapLibre reescribe `style.opacity` de los marcadores en cada cuadro (oclusión): para esconder uno, `visibility`.
+
+## v5 (2026-10-07) — problemas de render (Inty: "siguen habiendo problemas de render")
+- **Causa raíz encontrada en MapLibre 4.7.1:** `easeTo`/`fitBounds` con terreno llaman `_prepareElevation`
+  (`_elevationFreeze=true`) y solo descongelan si se pasó `freezeElevation`. Tras la vista general con `fitBounds`
+  la altura del mapa quedaba congelada: la cámara no seguía el relieve (Pistero subía/bajaba en pantalla; en
+  "Calles" la cámara quedaba a 0 m, pegada al suelo). Arreglo: vista general con `cameraForBounds` + `jumpTo`
+  y animación propia; defensa por cuadro. Medido: altura del mapa = terreno en todo el recorrido (sat y calles).
+  **Al integrar en la app: no usar fitBounds/easeTo/flyTo con terreno sin `freezeElevation`.**
+- Encuadre con el tamaño real: Pistero queda en la zona libre entre la barra y el panel (antes, en pantallas bajas
+  el panel tapaba la huella y Pistero chocaba con el título). Panel compacto si la altura < 700 px.
+- Cambiar Satélite/Calles con el sobrevuelo andando ya no rompe la animación (antes: error setData y se congelaba).
+- Relieve sombreado con fuente propia (`dem-sombra`), como pide MapLibre.
