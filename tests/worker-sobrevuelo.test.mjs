@@ -1,0 +1,220 @@
+// Worker del sobrevuelo (worker-sobrevuelo/worker.js) + el cliente (sobrevuelo-3d.js) que lo usa.
+// Inty (2026-10-07): "hazlo con un worker que lo guarde una vez por ruta". Se prueba sin red: Valhalla y KV simulados.
+// - una ruta se pega UNA vez; la segunda vez sale de la caché sin llamar a Valhalla (también desde otro "teléfono")
+// - la trampa de Valhalla (200 con solo un pedazo de la ruta) se detecta por tramo y no se guarda como buena
+// - si todo falla no se guarda (se reintenta otro día); límite por IP solo para rutas nuevas; CORS; entradas malas
+// - el cliente: worker primero; si el worker falla, responde mal o no está publicado → Valhalla directo, como antes
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import vm from 'vm';
+
+const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
+const src = readFileSync(join(raiz, 'worker-sobrevuelo', 'worker.js'), 'utf8');
+const W = await import('data:text/javascript;charset=utf-8,' + encodeURIComponent(src));
+let f = 0, n = 0; const ok = (c, m) => { n++; if (!c) { f++; console.log('  ✗ ' + m); } };
+
+// ---------- simulaciones ----------
+function encPoly6(c) { // [[lon,lat]] → polyline6 (lo inverso de decPoly6)
+  let s = '', pla = 0, plo = 0;
+  const e = (v) => { v = v < 0 ? ~(v << 1) : v << 1; let o = ''; while (v >= 32) { o += String.fromCharCode((32 | (v & 31)) + 63); v >>= 5; } return o + String.fromCharCode(v + 63); };
+  for (const [lo, la] of c) { const a = Math.round(la * 1e6), b = Math.round(lo * 1e6); s += e(a - pla) + e(b - plo); pla = a; plo = b; }
+  return s;
+}
+// Valhalla simulado. modo: 'bien' (devuelve el tramo), 'pedazo' (solo la mitad: la trampa), 'error' (500)
+const V = { llamadas: 0, modo: () => 'bien' };
+function valhalla(body) {
+  V.llamadas++;
+  const shape = JSON.parse(body).shape, k = V.llamadas, m = V.modo(k, shape);
+  if (m === 'error') return new Response('{}', { status: 500 });
+  let c = shape.map((p) => [p.lon + 0.00002, p.lat]); // "pegado": corrido ~2 m
+  if (m === 'pedazo') c = c.slice(0, Math.ceil(c.length / 2));
+  return new Response(JSON.stringify({ trip: { legs: [{ shape: encPoly6(c) }] } }), { status: 200 });
+}
+function kv() {
+  const m = new Map(), puts = [];
+  return { m, puts, async get(k) { return m.has(k) ? m.get(k) : null; }, async put(k, v, o) { puts.push({ k, o }); m.set(k, v); } };
+}
+globalThis.fetch = async (url, o) => { if (String(url).includes('valhalla')) return valhalla(o.body); throw new Error('red no permitida en la prueba: ' + url); };
+
+// ruta de prueba: N puntos cada ~44 m hacia el este (lat, lon)
+const ruta = (N, lat = -40.2) => Array.from({ length: N }, (_, i) => [lat, +(-72.3 + i * 0.0005).toFixed(5)]);
+const pedir = (env, cuerpo, { ip = '1.1.1.1', origen = 'https://librepedal.cl', metodo = 'POST' } = {}) =>
+  W.default.fetch(new Request('https://librepedal-sobrevuelo.librepedal.workers.dev', {
+    method: metodo, headers: { 'Content-Type': 'application/json', Origin: origen, 'CF-Connecting-IP': ip },
+    body: metodo === 'POST' ? (typeof cuerpo === 'string' ? cuerpo : JSON.stringify(cuerpo)) : undefined,
+  }), env);
+
+// 1) primera vez: pega por tramos de 120 (de a 2), guarda 180 días
+{
+  const env = { RATE_LIMIT_AUTH: kv() }; V.llamadas = 0; V.modo = () => 'bien';
+  const r = await pedir(env, { puntos: ruta(300) }), j = await r.json();
+  ok(r.status === 200 && j.m === 'valhalla' && j.cache === false && j.t === '3/3', 'ruta nueva → pegada (3 tramos de 300 puntos) ' + JSON.stringify({ s: r.status, m: j.m, t: j.t }));
+  ok(V.llamadas === 3, '3 pedidos a Valhalla (tramos de 120 que se tocan), fueron ' + V.llamadas);
+  const g = env.RATE_LIMIT_AUTH.puts.find((p) => p.k.startsWith('sbv:ruta:'));
+  ok(g && g.o.expirationTtl === 180 * 24 * 3600 && /^sbv:ruta:[0-9a-f]{64}$/.test(g.k), 'se guarda con clave sbv:ruta:<sha256> y 180 días');
+  ok(j.c.length > 2 && j.c.every((p, i) => i === 0 || i === j.c.length - 1 || W.hav(j.c[i - 1], p) >= 25 - 1e-6), 'compacta: 1 punto cada ≥25 m');
+  ok(Math.abs(j.c[0][0] - (-72.3 + 0.00002)) < 1e-5 && Math.abs(j.c[0][1] - -40.2) < 1e-5, 'entrega [lon,lat] de lo pegado');
+  // 2) segunda vez (otro teléfono, otra IP): caché, CERO llamadas a Valhalla, mismo resultado
+  V.llamadas = 0;
+  const r2 = await pedir(env, { puntos: ruta(300) }, { ip: '2.2.2.2' }), j2 = await r2.json();
+  ok(j2.cache === true && V.llamadas === 0 && JSON.stringify(j2.c) === JSON.stringify(j.c), 'misma ruta → de la caché, sin llamar a Valhalla');
+  ok(!env.RATE_LIMIT_AUTH.puts.some((p) => p.k === 'sbv:ip:2.2.2.2'), 'leer de la caché no gasta el límite de la IP');
+  // la misma ruta con ruido bajo 1 m (redondeo a 5 decimales) es la misma clave
+  V.llamadas = 0;
+  const casi = ruta(300).map(([a, b]) => [a + 0.000001, b - 0.000001]);
+  const j3 = await (await pedir(env, { puntos: casi })).json();
+  ok(j3.cache === true && V.llamadas === 0, 'diferencias bajo 1 m → misma ruta guardada');
+  // otra ruta → otra clave
+  const j4 = await (await pedir(env, { puntos: ruta(300, -40.3) })).json();
+  ok(j4.cache === false && V.llamadas === 3, 'otra ruta → se pega aparte');
+}
+
+// 3) la trampa de Valhalla: 200 con solo un pedazo → ese tramo queda con los puntos propios, resultado "parcial"
+{
+  const env = { RATE_LIMIT_AUTH: kv() }; V.llamadas = 0; V.modo = (k) => (k === 2 ? 'pedazo' : 'bien');
+  const j = await (await pedir(env, { puntos: ruta(300) })).json();
+  ok(j.m === 'parcial' && j.t === '2/3', 'tramo con respuesta a medias detectado → parcial 2/3 (' + j.m + ' ' + j.t + ')');
+  const largoTotal = j.c.slice(1).reduce((s, p, i) => s + W.hav(j.c[i], p), 0);
+  ok(largoTotal > 299 * 42 * 0.97, 'la línea no se corta donde Valhalla devolvió un pedazo (' + Math.round(largoTotal) + ' m)');
+  // la prueba detecta el error original: sin validar el largo, el pedazo pasaba como bueno
+  ok(env.RATE_LIMIT_AUTH.m.size >= 1, 'el parcial se guarda (es mejor que el GPS solo)');
+}
+
+// 4) todo falla → GPS limpio, NO se guarda; el siguiente pedido vuelve a intentar
+{
+  const env = { RATE_LIMIT_AUTH: kv() }; V.llamadas = 0; V.modo = () => 'error';
+  const j = await (await pedir(env, { puntos: ruta(150) })).json();
+  ok(j.m === 'gps' && j.t === '0/2' && j.c.length > 2, 'Valhalla caído → entrega la ruta limpia (gps 0/2)');
+  ok(![...env.RATE_LIMIT_AUTH.m.keys()].some((k) => k.startsWith('sbv:ruta:')), 'un fallo total no se guarda');
+  V.modo = () => 'bien'; V.llamadas = 0;
+  const j2 = await (await pedir(env, { puntos: ruta(150) })).json();
+  ok(j2.m === 'valhalla' && j2.cache === false && V.llamadas === 2, 'reintento después del fallo → ahora sí pegada');
+  // Valhalla que lanza (sin red) o responde algo raro
+  globalThis.fetch = async () => { throw new Error('sin red'); };
+  const j3 = await (await pedir({ RATE_LIMIT_AUTH: kv() }, { puntos: ruta(50) })).json();
+  ok(j3.m === 'gps', 'sin red hacia Valhalla → gps, sin caerse');
+  globalThis.fetch = async () => new Response(JSON.stringify({ trip: { legs: [{ shape: '' }] } }));
+  const j4 = await (await pedir({ RATE_LIMIT_AUTH: kv() }, { puntos: ruta(50) })).json();
+  ok(j4.m === 'gps', 'respuesta vacía de Valhalla → gps');
+  globalThis.fetch = async (url, o) => { if (String(url).includes('valhalla')) return valhalla(o.body); throw new Error('red no permitida: ' + url); };
+}
+
+// 5) límite por IP: solo rutas NUEVAS (30 por hora); lo guardado se sigue entregando
+{
+  const env = { RATE_LIMIT_AUTH: kv() }; V.modo = () => 'bien';
+  const guardada = ruta(20, -41);
+  await pedir(env, { puntos: guardada }, { ip: '9.9.9.9' });
+  let ultimo;
+  for (let i = 1; i <= 30; i++) ultimo = await pedir(env, { puntos: ruta(20, -41 - i * 0.01) }, { ip: '9.9.9.9' });
+  ok(ultimo.status === 429, 'la ruta nueva n.º 31 de una IP en una hora → 429 (fue ' + ultimo.status + ')');
+  const c = await pedir(env, { puntos: guardada }, { ip: '9.9.9.9' });
+  ok(c.status === 200 && (await c.json()).cache === true, 'con el límite lleno, una ruta guardada igual se entrega');
+  const otra = await pedir(env, { puntos: ruta(20, -45) }, { ip: '8.8.8.8' });
+  ok(otra.status === 200, 'otra IP no se ve afectada');
+  const lim = env.RATE_LIMIT_AUTH.puts.find((p) => p.k === 'sbv:ip:9.9.9.9');
+  ok(lim && lim.o.expirationTtl > 3600 && lim.o.expirationTtl < 3700, 'la cuenta de la IP expira sola en ~1 h');
+}
+
+// 6) entradas malas
+{
+  const env = { RATE_LIMIT_AUTH: kv() };
+  ok((await pedir(env, null, { metodo: 'GET' })).status === 405, 'GET → 405');
+  ok((await pedir(env, '{no es json')).status === 400, 'JSON roto → 400');
+  ok((await pedir(env, { puntos: ruta(2) })).status === 400, 'menos de 3 puntos → 400');
+  ok((await pedir(env, { otra: 1 })).status === 400, 'sin "puntos" → 400');
+  ok((await pedir(env, { puntos: [[-40, -72], [NaN, -72], [-40, -72.1]] })).status === 400, 'punto NaN → 400');
+  ok((await pedir(env, { puntos: [[-40, -72], [95, -72], [-40, -72.1]] })).status === 400, 'latitud fuera de rango → 400');
+  ok((await pedir(env, { puntos: [[-40, -72], null, [-40, -72.1]] })).status === 400, 'punto null → 400');
+  V.llamadas = 0;
+  ok((await pedir(env, { puntos: ruta(6001) })).status === 413 && V.llamadas === 0, 'más de 6000 puntos → 413 sin llamar a Valhalla');
+  ok(env.RATE_LIMIT_AUTH.m.size === 0, 'nada se guarda con entradas malas');
+}
+
+// 7) CORS
+{
+  const env = { RATE_LIMIT_AUTH: kv() };
+  const pre = await pedir(env, null, { metodo: 'OPTIONS', origen: 'https://librepedal.cl' });
+  ok(pre.status === 200 && pre.headers.get('Access-Control-Allow-Origin') === 'https://librepedal.cl' && /POST/.test(pre.headers.get('Access-Control-Allow-Methods')), 'preflight desde librepedal.cl');
+  const ajeno = await pedir(env, { puntos: ruta(10) }, { origen: 'https://otro-sitio.com' });
+  ok(ajeno.headers.get('Access-Control-Allow-Origin') === 'https://librepedal.cl', 'otro origen no recibe permiso CORS');
+  const pages = await pedir(env, { puntos: ruta(10) }, { origen: 'https://librepedal-web.pages.dev' });
+  ok(pages.headers.get('Access-Control-Allow-Origin') === 'https://librepedal-web.pages.dev', 'la vista previa de Pages sí');
+}
+
+// 8) KV ausente o fallando: igual entrega (sin caché) y no se cae
+{
+  V.modo = () => 'bien';
+  const j = await (await pedir({}, { puntos: ruta(30) })).json();
+  ok(j.m === 'valhalla', 'sin KV → pega igual');
+  const roto = { async get() { throw new Error('kv caído'); }, async put() { throw new Error('kv caído'); } };
+  const r = await pedir({ RATE_LIMIT_AUTH: roto }, { puntos: ruta(30) });
+  ok(r.status === 200 && (await r.json()).m === 'valhalla', 'KV que falla → pega igual, 200');
+  const env = { RATE_LIMIT_AUTH: kv() }; env.RATE_LIMIT_AUTH.m.set('x', 'y');
+  // dos teléfonos piden la misma ruta nueva a la vez: ambos reciben lo mismo y queda guardada
+  const [a, b] = await Promise.all([pedir(env, { puntos: ruta(200) }, { ip: '3.3.3.3' }), pedir(env, { puntos: ruta(200) }, { ip: '4.4.4.4' })]);
+  const ja = await a.json(), jb = await b.json();
+  ok(JSON.stringify(ja.c) === JSON.stringify(jb.c) && ja.m === 'valhalla' && jb.m === 'valhalla', 'pedidos simultáneos de la misma ruta → mismo resultado');
+}
+
+// ---------- 9) el cliente (sobrevuelo-3d.js) contra el worker ----------
+function cliente(fetchFn) {
+  const nada = () => null;
+  const ctx = { console: { ...console, info() {} }, Math, JSON, Object, Array, String, Number, RegExp, isFinite, Date, Promise, setTimeout, clearTimeout,
+    fetch: fetchFn, AbortController, performance: { now: () => Date.now() }, location: { search: '' }, navigator: {},
+    localStorage: { getItem: nada, setItem() {} }, matchMedia: () => ({ matches: false }),
+    document: { getElementById: nada, createElement: () => ({ getContext: nada }), addEventListener() {}, removeEventListener() {}, querySelector: nada },
+    window: { matchMedia: () => ({ matches: false }), addEventListener() {} } };
+  vm.createContext(ctx);
+  vm.runInContext(readFileSync(join(raiz, 'sobrevuelo-3d.js'), 'utf8'), ctx, { filename: 'sobrevuelo-3d.js' });
+  return ctx.window.__sb3test;
+}
+// puntos del GPS como los guarda la app: cada ~11 m, con hora (4 m/s)
+const gps = Array.from({ length: 1200 }, (_, i) => ({ lat: -40.2, lon: -72.3 + i * 0.000125, t: 1e12 + i * 2750 }));
+{
+  const env = { RATE_LIMIT_AUTH: kv() }; V.modo = () => 'bien';
+  const log = [];
+  const alWorker = async (url, o) => {
+    log.push(String(url));
+    if (String(url).startsWith('https://librepedal-sobrevuelo.librepedal.workers.dev')) return pedir(env, o.body, {});
+    return valhalla(o.body);
+  };
+  const T = cliente(alWorker);
+  ok(typeof T.pegarAlCamino === 'function', 'el cliente expone pegarAlCamino para probar');
+  V.llamadas = 0;
+  const r1 = await T.pegarAlCamino(gps);
+  ok(r1.metodo === 'valhalla' && log[0].includes('librepedal-sobrevuelo') && log.length === 1, 'cliente → pide al worker (un solo pedido desde el teléfono)');
+  ok(V.llamadas >= 2, 'el worker hizo los pedidos a Valhalla (' + V.llamadas + ')');
+  ok(r1.coords.length > 10 && r1.coords.every((p) => Math.abs(p[1] + 40.2) < 1e-4), 'el cliente recibe la línea [lon,lat]');
+  // otro teléfono, misma ruta: el worker responde de la caché (la limpieza y la muestra del cliente son estables)
+  V.llamadas = 0; log.length = 0;
+  const r2 = await cliente(alWorker).pegarAlCamino(gps);
+  ok(/^guardada/.test(r2.motivo) && V.llamadas === 0, 'segundo teléfono → la ruta guardada, cero pedidos a Valhalla (' + r2.motivo + ')');
+  ok(JSON.stringify(r2.coords) === JSON.stringify(r1.coords), 'misma línea en los dos teléfonos');
+}
+// el worker falla de distintas formas → Valhalla directo, como antes
+for (const [nombre, falla] of [
+  ['no publicado (sin red)', async () => { throw new TypeError('Failed to fetch'); }],
+  ['500', async () => new Response('{}', { status: 500 })],
+  ['429 límite', async () => new Response('{"error":"x"}', { status: 429 })],
+  ['respuesta sin línea', async () => new Response(JSON.stringify({ c: [], m: 'valhalla' }))],
+  ['método desconocido', async () => new Response(JSON.stringify({ c: [[-72, -40], [-72.1, -40]], m: 'raro' }))],
+  ['coordenadas basura', async () => new Response(JSON.stringify({ c: [[-72, -40], ['x', null]], m: 'valhalla' }))],
+  ['coordenada null', async () => new Response(JSON.stringify({ c: [[-72, -40], [null, -40]], m: 'valhalla' }))],
+  ['JSON roto', async () => new Response('<html>')],
+]) {
+  V.llamadas = 0; V.modo = () => 'bien';
+  const T = cliente(async (url, o) => (String(url).includes('librepedal-sobrevuelo') ? falla() : valhalla(o.body)));
+  const r = await T.pegarAlCamino(gps);
+  ok(r.metodo === 'valhalla' && V.llamadas >= 2, 'worker ' + nombre + ' → pega directo con Valhalla como antes');
+}
+// worker caído Y Valhalla caído → GPS limpio (el sobrevuelo igual se ve)
+{
+  V.modo = () => 'error';
+  const T = cliente(async (url, o) => (String(url).includes('librepedal-sobrevuelo') ? new Response('', { status: 503 }) : valhalla(o.body)));
+  const r = await T.pegarAlCamino(gps);
+  ok(r.metodo === 'gps' && r.coords.length > 10, 'todo caído → línea del GPS limpio, sin error');
+}
+
+console.log(`  ${n - f}/${n} pruebas del worker del sobrevuelo OK`);
+process.exit(f ? 1 : 0);

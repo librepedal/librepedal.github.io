@@ -339,6 +339,9 @@ function pegarAlCamino(pts){
   limpio=sinPinchazos(limpio);
   var muestra=[]; limpio.forEach(function(p){ var u=muestra[muestra.length-1]; if(!u||hav([u.lon,u.lat],[p.lon,p.lat])>=40) muestra.push(p); });
   if(muestra.length<3) return Promise.resolve({coords:limpio.map(function(p){ return [p.lon,p.lat]; }),metodo:'gps',motivo:'pocos puntos'});
+  return sb3PorWorker(muestra).catch(function(e){ console.info('[sobrevuelo3d] worker no disponible, pego directo:', e&&e.message); return pegarDirecto(muestra); });
+}
+function pegarDirecto(muestra){
   // tramos de ~120 puntos (~5 km) que se tocan en un punto; de a 2 pedidos a la vez (uso justo del servidor de demostración)
   var tramos=[]; for(var i=0;i<muestra.length-1;i+=119) tramos.push(muestra.slice(i,Math.min(muestra.length,i+120)));
   var res=new Array(tramos.length), sig=0;
@@ -923,6 +926,24 @@ function sb3GuardarPegada(id,coords,metodo){ if(!id||!coords||coords.length<2) r
   var ids=Object.keys(t).sort(function(a,b){ return (t[a].f||0)-(t[b].f||0); }); while(ids.length>10){ delete t[ids.shift()]; }
   localStorage.setItem(SB3_PEGADAS,JSON.stringify(t)); }catch(e){ /* sin espacio: se vuelve a pegar la próxima vez, nada más */ } }
 
+// worker que pega cada ruta al camino UNA vez y la guarda (worker-sobrevuelo/): así no se le pide a Valhalla desde cada
+// teléfono. Si no responde (sin publicar, sin red, límite), pegarAlCamino sigue directo como antes.
+var SB3_WORKER='https://librepedal-sobrevuelo.librepedal.workers.dev';
+var SB3_METODOS={valhalla:1,parcial:1,gps:1};
+function sb3PorWorker(muestra){
+  if(!SB3_WORKER || typeof fetch!=='function') return Promise.reject(new Error('sin worker'));
+  var ctl=(typeof AbortController==='function')?new AbortController():null;
+  var to=setTimeout(function(){ if(ctl) ctl.abort(); },45000); /* una ruta larga y nueva tarda: de a 2 tramos en Valhalla */
+  return fetch(SB3_WORKER,{method:'POST',headers:{'content-type':'application/json'},signal:ctl?ctl.signal:undefined,
+      body:JSON.stringify({puntos:muestra.map(function(p){ return [+p.lat.toFixed(5),+p.lon.toFixed(5)]; })})})
+  .then(function(r){ if(!r.ok) throw new Error('worker '+r.status); return r.json(); })
+  .then(function(j){ clearTimeout(to);
+    var c=j&&j.c, ok=Array.isArray(c)&&c.length>=2&&c.every(function(p){ return p&&typeof p[0]==='number'&&typeof p[1]==='number'&&isFinite(p[0])&&isFinite(p[1])&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90; });
+    if(!ok||!SB3_METODOS[j.m]) throw new Error('respuesta inválida');
+    return {coords:c,metodo:j.m,motivo:(j.cache?'guardada ':'')+(j.t||'')}; },
+    function(e){ clearTimeout(to); throw e; });
+}
+
 var SB3_FIN=null, SB3_ABIERTO=false;
 // la raíz de la pantalla; si ya se cerró, una de mentira (un temporizador que llega tarde no rompe nada)
 function sb3Raiz(){ return RAIZ||(sb3Raiz.f=sb3Raiz.f||(typeof document!=='undefined'?document.createElement('div'):{classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){ return false; }}})); }
@@ -962,7 +983,7 @@ function cerrarSobrevuelo3D(silencioso){
 window.abrirSobrevuelo3D=abrirSobrevuelo3D;
 window.cerrarSobrevuelo3D=cerrarSobrevuelo3D;
 // funciones puras para tests/sobrevuelo-3d.test.mjs y ganchos de prueba (no se usan en la app)
-window.__sb3test={hav:hav, sinPinchazos:sinPinchazos, solPos:solPos, luzDe:luzDe, caraSegun:caraSegun, planear:planear, tiemposReales:tiemposReales,
+window.__sb3test={hav:hav, pegarAlCamino:pegarAlCamino, sinPinchazos:sinPinchazos, solPos:solPos, luzDe:luzDe, caraSegun:caraSegun, planear:planear, tiemposReales:tiemposReales,
   sb3Puntos:sb3Puntos, durVuelo:durVuelo, linea:linea, densificar:densificar, colorPend:colorPend, setD:function(x){ D=x; }, getD:function(){ return D; }, dbg:SB3DBG};
 
 })();

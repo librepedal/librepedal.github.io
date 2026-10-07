@@ -1,0 +1,11 @@
+name = "librepedal-sobrevuelo"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Mismo KV que worker-auth y worker-proximidad, con prefijo propio "sbv:" (no se pisan):
+#   sbv:ruta:<sha256>  la ruta pegada al camino (180 días)  ·  sbv:ip:<ip>  límite de rutas NUEVAS por hora
+[[kv_namespaces]]
+binding = "RATE_LIMIT_AUTH"
+id = "87af0c17403445f78737975fd0b5b7c3"
+
+# Sin secretos. Publicar (con OK de Inty y sus credenciales de Cloudflare):  cd worker-sobrevuelo && npx wrangler deploy
