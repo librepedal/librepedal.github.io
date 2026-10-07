@@ -135,9 +135,9 @@ async function enviarFraseComunidad(){
   if(texto.length>140){ lpAviso('Máximo 140 caracteres.'); return; }
   if(_enviandoFrase) return; _enviandoFrase=true;
   try{
-    await db.collection('frasesComunidad').add({user:cu, nombre:nombreUsuario||'Ciclista', texto:texto, aprobada:false, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    const _conf=await lpEscrituraConTope(db.collection('frasesComunidad').add({user:cu, nombre:nombreUsuario||'Ciclista', texto:texto, aprobada:false, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()}));
     inp.value='';
-    h('¡Gracias! Tu frase queda en revisión.');
+    h(_conf?'¡Gracias! Tu frase queda en revisión.':'Sin señal ahora: tu frase quedó guardada en el teléfono y pasa a revisión apenas vuelva la conexión. ¡Gracias!');
     renderMisFrasesComunidad();
   }catch(e){ lpAviso('No se pudo enviar tu frase, intenta de nuevo.'); }
   finally{ _enviandoFrase=false; }

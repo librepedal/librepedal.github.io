@@ -87,14 +87,14 @@ function correr(overrides) {
     '_esPremium', 'vozMejorada', 'VOCES_MANIFEST_EL', 'VOCES_MANIFEST',
     '_vozArchivoEL', '_vozElevenRuntime', '_vozGoogleRuntime', '_vozNativaOWeb',
     'vozGen', 'vozHablando', 'vozPrioActual', 'vozTimerFin', 'PRIO_VOZ', '_durEstVoz',
-    'mostrarBocadillo', '_pisteroHabla', '_vozSiguiente', 'setTimeout', 'clearTimeout',
+    'mostrarBocadillo', '_pisteroHabla', '_vozSiguiente', 'setTimeout', 'clearTimeout', '_vozCallarTodo',
     REPRODUCIR + '\nreturn _reproducirVoz;'
   );
   const _reproducirVoz = fn(
     _esPremium, o.vozMejorada, o.VOCES_MANIFEST_EL, o.VOCES_MANIFEST,
     _vozArchivoEL, _vozElevenRuntime, _vozGoogleRuntime, _vozNativaOWeb,
     0, false, 0, null, PRIO_VOZ, () => 2000,
-    () => {}, () => {}, _vozSiguiente, setTimeout, clearTimeout
+    () => {}, () => {}, _vozSiguiente, setTimeout, clearTimeout, () => {} // _vozCallarTodo (2026-10-07): calla lo anterior; aquí no hay audio
   );
   _reproducirVoz({ t: 'hola', limpio: 'hola', prio: PRIO_VOZ.INFO });
   return llamadas;

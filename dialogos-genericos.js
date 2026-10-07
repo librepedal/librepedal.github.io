@@ -81,3 +81,14 @@ function _btnVolverModal(){ return _modalVolverA ? '<button class="ab sec" style
 // de vista funcione como nombre de función, igual que el resto de los volverA.
 function customize(){ closeModal(); cv('customize'); }
 
+
+/* ===== Escrituras a Firestore con tope (revisión de botones 2026-10-07) =====
+   Sin señal, add()/set() de Firestore NO responden: la promesa espera al servidor ("resolves once the document has
+   been successfully created in the backend", firebase-js-sdk reference_impl.ts), aunque el dato queda guardado en el
+   teléfono al tiro (persistencia offline, index.html) y se envía solo al volver la conexión. Los botones que
+   publicaban con un candado de "enviando" quedaban TRABADOS y mudos en zonas sin señal (justo en ruta).
+   lpEscrituraConTope(p) -> true si el servidor confirmó, false si a los 8 s no hubo respuesta (quedó en cola);
+   si Firestore rechaza (permisos, datos), el error sigue saliendo igual que antes. */
+function lpEscrituraConTope(promesa, ms){
+  return Promise.race([Promise.resolve(promesa).then(function(){ return true; }), new Promise(function(r){ setTimeout(function(){ r(false); }, ms||8000); })]);
+}

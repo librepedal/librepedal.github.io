@@ -190,6 +190,13 @@ Reusar este orden en vez de adivinar por dónde empezar.
   viejo si no se recalculan — ya causó bugs reales en esta app, revisar con
   cuidado cualquier callback que dependa de un valor que cambia con el tiempo.
 
+- **Voces que se pisan (2026-10-07, Inty lo pidió muchas veces: "no quiero errores").** Todo `<audio>` de voz se crea con
+  `_vozAudio(url)` (voz-motor.js), NUNCA con `new Audio()` suelto: el motor solo puede callar lo que tiene registrado
+  en `_vozAudiosVivos`. Todo corte o avance de la cola cambia el turno (`vozGen++`) ANTES de pausar, porque pausar un
+  audio que aún carga rechaza su `play()` con AbortError (verificado en Chrome real) y su respaldo arrancaría tarde
+  encima de la frase siguiente. Prueba obligatoria: `tests/voz-sin-pisarse.test.mjs` (motor real, navegador simulado,
+  800 viajes con señal al azar; antes del arreglo 266 tenían voces encima).
+
 ---
 *Este documento se va a seguir ampliando. Si aprendés algo nuevo de cómo Inty
 quiere que se trabaje, agregalo acá para que la próxima sesión no tenga que

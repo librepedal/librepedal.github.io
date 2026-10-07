@@ -294,7 +294,13 @@ async function toggleSeguimientoVivo(){
     // quien era el dueno real de este documento -- cualquier otro usuario logueado
     // podia sobrescribir tu ubicacion en vivo o borrar tu seguimiento llamando la API
     // directo (hallazgo real de la auditoria, ver firestore.rules).
-    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo'), authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    /* Sin señal set() no responde nunca (espera al servidor): antes el botón no mostraba nada. Tope de 8 s; si no
+       hubo respuesta se anula lo pendiente (Firestore aplica las escrituras en orden: set y luego activo:false), para
+       que no se active más tarde, sin aviso, un seguimiento cuyo link nadie tiene (revisión de botones 2026-10-07). */
+    const _ref=db.collection('liveTracking').doc(liveTrackId);
+    const _envio=_ref.set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo'), authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    const _r=await Promise.race([_envio.then(function(){ return 'ok'; }), new Promise(function(res){ setTimeout(function(){ res('sin-senal'); }, 8000); })]);
+    if(_r!=='ok'){ try{ _ref.update({activo:false}).catch(function(){}); }catch(_e){} liveTrackId=null; lpAviso('Sin señal: no pude activar la ubicación en vivo. Inténtalo cuando tengas conexión.'); return; }
     liveTrackActivo=true; liveTrackUltimoEnvio=0;
     _actualizarBtnSeguimientoVivo();
     const url=location.origin+location.pathname.replace(/index\.html$/,'')+'seguir.html?id='+liveTrackId;
@@ -304,7 +310,7 @@ async function toggleSeguimientoVivo(){
 // Invitar amigos: mensaje corto, honesto, sin exagerar ("comunidad enorme" cuando
 // recién está empezando) — solo lo que la app de verdad hace hoy.
 function invitarAmigos(){
-  const url='https://librepedal.pages.dev';
+  const url='https://librepedal.cl'; // dominio propio (2026-10-07): pages.dev es la dirección técnica de Cloudflare, no la marca
   const msg='Ando pedaleando con Libre Pedal: te guía como Waze, te graba la ruta sola y tiene comunidad de ciclistas. Pruébala gratis: '+url;
   if(navigator.share){
     navigator.share({title:'Libre Pedal', text:msg}).catch(function(){});
@@ -342,6 +348,10 @@ function _actualizarLiveTrack(lat,lon){
    estándar BLE (Heart Rate Service 0x180D, Cycling Power Service 0x1818) sirve. */
 let bleHRDevice=null, blePowerDevice=null, bleHR=null, blePower=null;
 function _bleDisponible(){ return typeof navigator!=='undefined' && !!navigator.bluetooth; }
+// Sin Bluetooth web (app de Play = WebView de Android, iPhone) el bloque "Sensores Bluetooth" de Ajustes no se muestra:
+// sus botones no podían conectar nada (2026-10-07, Inty: "ocúltalos en la app por ahora").
+function _bleMostrarBloque(){ try{ var b=document.getElementById('bloqueSensoresBLE'); if(b) b.style.display=_bleDisponible()?'':'none'; }catch(e){} }
+if(typeof document!=='undefined'){ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_bleMostrarBloque); else _bleMostrarBloque(); }
 function _parseHR(dataview){
   const flags=dataview.getUint8(0);
   const es16bits=(flags & 0x01)!==0;

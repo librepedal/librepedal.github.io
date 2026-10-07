@@ -338,7 +338,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <header>
 <div style="display:flex;align-items:center;gap:4px">
 <button class="es-globe" id="btnAtras" onclick="volverAtras()" title="Atrás" style="display:none"><i class="fas fa-arrow-left"></i></button>
-<h2 style="margin:0;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:1.18rem"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></h2>
+<h2 class="hdr-logo" style="margin:0;font-family:'LibrePedalLogo',system-ui,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:1.18rem;white-space:nowrap"><span style="color:#fff">Libre</span> <span style="color:var(--p)">Pedal</span></h2>
 </div>
 <div class="hdr-right">
 <button class="es-globe" id="btnEsferaHeader" onclick="abrirEsfera()" title="Esfera de apps"><i class="fas fa-globe"></i> </button>
@@ -480,12 +480,17 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <button class="ab sec" style="margin:0" id="btnCrashToggle" onclick="toggleDeteccionCaidas()"><i class="fas fa-tower-broadcast"></i> Detección de caídas: ON</button>
   <button class="ab sec" style="margin:0" onclick="mostrarAlertaCaida()"><i class="fas fa-flask"></i> Probar alerta</button>
 </div>
+<!-- 2026-10-07 (Inty: "ocúltalos en la app por ahora"): el WebView de Android (app de Play) NO tiene Bluetooth web
+     (MDN browser-compat-data: webview_android version_added:false), así que ahí estos botones nunca conectaban.
+     Se oculta todo el bloque donde no hay navigator.bluetooth (ver _bleMostrarBloque en seguridad-sensores.js). -->
+<div id="bloqueSensoresBLE">
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-signal"></i> Sensores Bluetooth</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Conecta un pulsómetro o potenciómetro estándar BLE para ver tus datos en vivo mientras pedaleas.</p>
 <div class="quick-links">
   <button class="ab sec" style="margin:0" onclick="conectarPulsometro()"><i class="fas fa-heart"></i> Conectar pulsómetro</button>
   <button class="ab sec" style="margin:0" onclick="conectarPotenciometro()"><i class="fas fa-bolt"></i> Conectar potenciómetro</button>
   <button class="ab sec" style="margin:0" onclick="desconectarBluetooth()"><i class="fas fa-plug"></i> Desconectar</button>
+</div>
 </div>
 <h4 style="color:var(--p);margin:16px 0 8px;font-size:0.9rem"><i class="fas fa-star"></i> Ayúdanos a crecer</h4>
 <p style="font-size:0.74rem;color:#9fb3c8;margin:0 0 8px">Contanos qué tal te va con la app — tu opinión nos ayuda a mejorarla.</p>
@@ -1008,7 +1013,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.807'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.810'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1429,6 +1434,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 
 </script>
 <script src="pwa-wakelock.js"></script>
+<script src="layout-medidas.js"></script>
 <script>
 
 </script>
@@ -1441,6 +1447,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 
 </script>
 <script src="sobrevuelo-viaje.js"></script>
+<script src="sobrevuelo-3d.js"></script>
 <script>
 </script>
 <script src="abanico-reporte.js"></script>

@@ -199,6 +199,17 @@ async function preguntarPistero(){
   }
 }
 let pisteroRec=null;
+/* Revisión de botones 2026-10-07: en el navegador, si el reconocimiento de voz fallaba (permiso negado, sin red,
+   silencio), el botón "Preguntar hablando" dejaba de parpadear y NO decía nada: el usuario no sabía qué pasó.
+   Códigos según la especificación Web Speech API (SpeechRecognitionErrorEvent.error). 'aborted' = lo cortamos
+   nosotros (otra voz, manos libres): ahí se queda callado a propósito. */
+function _micErrorAviso(cod){
+  if(cod==='aborted') return;
+  if(cod==='not-allowed'||cod==='service-not-allowed'){ h('Necesito permiso del micrófono para escucharte. Actívalo en los permisos del navegador, o escríbeme aquí abajo.'); return; }
+  if(cod==='audio-capture'){ h('No encuentro el micrófono del teléfono. Escríbeme aquí abajo y lo vemos.'); return; }
+  if(cod==='network'){ h('Sin señal no alcanzo a entender la voz. Escríbeme aquí abajo.'); return; }
+  _vozNoEntendi(); // no-speech, start u otro: "no te entendí, escríbelo"
+}
 async function pisteroPorVoz(){
   // App instalada: micrófono NATIVO si el APK trae el plugin.
   const _nat=lpPlugin('SpeechRecognition');
@@ -223,9 +234,9 @@ async function pisteroPorVoz(){
     const btn=document.getElementById('pisteroMic'); if(btn) btn.classList.add('grabando');
     pisteroRec.onresult=function(e){ const t=e.results[0][0].transcript; const st=quitarEcoPistero(t)||t; if(st) handleVoiceCommand(st); else _vozNoEntendi(); };
     pisteroRec.onend=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); };
-    pisteroRec.onerror=function(){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); };
+    pisteroRec.onerror=function(ev){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); _micErrorAviso(ev&&ev.error); };
     pisteroRec.start();
-  }catch(e){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); }
+  }catch(e){ const b=document.getElementById('pisteroMic'); if(b) b.classList.remove('grabando'); _reanudarManosLibres(); _micErrorAviso('start'); }
 }
 // 2026-08-20: antes era una sola variable (el ÚLTIMO lugar nada más), así que si la ruta
 // pasaba de vuelta por una ciudad ya visitada (ida y vuelta, o límite de zona con ruido de

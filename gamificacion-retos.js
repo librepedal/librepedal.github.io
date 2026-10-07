@@ -67,9 +67,9 @@ async function crearReto(){
   if(_creandoReto) return; // evita duplicar el reto con doble-tap
   _creandoReto=true;
   try{
-    await db.collection('retos').add({titulo:titulo, desc:desc, metaKm:metaKm, fechaInicio:Date.now(), fechaFin:Date.now()+dias*86400000, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    const _conf=await lpEscrituraConTope(db.collection('retos').add({titulo:titulo, desc:desc, metaKm:metaKm, fechaInicio:Date.now(), fechaFin:Date.now()+dias*86400000, ts:firebase.firestore.FieldValue.serverTimestamp()}));
     document.getElementById('retoTitulo').value=''; document.getElementById('retoDesc').value=''; document.getElementById('retoMeta').value=''; document.getElementById('retoDias').value='';
-    h('Reto publicado.');
+    h(_conf?'Reto publicado.':'Sin señal ahora: el reto quedó guardado y se publica solo apenas vuelva la conexión.');
   }catch(e){ lpAviso('No se pudo crear el reto.'); }
   finally{ _creandoReto=false; }
 }
@@ -123,7 +123,7 @@ function _dibujarTarjetaAnual(ctx, W, H, r){
     ctx.fillText('🗺️ Como pedalear Santiago–Valparaíso '+(veces<1?veces.toFixed(1):Math.round(veces))+' '+(veces<2?'vez':'veces'), W/2, y+10);
   }
   ctx.fillStyle='#3a4a5a'; ctx.font='18px sans-serif';
-  ctx.fillText('librepedal.pages.dev', W/2, H-40);
+  ctx.fillText('librepedal.cl', W/2, H-40);
 }
 function mostrarResumenAnual(){
   const anio=new Date().getFullYear();
