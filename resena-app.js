@@ -18,6 +18,11 @@ function _renderResenaStars(){
 }
 function _resenaSetEstrellas(n){ _resenaEstrellas=n; _renderResenaStars(); }
 let _enviandoResena=false;
+/* Sin señal, Firestore NO responde a add(): la promesa espera al servidor ("resolves once the document has been
+   successfully created in the backend", firebase-js-sdk reference_impl.ts) y el dato queda guardado en el teléfono
+   (persistencia offline activada en index.html) hasta que vuelve la conexión. Antes "Enviar" quedaba congelado y los
+   toques siguientes no hacían nada (revisión de botones 2026-10-07). Tope de 8 s: se libera y se avisa la verdad. */
+const _RESENA_TOPE_MS=8000;
 async function enviarResenaApp(){
   if(!_resenaEstrellas){ lpAviso('Toca una estrella para calificar primero.'); return; }
   if(_enviandoResena) return;
@@ -25,10 +30,12 @@ async function enviarResenaApp(){
   const comentarioEl=document.getElementById('resenaComentario');
   const comentario=(comentarioEl&&comentarioEl.value)?comentarioEl.value.trim():'';
   try{
-    await db.collection('resenasApp').add({estrellas:_resenaEstrellas, comentario:comentario, user:cu||null, nombre:nombreUsuario||null, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    const envio=db.collection('resenasApp').add({estrellas:_resenaEstrellas, comentario:comentario, user:cu||null, nombre:nombreUsuario||null, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    const r=await Promise.race([envio.then(function(){ return 'ok'; }), new Promise(function(res){ setTimeout(function(){ res('sin-senal'); }, _RESENA_TOPE_MS); })]);
     if(comentarioEl) comentarioEl.value='';
     _resenaEstrellas=0; _renderResenaStars();
-    h('¡Gracias por tu opinión! Nos ayuda un montón a mejorar la app.');
+    if(r==='ok') h('¡Gracias por tu opinión! Nos ayuda un montón a mejorar la app.');
+    else h('Ahora no hay señal: tu opinión quedó guardada en el teléfono y se envía sola apenas vuelva la conexión. ¡Gracias!');
   }catch(e){ lpAviso('No se pudo enviar, intenta de nuevo.'); }
   finally{ _enviandoResena=false; }
 }
