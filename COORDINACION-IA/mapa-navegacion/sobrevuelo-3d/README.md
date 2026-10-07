@@ -182,3 +182,5 @@ y frenan si la red se atrasa; Mapbox recomienda menos capas y fuentes separadas 
   cuadro. Tramos de neón de máx. 60 puntos; línea de vista cada 2 cuadros.
 - **Pausa al salir de la app** (batería y calor), **tocar el mapa pausa/sigue**, **movimiento reducido** (sistema): una
   sola toma tranquila, sin giro en la cima ni temblores.
+- Cima solo si es de verdad: en el medio de la ruta (8–92 %), con ≥25 m de relieve y subiendo para llegar (en un paseo
+  corto decía "¡Cima!" en el metro 86 y borraba "¡Partimos!"). Regresión completa OK (demo, cima, resumen, tarjeta, ruta corta).

@@ -146,7 +146,7 @@ function planear(N){
   bajadas.forEach(function(b){ if(-b.gan<10) return; C.push({d:b.d0+60,pri:4+Math.min(3,-b.gan/20),txt:'',sub:'por '+(b.d1-b.d0>=1000?fmt((b.d1-b.d0)/1000,1)+' km':Math.round((b.d1-b.d0)/10)*10+' m'),dur:1900,tipo:'baja'}); });
   if(N.vel){ var iv=0; for(var q=0;q<N.vel.length;q++) if(N.vel[q]>N.vel[iv]) iv=q; if(N.vel[iv]>=30) C.push({d:N.cum[iv],pri:7.5,expr:'adrenalina',txt:'¡Volando!',sub:Math.round(N.vel[iv])+' km/h, lo más rápido del viaje',dur:1900}); N.vMax={v:N.vel[iv],d:N.cum[iv]}; }
   C.push({d:30,pri:9,expr:'contento',txt:'¡Partimos!',sub:fmt(T/1000,1)+' km y +'+Math.round(N.sub[N.sub.length-1])+' m por delante',dur:2000});
-  C.push({d:N.cum[N.imax],pri:10,expr:'orgulloso',txt:'¡Cima!',sub:'lo más alto del viaje',dur:4200,cima:true,pose:'puno'});
+  if(N.hayCima) C.push({d:N.cum[N.imax],pri:10,expr:'orgulloso',txt:'¡Cima!',sub:'lo más alto del viaje',dur:4200,cima:true,pose:'puno'});
   C.push({d:T,pri:10,expr:'contento',txt:'¡Llegamos!',sub:D.dur?'en '+durTxt(D.dur):'',dur:2600,pose:'brazos',fin:true});
   C.sort(function(a,b){ return b.pri-a.pri; });
   var hueco=T/9, M=[]; C.forEach(function(c){ if(M.length<7 && M.every(function(m){ return Math.abs(m.d-c.d)>=hueco; })) M.push(c); });
@@ -314,6 +314,7 @@ function prepararRuta(crudo, pegada){
     var N=D.nuevo; N.alt=suavizar(suavizar(a,N.cum,60),N.cum,60); N.pend=pendientes(N.alt,N.cum,100);
     var sub=0, ref=N.alt[0]; N.sub=N.alt.map(function(h){ if(h>ref+2){ sub+=h-ref; ref=h; } else if(h<ref-2) ref=h; return sub; });
     N.min=Math.min.apply(null,N.alt); N.max=Math.max.apply(null,N.alt); N.imax=N.alt.indexOf(N.max);
+    var fr=N.cum[N.imax]/N.total; N.hayCima=fr>.08&&fr<.92&&N.max-N.min>=25&&N.sub[N.imax]>=15;   /* una cima de verdad: al medio, con relieve y subiendo para llegar */
     tiemposReales(N,crudo);
     D.sol=null; if(crudo[0]&&crudo[0].t>0){ var tm=crudo[0].t+(D.dur||0)/2, cen=N.c[Math.floor(N.c.length/2)]; D.sol=solPos(tm,cen[1],cen[0]); D.sol.salida=crudo[0].t; }
     D.luz=luzDe(D.sol?D.sol.alt:null);
@@ -400,7 +401,7 @@ function mostrarResumen(){ var R=D.nuevo.resumen, el=$('resumen'); if(!R||!el) r
   if(R.sMax) hitos.push(['La subida más dura','+'+Math.round(R.sMax.gan)+' m entre el km '+fmt(R.sMax.d0/1000,1)+' y el '+fmt(R.sMax.d1/1000,1),'sube']);
   hitos.push(['Lo más empinado',fmt(R.pendMax*100,0)+' % en el km '+fmt(R.dPendMax/1000,1),'empina']);
   if(R.bMax) hitos.push(['La mejor bajada','−'+Math.round(-R.bMax.gan)+' m desde el km '+fmt(R.bMax.d0/1000,1),'baja']);
-  hitos.push(['La cima',Math.round(R.altMax)+' m en el km '+fmt(R.dCima/1000,1),'cima']);
+  if(D.nuevo.hayCima) hitos.push(['La cima',Math.round(R.altMax)+' m en el km '+fmt(R.dCima/1000,1),'cima']);
   var N2=D.nuevo; if(N2.vMax&&N2.vMax.v>=15) hitos.push(['Lo más rápido',Math.round(N2.vMax.v)+' km/h en el km '+fmt(N2.vMax.d/1000,1),'baja']);
   if(N2.pausas&&N2.pausas.length){ var tp=N2.pausas.reduce(function(a2,b2){ return a2+b2.dur; },0); hitos.push(['Pausas',N2.pausas.length+' ('+durTxt(tp)+' en total)','cima']); }
   el.innerHTML='<div class="rs-tit"><b>'+RUTA.nombre+'</b><span>Así fue tu viaje</span></div>'
@@ -542,7 +543,7 @@ function montarCapas(){
   m.addLayer({id:'chispa',type:'circle',source:'chispa',layout:{visibility:vis},paint:{'circle-color':'#ffffff','circle-radius':Wz(3,7),'circle-blur':.7,'circle-pitch-alignment':'map'}});
   if(modo==='nuevo'){
     var cima=document.createElement('div'); cima.innerHTML='<div class="hito">▲ '+Math.round(N.max)+' m</div>';
-    if(D.cimaM) D.cimaM.remove(); D.cimaM=sinOclusion(new maplibregl.Marker({element:cima.firstChild,anchor:'bottom',offset:[0,-4]}).setLngLat(N.c[N.imax]).addTo(m));
+    if(D.cimaM){ D.cimaM.remove(); D.cimaM=null; } if(N.hayCima) D.cimaM=sinOclusion(new maplibregl.Marker({element:cima.firstChild,anchor:'bottom',offset:[0,-4]}).setLngLat(N.c[N.imax]).addTo(m));
   } else if(D.cimaM){ D.cimaM.remove(); D.cimaM=null; }
   N._ini=null; crearMarcador(); crearMascota(); pintar(16,performance.now());
 }
@@ -709,7 +710,7 @@ function pintar(dt,ts,mover){
     var curvaAd=Math.abs(giro(rumboEn(N,d+20),rumboEn(N,d+140)));
     if(ganCuesta>15) huboCuesta=ts; var trasCuesta=gp<0.02 && ts-huboCuesta<4000 && huboCuesta>0;
     var vReal=N.vel?N.vel[i]:null, enPausa=(N.pausas||[]).some(function(pz){ return Math.abs(pz.d-d)<70; });
-    var ex=caraSegun(gp,ganCuesta,N.pend[Math.min(N.pend.length-1,i+14)],exprAct,{vel:vReal,pausa:enPausa,curva:curvaAd,faltan:N.total-d,subidoDia:N.sub[i],trasCuesta:trasCuesta,cima:Math.abs(d-N.cum[N.imax])<150,recorrido:d});
+    var ex=caraSegun(gp,ganCuesta,N.pend[Math.min(N.pend.length-1,i+14)],exprAct,{vel:vReal,pausa:enPausa,curva:curvaAd,faltan:N.total-d,subidoDia:N.sub[i],trasCuesta:trasCuesta,cima:N.hayCima&&Math.abs(d-N.cum[N.imax])<150,recorrido:d});
     // familias: dentro de la misma (bajada / subida) la espera NO se reinicia y el cambio es rápido (0,3 s);
     // antes, en una bajada que pasa de −4 % a −12 % y vuelve en 3 s, la cara alternaba y nunca cambiaba
     var fam=function(e){ return /emocionado|adrenalina|sorprendido/.test(e)?'baja':/cansado|enojado|agotado/.test(e)?'sube':e; };
