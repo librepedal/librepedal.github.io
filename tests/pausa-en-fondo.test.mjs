@@ -34,8 +34,8 @@ function bloqueLlaves(desde) {
 }
 // document.addEventListener('visibilitychange', function(){ ... }); -- balancea PARÉNTESIS,
 // no llaves, porque lo que nos interesa es la llamada completa, paréntesis de cierre incluido.
-function bloqueParentesis(desde) {
-  const i = HTML.indexOf(desde);
+function bloqueParentesis(desde, despuesDe) {
+  const i = HTML.indexOf(desde, despuesDe ? HTML.indexOf(despuesDe) : 0); // despuesDe: index.html tiene otro visibilitychange (actualizar al volver, 2026-10-07)
   if (i < 0) { console.log('  FALLA: no encontré -> ' + desde); process.exit(1); }
   let prof = 0, q = null;
   for (let k = HTML.indexOf('(', i); k < HTML.length; k++) {
@@ -53,7 +53,7 @@ const SRC = "var ulp=null, ghostMode=false, cu=null;\n" +
   bloqueLlaves('function _rtdSubscribeToUsers(callback)') + '\n' +
   bloqueLlaves('function subscribeToUsers()') + '\n' +
   "var _lpUsersPausadoPorFondo = false;\n" +
-  bloqueParentesis("document.addEventListener('visibilitychange'");
+  bloqueParentesis("document.addEventListener('visibilitychange'", 'var _lpUsersPausadoPorFondo');
 
 // new Function no tiene closure sobre el scope externo: los contadores y el registro de
 // listeners se pasan COMO PARÁMETROS, no se capturan de afuera.

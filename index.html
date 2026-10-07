@@ -1041,8 +1041,13 @@ window.__lpRedirectListo = new Promise(function(resolve){ window.__lpResolverRed
 // sessionStorage (sobrevive al reload, no a una pestaña nueva) limita el total de
 // recargas automáticas a UNA por visita, sin importar cuál de los dos mecanismos
 // la dispare primero.
-function _lpYaRecargoEstaVisita(){ try{ return sessionStorage.getItem('lp_reload_visita')==='1'; }catch(e){ return false; } }
-function _lpMarcarRecargaEstaVisita(){ try{ sessionStorage.setItem('lp_reload_visita','1'); }catch(e){} }
+// 2026-10-07 (Inty: el scroll del Perfil "se expande y se contrae" — su teléfono seguía con el
+// código de ANTES de la 8.810, que ya lo arreglaba): en la app de Play el sessionStorage dura lo
+// que dura el proceso de la app (días en segundo plano), así que tras UNA recarga automática la app
+// no volvía a actualizarse nunca más hasta matarla. El freno ahora es por tiempo: una recarga
+// automática cada 45 s como máximo (de sobra para que los dos mecanismos no se sumen al arrancar).
+function _lpYaRecargoEstaVisita(){ try{ var t=+sessionStorage.getItem('lp_reload_visita')||0; return Date.now()-t<45000; }catch(e){ return false; } }
+function _lpMarcarRecargaEstaVisita(){ try{ sessionStorage.setItem('lp_reload_visita',String(Date.now())); }catch(e){} }
 // Detecta viaje/grabación en curso reusando lo que YA usa el resto de la app (ig =
 // GPS libre grabando, definido en app-estado-global.js; _navActivoAhora = pantalla de
 // navegación activa, definido en pwa-wakelock.js) -- sin inventar un estado nuevo.
@@ -1063,7 +1068,22 @@ async function _lpAplicarActualizacionSiPendiente(){
   try{ if(window.caches){ const ks=await caches.keys(); for(const k of ks){ if(k==='librepedal-tiles') continue; await caches.delete(k); } } }catch(e){}
   location.reload();
 }
-(function(){
+// 2026-10-07: la versión se revisaba SOLO al abrir la app desde cero. La app de Play queda viva en
+// segundo plano y al volver seguía con el código viejo en memoria (horas o días). Ahora también se
+// revisa al volver a la app, si estuvo afuera 30 s o más (no al ir y volver de elegir una foto o del
+// login de Google) y como máximo una vez por minuto. Mismos frenos de siempre: nunca en pleno viaje.
+var _lpOcultaDesde=0, _lpUltRevision=0;
+document.addEventListener('visibilitychange', function(){
+  try{
+    if(document.visibilityState==='hidden'){ _lpOcultaDesde=Date.now(); return; }
+    if(document.visibilityState!=='visible' || !_lpOcultaDesde) return;
+    var fuera=Date.now()-_lpOcultaDesde; _lpOcultaDesde=0;
+    if(fuera<30000 || Date.now()-_lpUltRevision<60000) return;
+    _lpRevisarVersion();
+  }catch(e){}
+});
+function _lpRevisarVersion(){
+  _lpUltRevision=Date.now();
   try{
     // _fetchT (con AbortController) en vez de fetch crudo: sin timeout, una red lenta
     // dejaba esta promesa colgada más allá de los 1.5s que auth-vinculo.js le da de
@@ -1098,7 +1118,8 @@ async function _lpAplicarActualizacionSiPendiente(){
       window.__lpResolverArranque();
     }).catch(function(){ window.__lpResolverArranque(); });
   }catch(e){ window.__lpResolverArranque(); }
-})();
+}
+_lpRevisarVersion();
 async function forzarActualizacion(){
   try{ if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); for(const r of rs){ await r.unregister(); } } }catch(e){}
   // NO borrar los mosaicos del mapa descargados para andar sin señal: son trabajo
