@@ -170,7 +170,7 @@ var M=[
    piezas:['Estela de luz','Chispas','Visera']},
   {id:'slime', n:'Slime', mov:'Gelatina que tiembla y se derrite al cansarse', fn:'crearSlimeCapas', capa:'cuerpo',
    estilos:[['Naranja','#ff8a3d',''],['Lima','#a3e635','hue-rotate(60deg)'],['Uva','#a855f7','hue-rotate(-110deg) saturate(1.1)'],['Celeste','#38bdf8','hue-rotate(165deg)']],
-   piezas:[{n:'Burbujas',v:'burbujas'},'Fruta adentro','Gotitas']},
+   piezas:[{n:'Burbujas',v:'burbujas'},'Fruta adentro',{n:'Gotitas',v:'gotitas'}]},
   {id:'vinilo', n:'Androide de vinilo', mov:'Servos, ojos de diafragma y boca LED', fn:'crearViniloCapas', capa:'casco',
    estilos:[['Naranja','#f08a4b',''],['Celeste','#38bdf8','hue-rotate(175deg)'],['Menta','#5eead4','hue-rotate(140deg) saturate(.9)'],['Grafito','#3a3f4a','grayscale(1) brightness(.34) contrast(1.15)']],
    piezas:['Antena con resorte','Calcomanías reflectantes','Ojo de otro color']},
@@ -206,7 +206,7 @@ var S={modelo:'ciber', estilo:{}, fondo:'noche', tab:'estilos', cat:'pelo', cl:O
 M.forEach(function(m){ S.estilo[m.id]=0; }); S.puestas={}; var PZ={};
 // piezas vector puestas: se agregan al SVG del modelo cuando su animación ya está lista
 function aplicarPiezas(id){ var a=inst[id]; if(!a||!a.listo) return; var lib=(window.PIEZAS_VECTOR||{})[id]||{}, on=S.puestas[id]||{}; PZ[id]=PZ[id]||{};
-  Object.keys(lib).forEach(function(v){ if(on[v] && !PZ[id][v]){ PZ[id][v]=lib[v](a.el); } else if(!on[v] && PZ[id][v]){ PZ[id][v].quitar(); delete PZ[id][v]; } }); }
+  Object.keys(lib).forEach(function(v){ if(on[v] && !PZ[id][v]){ PZ[id][v]=lib[v](a.el); } else if(!on[v] && PZ[id][v]){ PZ[id][v].quitar(); delete PZ[id][v]; } }); aplicarEstilo(id); }
 // orden barajado (pieza 1: ninguno gana por ir primero)
 var orden=M.map(function(m){ return m.id; }); for(var i=orden.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=orden[i]; orden[i]=orden[j]; orden[j]=t; }
 S.modelo=orden[0];
@@ -234,7 +234,9 @@ function capaDe(id){ var a=inst[id]; if(!a) return null; var ims=a.el.querySelec
   var cuerpo=[].filter.call(ims,function(x){ return casco.indexOf(x)<0; });
   return porId[id].capa==='casco'?casco:cuerpo; }
 function aplicarEstilo(id){ var m=porId[id];
-  if(m.fn){ var capas=capaDe(id)||[], f=m.estilos[S.estilo[id]][2]||''; capas.forEach(function(x){ x.style.filter=f; }); }
+  if(m.fn){ var capas=capaDe(id)||[], f=m.estilos[S.estilo[id]][2]||''; capas.forEach(function(x){ x.style.filter=f; });
+    // las piezas del color del cuerpo (gotitas del Slime) toman el mismo estilo
+    inst[id].el.querySelectorAll('.pieza-tinte').forEach(function(x){ x.style.filter=m.capa==='cuerpo'?f:''; }); }
   else if(inst[id]) pintarSvg(id,inst[id].ult); }
 function mostrar(estado){
   var a=instDe(S.modelo), h=$('#hueco');

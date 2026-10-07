@@ -41,5 +41,63 @@ var PIEZAS_VECTOR = (function(){
     return { quitar:function(){ g.remove(); f.remove(); m.remove(); } };
   }
 
-  return { slime:{ burbujas:slimeBurbujas } };
+  // ---------- Slime · Gotitas ----------
+  // Gota de gelatina recién desmoldada: baja por el costado pegada a la superficie, queda colgando bajo el borde, se estira,
+  // el cuello se adelgaza hasta cortarse, cae y se aplasta en el suelo en una manchita que se seca.
+  // Recorrido medido sobre la imagen del cuerpo (contorno a alfa > 128): el costado se ensancha hasta y≈630 (x 375 / 1000) y
+  // debajo se recoge (y 660: x 391 / 981). Suelo bajo el borde: y≈690. Va en el grupo "frente": se mueve con la gelatina.
+  // Lleva la clase pieza-tinte para tomar el mismo color que la gelatina cuando se cambia el Estilo.
+  var GOTA_RUTA={
+    izq:{p:[[389,588],[384,600],[379,612],[375,624],[375,636],[382,648],[391,660]], cuelga:[394,664], sale:-1},
+    der:{p:[[985,588],[991,600],[996,612],[1000,624],[999,636],[994,648],[981,660]], cuelga:[978,663], sale:1}
+  };
+  var SUELO_GOTA=690;
+  function slimeGotitas(el){
+    var svg=el.querySelector('svg'); if(!svg) return null;
+    var frente=[].filter.call(svg.querySelectorAll('g[clip-path]'),function(g){ return g.querySelector('image'); })[0]; if(!frente) return null;
+    var g=nodo('g',{'class':'pieza-gotitas pieza-tinte'}); frente.appendChild(g);
+    var gotas=[], vivo=true, prox=.6, ult=performance.now(), lado=Math.random()<.5?'izq':'der';
+    function sobre(t,ruta){ // punto del recorrido a la fracción t (0..1), un poco hacia afuera de la superficie
+      var p=ruta.p, f=Math.min(p.length-1.001,Math.max(0,t*(p.length-1))), i=Math.floor(f), k=f-i;
+      return [p[i][0]+(p[i+1][0]-p[i][0])*k+ruta.sale*7, p[i][1]+(p[i+1][1]-p[i][1])*k]; }
+    function nueva(){
+      var ruta=GOTA_RUTA[lado]; lado=lado==='izq'?'der':'izq';
+      var d={ruta:ruta, t:0, R:22+Math.random()*6, /* ~8 % del ancho de la gelatina: en la tarjeta del Perfil (124 px) la gota se ve de ~8 px */ cuerpo:nodo('path',{fill:'#f07a28','fill-opacity':'.9',stroke:'rgba(120,45,8,.35)','stroke-width':'1.6'}),
+        brillo:nodo('ellipse',{fill:'#fff',opacity:'.85'}), mancha:nodo('ellipse',{fill:'#f07a28','fill-opacity':'.7',opacity:'0'})};
+      g.appendChild(d.mancha); g.appendChild(d.cuerpo); g.appendChild(d.brillo); gotas.push(d); }
+    // forma de lágrima: cuello de ancho w en (x0,y0) y bulbo de radio r centrado en (x0,yb)
+    function lagrima(x0,y0,yb,r,w){ return 'M'+(x0-w)+' '+y0+' C'+(x0-w*.6)+' '+((y0+yb)/2)+' '+(x0-r)+' '+(yb-r*.7)+' '+(x0-r)+' '+yb
+      +' A'+r+' '+r+' 0 1 0 '+(x0+r)+' '+yb+' C'+(x0+r)+' '+(yb-r*.7)+' '+(x0+w*.6)+' '+((y0+yb)/2)+' '+(x0+w)+' '+y0+' Z'; }
+    function cuadro(now){
+      if(!vivo) return;
+      var dt=Math.min(.05,(now-ult)/1000); ult=now;
+      if(!reduce){ prox-=dt; if(prox<0 && gotas.length<2){ nueva(); prox=2.4+Math.random()*2.2; } }
+      gotas=gotas.filter(function(d){
+        if(!reduce) d.t+=dt; var t=d.t, R=d.R, c=d.ruta.cuelga, x, y, path;
+        if(t<1.1){ // baja pegada al costado (va acelerando)
+          var q=sobre(Math.pow(t/1.1,1.6),d.ruta), r=R*(.55+.25*t/1.1);
+          path='M'+(q[0]-r)+' '+q[1]+' A'+r+' '+(r*1.15)+' 0 1 0 '+(q[0]+r)+' '+q[1]+' A'+r+' '+(r*1.15)+' 0 1 0 '+(q[0]-r)+' '+q[1]+' Z'; x=q[0]; y=q[1];
+        } else if(t<1.85){ // cuelga del borde y se estira; el cuello se adelgaza
+          var k=(t-1.1)/.75, yb=c[1]+R*(.9+1.1*k*k), w=R*(.75-.6*k); x=c[0]; y=yb;
+          path=lagrima(c[0],c[1]-2,yb,R*(.8+.2*k),w);
+        } else if(t<2.15){ // se corta y cae (gravedad)
+          var k2=(t-1.85)/.3; y=c[1]+R*2+(SUELO_GOTA-R-(c[1]+R*2))*k2*k2; x=c[0];
+          path='M'+(x-R*.8)+' '+y+' A'+(R*.8)+' '+R+' 0 1 0 '+(x+R*.8)+' '+y+' A'+(R*.8)+' '+R+' 0 1 0 '+(x-R*.8)+' '+y+' Z';
+        } else { // se aplasta en el suelo y se seca
+          var k3=Math.min(1,(t-2.15)/.9); x=c[0]; path='';
+          d.mancha.setAttribute('cx',x); d.mancha.setAttribute('cy',SUELO_GOTA); d.mancha.setAttribute('rx',(R*(1.1+1.2*Math.min(1,k3*4))).toFixed(1)); d.mancha.setAttribute('ry',(R*.32).toFixed(1));
+          d.mancha.setAttribute('opacity',(1-k3).toFixed(2));
+          if(k3>=1){ d.cuerpo.remove(); d.brillo.remove(); d.mancha.remove(); return false; }
+        }
+        d.cuerpo.setAttribute('d',path); d.brillo.setAttribute('opacity',path?'.85':'0');
+        if(path){ d.brillo.setAttribute('cx',(x-R*.28).toFixed(1)); d.brillo.setAttribute('cy',(y-R*.15).toFixed(1)); d.brillo.setAttribute('rx',(R*.22).toFixed(1)); d.brillo.setAttribute('ry',(R*.32).toFixed(1)); }
+        return true; });
+      if(el.isConnected && !document.hidden) requestAnimationFrame(cuadro); else setTimeout(function(){ ult=performance.now(); requestAnimationFrame(cuadro); },250);
+    }
+    if(reduce){ nueva(); gotas[0].t=1.6; } // movimiento reducido: una gota quieta colgando del borde
+    requestAnimationFrame(cuadro);
+    return { quitar:function(){ vivo=false; g.remove(); } };
+  }
+
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas } };
 })();
