@@ -55,6 +55,7 @@ const CORE = [
   './mantencion-preventiva.js',
   './pistero-conversacion.js',
   './pwa-wakelock.js',
+  './layout-medidas.js',
   './avisos-viaje.js',
   './pwa-instalacion.js',
   './sobrevuelo-viaje.js',
