@@ -1,0 +1,292 @@
+<title>Maqueta Armario por modelo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Mismo teléfono que la maqueta de la pieza 1 (disenos-ui/elige-tu-pistero) y, al lado, qué es real y qué falta.
+   Look oscuro único, el de Libre Pedal. */
+:root{
+  --d:#0a0f1d; --surf:#141a2b; --surf2:#0f1524; --br:rgba(255,255,255,.09); --line:rgba(159,179,200,.16);
+  --p:#fc4c02; --p2:#ff6a1f; --p-suave:rgba(252,76,2,.14); --ok:#39ff88; --ojo:#ffd27a;
+  --tx:#e8eeff; --sub:#9fb3c8; --mute:#6f7f98;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-txt:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-app:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-txt);font-size:16px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:1060px;margin:0 auto;display:grid;gap:30px}
+h1,h2{font-family:var(--f-disp);font-weight:800;margin:0;text-wrap:balance}
+h1{font-size:clamp(2.1rem,6.5vw,3.2rem);line-height:1}
+h1 span{color:var(--p)}
+p{margin:0;max-width:66ch}
+.eyebrow{font-family:var(--f-disp);font-weight:600;font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p)}
+.lead{color:var(--sub)}
+.escena{display:grid;grid-template-columns:minmax(0,372px) minmax(0,1fr);gap:40px;align-items:start}
+.lado{display:grid;gap:14px;align-content:start}
+.bloque{background:var(--surf2);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:8px}
+.bloque b{font-family:var(--f-disp);font-size:1.25rem;font-weight:800}
+.bloque p,.bloque li{color:var(--sub);font-size:.94rem}
+.bloque ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.est{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.est.ok{color:var(--ok)}.est.ojo{color:var(--ojo)}
+
+/* ---------- teléfono (medidas de la pieza 1) ---------- */
+.tel{width:372px;max-width:100%;aspect-ratio:372/780;border-radius:44px;border:10px solid #1b2233;background:var(--d);box-shadow:0 30px 70px rgba(0,0,0,.6);position:relative;overflow:hidden;font-family:var(--f-app);font-size:14px;line-height:1.4;display:flex;flex-direction:column}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;background:rgba(10,15,29,.98);border-bottom:1px solid #222;flex:none}
+.logo{font-weight:900;letter-spacing:.05em;font-size:.98rem}.logo i{font-style:normal;color:var(--p)}
+.chip{font-size:.66rem;background:rgba(252,76,2,.14);border:1px solid rgba(252,76,2,.42);color:#ffd9c6;border-radius:20px;padding:4px 9px;font-weight:700}
+.cont{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 14px 16px;display:flex;flex-direction:column;gap:10px}
+.t1{font-size:1.05rem;font-weight:800}
+.t2{color:var(--sub);font-size:.78rem}
+/* tarjeta de tu Pistero: el fondo es la pestaña "Para todos" */
+.tarj{display:flex;gap:12px;align-items:center;border:1px solid var(--br);border-radius:16px;padding:10px;background:var(--surf)}
+.stage{position:relative;display:grid;place-items:center;border-radius:14px;width:132px;height:132px;flex:none;overflow:visible}
+.stage .hueco{width:124px;height:124px;display:grid;place-items:center}
+.mod{width:100%;height:100%}
+.mod svg{width:100%!important;height:100%!important;max-width:100%;max-height:100%;display:block}
+.mod.m-ciber svg{transform:scale(.76);transform-origin:50% 42%}
+.tarj .der{display:grid;gap:4px;min-width:0;flex:1}
+.tarj .der b{font-size:1rem}
+.tarj .der span{color:var(--sub);font-size:.76rem}
+.btn{all:unset;cursor:pointer;text-align:center;min-height:46px;display:grid;place-items:center;border-radius:13px;font-weight:700;font-size:.92rem;color:#fff;background:linear-gradient(180deg,var(--p2),var(--p));box-shadow:0 6px 18px rgba(252,76,2,.28)}
+.btn:focus-visible,.tab:focus-visible,.it:focus-visible,.sw:focus-visible,.cat:focus-visible,.mini:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.btn.sec{background:linear-gradient(180deg,#1a2438,#151d30);border:1px solid var(--br);box-shadow:none;color:#dfe7ff;font-weight:650;min-height:38px;font-size:.82rem}
+.tira{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tira[hidden]{display:none}
+.mini{all:unset;cursor:pointer;display:grid;justify-items:center;gap:3px;padding:7px 4px 6px;border-radius:13px;background:var(--surf);border:1.5px solid var(--br);min-width:0}
+.mini .cara{width:42px;height:42px;display:grid;place-items:center;overflow:hidden}
+.mini .cara img,.mini .cara svg{width:100%;height:100%;object-fit:contain;display:block}
+.mini small{font-size:.64rem;color:#cfd8ea;font-weight:600;text-align:center;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mini.on{border-color:var(--p);background:linear-gradient(180deg,#24180f,#141a2b)}
+/* tres pestañas, iguales para los 6 modelos (el estilo de las pestañas de la tienda de hoy) */
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;position:sticky;top:-12px;z-index:2;background:var(--d);padding-block:6px}
+.tab{all:unset;cursor:pointer;display:grid;justify-items:center;gap:2px;padding:8px 4px;border-radius:12px;border:1px solid var(--br);background:var(--surf);color:#9fb3c8;font-size:.72rem;font-weight:700}
+.tab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:#fff;border-color:rgba(252,76,2,.6);background:linear-gradient(180deg,#2a1a10,#141a2b)}
+.sub{font-size:.72rem;color:var(--sub);font-weight:700;letter-spacing:.02em;margin-top:2px}
+.sws{display:flex;flex-wrap:wrap;gap:8px}
+.sw{all:unset;cursor:pointer;display:grid;justify-items:center;gap:4px;width:58px}
+.sw i{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.14);box-shadow:inset 0 -6px 10px rgba(0,0,0,.28)}
+.sw span{font-size:.62rem;color:#cfd8ea;text-align:center;line-height:1.15}
+.sw.on i{border-color:#fff;box-shadow:0 0 0 2px var(--p),inset 0 -6px 10px rgba(0,0,0,.28)}
+.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.cat{all:unset;cursor:pointer;flex:none;font-size:.7rem;font-weight:700;color:#9fb3c8;padding:5px 10px;border-radius:20px;border:1px solid var(--br);background:var(--surf2)}
+.cat.on{color:#fff;border-color:var(--p);background:var(--p-suave)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.it{all:unset;cursor:pointer;display:grid;justify-items:center;gap:3px;padding:6px 4px 7px;border-radius:12px;background:var(--surf);border:1.5px solid var(--br);min-width:0}
+.it .vis{width:100%;aspect-ratio:1;display:grid;place-items:center;border-radius:9px;overflow:hidden}
+.it .vis svg{width:88%;height:88%}
+.it small{font-size:.64rem;color:#cfd8ea;font-weight:600;text-align:center;line-height:1.15}
+.it.on{border-color:var(--p);background:linear-gradient(180deg,#24180f,#141a2b)}
+.pend{all:unset;display:grid;justify-items:center;gap:4px;padding:10px 6px;border-radius:12px;border:1.5px dashed var(--line);color:var(--mute);text-align:center;min-width:0}
+.pend .vis{width:58px;height:58px;display:grid;place-items:center;opacity:.35;filter:grayscale(1)}
+.pend .vis img,.pend .vis svg{width:100%;height:100%;object-fit:contain}
+.pend b{font-size:.7rem;color:#cfd8ea}
+.pend span{font-size:.6rem;color:var(--ojo);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.aviso{font-size:.72rem;color:var(--sub);background:var(--surf2);border:1px solid var(--br);border-radius:10px;padding:8px 10px;line-height:1.35}
+.nav{flex:none;display:flex;justify-content:space-around;border-top:1px solid #222;background:rgba(10,15,29,.99);padding:6px 0 14px}
+.nav span{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:48px;color:#666;font-size:.55rem;font-weight:700;position:relative;padding:4px 6px}
+.nav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav .on{color:var(--p)}
+.nav .on::after{content:'';position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--p);box-shadow:0 0 8px var(--p)}
+.nav .pist{width:28px;height:23px}
+@keyframes salta{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}
+.entra{animation:salta .55s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.svgmod{animation:flota 2.6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.entra,.svgmod{animation:none}}
+@media (max-width:820px){ .escena{grid-template-columns:minmax(0,1fr);justify-items:center} .lado{width:100%} }
+</style>
+
+<main class="wrap">
+  <header style="display:grid;gap:8px">
+    <div class="eyebrow">Libre Pedal · Pistero · pieza 2 de 3 · maqueta</div>
+    <h1>Armario <span>por modelo</span></h1>
+    <p class="lead">El teléfono se puede tocar. Cambia de modelo arriba y prueba las tres pestañas: los colores y las piezas del Clásico son los de la app real, dibujados con su mismo código.</p>
+  </header>
+
+  <section class="escena">
+    <div class="tel">
+      <div class="hdr"><span class="logo">LIBRE <i>PEDAL</i></span><span class="chip">Novato</span></div>
+      <div class="cont" id="cont">
+        <div class="t1">Perfil y personaje</div>
+        <div class="tarj">
+          <div class="stage" id="stage"><div class="hueco" id="hueco"></div></div>
+          <div class="der"><span>Tu Pistero</span><b id="j-nombre"></b><span id="j-mov"></span>
+            <button class="btn sec" id="b-cambiar" type="button" aria-expanded="false">Cambiar modelo</button></div>
+        </div>
+        <div class="tira" id="tira" hidden></div>
+        <div class="tabs" role="tablist">
+          <button class="tab on" type="button" role="tab" data-t="estilos" aria-selected="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18c1.7 0 2-1.2 1.3-2.3-.8-1.2 0-2.7 1.4-2.7H17a4 4 0 0 0 4-4c0-5-4-9-9-9z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></svg>Estilos</button>
+          <button class="tab" type="button" role="tab" data-t="piezas" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 18l-1-10 5 4 4-7 4 7 5-4-1 10z"/><path d="M4 18h16"/></svg>Piezas propias</button>
+          <button class="tab" type="button" role="tab" data-t="todos" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 15l5-4 4 3 3-2 6 4"/></svg>Para todos</button>
+        </div>
+        <div id="panel" style="display:grid;gap:10px"></div>
+        <button class="btn" type="button" id="b-guardar" style="margin-top:4px">Guardar personaje</button>
+      </div>
+      <div class="nav">
+        <span><svg viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Inicio</span>
+        <span><svg viewBox="0 0 24 24"><path d="M18 8c0 3.613-3.869 7.429-5.393 8.795a1 1 0 0 1-1.214 0C9.87 15.429 6 11.613 6 8a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.714 14h-3.71a1 1 0 0 0-.948.683l-2.004 6A1 1 0 0 0 3 22h18a1 1 0 0 0 .948-1.316l-2-6a1 1 0 0 0-.949-.684h-3.712"/></svg>Mapa</span>
+        <span><span class="pist" id="nav-pist"></span>Pistero</span>
+        <span><svg viewBox="0 0 24 24"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg>Social</span>
+        <span class="on"><svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil</span>
+      </div>
+    </div>
+
+    <div class="lado">
+      <div class="bloque"><b>Estilos</b><span class="est ok">Real en los 6 modelos</span>
+        <p>Recolorea solo la capa que corresponde: el casco del Androide, la luz del Orbe, el neón del Cyberpunk, la gelatina del Slime. La cara animada no se toca. En el Casco vivo y el Clásico es su propio color de casco.</p></div>
+      <div class="bloque"><b>Piezas propias</b><span class="est ojo">Clásico real · los otros 5 por dibujar</span>
+        <p>El Clásico conserva todo lo suyo (pelo, cara, lentes, aros, cuello, accesorios, equipo y piel), dibujado con el código de la app. Los otros 5 muestran las 3 piezas que hay que dibujar para cada uno: 15 en total.</p></div>
+      <div class="bloque"><b>Para todos</b><span class="est ok">Real</span>
+        <p>El fondo de la tarjeta de tu Pistero. Cada fondo sale de algo que ya existe en la app:</p>
+        <ul><li><b style="font:inherit;color:var(--tx)">Noche</b>: el fondo de hoy.</li><li><b style="font:inherit;color:var(--tx)">Huella</b>: el camino que brilla del sobrevuelo.</li><li><b style="font:inherit;color:var(--tx)">Pendiente</b>: los colores de la leyenda del sobrevuelo (plano, 3–6 %, 6–9 %, más de 9 %).</li><li><b style="font:inherit;color:var(--tx)">Satélite</b>: verdes y tierras inspirados en la capa satelital del mapa.</li></ul></div>
+      <div class="bloque"><b>Fuera del armario</b>
+        <p>Bici, Pintura, Ruedas, Carga, Traje y Estela salen de la pantalla, pero su código queda guardado por si la bici vuelve.</p></div>
+    </div>
+  </section>
+</main>
+
+<script>
+{{LIBS}}
+</script>
+<script>
+{{APP}}
+</script>
+<script>
+(function(){
+var IMG={{IMGS}}, TH={{THUMBS}};
+var $=function(s){ return document.querySelector(s); };
+// ---------- modelos (los de la pieza 1) ----------
+var M=[
+  {id:'ciber', n:'Cyberpunk', mov:'Se mueve a saltos, con visor y boca de luz', fn:'crearCiberCapas', capa:'casco',
+   estilos:[['Naranja y cian','linear-gradient(135deg,#ff7a1a 50%,#22e6e6 50%)',''],['Verde y magenta','linear-gradient(135deg,#3ee06a 50%,#e639c8 50%)','hue-rotate(120deg)'],['Lima y violeta','linear-gradient(135deg,#c6f432 50%,#7c5cff 50%)','hue-rotate(60deg)'],['Rosa y verde','linear-gradient(135deg,#ff3d8b 50%,#2ee08a 50%)','hue-rotate(-60deg)']],
+   piezas:['Cables','Grafitis del casco','Visor partido']},
+  {id:'orbe', n:'Orbe', mov:'Flota; su cara es de luz', fn:'crearOrbeCapas', capa:'cuerpo',
+   estilos:[['Ámbar','#ff9a3c',''],['Celeste','#38bdf8','hue-rotate(170deg)'],['Verde','#4ade80','hue-rotate(95deg)'],['Rosa','#f472b6','hue-rotate(-45deg) saturate(1.2)']],
+   piezas:['Anillo de luz','Chispas','Visera']},
+  {id:'slime', n:'Slime', mov:'Gelatina que tiembla y se derrite al cansarse', fn:'crearSlimeCapas', capa:'cuerpo',
+   estilos:[['Naranja','#ff8a3d',''],['Lima','#a3e635','hue-rotate(60deg)'],['Uva','#a855f7','hue-rotate(-110deg) saturate(1.1)'],['Celeste','#38bdf8','hue-rotate(165deg)']],
+   piezas:['Burbujas','Algo tragado adentro','Gotitas']},
+  {id:'vinilo', n:'Androide de vinilo', mov:'Servos, ojos de diafragma y boca LED', fn:'crearViniloCapas', capa:'casco',
+   estilos:[['Naranja','#f08a4b',''],['Celeste','#38bdf8','hue-rotate(175deg)'],['Menta','#5eead4','hue-rotate(140deg) saturate(.9)'],['Grafito','#3a3f4a','grayscale(1) brightness(.34) contrast(1.15)']],
+   piezas:['Antena','Calcomanías del casco','Ojo de otro color']},
+  {id:'casco', n:'Casco vivo', mov:'Parpadea y habla con su visor LED',
+   estilos:[['Naranja','#fc4c02'],['Azul','#2f80ed'],['Verde','#22c55e'],['Rojo','#e11d48'],['Negro','#2a2f3a']],
+   piezas:['Cejas','Pegatinas','Luz trasera']},
+  {id:'clasico', n:'Clásico', mov:'El Pistero de siempre'}
+];
+var porId={}; M.forEach(function(m){ porId[m.id]=m; });
+// ---------- Clásico: las piezas y colores reales de la app (pistero-armario.js), dibujados con _pistoDe ----------
+var BASE=(typeof _pistOpts==='function')?_pistOpts():{};
+var CAT_CL=[
+  {k:'pelo',t:'Pelo',l:'PIST_PELO',ids:['','corto','melena','rizado','afro','trenzas']},
+  {k:'marca',t:'Cara',l:'PIST_MARCA',ids:['','pecas','rubor','barro','curita','brillos']},
+  {k:'lentes',t:'Lentes',l:'PIST_LENTES',ids:['','deportivas','aviador','escudo','redondas','corazon']},
+  {k:'aro',t:'Aros',l:'PIST_ARO',ids:['','argolla','perla','estrella']},
+  {k:'cuello',t:'Cuello',l:'PIST_CUELLO',ids:['','panoleta','buff','bufanda','maillot','collar']},
+  {k:'acc',t:'Accesorios',l:'PIST_ACC',ids:['','camara','luz','cresta','antena','corona']},
+  {k:'gadget',t:'Equipo',l:'PIST_GADGET',ids:['','visera','gopro','espejo','banderin','reflectante']},
+  {k:'piel',t:'Piel',l:'PIST_PIEL',ids:['claro','porcelana','medio','trigueno','canela','moreno']}
+];
+function nombreDe(lista,id){ try{ var x=(window[lista]||eval(lista)).find(function(i){ return i.id===id; }); return x?x.n:id; }catch(e){ return id; } }
+var CASCOS_CL=['azul','naranja','verde','rojo','negro','dorado'].map(function(id){ var x=(typeof PIST_CASCO!=='undefined'?PIST_CASCO:[]).find(function(i){ return i.id===id; })||{c:'#888',n:id}; return [x.n,x.c,id]; });
+// ---------- Para todos: fondos de la tarjeta ----------
+var FONDOS=[
+  {id:'noche', n:'Noche', css:'radial-gradient(70% 70% at 50% 45%,#1a2440,#0f1524 80%)'},
+  {id:'huella', n:'Huella', css:'url("data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132"><defs><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter></defs><rect width="132" height="132" fill="#0b1120"/><path d="M-6 112 C 30 96, 26 66, 58 70 S 96 40, 140 26" fill="none" stroke="#fc4c02" stroke-width="12" opacity=".55" filter="url(#b)"/><path d="M-6 112 C 30 96, 26 66, 58 70 S 96 40, 140 26" fill="none" stroke="#ffd9c6" stroke-width="2.4" stroke-linecap="round"/></svg>')+'") center/cover'},
+  {id:'pendiente', n:'Pendiente', css:'linear-gradient(135deg,rgba(57,255,136,.26),rgba(255,225,77,.22) 38%,rgba(255,138,31,.26) 66%,rgba(255,45,111,.3)),#0d1322'},
+  {id:'satelite', n:'Satélite', css:'radial-gradient(60% 50% at 30% 30%,#3b4a2c,transparent 70%),radial-gradient(50% 60% at 75% 70%,#2a3a3e,transparent 70%),linear-gradient(160deg,#26301f,#141a14)'}
+];
+// ---------- estado ----------
+var S={modelo:'ciber', estilo:{}, fondo:'noche', tab:'estilos', cat:'pelo', cl:Object.assign({},BASE)};
+M.forEach(function(m){ S.estilo[m.id]=0; });
+// orden barajado (pieza 1: ninguno gana por ir primero)
+var orden=M.map(function(m){ return m.id; }); for(var i=orden.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=orden[i]; orden[i]=orden[j]; orden[j]=t; }
+S.modelo=orden[0];
+// ---------- una instancia animada por modelo (igual que la pieza 1) ----------
+var inst={};
+function svgClasico(o,e){ try{ return _pistoDe(o,e||'feliz'); }catch(err){ console.warn('[maqueta] Clásico',err); return ''; } }
+function instDe(id){
+  if(inst[id]) return inst[id];
+  var el=document.createElement('div'); el.className='mod m-'+id; var m=porId[id];
+  var api={el:el, ult:'reposo', real:null, poner:function(e){ api.ult=e; if(api.real) api.real(e); }};
+  if(m.fn){ window[m.fn](el,IMG[id][0],IMG[id][1]).then(function(a){ api.real=a.estado; a.estado(api.ult); aplicarEstilo(id); }); }
+  else { el.classList.add('svgmod'); api.poner=function(e){ api.ult=e; pintarSvg(id,e); }; }
+  inst[id]=api; return api;
+}
+var EXPR_CASCO={reposo:'feliz',hablar:'hablando',feliz:'riendo',sorpresa:'sorprendido'};
+var EXPR_CL={reposo:'feliz',hablar:'contento',feliz:'emocionado',sorpresa:'sorprendido'};
+function pintarSvg(id,e){ var a=inst[id]; if(!a) return;
+  if(id==='casco') a.el.innerHTML=pisteroFrenteSVG({expr:EXPR_CASCO[e]||'feliz',color:porId.casco.estilos[S.estilo.casco][1]});
+  else a.el.innerHTML=svgClasico(S.cl,EXPR_CL[e]||'feliz'); }
+// Estilos de los modelos por capas: el filtro va SOLO a la imagen de su capa (casco o cuerpo); la cara (SVG animado) no se toca
+function capaDe(id){ var a=inst[id]; if(!a) return null; var ims=a.el.querySelectorAll('image');
+  // cada modelo dibuja [cuerpo/cabeza, casco, (cuerpo otra vez de máscara)]: el casco es la que no se repite
+  var hrefs=[].map.call(ims,function(x){ return x.getAttribute('href'); });
+  var casco=[].filter.call(ims,function(x,i){ return hrefs.indexOf(hrefs[i])===hrefs.lastIndexOf(hrefs[i]); });
+  var cuerpo=[].filter.call(ims,function(x){ return casco.indexOf(x)<0; });
+  return porId[id].capa==='casco'?casco:cuerpo; }
+function aplicarEstilo(id){ var m=porId[id];
+  if(m.fn){ var capas=capaDe(id)||[], f=m.estilos[S.estilo[id]][2]||''; capas.forEach(function(x){ x.style.filter=f; }); }
+  else if(inst[id]) pintarSvg(id,inst[id].ult); }
+function mostrar(estado){
+  var a=instDe(S.modelo), h=$('#hueco');
+  if(a.el.parentNode!==h){ h.innerHTML=''; h.appendChild(a.el); a.el.classList.remove('entra'); void a.el.offsetWidth; a.el.classList.add('entra'); }
+  a.poner(estado||'reposo'); aplicarEstilo(S.modelo);
+}
+// ---------- pantalla ----------
+function navPist(){ var id=S.modelo; $('#nav-pist').innerHTML=TH[id]?'<img src="'+TH[id]+'" alt="" style="width:100%;height:100%;object-fit:contain">':(id==='casco'?pisteroFrenteSVG({expr:'feliz',color:porId.casco.estilos[S.estilo.casco][1]}):svgClasico(S.cl,'feliz')); }
+function textos(){ var m=porId[S.modelo]; $('#j-nombre').textContent=m.n; $('#j-mov').textContent=m.mov;
+  $('#stage').style.background=FONDOS.filter(function(f){ return f.id===S.fondo; })[0].css; navPist();
+  document.querySelectorAll('.mini').forEach(function(b){ b.classList.toggle('on',b.dataset.id===S.modelo); b.setAttribute('aria-pressed',b.dataset.id===S.modelo); }); }
+function tira(){ var c=$('#tira'); c.innerHTML='';
+  orden.forEach(function(id){ var m=porId[id], b=document.createElement('button'); b.type='button'; b.className='mini'; b.dataset.id=id;
+    b.innerHTML='<span class="cara">'+(TH[id]?'<img src="'+TH[id]+'" alt="">':(id==='casco'?pisteroFrenteSVG({expr:'feliz'}):svgClasico(BASE,'feliz')))+'</span><small>'+m.n+'</small>';
+    b.addEventListener('click',function(){ S.modelo=id; if(S.tab==='piezas' && id==='clasico') S.cat='pelo'; textos(); mostrar('feliz'); panel(); setTimeout(function(){ if(S.modelo===id) instDe(id).poner('reposo'); },1600); });
+    c.appendChild(b); }); }
+function sw(color,nombre,on,fn){ var b=document.createElement('button'); b.type='button'; b.className='sw'+(on?' on':''); b.setAttribute('aria-pressed',on);
+  b.innerHTML='<i style="background:'+color+'"></i><span>'+nombre+'</span>'; b.addEventListener('click',fn); return b; }
+function panel(){
+  var p=$('#panel'), m=porId[S.modelo]; p.innerHTML='';
+  document.querySelectorAll('.tab').forEach(function(b){ var on=b.dataset.t===S.tab; b.classList.toggle('on',on); b.setAttribute('aria-selected',on); });
+  if(S.tab==='estilos'){
+    var cab=document.createElement('div'); cab.className='sub'; cab.textContent=S.modelo==='clasico'?'Color del casco':(m.capa==='cuerpo'?(S.modelo==='orbe'?'Color de la luz':'Color de la gelatina'):(S.modelo==='ciber'?'Colores del neón':'Color del vinilo')); if(S.modelo==='casco') cab.textContent='Color del casco'; p.appendChild(cab);
+    var w=document.createElement('div'); w.className='sws'; p.appendChild(w);
+    if(S.modelo==='clasico') CASCOS_CL.forEach(function(c){ w.appendChild(sw(c[1],c[0],S.cl.casco===c[2],function(){ S.cl.casco=c[2]; pintarSvg('clasico',instDe('clasico').ult); navPist(); panel(); })); });
+    else m.estilos.forEach(function(e,ix){ w.appendChild(sw(e[1],e[0],S.estilo[S.modelo]===ix,function(){ S.estilo[S.modelo]=ix; aplicarEstilo(S.modelo); instDe(S.modelo).poner('feliz'); navPist(); panel(); })); });
+    var av=document.createElement('div'); av.className='aviso'; av.textContent='Gratis durante el lanzamiento. Cambiar de estilo no borra las piezas.'; p.appendChild(av);
+  } else if(S.tab==='piezas'){
+    if(S.modelo==='clasico'){
+      var cats=document.createElement('div'); cats.className='cats'; p.appendChild(cats);
+      CAT_CL.forEach(function(c){ var b=document.createElement('button'); b.type='button'; b.className='cat'+(S.cat===c.k?' on':''); b.textContent=c.t; b.addEventListener('click',function(){ S.cat=c.k; panel(); }); cats.appendChild(b); });
+      var C=CAT_CL.filter(function(c){ return c.k===S.cat; })[0], g=document.createElement('div'); g.className='grid'; p.appendChild(g);
+      C.ids.forEach(function(id){ var o=Object.assign({},S.cl); o[C.k]=id; var b=document.createElement('button'); b.type='button'; b.className='it'+((S.cl[C.k]||'')===id?' on':'');
+        b.innerHTML='<span class="vis">'+svgClasico(o,'feliz')+'</span><small>'+nombreDe(C.l,id)+'</small>';
+        b.addEventListener('click',function(){ S.cl[C.k]=id; pintarSvg('clasico','feliz'); navPist(); panel(); }); g.appendChild(b); });
+    } else {
+      var g2=document.createElement('div'); g2.className='grid'; p.appendChild(g2);
+      m.piezas.forEach(function(n){ var d=document.createElement('div'); d.className='pend';
+        d.innerHTML='<span class="vis">'+(TH[S.modelo]?'<img src="'+TH[S.modelo]+'" alt="">':pisteroFrenteSVG({expr:'feliz'}))+'</span><b>'+n+'</b><span>Por dibujar</span>'; g2.appendChild(d); });
+      var av2=document.createElement('div'); av2.className='aviso'; av2.textContent='Estas 3 piezas se dibujan solo para el '+m.n+' después de tu OK. Antes se busca cómo es cada cosa en la vida real.'; p.appendChild(av2);
+    }
+  } else {
+    var g3=document.createElement('div'); g3.className='grid'; p.appendChild(g3);
+    FONDOS.forEach(function(f){ var b=document.createElement('button'); b.type='button'; b.className='it'+(S.fondo===f.id?' on':'');
+      b.innerHTML='<span class="vis" style="background:'+f.css+'"></span><small>'+f.n+'</small>';
+      b.addEventListener('click',function(){ S.fondo=f.id; textos(); panel(); }); g3.appendChild(b); });
+    var av3=document.createElement('div'); av3.className='aviso'; av3.textContent='El fondo sirve igual para los 6 modelos: si cambias de modelo, se queda.'; p.appendChild(av3);
+  }
+}
+document.querySelectorAll('.tab').forEach(function(b){ b.addEventListener('click',function(){ S.tab=b.dataset.t; panel(); }); });
+$('#b-cambiar').addEventListener('click',function(){ var t=$('#tira'); t.hidden=!t.hidden; this.setAttribute('aria-expanded',!t.hidden); this.textContent=t.hidden?'Cambiar modelo':'Listo'; });
+$('#b-guardar').addEventListener('click',function(){ var b=this; b.textContent='Guardado ✓'; instDe(S.modelo).poner('feliz'); setTimeout(function(){ b.textContent='Guardar personaje'; },1600); });
+tira(); textos(); mostrar('reposo'); panel();
+var seq=['reposo','hablar','reposo','feliz','reposo','sorpresa'], k=0;
+setInterval(function(){ k=(k+1)%seq.length; instDe(S.modelo).poner(seq[k]); },2600);
+var cola=orden.filter(function(id){ return porId[id].fn && !inst[id]; });
+(function sig(){ var id=cola.shift(); if(!id) return; instDe(id); setTimeout(sig,700); })();
+})();
+</script>
