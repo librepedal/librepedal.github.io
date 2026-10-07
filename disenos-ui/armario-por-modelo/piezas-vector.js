@@ -213,6 +213,19 @@ var PIEZAS_VECTOR = (function(){
     return { estado:function(n){ est=n; }, quitar:function(){ parar(); sigue.remove(); f.remove(); gr.remove(); } };
   }
 
+  // ---------- Orbe · Visera (arte de Gemini) ----------
+  // Referencia real: visera de casco MTB (ABUS MoDrop): pieza curva y baja sobre el borde delantero, fijada a los costados
+  // con tornillos de pivote. Gemini la dibujó EDITANDO la capa del casco del Orbe (misma cámara, 1024x1024, fondo verde):
+  // medido contra el original, solo cambia la franja de la visera (y 416–600); el resto coincide. Por eso la pieza
+  // reemplaza la imagen de la capa del casco (mismo recorte de verde que lib-orbe) y al quitarla vuelve la original.
+  function orbeVisera(el){
+    var svg=el.querySelector('svg'), src=(window.PIEZAS_IMG||{}).orbeVisera; if(!svg||!src||typeof _recortarVerde!=='function') return null;
+    var capa=svg.querySelector('g[id$="casco"] > image'); if(!capa) return null;
+    var original=capa.getAttribute('href'), vivo=true;
+    _recortarVerde(src).then(function(png){ if(vivo) capa.setAttribute('href',png); });
+    return { quitar:function(){ vivo=false; capa.setAttribute('href',original); } };
+  }
+
   // ---------- Androide · Ojo de otro color ----------
   // Sus ojos son diafragmas de cámara (lib-vinilo.js: iris naranjo encendido, hojas, brillo). Referencia real: el
   // TRATAMIENTO de los lentes de cámara: un lente multicapa refleja pequeños destellos violeta y verde, y cada tratamiento
@@ -282,6 +295,6 @@ var PIEZAS_VECTOR = (function(){
       +lado(-1,.1)+lado(1,.55); }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, destello:orbeDestello }, vinilo:{ ojo:viniloOjo },
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo },
            casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
