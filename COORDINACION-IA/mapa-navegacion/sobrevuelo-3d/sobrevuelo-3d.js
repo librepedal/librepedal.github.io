@@ -58,7 +58,7 @@ function densificar(c,paso){ var out=[c[0]]; for(var i=1;i<c.length;i++){ var d=
 function enD(L,d){ var c=L.c, cum=L.cum, k=1, lo=1, hi=c.length-1; d=Math.max(0,Math.min(L.total,d)); while(lo<hi){ var m=(lo+hi)>>1; if(cum[m]<d) lo=m+1; else hi=m; } k=lo; var f=Math.min(1,Math.max(0,(d-cum[k-1])/Math.max(1e-9,cum[k]-cum[k-1]))); return {p:[c[k-1][0]+(c[k][0]-c[k-1][0])*f, c[k-1][1]+(c[k][1]-c[k-1][1])*f], i:k-1, f:f}; }
 function rumboEn(L,d){ return rumbo(enD(L,d-40).p,enD(L,d+160).p); }
 // limpieza que hace HOY la app (_sbvLimpiar: fuera saltos > 22 m/s)
-function limpiarHoy(pts){ var out=[]; pts.forEach(function(p){ var u=out[out.length-1]; if(u && hav([u.lon,u.lat],[p.lon,p.lat])/((p.t-u.t)/1000)>22) return; out.push(p); }); return out; }
+function limpiarHoy(pts){ var out=[]; pts.forEach(function(p){ var u=out[out.length-1]; if(u && p.t>u.t && hav([u.lon,u.lat],[p.lon,p.lat])/((p.t-u.t)/1000)>22) return; out.push(p); }); return out; } /* sin horas no se filtra (antes dividía por 0 y se quedaba con 1 punto) */
 
 // ---------- relieve real: tiles terrarium de Mapterhorn decodificados en un canvas ----------
 var demCache={}, DEMS={}, EXAG=1.2; // 1,2: con 1,35 las laderas del DEM de 30 m se estiraban y se veían defectos
@@ -243,17 +243,78 @@ function mascotaElegida(){ return opts.mascota||''; }
 function mascotaCanasto(){ var id=mascotaElegida(); return (typeof PIST_MASCOTA!=='undefined' && PIST_MASCOTA.some(function(m){ return m.id===id && id; }))?id:''; }
 function mascotaSVG(id){ return typeof _bMascota==='function'?'<svg viewBox="-9 -16 20 18" xmlns="http://www.w3.org/2000/svg">'+_bMascota(id,[0,0],true)+'</svg>':''; }
 
-Promise.all([fetch('traza-gps.json').then(function(r){return r.json();}), fetch('traza-pegada.json').then(function(r){return r.json();}), cargarMascota()]).then(function(r){
-  D.hoy=linea(limpiarHoy(r[0]).map(function(p){ return [p.lon,p.lat]; }));
-  D.dur=r[0][r[0].length-1].t-r[0][0].t; // duración real del viaje (horas de los puntos)
-  D.nuevo=linea(densificar(r[1],12));
+// prepara todo lo que el vuelo necesita a partir de los puntos grabados (crudo) y la línea pegada al camino
+// ~5 s por km, pero acotado a 45–80 s (Relive deja sus videos en torno a un minuto); un viaje de 100 km ya no dura 8 min
+function durVuelo(){ return Math.max(45000,Math.min(80000,D.nuevo.total/1000*5000)); }
+function prepararRuta(crudo, pegada){
+  D.hoy=linea(limpiarHoy(crudo).map(function(p){ return [p.lon,p.lat]; }));
+  D.dur=(crudo[crudo.length-1].t&&crudo[0].t)?crudo[crudo.length-1].t-crudo[0].t:0; /* duración real (horas de los puntos), 0 si no hay */
+  D.nuevo=linea(densificar(pegada,12));
   return alturas(D.nuevo.c).then(function(a){
     var N=D.nuevo; N.alt=suavizar(suavizar(a,N.cum,60),N.cum,60); N.pend=pendientes(N.alt,N.cum,100);
     var sub=0, ref=N.alt[0]; N.sub=N.alt.map(function(h){ if(h>ref+2){ sub+=h-ref; ref=h; } else if(h<ref-2) ref=h; return sub; });
     N.min=Math.min.apply(null,N.alt); N.max=Math.max.apply(null,N.alt); N.imax=N.alt.indexOf(N.max);
-    return demPrecargar(N.c).then(function(){ ladoBajo(N); planear(N); iniciar(); });
+    return demPrecargar(N.c).then(function(){ ladoBajo(N); planear(N); });
   });
+}
+Promise.all([fetch('traza-gps.json').then(function(r){return r.json();}), fetch('traza-pegada.json').then(function(r){return r.json();}), cargarMascota()]).then(function(r){
+  return prepararRuta(r[0],r[1]).then(iniciar);
 }).catch(function(e){ $('cargando').textContent='No se pudo cargar: '+e.message; console.error(e); });
+
+// ===== "Usa tu ruta": GPX propio → limpieza → pegado al camino → relieve → vuelo =====
+// El archivo se lee en el navegador. Para pegarla al camino se envía SOLO la lista de puntos (sin nombre ni horas) al
+// servidor de demostración de Valhalla (FOSSGIS); si falla o devuelve un largo que no cuadra, se usa la traza limpia.
+function leerGPX(texto){
+  var x=new DOMParser().parseFromString(texto,'application/xml'), nodos=[].slice.call(x.getElementsByTagName('trkpt')); if(!nodos.length) nodos=[].slice.call(x.getElementsByTagName('rtept'));
+  var pts=nodos.map(function(n){ var t=n.getElementsByTagName('time')[0]; return {lat:+n.getAttribute('lat'), lon:+n.getAttribute('lon'), t:t?Date.parse(t.textContent):0}; }).filter(function(p){ return isFinite(p.lat)&&isFinite(p.lon); });
+  var nm=x.getElementsByTagName('name')[0]; return {pts:pts, nombre:nm?nm.textContent.trim():''};
+}
+function largoPts(p){ var s2=0; for(var i=1;i<p.length;i++) s2+=hav([p[i-1].lon,p[i-1].lat],[p[i].lon,p[i].lat]); return s2; }
+// quita "pinchazos": un punto que se sale más de 22 m de la línea entre sus vecinos (sirve aunque no haya horas)
+function sinPinchazos(p){ var out=p.slice(), cambio=true, vuelta=0;
+  while(cambio && vuelta++<3){ cambio=false; for(var i=1;i<out.length-1;i++){ var a2=out[i-1], b2=out[i+1], m={lat:(a2.lat+b2.lat)/2, lon:(a2.lon+b2.lon)/2};
+    if(hav([out[i].lon,out[i].lat],[m.lon,m.lat])>22 && hav([a2.lon,a2.lat],[b2.lon,b2.lat])<120){ out.splice(i,1); i--; cambio=true; } } }
+  return out; }
+var VALHALLA='https://valhalla1.openstreetmap.de/trace_route';
+function decPoly6(z){ var i=0,la=0,lo=0,o=[]; while(i<z.length){ for(var k=0;k<2;k++){ var sh=0,res=0,b; do{ b=z.charCodeAt(i++)-63; res|=(b&31)<<sh; sh+=5; }while(b>=32); var v=(res&1)?~(res>>1):(res>>1); if(k) lo+=v; else la+=v; } o.push([lo/1e6,la/1e6]); } return o; }
+// un tramo: si Valhalla responde con un pedazo (trampa conocida) o falla, ese tramo usa la traza limpia
+function pegarTramo(tr){
+  var Lg=largoPts(tr), propio=tr.map(function(p){ return [p.lon,p.lat]; });
+  return fetch(VALHALLA,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({shape:tr.map(function(p){ return {lat:p.lat,lon:p.lon}; }),costing:'bicycle',shape_match:'map_snap',trace_options:{search_radius:50,gps_accuracy:12}})})
+  .then(function(r2){ return r2.json(); }).then(function(j){ if(!j.trip) return {c:propio,ok:false};
+    var c=[]; j.trip.legs.forEach(function(l,ix){ var d2=decPoly6(l.shape); c=c.concat(ix?d2.slice(1):d2); });
+    return Math.abs(linea(c).total-Lg)/Lg<=.1?{c:c,ok:true}:{c:propio,ok:false}; })
+  .catch(function(){ return {c:propio,ok:false}; });
+}
+function pegarAlCamino(pts){
+  var conT=pts.every(function(p){ return p.t>0; });
+  var limpio=[]; pts.forEach(function(p){ var u=limpio[limpio.length-1]; if(u&&conT&&p.t>u.t&&hav([u.lon,u.lat],[p.lon,p.lat])/((p.t-u.t)/1000)>12) return; limpio.push(p); });
+  limpio=sinPinchazos(limpio);
+  var muestra=[]; limpio.forEach(function(p){ var u=muestra[muestra.length-1]; if(!u||hav([u.lon,u.lat],[p.lon,p.lat])>=40) muestra.push(p); });
+  if(muestra.length<3) return Promise.resolve({coords:limpio.map(function(p){ return [p.lon,p.lat]; }),metodo:'gps',motivo:'pocos puntos'});
+  // tramos de ~120 puntos (~5 km) que se tocan en un punto; de a 2 pedidos a la vez (uso justo del servidor de demostración)
+  var tramos=[]; for(var i=0;i<muestra.length-1;i+=119) tramos.push(muestra.slice(i,Math.min(muestra.length,i+120)));
+  var res=new Array(tramos.length), sig=0;
+  function trabajador(){ if(sig>=tramos.length) return Promise.resolve(); var k=sig++; return pegarTramo(tramos[k]).then(function(x){ res[k]=x; return trabajador(); }); }
+  return Promise.all([trabajador(),trabajador()]).then(function(){
+    var c=[], buenos=0; res.forEach(function(x,k){ if(x.ok) buenos++; c=c.concat(k?x.c.slice(1):x.c); });
+    var parte=buenos/res.length; if(parte<1) console.info('[sobrevuelo] tramos pegados al camino: '+buenos+' de '+res.length);
+    return {coords:c, metodo:parte===1?'valhalla':(parte>0?'parcial':'gps'), motivo:buenos+'/'+res.length};
+  });
+}
+function usarGPX(file,listo){
+  var sub=$('titSub'); corriendo=false; actualizarBoton();
+  file.text().then(function(txt){ if(listo) listo(); var g=leerGPX(txt); if(g.pts.length<10) throw new Error('El archivo no trae una ruta con puntos');
+    sub.textContent='Pegando tu ruta al camino…';
+    return pegarAlCamino(g.pts).then(function(res){ sub.textContent='Calculando el relieve…';
+      return prepararRuta(g.pts,res.coords).then(function(){
+        RUTA.nombre=g.nombre||file.name.replace(/\.gpx$/i,''); RUTA.metodo=res.metodo;
+        prog=0; perfilCache=null; PRE.hechos={}; PRE.cola=[]; PRE.pendientes={}; PRE.total=0; PRE.listos=0;
+        $('tit').textContent=RUTA.nombre;
+        sub.textContent=fmt(D.nuevo.total/1000,1)+' km · '+(res.metodo==='valhalla'?'pegada al camino':res.metodo==='parcial'?'pegada al camino en '+res.motivo+' tramos':'GPS limpio (no se pudo pegar al camino)');
+        reiniciar(); }); }); })
+  .catch(function(e){ sub.textContent='No se pudo usar ese archivo: '+e.message; console.error(e); });
+}
 
 // ---------- mascota: pudú cría (Gemini, rama feature/mascotas); fondo azul fuera con relleno desde los bordes (mismo sinFondo del mockup) ----------
 function sinFondo(src){ return new Promise(function(res,rej){ var im=new Image(); im.onerror=rej; im.onload=function(){
@@ -298,6 +359,7 @@ function iniciar(){
   var sm=$('mascota'); if(sm){ var lst=(typeof PIST_MASCOTA!=='undefined'?PIST_MASCOTA:[]).map(function(m){ return [m.id,m.n]; }).concat([['pudu',MASC_CORREN.pudu]]); sm.innerHTML=lst.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join(''); sm.value=opts.mascota||''; /* Inty 2026-10-07: por ahora sin mascota (queda lista para después) */ opts.mascota=sm.value; sm.onchange=function(){ opts.mascota=sm.value; if(mapa) montarDeNuevo(); }; }
   var sp=$('personaje'); if(sp){ sp.innerHTML=Object.keys(PERSONAJES).map(function(k){ return '<option value="'+k+'">'+(PERSONAJES[k].nombre||'Pistero')+'</option>'; }).join(''); sp.value=personaje.id;
     sp.onchange=function(){ personaje=PERSONAJES[sp.value]; if(mapa&&modo==='nuevo'){ crearMarcador(); pintar(16,performance.now(),false); } }; }
+  $('gpx').onchange=function(){ var inp=this; if(inp.files&&inp.files[0]) usarGPX(inp.files[0],function(){ inp.value=''; }); };   /* se limpia DESPUÉS de leer (antes se perdía el archivo) */
   $('vel').onclick=function(){ velX=velX===1?2:velX===2?4:1; this.textContent='×'+velX; };
   var pf=$('perfil'), arrastrando=false;
   function irA(ev){ var r=pf.getBoundingClientRect(); window._ir(Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))); }
@@ -374,7 +436,7 @@ function reiniciar(){ corriendo=false; prog=0; reiniciarEstado(); actualizarBoto
 // cameraForBounds + jumpTo no congela; la animación es propia (curva suave).
 var encuadreRAF=null;
 function encuadrar(ms){ var c=D[modo].c, b=c.reduce(function(b,p){ return [[Math.min(b[0][0],p[0]),Math.min(b[0][1],p[1])],[Math.max(b[1][0],p[0]),Math.max(b[1][1],p[1])]]; },[[180,90],[-180,-90]]);
-  var Z=zonaLibre(), pad={top:Z.arriba+10,bottom:Z.abajo+10,left:24,right:24};
+  var Z=zonaLibre(), pad={top:Z.arriba+44,bottom:Z.abajo+10,left:44,right:44}; /* margen para que el rostro (≈60 px) no quede cortado en los extremos */
   // con el resumen abierto, la ruta va en el espacio libre sobre la tarjeta
   var rs=document.body.classList.contains('fin')&&$('resumen'); if(rs){ pad.bottom=Math.max(pad.bottom,Math.round(Z.H-rs.getBoundingClientRect().top)+12); }
   // cameraForBounds calcula con la inclinación ACTUAL: si la cámara venía inclinada (64°) el zoom salía muy lejano.
@@ -463,7 +525,7 @@ function frame(ts){
     if(modo==='nuevo' && L.momentos[sigM]){ var falta=L.momentos[sigM].d-d; if(falta<120 && L.momentos[sigM].cima) ritmo*=Math.max(.05,falta/120); }
     if(LIVIANO && modo==='nuevo' && faltanHasta(d+350)>0) ritmo*=.35;   // la red viene atrasada: frena suave (no se ve el mapa cortado)
     ritmoAct=suave(ritmoAct,ritmo,dt,700);
-    prog=Math.min(1,prog+dt/(L.total/1000*5000)*ritmoAct*velX);
+    prog=Math.min(1,prog+dt/durVuelo()*ritmoAct*velX);
   }
   if(modo==='nuevo'){ var m=L.momentos[sigM], dd=prog*L.total;
     if(m && espera<=0 && dd>=m.d-1){ primerPlano(m,ts); if(m.cima||m.fin){ espera=m.dur/Math.min(2,velX); espTot=espera; } sigM++; } }
@@ -503,7 +565,7 @@ function pintar(dt,ts,mover){
     if(ultAlt===null) ultAlt=h; if(gp>0.03) ganCuesta+=Math.max(0,h-ultAlt); else if(gp<0.01) ganCuesta=Math.max(0,ganCuesta-Math.abs(h-ultAlt)*2-dt*.004); ultAlt=h;
     // ---- director de tomas ----
     // la toma se pide ~1,4 s más adelante: la transición queda centrada en el punto del evento
-    var adel=1.4*(1000/5)*velX*(ritmoAct||1), T=tomaEn(N,Math.min(N.total,d+adel)), bajo=N.bajo[Math.min(N.c.length-1,enD(N,d+adel).i)]||1;
+    var adel=1.4*(N.total/durVuelo()*1000)*velX*(ritmoAct||1), T=tomaEn(N,Math.min(N.total,d+adel)), bajo=N.bajo[Math.min(N.c.length-1,enD(N,d+adel).i)]||1;
     var clave=(espera>0?'cima':T.t)+'|'+bajo, P=TOMAS[espera>0?'cima':T.t];
     var meta={off:P.off*bajo,z:P.z,pitch:P.pitch,y:P.y};
     if(!cam||!mover&&!corriendo){ cam={off:meta.off,z:meta.z,pitch:meta.pitch,y:meta.y,b:brg,clave:clave,de:null,hacia:meta,t:TRANS}; }

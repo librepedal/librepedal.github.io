@@ -125,6 +125,9 @@ body.fin .datos,body.fin .leyenda,body.fin .nota{opacity:0;pointer-events:none}
 .rs-hitos li.sube{border-color:#ff8a1f}.rs-hitos li.empina{border-color:#ff2d6f}.rs-hitos li.baja{border-color:#22d3ff}.rs-hitos li.cima{border-color:#ffd700}
 @media (max-width:380px){.rs-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-height:700px){.resumen{bottom:calc(120px + env(safe-area-inset-bottom));padding:10px}.rs-hitos li{padding:4px 8px}}
+.tu-ruta{cursor:pointer;color:var(--tx);font:700 .78rem system-ui;padding:9px 10px;white-space:nowrap}
+body.corriendo .tu-ruta{opacity:.4;pointer-events:none}
+@media (max-width:420px){.titulo span{display:block;font-size:.66rem}}
 </style>
 </head>
 <body>
@@ -132,6 +135,7 @@ body.fin .datos,body.fin .leyenda,body.fin .nota{opacity:0;pointer-events:none}
 <div class="cargando" id="cargando">Preparando el relieve real del camino…</div>
 <div class="barra">
   <div class="titulo"><b id="tit"></b><span id="titSub"></span></div>
+  <label class="seg tu-ruta" title="Carga un GPX (Historial → Exportar GPX). Se procesa en tu navegador; para pegarla al camino se envía solo la lista de puntos a Valhalla (FOSSGIS)."><input type="file" id="gpx" accept=".gpx,application/gpx+xml" hidden><span>Tu ruta</span></label>
   <div class="seg" id="modo"><button data-m="hoy">Hoy</button><button data-m="nuevo" class="on">Propuesta</button></div>
 </div>
 <div class="nota" id="nota"></div>

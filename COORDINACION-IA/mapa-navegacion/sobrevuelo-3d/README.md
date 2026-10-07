@@ -133,3 +133,15 @@ y frenan si la red se atrasa; Mapbox recomienda menos capas y fuentes separadas 
 - **Arreglo de encuadre**: `cameraForBounds` devuelve un centro que YA descuenta los márgenes; se aplicaban dos veces y la
   ruta quedaba corrida hacia arriba (también en la vista inicial). Además se calcula con la cámara a nivel.
 - Regla aprendida (2 veces hoy): nunca agregar un comentario `//` al final de una línea que tiene más código: usar `/* */`.
+
+## v10 (2026-10-07) — "Tu ruta" (GPX propio) y duración como Relive
+- **Duración**: ~5 s/km pero acotada a 45–80 s (antes 100 km = 8 min). La anticipación de las tomas usa la velocidad real del vuelo.
+- **Tu ruta**: botón para cargar un GPX (la app ya exporta GPX desde el historial). Se procesa en el navegador:
+  limpieza de saltos por velocidad (si hay horas) + **quita "pinchazos"** (puntos que se salen >22 m de la línea entre
+  vecinos; sirve sin horas) → muestra cada 40 m → **pegado al camino por tramos de ~120 puntos** con Valhalla (2 pedidos a
+  la vez); cada tramo se valida (largo ±10 %) y si falla, solo ese tramo usa la traza limpia. Avisa "pegada al camino",
+  "pegada en N/M tramos" o "GPS limpio". Solo se envía la lista de puntos (sin nombre ni horas) al servidor de FOSSGIS.
+- Probado con 2 GPX de prueba (en `pruebas/`, datos sintéticos sobre caminos reales OSM): Valdivia→Niebla con horas
+  (17,6 km pegada vs 17,5 km del camino) y Futrono sin horas (21,4 km vs 21,39 km).
+- Arreglos encontrados al probar: sin horas `limpiarHoy` dividía por 0 y dejaba 1 punto; el archivo se perdía si se
+  limpiaba el selector antes de leerlo; comparar largos contra el GPS crudo (con zigzag) daba falso "no cuadra".
