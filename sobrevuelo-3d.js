@@ -201,6 +201,7 @@ window.sb3CaraPersonaje=function(expr){ try{ opts=(typeof _pistOpts==='function'
 // Inty 2026-10-07: SIN mascota en el sobrevuelo. La mascota será un regalo sorpresa al terminar el primer viaje (por diseñar);
 // el código de mascota queda para entonces, apagado con esta llave.
 var SB3_MASCOTA=false;
+window.sb3Neon={colorPend:colorPend, neon:neon};
 function caraPistero(expr){
   if(typeof _pistoDe!=='function') return '';
   function mas(base,extra){ var s=_pistoDe(opts,base); return s.replace(/<\/svg>\s*$/,extra+'</svg>'); }

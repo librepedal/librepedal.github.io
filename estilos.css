@@ -1023,13 +1023,12 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .sbv-rider{position:relative;width:78px;height:74px;pointer-events:none}
 .sbv-bici{width:78px;height:74px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));transition:transform .25s}
 .sbv-bici svg{width:100%;height:100%;overflow:visible}
-/* 2026-10-07: Pistero va como ROSTRO (sin bici), igual que en el sobrevuelo 3D (.cara-mk): la punta del pin queda en el
-   punto del camino (centro del marcador) y el globo sube sobre la cara. */
-.sbv-bici .sbv-rostro{position:absolute;left:50%;bottom:50%;width:68px;height:84px;margin-left:-34px;--c:#39ff88}
+/* 2026-10-07: Pistero va como ROSTRO (sin bici), la cara completa SIN anillo (Inty: "eso nunca lo pedí"); la punta queda
+   en el punto del camino (centro del marcador) y el globo sube sobre la cara. */
+.sbv-bici .sbv-rostro{position:absolute;left:50%;bottom:50%;width:64px;height:72px;margin-left:-32px;--c:#39ff88}
 .sbv-rostro-pin{position:absolute;left:50%;bottom:0;width:3px;height:20px;margin-left:-1.5px;border-radius:2px;background:linear-gradient(to top,#fff,var(--c) 45%,var(--c));box-shadow:0 0 8px var(--c)}
-.sbv-rostro-in{position:absolute;left:1px;top:0;width:66px;height:66px;border-radius:50%;background:radial-gradient(circle at 50% 32%,#1e293b,#0a0f1d 75%);box-shadow:0 0 0 3px var(--c),0 0 14px var(--c),0 6px 14px rgba(0,0,0,.55);overflow:hidden;clip-path:circle(50% at 50% 50%)}
-.sbv-rostro-c{position:absolute;left:-13%;top:-9%;width:126%;height:106%}
-.sbv-rostro-c svg{width:100%;height:100%;display:block;overflow:hidden}
+.sbv-rostro-c{position:absolute;left:0;top:0;width:64px;height:54px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
+.sbv-rostro-c svg{width:100%;height:100%;display:block}
 .sbv-rider:has(.sbv-rostro) .sbv-globo{bottom:calc(100% + 18px)}
 .sbv-globo{position:absolute;left:50%;bottom:calc(100% + 6px);display:flex;align-items:center;gap:6px;background:#fff;color:#111827;border:2.5px solid #111827;border-radius:16px;padding:4px 10px 4px 5px;font:900 .74rem/1.1 'Arial Black',system-ui,sans-serif;white-space:nowrap;box-shadow:3px 3px 0 #111827;transform:translateX(-50%) scale(0);transform-origin:50% 100%;opacity:0;transition:transform .22s cubic-bezier(.3,1.6,.5,1),opacity .15s}
 .sbv-globo::after{content:'';position:absolute;left:50%;top:100%;margin-left:-7px;border:7px solid transparent;border-top-color:#111827}

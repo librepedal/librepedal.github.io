@@ -16,7 +16,8 @@ const ctx = { console, Math, JSON, Object, Array, String, Number, RegExp, isFini
   window: { addEventListener() {}, matchMedia: () => ({ matches: false }) }, setTimeout, clearTimeout,
   getComputedStyle: () => ({ getPropertyValue: () => '#fc4c02' }), requestAnimationFrame: () => 0, cancelAnimationFrame() {}, performance: { now: () => 0 },
   pistSonar: (...a) => sonidos.push(a.join(':')), h() {}, actividadTipo: 'ciclismo' };
-ctx.mp = { getContainer: () => ({ clientHeight: 700 }), fitBounds() {}, flyTo() {}, easeTo() {}, jumpTo() {}, getZoom: () => 15, getBearing: () => 0, getPitch: () => 0 };
+const capas = {}, fuentes = {};
+ctx.mp = { addSource: (id, d) => { fuentes[id] = { setData() {} }; }, getSource: (id) => fuentes[id], removeSource: (id) => { delete fuentes[id]; }, addLayer: (l) => { capas[l.id] = l; }, getLayer: (id) => capas[id], removeLayer: (id) => { delete capas[id]; }, setFilter() {}, setPaintProperty() {}, getContainer: () => ({ clientHeight: 700 }), fitBounds() {}, flyTo() {}, easeTo() {}, jumpTo() {}, getZoom: () => 15, getBearing: () => 0, getPitch: () => 0 };
 ctx.mlPolyline = () => ({ addTo() { return this; }, getBounds: () => ({ pad() { return this; } }), remove() {} });
 ctx.mlMarker = (ll, o) => { marcadores.push(o.icon.html); return { addTo() { return this; }, _ml: { getElement: () => el }, setLatLng() {}, remove() {} }; };
 vm.createContext(ctx);
@@ -40,7 +41,11 @@ const bici = vm.runInContext("_pistBiciSVG(_pistOpts(),{expr:'feliz'})", ctx), f
 if (process.env.VER) console.log('firma bici:', firma, '| marcador:', html.slice(0, 260));
 ok(firma.length > 10 && !html.includes(firma), 'sin bici (el SVG de la bici no está en el marcador)');
 ok(!sonidos.some((s) => /^mascota/.test(s)), 'sin sonido de mascota al partir: ' + sonidos.join(','));
+const g3 = capas['sbvn-hecho-g3'], nucleo = capas['sbvn-hecho'];
+ok(g3 && g3.paint['line-blur'] && capas['sbvn-cabeza-g3'] && nucleo, 'el camino brilla: huella neón (halos difuminados + núcleo), como en el 3D');
+ok(!html.includes('sbv-rostro-in') && !/anillo/.test(html), 'rostro sin anillo (Inty: nunca lo pidió)');
 vm.runInContext('detenerSobrevuelo()', ctx);
+ok(!Object.keys(capas).some((k) => k.startsWith('sbvn-')) && !fuentes['sbvn-tramos'], 'al cerrar no quedan capas de la huella en el mapa de la app');
 
 const s3 = readFileSync(join(raiz, 'sobrevuelo-3d.js'), 'utf8');
 ok(/var SB3_MASCOTA=false;/.test(s3) && /var conM=SB3_MASCOTA&&/.test(s3), '3D: mascota apagada en el primer plano');
