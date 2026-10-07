@@ -26,17 +26,17 @@ app intacto; con una ruta de 5 puntos usa el sobrevuelo de siempre; la pegada qu
 - Clave `sbv:ruta:<sha256 de los puntos a 5 decimales>` → la línea pegada, 180 días. Misma ruta desde otro teléfono o
   tras reinstalar = caché, cero pedidos a Valhalla. Si todo falla, NO se guarda (se reintenta después).
 - Pide a Valhalla por tramos de 120 (de a 2) y valida el largo de cada tramo (±10 %): la trampa del "200 con un pedazo".
-- Límite: 30 rutas NUEVAS por hora e IP (`sbv:ip:<ip>`); lo guardado no cuenta. CORS solo librepedal.cl/www/Pages.
+- Límites (Inty, 2026-10-07): 20 rutas NUEVAS por conexión al día y 300 en total al día, en un solo registro `sbv:dia:<fecha>` (IP como hash); lo guardado no cuenta. Cada ruta nueva = 2 escrituras de KV (máx. 600/día). CORS solo librepedal.cl/www/Pages.
   Sin logs de coordenadas. Usa el mismo KV `RATE_LIMIT_AUTH` que auth/proximidad, con prefijo propio `sbv:`
   (ojo cuota gratis de KV: 1.000 escrituras/día compartidas; cada ruta nueva usa 2).
 - Cliente (`sobrevuelo-3d.js`, `sb3PorWorker`): primero el worker (45 s máx.); si no está publicado, falla, 429 o
   responde algo inválido → Valhalla directo como antes; si eso también falla → GPS limpio. Encima sigue la copia local
   `lp_sbv3_pegadas` (el mismo teléfono ni siquiera llama al worker).
-- Pruebas: `tests/worker-sobrevuelo.test.mjs` (51, sin red: Valhalla y KV simulados, incluye el cliente contra el worker).
+- Pruebas: `tests/worker-sobrevuelo.test.mjs` (58, sin red: Valhalla y KV simulados, incluye el cliente contra el worker).
   Se comprobó que fallan al quitar: la validación de largo, el no-guardar-fallos y el chequeo de tipos (un `null` pasaba
   como latitud 0 — error real encontrado por las pruebas y corregido en worker y cliente).
-- **Sin publicar.** No probado: `wrangler deploy` (no está instalado aquí) ni el worker real en Cloudflare.
-  Publicar (con OK de Inty y su sesión de Cloudflare): `cd worker-sobrevuelo && npx wrangler deploy`, y probar con
+- **Sin publicar.** `wrangler deploy --dry-run` OK (6 KB, KV enlazado). No probado: el worker real en Cloudflare.
+  Publicar (con OK de Inty y su sesión de Cloudflare): `cd worker-sobrevuelo && npx --yes wrangler@4 deploy`, y probar con
   `curl -X POST ... -H "Origin: https://librepedal.cl"` una ruta de prueba (no de un usuario).
 
 ## Antes de publicar (decisiones de Inty + pasos del release)

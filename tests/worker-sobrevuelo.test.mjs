@@ -59,7 +59,7 @@ const pedir = (env, cuerpo, { ip = '1.1.1.1', origen = 'https://librepedal.cl', 
   V.llamadas = 0;
   const r2 = await pedir(env, { puntos: ruta(300) }, { ip: '2.2.2.2' }), j2 = await r2.json();
   ok(j2.cache === true && V.llamadas === 0 && JSON.stringify(j2.c) === JSON.stringify(j.c), 'misma ruta → de la caché, sin llamar a Valhalla');
-  ok(!env.RATE_LIMIT_AUTH.puts.some((p) => p.k === 'sbv:ip:2.2.2.2'), 'leer de la caché no gasta el límite de la IP');
+  ok(env.RATE_LIMIT_AUTH.puts.length === 2, 'leer de la caché no escribe nada (la 1.ª ruta gastó 2 escrituras: contador del día + ruta), fueron ' + env.RATE_LIMIT_AUTH.puts.length);
   // la misma ruta con ruido bajo 1 m (redondeo a 5 decimales) es la misma clave
   V.llamadas = 0;
   const casi = ruta(300).map(([a, b]) => [a + 0.000001, b - 0.000001]);
@@ -100,20 +100,41 @@ const pedir = (env, cuerpo, { ip = '1.1.1.1', origen = 'https://librepedal.cl', 
   globalThis.fetch = async (url, o) => { if (String(url).includes('valhalla')) return valhalla(o.body); throw new Error('red no permitida: ' + url); };
 }
 
-// 5) límite por IP: solo rutas NUEVAS (30 por hora); lo guardado se sigue entregando
+// 5) límites de Inty (2026-10-07): 20 rutas NUEVAS por conexión al día y 300 en total al día; lo guardado no cuenta
 {
   const env = { RATE_LIMIT_AUTH: kv() }; V.modo = () => 'bien';
-  const guardada = ruta(20, -41);
+  const guardada = ruta(5, -41);
   await pedir(env, { puntos: guardada }, { ip: '9.9.9.9' });
-  let ultimo;
-  for (let i = 1; i <= 30; i++) ultimo = await pedir(env, { puntos: ruta(20, -41 - i * 0.01) }, { ip: '9.9.9.9' });
-  ok(ultimo.status === 429, 'la ruta nueva n.º 31 de una IP en una hora → 429 (fue ' + ultimo.status + ')');
+  let r;
+  for (let i = 1; i <= 19; i++) r = await pedir(env, { puntos: ruta(5, -41 - i * 0.01) }, { ip: '9.9.9.9' });
+  ok(r.status === 200, 'la ruta nueva n.º 20 de una conexión en el día → 200');
+  r = await pedir(env, { puntos: ruta(5, -42) }, { ip: '9.9.9.9' });
+  ok(r.status === 429 && /conexión/.test((await r.json()).error), 'la n.º 21 de la misma conexión → 429 (límite de la conexión)');
   const c = await pedir(env, { puntos: guardada }, { ip: '9.9.9.9' });
   ok(c.status === 200 && (await c.json()).cache === true, 'con el límite lleno, una ruta guardada igual se entrega');
-  const otra = await pedir(env, { puntos: ruta(20, -45) }, { ip: '8.8.8.8' });
-  ok(otra.status === 200, 'otra IP no se ve afectada');
-  const lim = env.RATE_LIMIT_AUTH.puts.find((p) => p.k === 'sbv:ip:9.9.9.9');
-  ok(lim && lim.o.expirationTtl > 3600 && lim.o.expirationTtl < 3700, 'la cuenta de la IP expira sola en ~1 h');
+  ok((await pedir(env, { puntos: ruta(5, -45) }, { ip: '8.8.8.8' })).status === 200, 'otra conexión no se ve afectada');
+  const reg = [...env.RATE_LIMIT_AUTH.m.entries()].filter(([k]) => k.startsWith('sbv:dia:'));
+  ok(reg.length === 1 && !reg[0][1].includes('9.9.9.9'), 'un solo registro del día y sin la IP tal cual (va como hash)');
+  const put = env.RATE_LIMIT_AUTH.puts.find((p) => p.k.startsWith('sbv:dia:'));
+  ok(put && put.o.expirationTtl === 2 * 24 * 3600, 'el registro del día expira solo (2 días)');
+  // al día siguiente (hora de Chile) la conexión vuelve a tener 20
+  const ahora = Date.now; Date.now = () => ahora() + 24 * 3600 * 1000;
+  ok((await pedir(env, { puntos: ruta(5, -43) }, { ip: '9.9.9.9' })).status === 200, 'al día siguiente la conexión vuelve a poder');
+  Date.now = ahora;
+}
+{
+  // tope total: 300 rutas nuevas al día entre todas las conexiones
+  const env = { RATE_LIMIT_AUTH: kv() }; V.modo = () => 'bien'; V.llamadas = 0;
+  let r, malas = 0;
+  for (let i = 0; i < 300; i++) { r = await pedir(env, { puntos: ruta(5, -30 - i * 0.01) }, { ip: '10.0.' + Math.floor(i / 15) + '.' + (i % 15) }); if (r.status !== 200) malas++; }
+  ok(malas === 0, 'las primeras 300 rutas nuevas del día pasan (' + malas + ' rechazadas)');
+  const antes = V.llamadas;
+  r = await pedir(env, { puntos: ruta(5, -60) }, { ip: '11.1.1.1' });
+  ok(r.status === 429 && /tope/.test((await r.json()).error) && V.llamadas === antes, 'la n.º 301 del día → 429 (tope del día) sin llamar a Valhalla');
+  r = await pedir(env, { puntos: ruta(5, -30) }, { ip: '11.1.1.1' });
+  ok(r.status === 200 && (await r.json()).cache === true, 'con el tope lleno, lo guardado se sigue entregando');
+  const escrituras = env.RATE_LIMIT_AUTH.puts.length;
+  ok(escrituras === 600, 'cada ruta nueva gasta 2 escrituras de KV: 300 rutas = 600 (fueron ' + escrituras + ')');
 }
 
 // 6) entradas malas

@@ -20,8 +20,13 @@ const PREFIJO = 'sbv:';                  // comparte el KV de worker-auth/proxim
 const TTL_RUTA = 180 * 24 * 3600;        // 180 días
 const MAX_PUNTOS = 6000;                 // ~240 km a 40 m
 const TRAMO = 120;
-const VENTANA_LIMITE_MS = 60 * 60 * 1000;
-const MAX_NUEVAS_POR_IP = 30;            // pegados NUEVOS por hora e IP (los de caché no cuentan)
+// Límites de rutas NUEVAS (las guardadas no cuentan), decididos por Inty el 2026-10-07: 20 por conexión al día
+// (los celulares comparten IP: 2 dejaría fuera a vecinos de la misma compañía) y 300 en total al día.
+// Un solo registro por día (sbv:dia:AAAA-MM-DD) guarda el total y la cuenta de cada IP (como hash): así cada ruta nueva
+// gasta 2 escrituras de KV (contador + ruta) y no 3. KV gratis = 1.000 escrituras/día compartidas con worker-auth.
+// Es aproximado (KV no es transaccional y acepta 1 escritura/s por clave); si KV falla, deja pasar.
+const MAX_NUEVAS_POR_IP_DIA = 20;
+const MAX_NUEVAS_DIA = 300;
 
 function cors(origen) {
   return {
@@ -49,16 +54,21 @@ async function claveDe(pts) { // pts = [[lat,lon],...] ya redondeados
   const dig = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(pts)));
   return PREFIJO + 'ruta:' + [...new Uint8Array(dig)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
-async function bajoLimite(env, ip) { // FALLA ABIERTA: si KV falla, se deja pasar (igual que worker-proximidad)
-  if (!env.RATE_LIMIT_AUTH) return true;
+// devuelve null si puede pegar, o el motivo si no. FALLA ABIERTA: si KV falla, se deja pasar (igual que worker-proximidad)
+async function bajoLimite(env, ip, ahora = Date.now()) {
+  if (!env.RATE_LIMIT_AUTH) return null;
   try {
-    const clave = PREFIJO + 'ip:' + ip, ahora = Date.now(), raw = await env.RATE_LIMIT_AUTH.get(clave);
-    let d = raw ? JSON.parse(raw) : null;
-    if (!d || ahora - d.inicio > VENTANA_LIMITE_MS) d = { inicio: ahora, cuenta: 0 };
-    d.cuenta++;
-    await env.RATE_LIMIT_AUTH.put(clave, JSON.stringify(d), { expirationTtl: Math.ceil(VENTANA_LIMITE_MS / 1000) + 30 });
-    return d.cuenta <= MAX_NUEVAS_POR_IP;
-  } catch (e) { return true; }
+    const dia = new Date(ahora - 4 * 3600 * 1000).toISOString().slice(0, 10); // día de Chile (aprox. UTC-4)
+    const clave = PREFIJO + 'dia:' + dia, raw = await env.RATE_LIMIT_AUTH.get(clave);
+    const d = raw ? JSON.parse(raw) : { total: 0, ips: {} };
+    const dig = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dia + '|' + ip)); // la IP no se guarda tal cual
+    const h = [...new Uint8Array(dig)].slice(0, 8).map((x) => x.toString(16).padStart(2, '0')).join('');
+    if (d.total >= MAX_NUEVAS_DIA) return 'tope del día';
+    if ((d.ips[h] || 0) >= MAX_NUEVAS_POR_IP_DIA) return 'límite de la conexión';
+    d.total++; d.ips[h] = (d.ips[h] || 0) + 1;
+    await env.RATE_LIMIT_AUTH.put(clave, JSON.stringify(d), { expirationTtl: 2 * 24 * 3600 });
+    return null;
+  } catch (e) { return null; }
 }
 async function pegarTramo(tr) { // tr = [[lat,lon],...]
   const propio = tr.map((p) => [p[1], p[0]]), Lg = largo(propio);
@@ -104,7 +114,8 @@ export default {
     try { const g = env.RATE_LIMIT_AUTH && (await env.RATE_LIMIT_AUTH.get(clave)); if (g) return responder({ ...JSON.parse(g), cache: true }, 200, origen); } catch (e) { /* sigue sin caché */ }
     // 2) nueva → límite por IP, pegar y guardar (las fallidas del todo no se guardan: se reintenta otro día)
     const ip = request.headers.get('CF-Connecting-IP') || 'desconocida';
-    if (!(await bajoLimite(env, ip))) return responder({ error: 'demasiadas rutas nuevas, prueba en un rato' }, 429, origen);
+    const lim = await bajoLimite(env, ip);
+    if (lim) return responder({ error: 'demasiadas rutas nuevas hoy (' + lim + ')' }, 429, origen);
     const r = await pegar(pts);
     if (r.m !== 'gps') { try { await env.RATE_LIMIT_AUTH.put(clave, JSON.stringify(r), { expirationTtl: TTL_RUTA }); } catch (e) { /* sin guardar: igual se entrega */ } }
     return responder({ ...r, cache: false }, 200, origen);
