@@ -66,3 +66,16 @@ para que un cerro no deje a Pistero transparente.
   seguida · cara que saltaba (histéresis + "preocupado" solo si ve venir la cuesta) · "¡Llegamos!" que podía no
   salir · repetir arrastraba cara/cansancio · salto brusco espaldas↔costado · pudú que parpadeaba en la cima ·
   demasiada interfaz al reproducir · 404 del ícono.
+
+## v4 (2026-10-07) — cámara profesional (pedido de Inty: "siempre hacia donde se dirige", "transiciones, no kindergarten")
+- Por ahora **sin mascota** (Inty): queda el código, el selector parte en "Sin mascota".
+- **Cámara siempre hacia adelante**: máx. 40° fuera del avance y siempre del **lado del valle** (`ladoBajo()` compara
+  el relieve a 120/250/400 m a cada lado, suavizado ±400 m). Nunca mira contra la ladera.
+- **Línea de vista con el relieve** (`pitchSeguro()`): ubica la cámara real de MapLibre (distancia por fov 36,87°)
+  y revisa 12 puntos entre la cámara y Pistero contra el DEM; si el cerro se cruza, baja la inclinación (eleva la
+  cámara) antes de que tape. Exageración 1,2 (con 1,35 el DEM de 30 m se estiraba).
+- **Cambios de plano de 2,8 s** con curva smootherstep, pedidos ~1,4 s antes del evento (llegan justo); zoom en
+  rango 14,9–16,3; rumbo con giro máx. 35°/s; velocidad que acelera y frena suave (también en la cima).
+- **Introducción**: al dar play baja desde la vista general hasta Pistero en 2,8 s antes de partir.
+- **Viñetas sobrias**: tarjeta oscura translúcida con anillo de color del estado; fundido + 10 px, sin rebote ni temblor.
+- MapLibre reescribe `style.opacity` de los marcadores en cada cuadro (oclusión): para esconder uno, `visibility`.

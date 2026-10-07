@@ -29,12 +29,39 @@ function suave(a,b,dt,tau){ return a+(b-a)*(1-Math.exp(-dt/tau)); }
 function linea(coords){ var cum=[0]; for(var i=1;i<coords.length;i++) cum.push(cum[i-1]+hav(coords[i-1],coords[i])); return {c:coords,cum:cum,total:cum[cum.length-1]}; }
 function densificar(c,paso){ var out=[c[0]]; for(var i=1;i<c.length;i++){ var d=hav(c[i-1],c[i]), k=Math.max(1,Math.ceil(d/paso)); for(var j=1;j<=k;j++) out.push([c[i-1][0]+(c[i][0]-c[i-1][0])*j/k, c[i-1][1]+(c[i][1]-c[i-1][1])*j/k]); } return out; }
 function enD(L,d){ var c=L.c, cum=L.cum, k=1, lo=1, hi=c.length-1; d=Math.max(0,Math.min(L.total,d)); while(lo<hi){ var m=(lo+hi)>>1; if(cum[m]<d) lo=m+1; else hi=m; } k=lo; var f=Math.min(1,Math.max(0,(d-cum[k-1])/Math.max(1e-9,cum[k]-cum[k-1]))); return {p:[c[k-1][0]+(c[k][0]-c[k-1][0])*f, c[k-1][1]+(c[k][1]-c[k-1][1])*f], i:k-1, f:f}; }
-function rumboEn(L,d){ return rumbo(enD(L,d-30).p,enD(L,d+90).p); }
+function rumboEn(L,d){ return rumbo(enD(L,d-40).p,enD(L,d+160).p); }
 // limpieza que hace HOY la app (_sbvLimpiar: fuera saltos > 22 m/s)
 function limpiarHoy(pts){ var out=[]; pts.forEach(function(p){ var u=out[out.length-1]; if(u && hav([u.lon,u.lat],[p.lon,p.lat])/((p.t-u.t)/1000)>22) return; out.push(p); }); return out; }
 
 // ---------- relieve real: tiles terrarium de Mapterhorn decodificados en un canvas ----------
-var demCache={};
+var demCache={}, DEMS={}, EXAG=1.2; // 1,2: con 1,35 las laderas del DEM de 30 m se estiraban y se veían defectos
+// precarga las tiles alrededor de la ruta para poder preguntar la altura de cualquier punto sin esperar
+function demPrecargar(coords){ var Z=12, n=4096, lo1=1e9,lo2=-1e9,la1=1e9,la2=-1e9; coords.forEach(function(c){ lo1=Math.min(lo1,c[0]); lo2=Math.max(lo2,c[0]); la1=Math.min(la1,c[1]); la2=Math.max(la2,c[1]); });
+  var tx=function(lo){ return Math.floor((lo+180)/360*n); }, ty=function(la){ var s=Math.sin(la*rad); return Math.floor((0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n); };
+  var M=0.03, ps=[]; for(var x=tx(lo1-M);x<=tx(lo2+M);x++) for(var y=ty(la2+M);y<=ty(la1-M);y++) (function(x,y){ ps.push(demTile(Z,x,y).then(function(T){ DEMS[x+','+y]=T; }).catch(function(){})); })(x,y);
+  return Promise.all(ps); }
+function elevAt(c){ var n=4096, X=(c[0]+180)/360*n, s=Math.sin(c[1]*rad), Y=(0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n, T=DEMS[Math.floor(X)+','+Math.floor(Y)]; if(!T) return null;
+  var w=T.w, px=(X-Math.floor(X))*w-.5, py=(Y-Math.floor(Y))*w-.5, x0=Math.max(0,Math.min(w-2,Math.floor(px))), y0=Math.max(0,Math.min(w-2,Math.floor(py))), ax=Math.min(1,Math.max(0,px-x0)), ay=Math.min(1,Math.max(0,py-y0));
+  var e=function(x,y){ var i=(y*w+x)*4; return T.d[i]*256+T.d[i+1]+T.d[i+2]/256-32768; };
+  return (e(x0,y0)*(1-ax)+e(x0+1,y0)*ax)*(1-ay)+(e(x0,y0+1)*(1-ax)+e(x0+1,y0+1)*ax)*ay; }
+// de qué lado de la ruta está el valle (más bajo): ahí va la cámara, para no quedar mirando contra la ladera.
+// +1 = valle a la izquierda (la cámara se corre a la izquierda y mira un poco a la derecha), -1 = a la derecha
+function ladoBajo(N){ var raw=new Array(N.c.length).fill(0);
+  for(var i=0;i<N.c.length;i+=4){ var b=rumbo(N.c[Math.max(0,i-4)],N.c[Math.min(N.c.length-1,i+4)]), eL=0, eR=0, k=0;
+    [120,250,400].forEach(function(m){ var l=elevAt(mover(N.c[i],(b+270)%360,m)), r2=elevAt(mover(N.c[i],(b+90)%360,m)); if(l!==null&&r2!==null){ eL+=l; eR+=r2; k++; } });
+    var v=k?(eR-eL)/k:0; for(var j=i;j<Math.min(N.c.length,i+4);j++) raw[j]=v; }
+  // suavizado ±400 m para que no cambie de lado a cada rato
+  N.bajo=raw.map(function(_,i){ var s=0, a=i, b=i; while(a>0&&N.cum[i]-N.cum[a]<400) a--; while(b<raw.length-1&&N.cum[b]-N.cum[i]<400) b++; for(var q=a;q<=b;q++) s+=raw[q]; return s>=0?1:-1; }); }
+// la cámara de MapLibre está a cameraToCenterDistance px del centro (fov 36,87°); con eso se ubica en el mundo
+// y se revisa que ni ella ni la línea de vista a Pistero atraviesen el cerro. Devuelve la inclinación segura.
+function pitchSeguro(p,bear,z,deseado){
+  var H=mapa.getContainer().clientHeight, mpp=40075016.686*Math.cos(p[1]*rad)/(512*Math.pow(2,z)), dist=0.5/Math.tan(0.6435/2)*H*mpp, e0=elevAt(p);
+  if(e0===null) return deseado; e0*=EXAG;
+  for(var pt=deseado; pt>=30; pt-=3){
+    var hz=dist*Math.sin(pt*rad), alt=e0+dist*Math.cos(pt*rad), cp=mover(p,(bear+180)%360,hz), ec=elevAt(cp), ok=ec===null||alt>ec*EXAG+35;
+    for(var k=1;ok&&k<12;k++){ var f=k/12, q=[cp[0]+(p[0]-cp[0])*f, cp[1]+(p[1]-cp[1])*f], eq=elevAt(q); if(eq!==null && eq*EXAG+8>alt+(e0+2-alt)*f) ok=false; }
+    if(ok) return pt; }
+  return 30; }
 function demTile(z,x,y){ var k=z+'/'+x+'/'+y; if(!demCache[k]) demCache[k]=fetch(DEM_TILE.replace('{z}',z).replace('{x}',x).replace('{y}',y)).then(function(r){ if(!r.ok) throw new Error('DEM '+r.status); return r.blob(); }).then(createImageBitmap).then(function(bm){ var cv=document.createElement('canvas'); cv.width=bm.width; cv.height=bm.height; var cx=cv.getContext('2d',{willReadFrequently:true}); cx.drawImage(bm,0,0); return {w:bm.width,d:cx.getImageData(0,0,bm.width,bm.height).data}; }); return demCache[k]; }
 function alturas(coords){
   var Z=12, n=Math.pow(2,Z), pos=coords.map(function(c){ var x=(c[0]+180)/360*n, s=Math.sin(c[1]*rad), y=(0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n; return {tx:Math.floor(x),ty:Math.floor(y),fx:x-Math.floor(x),fy:y-Math.floor(y)}; });
@@ -103,15 +130,17 @@ function planear(N){
 // la toma vigente: las de eventos ganan a las de base
 function tomaEn(N,d){ for(var i=0;i<N.seq.length;i++) if(d<N.seq[i].d1) return N.seq[i]; return N.seq[N.seq.length-1]; }
 // parámetros de cada toma: giro de la cámara respecto del avance, zoom, inclinación y altura de Pistero en pantalla
-var TOMAS={
-  persecucion:{off:0,z:15.7,pitch:66,y:.30},
-  aerea:{off:-18,z:13.6,pitch:52,y:.36},
-  paralelo:{off:72,z:16.5,pitch:76,y:.26},
-  subida:{off:0,z:16.6,pitch:58,y:.40},     // pegada atrás y un poco alta: se ve la cuesta delante
-  lateral:{off:88,z:16.9,pitch:74,y:.24},   // de costado: se ven la cara y el esfuerzo
-  bajada:{off:-14,z:16.6,pitch:70,y:.26},   // más cerca y baja: sensación de velocidad (más baja que 70 el cerro tapa a Pistero)
-  cima:{off:0,z:15.5,pitch:60,y:.34}        // giro alrededor (orbita en pintar), alto para no entrar al cerro
+var TOMAS={  // off = cuánto se gira la cámara respecto del avance (siempre hacia el lado del valle)
+  persecucion:{off:0,z:15.8,pitch:64,y:.30},
+  aerea:{off:12,z:14.9,pitch:54,y:.34},
+  paralelo:{off:28,z:16.1,pitch:64,y:.28},  // tres cuartos: se ve el costado y hacia dónde va
+  subida:{off:0,z:16.2,pitch:58,y:.36},     // detrás y un poco alta: se ve la cuesta delante
+  lateral:{off:36,z:16.3,pitch:64,y:.28},   // tres cuartos cerrado en la subida
+  bajada:{off:14,z:16.2,pitch:66,y:.28},
+  cima:{off:0,z:15.6,pitch:58,y:.32}
 };
+var TRANS=2800; // ms de cada cambio de plano (curva suave de entrada y salida)
+function suaveS(x){ x=Math.max(0,Math.min(1,x)); return x*x*x*(x*(x*6-15)+10); } // smootherstep
 
 // ---------- caras: las 10 de la app + 3 nuevas armadas sobre su misma cara ----------
 function cara(expr){
@@ -137,7 +166,7 @@ function caraSegun(g,ganCuesta,gAdelante,act){
 
 // ---------- estado ----------
 var mapa, modo='nuevo', capa='sat', D={}, marcador=null, rig=null, cajas={}, opts=(typeof _pistOpts==='function')?_pistOpts():{}, veh=(typeof _pistVehiculo==='function')?_pistVehiculo(opts,'ciclismo'):'';
-var espTot=1, prog=0, corriendo=false, ultimo=null, velX=1, incl=0, cam=null, espera=0, sigM=0, ppHasta=0, exprAct='feliz', exprCand=null, vista='atras', caraHasta=0, poseTemp=null, poseHasta=0, ganCuesta=0, ultAlt=null;
+var ritmoAct=0, intro=null, espTot=1, prog=0, corriendo=false, ultimo=null, velX=1, incl=0, cam=null, espera=0, sigM=0, ppHasta=0, exprAct='feliz', exprCand=null, vista='atras', caraHasta=0, poseTemp=null, poseHasta=0, ganCuesta=0, ultAlt=null;
 var MASC={on:true, F:{}, d:0, fase:0, mk:null, cv:null, ultCuadro:''};
 // mascota = la que eligió el usuario (opts.mascota). Las de la app (quiltro, perro negro, gato) van en el
 // canasto: se ven en la bici de costado y, de espaldas, asomadas junto al manubrio. Las nuevas de
@@ -155,7 +184,7 @@ Promise.all([fetch('traza-gps.json').then(function(r){return r.json();}), fetch(
     var N=D.nuevo; N.alt=suavizar(suavizar(a,N.cum,60),N.cum,60); N.pend=pendientes(N.alt,N.cum,100);
     var sub=0, ref=N.alt[0]; N.sub=N.alt.map(function(h){ if(h>ref+2){ sub+=h-ref; ref=h; } else if(h<ref-2) ref=h; return sub; });
     N.min=Math.min.apply(null,N.alt); N.max=Math.max.apply(null,N.alt); N.imax=N.alt.indexOf(N.max);
-    planear(N); iniciar();
+    return demPrecargar(N.c).then(function(){ ladoBajo(N); planear(N); iniciar(); });
   });
 }).catch(function(e){ $('cargando').textContent='No se pudo cargar: '+e.message; console.error(e); });
 
@@ -171,7 +200,8 @@ function sinFondo(src){ return new Promise(function(res,rej){ var im=new Image()
   var o=document.createElement('canvas'); o.width=x1-x0+1; o.height=y1-y0+1; o.getContext('2d').drawImage(c,x0,y0,o.width,o.height,0,0,o.width,o.height); res(o); }; im.src=src; }); }
 function cargarMascota(){ return Promise.all(['pudu-cria-corriendo','pudu-cria-corriendo2','pudu-cria-sentado','pudu-cria-v8-ojos-grandes'].map(function(n){ return sinFondo('mascota/'+n+'.png'); })).then(function(f){ MASC.F={A:f[0],B:f[1],S:f[2],cara:f[3]}; }).catch(function(e){ console.warn('mascota', e); MASC.on=false; }); }
 
-function reiniciarEstado(){ cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); document.body.classList.remove('pp-on'); }
+function arrancarIntro(){ var c=mapa.getCenter(); intro={t:0,dur:2800,de:{c:[c.lng,c.lat],z:mapa.getZoom(),pitch:mapa.getPitch(),b:mapa.getBearing()}}; }
+function reiniciarEstado(){ intro=null; ritmoAct=0; cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); document.body.classList.remove('pp-on'); }
 function iniciar(){
   mapa=new maplibregl.Map({container:'mapa',style:SAT,center:D.nuevo.c[0],zoom:12,pitch:0,maxPitch:85,attributionControl:{compact:true}});
   mapa.on('style.load',montarCapas); window._demo=mapa;
@@ -181,8 +211,8 @@ function iniciar(){
   mapa.once('load',function(){ $('cargando').style.display='none'; encuadrar(0); dibujarPerfil(); });
   $('modo').onclick=function(e){ var m=e.target.dataset.m; if(!m||m===modo) return; modo=m; marcarSeg('modo','m',m); reiniciar(); };
   $('capa').onclick=function(e){ var c=e.target.dataset.c; if(!c||c===capa) return; capa=c; marcarSeg('capa','c',c); mapa.setStyle(c==='sat'?SAT:CALLES,{diff:false}); };
-  $('play').onclick=function(){ if(prog>=1){ prog=0; reiniciarEstado(); } corriendo=!corriendo; actualizarBoton(); if(corriendo){ ultimo=null; requestAnimationFrame(frame); } };
-  var sm=$('mascota'); if(sm){ var lst=(typeof PIST_MASCOTA!=='undefined'?PIST_MASCOTA:[]).map(function(m){ return [m.id,m.n]; }).concat([['pudu',MASC_CORREN.pudu]]); sm.innerHTML=lst.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join(''); sm.value=opts.mascota||'quiltro'; opts.mascota=sm.value; sm.onchange=function(){ opts.mascota=sm.value; if(mapa) montarDeNuevo(); }; }
+  $('play').onclick=function(){ if(prog>=1){ prog=0; reiniciarEstado(); } corriendo=!corriendo; actualizarBoton(); if(corriendo){ ultimo=null; if(prog===0 && modo==='nuevo') arrancarIntro(); requestAnimationFrame(frame); } };
+  var sm=$('mascota'); if(sm){ var lst=(typeof PIST_MASCOTA!=='undefined'?PIST_MASCOTA:[]).map(function(m){ return [m.id,m.n]; }).concat([['pudu',MASC_CORREN.pudu]]); sm.innerHTML=lst.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join(''); sm.value=opts.mascota||''; /* Inty 2026-10-07: por ahora sin mascota (queda lista para después) */ opts.mascota=sm.value; sm.onchange=function(){ opts.mascota=sm.value; if(mapa) montarDeNuevo(); }; }
   $('vel').onclick=function(){ velX=velX===1?2:velX===2?4:1; this.textContent='×'+velX; };
   var pf=$('perfil'), arrastrando=false;
   function irA(ev){ var r=pf.getBoundingClientRect(); window._ir(Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))); }
@@ -197,13 +227,13 @@ function marcarSeg(id,k,v){ [].forEach.call($(id).children,function(b){ b.classL
 function actualizarBoton(){ document.body.classList.toggle('corriendo',corriendo); $('play').textContent=corriendo?'❚❚ Pausa':(prog>=1?'↺ Ver de nuevo':'▶ '+(prog>0?'Seguir':'Ver sobrevuelo')); }
 function nota(){ $('nota').innerHTML=modo==='hoy'
   ? '<b>Así funciona hoy.</b> La línea es el GPS tal cual se graba (aquí con el error típico de un teléfono, simulado): zigzaguea y se sale del camino. Pistero va anclado por el <b>centro</b>, así que flota corrido de la línea. Mapa plano, sin relieve.'
-  : '<b>Propuesta.</b> Huella neón pegada al camino, relieve real, tomas que cambian según la ruta (aérea, lateral, bajada, giro en la cima), primeros planos de Pistero y su pudú al lado.'; }
+  : '<b>Propuesta.</b> Huella neón pegada al camino, relieve real, tomas que cambian según la ruta (aérea, lateral, bajada, giro en la cima), y primeros planos de Pistero.'; }
 
 function montarCapas(){
   var m=mapa, N=D.nuevo, H=D.hoy, vis=modo==='nuevo'?'visible':'none';
   if(!m.getSource('dem')) m.addSource('dem',{type:'raster-dem',tiles:[DEM_TILE],encoding:'terrarium',tileSize:512,maxzoom:12,attribution:'© Mapterhorn'});
   if(modo==='nuevo'){
-    m.setTerrain({source:'dem',exaggeration:1.35});
+    m.setTerrain({source:'dem',exaggeration:EXAG});
     try{ m.setSky({'sky-color':'#5f8fc4','horizon-color':'#c9d8e6','fog-color':'#aebfd0','sky-horizon-blend':.6,'horizon-fog-blend':.45,'fog-ground-blend':.25}); }catch(e){}
     if(capa==='calles' && !m.getLayer('relieve')){ var antes; m.getStyle().layers.some(function(l){ if(l.type==='symbol'){ antes=l.id; return true; } }); m.addLayer({id:'relieve',type:'hillshade',source:'dem',paint:{'hillshade-exaggeration':.5,'hillshade-shadow-color':'#5b4a3a'}},antes); }
     // fondo apagado para que el neón destaque (la técnica "firefly" pide base oscura y desaturada)
@@ -296,19 +326,24 @@ function frame(ts){
   var dt=ultimo===null?16:Math.min(100,ts-ultimo); ultimo=ts;
   var L=D[modo], d=prog*L.total, g=0;
   if(modo==='nuevo') g=L.pend[enD(L,d).i]||0;
-  if(espera>0) espera-=dt;
+  if(intro){ intro.t+=dt; if(intro.t>=intro.dur) intro=null; }
+  else if(espera>0){ espera-=dt; ritmoAct=0; }
   else {
     // ~5 s por km (como hoy), más lento subiendo y más rápido bajando; frena un poco antes de cada momento
     var ritmo=Math.max(.45,Math.min(1.7,1-g*6));
-    if(modo==='nuevo' && L.momentos[sigM]){ var falta=L.momentos[sigM].d-d; if(falta<60 && L.momentos[sigM].cima) ritmo*=Math.max(.3,falta/60); }
-    prog=Math.min(1,prog+dt/(L.total/1000*5000)*ritmo*velX);
+    if(modo==='nuevo' && L.momentos[sigM]){ var falta=L.momentos[sigM].d-d; if(falta<120 && L.momentos[sigM].cima) ritmo*=Math.max(.05,falta/120); }
+    ritmoAct=suave(ritmoAct,ritmo,dt,700);
+    prog=Math.min(1,prog+dt/(L.total/1000*5000)*ritmoAct*velX);
   }
   if(modo==='nuevo'){ var m=L.momentos[sigM], dd=prog*L.total;
     if(m && espera<=0 && dd>=m.d-1){ primerPlano(m,ts); if(m.cima||m.fin){ espera=m.dur/Math.min(2,velX); espTot=espera; } sigM++; } }
   pintar(dt,ts,true);
   if(prog>=1 && espera<=0){ corriendo=false; actualizarBoton(); setTimeout(function(){ encuadrar(1800); },900); return; }
-  requestAnimationFrame(frame);
+  if(!window._manual) requestAnimationFrame(frame);
 }
+// modo grabación (solo para hacer el video cuadro a cuadro): avanza dt ms de reloj simulado
+window._paso=function(dt){ window._manual=true; window._T=(window._T||0)+dt; if(!corriendo){ corriendo=true; ultimo=window._T-dt; if(prog===0 && modo==='nuevo') arrancarIntro(); actualizarBoton(); } frame(window._T); return {prog:prog,corriendo:corriendo}; };
+window._velX=function(v){ velX=v; };
 function pintar(dt,ts,mover){
   var L=D[modo], d=prog*L.total, q=enD(L,d), p=q.p, brg=rumboEn(L,d);
   marcador.setLngLat(p);
@@ -334,19 +369,29 @@ function pintar(dt,ts,mover){
     // cuánto lleva subido en esta cuesta (para pasar de cansado a agotado)
     if(ultAlt===null) ultAlt=h; if(gp>0.03) ganCuesta+=Math.max(0,h-ultAlt); else if(gp<0.01) ganCuesta=Math.max(0,ganCuesta-Math.abs(h-ultAlt)*2-dt*.004); ultAlt=h;
     // ---- director de tomas ----
-    var T=tomaEn(N,d), P=TOMAS[espera>0?'cima':T.t], lado=T.lado||1;
-    var off=P.off*(P.off>30?lado:1);
-    if(espera>0){ var k2=1-espera/espTot; off=-10-k2*120; }                       // giro alrededor de Pistero en la cima
-    if(!cam||!mover&&!corriendo) cam={off:off,z:P.z,pitch:P.pitch,y:P.y,b:brg};
-    var tau=T.t==='aerea'?1800:1100;
-    cam.off=cam.off+giro(cam.off,off)*(1-Math.exp(-dt/tau)); cam.z=suave(cam.z,P.z,dt,tau); cam.pitch=suave(cam.pitch,P.pitch,dt,tau); cam.y=suave(cam.y,P.y,dt,tau);
-    cam.b=(cam.b+giro(cam.b,brg)*Math.min(1,dt/650)+360)%360;
-    if(mover) mapa.jumpTo({center:p,zoom:cam.z,pitch:cam.pitch,bearing:(cam.b+cam.off+360)%360,padding:{top:Math.round(H*cam.y),bottom:200,left:0,right:0}});
+    // la toma se pide ~1,4 s más adelante: la transición queda centrada en el punto del evento
+    var adel=1.4*(1000/5)*velX*(ritmoAct||1), T=tomaEn(N,Math.min(N.total,d+adel)), bajo=N.bajo[Math.min(N.c.length-1,enD(N,d+adel).i)]||1;
+    var clave=(espera>0?'cima':T.t)+'|'+bajo, P=TOMAS[espera>0?'cima':T.t];
+    var meta={off:P.off*bajo,z:P.z,pitch:P.pitch,y:P.y};
+    if(!cam||!mover&&!corriendo){ cam={off:meta.off,z:meta.z,pitch:meta.pitch,y:meta.y,b:brg,clave:clave,de:null,hacia:meta,t:TRANS}; }
+    if(cam.clave!==clave){ cam.de={off:cam.off,z:cam.z,pitchT:cam.pT||cam.pitch,y:cam.y}; cam.hacia=meta; cam.t=0; cam.clave=clave; }
+    cam.t+=dt; var e=suaveS(cam.t/TRANS), A=cam.de||{off:meta.off,z:meta.z,pitchT:meta.pitch,y:meta.y}, Bm=cam.hacia;
+    if(espera>0){ var k2=1-espera/espTot; Bm=Object.assign({},Bm,{off:suaveS(Math.sin(k2*Math.PI))*40*bajo}); }   // en la cima: se abre 40° hacia el valle y vuelve
+    cam.off=A.off+giro(A.off,Bm.off)*e; cam.z=A.z+(Bm.z-A.z)*e; cam.y=A.y+(Bm.y-A.y)*e; cam.pT=A.pitchT+(Bm.pitch-A.pitchT)*e; P={pitch:cam.pT};
+    // giro del rumbo pausado: máx. 35°/s, así no "tironea" en las curvas
+    var gb=giro(cam.b,brg)*(1-Math.exp(-dt/1100)), mx=35*dt/1000; cam.b=(cam.b+Math.max(-mx,Math.min(mx,gb))+360)%360;
+    // inclinación: la de la toma, pero nunca tanta como para que el cerro tape (baja rápido, sube lento)
+    var bear=(cam.b+cam.off+360)%360, pS=Math.min(P.pitch,pitchSeguro(p,bear,cam.z,P.pitch));
+    cam.pitch=suave(cam.pitch,pS,dt,pS<cam.pitch?350:1500);
+    var J={center:p,zoom:cam.z,pitch:cam.pitch,bearing:bear,padding:{top:Math.round(H*cam.y),bottom:200,left:0,right:0}};
+    if(intro){ var f=Math.min(1,intro.t/intro.dur), e=f<.5?4*f*f*f:1-Math.pow(-2*f+2,3)/2, F=intro.de;
+      J={center:[F.c[0]+(p[0]-F.c[0])*e, F.c[1]+(p[1]-F.c[1])*e], zoom:F.z+(J.zoom-F.z)*e, pitch:F.pitch+(J.pitch-F.pitch)*e, bearing:(F.b+giro(F.b,J.bearing)*e+360)%360, padding:{top:Math.round(J.padding.top*e),bottom:Math.round(200*e),left:0,right:0}}; }
+    if(mover) mapa.jumpTo(J);
     // ---- cara según la ruta (cambia solo si se mantiene ~0,6 s) ----
     var ex=caraSegun(gp,ganCuesta,N.pend[Math.min(N.pend.length-1,i+14)],exprAct);
     if(ts<ppHasta){ var pp=$('pp'); ex=(pp&&pp.classList[2])||ex; }
     if(ex!==exprAct){ if(!exprCand||exprCand.e!==ex) exprCand={e:ex,t:ts}; else if(ts-exprCand.t>1200){ exprAct=ex; exprCand=null; caraHasta=ts+1700; } }
-    if(D.cimaM) D.cimaM.getElement().style.opacity=Math.abs(d-N.cum[N.imax])<220?'0':'1';
+    if(D.cimaM) D.cimaM.getElement().style.visibility=Math.abs(d-N.cum[N.imax])<260?'hidden':'visible';
     // ---- mascota ----
     pintarMascota(dt,ts,d,gp,brg);
   } else {
