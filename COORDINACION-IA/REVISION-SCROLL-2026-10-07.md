@@ -58,3 +58,14 @@ con scroll), `bienvenida.html`. No hay ningún código que deje el `body` con `o
 3. **Pregúntale a Pistero:** la caja de escribir sobre la barra, sin que la página se mueva; abrir el teclado y escribir.
 4. **Ver mi perfil de comunidad** (y Amigos/Ranking): bajar hasta el final; la página de atrás no debe moverse; la X de arriba entera.
 5. Al publicar: subir versión en los 3 lugares (se agregó `layout-medidas.js` a la lista del caché de `sw.js`, así que el número de caché tiene que cambiar).
+
+## Revisión con el dedo (2026-10-07, tarde) — `herramientas/revision-dedo/`
+Toques reales de Chrome a 390×844, todo desplegado, dedo a la izquierda/centro/derecha:
+| | `main` (producción) | esta rama |
+|---|---|---|
+| Perfil, 16 pestañas de la tienda | **trabado en 0**, "Guardar personaje" cortado bajo la barra | llega al final, botón completo |
+| Perfil, Preferencias | **no se alcanza** | se abre tocándola y llega al final |
+| Social | se traba con el dedo sobre los accesos rápidos (izquierda) | llega |
+| Otras 12 pantallas | llegan | llegan |
+Sin errores de página. No probado: con datos reales de una cuenta (listas largas de viajes, chat con muchos mensajes)
+ni en el teléfono de Inty. Ventanas sueltas (Amigos, Ranking, perfil de comunidad) quedan para la revisión de botones.
