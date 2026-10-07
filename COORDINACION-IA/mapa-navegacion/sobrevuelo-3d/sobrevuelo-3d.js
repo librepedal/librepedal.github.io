@@ -11,7 +11,34 @@
    7) MASCOTA: el pudú (arte de feature/mascotas) corre a su lado, se queda atrás en las
       subidas, se adelanta en las bajadas y salta en la cima. */
 (function(){
-var RUTA={nombre:'Futrono → Llifén'}; // demo: en la app = r.nombreRuta
+var RUTA={nombre:'Futrono → Llifén'};
+var LIVIANO=!/[?&]completo/.test(location.search);
+// --- precarga del recorrido de la cámara (como preloadOnly de Mapbox, que MapLibre no trae) ---
+// Se piden por adelantado los mosaicos que la cámara va a necesitar (satélite o calles); quedan en la caché
+// del navegador (Esri: max-age 1 día; OpenFreeMap y Mapterhorn también cacheables, con CORS) y MapLibre los
+// toma de ahí al instante. Como un reproductor de video: carga ~3 km por delante y, si la red se atrasa,
+// el vuelo frena suave en vez de mostrar el mapa cortado.
+var PRE={hechos:{}, cola:[], activos:0, max:6, pendientes:{}, total:0, listos:0};
+function tileXY(c,z){ var n=Math.pow(2,z), s2=Math.sin(c[1]*rad); return [Math.floor((c[0]+180)/360*n), Math.floor((0.5-Math.log((1+s2)/(1-s2))/(4*Math.PI))*n)]; }
+function plantillaTiles(){ if(capa==='sat') return {url:SAT.sources.sat.tiles[0], d256:1, zmax:19};
+  var src=mapa&&mapa.getSource('openmaptiles'); return (src&&src.tiles&&src.tiles[0])?{url:src.tiles[0], d256:0, zmax:14}:null; }
+function tilesTramo(d0,d1){
+  var N=D.nuevo, T=plantillaTiles(); if(!T||!N) return;
+  // anillos según la distancia a la cámara: cerca el zoom de la toma, lejos (hacia el horizonte) zooms menores
+  var ANILLOS=[[-250,500,320,0],[500,1600,750,-1],[1600,4500,1800,-2],[4500,9000,3600,-3]];
+  for(var d=Math.max(0,d0); d<=Math.min(N.total,d1); d+=120){
+    var p=enD(N,d).p, b=rumboEn(N,d), zc=Math.round(TOMAS[tomaEn(N,d).t].z)+T.d256;
+    ANILLOS.forEach(function(A){ var z=Math.min(T.zmax,zc+A[3]), tam=40075016*Math.cos(p[1]*rad)/Math.pow(2,z), paso=Math.max(80,tam/2);
+      for(var f=A[0]; f<=A[1]; f+=paso) for(var l=-A[2]; l<=A[2]; l+=paso){ var q=mover(mover(p,b,f),(b+90)%360,l), t=tileXY(q,z), u=T.url.replace('{z}',z).replace('{x}',t[0]).replace('{y}',t[1]);
+        if(!PRE.hechos[u]){ PRE.hechos[u]=1; PRE.pendientes[u]=d; PRE.cola.push(u); PRE.total++; } } });
+  }
+  bombear();
+}
+function bombear(){ while(PRE.activos<PRE.max && PRE.cola.length){ (function(u){ PRE.activos++;
+  fetch(u,{mode:'cors',credentials:'omit'}).catch(function(){}).then(function(){ PRE.activos--; PRE.listos++; delete PRE.pendientes[u]; bombear(); }); })(PRE.cola.shift()); } }
+// ¿quedan mosaicos sin llegar para el tramo hasta d? (cuántos)
+function faltanHasta(d){ var n=0; for(var u in PRE.pendientes) if(PRE.pendientes[u]<=d) n++; return n; }
+var cargaInicial=null, ultPre=0, ultimoPinto=null; // demo: en la app = r.nombreRuta
 var LADO_SVG=1; // _pistBiciSVG dibuja la bici mirando a la derecha
 var DEM_TILE='https://tiles.mapterhorn.com/{z}/{x}/{y}.webp';
 var SAT={version:8,glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',sources:{sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'© Esri, Maxar, Earthstar Geographics'}},layers:[{id:'sat',type:'raster',source:'sat',paint:{'raster-saturation':-.08,'raster-contrast':.06}}]};
@@ -205,10 +232,11 @@ function sinFondo(src){ return new Promise(function(res,rej){ var im=new Image()
   var o=document.createElement('canvas'); o.width=x1-x0+1; o.height=y1-y0+1; o.getContext('2d').drawImage(c,x0,y0,o.width,o.height,0,0,o.width,o.height); res(o); }; im.src=src; }); }
 function cargarMascota(){ return Promise.all(['pudu-cria-corriendo','pudu-cria-corriendo2','pudu-cria-sentado','pudu-cria-v8-ojos-grandes'].map(function(n){ return sinFondo('mascota/'+n+'.png'); })).then(function(f){ MASC.F={A:f[0],B:f[1],S:f[2],cara:f[3]}; }).catch(function(e){ console.warn('mascota', e); MASC.on=false; }); }
 
+function precargarInicio(){ if(modo!=='nuevo'||!LIVIANO) return; var d=prog*D.nuevo.total; tilesTramo(d-200,d+2600); cargaInicial={t0:performance.now(),hasta:d+1300}; cargaInicial.f0=Math.max(1,faltanHasta(cargaInicial.hasta)); }
 function arrancarIntro(){ var c=mapa.getCenter(); intro={t:0,dur:2800,de:{c:[c.lng,c.lat],z:mapa.getZoom(),pitch:mapa.getPitch(),b:mapa.getBearing()}}; }
 function reiniciarEstado(){ intro=null; ritmoAct=0; cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); document.body.classList.remove('pp-on'); }
 function iniciar(){
-  mapa=new maplibregl.Map({container:'mapa',style:SAT,center:D.nuevo.c[0],zoom:12,pitch:0,maxPitch:85,attributionControl:{compact:true}});
+  mapa=new maplibregl.Map({container:'mapa',style:SAT,center:D.nuevo.c[0],zoom:12,pitch:0,maxPitch:85,attributionControl:{compact:true},pixelRatio:LIVIANO?Math.min(window.devicePixelRatio||1,1.5):(window.devicePixelRatio||1),maxTileCacheSize:LIVIANO?600:null});
   mapa.on('style.load',montarCapas); window._demo=mapa;
   window._ir=function(p){ reiniciarEstado(); prog=p; while(sigM<D.nuevo.momentos.length && D.nuevo.momentos[sigM].d<p*D[modo].total) sigM++; MASC.d=p*D[modo].total; pintar(16,performance.now(),true); };
   window._ver=function(ix,avance){ var N=D.nuevo, m=N.momentos[ix]; window._ir(Math.min(1,(m.d+1)/N.total)); var ts=performance.now(); primerPlano(m,ts); exprAct=m.expr; caraHasta=ts+5000; if(m.cima){ espTot=2800; espera=2800*(1-(avance||0)); } cam=null; pintar(16,ts,true); };
@@ -216,7 +244,7 @@ function iniciar(){
   mapa.once('load',function(){ $('cargando').style.display='none'; encuadrar(0); dibujarPerfil(); });
   $('modo').onclick=function(e){ var m=e.target.dataset.m; if(!m||m===modo) return; modo=m; marcarSeg('modo','m',m); reiniciar(); };
   $('capa').onclick=function(e){ var c=e.target.dataset.c; if(!c||c===capa) return; capa=c; marcarSeg('capa','c',c); mapa.setStyle(c==='sat'?SAT:CALLES,{diff:false}); };
-  $('play').onclick=function(){ if(prog>=1){ prog=0; reiniciarEstado(); } corriendo=!corriendo; actualizarBoton(); if(corriendo){ ultimo=null; if(prog===0 && modo==='nuevo') arrancarIntro(); requestAnimationFrame(frame); } };
+  $('play').onclick=function(){ if(prog>=1){ prog=0; reiniciarEstado(); } corriendo=!corriendo; actualizarBoton(); if(corriendo){ ultimo=null; ultimoPinto=null; precargarInicio(); if(prog===0 && modo==='nuevo') arrancarIntro(); requestAnimationFrame(frame); } };
   var sm=$('mascota'); if(sm){ var lst=(typeof PIST_MASCOTA!=='undefined'?PIST_MASCOTA:[]).map(function(m){ return [m.id,m.n]; }).concat([['pudu',MASC_CORREN.pudu]]); sm.innerHTML=lst.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join(''); sm.value=opts.mascota||''; /* Inty 2026-10-07: por ahora sin mascota (queda lista para después) */ opts.mascota=sm.value; sm.onchange=function(){ opts.mascota=sm.value; if(mapa) montarDeNuevo(); }; }
   $('vel').onclick=function(){ velX=velX===1?2:velX===2?4:1; this.textContent='×'+velX; };
   var pf=$('perfil'), arrastrando=false;
@@ -229,6 +257,7 @@ function iniciar(){
   $('tit').textContent=RUTA.nombre; $('titSub').textContent=fmt(D.nuevo.total/1000,1)+' km · ruta de demostración (camino real OSM, GPS simulado)';
 }
 function marcarSeg(id,k,v){ [].forEach.call($(id).children,function(b){ b.classList.toggle('on',b.dataset[k]===v); }); }
+function actualizarCarga(){ var b=$('play'); if(!b) return; if(cargaInicial){ var f=faltanHasta(cargaInicial.hasta), tot=Math.max(1,PRE.total); b.textContent='Preparando el vuelo · '+Math.round(100*Math.max(0,1-f/cargaInicial.f0))+' %'; } else actualizarBoton(); }
 function actualizarBoton(){ document.body.classList.toggle('corriendo',corriendo); $('play').textContent=corriendo?'❚❚ Pausa':(prog>=1?'↺ Ver de nuevo':'▶ '+(prog>0?'Seguir':'Ver sobrevuelo')); }
 function nota(){ $('nota').innerHTML=modo==='hoy'
   ? '<b>Así funciona hoy.</b> La línea es el GPS tal cual se graba (aquí con el error típico de un teléfono, simulado): zigzaguea y se sale del camino. Pistero va anclado por el <b>centro</b>, así que flota corrido de la línea. Mapa plano, sin relieve.'
@@ -273,8 +302,8 @@ function montarCapas(){
   // destello: pulso de luz blanca que corre por lo pedaleado hasta Pistero
   m.addSource('pulso',{type:'geojson',lineMetrics:true,data:{type:'Feature',geometry:{type:'LineString',coordinates:[N.c[0],N.c[1]]}}});
   var G=function(a){ return ['interpolate',['linear'],['line-progress'],0,'rgba(255,255,255,0)',.75,'rgba(255,255,255,'+(a*.55)+')',1,'rgba(255,255,255,'+a+')']; };
-  m.addLayer({id:'pulso-g',type:'line',source:'pulso',layout:LJ,paint:{'line-gradient':G(.6),'line-width':Wz(12,30),'line-blur':Wz(6,15)}});
-  m.addLayer({id:'pulso',type:'line',source:'pulso',layout:LJ,paint:{'line-gradient':G(1),'line-width':Wz(2,5)}});
+  if(!LIVIANO) m.addLayer({id:'pulso-g',type:'line',source:'pulso',layout:LJ,paint:{'line-gradient':G(.6),'line-width':Wz(12,30),'line-blur':Wz(6,15)}});
+  m.addLayer({id:'pulso',type:'line',source:'pulso',layout:LJ,paint:LIVIANO?{'line-gradient':G(1),'line-width':Wz(4,10),'line-blur':Wz(2,5)}:{'line-gradient':G(1),'line-width':Wz(2,5)}});
   // chispa bajo las ruedas: brillo tendido en el suelo que late
   m.addSource('chispa',{type:'geojson',data:{type:'Point',coordinates:N.c[0]}});
   m.addLayer({id:'chispa-g',type:'circle',source:'chispa',layout:{visibility:vis},paint:{'circle-color':c0,'circle-radius':Wz(12,34),'circle-blur':1,'circle-opacity':.8,'circle-pitch-alignment':'map'}});
@@ -305,7 +334,7 @@ function encuadrar(ms){ var c=D[modo].c, b=c.reduce(function(b,p){ return [[Math
 // ---------- Pistero: de espaldas (esqueleto animado) o de costado (con su cara) según la cámara ----------
 function crearRostro(){
   var el=document.createElement('div'); el.className='cara-mk';
-  el.innerHTML='<div class="cm-pin"></div><div class="cm-in"><div class="cm-anillo"></div><div class="cm-caras"><div class="cm-c on"></div><div class="cm-c"></div></div><div class="cm-gota"></div></div>';
+  el.innerHTML='<div class="cm-pin"></div><div class="cm-in"><div class="cm-halo"></div><div class="cm-anillo"></div><div class="cm-caras"><div class="cm-c on"></div><div class="cm-c"></div></div><div class="cm-gota"></div></div>';
   var capas=el.querySelectorAll('.cm-c'); capas[0].innerHTML=cara('feliz');
   marcador=new maplibregl.Marker({element:el,anchor:'bottom',opacityWhenCovered:'1'}).setLngLat(D.nuevo.c[0]).addTo(mapa);
   cajas={el:el,inn:el.querySelector('.cm-in'),capas:capas,act:0,expr:'feliz',bob:0};
@@ -351,15 +380,26 @@ function primerPlano(m,ts){
 // ---------- animación ----------
 function frame(ts){
   if(!corriendo) return;
+  if(LIVIANO && !window._manual && ultimoPinto!==null && ts-ultimoPinto<31){ requestAnimationFrame(frame); return; }
+  ultimoPinto=ts;
   var dt=ultimo===null?16:Math.min(100,ts-ultimo); ultimo=ts;
+  var esperaCarga=false;
+  if(LIVIANO && modo==='nuevo'){
+    var dAct=prog*D[modo].total;
+    if(cargaInicial){ var f0=faltanHasta(cargaInicial.hasta); esperaCarga=f0>0 && performance.now()-cargaInicial.t0<8000;
+      if(!esperaCarga) cargaInicial=null; actualizarCarga(); }
+    if(ts-ultPre>400){ ultPre=ts; tilesTramo(dAct,dAct+3000); }
+  }
   var L=D[modo], d=prog*L.total, g=0;
   if(modo==='nuevo') g=L.pend[enD(L,d).i]||0;
   if(intro){ intro.t+=dt; if(intro.t>=intro.dur) intro=null; }
+  else if(esperaCarga){ ritmoAct=0; }
   else if(espera>0){ espera-=dt; ritmoAct=0; }
   else {
     // ~5 s por km (como hoy), más lento subiendo y más rápido bajando; frena un poco antes de cada momento
     var ritmo=Math.max(.45,Math.min(1.7,1-g*6));
     if(modo==='nuevo' && L.momentos[sigM]){ var falta=L.momentos[sigM].d-d; if(falta<120 && L.momentos[sigM].cima) ritmo*=Math.max(.05,falta/120); }
+    if(LIVIANO && modo==='nuevo' && faltanHasta(d+350)>0) ritmo*=.35;   // la red viene atrasada: frena suave (no se ve el mapa cortado)
     ritmoAct=suave(ritmoAct,ritmo,dt,700);
     prog=Math.min(1,prog+dt/(L.total/1000*5000)*ritmoAct*velX);
   }
@@ -370,7 +410,7 @@ function frame(ts){
   if(!window._manual) requestAnimationFrame(frame);
 }
 // modo grabación (solo para hacer el video cuadro a cuadro): avanza dt ms de reloj simulado
-window._paso=function(dt){ window._manual=true; window._T=(window._T||0)+dt; if(!corriendo){ corriendo=true; ultimo=window._T-dt; if(prog===0 && modo==='nuevo') arrancarIntro(); actualizarBoton(); } frame(window._T); return {prog:prog,corriendo:corriendo}; };
+window._paso=function(dt){ window._manual=true; window._T=(window._T||0)+dt; if(!corriendo){ corriendo=true; ultimo=window._T-dt; precargarInicio(); if(prog===0 && modo==='nuevo') arrancarIntro(); actualizarBoton(); } frame(window._T); return {prog:prog,corriendo:corriendo}; };
 window._velX=function(v){ velX=v; };
 function capasListas(){ return !!(mapa && mapa.getSource('cabeza') && mapa.getSource('pulso') && mapa.getSource('chispa')); }
 function pintar(dt,ts,mover){
@@ -504,8 +544,28 @@ function pintarMascota(dt,ts,d,gp,brg){
 }
 
 // ---------- perfil de altura (pintado por pendiente, avanza con Pistero; lo recorrido brilla) ----------
+var perfilCache=null;
+function perfilBase(W,H,dpr,encendido){ var N=D.nuevo, cv=document.createElement('canvas'); cv.width=W*dpr; cv.height=H*dpr; var c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0);
+  var lo=N.min-8, hi=N.max+12, top=16, bot=H-14, X=function(d){ return d/N.total*W; }, Y=function(h){ return bot-(h-lo)/(hi-lo)*(bot-top); };
+  c.globalAlpha=encendido?.8:.2; for(var i=1;i<N.c.length;i++){ var x0=X(N.cum[i-1]), x1=X(N.cum[i]); c.fillStyle=colorPend(N.pend[i]); c.beginPath(); c.moveTo(x0,bot); c.lineTo(x0,Y(N.alt[i-1])); c.lineTo(x1,Y(N.alt[i])); c.lineTo(x1,bot); c.closePath(); c.fill(); }
+  c.globalAlpha=1; c.beginPath(); N.alt.forEach(function(h,k){ var x=X(N.cum[k]), y=Y(h); if(k) c.lineTo(x,y); else c.moveTo(x,y); });
+  if(encendido){ c.save(); c.shadowColor='#7dd3fc'; c.shadowBlur=10; c.strokeStyle='#fff'; c.lineWidth=2; c.stroke(); c.restore(); } else { c.strokeStyle='rgba(255,255,255,.5)'; c.lineWidth=1.2; c.stroke(); }
+  return cv; }
 function dibujarPerfil(){
   var cv=$('cv'), N=D.nuevo; if(!N||!N.alt) return;
+  if(LIVIANO && modo==='nuevo'){ var dpr0=window.devicePixelRatio||1, W0=cv.clientWidth, H0=cv.clientHeight, k0=W0+'x'+H0+'@'+dpr0;
+    if(!perfilCache||perfilCache.k!==k0){ perfilCache={k:k0,apag:perfilBase(W0,H0,dpr0,false),enc:perfilBase(W0,H0,dpr0,true)}; }
+    if(cv.width!==W0*dpr0){ cv.width=W0*dpr0; cv.height=H0*dpr0; }
+    var c0=cv.getContext('2d'); c0.setTransform(1,0,0,1,0,0); c0.clearRect(0,0,cv.width,cv.height); c0.drawImage(perfilCache.apag,0,0);
+    var px=Math.round(prog*W0*dpr0); if(px>0) c0.drawImage(perfilCache.enc,0,0,px,cv.height,0,0,px,cv.height);
+    c0.setTransform(dpr0,0,0,dpr0,0,0);
+    var lo0=N.min-8, hi0=N.max+12, top0=16, bot0=H0-14, X0=function(d){ return d/N.total*W0; }, Y0=function(h){ return bot0-(h-lo0)/(hi0-lo0)*(bot0-top0); }, pd0=prog*N.total;
+    c0.fillStyle='#9fb3c8'; c0.font='600 10px system-ui'; c0.fillText(Math.round(N.max)+' m',4,11); c0.fillText(Math.round(N.min)+' m',4,H0-3); c0.textAlign='right'; c0.fillText(fmt(N.total/1000,1)+' km',W0-4,H0-3); c0.textAlign='left';
+    N.momentos.forEach(function(m){ var kk=enD(N,m.d); c0.fillStyle=m.d<=pd0?'#ffd700':'rgba(255,215,0,.45)'; c0.beginPath(); c0.arc(X0(m.d),Y0(N.alt[kk.i])-7,2.6,0,7); c0.fill(); });
+    var q0=enD(N,pd0), h0=N.alt[q0.i]+(N.alt[q0.i+1]-N.alt[q0.i])*q0.f, x0=X0(pd0), y0=Y0(h0);
+    c0.strokeStyle='rgba(255,255,255,.5)'; c0.setLineDash([3,3]); c0.beginPath(); c0.moveTo(x0,top0-6); c0.lineTo(x0,bot0); c0.stroke(); c0.setLineDash([]);
+    c0.fillStyle='#fc4c02'; c0.strokeStyle='#fff'; c0.lineWidth=2; c0.beginPath(); c0.arc(x0,y0,5,0,7); c0.fill(); c0.stroke();
+    return; }
   var dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight; if(cv.width!==W*dpr){ cv.width=W*dpr; cv.height=H*dpr; }
   var c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,W,H);
   var lo=N.min-8, hi=N.max+12, top=16, bot=H-14, X=function(d){ return d/N.total*W; }, Y=function(h){ return bot-(h-lo)/(hi-lo)*(bot-top); };

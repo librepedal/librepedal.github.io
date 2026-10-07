@@ -98,3 +98,16 @@ para que un cerro no deje a Pistero transparente.
   esfuerzo fuerte; se mece y se inclina en las curvas; caras con fundido cruzado; hilo de luz al punto exacto.
 - La viñeta ya no repite la cara (está en el mapa): solo texto con barra del color del estado.
 - Se mantiene la secuencia de tomas y el rastro neón (aprobados).
+
+## v7 (2026-10-07) — MODO LIVIANO (por defecto; `?completo` = como antes). Inty: "que no se corte, copia a los mejores"
+Referencias: Mapbox precarga los mosaicos de una animación antes de correrla (`preloadOnly`, "evita el efecto
+bloque/flash gris"); MapTiler `TilePreloader.preloadForLinearPath`; los reproductores de video cargan por delante
+y frenan si la red se atrasa; Mapbox recomienda menos capas y fuentes separadas para lo que cambia cada cuadro.
+- **Precarga del recorrido de la cámara**: mosaicos por anillos de distancia (cerca zoom de la toma, al horizonte
+  zooms menores); 6 descargas a la vez; quedan en la caché HTTP (Esri max-age 1 día, OpenFreeMap/Mapterhorn
+  cacheables, todos con CORS). Al dar play: "Preparando el vuelo · N %" (primeros ~1,3 km, máx. 8 s) mientras corre
+  la introducción; después carga 3 km por delante cada 0,4 s y **si se atrasa, el vuelo frena suave** (no corta).
+- **Menos trabajo de GPU/CPU**: mapa dibujado a máx. 1,5× (teléfono 3× → 4 veces menos píxeles), tope 30 cuadros/s,
+  caché de 600 mosaicos, destello en 1 capa (antes 2), perfil de altura pre-dibujado (antes ~1.800 polígonos por
+  cuadro), latido del rostro con transform/opacity (antes animaba una sombra difuminada → repintado).
+- Probado: 15 s en Chrome sin GPU, precarga 8 % → 49 % → vuelo, sin errores. Falta probar en GPU real (panel/teléfono).

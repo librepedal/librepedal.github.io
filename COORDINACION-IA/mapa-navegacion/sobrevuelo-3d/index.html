@@ -93,8 +93,10 @@ body.corriendo .leyenda,body.corriendo .capa{opacity:0;pointer-events:none}
 .cara-mk{width:68px;height:84px;pointer-events:none;--c:#39ff88;--lat:1.15s}
 .cm-pin{position:absolute;left:50%;bottom:0;width:3px;height:20px;margin-left:-1.5px;border-radius:2px;background:linear-gradient(to top,#fff,var(--c) 45%,var(--c));box-shadow:0 0 8px var(--c)}
 .cm-in{position:absolute;left:1px;top:0;width:66px;height:66px;transform-origin:50% 100%}
-.cm-anillo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 32%,#1e293b,#0a0f1d 75%);box-shadow:0 0 0 3px var(--c),0 0 16px var(--c),0 6px 14px rgba(0,0,0,.55);animation:cmLate var(--lat) ease-in-out infinite;transition:box-shadow .5s}
-@keyframes cmLate{0%,40%,100%{box-shadow:0 0 0 3px var(--c),0 0 14px var(--c),0 6px 14px rgba(0,0,0,.55)}12%{box-shadow:0 0 0 4px var(--c),0 0 32px var(--c),0 6px 14px rgba(0,0,0,.55)}24%{box-shadow:0 0 0 3px var(--c),0 0 22px var(--c),0 6px 14px rgba(0,0,0,.55)}}
+.cm-anillo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 32%,#1e293b,#0a0f1d 75%);box-shadow:0 0 0 3px var(--c),0 0 14px var(--c),0 6px 14px rgba(0,0,0,.55)}
+/* latido = halo que crece y se apaga: solo transform/opacity → lo hace la GPU sin repintar */
+.cm-halo{position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,var(--c) 0%,transparent 68%);opacity:0;animation:cmLate var(--lat) ease-out infinite;will-change:transform,opacity}
+@keyframes cmLate{0%{opacity:0;transform:scale(.85)}10%{opacity:.75;transform:scale(1)}22%{opacity:.35;transform:scale(1.04)}30%{opacity:.6;transform:scale(1.08)}100%{opacity:0;transform:scale(1.22)}}
 .cm-caras{position:absolute;inset:0;border-radius:50%;overflow:hidden}
 .cm-c{position:absolute;left:-13%;top:-9%;width:126%;height:106%;opacity:0;transform:scale(.96);transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1)}
 .cm-c.on{opacity:1;transform:none}
@@ -105,7 +107,7 @@ body.corriendo .leyenda,body.corriendo .capa{opacity:0;pointer-events:none}
 @keyframes cmGota{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(26px)}}
 .pp{padding:10px 16px;border-left:3px solid var(--ring,#39ff88)}
 .pp.cansado,.pp.enojado{--ring:#ff8a1f}.pp.agotado{--ring:#ff2d6f}.pp.adrenalina,.pp.emocionado,.pp.sorprendido{--ring:#22d3ff}.pp.orgulloso{--ring:#ffd700}.pp.contento{--ring:#39ff88}
-@media (prefers-reduced-motion:reduce){.cm-anillo,.cara-mk.suda .cm-gota{animation:none}}
+@media (prefers-reduced-motion:reduce){.cm-halo,.cara-mk.suda .cm-gota{animation:none}}
 </style>
 </head>
 <body>
