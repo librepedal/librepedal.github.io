@@ -147,6 +147,15 @@ Reusar este orden en vez de adivinar por dónde empezar.
 - **Mostrar una referencia visual antes de aplicar un cambio de diseño**, no
   aplicarlo directo y esperar aprobación después.
 
+- **Pistero ya NO va en bicicleta** (Inty, 2026-10-07: "habíamos quedado en que ya no iba en bicicleta"). En el sobrevuelo (3D y el de
+  siempre) va como **rostro** del personaje que eligió el usuario (`PERSONAJES` en `sobrevuelo-3d.js`, contrato en
+  `EXPRESIONES-PERSONAJES.md` de `feature/sobrevuelo-3d`). Nunca hacer una cara aparte solo para el Pistero actual: los modelos
+  Cyberpunk, Orbe, Slime y Androide ya tienen sus 12 caras y deben verse en todas partes donde aparezca Pistero.
+- **Mascota = regalo sorpresa** (Inty, 2026-10-07): no aparece en el sobrevuelo. Se le regala al usuario al terminar su **primer
+  viaje**, de sorpresa, cuando empieza a revisar en el teléfono su recorrido. Está por diseñar (referencias + mockup aprobado).
+- **Probar en el teléfono de Inty no se reemplaza con Chrome sin pantalla**: antes de decir "arreglado", confirmar qué versión
+  tiene cargada el teléfono (Ajustes → "Libre Pedal · v…"). El 2026-10-07 un video "con el bug" era la versión anterior.
+
 ## Coordinación entre sesiones/cuentas (crítico en este repo específicamente)
 
 - **Este proyecto lo trabajan dos cuentas de Claude en paralelo, no sincronizadas

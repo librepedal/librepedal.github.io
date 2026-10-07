@@ -108,11 +108,15 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     var veh=(typeof _pistVehiculo==='function')?_pistVehiculo(opts,modo||(typeof actividadTipo!=='undefined'?actividadTipo:'')):'';
     // sonido: cadena (bici) o motor (auto/moto) mientras avanza; la mascota saluda al partir
     _sbvSonido=(typeof pistSonidoViaje==='function')?pistSonidoViaje(veh):null;
-    if(opts.mascota && typeof pistSonar==='function') pistSonar('mascota',opts.mascota);
-    function bici(expr,rapido,pose){ return conBici?_pistBiciSVG(opts,{expr:expr||'feliz',rapido:!!rapido,cadencia:rapido?0.5:0.85,pose:pose||'',vehiculo:veh}):((typeof _pistoNuevo==='function')?_pistoNuevo(expr||'feliz'):''); }
+    // Inty 2026-10-07: sin mascota en el sobrevuelo (será un regalo tras el primer viaje)
+    // Inty 2026-10-07: Pistero ya NO va en bici. Va como rostro, igual que en el sobrevuelo 3D (sb3CaraPersonaje = el
+    // personaje que eligió el usuario). Solo si sobrevuelo-3d.js no cargó, la cara de siempre.
+    function caraDe(expr){ var s=(typeof window.sb3CaraPersonaje==='function')?window.sb3CaraPersonaje(expr||'feliz'):''; return s||((typeof _pistoDe==='function')?_pistoDe(opts,expr||'feliz'):''); }
+    function rostro(expr){ return '<div class="sbv-rostro"><div class="sbv-rostro-in"><div class="sbv-rostro-c">'+caraDe(expr)+'</div></div><div class="sbv-rostro-pin"></div></div>'; }
+    function bici(expr,rapido,pose){ return rostro(expr); }
     // en primera persona Pistero va DE ESPALDAS hacia donde avanza la ruta (cámara detrás)
     var primera=!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    var deEspaldas=primera && typeof _pistAtrasSVG==='function';
+    var deEspaldas=false; // antes: Pistero de espaldas pedaleando (_pistAtrasSVG). Ahora siempre rostro de frente.
     function cuerpo(G){ return _pistAtrasSVG(opts,{vehiculo:veh,cadencia:G.cad,rapido:G.rapido,pose:G.pose||''}); }
     // esqueleto animado (movimiento orgánico) para las bicis; moto/auto usan el dibujo fijo
     var rig=(deEspaldas && typeof _pistAtrasRig==='function')?_pistAtrasRig(opts,veh):null, rigSt={cad:.68,pose:'',sway:0,rapido:0};
@@ -144,7 +148,7 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     function miniGlobo(expr,txt,ts,ms){
       if(!globo||!txt) return;
       var cara=globo.querySelector('.sbv-cara'), t=globo.querySelector('.sbv-txt');
-      if(cara && typeof _pistoDe==='function') cara.innerHTML=_pistoDe(opts,expr);
+      if(cara && typeof _pistoDe==='function') cara.innerHTML=caraDe(expr);
       if(t) t.textContent=txt;
       globo.classList.remove('on'); void globo.offsetWidth; globo.classList.add('on','mini');
       globoHasta=ts+ms;
@@ -175,7 +179,7 @@ function reproducirSobrevuelo(coords, modo, onEnd){
     function mostrarGlobo(e,ts){
       if(!globo) return;
       var cara=globo.querySelector('.sbv-cara'), txt=globo.querySelector('.sbv-txt');
-      if(cara && typeof _pistoDe==='function') cara.innerHTML=_pistoDe(opts,e.expr);
+      if(cara && typeof _pistoDe==='function') cara.innerHTML=caraDe(e.expr);
       if(txt) txt.textContent=e.txt;
       globo.classList.remove('on'); void globo.offsetWidth; globo.classList.add('on');
       if(deEspaldas){
