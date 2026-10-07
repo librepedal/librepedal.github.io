@@ -105,7 +105,7 @@ function previsualizarPersonalidad(id, ev){
     if(!fid) return;
     if(_vozPreviewAudio){ try{ _vozPreviewAudio.pause(); }catch(e){} }
     pararVoz(); // si Pistero venía hablando, que no se encime con el preview de la voz
-    const a=new Audio('voces-el/'+pisteroGenero+fid+'.mp3');
+    const a=(typeof _vozAudio==='function')?_vozAudio('voces-el/'+pisteroGenero+fid+'.mp3'):new Audio('voces-el/'+pisteroGenero+fid+'.mp3'); // registrada: si Pistero habla, el probador se calla (no se encima)
     _vozPreviewAudio=a;
     a.play().catch(function(){});
   }catch(e){}
