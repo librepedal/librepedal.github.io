@@ -279,8 +279,10 @@ function _ofrecerSobrevueloFin(coords, modo, localId){
     o.style.display='block';
     document.getElementById('lpSbvVer').onclick=function(){
       o.style.display='none';
-      if(typeof cv==='function') cv('map');
-      setTimeout(function(){ reproducirSobrevuelo(coords, modo, function(){ o.style.display='block'; }); },320);
+      var deSiempre=function(){ if(typeof cv==='function') cv('map'); setTimeout(function(){ reproducirSobrevuelo(coords, modo, function(){ o.style.display='block'; }); },320); };
+      // 2026-10-07: primero el sobrevuelo 3D (sobrevuelo-3d.js); si no se puede, el de siempre, igual que antes
+      if(typeof abrirSobrevuelo3D==='function' && abrirSobrevuelo3D(coords,{id:localId,nombre:'Tu viaje de hoy',respaldo:deSiempre},function(){ o.style.display='block'; })) return;
+      deSiempre();
     };
     document.getElementById('lpSbvGuardar').onclick=function(){ o.style.display='none'; if(typeof h==='function') h('Listo, guardé tu ruta.'); };
     document.getElementById('lpSbvDescartar').onclick=function(){ o.style.display='none'; _sbvDescartar(localId); if(typeof h==='function') h('Descarté esta ruta.'); };
@@ -288,6 +290,8 @@ function _ofrecerSobrevueloFin(coords, modo, localId){
 }
 // Reproducir el sobrevuelo de una ruta YA guardada (botón del historial). Usa el modo
 // guardado si existe, si no el modo actual.
+// nombre para el sobrevuelo 3D: el que le puso el ciclista o "Viaje del 4 de octubre"
+function _sbvNombreRuta(r){ if(r&&r.nombreRuta) return r.nombreRuta; try{ return 'Viaje del '+new Date(r.startTime).toLocaleDateString('es-CL',{day:'numeric',month:'long'}); }catch(e){ return 'Tu viaje'; } }
 function verSobrevueloRuta(id){
   try{
     var r=(typeof _rutaPorId==='function')?_rutaPorId(id):rutasLocales().find(function(x){return x.localId===id;});
@@ -295,8 +299,10 @@ function verSobrevueloRuta(id){
     if(!pts){ if(typeof h==='function') h('Esta ruta no tiene puntos guardados para el sobrevuelo.'); return; }
     var coords=pts.map(function(p){ return [p.lat,p.lon,p.t,p.alt]; });
     var modo=(r&&r.modo)?r.modo:actividadTipo;
-    if(typeof cv==='function') cv('map');
-    setTimeout(function(){ reproducirSobrevuelo(coords, modo); },340);
+    var deSiempre=function(){ if(typeof cv==='function') cv('map'); setTimeout(function(){ reproducirSobrevuelo(coords, modo); },340); };
+    // 2026-10-07: primero el sobrevuelo 3D (sobrevuelo-3d.js); si no se puede (sin WebGL, pocos puntos), el de siempre
+    if(typeof abrirSobrevuelo3D==='function' && abrirSobrevuelo3D(pts,{id:id,nombre:_sbvNombreRuta(r),respaldo:deSiempre})) return;
+    deSiempre();
   }catch(e){ try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
 }
 // ENVOLTORIO (no edición) de toggleGPS: cuando el usuario DETIENE el GPS libre y hay

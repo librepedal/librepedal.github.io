@@ -58,6 +58,7 @@ const CORE = [
   './avisos-viaje.js',
   './pwa-instalacion.js',
   './sobrevuelo-viaje.js',
+  './sobrevuelo-3d.js',
   './abanico-reporte.js',
   './prevuelo-intro-pistero.js',
   './recomendacion-rutas.js',
