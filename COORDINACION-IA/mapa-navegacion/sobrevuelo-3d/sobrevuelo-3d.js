@@ -184,7 +184,10 @@ var PERSONAJES={ pistero:{id:'pistero', tiene:function(e){ return true; }, cara:
 PERSONAJES.ciber={id:'ciber', nombre:'Pistero Cyberpunk', capas:true, tiene:function(e){ return ESTADOS.indexOf(e)>=0; },
   crear:function(host){ return crearCiberCapas(host,'personajes/ciber-capa-casco.jpg','personajes/ciber-capa-cabeza.jpg').then(function(api){
     api.svg.setAttribute('viewBox','458 104 460 460'); return api; }); }};   // encuadre: casco + visor + boca dentro del círculo
-// siguen (desde sus ramas): Orbe, Slime, Vinilo, Vidrio (feature/armario-piezas) y cada mascota (feature/mascotas)
+PERSONAJES.orbe={id:'orbe', nombre:'Pistero Orbe', capas:true, tiene:function(e){ return ESTADOS.indexOf(e)>=0; },
+  crear:function(host){ return crearOrbeCapas(host,'personajes/capa-casco.jpg','personajes/capa-orbe.jpg').then(function(api){
+    api.svg.setAttribute('viewBox','130 230 764 764'); return api; }); }};   // encuadre: casco con su franja + orbe con la cara de luz
+// siguen (desde sus ramas): Slime, Vinilo, Vidrio (feature/armario-piezas) y cada mascota (feature/mascotas)
 var personaje=PERSONAJES[(new URLSearchParams(location.search)).get('p')||'ciber']||PERSONAJES.pistero;
 function cara(expr){ var e=expr, n=0; while(!personaje.tiene(e) && RESPALDO[e] && n++<4) e=RESPALDO[e]; return personaje.cara(e); }
 function caraPistero(expr){
