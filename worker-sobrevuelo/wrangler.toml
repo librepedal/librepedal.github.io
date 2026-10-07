@@ -1,0 +1,14 @@
+name = "librepedal-sobrevuelo"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Base D1 propia (2026-10-07): rutas pegadas (180 días) y límites exactos de rutas nuevas (20 por conexión/día, 300/día).
+# Ya NO usa el KV de worker-auth (sus 1.000 escrituras/día eran compartidas con el inicio de sesión).
+# Crear (una vez):   npx wrangler d1 create librepedal-sobrevuelo      → copiar el database_id de abajo
+# Esquema:           npx wrangler d1 migrations apply librepedal-sobrevuelo --remote
+# Publicar:          npx wrangler deploy        (en PowerShell: npx.cmd)
+[[d1_databases]]
+binding = "DB"
+database_name = "librepedal-sobrevuelo"
+database_id = "37c49c88-fc31-46fa-a244-3b637ceea1c1"   # creada 2026-10-07, región ENAM (D1 no tiene Sudamérica)
+migrations_dir = "migrations"
