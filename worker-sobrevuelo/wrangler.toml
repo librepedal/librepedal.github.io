@@ -10,5 +10,5 @@ compatibility_date = "2024-11-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "librepedal-sobrevuelo"
-database_id = "PENDIENTE-crear-con-wrangler-d1-create"
+database_id = "37c49c88-fc31-46fa-a244-3b637ceea1c1"   # creada 2026-10-07, región ENAM (D1 no tiene Sudamérica)
 migrations_dir = "migrations"
