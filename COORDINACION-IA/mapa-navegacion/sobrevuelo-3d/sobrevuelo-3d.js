@@ -113,22 +113,26 @@ function planear(N){
   subidas.forEach(function(s){ var im=s.a; for(var i=s.a;i<=s.b;i++) if(N.pend[i]>N.pend[im]) im=i; s.dura=N.cum[im]; s.gmax=N.pend[im]; });
   // 1) tomas por tramo: la de cada evento dura lo necesario para que la cámara alcance a asentarse
   var P=[], lado=1, k=0; function toma(d0,d1,t,x){ P.push(Object.assign({d0:Math.max(0,d0),d1:Math.min(T,d1),t:t},x||{})); }
-  for(var d=600; d<T; d+=900){ k++; toma(d,d+900,k%3===0?'aerea':k%3===2?'paralelo':'persecucion',{lado:(lado=-lado),base:true}); }
-  subidas.forEach(function(s,ix){ if(s.gan<8) return; toma(s.d0-150,s.d0+420,'subida'); toma(s.d0+420,Math.max(s.d1,s.d0+1000),'lateral',{lado:ix%2?1:-1}); });
-  bajadas.forEach(function(b){ if(-b.gan<8) return; toma(b.d0-60,Math.max(b.d1,b.d0+650),'bajada'); });
-  toma(0,600,'aerea');
+  // largos de toma medidos en TIEMPO de vuelo (en 100 km a 80 s, 900 m eran 0,7 s por toma): m/s del vuelo
+  var mps=T/durVuelo()*1000, U=function(seg){ return seg*mps; }, BASE=Math.max(900,U(6)), INI=Math.max(600,U(3.5));
+  for(var d=INI; d<T; d+=BASE){ k++; toma(d,d+BASE,k%3===0?'aerea':k%3===2?'paralelo':'persecucion',{lado:(lado=-lado),base:true}); }
+  subidas.forEach(function(s,ix){ if(s.gan<8) return; toma(s.d0-Math.max(150,U(1)),s.d0+Math.max(420,U(2.5)),'subida'); toma(s.d0+Math.max(420,U(2.5)),Math.max(s.d1,s.d0+Math.max(1000,U(6))),'lateral',{lado:ix%2?1:-1}); });
+  bajadas.forEach(function(b){ if(-b.gan<8) return; toma(b.d0-60,Math.max(b.d1,b.d0+Math.max(650,U(4))),'bajada'); });
+  toma(0,INI,'aerea');
   // 2) secuencia final: se recorre cada 25 m y se funden las tomas de menos de 550 m (~3 s a ×1) con la anterior
-  var seq=[], MIN=550;
-  for(var x=0; x<T; x+=25){ var e=null,b=null; P.forEach(function(p){ if(x>=p.d0&&x<p.d1){ if(p.base) b=p; else e=p; } }); var t=e||b||{t:'persecucion',lado:1}, u=seq[seq.length-1];
-    if(u && u.t===t.t && (u.lado||1)===(t.lado||1)) u.d1=x+25; else seq.push({t:t.t,lado:t.lado||1,ev:!!e,d0:x,d1:x+25}); }
+  var seq=[], MIN=Math.max(550,U(3.5));
+  var PASO=Math.max(25,mps*.1);
+  for(var x=0; x<T; x+=PASO){ var e=null,b=null; P.forEach(function(p){ if(x>=p.d0&&x<p.d1){ if(p.base) b=p; else e=p; } }); var t=e||b||{t:'persecucion',lado:1}, u=seq[seq.length-1];
+    if(u && u.t===t.t && (u.lado||1)===(t.lado||1)) u.d1=x+PASO; else seq.push({t:t.t,lado:t.lado||1,ev:!!e,d0:x,d1:x+PASO}); }
   // las tomas de evento mandan: una normal corta se funde con la vecina; nunca se pierde una subida/bajada
-  var corta=function(q){ return q.d1-q.d0<MIN; }, cambio=true;
-  while(cambio){ cambio=false;
+  var corta=function(q){ return q.d1-q.d0<MIN-1; }, cambio=true;
+  var vueltas=0; while(cambio){ cambio=false; if(++vueltas>4000){ console.warn('[sobrevuelo] fusión de tomas sin terminar', seq.length); break; }
     for(var j=0;j<seq.length;j++){ var q=seq[j]; if(!corta(q)) continue;
       var A=seq[j-1], B=seq[j+1];
       if(!q.ev){ if(A){ A.d1=q.d1; } else if(B){ B.d0=q.d0; } else continue; seq.splice(j,1); cambio=true; break; }
-      if(A && !A.ev && A.d1-A.d0>MIN){ var falta=Math.min(MIN-(q.d1-q.d0),A.d1-A.d0-MIN); if(falta>0){ q.d0-=falta; A.d1-=falta; cambio=true; break; } }
-      if(B && !B.ev && B.d1-B.d0>MIN){ var f2=Math.min(MIN-(q.d1-q.d0),B.d1-B.d0-MIN); if(f2>0){ q.d1+=f2; B.d0+=f2; cambio=true; break; } }
+      if(A && A.d1-A.d0>MIN+1){   /* puede ceder cualquier vecina que tenga tiempo de sobra (también una de evento) */
+         var falta=Math.min(MIN-(q.d1-q.d0),A.d1-A.d0-MIN); if(falta>1){   /* >1 m: con decimales flotantes quedaba quitando trocitos para siempre */ q.d0-=falta; A.d1-=falta; cambio=true; break; } }
+      if(B && B.d1-B.d0>MIN+1){ var f2=Math.min(MIN-(q.d1-q.d0),B.d1-B.d0-MIN); if(f2>1){ q.d1+=f2; B.d0+=f2; cambio=true; break; } }
       if(A){ A.d1=q.d1; seq.splice(j,1); cambio=true; break; }   // dos eventos pegados: queda el primero
     }
     for(var j2=1;j2<seq.length;j2++) if(seq[j2].t===seq[j2-1].t && seq[j2].lado===seq[j2-1].lado){ seq[j2-1].d1=seq[j2].d1; seq.splice(j2,1); j2--; }
@@ -176,7 +180,7 @@ var TOMAS={  // off = giro de la cámara respecto del avance (siempre hacia el v
   bajada:{off:14,z:16.2,pitch:66,y:.64},
   cima:{off:0,z:15.6,pitch:58,y:.62}
 };
-var TRANS=2800; // ms de cada cambio de plano (curva suave de entrada y salida)
+var TRANS=reduce?4200:2800; // ms de cada cambio de plano (curva suave de entrada y salida)
 // zona libre del mapa (entre la barra de arriba y el panel de abajo) y dónde va Pistero dentro de ella (0 = arriba, 1 = abajo)
 function zonaLibre(){ var H=mapa.getContainer().clientHeight, pn=document.querySelector('.panel'), br=document.querySelector('.barra');
   var abajo=pn?Math.round(pn.getBoundingClientRect().height)-8:200, arriba=br?Math.round(br.getBoundingClientRect().bottom)+8:70; return {H:H,arriba:arriba,abajo:abajo,libre:Math.max(120,H-arriba-abajo)}; }
@@ -463,6 +467,9 @@ function iniciar(){
   var sm=$('mascota'); if(sm){ var lst=(typeof PIST_MASCOTA!=='undefined'?PIST_MASCOTA:[]).map(function(m){ return [m.id,m.n]; }).concat([['pudu',MASC_CORREN.pudu]]); sm.innerHTML=lst.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join(''); sm.value=opts.mascota||''; /* Inty 2026-10-07: por ahora sin mascota (queda lista para después) */ opts.mascota=sm.value; sm.onchange=function(){ opts.mascota=sm.value; if(mapa) montarDeNuevo(); }; }
   var sp=$('personaje'); if(sp){ sp.innerHTML=Object.keys(PERSONAJES).map(function(k){ return '<option value="'+k+'">'+(PERSONAJES[k].nombre||'Pistero')+'</option>'; }).join(''); sp.value=personaje.id;
     sp.onchange=function(){ personaje=PERSONAJES[sp.value]; if(mapa&&modo==='nuevo'){ crearMarcador(); pintar(16,performance.now(),false); } }; }
+  // pausa sola si la app pasa a segundo plano (batería y calor); tocar el mapa pausa o sigue
+  document.addEventListener('visibilitychange',function(){ if(document.hidden && corriendo){ corriendo=false; actualizarBoton(); } });
+  mapa.on('click',function(){ if(modo==='nuevo' && !document.body.classList.contains('fin')) $('play').click(); });
   $('gpx').onchange=function(){ var inp=this; if(inp.files&&inp.files[0]) usarGPX(inp.files[0],function(){ inp.value=''; }); };   /* se limpia DESPUÉS de leer (antes se perdía el archivo) */
   var bs=$('sonido'); if(bs){ var pintaS=function(){ bs.setAttribute('aria-pressed',SON.on); bs.classList.toggle('mudo',!SON.on); bs.title=SON.on?'Sonido: sí':'Sonido: no'; }; pintaS();
     bs.onclick=function(){ SON.on=!SON.on; try{ localStorage.setItem('lp_sbv_sonido',SON.on?'1':'0'); }catch(e){} if(!SON.on) vientoParar(); pintaS(); }; }
@@ -679,11 +686,11 @@ function pintar(dt,ts,mover){
     // la toma se pide ~1,4 s más adelante: la transición queda centrada en el punto del evento
     var adel=1.4*(N.total/durVuelo()*1000)*velX*(ritmoAct||1), T=tomaEn(N,Math.min(N.total,d+adel)), bajo=N.bajo[Math.min(N.c.length-1,enD(N,d+adel).i)]||1;
     var clave=(espera>0?'cima':T.t)+'|'+bajo, P=TOMAS[espera>0?'cima':T.t];
-    var meta={off:P.off*bajo,z:P.z,pitch:P.pitch,y:P.y};
+    var meta={off:reduce?0:P.off*bajo,z:reduce?15.6:P.z,pitch:reduce?55:P.pitch,y:P.y};   /* movimiento reducido: una sola toma tranquila */
     if(!cam||!mover&&!corriendo){ cam={off:meta.off,z:meta.z,pitch:meta.pitch,y:meta.y,b:brg,clave:clave,de:null,hacia:meta,t:TRANS}; }
     if(cam.clave!==clave){ cam.de={off:cam.off,z:cam.z,pitchT:cam.pT||cam.pitch,y:cam.y}; cam.hacia=meta; cam.t=0; cam.clave=clave; }
     cam.t+=dt; var e=suaveS(cam.t/TRANS), A=cam.de||{off:meta.off,z:meta.z,pitchT:meta.pitch,y:meta.y}, Bm=cam.hacia;
-    if(espera>0){ var k2=1-espera/espTot, ola=suaveS(Math.sin(k2*Math.PI)); Bm=Object.assign({},Bm,{off:ola*40*bajo, z:Bm.z-1.35*ola, pitch:Bm.pitch-8*ola}); }   // cima: se abre hacia el valle, se aleja para mostrarlo todo y vuelve   // en la cima: se abre 40° hacia el valle y vuelve
+    if(espera>0 && !reduce){ var k2=1-espera/espTot, ola=suaveS(Math.sin(k2*Math.PI)); Bm=Object.assign({},Bm,{off:ola*40*bajo, z:Bm.z-1.35*ola, pitch:Bm.pitch-8*ola}); }   // cima: se abre hacia el valle, se aleja para mostrarlo todo y vuelve   // en la cima: se abre 40° hacia el valle y vuelve
     cam.off=A.off+giro(A.off,Bm.off)*e; cam.z=A.z+(Bm.z-A.z)*e; cam.y=A.y+(Bm.y-A.y)*e; cam.pT=A.pitchT+(Bm.pitch-A.pitchT)*e; P={pitch:cam.pT};
     // giro del rumbo pausado: máx. 35°/s, así no "tironea" en las curvas
     var gb=giro(cam.b,brg)*(1-Math.exp(-dt/1100)), mx=35*dt/1000; cam.b=(cam.b+Math.max(-mx,Math.min(mx,gb))+360)%360;
