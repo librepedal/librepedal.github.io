@@ -141,7 +141,7 @@ function planear(N){
   subidas.forEach(function(s){ if(s.gan<8) return; var dura=s.gmax>.08||N.sub[s.b]>160; C.push({d:s.dura,pri:5+Math.min(4,s.gan/15),dura:dura,txt:'',sub:falta(s.d1-s.dura),dur:2200,tipo:'sube'}); });
   bajadas.forEach(function(b){ if(-b.gan<10) return; C.push({d:b.d0+60,pri:4+Math.min(3,-b.gan/20),txt:'',sub:'por '+(b.d1-b.d0>=1000?fmt((b.d1-b.d0)/1000,1)+' km':Math.round((b.d1-b.d0)/10)*10+' m'),dur:1900,tipo:'baja'}); });
   C.push({d:30,pri:9,expr:'contento',txt:'¡Partimos!',sub:fmt(T/1000,1)+' km y +'+Math.round(N.sub[N.sub.length-1])+' m por delante',dur:2000});
-  C.push({d:N.cum[N.imax],pri:10,expr:'orgulloso',txt:'¡Cima!',sub:'lo más alto del viaje',dur:2800,cima:true,pose:'puno'});
+  C.push({d:N.cum[N.imax],pri:10,expr:'orgulloso',txt:'¡Cima!',sub:'lo más alto del viaje',dur:4200,cima:true,pose:'puno'});
   C.push({d:T,pri:10,expr:'contento',txt:'¡Llegamos!',sub:D.dur?'en '+durTxt(D.dur):'',dur:2600,pose:'brazos',fin:true});
   C.sort(function(a,b){ return b.pri-a.pri; });
   var hueco=T/9, M=[]; C.forEach(function(c){ if(M.length<7 && M.every(function(m){ return Math.abs(m.d-c.d)>=hueco; })) M.push(c); });
@@ -152,6 +152,13 @@ function planear(N){
     if(m.tipo==='sube'){ var f=m.dura?['agotado',FA[na++%FA.length]]:FS[ns++%FS.length]; if(f[0]===prev) f=FS[ns++%FS.length]; m.expr=f[0]; m.txt=f[1]; }
     if(m.tipo==='baja'){ var g=FB[nb++%FB.length]; if(g[0]===prev) g=FB[nb++%FB.length]; m.expr=g[0]; m.txt=g[1]; }
     prev=m.expr; });
+  // resumen: lo que el viaje deja (sin repetir lo que ya se vio en el panel durante el vuelo)
+  var sMax=null; subidas.forEach(function(x){ if(!sMax||x.gan>sMax.gan) sMax=x; });
+  var bMax=null; bajadas.forEach(function(x){ if(!bMax||x.gan<bMax.gan) bMax=x; });
+  var iP=0; for(var ip=0;ip<N.pend.length;ip++) if(N.pend[ip]>N.pend[iP]) iP=ip;
+  var kmSube=0; for(var ik=1;ik<N.c.length;ik++) if(N.pend[ik]>0.03) kmSube+=N.cum[ik]-N.cum[ik-1];
+  N.resumen={dist:T, dur:D.dur||0, sub:N.sub[N.sub.length-1], altMax:N.max, pendMax:N.pend[iP], dPendMax:N.cum[iP], kmSube:kmSube,
+    sMax:sMax&&{gan:sMax.gan,d0:sMax.d0,d1:sMax.d1}, bMax:bMax&&{gan:bMax.gan,d0:bMax.d0}, dCima:N.cum[N.imax]};
   N.plan=P; N.seq=seq; N.momentos=M; N.subidas=subidas; N.bajadas=bajadas;
 }
 // la toma vigente: las de eventos ganan a las de base
@@ -262,12 +269,26 @@ function cargarMascota(){ return Promise.all(['pudu-cria-corriendo','pudu-cria-c
 
 function precargarInicio(){ if(modo!=='nuevo'||!LIVIANO) return; var d=prog*D.nuevo.total; tilesTramo(d-200,d+2600); cargaInicial={t0:performance.now(),hasta:d+1300}; cargaInicial.f0=Math.max(1,faltanHasta(cargaInicial.hasta)); }
 function arrancarIntro(){ var c=mapa.getCenter(); intro={t:0,dur:2800,de:{c:[c.lng,c.lat],z:mapa.getZoom(),pitch:mapa.getPitch(),b:mapa.getBearing()}}; }
-function reiniciarEstado(){ intro=null; ritmoAct=0; huboCuesta=0; cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); document.body.classList.remove('pp-on'); }
+function kmTxt(m){ return fmt(m/1000,1)+' km'; }
+function mostrarResumen(){ var R=D.nuevo.resumen, el=$('resumen'); if(!R||!el) return; var yaFin=document.body.classList.contains('fin');
+  var fila=function(a,b){ return '<div class="rs-dato"><small>'+a+'</small><b>'+b+'</b></div>'; };
+  var hitos=[];
+  if(R.sMax) hitos.push(['La subida más dura','+'+Math.round(R.sMax.gan)+' m entre el km '+fmt(R.sMax.d0/1000,1)+' y el '+fmt(R.sMax.d1/1000,1),'sube']);
+  hitos.push(['Lo más empinado',fmt(R.pendMax*100,0)+' % en el km '+fmt(R.dPendMax/1000,1),'empina']);
+  if(R.bMax) hitos.push(['La mejor bajada','−'+Math.round(-R.bMax.gan)+' m desde el km '+fmt(R.bMax.d0/1000,1),'baja']);
+  hitos.push(['La cima',Math.round(R.altMax)+' m en el km '+fmt(R.dCima/1000,1),'cima']);
+  el.innerHTML='<div class="rs-tit"><b>'+RUTA.nombre+'</b><span>Así fue tu viaje</span></div>'
+    +'<div class="rs-grid">'+fila('Distancia',kmTxt(R.dist))+fila('Tiempo',R.dur?durTxt(R.dur):'–')+fila('Subiste','+'+Math.round(R.sub)+' m')+fila('Subiendo',kmTxt(R.kmSube))+'</div>'
+    +'<ul class="rs-hitos">'+hitos.map(function(h){ return '<li class="'+h[2]+'"><span>'+h[0]+'</span><b>'+h[1]+'</b></li>'; }).join('')+'</ul>';
+  if(cajas&&cajas.inn){ cajas.k=.8; cajas.inn.style.transform='scale(.8)'; }   // en la vista general el rostro va chico
+  document.body.classList.add('fin'); if(!yaFin) setTimeout(function(){ encuadrar(1400); },60); }   // reencuadra sobre la tarjeta
+function reiniciarEstado(){ document.body.classList.remove('fin'); intro=null; ritmoAct=0; huboCuesta=0; cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); document.body.classList.remove('pp-on'); }
 function iniciar(){
   mapa=new maplibregl.Map({container:'mapa',style:SAT,center:D.nuevo.c[0],zoom:12,pitch:0,maxPitch:85,attributionControl:{compact:true},pixelRatio:LIVIANO?Math.min(window.devicePixelRatio||1,1.5):(window.devicePixelRatio||1),maxTileCacheSize:LIVIANO?600:null});
   mapa.on('style.load',montarCapas); window._demo=mapa;
   window._ir=function(p){ reiniciarEstado(); prog=p; while(sigM<D.nuevo.momentos.length && D.nuevo.momentos[sigM].d<p*D[modo].total) sigM++; MASC.d=p*D[modo].total; pintar(16,performance.now(),true); };
   window._ver=function(ix,avance){ var N=D.nuevo, m=N.momentos[ix]; window._ir(Math.min(1,(m.d+1)/N.total)); var ts=performance.now(); primerPlano(m,ts); exprAct=m.expr; caraHasta=ts+5000; if(m.cima){ espTot=2800; espera=2800*(1-(avance||0)); } cam=null; pintar(16,ts,true); };
+  window._fin=function(){ window._ir(1); mostrarResumen(); };
   window._cara=function(e){ exprAct=e; rostroCara(e); };
   window._tomas=function(){ return D.nuevo.seq.map(function(p){ return p.t+' '+Math.round(p.d0)+'-'+Math.round(p.d1); }).concat(D.nuevo.momentos.map(function(m){ return 'cara '+m.expr+' @'+Math.round(m.d)+' '+m.txt; })); };
   mapa.once('load',function(){ $('cargando').style.display='none'; encuadrar(0); dibujarPerfil(); });
@@ -353,8 +374,15 @@ function reiniciar(){ corriendo=false; prog=0; reiniciarEstado(); actualizarBoto
 // cameraForBounds + jumpTo no congela; la animación es propia (curva suave).
 var encuadreRAF=null;
 function encuadrar(ms){ var c=D[modo].c, b=c.reduce(function(b,p){ return [[Math.min(b[0][0],p[0]),Math.min(b[0][1],p[1])],[Math.max(b[1][0],p[0]),Math.max(b[1][1],p[1])]]; },[[180,90],[-180,-90]]);
-  var Z=zonaLibre(), pad={top:Z.arriba+10,bottom:Z.abajo+10,left:24,right:24}, C=mapa.cameraForBounds(b,{padding:pad});
-  if(!C) return; var T={c:[C.center.lng,C.center.lat],z:C.zoom-(modo==='nuevo'?.25:0),pitch:modo==='nuevo'?30:0,b:0,pad:pad};
+  var Z=zonaLibre(), pad={top:Z.arriba+10,bottom:Z.abajo+10,left:24,right:24};
+  // con el resumen abierto, la ruta va en el espacio libre sobre la tarjeta
+  var rs=document.body.classList.contains('fin')&&$('resumen'); if(rs){ pad.bottom=Math.max(pad.bottom,Math.round(Z.H-rs.getBoundingClientRect().top)+12); }
+  // cameraForBounds calcula con la inclinación ACTUAL: si la cámara venía inclinada (64°) el zoom salía muy lejano.
+  // Se calcula con la cámara a nivel y se vuelve a donde estaba antes de animar.
+  var c00=mapa.getCenter(), z00=mapa.getZoom(), p00=mapa.getPitch(), b00=mapa.getBearing(), pd00=mapa.getPadding();
+  var pFin=0; /* resumen: vista cenital (encaja exacto, como el mapa de actividad de Strava) */ mapa.jumpTo({pitch:pFin,bearing:0,padding:{top:0,bottom:0,left:0,right:0}}); var C=mapa.cameraForBounds(b,{padding:pad});
+  mapa.jumpTo({center:c00,zoom:z00,pitch:p00,bearing:b00,padding:pd00});
+  if(!C) return; var T={c:[C.center.lng,C.center.lat],z:C.zoom,pitch:pFin,b:0,pad:{top:0,bottom:0,left:0,right:0}}; /* el centro de cameraForBounds YA descuenta los márgenes: aplicarlos de nuevo corría la ruta hacia arriba */
   var c0=mapa.getCenter(), F={c:[c0.lng,c0.lat],z:mapa.getZoom(),pitch:mapa.getPitch(),b:mapa.getBearing(),pad:mapa.getPadding()};
   cancelAnimationFrame(encuadreRAF); var t0=null;
   (function paso(ts){ if(t0===null) t0=ts; var e=ms>0?suaveS((ts-t0)/ms):1, L=function(a,b){ return a+(b-a)*e; };
@@ -440,7 +468,7 @@ function frame(ts){
   if(modo==='nuevo'){ var m=L.momentos[sigM], dd=prog*L.total;
     if(m && espera<=0 && dd>=m.d-1){ primerPlano(m,ts); if(m.cima||m.fin){ espera=m.dur/Math.min(2,velX); espTot=espera; } sigM++; } }
   pintar(dt,ts,true);
-  if(prog>=1 && espera<=0){ corriendo=false; actualizarBoton(); setTimeout(function(){ encuadrar(1800); },900); return; }
+  if(prog>=1 && espera<=0){ corriendo=false; actualizarBoton(); setTimeout(function(){ if(modo==='nuevo') mostrarResumen(); else encuadrar(1800); },900); return; }
   if(!window._manual) requestAnimationFrame(frame);
 }
 // modo grabación (solo para hacer el video cuadro a cuadro): avanza dt ms de reloj simulado
@@ -481,7 +509,7 @@ function pintar(dt,ts,mover){
     if(!cam||!mover&&!corriendo){ cam={off:meta.off,z:meta.z,pitch:meta.pitch,y:meta.y,b:brg,clave:clave,de:null,hacia:meta,t:TRANS}; }
     if(cam.clave!==clave){ cam.de={off:cam.off,z:cam.z,pitchT:cam.pT||cam.pitch,y:cam.y}; cam.hacia=meta; cam.t=0; cam.clave=clave; }
     cam.t+=dt; var e=suaveS(cam.t/TRANS), A=cam.de||{off:meta.off,z:meta.z,pitchT:meta.pitch,y:meta.y}, Bm=cam.hacia;
-    if(espera>0){ var k2=1-espera/espTot; Bm=Object.assign({},Bm,{off:suaveS(Math.sin(k2*Math.PI))*40*bajo}); }   // en la cima: se abre 40° hacia el valle y vuelve
+    if(espera>0){ var k2=1-espera/espTot, ola=suaveS(Math.sin(k2*Math.PI)); Bm=Object.assign({},Bm,{off:ola*40*bajo, z:Bm.z-1.35*ola, pitch:Bm.pitch-8*ola}); }   // cima: se abre hacia el valle, se aleja para mostrarlo todo y vuelve   // en la cima: se abre 40° hacia el valle y vuelve
     cam.off=A.off+giro(A.off,Bm.off)*e; cam.z=A.z+(Bm.z-A.z)*e; cam.y=A.y+(Bm.y-A.y)*e; cam.pT=A.pitchT+(Bm.pitch-A.pitchT)*e; P={pitch:cam.pT};
     // giro del rumbo pausado: máx. 35°/s, así no "tironea" en las curvas
     var gb=giro(cam.b,brg)*(1-Math.exp(-dt/1100)), mx=35*dt/1000; cam.b=(cam.b+Math.max(-mx,Math.min(mx,gb))+360)%360;
@@ -535,7 +563,8 @@ function pintarPistero(dt,ts,d,gp,vp,brg){
     incl+=(Math.max(-12,Math.min(12,gi*.2))-incl)*Math.min(1,dt/350);
     cajas.bob+=dt/1000*(1.6+esf*2.2);
     var dy=reduce?0:Math.sin(cajas.bob*Math.PI*2)*(1.5+esf*2.5), rot=incl+(reduce?0:Math.sin(cajas.bob*Math.PI)*esf*4);
-    cajas.inn.style.transform='translateY('+dy.toFixed(1)+'px) rotate('+rot.toFixed(1)+'deg)';
+    var kz=cam?Math.max(.8,Math.min(1.28,.8+(cam.z-14.9)*.34)):1; cajas.k=cajas.k?cajas.k+(kz-cajas.k)*Math.min(1,dt/500):kz;   // tamaño según la toma (suave)
+    cajas.inn.style.transform='translateY('+dy.toFixed(1)+'px) rotate('+rot.toFixed(1)+'deg) scale('+cajas.k.toFixed(3)+')';
     return;
   }
   var L=D[modo], G=(typeof _pistGestoEsfuerzo==='function')?_pistGestoEsfuerzo(gp,vp):{cad:.68,rapido:0,pose:''};

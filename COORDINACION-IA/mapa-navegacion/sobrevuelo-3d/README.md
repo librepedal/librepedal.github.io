@@ -122,3 +122,14 @@ y frenan si la red se atrasa; Mapbox recomienda menos capas y fuentes separadas 
   estados y la espera de estabilidad se reiniciaba siempre → nunca cambiaba. Ahora por familias (bajada / subida):
   dentro de la familia la espera no se reinicia y el cambio toma 0,3 s; a ×2/×4 la espera se acorta.
 - Probado recorriendo la ruta completa con reloj simulado (ventana mínima, sin dibujar casi nada) a ×1 y ×2.
+
+## v9 (2026-10-07) — más cine y cierre (Inty: "sigue mejorando el sobrevuelo")
+- **Rostro según la toma**: más grande en tomas cerradas (primer plano), más chico en la aérea y en la vista general.
+- **Revelación en la cima**: la pausa dura 4,2 s; la cámara se abre 40° hacia el valle, se aleja 1,35 niveles y sube,
+  mostrando todo lo conquistado, y vuelve.
+- **Resumen del viaje** al terminar (como el cierre de Relive/Strava): la ruta completa iluminada sobre una tarjeta con
+  distancia, tiempo, metros subidos, km subiendo y los hitos (subida más dura, lo más empinado, mejor bajada, cima con su
+  km). Reemplaza los datos del panel (no se repiten).
+- **Arreglo de encuadre**: `cameraForBounds` devuelve un centro que YA descuenta los márgenes; se aplicaban dos veces y la
+  ruta quedaba corrida hacia arriba (también en la vista inicial). Además se calcula con la cámara a nivel.
+- Regla aprendida (2 veces hoy): nunca agregar un comentario `//` al final de una línea que tiene más código: usar `/* */`.

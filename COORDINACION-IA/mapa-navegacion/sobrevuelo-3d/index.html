@@ -112,6 +112,19 @@ body.corriendo .leyenda,body.corriendo .capa{opacity:0;pointer-events:none}
 .cm-modelo{position:absolute;inset:0}.cm-modelo svg{width:100%!important;height:100%!important;display:block}
 .cara-mk.modelo .cm-anillo{background:radial-gradient(circle at 50% 30%,#1b2333,#05070c 72%)}
 #personaje{max-width:150px;font-size:.78rem;padding:11px 8px}
+/* RESUMEN del viaje al terminar (como el cierre de Relive/Strava): reemplaza los datos del panel */
+.resumen{position:absolute;left:12px;right:12px;bottom:calc(150px + env(safe-area-inset-bottom));z-index:6;max-width:520px;margin:0 auto;background:rgba(10,15,29,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--br);border-radius:18px;padding:14px;opacity:0;transform:translateY(14px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+body.fin .resumen{opacity:1;transform:none;pointer-events:auto}
+body.fin .datos,body.fin .leyenda,body.fin .nota{opacity:0;pointer-events:none}
+.rs-tit b{display:block;font:800 1.15rem/1.15 system-ui;letter-spacing:-.01em}.rs-tit span{font:600 .74rem system-ui;color:var(--tx2)}
+.rs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.rs-dato{background:var(--surf);border:1px solid var(--br);border-radius:12px;padding:7px 8px}.rs-dato small{display:block;font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em}.rs-dato b{font-size:.95rem;font-variant-numeric:tabular-nums}
+.rs-hitos{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.rs-hitos li{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.04);border-left:3px solid #39ff88;font-size:.78rem}
+.rs-hitos li span{color:var(--tx2)}.rs-hitos li b{font-weight:700;text-align:right}
+.rs-hitos li.sube{border-color:#ff8a1f}.rs-hitos li.empina{border-color:#ff2d6f}.rs-hitos li.baja{border-color:#22d3ff}.rs-hitos li.cima{border-color:#ffd700}
+@media (max-width:380px){.rs-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-height:700px){.resumen{bottom:calc(120px + env(safe-area-inset-bottom));padding:10px}.rs-hitos li{padding:4px 8px}}
 </style>
 </head>
 <body>
@@ -124,6 +137,7 @@ body.corriendo .leyenda,body.corriendo .capa{opacity:0;pointer-events:none}
 <div class="nota" id="nota"></div>
 <div class="pp" id="pp"><div class="pp-cara" hidden></div><div class="pp-texto"><b class="pp-txt"></b><span class="pp-sub"></span></div><div class="pp-masc"></div></div>
 <div class="capa"><div class="seg" id="capa"><button data-c="sat" class="on">Satélite</button><button data-c="calles">Calles</button></div></div>
+<div class="resumen" id="resumen"></div>
 <div class="panel">
   <div class="datos">
     <div class="dato"><small>Recorrido</small><b id="dKm">0,0<i>km</i></b></div>
