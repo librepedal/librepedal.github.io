@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const ruta=JSON.parse(fs.readFileSync('ruta-osrm.json')).routes[0].geometry.coordinates;
+const g=JSON.parse(fs.readFileSync('traza-gps.json')).map(p=>[p.lon,p.lat]);
+const m=JSON.parse(fs.readFileSync('traza-pegada.json'));
+const rad=Math.PI/180, lat0=-40.16, kx=111320*Math.cos(lat0*rad), ky=110540;
+const xy=c=>[c[0]*kx,c[1]*ky];
+const segD=(p,a,b)=>{p=xy(p);a=xy(a);b=xy(b);const dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy;let t=L?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L:0;t=Math.max(0,Math.min(1,t));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy);};
+const err=p=>{let mn=1e9;for(let i=1;i<ruta.length;i++)mn=Math.min(mn,segD(p,ruta[i-1],ruta[i]));return mn;};
+const len=a=>a.slice(1).reduce((s,c,i)=>s+Math.hypot(...xy(c).map((v,k)=>v-xy(a[i])[k])),0);
+const st=a=>{const e=a.map(err).sort((x,y)=>x-y);return 'medio '+(e.reduce((s,x)=>s+x,0)/e.length).toFixed(1)+' m · p95 '+e[Math.floor(e.length*.95)].toFixed(1)+' m · máx '+e.at(-1).toFixed(1)+' m';};
+console.log('largo camino',(len(ruta)/1000).toFixed(2),'grabada',(len(g)/1000).toFixed(2),'pegada',(len(m)/1000).toFixed(2));
+console.log('grabada:',st(g));console.log('pegada :',st(m));

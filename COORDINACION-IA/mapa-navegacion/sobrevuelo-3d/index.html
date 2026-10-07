@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sobrevuelo 3D · propuesta</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+/* tokens de la app (estilos.css :root) */
+:root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--surf:#141a2b;--surf-2:#0f1524;--br:rgba(255,255,255,.09);--tx:#e8edf6;--tx2:#9fb3c8}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--d);color:var(--tx);font:500 14px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+#mapa{position:absolute;inset:0}
+.barra{position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;display:flex;gap:8px;align-items:center;z-index:5}
+.titulo{flex:1;min-width:0;background:rgba(10,15,29,.82);backdrop-filter:blur(8px);border:1px solid var(--br);border-radius:14px;padding:8px 12px}
+.titulo b{display:block;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.titulo span{font-size:.72rem;color:var(--tx2)}
+.seg{display:flex;background:rgba(10,15,29,.82);backdrop-filter:blur(8px);border:1px solid var(--br);border-radius:12px;padding:3px}
+.seg button{border:0;background:none;color:var(--tx2);font:700 .78rem system-ui;padding:8px 10px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--p);color:#0a0f1d}
+.capa{position:absolute;right:12px;bottom:calc(232px + env(safe-area-inset-bottom));z-index:5}
+.panel{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:10px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(10,15,29,0),rgba(10,15,29,.88) 22%,rgba(10,15,29,.97))}
+.datos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.dato{background:var(--surf);border:1px solid var(--br);border-radius:12px;padding:7px 8px}
+.dato small{display:block;font-size:.62rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em}
+.dato b{font-size:1.02rem;font-variant-numeric:tabular-nums}
+.dato b i{font-style:normal;font-size:.7rem;color:var(--tx2);margin-left:2px}
+.perfil{position:relative;height:84px;background:var(--surf-2);border:1px solid var(--br);border-radius:12px;overflow:hidden;cursor:pointer;touch-action:none}
+.perfil canvas{width:100%;height:100%;display:block}
+.ctrl{display:flex;gap:8px;margin-top:8px;align-items:center}
+.btn{border:0;border-radius:12px;font:800 .85rem system-ui;padding:11px 14px;cursor:pointer}
+.play{background:var(--p);color:#0a0f1d;flex:1}
+.vel{background:var(--surf);color:var(--tx);border:1px solid var(--br)}
+.leyenda{display:flex;gap:10px;font-size:.66rem;color:var(--tx2);margin:0 2px 6px;flex-wrap:wrap}
+.leyenda i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.nota{position:absolute;left:12px;right:12px;transition:opacity .4s;top:calc(66px + env(safe-area-inset-top));z-index:4;max-width:330px;background:rgba(10,15,29,.86);border:1px solid var(--br);border-left:3px solid var(--p);border-radius:10px;padding:8px 10px;font-size:.74rem;color:var(--tx2)}
+.nota b{color:var(--tx)}
+.cargando{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:9;background:var(--d);font-weight:700;color:var(--tx2)}
+/* marcador: mismas reglas que estilos.css (.sbv-*) */
+.sbv-rider{position:relative;width:78px;height:74px;pointer-events:none}
+.sbv-bici svg{width:100%;height:100%;overflow:visible}
+.sbv-rider.atras{width:80px;height:88px}
+.sbv-rider.atras .sbv-bici{position:relative;width:80px;height:88px;transform-origin:50% 96%;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
+.sbv-cuerpo,.sbv-cuerpo svg{width:100%;height:100%;display:block}
+.sbv-cabeza{position:absolute}.sbv-cabeza svg{width:100%;height:100%;display:block}
+.sbv-incl{position:relative;width:100%;height:100%;transform-origin:50% 96%}
+.sbv-sombra{position:absolute;left:50%;bottom:-3px;width:34px;height:9px;margin-left:-17px;border-radius:50%;background:radial-gradient(rgba(0,0,0,.55),rgba(0,0,0,0) 70%)}
+.punto-ruta{width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #e11d48;box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+@media (max-width:420px){.dato b{font-size:.92rem}.titulo span{display:none}}
+body.corriendo .nota{opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="mapa"></div>
+<div class="cargando" id="cargando">Preparando el relieve real del camino…</div>
+<div class="barra">
+  <div class="titulo"><b>Futrono → Llifén · 21,4 km</b><span>Ruta de demostración (camino real OSM, GPS simulado)</span></div>
+  <div class="seg" id="modo"><button data-m="hoy">Hoy</button><button data-m="nuevo" class="on">Propuesta</button></div>
+</div>
+<div class="nota" id="nota"></div>
+<div class="capa"><div class="seg" id="capa"><button data-c="sat" class="on">Satélite</button><button data-c="calles">Calles</button></div></div>
+<div class="panel">
+  <div class="datos">
+    <div class="dato"><small>Recorrido</small><b id="dKm">0,0<i>km</i></b></div>
+    <div class="dato"><small>Altura</small><b id="dAlt">–<i>m</i></b></div>
+    <div class="dato"><small>Pendiente</small><b id="dPend">–<i>%</i></b></div>
+    <div class="dato"><small>Subido</small><b id="dSub">0<i>m</i></b></div>
+  </div>
+  <div class="leyenda" id="leyenda"><span><i style="background:#22c55e"></i>plano</span><span><i style="background:#facc15"></i>3–6 %</span><span><i style="background:#f97316"></i>6–9 %</span><span><i style="background:#dc2626"></i>+9 %</span><span><i style="background:#38bdf8"></i>bajada</span></div>
+  <div class="perfil" id="perfil"><canvas id="cv"></canvas></div>
+  <div class="ctrl"><button class="btn play" id="play">▶ Ver sobrevuelo</button><button class="btn vel" id="vel">×1</button></div>
+</div>
+
+<!-- Pistero real de la app (mismos archivos que index.html) -->
+<script>var cu=null, us={};</script>
+<script src="../../../pistero-personalizacion-datos.js"></script>
+<script src="../../../pistero-armario.js"></script>
+<script src="../../../pistero-apariencia.js"></script>
+<script src="../../../pistero-bici.js"></script>
+<script src="../../../pistero-bici-atras.js"></script>
+<script src="sobrevuelo-3d.js"></script>
+</body>
+</html>

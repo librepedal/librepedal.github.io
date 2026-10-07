@@ -1,0 +1,5 @@
+// servidor estático mínimo para ver la demo: node servir.mjs  ->  http://localhost:5178/COORDINACION-IA/mapa-navegacion/sobrevuelo-3d/
+import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
+const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const tipos = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml' };
+http.createServer((q, r) => { let p = decodeURIComponent(q.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html'; const f = path.join(raiz, p); if (!f.startsWith(raiz) || !fs.existsSync(f)) { r.writeHead(404); return r.end('404'); } r.writeHead(200, { 'content-type': tipos[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' }); fs.createReadStream(f).pipe(r); }).listen(5178, () => console.log('http://localhost:5178/COORDINACION-IA/mapa-navegacion/sobrevuelo-3d/'));
