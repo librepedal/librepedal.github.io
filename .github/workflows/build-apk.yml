@@ -36,7 +36,7 @@ jobs:
           node-version: '22'
 
       - name: Instalar Java (JDK 21)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           # Capacitor 8 / AGP 8.13.0 (migración 2026-09-22) exigen JDK 21 -- con 17
