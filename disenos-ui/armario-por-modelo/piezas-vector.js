@@ -290,6 +290,21 @@ var PIEZAS_VECTOR = (function(){
     return { quitar:function(){ g.remove(); f.remove(); } };
   }
 
+  // ---------- Cyberpunk · Cables de luz (arte de Gemini + parpadeo) ----------
+  // Referencia real: el cable EL (electroluminiscente) del cosplay cyberpunk: tubo delgado que brilla parejo en todo su largo
+  // y se usa para trazar las líneas de los paneles; lo alimenta un inversor y, si el contacto falla, parpadea. Gemini lo trazó
+  // editando la capa del casco (borde bajo de la cáscara y líneas del centro, con broches); se separó por diferencia
+  // (gemini/ciber-cables.png, x 440 y 20). Va en el grupo del casco y SÍ toma el color de neón del estilo (no lleva
+  // pieza-img). Parpadeo: se apaga en el mismo cuadro de la interferencia del modelo (lib-ciber corre el casco translate(-3 0)).
+  var CAB={x:440,y:20,w:500,h:300};
+  function ciberCables(el){
+    var svg=el.querySelector('svg'), src=(window.PIEZAS_IMG||{}).ciberCables; if(!svg||!src) return null;
+    var casco=svg.querySelector('g[id$="casco"]'); if(!casco) return null;
+    var im=nodo('image',{'class':'pieza-cables',href:src,x:CAB.x,y:CAB.y,width:CAB.w,height:CAB.h}); casco.appendChild(im);
+    var parar=bucle(el,function(){ var gl=/translate\(-3 0\)/.test(casco.getAttribute('transform')||''); im.setAttribute('opacity',gl&&!reduce?'.15':'1'); });
+    return { quitar:function(){ parar(); im.remove(); } };
+  }
+
   // ---------- Androide · Ojo de otro color ----------
   // Sus ojos son diafragmas de cámara (lib-vinilo.js: iris naranjo encendido, hojas, brillo). Referencia real: el
   // TRATAMIENTO de los lentes de cámara: un lente multicapa refleja pequeños destellos violeta y verde, y cada tratamiento
@@ -359,6 +374,6 @@ var PIEZAS_VECTOR = (function(){
       +lado(-1,.1)+lado(1,.55); }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena, calcos:viniloCalcos },
+  return { ciber:{ cables:ciberCables }, slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena, calcos:viniloCalcos },
            casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
