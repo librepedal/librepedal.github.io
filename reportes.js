@@ -296,7 +296,7 @@ async function enviarReporte(){
       data.superficie=tipoEl.value;
       if(difEl && difEl.value) data.dificultad=difEl.value;
     }
-    await db.collection('reportes').add(data);
+    const _conf=await lpEscrituraConTope(db.collection('reportes').add(data));
     _ganarDarma(15); au(); sincronizarStats();
     _cerrarReporteRapido();
     // 2026-08-23: pedido de Inty tras probar en vivo — publicaba bien pero si el mapa
@@ -311,7 +311,7 @@ async function enviarReporte(){
         mp.easeTo({center:[loc.lon,loc.lat], duration:500});
       }
     }catch(e){}
-    try{ _pisteroMood='contento'; }catch(e){} h('¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.');
+    try{ _pisteroMood='contento'; }catch(e){} h(_conf?'¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.':'Sin señal ahora: tu reporte quedó guardado en el teléfono y aparece en el mapa de '+comuna+' apenas vuelva la conexión. Quince de Darma para ti.');
   }catch(err){ lpAviso('No se pudo enviar: '+err.message); }
   finally{ _enviandoReporte=false; }
 }

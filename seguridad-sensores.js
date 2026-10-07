@@ -294,7 +294,13 @@ async function toggleSeguimientoVivo(){
     // quien era el dueno real de este documento -- cualquier otro usuario logueado
     // podia sobrescribir tu ubicacion en vivo o borrar tu seguimiento llamando la API
     // directo (hallazgo real de la auditoria, ver firestore.rules).
-    await db.collection('liveTracking').doc(liveTrackId).set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo'), authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    /* Sin señal set() no responde nunca (espera al servidor): antes el botón no mostraba nada. Tope de 8 s; si no
+       hubo respuesta se anula lo pendiente (Firestore aplica las escrituras en orden: set y luego activo:false), para
+       que no se active más tarde, sin aviso, un seguimiento cuyo link nadie tiene (revisión de botones 2026-10-07). */
+    const _ref=db.collection('liveTracking').doc(liveTrackId);
+    const _envio=_ref.set({nombre:nombreUsuario||'Ciclista', lat:loc?loc.lat:null, lon:loc?loc.lon:null, activo:true, modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo'), authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    const _r=await Promise.race([_envio.then(function(){ return 'ok'; }), new Promise(function(res){ setTimeout(function(){ res('sin-senal'); }, 8000); })]);
+    if(_r!=='ok'){ try{ _ref.update({activo:false}).catch(function(){}); }catch(_e){} liveTrackId=null; lpAviso('Sin señal: no pude activar la ubicación en vivo. Inténtalo cuando tengas conexión.'); return; }
     liveTrackActivo=true; liveTrackUltimoEnvio=0;
     _actualizarBtnSeguimientoVivo();
     const url=location.origin+location.pathname.replace(/index\.html$/,'')+'seguir.html?id='+liveTrackId;
