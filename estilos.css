@@ -1053,3 +1053,21 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 /* Esqueleto animado: el balanceo y la inclinación los mueve JS; el giro de cabeza usa scale (no choca con rotate) */
 .sbv-bici.con-rig{animation:none!important}.sbv-bici.con-rig .sbv-incl{transition:none}
 .sbv-bici.con-rig .sbv-cabeza{transition:scale .2s cubic-bezier(.4,0,.2,1);transform:none}.sbv-bici.con-rig .sbv-cabeza.girando{transform:none;scale:0 1}
+/* "¿Sigue ahí?" al pasar un peligro (reportes.js, 2026-10-07, como Waze): tarjeta sobre la barra de abajo,
+   mismos colores que los botones del popup del mapa (verde #10b981 sigue / rojo #ff5a5a no está), botones de
+   52 px para tocarlos pedaleando; se va sola a los 12 s (la franja de abajo muestra el tiempo que queda). */
+#lpRepSigue{position:fixed;left:12px;right:12px;bottom:calc(var(--lp-nav-h,64px) + 12px);z-index:2300;max-width:520px;margin:0 auto;background:#0b111f;border:1px solid var(--surf-br);border-left:3px solid var(--rc,#fc4c02);border-radius:18px;padding:12px 12px 0;box-shadow:0 10px 30px rgba(0,0,0,.45);overflow:hidden;opacity:0;transform:translateY(16px);pointer-events:none;transition:opacity .3s cubic-bezier(.2,.7,.2,1),transform .4s cubic-bezier(.2,.7,.2,1)}
+#lpRepSigue.on{opacity:1;transform:none;pointer-events:auto}
+#lpRepSigue .rs-cab{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+#lpRepSigue .rs-ico{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.06);font-size:1.15rem}
+#lpRepSigue b{display:block;font-size:1.02rem;color:#fff;line-height:1.15}
+#lpRepSigue small{display:block;margin-top:2px;font-size:.74rem;color:#9fb3c8}
+#lpRepSigue .rs-btns{display:flex;gap:8px;margin-bottom:12px}
+#lpRepSigue .rs-btns button{flex:1;min-height:52px;border-radius:12px;font-size:.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin:0}
+#lpRepSigue .rs-si{background:#0c2a2e;border:1px solid #10b981;color:#10b981}
+#lpRepSigue .rs-no{background:#2d1b27;border:1px solid #ff5a5a;color:#ff8a8a}
+#lpRepSigue .rs-tiempo{height:3px;margin:0 -12px;background:rgba(255,255,255,.06)}
+#lpRepSigue .rs-tiempo i{display:block;height:100%;background:var(--rc,#fc4c02);transform-origin:left}
+#lpRepSigue.on .rs-tiempo i{animation:lpRepTiempo 12s linear forwards}
+@keyframes lpRepTiempo{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){#lpRepSigue{transition:opacity .2s;transform:none}#lpRepSigue.on .rs-tiempo i{animation:none}}

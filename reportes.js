@@ -34,12 +34,16 @@ function _repIco(c){ return (c&&c.fa)?('<i class="fas fa-'+c.fa+'" style="color:
 // ayer ya no sirve de nada (y podría hasta desviar mal), pero un objeto tirado
 // en la vía puede seguir ahí días después. Cada una expira a su propio ritmo.
 const REPORTE_VIGENCIA_MS={policia:3*3600000, taco:2*3600000, accidente:6*3600000, animal:24*3600000, objeto:48*3600000, critico:72*3600000};
-// Modelo Waze (pedido de Inty): un reporte NO se quita del mapa por reloj — se queda
-// hasta que la comunidad diga "ya no está". Con 2 desmentidos ("no hay nadie") desaparece
-// para todos. La vigencia de arriba solo se usa para los AVISOS proactivos de voz (Pistero
-// no anda gritando un control policial de hace 3 horas), pero el pin sigue en el mapa.
-const REPORTE_DESMENTIDO_UMBRAL=2;
-function reporteVisible(r){ return ((r&&r.desmentidoPor||[]).length) < REPORTE_DESMENTIDO_UMBRAL; }
+// Inty 2026-10-07: había avisos en el mapa "de adorno, que no avisan nada": el pin de un peligro
+// se quedaba para siempre aunque Pistero ya no lo avisara (la vigencia solo apagaba la voz) y hacían
+// falta 2 "ya no está". Waze de verdad no es así: el aviso vive ~1 h en el mapa, cada "gracias" lo
+// alarga y un "no está" lo saca (waze.com/discuss "How long do reported hazards remain on map?").
+// Ahora: un PELIGRO desaparece del mapa cuando vence su vigencia (desde el último "sigue ahí"), y
+// UN "ya no está" lo quita para todos (sigue el freno de LP_KM_CONFIANZA km para votar). Los puntos
+// útiles (agua, taller, alojamiento, miradores) no tienen vigencia: no vencen.
+const REPORTE_DESMENTIDO_UMBRAL=1;
+function _reporteVencido(r){ const vig=REPORTE_VIGENCIA_MS[r&&r.cat]; if(!vig) return false; const ms=_reporteEdadMs(r); return ms!=null && ms>vig; }
+function reporteVisible(r){ return ((r&&r.desmentidoPor||[]).length) < REPORTE_DESMENTIDO_UMBRAL && !_reporteVencido(r); }
 // Edad para el aviso proactivo: cada "sigue ahí" reinicia el reloj (igual que Waze),
 // así un peligro que la gente sigue confirmando no se apaga solo.
 function _reporteEdadMs(r){
@@ -159,7 +163,44 @@ const _POLICIA_CHISTOSO=[
   "Eeeh… buenos días, buenas tardes… hay control a tres kilómetros, no má."
 ];
 let _distPrevRep={};
+// ===== "¿Sigue ahí?" al pasar (Inty 2026-10-07, como Waze): después de pasar a menos de 150 m de un
+// peligro vigente, aparece una tarjeta con dos botones grandes. Si no tocas nada, se va sola y no
+// pasa nada. Una vez por aviso; nunca al autor, a quien ya votó ni a quien aún no puede votar. =====
+const _REP_PASO_CERCA_M=150, _REP_PASO_ALEJA_M=40, _REP_PREGUNTA_MS=12000;
+let _repPaso={}, _repPreguntados=new Set(), _repPreguntaTimer=null;
+function _repEsMio(r){ const yo=window.lpUID||null; return !!r && ((yo && r.authUid===yo) || (typeof cu!=='undefined' && cu && r.user===cu)); }
+function _repYaVote(r){ const yo=window.lpUID||(typeof cu!=='undefined'?cu:null)||'anon'; return ((r.confirmadoPor||[]).indexOf(yo)>=0) || ((r.desmentidoPor||[]).indexOf(yo)>=0); }
+function _repPreguntarAlPasar(lat,lon){
+  try{
+    for(let i=0;i<reportesAvisoRelevantes.length;i++){
+      const r=reportesAvisoRelevantes[i]; if(!r.id || _repPreguntados.has(r.id)) continue;
+      if(Math.abs(r.lat-lat)>0.01 || Math.abs(r.lon-lon)>0.01) continue;
+      const d=calculateDistance(lat,lon,r.lat,r.lon), p=_repPaso[r.id]||(_repPaso[r.id]={min:d});
+      if(d<p.min) p.min=d;
+      if(p.min<=_REP_PASO_CERCA_M && d>=p.min+_REP_PASO_ALEJA_M){
+        _repPreguntados.add(r.id);
+        if(_repEsMio(r) || _repYaVote(r) || (typeof _esCiclistaConfiable==='function' && !_esCiclistaConfiable()) || !reporteVisible(r)) continue;
+        _repMostrarPregunta(r); return;
+      }
+    }
+  }catch(e){ console.warn('[reportes] ¿sigue ahí?', e); }
+}
+function _repCerrarPregunta(){ clearTimeout(_repPreguntaTimer); _repPreguntaTimer=null; const el=document.getElementById('lpRepSigue'); if(el) el.classList.remove('on'); }
+function _repMostrarPregunta(r){
+  let el=document.getElementById('lpRepSigue');
+  if(!el){ el=document.createElement('div'); el.id='lpRepSigue'; el.setAttribute('role','dialog'); document.body.appendChild(el); }
+  const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util;
+  el.style.setProperty('--rc',c.c||'#fc4c02');
+  el.innerHTML='<div class="rs-cab"><span class="rs-ico">'+_repIco(c)+'</span><div><b>¿Sigue ahí?</b><small>'+escapeHTML(c.l)+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</small></div></div>'
+    +'<div class="rs-btns"><button type="button" class="rs-si"><i class="fas fa-thumbs-up"></i> Sigue ahí</button><button type="button" class="rs-no"><i class="fas fa-ban"></i> Ya no está</button></div>'
+    +'<div class="rs-tiempo"><i></i></div>';
+  el.querySelector('.rs-si').onclick=function(){ _repCerrarPregunta(); confirmarReporte(r.id,true); };
+  el.querySelector('.rs-no').onclick=function(){ _repCerrarPregunta(); confirmarReporte(r.id,false); };
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(_repPreguntaTimer); _repPreguntaTimer=setTimeout(_repCerrarPregunta,_REP_PREGUNTA_MS);
+}
 function avisarReportesCercanos(lat,lon,speed){
+  _repPreguntarAlPasar(lat,lon);
   if(!reportesAvisoRelevantes.length || !vozActiva || vozOcupada() || vozCola.length) return;
   // El control policial le interesa sobre todo al motorizado (va rápido): se avisa
   // con 3 km de anticipación en moto/auto, más cerca en bici/caminata.
@@ -358,6 +399,8 @@ async function confirmarReporte(id, sigue){
       if(!_avisoDesmentidoHablado){ _avisoDesmentidoHablado=true; h(_txtDesmentido); }
       else { mostrarBocadillo(_txtDesmentido); }
     }
+    // el mapa cambia al tiro (sin esperar la vuelta del servidor): "ya no está" lo saca, "sigue ahí" le reinicia el reloj
+    if(doc){ if(sigue){ doc.confirmadoPor=(doc.confirmadoPor||[]).concat([uid]); doc.lastConfirm={seconds:Math.floor(Date.now()/1000)}; } else doc.desmentidoPor=(doc.desmentidoPor||[]).concat([uid]); _repRevisarVencidos(true); }
     if(!yaVoto){ _ganarDarma(2); au(); if(typeof sincronizarStats==='function') sincronizarStats(); } // +2 Darma solo la 1ª vez, sin farmear
   }catch(e){ lpAviso('No se pudo registrar tu confirmación, intenta de nuevo en un rato.'); }
   try{ if(mp) mp.closePopup(); }catch(e){}
@@ -425,13 +468,24 @@ function toggleCapaCiclistas(el){
   toggleRadarOnMap(); // ya sube/baja el radar y sus marcadores
   if(el) el.classList.toggle('on', radarActive);
 }
+// Un peligro vence por reloj aunque nadie toque nada: cada minuto se revisa y, si cambió qué se ve,
+// se redibuja el mapa y la lista (también se recalcula qué avisa Pistero por voz).
+let _repVisiblesClave='';
+function _repRevisarVencidos(forzar){
+  try{
+    _calcularReportesAvisoRelevantes();
+    const k=reportesData.filter(reporteVisible).map(function(r){ return r.id; }).join(',');
+    if(!forzar && k===_repVisiblesClave) return;
+    _repVisiblesClave=k; renderReporteMarkers(); renderReportesComunidad(reportesData.filter(reporteVisible));
+  }catch(e){ console.warn('[reportes] revisar vencidos', e); }
+}
+if(typeof setInterval==='function') setInterval(function(){ _repRevisarVencidos(false); },60000);
 function subscribeToReportes(){
   db.collection('reportes').orderBy('ts','desc').limit(200).onSnapshot(function(snap){
     const docs=[]; snap.forEach(function(d){ const x=d.data(); x.id=d.id; docs.push(x); });
-    reportesData=docs; _calcularReportesAvisoRelevantes();
-    renderReporteMarkers();
+    reportesData=docs;
+    _repRevisarVencidos(true);
     renderColaboradores(); // los aliados se dibujan siempre, no dependen de que alguien los reporte
-    renderReportesComunidad(docs.filter(reporteVisible));
   });
 }
 function renderReportesComunidad(docs){

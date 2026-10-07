@@ -566,7 +566,7 @@ function encuadrar(ms){ var c=D[modo].c, b=c.reduce(function(b,p){ return [[Math
 function sinOclusion(mk){ if(mk && typeof mk._updateOpacity==='function') mk._updateOpacity=function(){}; return mk; }
 function crearRostro(){
   var el=document.createElement('div'); el.className='cara-mk';
-  el.innerHTML='<div class="cm-pin"></div><div class="cm-in"><div class="cm-halo"></div><div class="cm-anillo"></div><div class="cm-caras"><div class="cm-c on"></div><div class="cm-c"></div></div><div class="cm-gota"></div></div>';
+  el.innerHTML='<div class="cm-pin"></div><div class="cm-in"><div class="cm-caras"><div class="cm-c on"></div><div class="cm-c"></div></div><div class="cm-gota"></div></div>';
   var capas=el.querySelectorAll('.cm-c');
   if(personaje.capas){ el.classList.add('modelo'); var host=document.createElement('div'); host.className='cm-modelo'; el.querySelector('.cm-caras').appendChild(host);
     personaje.crear(host).then(function(api){ if(cajas.host===host){ cajas.api=api; api.estadoRuta(cajas.expr||'feliz'); } }); }
@@ -726,7 +726,7 @@ function mover2(p,brg){ return mover(p,brg,1); }
 function haciaDerecha(p,brg){ try{ var a=mapa.project(p), b=mapa.project(mover(p,brg,25)); return b.x>=a.x; }catch(e){ return true; } }
 function pintarPistero(dt,ts,d,gp,vp,brg){
   if(modo==='nuevo' && cajas.capas){
-    // la cara que toca (la del momento si hay viñeta); color del anillo = color neón de la pendiente
+    // la cara que toca (la del momento si hay viñeta); color del pin = color neón de la pendiente
     rostroCara(exprAct);
     var col=colorPend(gp||0), esf=Math.max(0,Math.min(1,(gp||0)/.1));
     cajas.el.style.setProperty('--c',col);
@@ -868,11 +868,10 @@ var SB3_CSS='#sb3{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--surf:#141a2b;--surf-2:#0
 +'#sb3 .cara-mk{width:68px;height:84px;pointer-events:none;--c:#39ff88;--lat:1.15s}'
 +'#sb3 .cm-pin{position:absolute;left:50%;bottom:0;width:3px;height:20px;margin-left:-1.5px;border-radius:2px;background:linear-gradient(to top,#fff,var(--c) 45%,var(--c));box-shadow:0 0 8px var(--c)}'
 +'#sb3 .cm-in{position:absolute;left:1px;top:0;width:66px;height:66px;transform-origin:50% 100%}'
-+'#sb3 .cm-anillo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 32%,#1e293b,#0a0f1d 75%);box-shadow:0 0 0 3px var(--c),0 0 14px var(--c),0 6px 14px rgba(0,0,0,.55)}'
-+'#sb3 .cm-halo{position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,var(--c) 0%,transparent 68%);opacity:0;animation:sb3Late var(--lat) ease-out infinite;will-change:transform,opacity}'
-+'@keyframes sb3Late{0%{opacity:0;transform:scale(.85)}10%{opacity:.75;transform:scale(1)}22%{opacity:.35;transform:scale(1.04)}30%{opacity:.6;transform:scale(1.08)}100%{opacity:0;transform:scale(1.22)}}'
-+'#sb3 .cm-caras{position:absolute;inset:0;border-radius:50%;overflow:hidden;clip-path:circle(50% at 50% 50%)}'
-+'#sb3 .cm-c{position:absolute;left:-13%;top:-9%;width:126%;height:106%;opacity:0;transform:scale(.96);transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1)}'
+/* Inty 2026-10-07: la cara completa, SIN anillo ni halo que late ("eso nunca lo pedí"), igual que el respaldo
+   (.sbv-rostro-c de estilos.css): 64×54 apoyada sobre el pin */
++'#sb3 .cm-caras{position:absolute;left:1px;top:12px;width:64px;height:54px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}'
++'#sb3 .cm-c{position:absolute;inset:0;opacity:0;transform:scale(.96);transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1)}'
 +'#sb3 .cm-c.on{opacity:1;transform:none}#sb3 .cm-c svg{width:100%;height:100%;display:block}'
 +'#sb3 .cm-gota{position:absolute;right:-2px;top:10px;width:9px;height:12px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#7fd0ff;box-shadow:0 0 6px #7fd0ff;opacity:0}'
 +'#sb3 .cara-mk.suda .cm-gota{animation:sb3Gota 1.4s ease-in infinite}'
@@ -892,7 +891,7 @@ var SB3_CSS='#sb3{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--surf:#141a2b;--surf-2:#0
 +'@media (max-width:420px){#sb3 .dato b{font-size:.92rem}}'
 +'@media (max-width:380px){#sb3 .rs-grid{grid-template-columns:repeat(2,1fr)}}'
 +'@media (max-height:700px){#sb3 .perfil{height:64px}#sb3 .dato{padding:5px 8px}#sb3 .dato b{font-size:.92rem}#sb3 .ctrl{margin-top:6px}#sb3 .btn{padding:9px 12px}#sb3 .resumen{bottom:calc(150px + env(safe-area-inset-bottom));padding:10px}#sb3 .rs-hitos li{padding:4px 8px}}'
-+'@media (prefers-reduced-motion:reduce){#sb3 .pp{transition:opacity .3s;transform:none}#sb3 .cm-halo{animation:none;opacity:.35}#sb3 .cara-mk.suda .cm-gota{animation:none}}';
++'@media (prefers-reduced-motion:reduce){#sb3 .pp{transition:opacity .3s;transform:none}#sb3 .cara-mk.suda .cm-gota{animation:none}}';
 
 function sb3Estilos(){ if(document.getElementById('sb3-css')) return; var st=document.createElement('style'); st.id='sb3-css'; st.textContent=SB3_CSS; document.head.appendChild(st); }
 // la pantalla (mismos elementos que el prototipo; ids con prefijo sb3-). Íconos dibujados a medida (no emoji).
@@ -986,10 +985,37 @@ function cerrarSobrevuelo3D(silencioso){
   var el=document.getElementById('sb3'); if(el) el.remove(); RAIZ=null;
   var fin=SB3_FIN; SB3_FIN=null; if(!silencioso && typeof fin==='function'){ try{ fin(); }catch(e){} }
 }
+// El sobrevuelo de siempre (respaldo, sobrevuelo-viaje.js) también va por la línea pegada al camino (Inty 2026-10-07):
+// la guardada en el teléfono, o se pega ahora (worker → Valhalla) con un tope de tiempo. Las horas y alturas del GPS se
+// pasan a la línea pegada por distancia proporcional, como tiemposReales. crudo y la respuesta: [[lat,lon,t,alt],...].
+function sb3SobreLaPegada(crudo,pegada){
+  if(!pegada||pegada.length<2||!crudo||crudo.length<2) return null;
+  var num=function(x){ return typeof x==='number'&&isFinite(x); }, ent=function(a,b,f){ return num(a)&&num(b)?a+(b-a)*f:(num(a)?a:(num(b)?b:undefined)); };
+  var cc=[0], pc=[0], i;
+  for(i=1;i<crudo.length;i++) cc.push(cc[i-1]+hav([crudo[i-1][1],crudo[i-1][0]],[crudo[i][1],crudo[i][0]]));
+  for(i=1;i<pegada.length;i++) pc.push(pc[i-1]+hav(pegada[i-1],pegada[i]));
+  var Lc=cc[cc.length-1], Lp=pc[pc.length-1]; if(!(Lc>0)||!(Lp>0)) return null;
+  var k=Lp/Lc; if(k<.5||k>2) return null;   /* largos que no cuadran: mejor la traza del GPS */
+  var out=[], j=1;
+  for(i=0;i<pegada.length;i++){ var dc=pc[i]/k; while(j<crudo.length-1&&cc[j]<dc) j++;
+    var a=crudo[j-1], b=crudo[j], f=Math.max(0,Math.min(1,(dc-cc[j-1])/Math.max(1e-6,cc[j]-cc[j-1])));
+    out.push([pegada[i][1],pegada[i][0],ent(a[2],b[2],f),ent(a[3],b[3],f)]); }
+  return out;
+}
+function sb3PegadaPara(id,crudo,msMax){
+  try{
+    var g=sb3LeerPegada(id); if(g) return Promise.resolve(sb3SobreLaPegada(crudo,g.c));
+    var pts=sb3Puntos(crudo); if(pts.length<10) return Promise.resolve(null);
+    var tope=new Promise(function(res){ setTimeout(function(){ res(null); },msMax||6000); });
+    var pega=pegarAlCamino(pts).then(function(r){ if(!r||r.metodo==='gps') return null; sb3GuardarPegada(id,r.coords,r.metodo); return sb3SobreLaPegada(crudo,r.coords); },function(){ return null; });
+    return Promise.race([pega,tope]);
+  }catch(e){ return Promise.resolve(null); }
+}
+window.sb3PegadaPara=sb3PegadaPara;
 window.abrirSobrevuelo3D=abrirSobrevuelo3D;
 window.cerrarSobrevuelo3D=cerrarSobrevuelo3D;
 // funciones puras para tests/sobrevuelo-3d.test.mjs y ganchos de prueba (no se usan en la app)
 window.__sb3test={hav:hav, pegarAlCamino:pegarAlCamino, sinPinchazos:sinPinchazos, solPos:solPos, luzDe:luzDe, caraSegun:caraSegun, planear:planear, tiemposReales:tiemposReales,
-  sb3Puntos:sb3Puntos, durVuelo:durVuelo, linea:linea, densificar:densificar, colorPend:colorPend, setD:function(x){ D=x; }, getD:function(){ return D; }, dbg:SB3DBG};
+  sb3Puntos:sb3Puntos, sobreLaPegada:sb3SobreLaPegada, durVuelo:durVuelo, linea:linea, densificar:densificar, colorPend:colorPend, setD:function(x){ D=x; }, getD:function(){ return D; }, dbg:SB3DBG};
 
 })();
