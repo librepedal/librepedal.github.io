@@ -870,10 +870,18 @@ var PIEZAS_VECTOR = (function(){
       +'<animate attributeName="opacity" values="0;0;1;.2;0" keyTimes="0;.86;.9;.95;1" dur="5.5s"'+fase(5.5)+' repeatCount="indefinite"/></g>'; }
   // Luz frontal y direccionales: como el casco Lumos (luz blanca adelante, direccionales ámbar a los costados que parpadean al doblar).
   function cascoLuces(expr,color,u){
-    var blink=function(desde){ return '<animate attributeName="opacity" values="0;1;0;1;0;1;0;0" keyTimes="0;'+desde+';'+(desde+.06)+';'+(desde+.12)+';'+(desde+.18)+';'+(desde+.24)+';'+(desde+.3)+';1" dur="8s"'+fase(8)+' repeatCount="indefinite"/>'; };
+    var blink=function(desde){ return '<animate attributeName="opacity" values="0;1;0;1;0;1;0;0" keyTimes="0;'+desde+';'+(desde+.06)+';'+(desde+.12)+';'+(desde+.18)+';'+(desde+.24)+';'+(desde+.3)+';1" dur="8s"'+fase(8)+' calcMode="discrete" repeatCount="indefinite"/>'; }; // discreta: una direccional se prende y se apaga de golpe (con interpolación se encendía lento por segundos)
+    // Direccionales agrandadas (Inty 2026-10-07: "agranda las direccionales"; antes 8x6 = ~5 px en la tarjeta de 124 px):
+    // tira ámbar a lo largo del borde bajo de la cáscara (contorno CASC de lib-frente: (30,106) -> esquina (40,119)),
+    // metida 3 unidades hacia adentro, con halo ancho para que se lea como luz encendida a tamaño de tarjeta.
+    var TIRA='M33 86 C31.6 95 32 102 33.6 108 C35 113 37 116 40 117.5';
+    function lado(esp,desde){ var tr=esp<0?'':' transform="translate(200 0) scale(-1 1)"';
+      return '<g'+tr+'><g opacity="0">'+blink(desde)
+        +'<path d="'+TIRA+'" fill="none" stroke="#ffb020" stroke-width="11" stroke-linecap="round" opacity=".35" filter="url(#'+u+'cg)"/>'
+        +'<path d="'+TIRA+'" fill="none" stroke="#ffc24a" stroke-width="5" stroke-linecap="round"/>'
+        +'<path d="'+TIRA+'" fill="none" stroke="#fff3cf" stroke-width="1.8" stroke-linecap="round"/></g></g>'; }
     return '<rect x="86" y="97" width="28" height="5" rx="2.5" fill="#fffbe8" filter="url(#'+u+'cg)"/>'
-      +'<g fill="#ffb020" filter="url(#'+u+'cg)"><rect x="29" y="105" width="8" height="6" rx="3" opacity="0">'+blink(.1)+'</rect>'
-      +'<rect x="163" y="105" width="8" height="6" rx="3" opacity="0">'+blink(.55)+'</rect></g>'; }
+      +lado(-1,.1)+lado(1,.55); }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
   return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, destello:orbeDestello }, vinilo:{ ojo:viniloOjo },
