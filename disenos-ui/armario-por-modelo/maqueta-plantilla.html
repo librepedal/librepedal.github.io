@@ -203,7 +203,7 @@ var FONDOS=[
 ];
 // ---------- estado ----------
 var S={modelo:'ciber', estilo:{}, fondo:'noche', tab:'estilos', cat:'pelo', cl:Object.assign({},BASE)};
-M.forEach(function(m){ S.estilo[m.id]=0; }); S.puestas={}; var PZ={};
+M.forEach(function(m){ S.estilo[m.id]=0; }); S.puestas={}; var PZ={}; window.__PZ=PZ;
 // piezas vector puestas: se agregan al SVG del modelo cuando su animación ya está lista
 function aplicarPiezas(id){ var a=inst[id]; if(!a||!a.listo) return; var lib=(window.PIEZAS_VECTOR||{})[id]||{}, on=S.puestas[id]||{}; PZ[id]=PZ[id]||{};
   Object.keys(lib).forEach(function(v){ if(on[v] && !PZ[id][v]){ PZ[id][v]=lib[v](a.el); } else if(!on[v] && PZ[id][v]){ PZ[id][v].quitar(); delete PZ[id][v]; } }); aplicarEstilo(id); }
