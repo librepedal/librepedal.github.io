@@ -9,6 +9,12 @@
 // Privacidad: la clave es un SHA-256 de los puntos (solo quien ya tiene esa misma ruta puede pedirla), el resultado
 // expira en 180 días y el worker no registra coordenadas en ningún log.
 //
+// Dónde guarda (2026-10-07, paso 4 de Inty: "pasar el sobrevuelo a D1"): base D1 propia `librepedal-sobrevuelo`
+// (binding DB, esquema en migrations/). Antes usaba el KV de worker-auth: solo 1.000 escrituras/día COMPARTIDAS con
+// el inicio de sesión y contadores aproximados. D1 gratis = 100.000 filas escritas/día y 5 GB, y cuenta exacto:
+// D1 ejecuta las escrituras de a una y batch() es una transacción ("Batched statements are SQL transactions").
+// D1 no tiene vencimiento automático: cada fila guarda `expira`, se filtra al leer y lo vencido se borra al guardar.
+//
 // Cómo pega (lecciones del prototipo, ver COORDINACION-IA/mapa-navegacion/sobrevuelo-3d/README.md):
 // - Valhalla responde 200 con SOLO un pedazo de la ruta si un punto salta lejos del camino: se pide por tramos de
 //   ~120 puntos y se valida el largo de cada tramo (±10 %); el tramo que no cuadra queda con los puntos limpios.
@@ -16,15 +22,12 @@
 
 const VALHALLA = 'https://valhalla1.openstreetmap.de/trace_route';
 const ORIGENES_OK = ['https://librepedal.cl', 'https://www.librepedal.cl', 'https://librepedal-web.pages.dev'];
-const PREFIJO = 'sbv:';                  // comparte el KV de worker-auth/proximidad con prefijo propio
-const TTL_RUTA = 180 * 24 * 3600;        // 180 días
+const TTL_RUTA_MS = 180 * 24 * 3600 * 1000; // 180 días
 const MAX_PUNTOS = 6000;                 // ~240 km a 40 m
 const TRAMO = 120;
 // Límites de rutas NUEVAS (las guardadas no cuentan), decididos por Inty el 2026-10-07: 20 por conexión al día
 // (los celulares comparten IP: 2 dejaría fuera a vecinos de la misma compañía) y 300 en total al día.
-// Un solo registro por día (sbv:dia:AAAA-MM-DD) guarda el total y la cuenta de cada IP (como hash): así cada ruta nueva
-// gasta 2 escrituras de KV (contador + ruta) y no 3. KV gratis = 1.000 escrituras/día compartidas con worker-auth.
-// Es aproximado (KV no es transaccional y acepta 1 escritura/s por clave); si KV falla, deja pasar.
+// Tabla `limites` (día, IP como hash, cuenta): exacto, ver bajoLimite. Si D1 falla, deja pasar (falla abierta).
 const MAX_NUEVAS_POR_IP_DIA = 20;
 const MAX_NUEVAS_DIA = 300;
 
@@ -52,22 +55,46 @@ export function decPoly6(z) {
 }
 async function claveDe(pts) { // pts = [[lat,lon],...] ya redondeados
   const dig = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(pts)));
-  return PREFIJO + 'ruta:' + [...new Uint8Array(dig)].map((x) => x.toString(16).padStart(2, '0')).join('');
+  return [...new Uint8Array(dig)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
-// devuelve null si puede pegar, o el motivo si no. FALLA ABIERTA: si KV falla, se deja pasar (igual que worker-proximidad)
-async function bajoLimite(env, ip, ahora = Date.now()) {
-  if (!env.RATE_LIMIT_AUTH) return null;
+const diaChile = (ahora) => new Date(ahora - 4 * 3600 * 1000).toISOString().slice(0, 10); // aprox. UTC-4
+
+// ---- D1 ----
+export async function leerRuta(env, clave, ahora = Date.now()) {
+  if (!env.DB) return null;
   try {
-    const dia = new Date(ahora - 4 * 3600 * 1000).toISOString().slice(0, 10); // día de Chile (aprox. UTC-4)
-    const clave = PREFIJO + 'dia:' + dia, raw = await env.RATE_LIMIT_AUTH.get(clave);
-    const d = raw ? JSON.parse(raw) : { total: 0, ips: {} };
+    const f = await env.DB.prepare('SELECT datos FROM rutas WHERE clave = ?1 AND expira > ?2').bind(clave, ahora).first();
+    return f ? JSON.parse(f.datos) : null;
+  } catch (e) { return null; } // sin base: se pega de nuevo
+}
+export async function guardarRuta(env, clave, r, ahora = Date.now()) {
+  if (!env.DB) return;
+  try {
+    // INSERT OR REPLACE y DELETE: SQL clásico de SQLite (no se usa RETURNING ni upsert: la doc de D1 no los confirma)
+    await env.DB.batch([
+      env.DB.prepare('INSERT OR REPLACE INTO rutas (clave, datos, metodo, creada, expira) VALUES (?1, ?2, ?3, ?4, ?5)').bind(clave, JSON.stringify(r), r.m, ahora, ahora + TTL_RUTA_MS),
+      env.DB.prepare('DELETE FROM rutas WHERE expira <= ?1').bind(ahora),                     // limpieza de lo vencido
+      env.DB.prepare('DELETE FROM limites WHERE dia < ?1').bind(diaChile(ahora - 2 * 86400000)),
+    ]);
+  } catch (e) { /* sin guardar: igual se entrega */ }
+}
+// null si puede pegar, o el motivo si no. EXACTO: un lote (transacción) que crea la fila del día/IP si falta y la sube
+// en 1 SOLO si esa conexión va bajo 20 y el día va bajo 300 (meta.changes = 0 → no se subió → límite).
+// FALLA ABIERTA: si D1 falla, se deja pasar (igual que worker-proximidad).
+export async function bajoLimite(env, ip, ahora = Date.now()) {
+  if (!env.DB) return null;
+  try {
+    const dia = diaChile(ahora);
     const dig = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dia + '|' + ip)); // la IP no se guarda tal cual
     const h = [...new Uint8Array(dig)].slice(0, 8).map((x) => x.toString(16).padStart(2, '0')).join('');
-    if (d.total >= MAX_NUEVAS_DIA) return 'tope del día';
-    if ((d.ips[h] || 0) >= MAX_NUEVAS_POR_IP_DIA) return 'límite de la conexión';
-    d.total++; d.ips[h] = (d.ips[h] || 0) + 1;
-    await env.RATE_LIMIT_AUTH.put(clave, JSON.stringify(d), { expirationTtl: 2 * 24 * 3600 });
-    return null;
+    const res = await env.DB.batch([
+      env.DB.prepare('INSERT OR IGNORE INTO limites (dia, ip, cuenta) VALUES (?1, ?2, 0)').bind(dia, h),
+      env.DB.prepare('UPDATE limites SET cuenta = cuenta + 1 WHERE dia = ?1 AND ip = ?2 AND cuenta < ?3 AND (SELECT COALESCE(SUM(cuenta), 0) FROM limites WHERE dia = ?1) < ?4')
+        .bind(dia, h, MAX_NUEVAS_POR_IP_DIA, MAX_NUEVAS_DIA),
+    ]);
+    if (res[1] && res[1].meta && res[1].meta.changes === 1) return null;
+    const mia = await env.DB.prepare('SELECT cuenta FROM limites WHERE dia = ?1 AND ip = ?2').bind(dia, h).first('cuenta');
+    return (mia || 0) >= MAX_NUEVAS_POR_IP_DIA ? 'límite de la conexión' : 'tope del día';
   } catch (e) { return null; }
 }
 async function pegarTramo(tr) { // tr = [[lat,lon],...]
@@ -111,13 +138,14 @@ export default {
     }
     const clave = await claveDe(pts);
     // 1) ya pegada → caché (sin escribir nada, sin llamar a Valhalla)
-    try { const g = env.RATE_LIMIT_AUTH && (await env.RATE_LIMIT_AUTH.get(clave)); if (g) return responder({ ...JSON.parse(g), cache: true }, 200, origen); } catch (e) { /* sigue sin caché */ }
+    const g = await leerRuta(env, clave);
+    if (g) return responder({ ...g, cache: true }, 200, origen);
     // 2) nueva → límite por IP, pegar y guardar (las fallidas del todo no se guardan: se reintenta otro día)
     const ip = request.headers.get('CF-Connecting-IP') || 'desconocida';
     const lim = await bajoLimite(env, ip);
     if (lim) return responder({ error: 'demasiadas rutas nuevas hoy (' + lim + ')' }, 429, origen);
     const r = await pegar(pts);
-    if (r.m !== 'gps') { try { await env.RATE_LIMIT_AUTH.put(clave, JSON.stringify(r), { expirationTtl: TTL_RUTA }); } catch (e) { /* sin guardar: igual se entrega */ } }
+    if (r.m !== 'gps') await guardarRuta(env, clave, r);
     return responder({ ...r, cache: false }, 200, origen);
   },
 };

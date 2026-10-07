@@ -2,10 +2,13 @@ name = "librepedal-sobrevuelo"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 
-# Mismo KV que worker-auth y worker-proximidad, con prefijo propio "sbv:" (no se pisan):
-#   sbv:ruta:<sha256>  la ruta pegada al camino (180 días)  ·  sbv:dia:<fecha>  rutas NUEVAS del día (total + cada IP como hash)
-[[kv_namespaces]]
-binding = "RATE_LIMIT_AUTH"
-id = "87af0c17403445f78737975fd0b5b7c3"
-
-# Sin secretos. Publicar (con OK de Inty y sus credenciales de Cloudflare):  cd worker-sobrevuelo && npx wrangler deploy
+# Base D1 propia (2026-10-07): rutas pegadas (180 días) y límites exactos de rutas nuevas (20 por conexión/día, 300/día).
+# Ya NO usa el KV de worker-auth (sus 1.000 escrituras/día eran compartidas con el inicio de sesión).
+# Crear (una vez):   npx wrangler d1 create librepedal-sobrevuelo      → copiar el database_id de abajo
+# Esquema:           npx wrangler d1 migrations apply librepedal-sobrevuelo --remote
+# Publicar:          npx wrangler deploy        (en PowerShell: npx.cmd)
+[[d1_databases]]
+binding = "DB"
+database_name = "librepedal-sobrevuelo"
+database_id = "PENDIENTE-crear-con-wrangler-d1-create"
+migrations_dir = "migrations"
