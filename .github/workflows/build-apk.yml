@@ -23,7 +23,7 @@ jobs:
       contents: write          # necesario para publicar el APK en Releases
     steps:
       - name: Descargar el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Instalar Node
         uses: actions/setup-node@v4
