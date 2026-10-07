@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="../../../icon-192.png">
 <title>Sobrevuelo 3D · propuesta</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -48,7 +49,19 @@ html,body{margin:0;height:100%;background:var(--d);color:var(--tx);font:500 14px
 .sbv-sombra{position:absolute;left:50%;bottom:-3px;width:34px;height:9px;margin-left:-17px;border-radius:50%;background:radial-gradient(rgba(0,0,0,.55),rgba(0,0,0,0) 70%)}
 .punto-ruta{width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #e11d48;box-shadow:0 0 0 2px rgba(0,0,0,.4)}
 @media (max-width:420px){.dato b{font-size:.92rem}.titulo span{display:none}}
-body.corriendo .nota{opacity:0;pointer-events:none}
+body.corriendo .nota,body.pp-on .nota{opacity:0;pointer-events:none}
+/* durante el sobrevuelo, menos interfaz: el perfil ya lleva los colores de pendiente */
+.leyenda,.capa{transition:opacity .3s}
+body.corriendo .leyenda,body.corriendo .capa{opacity:0;pointer-events:none}
+#mascota{max-width:118px;font-size:.78rem;padding:11px 8px}
+/* giro corto al pasar de espaldas a costado */
+.sbv-rider .sbv-bici,.sbv-rider .sbv-lado{transition:transform .12s ease-in}
+.sbv-rider.girando .sbv-bici,.sbv-rider.girando .sbv-lado{transform:scaleX(.08)!important}
+/* mascota del Taller asomada en el canasto (de espaldas): delante del manubrio, junto al brazo derecho */
+.sbv-asoma{position:absolute;left:58%;top:44%;width:30px;height:27px;pointer-events:none}
+.sbv-asoma svg{width:100%;height:100%;overflow:visible}
+.sbv-rider.de-lado .sbv-asoma{display:none}
+.pp-masc-svg{width:60px;height:54px}.pp-masc-svg svg{width:100%;height:100%}
 /* hito de la cima */
 .hito{font:800 11px system-ui;color:#0a0f1d;background:#ffd700;border-radius:8px;padding:3px 7px;box-shadow:0 0 12px rgba(255,215,0,.6),0 2px 6px rgba(0,0,0,.45);white-space:nowrap}
 /* Pistero de costado (bici real de la app, viewBox 100x84) cuando la toma es lateral */
@@ -83,7 +96,7 @@ body.corriendo .nota{opacity:0;pointer-events:none}
 <div id="mapa"></div>
 <div class="cargando" id="cargando">Preparando el relieve real del camino…</div>
 <div class="barra">
-  <div class="titulo"><b>Futrono → Llifén · 21,4 km</b><span>Ruta de demostración (camino real OSM, GPS simulado)</span></div>
+  <div class="titulo"><b id="tit"></b><span id="titSub"></span></div>
   <div class="seg" id="modo"><button data-m="hoy">Hoy</button><button data-m="nuevo" class="on">Propuesta</button></div>
 </div>
 <div class="nota" id="nota"></div>
@@ -98,7 +111,7 @@ body.corriendo .nota{opacity:0;pointer-events:none}
   </div>
   <div class="leyenda" id="leyenda"><span><i style="background:#39ff88;box-shadow:0 0 6px #39ff88"></i>plano</span><span><i style="background:#ffe14d;box-shadow:0 0 6px #ffe14d"></i>3–6 %</span><span><i style="background:#ff8a1f;box-shadow:0 0 6px #ff8a1f"></i>6–9 %</span><span><i style="background:#ff2d6f;box-shadow:0 0 6px #ff2d6f"></i>+9 %</span><span><i style="background:#22d3ff;box-shadow:0 0 6px #22d3ff"></i>bajada</span></div>
   <div class="perfil" id="perfil"><canvas id="cv"></canvas></div>
-  <div class="ctrl"><button class="btn play" id="play">▶ Ver sobrevuelo</button><button class="btn vel" id="vel">×1</button></div>
+  <div class="ctrl"><button class="btn play" id="play">▶ Ver sobrevuelo</button><select class="btn vel" id="mascota" aria-label="Mascota elegida en el Taller (demo)"></select><button class="btn vel" id="vel">×1</button></div>
 </div>
 
 <!-- Pistero real de la app (mismos archivos que index.html) -->

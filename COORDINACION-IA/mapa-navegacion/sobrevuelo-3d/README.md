@@ -55,3 +55,14 @@ Botón **Hoy / Propuesta** compara lo de `main` con lo propuesto.
 del anterior). En la app puede sumar al desfase si hay otros marcadores antes. Arreglo: no dar `position` al
 raíz del marcador (o `.maplibregl-marker.sbv-rider{position:absolute}`). También: `opacityWhenCovered:'1'`
 para que un cerro no deje a Pistero transparente.
+
+## v3 (2026-10-07) — mascota elegida + 12 errores corregidos
+- **Mascota = la que eligió el usuario** (`opts.mascota`). Las del Taller (quiltro, perro negro, gato) van en el
+  canasto: de costado se ven en la bici real; de espaldas, asomadas junto al manubrio. Las nuevas de
+  `feature/mascotas` corren al lado (hoy solo el pudú tiene arte de carrera). Selector solo en la demo.
+- Errores corregidos: nota tapada por la viñeta · viñetas que repetían datos de pantalla (ahora dicen lo que
+  NO se ve: "quedan 240 m de cuesta", "en 1 h 25 min", "lo más alto del viaje") · texto fijo (Futrono, 21,4 km)
+  · tomas de 0,5–1,5 s (mínimo ~3 s; las de subida/bajada mandan) · 16 viñetas → máx. 7, sin repetir cara
+  seguida · cara que saltaba (histéresis + "preocupado" solo si ve venir la cuesta) · "¡Llegamos!" que podía no
+  salir · repetir arrastraba cara/cansancio · salto brusco espaldas↔costado · pudú que parpadeaba en la cima ·
+  demasiada interfaz al reproducir · 404 del ícono.
