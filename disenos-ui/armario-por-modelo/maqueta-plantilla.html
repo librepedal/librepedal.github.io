@@ -173,7 +173,7 @@ var M=[
    piezas:[{n:'Burbujas',v:'burbujas'},{n:'Fruta adentro',v:'fruta'},{n:'Gotitas',v:'gotitas'}]},
   {id:'vinilo', n:'Androide de vinilo', mov:'Servos, ojos de diafragma y boca LED', fn:'crearViniloCapas', capa:'casco',
    estilos:[['Naranja','#f08a4b',''],['Celeste','#38bdf8','hue-rotate(175deg)'],['Menta','#5eead4','hue-rotate(140deg) saturate(.9)'],['Grafito','#3a3f4a','grayscale(1) brightness(.34) contrast(1.15)']],
-   piezas:['Antena con resorte','Calcomanías reflectantes',{n:'Ojo de otro color',v:'ojo'}]},
+   piezas:[{n:'Antena con resorte',v:'antena'},'Calcomanías reflectantes',{n:'Ojo de otro color',v:'ojo'}]},
   {id:'casco', n:'Casco vivo', mov:'Parpadea y habla con su visor LED',
    estilos:[['Naranja','#fc4c02'],['Azul','#2f80ed'],['Verde','#22c55e'],['Rojo','#e11d48'],['Negro','#2a2f3a']],
    piezas:[{n:'Cejas',v:'cejas'},{n:'Calcomanías reflectantes',v:'calcos'},{n:'Luz frontal y direccionales',v:'luces'}]},
@@ -229,7 +229,7 @@ function pintarSvg(id,e){ var a=inst[id]; if(!a) return;
     if(extra) sv=sv.replace('</svg>','<defs>'+lib._defs(uu)+'</defs>'+extra+'</svg>'); a.el.innerHTML=sv; }
   else a.el.innerHTML=svgClasico(S.cl,EXPR_CL[e]||'feliz'); }
 // Estilos de los modelos por capas: el filtro va SOLO a la imagen de su capa (casco o cuerpo); la cara (SVG animado) no se toca
-function capaDe(id){ var a=inst[id]; if(!a) return null; var ims=a.el.querySelectorAll('image');
+function capaDe(id){ var a=inst[id]; if(!a) return null; var ims=a.el.querySelectorAll('image:not(.pieza-img)'); // las piezas con imagen propia (antena) no se tiñen con el estilo
   // cada modelo dibuja [cuerpo/cabeza, casco, (cuerpo otra vez de máscara)]: el casco es la que no se repite
   var hrefs=[].map.call(ims,function(x){ return x.getAttribute('href'); });
   var casco=[].filter.call(ims,function(x,i){ return hrefs.indexOf(hrefs[i])===hrefs.lastIndexOf(hrefs[i]); });

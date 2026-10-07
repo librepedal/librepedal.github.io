@@ -241,6 +241,33 @@ var PIEZAS_VECTOR = (function(){
     return { quitar:function(){ vivo=false; capa.setAttribute('href',original); } };
   }
 
+  // ---------- Androide · Antena con resorte (arte de Gemini + rebote) ----------
+  // Referencia real: la bandera de seguridad de bici con base de resorte: el resorte deja que la vara se doble y la devuelve
+  // a su lugar oscilando. Gemini la dibujó editando la capa del casco (misma cámara 1376x768); se separó como capa propia
+  // (gemini/vinilo-antena.png, en x 859 y 13) para poder moverla. Gira sobre la base del resorte (873,137) como un resorte
+  // poco amortiguado (~2,6 Hz) empujado por la aceleración de la cabeza: el giro del servo y los saltos (lib-vinilo mueve
+  // el grupo "todo" con translate(ang*1.4, hy) rotate(ang)). Va dentro del grupo del casco: se mueve con él.
+  var ANT={x:859,y:13,w:296,h:152,px:873,py:137};
+  function viniloAntena(el){
+    var svg=el.querySelector('svg'), src=(window.PIEZAS_IMG||{}).viniloAntena; if(!svg||!src) return null;
+    var casco=svg.querySelector('g[id$="casco"]'), todo=svg.querySelector('g[id$="todo"]'); if(!casco||!todo) return null;
+    var g=nodo('g',{'class':'pieza-antena'}); g.appendChild(nodo('image',{'class':'pieza-img',href:src,x:ANT.x,y:ANT.y,width:ANT.w,height:ANT.h})); casco.appendChild(g);
+    var th=0, tv=0, prev=null, vPrev=null, K=270, C=3.2;
+    var parar=bucle(el,function(dt){ if(dt<=0) return;
+      var tr=todo.getAttribute('transform')||'', m=/translate\((-?[\d.]+) (-?[\d.]+)\) rotate\((-?[\d.]+)/.exec(tr);
+      var s=m?{x:+m[1],y:+m[2],a:+m[3]}:{x:0,y:0,a:0}, v=prev?{x:(s.x-prev.x)/dt,y:(s.y-prev.y)/dt,a:(s.a-prev.a)/dt}:{x:0,y:0,a:0};
+      var acc=vPrev?{x:(v.x-vPrev.x)/dt,y:(v.y-vPrev.y)/dt,a:(v.a-vPrev.a)/dt}:{x:0,y:0,a:0}; prev=s; vPrev=v;
+      // inercia: la vara se queda atrás cuando la base acelera (giro del servo y saltos; va inclinada ~40°, así que el salto también la dobla)
+      var empuje=reduce?0:-(acc.a*2+acc.x*.06-acc.y*.07);
+      tv+=(-K*th-C*tv+Math.max(-4000,Math.min(4000,empuje)))*dt; th+=tv*dt; th=Math.max(-22,Math.min(22,th));
+      // tal como la dibujó Gemini medía 307 de largo y el banderín se salía del recuadro del modelo (viewBox hasta x 986) y tapaba
+      // el texto de la tarjeta: se achica a la mitad y se levanta 30° sobre su base (punta en x ~992 aun con el rebote máximo)
+      g.setAttribute('transform','rotate('+(th-30).toFixed(2)+' '+ANT.px+' '+ANT.py+') translate('+ANT.px+' '+ANT.py+') scale(.5) translate(-'+ANT.px+' -'+ANT.py+')'); });
+    return { estado:function(n){ if(!reduce && (n==='feliz'||n==='sorpresa')) tv+=n==='sorpresa'?-230:190; },
+             quitar:function(){ parar(); g.remove(); },
+             _th:function(){ return th; } };
+  }
+
   // ---------- Androide · Ojo de otro color ----------
   // Sus ojos son diafragmas de cámara (lib-vinilo.js: iris naranjo encendido, hojas, brillo). Referencia real: el
   // TRATAMIENTO de los lentes de cámara: un lente multicapa refleja pequeños destellos violeta y verde, y cada tratamiento
@@ -310,6 +337,6 @@ var PIEZAS_VECTOR = (function(){
       +lado(-1,.1)+lado(1,.55); }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo },
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena },
            casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
