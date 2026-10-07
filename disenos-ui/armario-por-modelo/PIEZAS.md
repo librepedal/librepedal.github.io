@@ -17,7 +17,7 @@ cuenta de Inty en su Chrome; Claude recorta, separa capas y anima. La cara y las
 | Cyberpunk | Visor partido | Gemini | Visor de una pieza con una grieta en diagonal; la luz del visor sigue prendida a los dos lados. |
 | Orbe | Visera | Gemini | Visera de casco MTB (ABUS MoDrop, M-Wave Crest): pieza curva sobre la frente, regulable en altura. |
 | Orbe | Chispas | Vector | Chispas que saltan de la luz cuando se emociona. |
-| Orbe | ~~Anillo de luz~~ → **Estela de luz** | Vector | **Cambio propuesto:** Inty dijo del anillo del sobrevuelo "eso nunca lo pedí". En su lugar, la estela que deja una luz en una foto de exposición larga, al flotar. |
+| Orbe | ~~Anillo de luz~~ → ~~Estela de luz~~ → **Destello al hablar** | Vector | Filtro de estrella de fotografía (Hoya Star 6, Tiffen Star): líneas grabadas en el vidrio convierten cada luz fuerte en rayos finos; 3 direcciones = 6 puntas y el largo del rayo crece con el brillo. En el Orbe, la boca de luz se enciende en cada sílaba y le salen los 6 rayos. Inty eligió esta opción el 2026-10-07 (la estela casi no se veía: el Orbe sube ~25/1024 al celebrar). |
 | Slime | Burbujas | Vector | Burbujas de aire atrapadas en gelatina: suben lento y se achican. |
 | Slime | **Fruta adentro** (antes "algo tragado") | Gemini | La gelatina con fruta de toda la vida: trozos de durazno o frutilla suspendidos, se ven a través. (Slime Rancher **no** muestra la comida adentro: la idea original no tenía referencia real.) |
 | Slime | Gotitas | Vector | Gotas que se desprenden del borde al moverse, como gelatina recién desmoldada. |

@@ -779,29 +779,40 @@ var PIEZAS_VECTOR = (function(){
              quitar:function(){ parar(); g.remove(); f.remove(); } };
   }
 
-  // ---------- Orbe · Estela de luz ----------
-  // Como una foto de exposición larga: una luz que se mueve deja un rastro continuo que se apaga hacia atrás. Va DETRÁS del
-  // orbe (el orbe tapa su posición actual): el rastro asoma cuando se mueve (respira, salta al celebrar, se sorprende).
-  // Quieto no deja estela, igual que en la foto. El ancho es el del orbe: se ve apenas se mueve más de ~2 % de su tamaño.
-  function orbeEstela(el){
-    var G=orbeGrupos(el); if(!G) return null; var u='pze'+(++uid), defs=defsDe(G.svg), f=brillo(defs,u+'f');
-    var gr=nodo('radialGradient',{id:u+'g',cx:'.5',cy:'.5',r:'.5'});
-    gr.appendChild(nodo('stop',{offset:'0','stop-color':'#ffe2b8','stop-opacity':'.9'})); gr.appendChild(nodo('stop',{offset:'.6','stop-color':'#ff9a4a','stop-opacity':'.55'})); gr.appendChild(nodo('stop',{offset:'1','stop-color':'#ff7a2a','stop-opacity':'0'}));
+  // ---------- Orbe · Destello al hablar ----------
+  // Reemplaza a la "Estela de luz" (Inty 2026-10-07: casi no se veía; eligió "destello al hablar").
+  // Referencia real: el filtro de estrella de fotografía (Hoya Star 6, Tiffen Star). Líneas grabadas en el vidrio difractan cada
+  // luz fuerte en rayos finos perpendiculares a las líneas; 3 direcciones = 6 puntas, y el LARGO del rayo crece con el BRILLO de
+  // la luz. En el Orbe la luz que habla es su boca: en cada sílaba se enciende (lib-orbe: halo .6 + .3·s al hablar) y le salen
+  // 6 rayos que se alargan y se recogen con la voz. Callado no hay destello, igual que una luz apagada no hace estrella.
+  // Va encima de todo (el filtro está en la "cámara") y sigue al orbe y a la cara: boca medida en lib-orbe (CX 522, MY 722).
+  var BOCA_X=522, BOCA_Y=730;
+  function orbeDestello(el){
+    var G=orbeGrupos(el); if(!G) return null; var u='pzd'+(++uid), defs=defsDe(G.svg), f=brillo(defs,u+'f');
+    var halo=G.cuerpo.querySelector('circle'), cara=G.svg.querySelector('[id$="cara"]');
+    var L=470, W=22; // rayo a plena voz (marco 1024): pasa el borde del orbe (R 293); base de 44 = ~5 px en la tarjeta de 124 px (con 26 no se distinguía)
+    var gr=nodo('radialGradient',{id:u+'g',gradientUnits:'userSpaceOnUse',cx:'0',cy:'0',r:L});
+    gr.appendChild(nodo('stop',{offset:'0','stop-color':'#ffffff','stop-opacity':'1'})); gr.appendChild(nodo('stop',{offset:'.22','stop-color':'#fff1d6','stop-opacity':'.95'}));
+    gr.appendChild(nodo('stop',{offset:'.6','stop-color':'#ffb36b','stop-opacity':'.55'})); gr.appendChild(nodo('stop',{offset:'1','stop-color':'#ff8a3c','stop-opacity':'0'}));
     defs.appendChild(gr);
-    var g=nodo('g',{'class':'pieza-estela',filter:'url(#'+u+'f)'}); G.svg.insertBefore(g,G.cuerpo);
-    // fantasmas del orbe en sus posiciones de antes: el más reciente más fuerte, los viejos se apagan (exposición larga)
-    var N=7, fant=[]; for(var i=0;i<N;i++){ var c=nodo('circle',{cx:OCX,r:(OR*.97).toFixed(0),fill:'url(#'+u+'g)',opacity:'0'}); g.appendChild(c); fant.push(c); }
-    var hist=[], DUR=.6;
-    var parar=bucle(el,function(dt,now){
-      var m=/translate\(0 (-?[\d.]+)\)/.exec(G.cuerpo.getAttribute('transform')||''), y=OCY+(m?+m[1]:0), t=now/1000;
-      hist.push({t:t,y:y}); while(hist.length&&hist[0].t<t-DUR) hist.shift();
-      fant.forEach(function(c,i){ var edad=(i+1)/N*DUR, h=null;
-        for(var k=hist.length-1;k>=0;k--){ if(t-hist[k].t>=edad){ h=hist[k]; break; } }
-        var sep=h?Math.abs(h.y-y):0; // solo asoma lo que el orbe ya no tapa
-        if(reduce||!h||sep<5){ c.setAttribute('opacity','0'); return; }
-        c.setAttribute('cy',h.y.toFixed(1)); c.setAttribute('opacity',((1-edad/DUR)*.75*Math.min(1,sep/40)).toFixed(2)); });
+    var sigue=nodo('g',{'class':'pieza-destello','pointer-events':'none',style:'mix-blend-mode:screen'}), enCara=nodo('g',{}), estrella=nodo('g',{filter:'url(#'+u+'f)',opacity:'0'});
+    sigue.appendChild(enCara); enCara.appendChild(estrella); G.svg.appendChild(sigue);
+    // 6 puntas (Star 6): una vertical y las otras cada 60°; cada rayo es una aguja que se afina hasta la punta
+    [90,150,210,270,330,30].forEach(function(a){ var r=a*Math.PI/180, c=Math.cos(r), s=Math.sin(r);
+      estrella.appendChild(nodo('path',{fill:'url(#'+u+'g)',d:'M'+(-s*W).toFixed(1)+' '+(c*W).toFixed(1)+' L'+(c*L).toFixed(1)+' '+(-s*L).toFixed(1)+' L'+(s*W).toFixed(1)+' '+(-c*W).toFixed(1)+' Z'})); });
+    estrella.appendChild(nodo('circle',{r:'34',fill:'url(#'+u+'g)'})); // el núcleo: la luz de la boca encandilada
+    var est='reposo', k=0;
+    var parar=bucle(el,function(dt){
+      var s=0; if(est==='hablar' && halo) s=Math.max(0,Math.min(1,((+halo.getAttribute('opacity')||0)-.6)/.3)); // brillo de la sílaba
+      if(reduce) s=est==='hablar'?.55:0;
+      k+=(s-k)*Math.min(1,dt*(s>k?28:11)); // se enciende al instante y se recoge un poco más lento, como una luz real
+      sigue.setAttribute('transform',G.cuerpo.getAttribute('transform')||'');
+      enCara.setAttribute('transform',cara?(cara.getAttribute('transform')||''):'');
+      var e=.25+.75*k; // el largo sigue al brillo
+      estrella.setAttribute('transform','translate('+BOCA_X+' '+BOCA_Y+') scale('+e.toFixed(3)+')');
+      estrella.setAttribute('opacity',(k<.04?0:Math.min(1,k*1.4)).toFixed(2));
     });
-    return { quitar:function(){ parar(); g.remove(); f.remove(); gr.remove(); } };
+    return { estado:function(n){ est=n; }, quitar:function(){ parar(); sigue.remove(); f.remove(); gr.remove(); } };
   }
 
   // ---------- Androide · Ojo de otro color ----------
@@ -865,7 +876,7 @@ var PIEZAS_VECTOR = (function(){
       +'<rect x="163" y="105" width="8" height="6" rx="3" opacity="0">'+blink(.55)+'</rect></g>'; }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, estela:orbeEstela }, vinilo:{ ojo:viniloOjo },
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, destello:orbeDestello }, vinilo:{ ojo:viniloOjo },
            casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
 
@@ -1824,7 +1835,7 @@ var M=[
    piezas:['Cables de luz','Grafitis del casco','Visor partido']},
   {id:'orbe', n:'Orbe', mov:'Flota; su cara es de luz', fn:'crearOrbeCapas', capa:'cuerpo',
    estilos:[['Ámbar','#ff9a3c',''],['Celeste','#38bdf8','hue-rotate(170deg)'],['Verde','#4ade80','hue-rotate(95deg)'],['Rosa','#f472b6','hue-rotate(-45deg) saturate(1.2)']],
-   piezas:[{n:'Estela de luz',v:'estela'},{n:'Chispas',v:'chispas'},'Visera']},
+   piezas:[{n:'Destello al hablar',v:'destello'},{n:'Chispas',v:'chispas'},'Visera']},
   {id:'slime', n:'Slime', mov:'Gelatina que tiembla y se derrite al cansarse', fn:'crearSlimeCapas', capa:'cuerpo',
    estilos:[['Naranja','#ff8a3d',''],['Lima','#a3e635','hue-rotate(60deg)'],['Uva','#a855f7','hue-rotate(-110deg) saturate(1.1)'],['Celeste','#38bdf8','hue-rotate(165deg)']],
    piezas:[{n:'Burbujas',v:'burbujas'},'Fruta adentro',{n:'Gotitas',v:'gotitas'}]},
@@ -1936,7 +1947,7 @@ function panel(){
       m.piezas.forEach(function(pz){ var n=pz.n||pz, v=pz.v, lib=(window.PIEZAS_VECTOR||{})[S.modelo]||{}, cara=(TH[S.modelo]?'<img src="'+TH[S.modelo]+'" alt="">':pisteroFrenteSVG({expr:'feliz'}));
         if(v && lib[v]){ var on=!!(S.puestas[S.modelo]||{})[v], b=document.createElement('button'); b.type='button'; b.className='it'+(on?' on':''); b.setAttribute('aria-pressed',on);
           b.innerHTML='<span class="vis pz">'+cara+'</span><small>'+n+'</small><small class="pz-est">'+(on?'Puesta':'Probar')+'</small>';
-          b.addEventListener('click',function(){ var p=S.puestas[S.modelo]=S.puestas[S.modelo]||{}; p[v]=!p[v]; aplicarPiezas(S.modelo); instDe(S.modelo).poner('feliz'); panel(); }); g2.appendChild(b); return; }
+          b.addEventListener('click',function(){ var p=S.puestas[S.modelo]=S.puestas[S.modelo]||{}; p[v]=!p[v]; aplicarPiezas(S.modelo); instDe(S.modelo).poner(v==='destello'&&p[v]?'hablar':'feliz'); panel(); }); g2.appendChild(b); return; }
         var d=document.createElement('div'); d.className='pend'; d.innerHTML='<span class="vis">'+cara+'</span><b>'+n+'</b><span>Por dibujar</span>'; g2.appendChild(d); });
       var av2=document.createElement('div'); av2.className='aviso'; av2.textContent='Las piezas de '+m.n+' solo le quedan a él. Las que dicen “Por dibujar” vienen en las próximas entregas.'; p.appendChild(av2);
     }

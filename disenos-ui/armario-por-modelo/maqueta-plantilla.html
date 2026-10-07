@@ -167,7 +167,7 @@ var M=[
    piezas:['Cables de luz','Grafitis del casco','Visor partido']},
   {id:'orbe', n:'Orbe', mov:'Flota; su cara es de luz', fn:'crearOrbeCapas', capa:'cuerpo',
    estilos:[['Ámbar','#ff9a3c',''],['Celeste','#38bdf8','hue-rotate(170deg)'],['Verde','#4ade80','hue-rotate(95deg)'],['Rosa','#f472b6','hue-rotate(-45deg) saturate(1.2)']],
-   piezas:[{n:'Estela de luz',v:'estela'},{n:'Chispas',v:'chispas'},'Visera']},
+   piezas:[{n:'Destello al hablar',v:'destello'},{n:'Chispas',v:'chispas'},'Visera']},
   {id:'slime', n:'Slime', mov:'Gelatina que tiembla y se derrite al cansarse', fn:'crearSlimeCapas', capa:'cuerpo',
    estilos:[['Naranja','#ff8a3d',''],['Lima','#a3e635','hue-rotate(60deg)'],['Uva','#a855f7','hue-rotate(-110deg) saturate(1.1)'],['Celeste','#38bdf8','hue-rotate(165deg)']],
    piezas:[{n:'Burbujas',v:'burbujas'},'Fruta adentro',{n:'Gotitas',v:'gotitas'}]},
@@ -279,7 +279,7 @@ function panel(){
       m.piezas.forEach(function(pz){ var n=pz.n||pz, v=pz.v, lib=(window.PIEZAS_VECTOR||{})[S.modelo]||{}, cara=(TH[S.modelo]?'<img src="'+TH[S.modelo]+'" alt="">':pisteroFrenteSVG({expr:'feliz'}));
         if(v && lib[v]){ var on=!!(S.puestas[S.modelo]||{})[v], b=document.createElement('button'); b.type='button'; b.className='it'+(on?' on':''); b.setAttribute('aria-pressed',on);
           b.innerHTML='<span class="vis pz">'+cara+'</span><small>'+n+'</small><small class="pz-est">'+(on?'Puesta':'Probar')+'</small>';
-          b.addEventListener('click',function(){ var p=S.puestas[S.modelo]=S.puestas[S.modelo]||{}; p[v]=!p[v]; aplicarPiezas(S.modelo); instDe(S.modelo).poner('feliz'); panel(); }); g2.appendChild(b); return; }
+          b.addEventListener('click',function(){ var p=S.puestas[S.modelo]=S.puestas[S.modelo]||{}; p[v]=!p[v]; aplicarPiezas(S.modelo); instDe(S.modelo).poner(v==='destello'&&p[v]?'hablar':'feliz'); panel(); }); g2.appendChild(b); return; }
         var d=document.createElement('div'); d.className='pend'; d.innerHTML='<span class="vis">'+cara+'</span><b>'+n+'</b><span>Por dibujar</span>'; g2.appendChild(d); });
       var av2=document.createElement('div'); av2.className='aviso'; av2.textContent='Las piezas de '+m.n+' solo le quedan a él. Las que dicen “Por dibujar” vienen en las próximas entregas.'; p.appendChild(av2);
     }
