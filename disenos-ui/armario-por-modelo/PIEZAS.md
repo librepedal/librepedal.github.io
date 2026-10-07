@@ -39,4 +39,4 @@ cuenta de Inty en su Chrome; Claude recorta, separa capas y anima. La cara y las
 ## Estado al 2026-10-07 (cuenta 2)
 - Aprobadas por Inty: Slime Burbujas y Gotitas.
 - Hechas y publicadas en la maqueta, sin OK todavía: Orbe Destello al hablar (opción 1 elegida por Inty), Casco vivo con direccionales agrandadas.
-- Gemini: cuenta de Inty confirmada en Chrome (inty405@gmail.com) y OK de descargas (2026-10-07). Orbe Visera hecha (`gemini/orbe-visera-v1.jpg`, editando la capa del casco; solo cambia la franja y 416–600), esperando su OK. Faltan 6.
+- Gemini: cuenta de Inty confirmada en Chrome (inty405@gmail.com) y OK de descargas (2026-10-07). Orbe Visera ✅ aprobada ("está bien así"). Slime Fruta adentro hecha (`gemini/slime-fruta-v2.jpg`: Gemini editó el cuerpo; se borró el cubo de detrás de la boca), esperando su OK; con otros colores de gelatina la fruta toma el tono (guinda azul en Uva). Faltan 5.

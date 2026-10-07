@@ -134,6 +134,21 @@ var PIEZAS_VECTOR = (function(){
              _revisar:function(t,l){ quieta=true; gotas.forEach(function(d){ d.t=99; }); lado=l||'der'; nueva(); gotas[gotas.length-1].t=t; } };
   }
 
+  // ---------- Slime · Fruta adentro (arte de Gemini) ----------
+  // Referencia real: la gelatina con fruta (durazno en conserva en cubos y guindas), con la fruta suspendida porque se agrega
+  // cuando la gelatina empieza a cuajar; se ve suave a través de ella. Gemini la dibujó EDITANDO la capa del cuerpo del Slime
+  // (misma cámara 1376x768): fuera de la fruta la gelatina coincide con la original. v2 = v1 sin el cubo que quedaba detrás
+  // de la boca (x 570–726, y 396–504: se devolvió la gelatina original con borde suave). La fruta tiene casi el color de la
+  // gelatina, así que no se puede separar por diferencia: la pieza reemplaza la imagen del cuerpo en todas sus copias
+  // (cuerpo y frente) con el mismo recorte del fondo azul marino que lib-slime, y al quitarla vuelve la original.
+  function slimeFruta(el){
+    var svg=el.querySelector('svg'), src=(window.PIEZAS_IMG||{}).slimeFruta; if(!svg||!src||typeof _recortarFondo!=='function') return null;
+    var cuerpo=svg.querySelector('g[id$="cuerpo"] > image'); if(!cuerpo) return null;
+    var original=cuerpo.getAttribute('href'), copias=[].filter.call(svg.querySelectorAll('image'),function(i){ return i.getAttribute('href')===original; }), vivo=true;
+    _recortarFondo(src,_sinMarino).then(function(png){ if(vivo) copias.forEach(function(i){ i.setAttribute('href',png); }); });
+    return { quitar:function(){ vivo=false; copias.forEach(function(i){ i.setAttribute('href',original); }); } };
+  }
+
   // ---------- Orbe: datos medidos en lib-orbe.js (marco 1024; orbe CX 522, CY 647, R 293) ----------
   var OCX=522, OCY=647, OR=293;
   function orbeGrupos(el){ var svg=el.querySelector('svg'); if(!svg) return null;
@@ -295,6 +310,6 @@ var PIEZAS_VECTOR = (function(){
       +lado(-1,.1)+lado(1,.55); }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo },
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo },
            casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
