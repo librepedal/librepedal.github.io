@@ -39,7 +39,7 @@
       else _vozNativaOWeb(item, durEst);
     };
     try{
-      const a = new Audio('voces-el/' + pisteroGenero + id + '.mp3');
+      const a = (typeof _vozAudio==='function') ? _vozAudio('voces-el/' + pisteroGenero + id + '.mp3') : new Audio('voces-el/' + pisteroGenero + id + '.mp3'); // registrada: ver _vozAudiosVivos en voz-motor.js
       // Aplica la prosodia del arquetipo elegido (rate) tambien a lo pre-grabado --
       // antes solo la voz en vivo (Azure runtime) sonaba distinta por personalidad,
       // asi que ElevenLabs (que tiene prioridad) sonaba igual sin importar el

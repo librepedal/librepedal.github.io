@@ -290,6 +290,19 @@ function decidirVoz(actualPrio, nuevaPrio){
 }
 var vozMejorada = localStorage.getItem('lp_vozneural')!=='off'; // var a propósito: leida desde fuera de este archivo (botón de UI). voz chilena (Worker Azure) por DEFECTO ENCENDIDA; solo se apaga si el usuario la desactivó (antes arrancaba off -> "volvía la voz antigua" al reinstalar/limpiar localStorage). Fallback a la nativa si no hay red.
 let _vozNeuralAudio = null;
+/* TODAS las voces vivas, no solo la última (2026-10-07, Inty: "las voces se pisan navegando", reportado muchas veces).
+   Causa de fondo, reproducida en tests/voz-sin-pisarse.test.mjs (162 de 400 viajes simulados con voces encima):
+   el motor solo vigilaba el ÚLTIMO <audio> (_vozNeuralAudio). Con señal débil, la voz en vivo tarda >12 s, el
+   temporizador de seguridad la abandona (_vozSiguiente) y la pausa; esa pausa hace que su play() RECHACE con
+   AbortError y su .catch(fallback) arrancaba el respaldo (Edge/nativa) de la frase vieja — _vozSiguiente no
+   cambiaba el turno (vozGen) — y ese respaldo sonaba encima de la frase siguiente. Además cualquier audio que
+   quedara sin vigilar podía terminar y adelantar la cola (su onended llamaba a _vozSiguiente a mitad de otra
+   frase). Ahora: cada <audio> de voz se crea con _vozAudio() (suelta todos los anteriores), _vozCallarTodo()
+   calla todo antes de cada frase, y todo corte cambia el turno. */
+const _vozAudiosVivos = new Set();
+function _vozSoltar(a){ try{ a.onplaying=a.onended=a.onerror=a.onloadedmetadata=null; a.pause(); }catch(e){} _vozAudiosVivos.delete(a); }
+function _vozCallarTodo(){ _vozAudiosVivos.forEach(_vozSoltar); _vozNeuralAudio=null; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} }
+function _vozAudio(url){ _vozAudiosVivos.forEach(_vozSoltar); const a=new Audio(url); _vozAudiosVivos.add(a); _vozNeuralAudio=a; return a; }
 var pisteroGenero = localStorage.getItem('lp_genero')||'l'; // var a propósito: leida/escrita desde fuera de este archivo (avatar, voz por archivo, botón de UI). 'l'=Pistero (Lorenzo) / 'c'=Pistera (Catalina)
 let VOCES_MANIFEST = null; // índice de frases fijas pre-generadas en voz chilena (Azure), se carga de voces/manifest.json
 (function(){ try{ fetch('voces/manifest.json').then(function(r){return r.ok?r.json():null;}).then(function(m){ VOCES_MANIFEST=m; }).catch(function(){}); }catch(e){} })();
@@ -311,9 +324,9 @@ function _esPremium(){
   return !!(typeof us!=='undefined' && us.premium && us.premium.activo && (!us.premium.expira || us.premium.expira > Date.now()));
 }
 function vozOcupada(){ return vozHablando || (typeof micOn!=='undefined' && micOn); }
-function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){} _pisteroCalla(); }
+function pararVoz(){ vozGen++; vozCola=[]; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; _vozCallarTodo(); _pisteroCalla(); }
 // Como pararVoz pero SIN borrar la cola: para cuando algo más importante interrumpe pero lo pendiente debe seguir sonando después.
-function _cortarActual(){ vozGen++; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){} }
+function _cortarActual(){ vozGen++; clearTimeout(vozTimerFin); vozHablando=false; vozPrioActual=0; _vozCallarTodo(); }
 function h(t, prio){
   prio = prio || PRIO_VOZ.INFO;
   // 3er argumento posicional a propósito, sin nombrarlo en la firma (arguments[2], no
@@ -362,6 +375,7 @@ function _esperarFinVoz(cb, maxEsperaMs, respiroMs){
 }
 function _reproducirVoz(item){
   const miGen=++vozGen; // turno de esta frase — ver nota junto a "let vozGen" más arriba
+  _vozCallarTodo(); // nada de antes puede seguir sonando (ver _vozAudiosVivos)
   vozHablando=true;
   vozPrioActual = item.prio || PRIO_VOZ.INFO; // qué tan importante es lo que suena ahora
   const durEst=_durEstVoz(item.limpio);
@@ -424,7 +438,7 @@ function _reproducirVoz(item){
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
   _vozNativaOWeb(item, durEst);
 }
-function _vozNativaOWeb(item, durEst){ try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onplaying=_vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=null; _vozNeuralAudio=null; } }catch(e){}
+function _vozNativaOWeb(item, durEst){ const miGen=vozGen; _vozAudiosVivos.forEach(_vozSoltar); _vozNeuralAudio=null;
   clearTimeout(vozTimerFin); vozTimerFin=setTimeout(_vozSiguiente, Math.round((durEst||_durEstVoz(item.limpio))*1.4)+800);
   if(lpTTS.disponible()){ lpTTS.hablar(item.limpio); return; } // nativa: avanza con el tiempo estimado
   if(!('speechSynthesis' in window)) return;
@@ -440,14 +454,14 @@ function _vozNativaOWeb(item, durEst){ try{ if(_vozNeuralAudio){ _vozNeuralAudio
     u.rate=Math.max(0.6,Math.min(1.6, 1.05 + (parseInt(_pr.rate,10)||0)/100));
     u.pitch=Math.max(0.6,Math.min(1.6, 1.08 + (parseInt(_pr.pitch,10)||0)/100));
     if(vozPref) u.voice=vozPref;
-    u.onend=u.onerror=function(){ clearTimeout(vozTimerFin); _vozSiguiente(); };
+    u.onend=u.onerror=function(){ if(miGen!==vozGen) return; clearTimeout(vozTimerFin); _vozSiguiente(); }; // cancel() dispara onerror tarde en la frase cortada
     speechSynthesis.speak(u);
   }catch(e){ clearTimeout(vozTimerFin); _vozSiguiente(); }
 }
 function _vozArchivo(item, durEst, id, miGen){
   // Reproduce la frase fija ya grabada en voz chilena (Azure): voces/{genero}{id}.mp3.
   // Si el archivo no carga (404, red), cae a la voz chilena EN VIVO (no a la gringa).
-  try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onplaying=_vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=null; _vozNeuralAudio=null; } }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} 
+  try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} 
   let cayo=false;
   // miGen!==vozGen: esta frase ya no es la vigente (se cortó o ya empezó la
   // siguiente) — no caer a la voz de respaldo por algo que ya nadie está esperando.
@@ -456,7 +470,7 @@ function _vozArchivo(item, durEst, id, miGen){
   // de vuelta a Azure hacia rebotar la cadena entre motores sin ganar nada.
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
-    const a=new Audio('voces/'+pisteroGenero+id+'.mp3');
+    const a=_vozAudio('voces/'+pisteroGenero+id+'.mp3');
     const _pr=_rateArq(); try{ a.playbackRate=_pr; }catch(_e2){}
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ var ms=a.duration*1000/_pr; clearTimeout(vozTimerFin); _pisteroHabla(ms+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(ms)+2500); } };
@@ -468,14 +482,14 @@ function _vozArchivo(item, durEst, id, miGen){
 }
 function _vozArchivoArq(item, durEst, arq, id, miGen){
   // Frase fija en la voz chilena del arquetipo (SLR71): voces/{arq}/{id}.mp3.
-  try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onplaying=_vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=null; _vozNeuralAudio=null; } }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} 
+  try{ speechSynthesis.cancel(); }catch(e){} try{ lpTTS.stop(); }catch(e){} 
   let cayo=false;
   // A la nativa y no a Azure (2026-08-16): estos archivos pregrabados ya son EL RESPALDO
   // de la voz en vivo, asi que si tambien fallan no queda nada mejor que intentar — mandarlos
   // de vuelta a Azure hacia rebotar la cadena entre motores sin ganar nada.
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
-    const a=new Audio('voces/'+arq+'/'+id+'.mp3');
+    const a=_vozAudio('voces/'+arq+'/'+id+'.mp3');
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; };
@@ -542,7 +556,7 @@ function _vozAzureRuntime(item, durEst, miGen, _yaProboEleven){
   };
   try{
     const pros=PERSONALIDAD_PROSODIA[pisteroPersonalidad]||PERSONALIDAD_PROSODIA.cercano;
-    const a=new Audio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&rate='+encodeURIComponent(pros.rate)+'&pitch='+encodeURIComponent(pros.pitch));
+    const a=_vozAudio(IA_URL+'/?aztts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&rate='+encodeURIComponent(pros.rate)+'&pitch='+encodeURIComponent(pros.pitch));
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
@@ -580,7 +594,7 @@ function _vozElevenRuntime(item, durEst, miGen, _yaProboAzure, _respaldo){
     // `vel` traduce la velocidad del arquetipo (PERSONALIDAD_PROSODIA, de -18% a +22%)
     // al parámetro de ElevenLabs. Sin esto la voz salía siempre a la velocidad por
     // defecto —rápida— y un tester reportó que no se le entendía a Pistero.
-    const a=new Audio(IA_URL+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&voz='+encodeURIComponent(_vozELid())+'&vel='+_velArq());
+    const a=_vozAudio(IA_URL+'/?eltts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&voz='+encodeURIComponent(_vozELid())+'&vel='+_velArq());
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; }; // ya suena: no dispares un segundo audio aunque llegue un error tardío
@@ -600,7 +614,7 @@ function _vozGoogleRuntime(item, durEst, miGen){
   let cayo=false;
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozEdgeRuntime(item, durEst, miGen); };
   try{
-    const a=new Audio(IA_URL+'/?gtts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&arq='+encodeURIComponent(pisteroPersonalidad));
+    const a=_vozAudio(IA_URL+'/?gtts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero+'&arq='+encodeURIComponent(pisteroPersonalidad));
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; };
@@ -618,7 +632,7 @@ function _vozEdgeRuntime(item, durEst, miGen){
   let cayo=false;
   const fallback=function(){ if(cayo || miGen!==vozGen) return; cayo=true; _vozNativaOWeb(item, durEst); };
   try{
-    const a=new Audio(IA_URL+'/?edgetts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
+    const a=_vozAudio(IA_URL+'/?edgetts='+encodeURIComponent(item.limpio.slice(0,480))+'&g='+pisteroGenero);
     _vozNeuralAudio=a;
     a.onloadedmetadata=function(){ if(isFinite(a.duration)&&a.duration>0){ clearTimeout(vozTimerFin); _pisteroHabla(a.duration*1000+300); vozTimerFin=setTimeout(_vozSiguiente, Math.round(a.duration*1000)+2500); } };
     a.onplaying=function(){ cayo=true; };
@@ -639,7 +653,7 @@ function _vozNeural(item, durEst){
       if(cayo) return;
       if(!d || !d.audio){ fallback(); return; }
       try{
-        const a=new Audio('data:audio/wav;base64,'+d.audio);
+        const a=_vozAudio('data:audio/wav;base64,'+d.audio);
         _vozNeuralAudio=a;
         a.onloadedmetadata=function(){ // recalibra animación de boca, ducking y respaldo al largo REAL del audio
           if(isFinite(a.duration) && a.duration>0){
@@ -661,9 +675,8 @@ function _vozSiguiente(){
   // -Azure/ElevenLabs- tarda en cargar por señal débil, típico pedaleando), el <audio> viejo
   // seguía vivo de fondo sin pausar y podía terminar de cargar y arrancar a sonar TARDE,
   // superpuesto con la frase siguiente que este mismo _vozSiguiente() ya puso a sonar.
-  try{ if(_vozNeuralAudio){ _vozNeuralAudio.pause(); _vozNeuralAudio.onended=_vozNeuralAudio.onerror=_vozNeuralAudio.onloadedmetadata=_vozNeuralAudio.onplaying=null; _vozNeuralAudio=null; } }catch(e){}
-  try{ speechSynthesis.cancel(); }catch(e){}
-  try{ lpTTS.stop(); }catch(e){}
+  // 2026-10-07: además cambia el turno: la frase abandonada por el temporizador ya no puede arrancar su respaldo tarde.
+  vozGen++; _vozCallarTodo();
   vozHablando=false; vozPrioActual=0;
   // saca el de MÁS prioridad (no el primero): un aviso importante no espera detrás de uno menor
   let idx=-1, mejor=-1;
