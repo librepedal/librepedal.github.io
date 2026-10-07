@@ -273,6 +273,7 @@ function sonidoCuadro(ts,gp,vReal){
 }
 function sonarMomento(m){ if(!sonidoListo()||typeof pistSonarNombre!=='function') return;
   if(m.d<100||m.fin) pistSonarNombre('timbre'); else if(m.cima) pistSonarNombre('fanfarria'); else if(m.expr==='adrenalina') pistSonarNombre('viento'); }
+function horaLuz(){ if(!D.sol) return ''; var h2=new Date(D.sol.salida).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}); return ' · salida '+h2+' · '+D.luz.n; }
 function durVuelo(){ return Math.max(45000,Math.min(80000,D.nuevo.total/1000*5000)); }
 // Lleva las horas de la traza grabada a la línea pegada al camino (por fracción de distancia) y saca la velocidad
 // (ventana ±80 m) y las pausas reales (más de 45 s casi sin moverse). Sin horas: N.vel=null y no hay pausas.
@@ -287,6 +288,20 @@ function tiemposReales(N,crudo){
   for(i=0;i<L.length-1;i++){ var j2=i+1; while(j2<L.length&&hav([L[i].lon,L[i].lat],[L[j2].lon,L[j2].lat])<30) j2++; var dur=L[j2-1].t-L[i].t;
     if(dur>=60000){ N.pausas.push({d:cc[i]*k,dur:dur}); i=j2-1; } }
 }
+// posición del sol (algoritmo aproximado de la NOAA/Meeus, error < 1°): altura y azimut en grados
+function solPos(ms,lat,lon){ var rd=Math.PI/180, d=ms/86400000-10957.5, g=(357.529+0.98560028*d)*rd, q=280.459+0.98564736*d,
+  L=(q+1.915*Math.sin(g)+0.020*Math.sin(2*g))*rd, e=(23.439-0.00000036*d)*rd, ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L)), dec=Math.asin(Math.sin(e)*Math.sin(L)),
+  gmst=(18.697374558+24.06570982441908*d)%24, H=((gmst*15+lon)*rd-ra), la=lat*rd,
+  alt=Math.asin(Math.sin(la)*Math.sin(dec)+Math.cos(la)*Math.cos(dec)*Math.cos(H)), az=Math.atan2(-Math.sin(H),Math.tan(dec)*Math.cos(la)-Math.sin(la)*Math.cos(H));
+  return {alt:alt/rd, az:((az/rd)+360)%360}; }
+// luz según la altura del sol: día · hora dorada · crepúsculo · noche (de noche el neón resalta aún más)
+function luzDe(alt){
+  if(alt==null||alt>25) return {n:'día',sky:'#5f8fc4',hor:'#c9d8e6',fog:'#aebfd0',brillo:.5,sat:-.45,hue:0};
+  if(alt>6) return {n:'luz de tarde/mañana',sky:'#6a86c0',hor:'#f1c99a',fog:'#d9b48f',brillo:.46,sat:-.3,hue:-8};
+  if(alt>-1) return {n:'hora dorada',sky:'#7a6fb0',hor:'#ffb36b',fog:'#e39a6a',brillo:.4,sat:-.2,hue:-14};
+  if(alt>-7) return {n:'crepúsculo',sky:'#2b2f63',hor:'#c06b6b',fog:'#3c3456',brillo:.3,sat:-.4,hue:-6};
+  return {n:'noche',sky:'#070b1c',hor:'#1b2550',fog:'#0b1028',brillo:.2,sat:-.6,hue:0};
+}
 function prepararRuta(crudo, pegada){
   D.hoy=linea(limpiarHoy(crudo).map(function(p){ return [p.lon,p.lat]; }));
   D.dur=(crudo[crudo.length-1].t&&crudo[0].t)?crudo[crudo.length-1].t-crudo[0].t:0; /* duración real (horas de los puntos), 0 si no hay */
@@ -296,6 +311,8 @@ function prepararRuta(crudo, pegada){
     var sub=0, ref=N.alt[0]; N.sub=N.alt.map(function(h){ if(h>ref+2){ sub+=h-ref; ref=h; } else if(h<ref-2) ref=h; return sub; });
     N.min=Math.min.apply(null,N.alt); N.max=Math.max.apply(null,N.alt); N.imax=N.alt.indexOf(N.max);
     tiemposReales(N,crudo);
+    D.sol=null; if(crudo[0]&&crudo[0].t>0){ var tm=crudo[0].t+(D.dur||0)/2, cen=N.c[Math.floor(N.c.length/2)]; D.sol=solPos(tm,cen[1],cen[0]); D.sol.salida=crudo[0].t; }
+    D.luz=luzDe(D.sol?D.sol.alt:null);
     return demPrecargar(N.c).then(function(){ ladoBajo(N); planear(N); });
   });
 }
@@ -353,7 +370,7 @@ function usarGPX(file,listo){
         RUTA.nombre=g.nombre||file.name.replace(/\.gpx$/i,''); RUTA.metodo=res.metodo;
         prog=0; perfilCache=null; PRE.hechos={}; PRE.cola=[]; PRE.pendientes={}; PRE.total=0; PRE.listos=0;
         $('tit').textContent=RUTA.nombre;
-        sub.textContent=fmt(D.nuevo.total/1000,1)+' km · '+(res.metodo==='valhalla'?'pegada al camino':res.metodo==='parcial'?'pegada al camino en '+res.motivo+' tramos':'GPS limpio (no se pudo pegar al camino)');
+        sub.textContent=fmt(D.nuevo.total/1000,1)+' km'+horaLuz()+' · '+(res.metodo==='valhalla'?'pegada al camino':res.metodo==='parcial'?'pegada al camino en '+res.motivo+' tramos':'GPS limpio (no se pudo pegar al camino)');
         reiniciar(); }); }); })
   .catch(function(e){ sub.textContent='No se pudo usar ese archivo: '+e.message; console.error(e); });
 }
@@ -386,14 +403,56 @@ function mostrarResumen(){ var R=D.nuevo.resumen, el=$('resumen'); if(!R||!el) r
     +'<div class="rs-grid">'+fila('Distancia',kmTxt(R.dist))+fila('Tiempo',R.dur?durTxt(R.dur):'–')+fila('Subiste','+'+Math.round(R.sub)+' m')+fila('Subiendo',kmTxt(R.kmSube))+'</div>'
     +'<ul class="rs-hitos">'+hitos.map(function(h){ return '<li class="'+h[2]+'"><span>'+h[0]+'</span><b>'+h[1]+'</b></li>'; }).join('')+'</ul>';
   if(cajas&&cajas.inn){ cajas.k=.8; cajas.inn.style.transform='scale(.8)'; }   // en la vista general el rostro va chico
+  el.innerHTML+='<button class="btn play rs-comp" id="compartir">Compartir mi viaje</button>';
+  $('compartir').onclick=compartirViaje;
   document.body.classList.add('fin'); if(!yaFin) setTimeout(function(){ encuadrar(1400); },60); }   // reencuadra sobre la tarjeta
+function cargarImg(src){ return new Promise(function(ok,mal){ var im=new Image(); im.onload=function(){ ok(im); }; im.onerror=mal; im.src=src; }); }
+function fotoMapa(){ return new Promise(function(ok){ mapa.once('render',function(){ try{ ok(mapa.getCanvas().toDataURL('image/jpeg',.92)); }catch(e){ console.warn('[sobrevuelo] foto del mapa', e); ok(null); } }); mapa.triggerRepaint(); }); }
+function svgDelRostro(){ var x;
+  if(personaje.capas && cajas.host && cajas.host.querySelector('svg')){ x=cajas.host.querySelector('svg').cloneNode(true); x.setAttribute('xmlns','http://www.w3.org/2000/svg'); x.setAttribute('width','400'); x.setAttribute('height','400'); return new XMLSerializer().serializeToString(x); }
+  return cara('orgulloso').replace('<svg ','<svg width="400" height="336" '); }
+function tarjetaCompartir(){
+  var R=D.nuevo.resumen, W=1080, H=1350, rs=$('resumen'), Hc=mapa.getContainer().clientHeight;
+  return Promise.all([fotoMapa(), cargarImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgDelRostro())).catch(function(){ return null; }), cargarImg('../../../logo-transparent.png').catch(function(){ return null; })]).then(function(r){
+    var cv=document.createElement('canvas'); cv.width=W; cv.height=H; var c=cv.getContext('2d',{willReadFrequently:true}); /* lienzo en memoria: el acelerado por GPU perdía lo dibujado al exportar */
+    c.fillStyle='#0a0f1d'; c.fillRect(0,0,W,H);
+    var dibujarMapa=function(img){ var cvM=mapa.getCanvas(), sh=cvM.height*Math.max(.3,(rs?rs.getBoundingClientRect().top:Hc*.5)/Hc), sw=cvM.width, k=Math.max(W/sw,820/sh), dw=sw*k, dh=sh*k;
+      c.save(); c.beginPath(); c.rect(0,0,W,820); c.clip(); c.drawImage(img,0,0,sw,sh,(W-dw)/2,(820-dh)/2,dw,dh); c.restore();
+      var gr=c.createLinearGradient(0,560,0,830); gr.addColorStop(0,'rgba(10,15,29,0)'); gr.addColorStop(1,'#0a0f1d'); c.fillStyle=gr; c.fillRect(0,560,W,270); };
+    var seguir=r[0]?cargarImg(r[0]).then(dibujarMapa):Promise.resolve();
+    return seguir.then(function(){
+      // logo real de la app (arriba a la izquierda) y rostro del Pistero elegido (arriba a la derecha)
+      if(r[2]){ c.save(); c.shadowColor='rgba(0,0,0,.6)'; c.shadowBlur=18; c.drawImage(r[2],28,24,170,170); c.restore(); }
+      if(r[1]){ var cx=930, cy=130, rr=96; c.save(); c.beginPath(); c.arc(cx,cy,rr,0,7); c.fillStyle='#0f1524'; c.fill(); c.clip(); if(personaje.capas) c.drawImage(r[1],cx-rr,cy-rr,rr*2,rr*2); else { var ih=r[1].height/r[1].width; c.drawImage(r[1],cx-rr*1.15,cy-rr*1.15*ih+rr*.22,rr*2.3,rr*2.3*ih); } c.restore();
+        c.save(); c.beginPath(); c.arc(cx,cy,rr,0,7); c.lineWidth=8; c.strokeStyle='#ffd700'; c.shadowColor='#ffd700'; c.shadowBlur=26; c.stroke(); c.restore(); }
+      c.fillStyle='#e8edf6'; var fz=60; do{ c.font='800 '+fz+'px system-ui,-apple-system,Segoe UI,Roboto,sans-serif'; fz-=2; }while(fz>34 && c.measureText(RUTA.nombre).width>W-112); c.fillText(RUTA.nombre,56,890,W-112); /* el nombre entra completo: baja la letra en vez de cortarlo */
+      var fecha=D.sol?new Date(D.sol.salida).toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})+horaLuz().replace(' · salida',' ·'):'';
+      c.fillStyle='#9fb3c8'; c.font='600 30px system-ui,sans-serif'; c.fillText(fecha||'Mi viaje en Libre Pedal',56,936);
+      var datos=[['DISTANCIA',fmt(R.dist/1000,1)+' km'],['TIEMPO',R.dur?durTxt(R.dur):'–'],['SUBISTE','+'+Math.round(R.sub)+' m'],['MÁS ALTO',Math.round(R.altMax)+' m']];
+      datos.forEach(function(d2,k){ var x=56+k*248; c.fillStyle='#141a2b'; c.beginPath(); c.roundRect(x,972,232,128,22); c.fill(); c.strokeStyle='rgba(255,255,255,.09)'; c.lineWidth=2; c.stroke();
+        c.fillStyle='#9fb3c8'; c.font='700 22px system-ui,sans-serif'; c.fillText(d2[0],x+22,1014); c.fillStyle='#e8edf6'; c.font='800 40px system-ui,sans-serif'; c.fillText(d2[1],x+22,1072); });
+      var hitos=[]; if(R.sMax) hitos.push(['#ff8a1f','La subida más dura','+'+Math.round(R.sMax.gan)+' m · km '+fmt(R.sMax.d0/1000,1)]);
+      hitos.push(['#ff2d6f','Lo más empinado',fmt(R.pendMax*100,0)+' % · km '+fmt(R.dPendMax/1000,1)]);
+      if(D.nuevo.vMax&&D.nuevo.vMax.v>=15) hitos.push(['#22d3ff','Lo más rápido',Math.round(D.nuevo.vMax.v)+' km/h']); else if(R.bMax) hitos.push(['#22d3ff','La mejor bajada','−'+Math.round(-R.bMax.gan)+' m']);
+      hitos.slice(0,3).forEach(function(h3,k){ var y=1128+k*56; c.fillStyle=h3[0]; c.fillRect(56,y,8,44); c.fillStyle='#9fb3c8'; c.font='600 30px system-ui,sans-serif'; c.fillText(h3[1],84,y+33);
+        c.fillStyle='#e8edf6'; c.font='800 30px system-ui,sans-serif'; c.textAlign='right'; c.fillText(h3[2],W-56,y+33); c.textAlign='left'; });
+      c.fillStyle='#fc4c02'; c.font='800 26px system-ui,sans-serif'; c.textAlign='center'; c.fillText('librepedal.cl',W/2,H-18); c.textAlign='left';
+      return new Promise(function(ok){ cv.toBlob(ok,'image/png'); });
+    }); });
+}
+function compartirViaje(){ var b=$('compartir'); if(b){ b.disabled=true; b.textContent='Preparando la imagen…'; }
+  tarjetaCompartir().then(function(blob){ var nom='libre-pedal-'+RUTA.nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png', file=new File([blob],nom,{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})) return navigator.share({files:[file],title:RUTA.nombre,text:'Mi viaje en Libre Pedal'}).catch(function(){});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); },4000); })
+  .catch(function(e){ console.warn('[sobrevuelo] compartir', e); }).then(function(){ if(b){ b.disabled=false; b.textContent='Compartir mi viaje'; } }); }
 function reiniciarEstado(){ document.body.classList.remove('fin'); intro=null; ritmoAct=0; huboCuesta=0; cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); document.body.classList.remove('pp-on'); }
 function iniciar(){
-  mapa=new maplibregl.Map({container:'mapa',style:SAT,center:D.nuevo.c[0],zoom:12,pitch:0,maxPitch:85,attributionControl:{compact:true},pixelRatio:LIVIANO?Math.min(window.devicePixelRatio||1,1.5):(window.devicePixelRatio||1),maxTileCacheSize:LIVIANO?600:null});
+  mapa=new maplibregl.Map({container:'mapa',style:SAT,center:D.nuevo.c[0],zoom:12,pitch:0,maxPitch:85,attributionControl:{compact:true},pixelRatio:LIVIANO?Math.min(window.devicePixelRatio||1,1.5):(window.devicePixelRatio||1),maxTileCacheSize:LIVIANO?600:null,preserveDrawingBuffer:true}); /* para poder sacar la foto del mapa al compartir (si no, sale negra) */
   mapa.on('style.load',montarCapas); window._demo=mapa;
   window._ir=function(p){ reiniciarEstado(); prog=p; while(sigM<D.nuevo.momentos.length && D.nuevo.momentos[sigM].d<p*D[modo].total) sigM++; MASC.d=p*D[modo].total; pintar(16,performance.now(),true); };
   window._ver=function(ix,avance){ var N=D.nuevo, m=N.momentos[ix]; window._ir(Math.min(1,(m.d+1)/N.total)); var ts=performance.now(); primerPlano(m,ts); exprAct=m.expr; caraHasta=ts+5000; if(m.cima){ espTot=2800; espera=2800*(1-(avance||0)); } cam=null; pintar(16,ts,true); };
   window._fin=function(){ window._ir(1); mostrarResumen(); };
+  window._tarjeta=function(){ return tarjetaCompartir().then(function(b){ return new Promise(function(ok){ var fr=new FileReader(); fr.onload=function(){ ok(fr.result); }; fr.readAsDataURL(b); }); }); };
   window._dbgN=function(){ var N=D.nuevo; return JSON.stringify({pausas:N.pausas,vMax:N.vMax,conT:!!N.t}); };
   window._cara=function(e){ exprAct=e; rostroCara(e); };
   window._tomas=function(){ return D.nuevo.seq.map(function(p){ return p.t+' '+Math.round(p.d0)+'-'+Math.round(p.d1); }).concat(D.nuevo.momentos.map(function(m){ return 'cara '+m.expr+' @'+Math.round(m.d)+' '+m.txt; })); };
@@ -415,7 +474,7 @@ function iniciar(){
   pf.addEventListener('pointerup',function(){ arrastrando=false; });
   window.addEventListener('resize',dibujarPerfil);
   nota();
-  $('tit').textContent=RUTA.nombre; $('titSub').textContent=fmt(D.nuevo.total/1000,1)+' km · ruta de demostración (camino real OSM, GPS simulado)';
+  $('tit').textContent=RUTA.nombre; $('titSub').textContent=fmt(D.nuevo.total/1000,1)+' km'+horaLuz()+' · ruta de demostración (camino real OSM, GPS simulado)';
 }
 function marcarSeg(id,k,v){ [].forEach.call($(id).children,function(b){ b.classList.toggle('on',b.dataset[k]===v); }); }
 function actualizarCarga(){ var b=$('play'); if(!b) return; if(cargaInicial){ var f=faltanHasta(cargaInicial.hasta), tot=Math.max(1,PRE.total); b.textContent='Preparando el vuelo · '+Math.round(100*Math.max(0,1-f/cargaInicial.f0))+' %'; } else actualizarBoton(); }
@@ -429,10 +488,15 @@ function montarCapas(){
   if(!m.getSource('dem')) m.addSource('dem',{type:'raster-dem',tiles:[DEM_TILE],encoding:'terrarium',tileSize:512,maxzoom:12,attribution:'© Mapterhorn'});
   if(modo==='nuevo'){
     m.setTerrain({source:'dem',exaggeration:EXAG});
-    try{ m.setSky({'sky-color':'#5f8fc4','horizon-color':'#c9d8e6','fog-color':'#aebfd0','sky-horizon-blend':.6,'horizon-fog-blend':.45,'fog-ground-blend':.25}); }catch(e){}
+    var LZ=D.luz||luzDe(null); try{ m.setSky({'sky-color':LZ.sky,'horizon-color':LZ.hor,'fog-color':LZ.fog,'sky-horizon-blend':.6,'horizon-fog-blend':.45,'fog-ground-blend':.25}); }catch(e){}
+    // sombras del relieve desde donde estaba el sol (solo si era de día)
+    if(D.sol&&D.sol.alt>0){ var somb={'hillshade-illumination-direction':D.sol.az,'hillshade-illumination-anchor':'map','hillshade-exaggeration':Math.min(.6,.25+(30-Math.min(30,D.sol.alt))/60),'hillshade-shadow-color':'#000','hillshade-highlight-color':'#fff6e0','hillshade-accent-color':'#000'};
+      if(!m.getSource('dem-sombra')) m.addSource('dem-sombra',{type:'raster-dem',tiles:[DEM_TILE],encoding:'terrarium',tileSize:512,maxzoom:12});
+      if(capa==='sat' && !m.getLayer('sol')) m.addLayer({id:'sol',type:'hillshade',source:'dem-sombra',paint:somb}); }
     if(capa==='calles' && !m.getLayer('relieve')){ var antes; m.getStyle().layers.some(function(l){ if(l.type==='symbol'){ antes=l.id; return true; } }); if(!m.getSource('dem-sombra')) m.addSource('dem-sombra',{type:'raster-dem',tiles:[DEM_TILE],encoding:'terrarium',tileSize:512,maxzoom:12}); m.addLayer({id:'relieve',type:'hillshade',source:'dem-sombra',paint:{'hillshade-exaggeration':.5,'hillshade-shadow-color':'#5b4a3a'}},antes); }
     // fondo apagado para que el neón destaque (la técnica "firefly" pide base oscura y desaturada)
-    if(m.getLayer('sat')){ m.setPaintProperty('sat','raster-brightness-max',.5); m.setPaintProperty('sat','raster-saturation',-.45); }
+    if(m.getLayer('sat')){ m.setPaintProperty('sat','raster-brightness-max',LZ.brillo); m.setPaintProperty('sat','raster-saturation',LZ.sat); m.setPaintProperty('sat','raster-hue-rotate',LZ.hue); }
+    if(m.getLayer('relieve')&&D.sol&&D.sol.alt>0){ m.setPaintProperty('relieve','hillshade-illumination-direction',D.sol.az); m.setPaintProperty('relieve','hillshade-illumination-anchor','map'); }
   } else { m.setTerrain(null); }
   // con relieve los símbolos se dibujan SOBRE las líneas: los escudos de ruta (T-551) tapaban el trazado
   m.getStyle().layers.forEach(function(l){ if(l.type==='symbol' && /shield|oneway/.test(l.id)) m.setLayoutProperty(l.id,'visibility','none'); });

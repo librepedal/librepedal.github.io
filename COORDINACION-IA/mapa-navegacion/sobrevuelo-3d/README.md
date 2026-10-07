@@ -159,3 +159,13 @@ y frenan si la red se atrasa; Mapbox recomienda menos capas y fuentes separadas 
   cima, ráfaga en bajada/volando. Botón de parlante dibujado a medida; preferencia guardada (`lp_sbv_sonido`).
 - Probado con `pruebas/prueba-pausa-y-velocidad.gpx` (sintético: pausa de 4 min en el km 8,3 y tramo a 40 km/h en el km 13).
   Sonido verificado por las llamadas (timbre, viento, fanfarria, viento, timbre), no escuchado.
+
+## v12 (2026-10-07) — luz real del momento del viaje + compartir como imagen
+- **Luz real**: posición del sol (NOAA/Meeus aprox.; validado: ocaso Valdivia 5-oct = 20:03) a media ruta y en su
+  centro → día / luz de mañana-tarde / hora dorada / crepúsculo / noche: colores de cielo, brillo y tono del satélite.
+  De día, **sombras del relieve desde donde estaba el sol** (hillshade con el azimut real). Subtítulo: "salida 10:00 · día".
+- **Compartir mi viaje**: tarjeta 1080×1350 (formato de historia/Instagram, como las de Strava): foto del mapa con la
+  ruta neón, logo real (`logo-transparent.png`), rostro del Pistero elegido, nombre (la letra se achica para que entre
+  completo), fecha y luz, 4 datos y 3 hitos, librepedal.cl. Web Share con archivo en el teléfono; si no, descarga PNG.
+- Causas raíz encontradas al probar: la foto del mapa salía negra sin `preserveDrawingBuffer`; y el lienzo 2D acelerado
+  por GPU perdía lo dibujado al exportar en el Chrome de prueba → lienzo `willReadFrequently` (en memoria).
