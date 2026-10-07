@@ -804,7 +804,31 @@ var PIEZAS_VECTOR = (function(){
     return { quitar:function(){ parar(); g.remove(); f.remove(); gr.remove(); } };
   }
 
-  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, estela:orbeEstela } };
+  // ---------- Androide · Ojo de otro color ----------
+  // Sus ojos son diafragmas de cámara (lib-vinilo.js: iris naranjo encendido, hojas, brillo). Referencia real: el
+  // TRATAMIENTO de los lentes de cámara: un lente multicapa refleja pequeños destellos violeta y verde, y cada tratamiento
+  // tiene su tinte. El ojo derecho pasa a un lente verdeazulado con esos reflejos; en los ojos de LED (feliz, dormir)
+  // conserva su color, así nunca vuelve a verse naranjo. Ojo derecho medido en lib-vinilo: EX 795, EY 391, RI 43.
+  function viniloOjo(el){
+    var svg=el.querySelector('svg'); if(!svg) return null;
+    var ojo=[].filter.call(svg.querySelectorAll('g[clip-path]'),function(g){ return /o1\)$/.test(g.getAttribute('clip-path')||''); })[0]; if(!ojo) return null;
+    var filtro='hue-rotate(148deg) saturate(.92)'; // naranjo -> verdeazulado (tinte de tratamiento de lente)
+    ojo.style.filter=filtro;
+    var u='pzo'+(++uid), fb=nodo('filter',{id:u,x:'-50%',y:'-50%',width:'200%',height:'200%'}); fb.appendChild(nodo('feGaussianBlur',{stdDeviation:'1.4'})); defsDe(svg).appendChild(fb);
+    var g=nodo('g',{'clip-path':ojo.getAttribute('clip-path'),'class':'pieza-ojo','pointer-events':'none'}); ojo.parentNode.insertBefore(g,ojo.nextSibling);
+    var gb=nodo('g',{filter:'url(#'+u+')'}); g.appendChild(gb); // destellos difusos, como los reflejos reales de un lente
+    var violeta=nodo('path',{fill:'none',stroke:'#c77dff','stroke-width':'5','stroke-linecap':'round',opacity:'.6'}), verde=nodo('path',{fill:'none',stroke:'#9dff7a','stroke-width':'3.5','stroke-linecap':'round',opacity:'.45'});
+    gb.appendChild(violeta); gb.appendChild(verde);
+    function arco(x,y,r,a0,a1){ var p=Math.PI/180; return 'M'+(x+Math.cos(a0*p)*r).toFixed(1)+' '+(y+Math.sin(a0*p)*r).toFixed(1)+' A'+r+' '+r+' 0 0 1 '+(x+Math.cos(a1*p)*r).toFixed(1)+' '+(y+Math.sin(a1*p)*r).toFixed(1); }
+    var parar=bucle(el,function(){
+      var c=ojo.querySelector('circle'), lente=c && /url\(/.test(c.getAttribute('fill')||''); // diafragma (no LED)
+      if(!lente){ violeta.setAttribute('d',''); verde.setAttribute('d',''); return; }
+      var x=+c.getAttribute('cx'), y=+c.getAttribute('cy');
+      violeta.setAttribute('d',arco(x,y,31,-62,-18)); verde.setAttribute('d',arco(x,y,24,118,152)); });
+    return { quitar:function(){ parar(); g.remove(); fb.remove(); ojo.style.filter=''; } };
+  }
+
+  return { slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas }, orbe:{ chispas:orbeChispas, estela:orbeEstela }, vinilo:{ ojo:viniloOjo } };
 })();
 
 </script>
@@ -1768,7 +1792,7 @@ var M=[
    piezas:[{n:'Burbujas',v:'burbujas'},'Fruta adentro',{n:'Gotitas',v:'gotitas'}]},
   {id:'vinilo', n:'Androide de vinilo', mov:'Servos, ojos de diafragma y boca LED', fn:'crearViniloCapas', capa:'casco',
    estilos:[['Naranja','#f08a4b',''],['Celeste','#38bdf8','hue-rotate(175deg)'],['Menta','#5eead4','hue-rotate(140deg) saturate(.9)'],['Grafito','#3a3f4a','grayscale(1) brightness(.34) contrast(1.15)']],
-   piezas:['Antena con resorte','Calcomanías reflectantes','Ojo de otro color']},
+   piezas:['Antena con resorte','Calcomanías reflectantes',{n:'Ojo de otro color',v:'ojo'}]},
   {id:'casco', n:'Casco vivo', mov:'Parpadea y habla con su visor LED',
    estilos:[['Naranja','#fc4c02'],['Azul','#2f80ed'],['Verde','#22c55e'],['Rojo','#e11d48'],['Negro','#2a2f3a']],
    piezas:['Cejas','Calcomanías reflectantes','Luz frontal y direccionales']},
