@@ -1,0 +1,227 @@
+<title>Referencias de Elige tu Pistero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Una sola columna de lectura con láminas anchas: la estética real de Libre Pedal (fondo de la app, naranja de marca).
+   Look oscuro único, igual que la app. */
+:root{
+  --d:#0a0f1d; --surf:#121a2c; --surf2:#0e1526; --line:rgba(159,179,200,.16);
+  --p:#fc4c02; --p-suave:rgba(252,76,2,.14); --ok:#39ff88;
+  --tx:#e8eeff; --sub:#9fb3c8; --mute:#6f7f98;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-txt:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-txt);font-size:16px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:44px}
+h1,h2,h3{font-family:var(--f-disp);font-weight:800;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:clamp(2.2rem,7vw,3.4rem);line-height:.98}
+h1 span{color:var(--p)}
+h2{font-size:clamp(1.5rem,4vw,2rem);line-height:1.05}
+h3{font-size:1.3rem;line-height:1.1}
+p{margin:0;max-width:68ch}
+.eyebrow{font-family:var(--f-disp);font-weight:600;font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p)}
+.lead{color:var(--sub);font-size:1.06rem}
+.sec{display:grid;gap:16px}
+.sec>header{display:grid;gap:6px}
+.lamina{background:var(--surf2);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.lamina img{display:block;width:100%;height:auto}
+.modelos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
+.modelos div{padding:12px 14px;display:grid;gap:2px;min-width:0}
+.modelos div+div{border-left:1px solid var(--line)}
+.modelos b{font-family:var(--f-disp);font-size:1.15rem;font-weight:800}
+.modelos small{color:var(--sub);font-size:.84rem;line-height:1.35}
+.estado{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ok)}
+.estado.sigue{color:#ffd27a}
+.nota{color:var(--sub);font-size:.92rem}
+.ref{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start;padding-block:22px;border-top:1px solid var(--line)}
+.ref .txt{display:grid;gap:10px;min-width:0}
+.ref .fuente{font-size:.82rem;color:var(--mute)}
+.ref .fuente a{color:var(--sub)}
+.toma{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.toma li{padding-left:22px;position:relative;font-size:.96rem}
+.toma li::before{content:'';position:absolute;left:4px;top:.62em;width:9px;height:9px;border-radius:50%;background:var(--p)}
+.toma li.no::before{background:transparent;border:2px solid var(--mute)}
+.toma li.no{color:var(--sub)}
+.duo{display:grid;gap:10px}
+.solo-txt{background:var(--surf);border:1px dashed var(--line);border-radius:18px;padding:22px;display:grid;gap:8px;align-content:center;min-height:180px}
+.solo-txt b{font-family:var(--f-disp);font-size:1.25rem}
+.flujo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;counter-reset:paso}
+.paso{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:6px;align-content:start;min-width:0}
+.paso .n{font-family:var(--f-disp);font-weight:800;font-size:2rem;line-height:1;color:var(--p)}
+.paso b{font-weight:600}
+.paso p{font-size:.92rem;color:var(--sub)}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+.tabla{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-disp);font-weight:600;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);background:var(--surf)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.preg{display:grid;gap:12px;counter-reset:q}
+.preg li{background:var(--p-suave);border:1px solid rgba(252,76,2,.38);border-radius:14px;padding:14px 16px 14px 52px;position:relative;list-style:none}
+.preg li::before{counter-increment:q;content:counter(q);position:absolute;left:16px;top:13px;font-family:var(--f-disp);font-weight:800;font-size:1.5rem;line-height:1;color:var(--p)}
+.preg li span{display:block;color:var(--sub);font-size:.92rem;margin-top:4px}
+.preg{padding:0;margin:0}
+a{color:var(--tx);text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--p);outline-offset:2px;border-radius:3px}
+@media (max-width:760px){
+  .ref{grid-template-columns:1fr}
+  .modelos{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modelos div:nth-child(3){border-left:0}
+  .modelos div:nth-child(n+3){border-top:1px solid var(--line)}
+  .flujo{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:420px){ .flujo{grid-template-columns:1fr} }
+</style>
+
+<main class="wrap">
+  <header class="sec">
+    <div class="eyebrow">Libre Pedal · Pistero · pieza 1 de 3</div>
+    <h1>Elige tu <span>Pistero</span></h1>
+    <p class="lead">Referencias antes de diseñar. La pantalla tiene un trabajo: que cada ciclista vea los modelos animados de verdad, elija el suyo en dos toques y pueda cambiarlo cuando quiera. Durante la prueba todo el catálogo es gratis, y lo que la gente elija decide qué modelos quedan.</p>
+  </header>
+
+  <section class="sec">
+    <header>
+      <h2>Los modelos que entran a la prueba</h2>
+      <p class="nota">Capturas reales de cada modelo armado por capas (rama <code>feature/armario-piezas</code>). Cada uno tiene su forma de moverse y sus 12 caras para el sobrevuelo.</p>
+    </header>
+    <figure class="lamina" style="margin:0">
+      <img src="{{img:mods}}" alt="Los cuatro modelos de Pistero: Cyberpunk, Orbe, Slime y Androide de vinilo, cada uno con su casco de ciclismo" width="1280" height="320">
+      <div class="modelos">
+        <div><span class="estado">Aprobado</span><b>Cyberpunk</b><small>Se mueve a saltos, 12 cuadros por segundo; visor de ranura tipo Gort y boca LED.</small></div>
+        <div><span class="estado">Movimiento aprobado</span><b>Orbe</b><small>Flota; cara de luz con cejas de luz y halo de color.</small></div>
+        <div><span class="estado sigue">"Sigue"</span><b>Slime</b><small>Gelatina que tiembla, párpados de gelatina, se derrite cuando se cansa.</small></div>
+        <div><span class="estado sigue">"Sigue"</span><b>Androide de vinilo</b><small>Servos, ojos de diafragma y boca LED; LED que fallan cuando se agota.</small></div>
+      </div>
+    </figure>
+    <p class="nota">El Vidrio entra cuando apruebes su forma (<code>vidrio4-compacto.jpg</code>). En la medición queda marcado como llegado después, para compararlo de forma justa.</p>
+  </section>
+
+  <section class="sec">
+    <header>
+      <h2>Cómo lo resuelven otros</h2>
+      <p class="nota">Lo que tomamos de cada uno (punto naranja) y lo que no (círculo vacío).</p>
+    </header>
+
+    <article class="ref">
+      <div class="duo">
+        <div class="lamina"><img src="{{img:pogobuddy-1}}" alt="Pokémon GO: Pikachu, Porygon y Lapras grandes al centro, uno por pantalla, con la distancia caminada juntos"></div>
+        <div class="lamina"><img src="{{img:pogobuddy-2}}" alt="Pokémon GO: mensaje Flipper is now your buddy y la pregunta antes de cambiar de compañero"></div>
+      </div>
+      <div class="txt">
+        <h3>Pokémon GO · elegir compañero</h3>
+        <p>Es lo más parecido a Pistero: un compañero que va contigo mientras te mueves y suma por la distancia. Un personaje grande por pantalla, su nombre y cuánto han caminado juntos.</p>
+        <ul class="toma">
+          <li>Un modelo grande al centro, animado, con su nombre.</li>
+          <li>Al elegir, una sola frase que lo confirma: "Orbe ya es tu Pistero".</li>
+          <li>Pistero recuerda los km que llevan juntos, por modelo (también sirve para medir la prueba).</li>
+          <li class="no">Su aviso de que al cambiar pierdes el progreso. En Libre Pedal cambiar de modelo no quita nada.</li>
+        </ul>
+        <p class="fuente">Fuente: <a href="https://www.imore.com/how-add-buddy-pokemon-get-more-candy-pokemon-go">iMore, cómo elegir compañero en Pokémon GO</a></p>
+      </div>
+    </article>
+
+    <article class="ref">
+      <div class="lamina"><img src="{{img:duolingo-2}}" alt="Duolingo: creador de avatar con el avatar grande arriba, fila de categorías con íconos y grilla de opciones de expresión"></div>
+      <div class="txt">
+        <h3>Duolingo · creador de avatar</h3>
+        <p>El avatar va grande arriba, una fila de categorías con íconos al medio y la grilla de opciones abajo; cada opción ya muestra al avatar con ese cambio puesto.</p>
+        <ul class="toma">
+          <li>Cada tarjeta muestra al modelo de verdad, no un ícono genérico.</li>
+          <li>El orden vista grande, categorías y grilla, para el armario (pieza 2).</li>
+          <li class="no">Las categorías humanas (piel, pelo, cuerpo). Los modelos son "rostro con casco, sin toque humano".</li>
+        </ul>
+        <p class="fuente">Fuente: <a href="https://blog.duolingo.com/avatar-creator/">Blog de Duolingo, creador de avatar</a></p>
+      </div>
+    </article>
+
+    <article class="ref">
+      <div class="duo">
+        <div class="lamina"><img src="{{img:memoji-3}}" alt="Memoji de Apple: cabeza grande arriba, pestañas de categoría deslizables y fichas de color de piel"></div>
+        <div class="lamina"><img src="{{img:memoji-5}}" alt="Memoji de Apple: categorías de barba, cejas, gorro y lentes, cada opción con la cabeza completa"></div>
+      </div>
+      <div class="txt">
+        <h3>Memoji (Apple) · editor</h3>
+        <p>La cabeza queda fija arriba y reacciona mientras se elige; las categorías se deslizan de lado y los colores van en fichas redondas.</p>
+        <ul class="toma">
+          <li>El modelo elegido reacciona al tocarlo: mira, sonríe, hace su animación propia.</li>
+          <li>Lentes y gorros como categoría aparte que calza en todas las cabezas: es la idea del "molde" que ya empezamos.</li>
+        </ul>
+        <p class="fuente">Fuente: <a href="https://www.macrumors.com/how-to/create-memoji-ios-12">MacRumors, cómo crear Memoji</a></p>
+      </div>
+    </article>
+
+    <article class="ref">
+      <div class="solo-txt">
+        <b>Finch · elegir y nacer</b>
+        <p class="nota">Sin captura limpia disponible: las galerías de pantallas de Finch piden cuenta.</p>
+      </div>
+      <div class="txt">
+        <h3>Finch · decisiones cortas</h3>
+        <p>La mascota se arma de a una decisión por pantalla (color del huevo, nombre, personalidad), con un solo botón grande siempre en el mismo lugar, y nace en un momento de celebración.</p>
+        <ul class="toma">
+          <li>Una decisión por pantalla y el botón principal siempre en el mismo sitio.</li>
+          <li>El momento del huevo que nace, para la entrega de la mascota (pieza 3).</li>
+        </ul>
+        <p class="fuente">Fuentes: <a href="https://screensdesign.com/articles/finch-app-onboarding-design/">Screensdesign, onboarding de Finch</a> · <a href="https://ixd.prattsi.org/2026/02/design-critique-finch-self-care-pet-ios-app/">Pratt IXD, crítica de diseño de Finch</a></p>
+      </div>
+    </article>
+
+    <article class="ref">
+      <div class="lamina" style="max-width:330px"><img src="{{img:maqvieja}}" alt="Maqueta anterior de Elige tu Pistero: vista grande arriba, grilla de cuatro modelos y botón Usar este Pistero"></div>
+      <div class="txt">
+        <h3>Nuestra maqueta anterior (6 de octubre)</h3>
+        <p>Ya tenía la estructura correcta. Quedó vieja por los modelos: Casco vivo, Timbre y Cóndor salieron.</p>
+        <ul class="toma">
+          <li>Vista grande animada arriba, grilla de 2 × 2 y el botón "Usar este Pistero".</li>
+          <li>Está en el Armario, arriba de todo, y el elegido es el que asoma en Inicio.</li>
+          <li class="no">Los modelos viejos y los dibujos de muestra: van los 4 reales, animados.</li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <section class="sec">
+    <header>
+      <h2>Lo que voy a maquetar</h2>
+      <p class="nota">Un recorrido de cuatro pantallas, en tamaño de teléfono, con los modelos animados de verdad.</p>
+    </header>
+    <div class="flujo">
+      <div class="paso"><span class="n">1</span><b>Grilla de modelos</b><p>Arriba del Armario: los 4 modelos en tarjetas, cada uno con su animación lenta y la etiqueta "Gratis en el lanzamiento".</p></div>
+      <div class="paso"><span class="n">2</span><b>Vista grande</b><p>Al tocar uno, crece arriba y hace su animación propia; debajo, una línea que dice cómo se mueve.</p></div>
+      <div class="paso"><span class="n">3</span><b>Elegir</b><p>"Usar este Pistero" y una frase que lo confirma. Se puede cambiar cuando quieras, sin perder nada.</p></div>
+      <div class="paso"><span class="n">4</span><b>Lo ves en la app</b><p>Asoma en Inicio y aparece en el sobrevuelo con sus caras (ya preparado en el 3D).</p></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <header>
+      <h2>Qué medimos en la prueba</h2>
+      <p class="nota">Conteos por modelo, sin datos personales. Se diseña con la pantalla y se programa solo con tu OK.</p>
+    </header>
+    <div class="tabla">
+      <table>
+        <thead><tr><th>Dato</th><th>Qué nos dice</th></tr></thead>
+        <tbody>
+          <tr><td>Primera elección</td><td>Qué modelo atrae a primera vista.</td></tr>
+          <tr><td>Elegido hoy</td><td>Cuántos lo tienen puesto ahora: el que de verdad gusta.</td></tr>
+          <tr><td>Días que lo mantienen</td><td>Si gusta al rato o cansa.</td></tr>
+          <tr><td>Probado y descartado</td><td>Los que se tocan pero no se eligen.</td></tr>
+          <tr><td>Km pedaleados juntos</td><td>Con qué modelo sale más la gente a pedalear.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec">
+    <header><h2>Antes de maquetar, decide tú</h2></header>
+    <ol class="preg">
+      <li>¿El Pistero clásico (el actual, con piel y pelo) queda como quinta opción en la prueba?<span>Mi recomendación: sí. Muchos ya lo tienen puesto, y compararlo con los nuevos es el dato más útil de la prueba.</span></li>
+      <li>¿Se elige solo desde el Armario, o también al abrir la app por primera vez?<span>Mi recomendación: las dos. La primera vez, como en Finch, una sola pantalla; después, siempre desde el Armario.</span></li>
+      <li>¿Te sirven estas referencias para hacer la maqueta?</li>
+    </ol>
+  </section>
+</main>

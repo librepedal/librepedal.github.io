@@ -1,5 +1,7 @@
 # 🚀 EMPEZAR AQUÍ — cualquier cuenta Claude que retome LibrePedal
 
+> 🟢 **2026-10-07 noche: 8.810 publicada; listas sin publicar `fix/ci-node22` y `fix/sobrevuelo-sin-bici` (8.811); "Elige tu Pistero" en maqueta (6 modelos, catálogo gratis de prueba).** Lee primero `TRASPASO-2026-10-07-NOCHE.md`.
+
 > 🔴 **2026-10-04 tarde: hay errores reportados por Inty en el teléfono (skins que no aparecen, bienvenida antigua, login con Google lento).** Lee primero `TRASPASO-2026-10-04-TARDE.md`.
 
 Punto de entrada único. Léelo y en 2 minutos sabes el estado y qué hacer. Actualizado

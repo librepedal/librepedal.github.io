@@ -196,6 +196,12 @@ var PERSONAJES={ pistero:{id:'pistero', tiene:function(e){ return true; }, cara:
 // los modelos nuevos (Cyberpunk, Orbe, Slime, Androide) se conectan acá cuando lleguen a main (ver feature/sobrevuelo-3d)
 var personaje=PERSONAJES.pistero;
 function cara(expr){ var e=expr, n=0; while(!personaje.tiene(e) && RESPALDO[e] && n++<4) e=RESPALDO[e]; return personaje.cara(e); }
+// el sobrevuelo de siempre (sobrevuelo-viaje.js, respaldo sin 3D) usa la MISMA cara: el personaje que eligió el usuario, nunca la bici
+window.sb3CaraPersonaje=function(expr){ try{ opts=(typeof _pistOpts==='function')?_pistOpts():{}; return cara(expr||'feliz'); }catch(e){ return ''; } };
+// Inty 2026-10-07: SIN mascota en el sobrevuelo. La mascota será un regalo sorpresa al terminar el primer viaje (por diseñar);
+// el código de mascota queda para entonces, apagado con esta llave.
+var SB3_MASCOTA=false;
+window.sb3Neon={colorPend:colorPend, neon:neon};
 function caraPistero(expr){
   if(typeof _pistoDe!=='function') return '';
   function mas(base,extra){ var s=_pistoDe(opts,base); return s.replace(/<\/svg>\s*$/,extra+'</svg>'); }
@@ -600,7 +606,7 @@ function primerPlano(m,ts){
   var pp=$('pp'); if(!pp) return;
   pp.querySelector('.pp-cara').innerHTML='';
   pp.querySelector('.pp-txt').textContent=m.txt; pp.querySelector('.pp-sub').textContent=m.sub||'';
-  var pm=pp.querySelector('.pp-masc'); pm.innerHTML=''; var conM=(m.cima||m.fin||m.d<100); if(conM && mascotaCanasto()) pm.innerHTML='<div class="pp-masc-svg">'+mascotaSVG(mascotaCanasto())+'</div>'; else if(conM && mascotaElegida()==='pudu' && MASC.F.cara){ var F=MASC.F.cara, hh=Math.round(F.height*.9), c=document.createElement('canvas'); c.width=F.width; c.height=hh; c.getContext('2d').drawImage(F,0,0,F.width,hh,0,0,F.width,hh); pm.appendChild(c); }
+  var pm=pp.querySelector('.pp-masc'); pm.innerHTML=''; var conM=SB3_MASCOTA&&(m.cima||m.fin||m.d<100); if(conM && mascotaCanasto()) pm.innerHTML='<div class="pp-masc-svg">'+mascotaSVG(mascotaCanasto())+'</div>'; else if(conM && mascotaElegida()==='pudu' && MASC.F.cara){ var F=MASC.F.cara, hh=Math.round(F.height*.9), c=document.createElement('canvas'); c.width=F.width; c.height=hh; c.getContext('2d').drawImage(F,0,0,F.width,hh,0,0,F.width,hh); pm.appendChild(c); }
   pp.className='pp on '+m.expr; void pp.offsetWidth; sb3Raiz().classList.add('pp-on');
   ppHasta=ts+m.dur/Math.min(2,velX);
   if(m.pose){ poseTemp=m.pose; poseHasta=ppHasta; }
