@@ -45,6 +45,14 @@ while(pila.length){const k=pila.pop();if(vis[k])continue;vis[k]=1;
   alfa[k]=Math.max(0,(d[k]-T0)/(T1-T0));
   if(d[k]>T0+ (T1-T0)*.6)continue;            // borde: se suaviza pero no se cruza
   const x=k%W,y=(k/W)|0;if(x>0)pila.push(k-1);if(x<W-1)pila.push(k+1);if(y>0)pila.push(k-W);if(y<H-1)pila.push(k+W)}
+// huecos de fondo encerrados (entre las patas, bajo la panza): si son grandes y del color del fondo, también se vacían
+{const v2=new Uint8Array(W*H);
+ for(let k0=0;k0<W*H;k0++){if(vis[k0]||v2[k0]||d[k0]>=T0+8)continue;const comp=[],st=[k0];v2[k0]=1;
+   while(st.length){const k=st.pop();comp.push(k);const x=k%W,y=(k/W)|0;
+     for(const q of [x>0?k-1:-1,x<W-1?k+1:-1,y>0?k-W:-1,y<H-1?k+W:-1])if(q>=0&&!vis[q]&&!v2[q]&&d[q]<T0+8){v2[q]=1;st.push(q)}}
+   if(comp.length>W*H/4000)for(const k of comp){alfa[k]=Math.max(0,(d[k]-T0)/(T1-T0));
+     // y su borde suave
+     const x=k%W,y=(k/W)|0;for(const q of [k-1,k+1,k-W,k+W])if(q>=0&&q<W*H&&d[q]<T1&&!vis[q])alfa[q]=Math.min(alfa[q],Math.max(0,(d[q]-T0)/(T1-T0)))}}}
 // suavizado leve del borde (promedio 3x3 solo donde el alfa no es 0 ni 1)
 const a2=alfa.slice();
 for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x;if(alfa[k]===1&&alfa[k-1]===1&&alfa[k+1]===1&&alfa[k-W]===1&&alfa[k+W]===1)continue;
@@ -61,8 +69,9 @@ for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x;if(alfa[k]===1&&alfa[
 // 3) color: quitar el azul del fondo en los bordes
 let x0=W,y0=H,x1=0,y1=0;
 for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,i=k*4,a=a2[k];
-  if(a<=0.02){p[i+3]=0;continue}
-  if(a<1)for(let c=0;c<3;c++){const f=fondo(x,y,c);p[i+c]=Math.max(0,Math.min(255,(p[i+c]-(1-a)*f)/a))}
+  if(a<=0.12){p[i+3]=0;continue}
+  // sin inflar el color de los casi transparentes (salían motas blancas)
+  if(a<1)for(let c=0;c<3;c++){const f=fondo(x,y,c),ae=Math.max(a,.55);p[i+c]=Math.max(0,Math.min(255,(p[i+c]-(1-ae)*f)/ae))}
   p[i+3]=Math.round(a*255);
   if(a>.3){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
 // 4) recorte con margen y escala opcional
