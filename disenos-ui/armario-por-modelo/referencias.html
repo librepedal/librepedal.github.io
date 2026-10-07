@@ -1,0 +1,248 @@
+<title>Armario por modelo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Mismo sistema que el panel de la pieza 1 (disenos-ui/elige-tu-pistero): una columna de lectura con láminas anchas,
+   fondo de la app y naranja de marca. Look oscuro único, igual que la app. */
+:root{
+  --d:#0a0f1d; --surf:#121a2c; --surf2:#0e1526; --line:rgba(159,179,200,.16);
+  --p:#fc4c02; --p-suave:rgba(252,76,2,.14); --ok:#39ff88; --ojo:#ffd27a;
+  --tx:#e8eeff; --sub:#9fb3c8; --mute:#6f7f98;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-txt:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--d);color:var(--tx);font-family:var(--f-txt);font-size:16px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:44px}
+h1,h2,h3{font-family:var(--f-disp);font-weight:800;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:clamp(2.2rem,7vw,3.4rem);line-height:.98}
+h1 span{color:var(--p)}
+h2{font-size:clamp(1.5rem,4vw,2rem);line-height:1.05}
+h3{font-size:1.3rem;line-height:1.1}
+p{margin:0;max-width:68ch}
+a{color:var(--sub)}
+a:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.eyebrow{font-family:var(--f-disp);font-weight:600;font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;color:var(--p)}
+.lead{color:var(--sub);font-size:1.06rem}
+.sec{display:grid;gap:16px}
+.sec>header{display:grid;gap:6px}
+.lamina{background:var(--surf2);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin:0}
+.lamina img{display:block;width:100%;height:auto}
+.lamina figcaption{padding:10px 14px;font-size:.84rem;color:var(--mute);border-top:1px solid var(--line)}
+.hoy{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:22px;align-items:start}
+.hoy .lamina{max-width:300px}
+.grupos{display:grid;gap:12px;min-width:0}
+.grupo{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:8px}
+.grupo .cab{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.grupo b{font-family:var(--f-disp);font-size:1.15rem;font-weight:800}
+.grupo p{color:var(--sub);font-size:.93rem}
+.estado{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ok)}
+.estado.ojo{color:var(--ojo)}
+.estado.no{color:#ff8a8a}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{font-size:.8rem;padding:3px 10px;border-radius:999px;background:var(--surf2);border:1px solid var(--line);color:var(--tx)}
+.grupo.apagado .chips span{color:var(--mute);text-decoration:line-through;text-decoration-color:rgba(255,138,138,.6)}
+.ref{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start;padding-block:22px;border-top:1px solid var(--line)}
+.ref .txt{display:grid;gap:10px;min-width:0}
+.ref .fuente{font-size:.82rem;color:var(--mute)}
+.toma{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.toma li{padding-left:22px;position:relative;font-size:.96rem}
+.toma li::before{content:'';position:absolute;left:4px;top:.62em;width:9px;height:9px;border-radius:50%;background:var(--p)}
+.toma li.no::before{background:transparent;border:2px solid var(--mute)}
+.toma li.no{color:var(--sub)}
+.tipos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tipo{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:8px;align-content:start;min-width:0}
+.tipo .k{font-family:var(--f-disp);font-weight:600;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--p)}
+.tipo b{font-family:var(--f-disp);font-size:1.35rem;font-weight:800;line-height:1.05}
+.tipo p{font-size:.92rem;color:var(--sub)}
+.tipo .como{font-size:.84rem;color:var(--tx);border-top:1px solid var(--line);padding-top:8px}
+.tabla{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+table{border-collapse:collapse;width:100%;font-size:.93rem;min-width:640px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-disp);font-weight:600;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);background:var(--surf)}
+td:first-child{font-family:var(--f-disp);font-weight:800;font-size:1.05rem;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td small{display:block;color:var(--mute);font-size:.8rem}
+.preg{display:grid;gap:12px;counter-reset:q}
+.q{background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--p);border-radius:14px;padding:14px 16px;display:grid;gap:6px}
+.q b{font-weight:600}
+.q p{font-size:.93rem;color:var(--sub)}
+.q .rec{font-size:.86rem;color:var(--tx)}
+.q .rec::before{content:'Recomiendo: ';color:var(--p);font-weight:600}
+@media (max-width:760px){
+  .hoy,.ref{grid-template-columns:minmax(0,1fr)}
+  .hoy .lamina{max-width:340px}
+  .tipos{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+
+<div class="wrap">
+  <header class="sec">
+    <div class="eyebrow">Libre Pedal · Pistero · pieza 2 de 3 · referencias</div>
+    <h1>Cada Pistero, <span>su armario</span></h1>
+    <p class="lead">Ya elegiste los 6 modelos de la prueba. Ahora toca qué se puede cambiar en cada uno. Hoy el armario tiene 16 pestañas pensadas para el Clásico (una cara humana con casco), y 6 de ellas venden cosas que ya no se ven en ninguna parte.</p>
+  </header>
+
+  <section class="sec">
+    <header>
+      <div class="eyebrow">Lo que hay hoy</div>
+      <h2>16 pestañas, hechas para una sola cara</h2>
+    </header>
+    <div class="hoy">
+      <figure class="lamina">
+        <img src="img/armario-hoy.jpg" alt="Perfil de Libre Pedal 8.812 a 360 de ancho: Pistero Clásico arriba, pestañas Casco, Diseño, Accesorios, Equipo, Lentes y acabados del casco">
+        <figcaption>Perfil en la 8.812, a 360 px de ancho.</figcaption>
+      </figure>
+      <div class="grupos">
+        <div class="grupo">
+          <div class="cab"><b>Cabeza y casco</b><span class="estado">Se ven</span></div>
+          <div class="chips"><span>Casco</span><span>Diseño</span><span>Accesorios</span><span>Equipo</span><span>Lentes</span></div>
+          <p>Dibujadas sobre el casco del Clásico. En los otros 5 modelos el casco es otra imagen y no calzan.</p>
+        </div>
+        <div class="grupo">
+          <div class="cab"><b>Cuerpo humano</b><span class="estado ojo">Solo Clásico</span></div>
+          <div class="chips"><span>Pelo</span><span>Cara</span><span>Aros</span><span>Piel</span><span>Cuello</span></div>
+          <p>El Orbe, el Slime y el Androide no tienen pelo, orejas ni piel. En el traspaso quedó acordado sacarlas para los modelos nuevos.</p>
+        </div>
+        <div class="grupo apagado">
+          <div class="cab"><b>Todo lo de la bici</b><span class="estado no">No se ven en ningún lado</span></div>
+          <div class="chips"><span>Bici</span><span>Pintura</span><span>Ruedas</span><span>Carga</span><span>Traje</span><span>Estela</span></div>
+          <p>Se dibujan solo con Pistero arriba de la bici. Desde que Pistero va como rostro (decisión del 7 de octubre), no aparecen. La tienda aún no cobra, así que nadie pagó por ellas.</p>
+        </div>
+      </div>
+    </div>
+    <figure class="lamina" style="max-width:340px">
+      <img src="img/maqueta-pieza1.jpg" alt="Maqueta aprobada de Elige tu Pistero con los 6 modelos: Clásico, Androide de vinilo, Orbe, Cyberpunk, Casco vivo y Slime">
+      <figcaption>Pieza 1, aprobada: los 6 modelos.</figcaption>
+    </figure>
+  </section>
+
+  <section class="sec">
+    <header>
+      <div class="eyebrow">Cómo lo resuelven otros</div>
+      <h2>Juegos donde cada personaje tiene lo suyo</h2>
+      <p class="nota" style="color:var(--sub)">Capturas reales de cada juego, armadas con las imágenes oficiales de sus wikis y guías.</p>
+    </header>
+
+    <article class="ref">
+      <figure class="lamina">
+        <img src="img/rocket-league-calcomanias.jpg" alt="Calcomanías del Octane en Rocket League (Dragon Lord, Griffon, Chantico, Gale-Fire, Buzz Kill, Island King) junto a calcomanías universales (Flames, Lightning, Stripes, Wings, Stars, Tech)">
+      </figure>
+      <div class="txt">
+        <h3>Rocket League · garaje</h3>
+        <p>Cada auto tiene calcomanías que solo le quedan a él. El nombre lo dice: “Octane: Dragon Lord” es solo del Octane. Las ruedas, antenas y algunas calcomanías sirven en casi todos.</p>
+        <ul class="toma">
+          <li>Piezas propias de cada modelo, dibujadas para su forma.</li>
+          <li>Unas pocas piezas que sirven en todos los modelos.</li>
+          <li class="no">No tomamos: cientos de piezas. Para la prueba bastan unas pocas por modelo.</li>
+        </ul>
+        <p class="fuente">Fuentes: <a href="https://www.epicgames.com/help/c-202300000001622/c-202300000001682/a202300000082254?lang=en-US" target="_blank" rel="noopener">Epic Games, compatibilidad de calcomanías</a> · <a href="https://rocketleague.fandom.com/wiki/Octane" target="_blank" rel="noopener">Rocket League Wiki, Octane</a></p>
+      </div>
+    </article>
+
+    <article class="ref">
+      <figure class="lamina">
+        <img src="img/fortnite-locker.jpg" alt="Casillero de Fortnite: pestaña Character con Outfit, Back Bling, Pickaxe y botón Save Character">
+      </figure>
+      <div class="txt">
+        <h3>Fortnite · casillero y “estilos”</h3>
+        <p>Muchos trajes traen sus propios estilos: otros colores o versiones del mismo traje, que se eligen con “Editar estilo”. Además, el casillero guarda el personaje completo con “Guardar personaje”.</p>
+        <ul class="toma">
+          <li>Estilos: variantes de color de cada modelo, sin dibujar nada nuevo.</li>
+          <li>Lo que ya tenemos: “Guardar personaje” al final del Perfil.</li>
+          <li class="no">No tomamos: diez categorías. Tres alcanzan.</li>
+        </ul>
+        <p class="fuente">Fuentes: <a href="https://www.destructoid.com/how-to-change-your-character-in-fortnite/" target="_blank" rel="noopener">Destructoid</a> (captura) · <a href="https://www.epicgames.com/help/en-US/fortnite-c75/battle-royale-c93/how-do-i-change-the-style-of-an-outfit-a3351" target="_blank" rel="noopener">Epic Games, cambiar el estilo de un traje</a></p>
+      </div>
+    </article>
+
+    <article class="ref">
+      <figure class="lamina">
+        <img src="img/brawl-stars-shelly.jpg" alt="Skins de Shelly en Brawl Stars: Default, Bandita, Star, Classic, U. de Chile y Boca Juniors">
+      </figure>
+      <div class="txt">
+        <h3>Brawl Stars · skins por personaje</h3>
+        <p>Cada personaje tiene sus skins, y cada skin su rareza. Shelly tiene hasta una de la U. de Chile: los de acá la reconocen al tiro.</p>
+        <ul class="toma">
+          <li>Cada pieza propia con su rareza, como ya hace nuestra tienda (Común, Raro, Épico, Legendario).</li>
+          <li class="no">No tomamos: camisetas de clubes. Son marcas con licencia.</li>
+        </ul>
+        <p class="fuente">Fuente: <a href="https://brawlstars.fandom.com/wiki/Shelly" target="_blank" rel="noopener">Brawl Stars Wiki, Shelly</a></p>
+      </div>
+    </article>
+  </section>
+
+  <section class="sec">
+    <header>
+      <div class="eyebrow">Lo que voy a maquetar</div>
+      <h2>Tres pestañas, iguales para los 6 modelos</h2>
+      <p style="color:var(--sub)">Arriba, tu Pistero y “Cambiar modelo”, como en la pieza 1. Abajo, siempre las mismas tres pestañas, con el contenido de ese modelo.</p>
+    </header>
+    <div class="tipos">
+      <div class="tipo">
+        <span class="k">Como Fortnite</span>
+        <b>Estilos</b>
+        <p>Otros colores del mismo modelo.</p>
+        <p class="como">Se pueden hacer ya: se recolorean las capas que el modelo ya tiene. No hace falta dibujar.</p>
+      </div>
+      <div class="tipo">
+        <span class="k">Como Rocket League</span>
+        <b>Piezas propias</b>
+        <p>Cosas dibujadas para la forma de ese modelo. Solo le quedan a él.</p>
+        <p class="como">Hay que dibujarlas, con el mismo método que los modelos. Propuesta: 3 por modelo para la prueba.</p>
+      </div>
+      <div class="tipo">
+        <span class="k">Como las ruedas de Rocket League</span>
+        <b>Para todos</b>
+        <p>Lo que no depende de la forma del modelo.</p>
+        <p class="como">Por definir contigo (pregunta 3).</p>
+      </div>
+    </div>
+
+    <div class="tabla">
+      <table>
+        <thead><tr><th>Modelo</th><th>Estilos (recolorear lo que ya tiene)</th><th>Piezas propias (ideas a dibujar)</th></tr></thead>
+        <tbody>
+          <tr><td>Clásico</td><td>Lo de hoy: color, diseño y acabado del casco, lentes<small>Ya existe</small></td><td>Lo de hoy: accesorios y equipo del casco<small>Ya existe</small></td></tr>
+          <tr><td>Androide de vinilo</td><td>Combinación de colores del vinilo y color del LED de la boca</td><td>Antena, calcomanías del casco, ojo de otro color</td></tr>
+          <tr><td>Orbe</td><td>Color de la luz del orbe</td><td>Anillo de luz alrededor, chispas, visera</td></tr>
+          <tr><td>Cyberpunk</td><td>Color del neón del visor</td><td>Cables, grafitis del casco, visor partido</td></tr>
+          <tr><td>Casco vivo</td><td>Colores del casco (es dibujo vectorial, se cambia directo)</td><td>Cejas, pegatinas, luz trasera</td></tr>
+          <tr><td>Slime</td><td>Color de la gelatina</td><td>Burbujas, algo “tragado” adentro, gotitas</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--mute);font-size:.86rem">Las ideas de piezas propias son un punto de partida para conversar. Antes de dibujarlas se busca cómo es cada cosa en la vida real, como pide el método de trabajo.</p>
+  </section>
+
+  <section class="sec">
+    <header>
+      <div class="eyebrow">Antes de maquetar, decide tú</div>
+      <h2>Cuatro preguntas</h2>
+    </header>
+    <div class="preg">
+      <div class="q">
+        <b>1. ¿Sacamos del armario las 6 pestañas de la bici?</b>
+        <p>Bici, Pintura, Ruedas, Carga, Traje y Estela no se ven en ningún lado desde que Pistero va sin bici, y nadie pagó por ellas.</p>
+        <p class="rec">Sí. Quedan guardadas en el código por si la bici vuelve algún día, por ejemplo en la tarjeta del viaje.</p>
+      </div>
+      <div class="q">
+        <b>2. ¿El Clásico conserva sus pestañas de cuerpo humano (Pelo, Cara, Aros, Piel, Cuello)?</b>
+        <p>Son su gracia: es el único modelo con cara humana. Pero así el Clásico tendría un armario distinto al resto.</p>
+        <p class="rec">Que las conserve dentro de “Piezas propias”. Las tres pestañas quedan iguales para todos.</p>
+      </div>
+      <div class="q">
+        <b>3. ¿Qué va en “Para todos”?</b>
+        <p>Tiene que ser algo que no dependa de la forma de la cabeza. Opciones: el fondo de la tarjeta de tu Pistero, el sonido que hace al saludar, o dejar la pestaña fuera por ahora.</p>
+        <p class="rec">El fondo de la tarjeta. Se ve en el Perfil y en “Elige tu Pistero”, y sirve igual en los 6 modelos.</p>
+      </div>
+      <div class="q">
+        <b>4. ¿Cuántas piezas propias por modelo para la prueba?</b>
+        <p>Cada una es un dibujo nuevo por modelo. Con 3 por modelo son 15 dibujos (el Clásico ya tiene las suyas).</p>
+        <p class="rec">3 por modelo. Con lo que la gente elija en la prueba se decide qué modelos siguen y cuántas piezas más vale la pena dibujar.</p>
+      </div>
+    </div>
+  </section>
+</div>
