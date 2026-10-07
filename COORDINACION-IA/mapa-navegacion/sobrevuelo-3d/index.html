@@ -49,6 +49,34 @@ html,body{margin:0;height:100%;background:var(--d);color:var(--tx);font:500 14px
 .punto-ruta{width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #e11d48;box-shadow:0 0 0 2px rgba(0,0,0,.4)}
 @media (max-width:420px){.dato b{font-size:.92rem}.titulo span{display:none}}
 body.corriendo .nota{opacity:0;pointer-events:none}
+/* hito de la cima */
+.hito{font:800 11px system-ui;color:#0a0f1d;background:#ffd700;border-radius:8px;padding:3px 7px;box-shadow:0 0 12px rgba(255,215,0,.6),0 2px 6px rgba(0,0,0,.45);white-space:nowrap}
+/* Pistero de costado (bici real de la app, viewBox 100x84) cuando la toma es lateral */
+.sbv-lado{position:absolute;left:-14px;bottom:0;width:108px;height:91px;display:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));transform-origin:50% 100%}
+.sbv-lado svg{width:100%;height:100%;overflow:visible}
+.sbv-rider.de-lado .sbv-bici{display:none}.sbv-rider.de-lado .sbv-lado{display:block}
+/* mascota que corre al lado */
+.masc{width:46px;height:44px;pointer-events:none}
+/* OJO: no ponerle position al elemento raíz de un marcador: pisa el position:absolute de MapLibre
+   (.maplibregl-marker) y el marcador queda apilado debajo de los anteriores, corrido de su punto */
+.maplibregl-marker.sbv-rider,.maplibregl-marker.masc{position:absolute}
+.masc canvas{position:absolute;left:0;bottom:2px;width:46px;height:auto;max-height:44px;object-fit:contain;transform-origin:50% 100%;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.masc-sombra{position:absolute;left:50%;bottom:-2px;width:30px;height:7px;margin-left:-15px;border-radius:50%;background:radial-gradient(rgba(0,0,0,.5),rgba(0,0,0,0) 70%)}
+/* PRIMER PLANO: la cara de Pistero en grande con el dato del momento (viñeta de cómic) */
+.pp{position:absolute;left:12px;top:calc(66px + env(safe-area-inset-top));z-index:6;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;background:#fff;color:#111827;border:3px solid #111827;border-radius:20px;box-shadow:4px 4px 0 #111827;transform:scale(0) rotate(-6deg);transform-origin:20% 50%;opacity:0;transition:transform .28s cubic-bezier(.3,1.6,.5,1),opacity .18s;pointer-events:none;max-width:calc(100% - 24px)}
+.pp.on{transform:scale(1) rotate(-2deg);opacity:1}
+.pp-marco{width:86px;height:86px;border-radius:50%;flex:none;overflow:hidden;background:radial-gradient(circle at 50% 40%,#fef3c7,#fdba74);border:3px solid #111827;display:flex;align-items:center;justify-content:center}
+.pp-cara{width:118%;height:118%;margin-top:14%}.pp-cara svg{width:100%;height:100%}
+.pp-texto b{display:block;font:900 1.15rem/1.05 'Arial Black',system-ui,sans-serif}
+.pp-texto span{display:block;margin-top:3px;font:800 .78rem system-ui;color:#475569}
+.pp-masc canvas{height:62px;width:auto;display:block;margin-left:-4px}
+.pp.agotado .pp-marco{background:radial-gradient(circle at 50% 40%,#fee2e2,#f87171);animation:ppTiembla .18s linear infinite}
+.pp.enojado .pp-marco,.pp.cansado .pp-marco{background:radial-gradient(circle at 50% 40%,#ffedd5,#fb923c)}
+.pp.adrenalina .pp-marco{background:radial-gradient(circle at 50% 40%,#e0f2fe,#38bdf8);animation:ppVibra .12s linear infinite}
+.pp.orgulloso .pp-marco{background:radial-gradient(circle at 50% 40%,#fef9c3,#facc15);box-shadow:0 0 0 4px #fde047}
+@keyframes ppTiembla{0%,100%{transform:translateX(0)}50%{transform:translateX(1.5px)}}
+@keyframes ppVibra{0%,100%{transform:translate(0,0)}33%{transform:translate(1px,-1px)}66%{transform:translate(-1px,1px)}}
+@media (prefers-reduced-motion:reduce){.pp,.pp-marco{animation:none!important;transition:none}}
 </style>
 </head>
 <body>
@@ -59,6 +87,7 @@ body.corriendo .nota{opacity:0;pointer-events:none}
   <div class="seg" id="modo"><button data-m="hoy">Hoy</button><button data-m="nuevo" class="on">Propuesta</button></div>
 </div>
 <div class="nota" id="nota"></div>
+<div class="pp" id="pp"><div class="pp-marco"><div class="pp-cara"></div></div><div class="pp-texto"><b class="pp-txt"></b><span class="pp-sub"></span></div><div class="pp-masc"></div></div>
 <div class="capa"><div class="seg" id="capa"><button data-c="sat" class="on">Satélite</button><button data-c="calles">Calles</button></div></div>
 <div class="panel">
   <div class="datos">
@@ -67,7 +96,7 @@ body.corriendo .nota{opacity:0;pointer-events:none}
     <div class="dato"><small>Pendiente</small><b id="dPend">–<i>%</i></b></div>
     <div class="dato"><small>Subido</small><b id="dSub">0<i>m</i></b></div>
   </div>
-  <div class="leyenda" id="leyenda"><span><i style="background:#22c55e"></i>plano</span><span><i style="background:#facc15"></i>3–6 %</span><span><i style="background:#f97316"></i>6–9 %</span><span><i style="background:#dc2626"></i>+9 %</span><span><i style="background:#38bdf8"></i>bajada</span></div>
+  <div class="leyenda" id="leyenda"><span><i style="background:#39ff88;box-shadow:0 0 6px #39ff88"></i>plano</span><span><i style="background:#ffe14d;box-shadow:0 0 6px #ffe14d"></i>3–6 %</span><span><i style="background:#ff8a1f;box-shadow:0 0 6px #ff8a1f"></i>6–9 %</span><span><i style="background:#ff2d6f;box-shadow:0 0 6px #ff2d6f"></i>+9 %</span><span><i style="background:#22d3ff;box-shadow:0 0 6px #22d3ff"></i>bajada</span></div>
   <div class="perfil" id="perfil"><canvas id="cv"></canvas></div>
   <div class="ctrl"><button class="btn play" id="play">▶ Ver sobrevuelo</button><button class="btn vel" id="vel">×1</button></div>
 </div>

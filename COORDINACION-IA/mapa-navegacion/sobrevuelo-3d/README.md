@@ -31,3 +31,27 @@ Botón **Hoy / Propuesta** compara lo de `main` con lo propuesto.
 - `gen-datos.mjs` genera `ruta-osrm.json` → `traza-gps.json` (simulada, semilla fija) → `traza-pegada.json`.
 - `medir.mjs` mide desvío contra el camino real. `servir.mjs` servidor estático.
 - `index.html` + `sobrevuelo-3d.js` la demo (usa el Pistero real: pistero-*.js de la raíz).
+
+## v2 (2026-10-07) — pedido de Inty: huella neón, tomas variadas, caras según la ruta y mascota
+- **Huella neón** (técnica "firefly" de John Nelson / Mapbox): 2 halos anchos y difuminados del color de la
+  pendiente (paleta eléctrica) + núcleo casi blanco; base satelital oscurecida (brillo máx. 0,5). Los halos
+  respiran (~1,6 s) y titilan, más fuerte en subida; chispa bajo las ruedas; un destello blanco recorre lo
+  pedaleado cada 2,4 s.
+- **Director de tomas** (`planear()`): lee subidas/bajadas/cima y arma el plan: aérea al partir, persecución,
+  aérea y paralelo bajo alternados en el plano, en subida cámara detrás y luego **lateral** (se ve la cara),
+  en bajada baja y cerca, en la cima se detiene y **gira alrededor**. Transiciones suaves (dolly).
+- **Pistero de costado** en las tomas laterales (bici real `_pistBiciSVG` con su cara); de espaldas gira la
+  cabeza a la cámara cuando cambia la cara. Sentido en pantalla calculado proyectando el avance (no por ángulo).
+- **Caras según la ruta**: las 10 de la app + 3 nuevas armadas sobre su misma cara: `agotado` (boca abierta,
+  gotas, vapor), `adrenalina` (líneas de viento) y `orgulloso` (estrellas). El cansancio se acumula
+  (más subido en el día → peor cara). Frases que rotan (sin repetir).
+- **Primer plano**: viñeta de cómic con la cara grande y el dato real (pendiente, desnivel, cima, llegada).
+- **Mascota**: pudú cría de `feature/mascotas` (arte Gemini; corriendo = pendiente de revisión de Inty).
+  Corre al lado, se queda atrás en subida, se adelanta en bajada, salta en la cima; sale en la viñeta de cima.
+
+### Hallazgo para la app real (verificar al integrar)
+`estilos.css` tiene `.sbv-rider{position:relative}` y es el elemento RAÍZ del marcador: eso pisa el
+`position:absolute` de `.maplibregl-marker`. En la demo, un marcador así quedó 88 px corrido (apilado debajo
+del anterior). En la app puede sumar al desfase si hay otros marcadores antes. Arreglo: no dar `position` al
+raíz del marcador (o `.maplibregl-marker.sbv-rider{position:absolute}`). También: `opacityWhenCovered:'1'`
+para que un cerro no deje a Pistero transparente.
