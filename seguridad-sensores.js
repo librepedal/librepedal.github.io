@@ -304,7 +304,7 @@ async function toggleSeguimientoVivo(){
 // Invitar amigos: mensaje corto, honesto, sin exagerar ("comunidad enorme" cuando
 // recién está empezando) — solo lo que la app de verdad hace hoy.
 function invitarAmigos(){
-  const url='https://librepedal.pages.dev';
+  const url='https://librepedal.cl'; // dominio propio (2026-10-07): pages.dev es la dirección técnica de Cloudflare, no la marca
   const msg='Ando pedaleando con Libre Pedal: te guía como Waze, te graba la ruta sola y tiene comunidad de ciclistas. Pruébala gratis: '+url;
   if(navigator.share){
     navigator.share({title:'Libre Pedal', text:msg}).catch(function(){});

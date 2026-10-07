@@ -123,7 +123,7 @@ function _dibujarTarjetaAnual(ctx, W, H, r){
     ctx.fillText('🗺️ Como pedalear Santiago–Valparaíso '+(veces<1?veces.toFixed(1):Math.round(veces))+' '+(veces<2?'vez':'veces'), W/2, y+10);
   }
   ctx.fillStyle='#3a4a5a'; ctx.font='18px sans-serif';
-  ctx.fillText('librepedal.pages.dev', W/2, H-40);
+  ctx.fillText('librepedal.cl', W/2, H-40);
 }
 function mostrarResumenAnual(){
   const anio=new Date().getFullYear();
