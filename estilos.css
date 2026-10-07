@@ -289,8 +289,14 @@ html.lp-sin-sesion #auth{display:flex}
    (ver .view y el overlay del final); el de arriba nunca se había puesto. 17-ago-2026. */
 header{padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:rgba(10,15,29,0.98);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;position:sticky;top:0;z-index:1000}
 header h2{margin:0;font-size:1rem;font-weight:800}
+/* 2026-10-05: el logo va en UNA línea (antes se partía en "LIBRE / PEDAL" y la cabecera medía 78px);
+   en teléfonos angostos se achica en vez de partirse o empujar los botones fuera de la pantalla. */
+header .hdr-logo{font-size:clamp(.92rem,4.4vw,1.18rem)!important;flex-shrink:1;min-width:0}
 .ulvl{background:linear-gradient(135deg,var(--g),#ffaa00);color:#000;padding:4px 10px;border-radius:12px;font-weight:800;font-size:0.7rem}
-main{flex:1;overflow-y:auto;padding:10px;scroll-behavior:smooth}
+main{flex:1;padding:10px;scroll-behavior:smooth}
+/* 2026-10-05: main ya NO tiene overflow-y:auto. Con body sin alto fijo, main nunca llegaba a desplazarse:
+   solo era un contenedor de scroll vacío que impedía position:sticky dentro de las vistas (por eso la
+   tienda tenía su propia lista con scroll, que atrapaba el dedo). Ahora el único scroll es la página. */
 /* 2026-07-20 — causa de fondo del "abajo se pierde y está en negro" que reportó Inty.
    Ninguna vista reservaba espacio para la barra inferior (fija, 69px), así que el ÚLTIMO
    elemento de CADA pantalla quedaba tapado por ella — no era solo el mapa. Se agrega el
@@ -507,7 +513,12 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 /* La vista de chat se acota a la pantalla (menos barra superior ~51 + barra inferior 60
    + respiro). Así .cc (flex:1) llena el resto y la fila de entrada queda SIEMPRE visible
    sobre la barra, sin scroll de página. dvh corrige la barra dinámica del navegador móvil. */
-#v-pistero.view.on,#v-chat.view.on{display:flex;flex-direction:column;height:calc(100vh - 130px);height:calc(100dvh - 130px);padding-bottom:8px}
+/* 2026-10-07: SOLO Pregúntale a Pistero tiene alto fijo. Social (#v-chat) lo tenía también, pero bajo su
+   chat de 280px van 5 grupos más: el contenido se salía de la caja, <main> se volvía un segundo scroll y lo
+   último (Aportar, Recomendaciones) quedaba bajo la barra y la cara de Pistero. Social ahora crece normal.
+   Alto exacto = pantalla - cabecera - barra - padding de <main> (10+10); el body reserva justo la barra
+   (regla de abajo), así la página no queda con 12-21px de scroll de sobra. */
+#v-pistero.view.on{display:flex;flex-direction:column;height:calc(100vh - 150px);height:calc(100dvh - var(--lp-hdr-h,60px) - var(--lp-nav-h,70px) - 20px);padding-bottom:8px}
 .cm{flex:1;overflow-y:auto;padding:8px;background:#0b1120;border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:6px}
 .ms{margin-bottom:8px;max-width:85%}.ms.sf{margin-left:auto;text-align:right}
 .mb{display:inline-block;padding:6px 10px;border-radius:12px;line-height:1.2;font-size:0.85rem}
@@ -629,7 +640,7 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .gps-btn{background:#fc4c02;color:#fff;border:none;min-height:44px;padding:12px;border-radius:12px;cursor:pointer;font-weight:700;width:100%;margin-top:6px;font-size:0.85rem}
 .gps-status{background:rgba(255,102,0,0.2);padding:6px;border-radius:6px;margin-top:6px;font-size:0.75rem;text-align:center;display:none}
 .gps-status.show{display:block}
-.user-list-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:4000;display:none;flex-direction:column;padding:15px;overflow-y:auto}
+.user-list-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:4000;display:none;flex-direction:column;padding:calc(15px + env(safe-area-inset-top,0px)) 15px calc(15px + env(safe-area-inset-bottom,0px));overflow-y:auto;overscroll-behavior:contain}
 .user-list-modal.on{display:flex}
 /* z-index 6500, no 4500: tiene que ganarle SIEMPRE a .loading-overlay (6000). Bug real
    2026-09-10 (auditoría): startQuickTrip/startNavigation llaman showLoading() ANTES de
@@ -791,6 +802,13 @@ body.lp-typing #micBtn{opacity:0;pointer-events:none}
    verdad. Misma solución que ya existía para "escribiendo" (lp-typing, arriba): atenuar y
    dejar pasar el toque, detectado en vivo por JS (ver _revisarMicTapaBoton). */
 body.mic-tapando-boton #micBtn{opacity:.22;pointer-events:none}
+/* 2026-10-07: el espacio final de cada pantalla ya lo da .view (148px + safe-area, deja lo último sobre la
+   cara de Pistero) + los 70px del body. Sumarle otro colchón al body dejaba ~300px vacíos al final.
+   En Pregúntale a Pistero (alto fijo) el body reserva exactamente la barra medida. */
+body[data-vista="pistero"]{padding-bottom:var(--lp-nav-h,70px)}
+/* En Perfil la cara de Pistero no se muestra (regla de abajo), así que no hace falta el colchón de 148px de
+   .view para ella: "Guardar personaje" queda pegado a la barra en vez de flotar sobre ~160px vacíos. */
+#v-customize.view{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .nav-manoslibres-btn{display:none!important}
 body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:none}
 /* Animaciones de la cara (compartidas mapa+esfera) */
@@ -947,7 +965,12 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .pist-chip-libre input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
 /* ===== Tienda / armario de Pistero (pistero-tienda.js) ===== */
 .pt-tienda{--rc:#3a465e;--rr:#3b82f6;--re:#a855f7;--rl:#f59e0b;margin:10px 0}
-.pt-escena{padding:8px 0 6px}
+/* 2026-10-07: Pistero y las pestañas quedan a la vista mientras se recorren las piezas (lo que antes se
+   lograba con una lista con scroll propio, que atrapaba el dedo: el perfil no bajaba). Ahora es sticky
+   sobre el scroll de la página; se suelta solo al terminar la tienda (Preferencias y Guardar quedan abajo). */
+.pt-escena{padding:8px 0 6px;position:sticky;top:var(--lp-hdr-h,60px);z-index:5;background:rgba(10,15,29,0.98);margin:0 -10px;padding-left:10px;padding-right:10px}
+/* En pantallas bajas el cuadro fijo dejaría muy poca lista a la vista: ahí la tienda scrollea entera. */
+@media (max-height:600px){.pt-escena{position:static;background:none;margin:0;padding:8px 0 6px}}
 .pt-lanza{font-size:.66rem;color:#fde68a;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:6px 9px;margin-bottom:8px;line-height:1.35}
 .pt-top{display:flex;align-items:center;gap:12px;background:radial-gradient(120% 140% at 30% 20%,#1d2c48,#0c1422 70%);border:1px solid rgba(252,76,2,.3);border-radius:16px;padding:8px 12px}
 .pt-pistero{position:relative;width:118px;height:100px;flex:none;cursor:pointer}
@@ -966,12 +989,12 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .pt-quitar{background:none;border:0;color:#9fb3c8;font-size:1.1rem;cursor:pointer;padding:0 4px}
 .pt-rz{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:6px;background:var(--rc);color:#fff}
 .pt-rz.r-r{background:var(--rr)}.pt-rz.r-e{background:var(--re)}.pt-rz.r-l{background:linear-gradient(135deg,#f59e0b,#fde047);color:#3b2a00}
-.pt-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:8px;padding-bottom:2px}.pt-tabs::-webkit-scrollbar{display:none}
+.pt-tabs{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin-top:8px;padding-bottom:2px}.pt-tabs::-webkit-scrollbar{display:none}
 .pt-tab{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:56px;padding:6px 6px 5px;background:#141f33;border:1px solid #2a3348;border-radius:11px;color:#9fb3c8;font-size:.6rem;cursor:pointer}
 .pt-tab-i{width:20px;height:20px;display:block}.pt-tab-i svg{width:100%;height:100%}
 .pt-tab.on{color:#fff;border-color:var(--p);background:linear-gradient(180deg,rgba(252,76,2,.22),#141f33)}
 /* Pistero y las pestañas quedan a la vista: solo la lista de piezas tiene scroll propio (como las tiendas de juegos) */
-.pt-panel{padding:2px 2px 10px;max-height:calc(100dvh - 330px);min-height:280px;overflow-y:auto;overscroll-behavior:contain;border-top:1px solid #1e2a40}
+.pt-panel{padding:2px 2px 10px;border-top:1px solid #1e2a40}
 .pt-filtros{display:flex;gap:6px;margin:4px 0 2px}.pt-filtros button{background:#141f33;border:1px solid #2a3348;color:#9fb3c8;border-radius:14px;padding:3px 11px;font-size:.66rem;cursor:pointer}.pt-filtros button.on{color:#fff;border-color:var(--p)}
 .pt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:7px}
 .pt-card{position:relative;display:flex;flex-direction:column;align-items:center;padding:6px 4px 5px;border-radius:12px;border:1.5px solid var(--rc);background:linear-gradient(180deg,#18243b,#111a2c);color:#dfe7ff;cursor:pointer;overflow:hidden;transition:transform .12s}
