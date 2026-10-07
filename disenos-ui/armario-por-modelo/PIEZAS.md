@@ -32,3 +32,6 @@ cuenta de Inty en su Chrome; Claude recorta, separa capas y anima. La cara y las
 - Chrome de Inty conectado (Claude in Chrome) con Gemini abierto: https://gemini.google.com/app/33df4033dcc9687b
 - OK de Inty para bajar las imágenes que genere Gemini (una por pieza).
 - Una pieza a la vez, mostrada y aprobada.
+
+## Maqueta publicada
+- Cuenta 2 (desde el 2026-10-07, con el Destello al hablar): https://claude.ai/artifact/W5HL2jaS31pHtgz3REURYW (la de la otra cuenta, Vo5uvdEcq1MAMNJ9dq86Ne, no se puede actualizar desde aquí).
