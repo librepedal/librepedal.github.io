@@ -58,3 +58,10 @@ Datos reales: la cría nace con manchas blancas que pierde cerca de los 5 meses 
 - **Fondo transparente** (Inty preguntó, 2026-10-06): sí, todo PNG transparente. `herramientas/transparente.js` quita el fondo de Gemini (superficie curva ajustada a los bordes, alfa suave en el pelaje, quita el azul del borde y la sombra del piso, deja solo la mancha del pudú) y escala por el ancho de la foto para que todos los cuadros queden a la misma escala. Salida en `transparentes/`. Necesita pngjs y jpeg-js instalados fuera del repo (`NODE_PATH`).
 - Mockup en viaje nuevo (esta cuenta): https://claude.ai/artifact/WkxksRS8N8f5dg7pQG2DN7 (el de la otra cuenta no se puede abrir desde aquí).
 - Corrección del galope: los ciervos chicos usan galope rotatorio, con DOS vuelos (patas estiradas y patas recogidas), según Biancardi y Minetti, J. Exp. Biol. 2012 (corzo). El mockup solo despega con las patas estiradas. Se arregla con las 2 imágenes de hoy: dos vuelos, velocidad suave y altura variable.
+
+## Varios animales en el mockup de viaje (2026-10-07)
+- Inty: "sigue con las otras mascotas". Se va de a un animal; cada uno con acciones sacadas de su comportamiento real, no copiadas del pudú.
+- **Zorro culpeo hecho** (pendiente de revisión de Inty): 13 cuadros de Gemini en `transparentes/zorro-*.png` (versión liviana en `transparentes/mockup/`). Cambia "dos patas" por **escuchar un ruido en el pasto** (sin arbusto), el brote por **frutos de pimiento** (Schinus molle, el culpeo los come y dispersa sus semillas), salto juguetón propio y duerme enrollado en su cola.
+- Galope del zorro: galope rotatorio con dos vuelos, como los perros y otros carnívoros corredores (Biancardi y Minetti 2012; Hildebrand).
+- El mockup elige animal con `ANIMALES` en `mockup-viaje.src.html`; `cargarAnimal` carga los cuadros aparte y los cambia de una vez (antes, cambiar de animal mientras cargaba dejaba la página en blanco).
+- Faltan: huillín, ranita de Darwin, güiña y Yorkshire.

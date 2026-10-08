@@ -1,4 +1,4 @@
-<title>Pudú en viaje</title>
+<title>Mascotas en viaje</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <style>
 /* Layout: el teléfono con la vista de viaje (Pistero real de la app + el pudú) y al lado los controles: ruta automática, las 14 acciones para verlas cuando quieras y cómo está hecho el galope. En teléfono se apilan. */
@@ -29,7 +29,7 @@ h1{font-size:clamp(26px,4.5vw,36px);font-weight:800}
 .bici{position:absolute;left:50%;bottom:44px;width:236px;transform:translateX(-46%);z-index:2}
 .bici svg{display:block;width:100%;height:auto}
 .obj{position:absolute;z-index:1;bottom:30px;will-change:transform}
-.obj.tronco{bottom:13px;z-index:2}.obj.brote{bottom:15px;z-index:2}.obj.chilco{bottom:20px}
+.obj.tronco{bottom:13px;z-index:2}.obj.brote,.obj.pimiento{bottom:15px;z-index:2}.obj.chilco{bottom:20px}
 #pudu{position:absolute;z-index:3;bottom:6px;left:0;width:150px;height:120px;transform-origin:50% 100%;will-change:transform}
 #sombra{position:absolute;z-index:2;bottom:12px;left:0;width:64px;height:9px;border-radius:50%;background:rgba(0,0,0,.34);will-change:transform}
 .aviso{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(10,15,29,.82);border:1px solid var(--line);border-radius:99px;padding:4px 12px;font-size:13px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity .35s;z-index:6}
@@ -57,8 +57,8 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 </style>
 
 <div class="wrap">
-  <h1>Pudú en viaje</h1>
-  <p class="lead">El pudú acompaña a Pistero (el mismo de la app, con el código real de <code>pistero-bici.js</code>). Con la ruta automática hace sus cosas solo: cada 8 a 15 segundos elige algo distinto, y además reacciona a lo que pasa en el viaje (subidas, bajadas, semáforos, cada km). Abajo puedes pedirle cada acción para verla.</p>
+  <h1>Mascotas en viaje</h1>
+  <p class="lead">La mascota acompaña a Pistero (el mismo de la app, con el código real de <code>pistero-bici.js</code>). Con la ruta automática hace sus cosas solo: cada 8 a 15 segundos elige algo distinto, y además reacciona a lo que pasa en el viaje (subidas, bajadas, semáforos, cada km). Abajo puedes pedirle cada acción para verla.</p>
   <div class="grid">
     <div class="phone">
       <div class="hud"><div><span>Velocidad</span><b id="vel">18</b> km/h</div><span class="ej">datos de ejemplo</span><div style="text-align:right"><span>Recorrido</span><b id="dist">0,0</b> km</div></div>
@@ -69,20 +69,21 @@ input[type=range]{width:100%;accent-color:var(--acc)}
           <div id="objs"></div>
           <div class="bici" id="bici"></div>
           <div id="sombra"></div>
-          <canvas id="pudu" aria-label="El pudú"></canvas>
+          <canvas id="pudu" aria-label="La mascota"></canvas>
         </div>
         <div class="aviso" id="aviso" role="status"></div>
       </div>
-      <div class="tarjeta"><canvas id="mini"></canvas><p><b>Pudú</b> <span id="txtModo">va corriendo a tu lado</span><br><small id="txtEne">Energía 100 · Pancita 60</small></p></div>
+      <div class="tarjeta"><canvas id="mini"></canvas><p><b id="nomAni">Pudú</b> <span id="txtModo">va corriendo a tu lado</span><br><small id="txtEne">Energía 100 · Pancita 60</small></p></div>
     </div>
     <div class="ctrl">
+      <div class="card"><h2>Mascota</h2><div class="seg" id="animales"></div><p class="nota" id="notaAni"></p></div>
       <div class="card"><h2>Viaje</h2>
         <div class="seg"><button id="bAuto" aria-pressed="true">Ruta automática</button><button id="bCor" aria-pressed="true">Corriendo al lado</button><button id="bCan" aria-pressed="false">En el canasto</button></div>
         <label for="rVel" style="margin-top:12px">Velocidad (sin ruta automática): <span id="lVel">18 km/h</span><input id="rVel" type="range" min="0" max="32" value="18"></label>
         <p class="nota" id="tramo">Tramo: llano</p>
       </div>
       <div class="card"><h2>Pídele una acción</h2>
-        <p class="grupo">Del pudú real</p>
+        <p class="grupo" id="grupoReal">Del pudú real</p>
         <div class="seg"><button data-a="zigzag">Zigzag</button><button data-a="tronco">Saltar tronco</button><button data-a="olfatea">Olfatear</button><button data-a="dospatas">Dos patas</button><button data-a="ladra">Frenazo (ladra)</button></div>
         <p class="grupo">De juegos con mascota</p>
         <div class="seg"><button data-a="brote">Brote (1 km)</button><button data-a="adelanta">Adelantarse</button><button data-a="atras">Quedarse atrás</button><button data-a="mira">Mirar a Pistero</button><button data-a="semaforo">Semáforo</button><button data-a="subida">Subida</button><button data-a="celebra">Celebrar 5 km</button></div>
@@ -91,7 +92,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
         <p class="nota" id="ultima">Última acción: ninguna todavía</p>
       </div>
       <div class="card"><h2>Cómo está hecho</h2>
-        <p class="nota" style="margin-top:0">Galope con dos vuelos por zancada, como los ciervos chicos: patas traseras empujan, vuelo estirado, patas delanteras aterrizan, vuelo recogido. Cada cuadro se funde con el siguiente, y la altura y el ritmo cambian un poco en cada zancada. Acelera y frena con suavidad, nunca de golpe.</p>
+        <p class="nota" style="margin-top:0"><span id="galopeQuien">Galope con dos vuelos por zancada, como los ciervos chicos</span>: patas traseras empujan, vuelo estirado, patas delanteras aterrizan, vuelo recogido. Cada cuadro se funde con el siguiente, y la altura y el ritmo cambian un poco en cada zancada. Acelera y frena con suavidad, nunca de golpe.</p>
         <div class="cuadros" id="cuadros"></div>
       </div>
     </div>
@@ -125,8 +126,23 @@ const CUADROS=[
   ['come','Come','pudu-come','sentado'],
   ['mira','Mira a Pistero','pudu-mira','recogido'],
   ['asoma','Se asoma','pudu-asoma','sentado'],
-  ['duerme','Duerme','pudu-duerme','sentado']
+  ['duerme','Duerme','pudu-duerme','sentado'],
+  ['salta','Salto','pudu-salta','estirado']
 ];
+/* cada animal reemplaza las acciones que no son suyas por las de su comportamiento real */
+const ANIMALES={
+  pudu:{n:'Pudú',img:{estirado:'pudu-corriendo',recogido:'pudu-corriendo2'},comida:'brote',arbusto:'chilco',
+    grupo:'Del pudú real',galope:'Galope con dos vuelos por zancada, como los ciervos chicos',
+    nota:'El ciervo más chico del mundo: corre en zigzag, salta troncos, se para en dos patas para alcanzar hojas y ladra si se asusta.'},
+  zorro:{n:'Zorro culpeo',cuadro:{dospatas:'escucha'},salto:'salta',comida:'pimiento',arbusto:null,
+    nombres:{olfatea:'Olfatea un rastro',dospatas:'Escucha un ruido en el pasto',tronco:'Salta juguetón sobre un tronco',brote:'Encuentra frutos de pimiento',duerme:'Se duerme enrollado en su cola'},
+    etiquetas:{olfatea:'Olfatear rastro',dospatas:'Escuchar',tronco:'Salto juguetón',brote:'Pimiento (1 km)'},
+    rotulos:{dospatas:'Escucha',salta:'Salto juguetón'},
+    grupo:'Del zorro real',galope:'Galope con dos vuelos por zancada, como los perros y otros carnívoros corredores',
+    nota:'Cazador solitario: olfatea rastros, escucha con sus orejas grandes, ladra y come frutos de pimiento (dispersa sus semillas). Duerme enrollado en su cola.'}
+};
+let ANI='pudu', A=ANIMALES.pudu;
+const nom=id=>(A.nombres&&A.nombres[id])||NOMBRE[id];
 const F={}, FALTA={};
 let ESC=1, REF=null; // escala común (misma cámara en todas las fotos) y referencia del galope
 
@@ -177,6 +193,8 @@ const SVG_OBJ={
   tronco:'<svg width="58" height="26" viewBox="0 0 58 26"><rect x="4" y="5" width="48" height="18" rx="9" fill="#6b4a2b"/><path d="M8 9h36M10 15h30M9 20h34" stroke="#4e341d" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="50" cy="14" rx="6" ry="9" fill="#c9a06b" stroke="#6b4a2b" stroke-width="1.5"/><ellipse cx="50" cy="14" rx="3" ry="5" fill="none" stroke="#9c7647" stroke-width="1"/><path d="M6 7c6-5 14-4 20-2 6-3 12-2 16 1" fill="none" stroke="#5f8f3e" stroke-width="3" stroke-linecap="round"/></svg>',
   // chilco (Fuchsia magellanica): arbusto nativo del sur, flores colgantes rojas y moradas
   chilco:'<svg width="56" height="62" viewBox="0 0 56 62"><path d="M28 62C26 46 18 34 8 26M28 62c2-18 10-30 22-38M28 62V22" stroke="#4a3a24" stroke-width="2.2" fill="none" stroke-linecap="round"/><g fill="#2f6b3a"><ellipse cx="12" cy="24" rx="10" ry="6"/><ellipse cx="44" cy="22" rx="11" ry="7"/><ellipse cx="28" cy="16" rx="12" ry="8"/><ellipse cx="20" cy="34" rx="9" ry="6"/><ellipse cx="38" cy="34" rx="9" ry="6"/></g><g><path d="M14 29l-2 7M33 22l1 8M45 28l2 7M24 39l-1 6" stroke="#4a3a24" stroke-width=".8"/><path d="M10 36l2 5 2-5z M32 30l2 5 2-5z M45 35l2 5 2-5z M21 45l2 5 2-5z" fill="#c8102e"/><path d="M11 40l1 4 1-4z M33 34l1 4 1-4z M46 39l1 4 1-4z M22 49l1 4 1-4z" fill="#6b2d8f"/></g></svg>',
+  // frutos del pimiento (Schinus molle): racimo de bayas rosadas con hojas compuestas; el culpeo los come y dispersa sus semillas
+  pimiento:'<svg width="34" height="26" viewBox="0 0 34 26"><path d="M4 20c6-5 14-8 26-9" stroke="#5b7a3a" stroke-width="1.4" fill="none"/><g fill="#6f9a45"><ellipse cx="9" cy="15" rx="3.2" ry="1.2" transform="rotate(-40 9 15)"/><ellipse cx="14" cy="12.5" rx="3.2" ry="1.2" transform="rotate(-40 14 12.5)"/><ellipse cx="19" cy="11" rx="3.2" ry="1.2" transform="rotate(-35 19 11)"/><ellipse cx="12" cy="19" rx="3.2" ry="1.2" transform="rotate(30 12 19)"/><ellipse cx="17" cy="16.5" rx="3.2" ry="1.2" transform="rotate(30 17 16.5)"/></g><g fill="#e2668a"><circle cx="22" cy="17" r="1.9"/><circle cx="25" cy="18.5" r="1.9"/><circle cx="23.5" cy="20.8" r="1.9"/><circle cx="26.8" cy="21.2" r="1.9"/><circle cx="20.6" cy="20" r="1.9"/><circle cx="25" cy="23.2" r="1.9"/></g><g fill="#ffd0dc"><circle cx="21.5" cy="16.4" r=".5"/><circle cx="24.5" cy="18" r=".5"/><circle cx="26.3" cy="20.6" r=".5"/></g><ellipse cx="18" cy="25" rx="10" ry="1.3" fill="rgba(0,0,0,.25)"/></svg>',
   // brote: hoja tierna recién salida, lo que come el pudú en el prototipo (1 por km)
   brote:'<svg width="26" height="26" viewBox="0 0 26 26"><path d="M13 25V13" stroke="#3f7a2a" stroke-width="2" stroke-linecap="round"/><path d="M13 15C8 15 4 11 4 6c5 0 9 3 9 9z" fill="#7cc04a"/><path d="M13 13c0-5 4-9 9-9 0 5-4 9-9 9z" fill="#9bd65c"/><ellipse cx="13" cy="25" rx="6" ry="1.6" fill="rgba(0,0,0,.25)"/></svg>'
 };
@@ -199,10 +217,10 @@ function iniciar(id){
   if(id==='ladra'){frenazo();return}
   if(id==='celebra'){celebrar(5);return}
   if(P.accion&&P.accion.obj&&OBJ.includes(P.accion.obj))quitarObjeto(P.accion.obj);
-  const a={id,t:0};P.accion=a;P.ultima=id;$('ultima').textContent='Última acción: '+NOMBRE[id];
+  const a={id,t:0};P.accion=a;P.ultima=id;$('ultima').textContent='Última acción: '+nom(id);
   if(id==='tronco')a.obj=ponerObjeto('tronco',W+30);
-  if(id==='dospatas')a.obj=ponerObjeto('chilco',W+30);
-  if(id==='brote'){a.obj=ponerObjeto('brote',W+20);}
+  if(id==='dospatas'&&A.arbusto)a.obj=ponerObjeto(A.arbusto,W+30);
+  if(id==='brote'){a.obj=ponerObjeto(A.comida,W+20);}
   if(id==='adelanta'){a.fase='va';}
   if(id==='mira'){S.expr='guino'}
   if(id==='atras'){a.fase='se queda';}
@@ -224,10 +242,12 @@ function cerebro(dt){
       case 'tronco': {const px=a.obj.x+a.obj.w*.3, dx=px-(casa()+P.rel+40);
         if(!P.salto&&dx<70&&dx>0&&P.g>20){P.salto={t:0,dur:clamp(150/(P.g+60),.5,.75)}}
         if(a.obj.x<-80){quitarObjeto(a.obj);terminar()} break;}
-      case 'dospatas': case 'brote': {const destino=a.obj.x+a.obj.w/2-casa()-(a.id==='brote'?62:44);
+      case 'dospatas': case 'brote': {
+        if(!a.obj){quieto=true;pose='dospatas';if(a.t>1.9||P.rel<-140)terminar();break}  // sin arbusto (zorro): se detiene a escuchar
+        const destino=a.obj.x+a.obj.w/2-casa()-(a.id==='brote'?62:44);
         if(!a.llego){relObj=Math.min(destino,90);maxAde=220; if(Math.abs(P.rel-destino)<12){a.llego=a.t}}  // se adelanta un poco y deja que el camino le traiga el brote o el chilco: así come dentro de la pantalla
         else{quieto=true;pose=a.id==='brote'?'come':'dospatas';P.rel=lerp(P.rel,a.obj.x+a.obj.w/2-casa()-(a.id==='brote'?62:44),.2);
-          if(a.id==='brote'&&a.t-a.llego>1.3&&!a.comido){a.comido=1;a.obj.el.style.opacity=0;S.pan=Math.min(100,S.pan+10);aviso('Brote: +10 pancita')}
+          if(a.id==='brote'&&a.t-a.llego>1.3&&!a.comido){a.comido=1;a.obj.el.style.opacity=0;S.pan=Math.min(100,S.pan+10);aviso((A.comida==='pimiento'?'Frutos de pimiento':'Brote')+': +10 pancita')}
           if(a.t-a.llego>(a.id==='brote'?1.7:1.9)||P.rel<-140){if(a.id==='brote')quitarObjeto(a.obj);else a.obj.suelto=1;terminar()}}
         break;}
       case 'olfatea': quieto=true;pose='olfatea'; if(a.t>2||P.rel<-140)terminar(); break;
@@ -308,7 +328,7 @@ function dibujarPudu(dt,t){
   // salto del tronco: un arco alto con el cuadro estirado
   let a=G.a,b=G.b,funde=G.funde;
   if(P.salto){P.salto.t+=dt;const u=P.salto.t/P.salto.dur;
-    if(u>=1){P.salto=null;sq=.07}else{y=Math.sin(u*Math.PI)*(P.salto.h||34);pitch=lerp(-9,8,u);a='estirado';b='estirado';funde=0}}
+    if(u>=1){P.salto=null;sq=.07}else{y=Math.sin(u*Math.PI)*(P.salto.h||34);pitch=lerp(-9,8,u);a=P.salto.cuadro||'salta';b=a;funde=0}}
   // mira a Pistero: en el vuelo recogido se ve el cuadro con la cabeza girada
   if(P.accion&&P.accion.id==='mira'){if(a==='recogido')a='mira';if(b==='recogido')b='mira'}
   // zigzag: se acerca y se aleja de la cámara
@@ -336,8 +356,8 @@ function tramo(n){
   $('mundo').style.transform=n==='subida'?'rotate(-4deg)':n==='bajada'?'rotate(3deg)':'none';
   S.pose=n==='subida'?'pie':'';S.expr=n==='subida'?'cansado':n==='semaforo'?'guino':'contento';
   $('tramo').textContent='Tramo: '+{llano:'llano',bajada:'bajada',subida:'subida',semaforo:'semáforo en rojo'}[n];
-  if(n==='semaforo'){P.ultima='semaforo';$('ultima').textContent='Última acción: '+NOMBRE.semaforo}
-  if(n==='subida'){$('ultima').textContent='Última acción: '+NOMBRE.subida}
+  if(n==='semaforo'){P.ultima='semaforo';$('ultima').textContent='Última acción: '+nom('semaforo')}
+  if(n==='subida'){$('ultima').textContent='Última acción: '+nom('subida')}
   if(n==='bajada'&&S.modo==='corriendo'&&!P.accion)setTimeout(()=>{if(!P.accion)iniciar('zigzag')},900);
 }
 function avanzarRuta(dt){
@@ -349,9 +369,9 @@ function avanzarRuta(dt){
 }
 let tFrenazo=0;
 function frenazo(){S.v=Math.max(0,S.v-14);S.vObj=0;S.expr='sorprendido';tFrenazo=2.4;claveBici='';
-  if(S.modo==='corriendo'){P.accion={id:'ladra',t:0};P.ultima='ladra'}$('ultima').textContent='Última acción: '+NOMBRE.ladra;ladrido()}
+  if(S.modo==='corriendo'){P.accion={id:'ladra',t:0};P.ultima='ladra'}$('ultima').textContent='Última acción: '+nom('ladra');ladrido()}
 let tCelebra=0;
-function celebrar(km){S.pose='sinmanos';S.expr='emocionado';tCelebra=2.6;aviso(km+' km');$('ultima').textContent='Última acción: '+NOMBRE.celebra;
+function celebrar(km){S.pose='sinmanos';S.expr='emocionado';tCelebra=2.6;aviso(km+' km');$('ultima').textContent='Última acción: '+nom('celebra');
   if(S.modo==='corriendo'){P.accion={id:'celebra',t:0}}}
 
 /* ladrido: pendiente una grabación real con licencia libre; por ahora sin sonido */
@@ -385,7 +405,7 @@ function loop(t){
     if(P.accion&&P.accion.id==='ladra'){P.quieto=true}
     moverPudu(dt);
     if(P.accion&&P.accion.id==='ladra'){P.pose='ladra';P.quieto=P.g<18}
-    if(P.accion&&P.accion.id==='celebra'&&!P.salto&&P.accion.t<2.2&&(!P.accion.n||P.accion.n<3)){P.accion.n=(P.accion.n||0)+1;P.salto={t:0,dur:.42,h:15}}
+    if(P.accion&&P.accion.id==='celebra'&&!P.salto&&P.accion.t<2.2&&(!P.accion.n||P.accion.n<3)){P.accion.n=(P.accion.n||0)+1;P.salto={t:0,dur:.42,h:15,cuadro:'recogido'}}
   }else{
     S.ene=Math.min(100,S.ene+S.v*dt/3600*TIEMPO*2);
     if(!P.accion){P.proxima-=dt;if(P.proxima<=0)iniciar(S.ene<30?'duerme':'asoma')}
@@ -411,18 +431,33 @@ $('bCan').onclick=()=>{S.modo='canasto';P.accion=null;canastoCuadro='sentado';ui
 $('rVel').oninput=e=>{S.velMan=+e.target.value;if(!S.auto)S.vObj=S.velMan;ui()};
 document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>iniciar(b.dataset.a));
 
-(async()=>{
+let cargaN=0;
+async function cargarAnimal(id){
+  // carga los cuadros aparte y los cambia de una vez: si se elige otro animal mientras carga, gana el último y el dibujo nunca ve cuadros a medias
+  const n=++cargaN, an=ANIMALES[id], nf={}, nfalta={};
   for(const [k,txt,img,resp] of CUADROS){
-    const fr=IMG[img]?await cargar(IMG[img]):null;
-    if(fr){F[k]=fr}else{FALTA[k]=resp}
+    const clave=(an.img&&an.img[k])||(id+'-'+((an.cuadro&&an.cuadro[k])||k));
+    const fr=IMG[clave]?await cargar(IMG[clave]):null;
+    if(fr){nf[k]=fr}else{nfalta[k]=resp}
   }
+  if(n!==cargaN)return;
+  ANI=id;A=an;for(const k in F)delete F[k];for(const k in FALTA)delete FALTA[k];Object.assign(F,nf);Object.assign(FALTA,nfalta);
   for(const k in FALTA){let r=FALTA[k];while(!F[r]&&FALTA[r])r=FALTA[r];F[k]=F[r]}
   REF=F.estirado;ESC=92/REF.height;
-  ['empuje','estirado','aterriza','recogido','mira'].forEach(k=>{if(F[k])F[k].galope=true});
+  ['empuje','estirado','aterriza','recogido','mira','salta'].forEach(k=>{if(F[k])F[k].galope=true});
   for(const k of ['sentado','asoma','duerme']){const c=document.createElement('canvas');c.width=F[k].width;c.height=F[k].height;c.getContext('2d').drawImage(F[k],0,0);PNG[k]=c.toDataURL('image/png')}
-  // tira de cuadros
-  $('cuadros').innerHTML=CUADROS.map(([k,txt])=>'<figure'+(FALTA[k]?' class="falta"':'')+'><canvas data-k="'+k+'"></canvas>'+txt+(FALTA[k]?' (falta)':'')+'</figure>').join('');
+  $('cuadros').innerHTML=CUADROS.map(([k,txt])=>{const t=(A.rotulos&&A.rotulos[k])||txt;return '<figure'+(FALTA[k]?' class="falta"':'')+'><canvas data-k="'+k+'"></canvas>'+t+(FALTA[k]?' (usa otro)':'')+'</figure>'}).join('');
   document.querySelectorAll('#cuadros canvas').forEach(c=>{const fr=F[c.dataset.k];c.width=fr.width;c.height=fr.height;c.getContext('2d').drawImage(fr,0,0)});
+  document.querySelectorAll('[data-a]').forEach(b=>{b.dataset.base=b.dataset.base||b.textContent;b.textContent=(A.etiquetas&&A.etiquetas[b.dataset.a])||b.dataset.base});
+  document.querySelectorAll('#animales button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ani===id));
+  $('nomAni').textContent=A.n;$('grupoReal').textContent=A.grupo;$('galopeQuien').textContent=A.galope;$('notaAni').textContent=A.nota;
+  P.accion=null;P.salto=null;canastoCuadro='sentado';for(const o of OBJ.slice())quitarObjeto(o);
+  ui();
+}
+$('animales').innerHTML=Object.entries(ANIMALES).map(([k,v])=>'<button data-ani="'+k+'" aria-pressed="false">'+v.n+'</button>').join('');
+document.querySelectorAll('#animales button').forEach(b=>b.onclick=()=>cargarAnimal(b.dataset.ani));
+(async()=>{
+  await cargarAnimal('pudu');while(!REF)await new Promise(r=>setTimeout(r,50));  // si eligieron otro animal mientras cargaba el pudú, espera a ese
   tramo('llano');S.v=18;P.g=18*PXK;ui();requestAnimationFrame(loop);
 })();
 </script>
