@@ -181,7 +181,7 @@ function renderRutas(){
   if(arr.length===0){ html='<p style="color:#888;padding:8px">Aún no tienes rutas grabadas. Escribe un destino en Inicio y sal a pedalear — apenas termines, tu ruta va a aparecer aquí con perfil de elevación y video.</p>'; }
   else{
     html='';
-    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'<i class="fas fa-cloud"></i> en la nube':'<i class="fas fa-mobile-screen"></i> en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8"><i class="fas fa-house"></i> '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic"><i class="fas fa-book"></i> '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item" onclick="showSingleRoute(\''+d.localId+'\')"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions" onclick="event.stopPropagation()"><button class="route-icon-btn" title="Perfil de elevación" onclick="verPerfilElevacion(\''+d.localId+'\')"><i class="fas fa-chart-line"></i> </button><button class="route-icon-btn" title="Video 3D" onclick="abrirVideoRuta(\''+d.localId+'\')"><i class="fas fa-clapperboard"></i> </button><button class="route-icon-btn" title="Crear segmento" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')"><i class="fas fa-flag-checkered"></i> </button><button class="route-icon-btn" title="Ver el sobrevuelo del viaje" onclick="verSobrevueloRuta(\''+d.localId+'\')"><i class="fas fa-helicopter"></i> </button><button class="route-icon-btn" title="Compartir este viaje" onclick="compartirViaje(\''+d.localId+'\')"><i class="fas fa-comment"></i> </button><button class="route-icon-btn" title="Exportar GPX" onclick="exportarRutaGPX(\''+d.localId+'\')"><i class="fas fa-share-from-square"></i> </button><button class="route-icon-btn delete" title="Borrar ruta" onclick="deleteRoute(\''+d.localId+'\')"><i class="fas fa-trash-can"></i> </button></div></div>'; });
+    arr.forEach(function(d){ const date=new Date(d.startTime).toLocaleString(); const dist=(d.distance||0).toFixed(2); const cal=Math.round(d.calories||0); const nube=d.firebaseId?'<i class="fas fa-cloud"></i> en la nube':'<i class="fas fa-mobile-screen"></i> en tu celular'; const titulo=d.nombreRuta?escapeHTML(d.nombreRuta):date; const sub=d.nombreRuta?(date+' · '):''; const bitacora=(d.hospedaje?'<div style="margin-top:3px;font-size:0.72rem;color:#9fb3c8"><i class="fas fa-house"></i> '+escapeHTML(d.hospedaje)+'</div>':'')+(d.notasDelDia?'<div style="margin-top:2px;font-size:0.72rem;color:#9fb3c8;font-style:italic"><i class="fas fa-book"></i> '+escapeHTML(d.notasDelDia)+'</div>':''); html+='<div class="route-history-item" onclick="showSingleRoute(\''+d.localId+'\')"><div class="route-item-info"><strong>'+titulo+'</strong><p style="margin:3px 0 0 0;font-size:0.75rem;color:#aaa">'+sub+dist+' km · '+cal+' cal · '+nube+'</p>'+bitacora+'</div><div class="route-item-actions" onclick="event.stopPropagation()"><button class="route-icon-btn" title="Perfil de elevación" onclick="verPerfilElevacion(\''+d.localId+'\')"><i class="fas fa-chart-line"></i> </button><button class="route-icon-btn" title="Video 3D" onclick="abrirVideoRuta(\''+d.localId+'\')"><i class="fas fa-clapperboard"></i> </button><button class="route-icon-btn" title="Crear segmento" onclick="crearSegmentoDesdeRuta(\''+d.localId+'\')"><i class="fas fa-flag-checkered"></i> </button><button class="route-icon-btn" title="Ver el sobrevuelo del viaje" onclick="verSobrevueloRuta(\''+d.localId+'\')"><i class="fas fa-helicopter"></i> </button><button class="route-icon-btn" title="Compartir este viaje" onclick="compartirViaje(\''+d.localId+'\')"><i class="fas fa-share-from-square"></i> </button><button class="route-icon-btn delete" title="Borrar ruta" onclick="deleteRoute(\''+d.localId+'\')"><i class="fas fa-trash-can"></i> </button></div></div>'; });
   }
   targets.forEach(function(c){ c.innerHTML=html; });
 }
@@ -373,7 +373,8 @@ function abrirVideoRuta(id){
     document.getElementById('video-status').innerText='Preparando el vuelo 3D...';
     document.getElementById('videoProgressFill').style.width='0%';
     document.getElementById('btnReplayVideo').style.display='none';
-    document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar y descargar';
+    document.getElementById('btnCompartirVideo').style.display='none'; videoArchivo=null;
+    document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar video';
     setTimeout(initVideoMap,50);
   }
   if(r&&r.points&&r.points.length){ conPuntos(r.points, r); return; }
@@ -447,7 +448,7 @@ function initVideoMap(){
     videoMap.addSource('ruta-recorrida',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[]}}});
     videoMap.addLayer({id:'ruta-recorrida-line',type:'line',source:'ruta-recorrida',paint:{'line-color':'#fc4c02','line-width':5,'line-opacity':0.95}});
     const out=document.getElementById('video-canvas-out'), mc=videoMap.getCanvas();
-    out.width=mc.width; out.height=mc.height; videoCompositeCtx=out.getContext('2d');
+    out.width=VIDEO_ANCHO; out.height=VIDEO_ALTO; videoCompositeCtx=out.getContext('2d');
     // Espera a que el estilo (calles, edificios, terreno) termine de pintar la
     // vista inicial ANTES de arrancar el vuelo — antes arrancaba con un
     // setTimeout fijo de 400ms sin importar si ya había algo que mostrar, y
@@ -492,13 +493,20 @@ function iniciarVueloRuta(){
   }
   videoRafId=requestAnimationFrame(frame);
 }
+// Formato de TikTok e Instagram Reels (Inty 2026-10-08: "son formatos diferentes los que admite TikTok y Instagram"):
+// vertical 9:16 a 1080x1920 SIEMPRE, sea cual sea la pantalla. Antes el video salía del tamaño de la pantalla
+// (p. ej. 1080x2400 en un teléfono alargado, o apaisado en el computador) y las redes lo recortaban o le ponían franjas.
+// El mapa se dibuja "cubriendo" el cuadro (se recorta lo que sobra a los lados o arriba/abajo, centrado).
+const VIDEO_ANCHO=1080, VIDEO_ALTO=1920;
 function _dibujarCompositeVideo(progreso, lon, lat, bearingDeg){
   if(!videoCompositeCtx||!videoMap) return;
   const out=document.getElementById('video-canvas-out'), mc=videoMap.getCanvas();
-  if(out.width!==mc.width||out.height!==mc.height){ out.width=mc.width; out.height=mc.height; }
+  if(out.width!==VIDEO_ANCHO||out.height!==VIDEO_ALTO){ out.width=VIDEO_ANCHO; out.height=VIDEO_ALTO; }
   const ctx=videoCompositeCtx, d=videoRouteData;
+  const esc=Math.max(out.width/mc.width, out.height/mc.height);
+  const dx=(out.width-mc.width*esc)/2, dy=(out.height-mc.height*esc)/2;
   ctx.clearRect(0,0,out.width,out.height);
-  ctx.drawImage(mc,0,0,out.width,out.height);
+  ctx.drawImage(mc,dx,dy,mc.width*esc,mc.height*esc);
   // Pistero en su bici, en la PUNTA de la línea que se traza (misma coordenada
   // que maneja la cámara): se dibuja acá, DENTRO del mismo canvas que se graba,
   // en vez de un Marker HTML aparte (ver nota arriba, esa era la causa real de
@@ -511,11 +519,11 @@ function _dibujarCompositeVideo(progreso, lon, lat, bearingDeg){
       // composición está a la resolución REAL del canvas del mapa (CSS * DPR).
       // Sin esta corrección, en un celular con DPR 2-3 la carita caía arriba-
       // izquierda en vez de sobre la línea del recorrido (bug reportado).
-      const _cw=(videoMap.getContainer()&&videoMap.getContainer().clientWidth)||out.width;
-      const _dpr=out.width/_cw;
+      const _cw=(videoMap.getContainer()&&videoMap.getContainer().clientWidth)||mc.width;
+      const _dpr=mc.width/_cw;
       const w=out.width*0.13, h=w*(84/100);
       ctx.save();
-      ctx.translate(p.x*_dpr, p.y*_dpr);
+      ctx.translate(dx+p.x*_dpr*esc, dy+p.y*_dpr*esc);
       ctx.fillStyle='rgba(0,0,0,0.30)';
       ctx.beginPath(); ctx.ellipse(0, h*0.42, w*0.34, h*0.11, 0, 0, Math.PI*2); ctx.fill();
       // Una carita NO se inclina con el rumbo: se dibuja siempre derecha, apoyada
@@ -529,6 +537,34 @@ function _dibujarCompositeVideo(progreso, lon, lat, bearingDeg){
   ctx.fillStyle='#fc4c02'; ctx.font='700 '+fs+'px system-ui,sans-serif'; ctx.textAlign='left'; ctx.fillText('Libre Pedal', pad, out.height-barH*0.62);
   ctx.fillStyle='#fff'; ctx.font='800 '+(fs*1.6)+'px system-ui,sans-serif'; ctx.fillText(((d.distance||0)*progreso).toFixed(2)+' km', pad, out.height-barH*0.2);
   if(d.calories){ ctx.textAlign='right'; ctx.font='600 '+fs+'px system-ui,sans-serif'; ctx.fillText(Math.round((d.calories||0)*progreso)+' cal', out.width-pad, out.height-barH*0.2); }
+}
+// Video ya grabado (para el botón "Compartir video": navigator.share exige un toque del usuario,
+// por eso no se puede llamar solo al terminar de grabar).
+let videoArchivo=null;
+function _esAppNativa(){ try{ return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
+// Devuelve el texto de estado. Compartir si se puede; si no, descargar (no en la app: ahí no hace nada).
+function _videoListo(blob, nombre, tipo){
+  let file=null;
+  try{ file=new File([blob], nombre, {type:tipo}); }catch(e){}
+  videoArchivo=file;
+  const btn=document.getElementById('btnCompartirVideo');
+  if(file && navigator.canShare && navigator.canShare({files:[file]})){
+    btn.style.display='';
+    return '¡Tu video está listo! Toca "Compartir video" para subirlo a TikTok, Instagram o donde quieras.';
+  }
+  btn.style.display='none';
+  if(_esAppNativa()) return 'Esta versión de la app todavía no puede guardar el video. Para descargarlo y compartirlo, abre librepedal.cl en Chrome.';
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=nombre; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); },4000);
+  return '¡Video descargado! Está en tu carpeta Descargas.';
+}
+function compartirVideoRuta(){
+  if(!videoArchivo || !navigator.share) return;
+  navigator.share({files:[videoArchivo], title:'Mi viaje en Libre Pedal', text:'Mi viaje en Libre Pedal 🚴 https://librepedal.cl'}).catch(function(e){
+    if(e && e.name==='AbortError') return; // cerró el menú de compartir: no es un error
+    lpAviso('No se pudo compartir el video. Inténtalo de nuevo.');
+  });
 }
 function grabarVideoRuta(){
   if(!videoMap){ return; }
@@ -553,21 +589,24 @@ function grabarVideoRuta(){
     const recorder=new MediaRecorder(stream,{mimeType:mime, videoBitsPerSecond:4000000});
     videoRecorder=recorder;
     recorder.ondataavailable=function(e){ if(e.data&&e.data.size>0) videoChunks.push(e.data); };
+    // Inty 2026-10-08: "no sé si se descarga el video, no sé dónde... debería dar la opción de compartir".
+    // Antes solo se descargaba: en la app instalada (WebView de Android) la descarga de un blob no hace
+    // nada, y en Chrome quedaba en Descargas sin ofrecer compartir. Ahora: si el teléfono sabe compartir
+    // archivos, botón "Compartir video" (TikTok, Instagram, WhatsApp...); si no, se descarga y se dice dónde.
     recorder.onstop=function(){
-      const blob=new Blob(videoChunks,{type:mime.split(';')[0]});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download='libre-pedal-ruta.'+extension; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(function(){ URL.revokeObjectURL(url); },4000);
-      document.getElementById('video-status').innerText='¡Video descargado! Ya lo puedes compartir.';
-      document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar y descargar';
+      const tipo=mime.split(';')[0];
+      const blob=new Blob(videoChunks,{type:tipo});
       if(videoStream){ videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream=null; }
+      document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar de nuevo';
+      document.getElementById('video-status').innerText=_videoListo(blob, 'libre-pedal-ruta.'+extension, tipo);
     };
+    document.getElementById('btnCompartirVideo').style.display='none';
     document.getElementById('btnGrabarVideo').disabled=true; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabando...';
     document.getElementById('btnReplayVideo').style.display='none';
     recorder.start();
     iniciarVueloRuta();
     videoStopTimeoutId=setTimeout(function(){ if(recorder.state==='recording') recorder.stop(); videoStopTimeoutId=null; },videoVueloMs+600);
-  }catch(e){ lpAviso('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar y descargar'; }
+  }catch(e){ lpAviso('Tu navegador no pudo grabar el video. Prueba desde Chrome o la app instalada.'); document.getElementById('btnGrabarVideo').disabled=false; document.getElementById('btnGrabarVideo').innerHTML='<i class="fas fa-video"></i> Grabar video'; }
 }
 function cerrarVideoRuta(){
   if(videoRafId){ cancelAnimationFrame(videoRafId); videoRafId=null; }
