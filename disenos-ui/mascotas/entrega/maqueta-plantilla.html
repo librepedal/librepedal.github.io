@@ -91,8 +91,8 @@ p{margin:0;max-width:66ch}
 @keyframes oreja{0%,100%{transform:none}25%,60%{transform:rotate(-9deg) translateY(-3px)}80%{transform:rotate(4deg)}}
 .r-huillin{animation:retoza 1.1s ease-in-out}
 @keyframes retoza{0%,100%{transform:none}20%{transform:translateX(-10px) rotate(-6deg)}45%{transform:translateX(10px) rotate(6deg)}70%{transform:translateX(-6px) rotate(-3deg)}}
-.r-rana{animation:cola 1s ease-in-out}
-@keyframes cola{0%,100%{transform:none}15%{transform:translateX(-5px) skewX(6deg)}35%{transform:translateX(5px) skewX(-6deg)}55%{transform:translateX(-4px) skewX(4deg)}75%{transform:translateX(3px) skewX(-2deg)}}
+.r-rana{animation:saltito 1s ease-out}
+@keyframes saltito{0%{transform:none}20%{transform:translateY(6px) scale(1.08,.88)}45%{transform:translateY(-30px) scale(.94,1.08)}68%{transform:translateY(0) scale(1.1,.9)}82%{transform:translateY(-8px)}100%{transform:none}}
 .r-guina{animation:acecha 1.2s ease-out}
 @keyframes acecha{0%{transform:none}35%{transform:translateY(8px) scale(1.06,.88)}55%{transform:translateY(-26px) translateX(10px) scale(.96,1.05)}80%{transform:translateX(10px)}100%{transform:none}}
 .r-yorkie{animation:cola2 .9s ease-in-out}
@@ -214,7 +214,7 @@ p{margin:0;max-width:66ch}
         <button class="paso" type="button" data-ir="3"><span class="n">3</span><b>El nombre</b><p>Se lo dices a Pistero (micrófono) o lo escribes. "Sugiéreme uno" propone nombres del sur, distintos por animal. Como en Finch: "lo puedes cambiar después".</p></button>
         <button class="paso" type="button" data-ir="4"><span class="n">4</span><b>Lista para salir</b><p>Su ficha con dónde y cuándo llegó (como el huevo de Pokémon GO), las barras del prototipo y lo que le falta para crecer. Eliges si corre a tu lado o va en el canasto. Se puede cambiar de animal hasta la próxima salida.</p></button>
       </div>
-      <p class="nota">Los gestos al tocarlas: el pudú brinca, el zorro ladea la cabeza para escuchar, el huillín retoza de lado a lado, el renacuajo mueve la cola, la güiña se agazapa y salta, y el Yorkshire mueve todo el cuerpo. En la maqueta el micrófono no escucha de verdad: escribe un nombre de ejemplo. Ubicación y fecha de ejemplo.</p>
+      <p class="nota">Los gestos al tocarlas: el pudú brinca, el zorro ladea la cabeza para escuchar, el huillín retoza de lado a lado, la ranita da un saltito, la güiña se agazapa y salta, y el Yorkshire mueve todo el cuerpo. En la maqueta el micrófono no escucha de verdad: escribe un nombre de ejemplo. Ubicación y fecha de ejemplo.</p>
     </div>
   </section>
 </main>
@@ -229,7 +229,7 @@ var ANI=[
   {id:'pudu',n:'Pudú',art:'el pudú',dato:'Es el ciervo más chico del mundo: de grande mide unos 40 cm de alto.',nombres:['Chilco','Brote','Copihue','Maqui']},
   {id:'zorro',n:'Zorro culpeo',art:'el zorro',dato:'Come frutos del bosque y va dejando sus semillas por el camino.',nombres:['Pimienta','Culpeo','Canelo','Ñirre']},
   {id:'huillin',n:'Huillín',art:'el huillín',dato:'Es la nutria de los ríos del sur de Chile, y está en peligro de extinción.',nombres:['Remo','Calafate','Chucao','Lluvia']},
-  {id:'rana',n:'Ranita de Darwin',art:'la ranita',dato:'Nace renacuajo, y su papá lo cuida guardándolo en el saco de su garganta.',nombres:['Saquito','Gota','Musgo','Lenga']},
+  {id:'rana',n:'Ranita de Darwin',art:'la ranita',dato:'Nace dentro del saco de la garganta de su papá y sale por su boca ya convertida en ranita.',nombres:['Saquito','Gota','Musgo','Lenga']},
   {id:'guina',n:'Güiña',art:'la güiña',dato:'Es el gato salvaje más chico de América.',nombres:['Kodkod','Mancha','Nalca','Arrayán']},
   {id:'yorkie',n:'Yorkshire',art:'el Yorkshire',dato:'Nace negro con fuego, y de grande se vuelve azul acero y dorado.',nombres:['Toffee','Cachupín','Pelusa','Mote']}
 ];
