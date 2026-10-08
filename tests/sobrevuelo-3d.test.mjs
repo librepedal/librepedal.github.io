@@ -13,6 +13,7 @@ const ctx = { console, Math, JSON, Object, Array, String, Number, RegExp, isFini
   document: { getElementById: nada, createElement: () => ({ getContext: nada }), addEventListener() {}, removeEventListener() {}, querySelector: nada },
   window: { matchMedia: () => ({ matches: false }), addEventListener() {} } };
 vm.createContext(ctx);
+for (const m of ['sobrevuelo-3d-vista.js', 'sobrevuelo-3d-pegada.js', 'sobrevuelo-video.js']) vm.runInContext(readFileSync(join(raiz, m), 'utf8'), ctx, { filename: m });
 vm.runInContext(readFileSync(join(raiz, 'sobrevuelo-3d.js'), 'utf8'), ctx, { filename: 'sobrevuelo-3d.js' });
 const T = ctx.window.__sb3test;
 let f = 0, n = 0; const ok = (c, m) => { n++; if (!c) { f++; console.log('  ✗ ' + m); } };

@@ -1,0 +1,98 @@
+/* ===== SOBREVUELO 3D: la vista (estilos y estructura HTML de la pantalla) — separado de sobrevuelo-3d.js (2026-10-08) =====
+   Solo texto: no tiene lógica ni estado. sobrevuelo-3d.js llama SB3Vista.estilos() y SB3Vista.pantalla() al abrir. */
+(function(){
+// Estilos SOLO bajo #sb3 (la app tiene sus propias .btn, .panel, etc.: así no se pisan) y keyframes con prefijo sb3.
+var SB3_CSS='#sb3{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--surf:#141a2b;--surf-2:#0f1524;--br:rgba(255,255,255,.09);--tx:#e8edf6;--tx2:#9fb3c8;position:fixed;inset:0;z-index:99995;background:var(--d);color:var(--tx);font:500 14px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}'
++'#sb3 *{box-sizing:border-box}'
++'#sb3-mapa{position:absolute;inset:0}'
++'#sb3 .barra{position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;display:flex;gap:8px;align-items:center;z-index:5}'
++'#sb3 .titulo{flex:1;min-width:0;background:rgba(10,15,29,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--br);border-radius:14px;padding:8px 12px}'
++'#sb3 .titulo b{display:block;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
++'#sb3 .titulo span{display:block;font-size:.68rem;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
++'#sb3 .cerrar{flex:none;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid var(--br);background:rgba(10,15,29,.82);color:var(--tx);cursor:pointer}'
++'#sb3 .seg{display:flex;background:rgba(10,15,29,.82);backdrop-filter:blur(8px);border:1px solid var(--br);border-radius:12px;padding:3px}'
++'#sb3 .seg button{border:0;background:none;color:var(--tx2);font:700 .78rem system-ui;padding:8px 10px;border-radius:9px;cursor:pointer}'
++'#sb3 .seg button.on{background:var(--p);color:#0a0f1d}'
++'#sb3 .capa{position:absolute;right:12px;bottom:calc(232px + env(safe-area-inset-bottom));z-index:5;transition:opacity .3s}'
++'#sb3 .panel{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:10px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(10,15,29,0),rgba(10,15,29,.88) 22%,rgba(10,15,29,.97))}'
++'#sb3 .datos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}'
++'#sb3 .dato{background:var(--surf);border:1px solid var(--br);border-radius:12px;padding:7px 8px}'
++'#sb3 .dato small{display:block;font-size:.62rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em}'
++'#sb3 .dato b{font-size:1.02rem;font-variant-numeric:tabular-nums}'
++'#sb3 .dato b i{font-style:normal;font-size:.7rem;color:var(--tx2);margin-left:2px}'
++'#sb3 .perfil{position:relative;height:84px;background:var(--surf-2);border:1px solid var(--br);border-radius:12px;overflow:hidden;cursor:pointer;touch-action:none}'
++'#sb3 .perfil canvas{width:100%;height:100%;display:block}'
++'#sb3 .ctrl{display:flex;gap:8px;margin-top:8px;align-items:center}'
++'#sb3 .btn{border:0;border-radius:12px;font:800 .85rem system-ui;padding:11px 14px;cursor:pointer}'
++'#sb3 .play{background:var(--p);color:#0a0f1d;flex:1 0 auto;white-space:nowrap}'
++'#sb3 .vel{background:var(--surf);color:var(--tx);border:1px solid var(--br)}'
++'#sb3 .leyenda{display:flex;gap:10px;font-size:.66rem;color:var(--tx2);margin:0 2px 6px;flex-wrap:wrap;transition:opacity .3s}'
++'#sb3 .leyenda i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:4px}'
++'#sb3 .cargando{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:9;background:var(--d);font-weight:700;color:var(--tx2)}'
++'#sb3.corriendo .leyenda,#sb3.corriendo .capa{opacity:0;pointer-events:none}'
++'#sb3 .hito{font:800 11px system-ui;color:#0a0f1d;background:#ffd700;border-radius:8px;padding:3px 7px;box-shadow:0 0 12px rgba(255,215,0,.6),0 2px 6px rgba(0,0,0,.45);white-space:nowrap}'
++'#sb3 .pp{position:absolute;left:12px;top:calc(66px + env(safe-area-inset-top));z-index:6;display:flex;align-items:center;gap:12px;padding:10px 16px;background:rgba(10,15,29,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--tx);border:1px solid var(--br);border-left:3px solid var(--ring,#39ff88);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;transform:translateY(-10px);transition:opacity .45s cubic-bezier(.2,.7,.2,1),transform .55s cubic-bezier(.2,.7,.2,1);pointer-events:none;max-width:calc(100% - 24px)}'
++'#sb3 .pp.on{opacity:1;transform:none}'
++'#sb3 .pp-texto b{display:block;font:800 1.05rem/1.1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:-.01em}'
++'#sb3 .pp-texto span{display:block;margin-top:3px;font:600 .76rem system-ui;color:var(--tx2)}'
++'#sb3 .pp.cansado,#sb3 .pp.enojado{--ring:#ff8a1f}#sb3 .pp.agotado{--ring:#ff2d6f}#sb3 .pp.adrenalina,#sb3 .pp.emocionado,#sb3 .pp.sorprendido{--ring:#22d3ff}#sb3 .pp.orgulloso{--ring:#ffd700}#sb3 .pp.contento{--ring:#39ff88}#sb3 .pp.pensando{--ring:#9fb3c8}'
++'#sb3 .cara-mk{width:68px;height:84px;pointer-events:none;--c:#39ff88;--lat:1.15s}'
++'#sb3 .cm-pin{position:absolute;left:50%;bottom:0;width:3px;height:20px;margin-left:-1.5px;border-radius:2px;background:linear-gradient(to top,#fff,var(--c) 45%,var(--c));box-shadow:0 0 8px var(--c)}'
++'#sb3 .cm-in{position:absolute;left:1px;top:0;width:66px;height:66px;transform-origin:50% 100%}'
+/* Inty 2026-10-07: la cara completa, SIN anillo ni halo que late ("eso nunca lo pedí"), igual que el respaldo
+   (.sbv-rostro-c de estilos.css): 64×54 apoyada sobre el pin */
++'#sb3 .cm-caras{position:absolute;left:1px;top:12px;width:64px;height:54px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}'
++'#sb3 .cm-c{position:absolute;inset:0;opacity:0;transform:scale(.96);transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1)}'
++'#sb3 .cm-c.on{opacity:1;transform:none}#sb3 .cm-c svg{width:100%;height:100%;display:block}'
++'#sb3 .cm-gota{position:absolute;right:-2px;top:10px;width:9px;height:12px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#7fd0ff;box-shadow:0 0 6px #7fd0ff;opacity:0}'
++'#sb3 .cara-mk.suda .cm-gota{animation:sb3Gota 1.4s ease-in infinite}'
++'@keyframes sb3Gota{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(26px)}}'
++'#sb3 .resumen{position:absolute;left:12px;right:12px;bottom:calc(176px + env(safe-area-inset-bottom));max-height:calc(100% - 260px);overflow:auto;z-index:6;max-width:520px;margin:0 auto;background:rgba(10,15,29,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--br);border-radius:18px;padding:14px;opacity:0;transform:translateY(14px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);pointer-events:none}'
++'#sb3.fin .resumen{opacity:1;transform:none;pointer-events:auto}'
++'#sb3.fin .datos,#sb3.fin .leyenda,#sb3.fin .pp{opacity:0;pointer-events:none}'
++'#sb3 .rs-tit b{display:block;font:800 1.15rem/1.15 system-ui;letter-spacing:-.01em}#sb3 .rs-tit span{font:600 .74rem system-ui;color:var(--tx2)}'
++'#sb3 .rs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}'
++'#sb3 .rs-dato{background:var(--surf);border:1px solid var(--br);border-radius:12px;padding:7px 8px}#sb3 .rs-dato small{display:block;font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em}#sb3 .rs-dato b{font-size:.95rem;font-variant-numeric:tabular-nums}'
++'#sb3 .rs-hitos{list-style:none;margin:0;padding:0;display:grid;gap:5px}'
++'#sb3 .rs-hitos li{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.04);border-left:3px solid #39ff88;font-size:.78rem}'
++'#sb3 .rs-hitos li span{color:var(--tx2)}#sb3 .rs-hitos li b{font-weight:700;text-align:right}'
++'#sb3 .rs-hitos li.sube{border-color:#ff8a1f}#sb3 .rs-hitos li.empina{border-color:#ff2d6f}#sb3 .rs-hitos li.baja{border-color:#22d3ff}#sb3 .rs-hitos li.cima{border-color:#ffd700}'
++'#sb3 .rs-comp{width:100%;margin-top:10px}'
++'#sb3 .son{display:flex;align-items:center;justify-content:center;padding:9px 11px}#sb3 .son .tacha{display:none}#sb3 .son.mudo .onda{display:none}#sb3 .son.mudo .tacha{display:inline}#sb3 .son.mudo{color:var(--tx2)}'
++'#sb3 .rs-comp{display:flex;align-items:center;justify-content:center;gap:7px}#sb3 .rs-sec{margin-top:8px}'
+/* video para redes (maqueta aprobada por Inty 2026-10-08): mientras se graba solo se ven el mapa del video y la tarjeta */
++'#sb3.grabando .barra,#sb3.grabando .panel,#sb3.grabando .resumen,#sb3.grabando .pp,#sb3.grabando .capa,#sb3.grabando .maplibregl-ctrl-bottom-right,#sb3.vid-on .resumen,#sb3.vid-on .panel{visibility:hidden}'
++'#sb3 .vid{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:12;max-width:520px;margin:0 auto;background:rgba(10,15,29,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--br);border-radius:18px;padding:14px;display:grid;gap:10px}'
++'#sb3 .vid-fila{display:flex;gap:12px;align-items:center;min-width:0}#sb3 .vid-mini{width:84px;height:auto;aspect-ratio:9/16;border-radius:8px;border:1px solid var(--br);background:var(--surf-2);flex:none}'
++'#sb3 .vid-txt{display:grid;gap:6px;min-width:0}#sb3 .vid-txt b{font:800 1.05rem/1.15 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}#sb3 .vid-txt small,#sb3 .vid-nota{color:var(--tx2);font-size:.78rem;line-height:1.35}'
++'#sb3 .vid-barra{height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}#sb3 .vid-barra i{display:block;height:100%;width:0;background:var(--p);border-radius:4px;transition:width .2s linear}'
++'#sb3 .vid-ancho{width:100%;display:flex;align-items:center;justify-content:center;gap:7px}#sb3 .vid .btn:disabled{opacity:.6}'
++'@media (max-width:420px){#sb3 .dato b{font-size:.92rem}}'
++'@media (max-width:380px){#sb3 .rs-grid{grid-template-columns:repeat(2,1fr)}}'
++'@media (max-height:700px){#sb3 .perfil{height:64px}#sb3 .dato{padding:5px 8px}#sb3 .dato b{font-size:.92rem}#sb3 .ctrl{margin-top:6px}#sb3 .btn{padding:9px 12px}#sb3 .resumen{bottom:calc(150px + env(safe-area-inset-bottom));padding:10px}#sb3 .rs-hitos li{padding:4px 8px}}'
++'@media (prefers-reduced-motion:reduce){#sb3 .pp{transition:opacity .3s;transform:none}#sb3 .cara-mk.suda .cm-gota{animation:none}}';
+
+function sb3Estilos(){ if(document.getElementById('sb3-css')) return; var st=document.createElement('style'); st.id='sb3-css'; st.textContent=SB3_CSS; document.head.appendChild(st); }
+// la pantalla (mismos elementos que el prototipo; ids con prefijo sb3-). Íconos dibujados a medida (no emoji).
+function sb3Pantalla(){
+  var el=document.createElement('div'); el.id='sb3'; el.setAttribute('role','dialog'); el.setAttribute('aria-label','Sobrevuelo del viaje');
+  el.innerHTML='<div id="sb3-mapa"></div><div class="cargando" id="sb3-cargando">Preparando tu viaje…</div>'
+   +'<div class="barra"><div class="titulo"><b id="sb3-tit"></b><span id="sb3-titSub"></span></div>'
+   +'<button class="cerrar" id="sb3-cerrar" aria-label="Cerrar el sobrevuelo"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
+   +'<div class="pp" id="sb3-pp"><div class="pp-cara" hidden></div><div class="pp-texto"><b class="pp-txt"></b><span class="pp-sub"></span></div><div class="pp-masc"></div></div>'
+   +'<div class="capa"><div class="seg" id="sb3-capa"><button data-c="sat" class="on">Satélite</button><button data-c="calles">Calles</button></div></div>'
+   +'<div class="resumen" id="sb3-resumen"></div>'
+   +'<div class="panel"><div class="datos">'
+   +'<div class="dato"><small>Recorrido</small><b id="sb3-dKm">0,0<i>km</i></b></div>'
+   +'<div class="dato"><small id="sb3-lAlt">Altura</small><b id="sb3-dAlt">–<i>m</i></b></div>'
+   +'<div class="dato"><small>Pendiente</small><b id="sb3-dPend">–<i>%</i></b></div>'
+   +'<div class="dato"><small>Subido</small><b id="sb3-dSub">0<i>m</i></b></div></div>'
+   +'<div class="leyenda" id="sb3-leyenda"><span><i style="background:#39ff88;box-shadow:0 0 6px #39ff88"></i>plano</span><span><i style="background:#ffe14d;box-shadow:0 0 6px #ffe14d"></i>3–6 %</span><span><i style="background:#ff8a1f;box-shadow:0 0 6px #ff8a1f"></i>6–9 %</span><span><i style="background:#ff2d6f;box-shadow:0 0 6px #ff2d6f"></i>+9 %</span><span><i style="background:#22d3ff;box-shadow:0 0 6px #22d3ff"></i>bajada</span></div>'
+   +'<div class="perfil" id="sb3-perfil"><canvas id="sb3-cv"></canvas></div>'
+   +'<div class="ctrl"><button class="btn play" id="sb3-play">▶ Ver sobrevuelo</button>'
+   +'<button class="btn vel son" id="sb3-sonido" aria-label="Sonido del sobrevuelo"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" stroke="none"/><path class="onda" d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path class="onda" d="M18.2 6.5a8 8 0 0 1 0 11"/><path class="tacha" d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg></button>'
+   +'<button class="btn vel" id="sb3-vel">×1</button></div></div>';
+  document.body.appendChild(el); return el;
+}
+window.SB3Vista={estilos:sb3Estilos, pantalla:sb3Pantalla};
+})();
