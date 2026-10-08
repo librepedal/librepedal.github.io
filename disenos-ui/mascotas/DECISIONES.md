@@ -64,7 +64,9 @@ Datos reales: la cría nace con manchas blancas que pierde cerca de los 5 meses 
 - **Zorro culpeo hecho** (pendiente de revisión de Inty): 13 cuadros de Gemini en `transparentes/zorro-*.png` (versión liviana en `transparentes/mockup/`). Cambia "dos patas" por **escuchar un ruido en el pasto** (sin arbusto), el brote por **frutos de pimiento** (Schinus molle, el culpeo los come y dispersa sus semillas), salto juguetón propio y duerme enrollado en su cola.
 - Galope del zorro: galope rotatorio con dos vuelos, como los perros y otros carnívoros corredores (Biancardi y Minetti, J. Exp. Biol. 2012).
 - El mockup elige animal con `ANIMALES` en `mockup-viaje.src.html`; `cargarAnimal` carga los cuadros aparte y los cambia de una vez (antes, cambiar de animal mientras cargaba dejaba la página en blanco).
-- Faltan: huillín, ranita de Darwin, güiña y Yorkshire.
+- **Huillín hecho** (2026-10-08, pendiente de revisión de Inty): 12 cuadros nuevos de Gemini en su chat (pedido: "Edit my original RUNNING baby huillin image… change only the pose: …"), originales en `gemini/huillin-cria-*.jpg`, transparentes en `transparentes/huillin-*.png`. Galope a saltos con el lomo arqueado (las patas delanteras son más cortas: otterjoy.com, locomoción de nutrias); "dos patas" = se para a vigilar; "tronco" = tobogán de guata (las nutrias se deslizan en barro y nieve como juego, Northeastern Naturalist 2005); come pancoras (*Aegla*, casi 100 % de su dieta según Oryx/Cambridge); chilla. Lleva `alto:64` porque corre bajo y largo.
+- Faltan: ranita de Darwin, güiña y Yorkshire.
+- Descarga de Gemini sin el botón: en la pestaña del chat, `location.href` = URL `/gg/…=s0` de la imagen, leer la URL `rd-gg` a la que redirige y bajarla con curl en seguida (vence en minutos).
 
 ## Pieza 3 de 3: entrega de la mascota (2026-10-07)
 - Panel de referencias: https://claude.ai/artifact/2X4QuGeonYiadh2KiQRtmS (fuente `entrega/`: `cabecera.html` con los estilos del panel de la pieza 1, `cuerpo.html` y `ref/*.jpg`; `node entrega/armar.cjs` arma `entrega/referencias.html`).
