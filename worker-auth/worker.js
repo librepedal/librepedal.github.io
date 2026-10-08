@@ -77,7 +77,10 @@ async function incrementarContador(env, clave) {
 }
 
 const VENTANA_LIMITE_MS = 10 * 60 * 1000; // 10 minutos
-const MAX_POR_IP = 5;    // por dirección de origen -- frena un script/una IP insistiendo.
+// 2026-10-08: era 5. Con la app abierta y un evento, todos entran desde el MISMO Wi-Fi (una
+// sola IP pública): con 5, el sexto quedaba fuera 10 minutos. 60 deja entrar a un salón entero
+// y sigue frenando un script; a cada persona la protege MAX_POR_CORREO.
+const MAX_POR_IP = 60;   // por dirección de origen -- frena un script/una IP insistiendo.
 const MAX_POR_CORREO = 5; // por correo objetivo -- frena insistir contra UNA persona aunque
                            // el ataque venga rotando de IP en IP (el límite por IP solo no alcanza para eso).
 
@@ -130,6 +133,41 @@ async function verificarIdToken(idToken) {
   return payload;
 }
 
+// ¿Ya existe users/{cu} en Firestore? (para el código del evento). Lee con la misma cuenta
+// de servicio que firma los tokens: token OAuth de 1 h (se guarda 50 min) + GET por REST.
+// true/false, o lanza si no se pudo saber (quien llama falla cerrado).
+let _tokServicio = { at: 0, tok: null };
+async function tokenServicio(env) {
+  if (_tokServicio.tok && Date.now() - _tokServicio.at < 50 * 60 * 1000) return _tokServicio.tok;
+  const key = await importPKCS8(atob(env.FIREBASE_PRIVATE_KEY_B64), 'RS256');
+  const now = Math.floor(Date.now() / 1000);
+  const assertion = await new SignJWT({ scope: 'https://www.googleapis.com/auth/datastore' })
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+    .setIssuer(env.FIREBASE_CLIENT_EMAIL)
+    .setAudience('https://oauth2.googleapis.com/token')
+    .setIssuedAt(now)
+    .setExpirationTime(now + 3600)
+    .sign(key);
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') + '&assertion=' + assertion
+  });
+  const data = await r.json().catch(() => null);
+  if (!r.ok || !data || !data.access_token) throw new Error('token de servicio: ' + r.status);
+  _tokServicio = { at: Date.now(), tok: data.access_token };
+  return data.access_token;
+}
+async function usuarioExiste(env, cu) {
+  const tok = await tokenServicio(env);
+  const url = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/users/'
+    + encodeURIComponent(cu) + '?mask.fieldPaths=user';
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + tok } });
+  if (r.status === 200) return true;
+  if (r.status === 404) return false;
+  throw new Error('firestore: ' + r.status);
+}
+
 // Orígenes reales de la app (mismo patrón ya usado en worker-ia): CORS no frena un
 // script/curl (eso lo hace el límite por IP de arriba), pero sí evita que este Worker se
 // pueda llamar desde JS de una página ajena usando la sesión de un visitante inocente.
@@ -173,8 +211,20 @@ export default {
     //                          datos personales de gente real.
     //
     // Es para la prueba cerrada; se quita cuando el login de Google esté arriba.
+    //
+    // CÓDIGO DEL EVENTO (2026-10-08, Inty: "que la aplicación quede libre para cualquier
+    // usuario que descargue la aplicación"): CODIGO_EVENTO es un segundo código, para gente
+    // que todavía NO tiene cuenta. Como no hay correo que lo verifique, solo sirve para
+    // correos sin cuenta: si users/{cu} ya existe en Firestore (testers, gente que entró
+    // con Google) se rechaza, así nadie entra a la cuenta de otro sabiendo el código.
+    // La primera entrada deja la marca 'evento:<correo>' en KV y con ella esa persona
+    // puede volver a entrar con el código (otro teléfono, sesión cerrada). Mismo riesgo
+    // que ya tienen los testers entre sí, nunca sobre una cuenta que no nació con el código.
+    // FALLA CERRADA: si no se puede comprobar Firestore o KV, no entra.
     if (body && body.modo === 'codigo') {
-      if (!env.CODIGO_TESTER || !env.TESTERS_PERMITIDOS) {
+      const hayTester = !!(env.CODIGO_TESTER && env.TESTERS_PERMITIDOS);
+      const hayEvento = !!env.CODIGO_EVENTO;
+      if (!hayTester && !hayEvento) {
         return json({ error: 'el ingreso por código no está habilitado' }, 403);
       }
       const codigo = typeof body.codigo === 'string' ? body.codigo.trim() : '';
@@ -206,18 +256,35 @@ export default {
         return json({ error: 'demasiados intentos con ese correo, esperá unos minutos' }, 429);
       }
 
-      const esperado = String(esAdmin ? env.CODIGO_ADMIN : env.CODIGO_TESTER);
-      if (!codigosIguales(codigo, esperado)) {
+      const permitidos = String(env.TESTERS_PERMITIDOS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      const esCodigoTester = !esAdmin && hayTester && codigosIguales(codigo, String(env.CODIGO_TESTER));
+      const esCodigoEvento = !esAdmin && hayEvento && codigosIguales(codigo, String(env.CODIGO_EVENTO));
+      if (esAdmin ? !codigosIguales(codigo, String(env.CODIGO_ADMIN)) : (!esCodigoTester && !esCodigoEvento)) {
         await registrarIntentoFallido(env, email);
         return json({ error: 'código incorrecto' }, 401);
       }
 
-      const permitidos = String(env.TESTERS_PERMITIDOS).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      if (permitidos.indexOf(email) === -1) {
+      if (esCodigoTester && permitidos.indexOf(email) === -1) {
         return json({ error: 'ese correo no está en la lista de testers de la prueba cerrada' }, 403);
       }
       if (!env.FIREBASE_PRIVATE_KEY_B64 || !env.FIREBASE_CLIENT_EMAIL) {
         return json({ error: 'este deploy no puede emitir tokens' }, 500);
+      }
+      if (esCodigoEvento && !esCodigoTester) {
+        const yaTieneCuenta = 'ese correo ya tiene cuenta: entra con "Entrar con Google" o con tu código de tester';
+        if (permitidos.indexOf(email) !== -1) return json({ error: yaTieneCuenta }, 403);
+        if (!env.RATE_LIMIT_AUTH) return json({ error: 'el ingreso con el código del evento no está disponible ahora' }, 503);
+        let marca = null;
+        try { marca = await env.RATE_LIMIT_AUTH.get('evento:' + email); }
+        catch (e) { return json({ error: 'no se pudo comprobar el correo, intenta de nuevo' }, 503); }
+        if (!marca) {
+          let existe;
+          try { existe = await usuarioExiste(env, cuDeEmail(email)); }
+          catch (e) { return json({ error: 'no se pudo comprobar el correo, intenta de nuevo', detalle: String(e && e.message || e) }, 503); }
+          if (existe) return json({ error: yaTieneCuenta }, 403);
+          try { await env.RATE_LIMIT_AUTH.put('evento:' + email, String(Date.now())); }
+          catch (e) { return json({ error: 'no se pudo comprobar el correo, intenta de nuevo' }, 503); }
+        }
       }
       try {
         const key = await importPKCS8(atob(env.FIREBASE_PRIVATE_KEY_B64), 'RS256');
@@ -249,17 +316,9 @@ export default {
     }
     const cu = cuDeEmail(payload.email);
 
-    // Prueba cerrada: el idToken (Google) prueba QUIÉN es, pero no que esté invitado.
-    // Mismo chequeo que el bloque modo:'codigo' de arriba. FALLA CERRADA a propósito:
-    // sin el secreto puesto, esta vía queda bloqueada entera (igual que el otro modo),
-    // no abierta a cualquier cuenta de Google verificada.
-    if (!env.TESTERS_PERMITIDOS) {
-      return json({ error: 'el ingreso con Google no está habilitado' }, 403);
-    }
-    const permitidos = String(env.TESTERS_PERMITIDOS).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-    if (permitidos.indexOf(String(payload.email).toLowerCase()) === -1) {
-      return json({ error: 'ese correo no está en la lista de testers de la prueba cerrada' }, 403);
-    }
+    // App abierta (2026-10-08): el idToken ya prueba QUIÉN es (firma de Google, correo
+    // verificado), así que entra cualquier cuenta. Antes además se exigía estar en
+    // TESTERS_PERMITIDOS (prueba cerrada); Inty pidió abrirla a cualquier usuario.
 
     if (!env.FIREBASE_PRIVATE_KEY_B64 || !env.FIREBASE_CLIENT_EMAIL) {
       // Deploy de staging sin la llave de firma: confirma la verificación pero no emite token.

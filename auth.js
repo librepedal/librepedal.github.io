@@ -103,8 +103,8 @@ async function _entrarConCodigoTester(){
   var codigo=(document.getElementById('codigoTesterInput')||{}).value||'';
   var correo=(document.getElementById('correoTesterInput')||{}).value||'';
   codigo=codigo.trim().toUpperCase(); correo=correo.trim().toLowerCase();
-  if(!codigo) return _lpAvisoLogin('Escribí el código que te pasaron.');
-  if(!correo||correo.indexOf('@')===-1) return _lpAvisoLogin('Escribí el correo con el que te inscribiste a la prueba.');
+  if(!codigo) return _lpAvisoLogin('Escribe el código que te dieron.');
+  if(!correo||correo.indexOf('@')===-1) return _lpAvisoLogin('Escribe tu correo.');
   var btn=document.getElementById('btnEntrarCodigo');
   if(btn){ btn.disabled=true; btn.innerText='Entrando...'; }
   try{

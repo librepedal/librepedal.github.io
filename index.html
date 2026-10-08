@@ -150,8 +150,8 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
      grande y abierta. Antes era un enlace chico al final de la pantalla y la gente no lo
      encontraba. No depende del correo ni de Google: solo del worker propio. -->
 <div id="cajaCodigoTester" style="margin-top:6px;padding:16px;border:2px solid var(--p);border-radius:14px;background:rgba(252,76,2,.07)">
-  <p style="font-size:.95rem;color:#e7edf6;font-weight:800;margin:0 0 4px">Entrar a la prueba</p>
-  <p style="font-size:.78rem;color:#9fb3c8;margin:0 0 12px;line-height:1.5">Escribe el código que te pasaron y tu correo.</p>
+  <p style="font-size:.95rem;color:#e7edf6;font-weight:800;margin:0 0 4px">Entrar con código</p>
+  <p style="font-size:.78rem;color:#9fb3c8;margin:0 0 12px;line-height:1.5">Escribe el código que te dieron y tu correo.</p>
   <input type="text" id="codigoTesterInput" placeholder="Código" autocomplete="off" maxlength="40" style="width:100%;margin-bottom:9px;font-size:1.05rem;letter-spacing:.06em;text-align:center;font-weight:700;text-transform:uppercase">
   <input type="email" id="correoTesterInput" placeholder="tu correo" autocomplete="email" maxlength="100" style="width:100%;margin-bottom:12px;font-size:1rem">
   <button type="button" id="btnEntrarCodigo" style="width:100%;background:var(--p);color:#0b1220;border:none;border-radius:12px;padding:15px;font-weight:900;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 14px rgba(252,76,2,.35)">Entrar</button>
@@ -1013,7 +1013,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.813'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.814'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
