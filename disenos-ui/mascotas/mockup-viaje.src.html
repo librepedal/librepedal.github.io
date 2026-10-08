@@ -29,7 +29,7 @@ h1{font-size:clamp(26px,4.5vw,36px);font-weight:800}
 .bici{position:absolute;left:50%;bottom:44px;width:236px;transform:translateX(-46%);z-index:2}
 .bici svg{display:block;width:100%;height:auto}
 .obj{position:absolute;z-index:1;bottom:30px;will-change:transform}
-.obj.tronco{bottom:13px;z-index:2}.obj.brote,.obj.pimiento,.obj.pancora,.obj.colilargo{bottom:15px;z-index:2}.obj.mosquita{bottom:46px;z-index:2}.obj.chilco{bottom:20px}
+.obj.tronco{bottom:13px;z-index:2}.obj.brote,.obj.pimiento,.obj.pancora,.obj.colilargo,.obj.galletita{bottom:15px;z-index:2}.obj.mosquita{bottom:46px;z-index:2}.obj.chilco{bottom:20px}
 #pudu{position:absolute;z-index:3;bottom:6px;left:0;width:150px;height:120px;transform-origin:50% 100%;will-change:transform}
 #sombra{position:absolute;z-index:2;bottom:12px;left:0;width:64px;height:9px;border-radius:50%;background:rgba(0,0,0,.34);will-change:transform}
 .aviso{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(10,15,29,.82);border:1px solid var(--line);border-radius:99px;padding:4px 12px;font-size:13px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity .35s;z-index:6}
@@ -158,7 +158,13 @@ const ANIMALES={
     etiquetas:{olfatea:'Olfatear rastro',dospatas:'Acechar',brote:'Colilargo (1 km)',ladra:'Frenazo (se eriza)'},
     rotulos:{dospatas:'Acecha',ladra:'Se eriza'},
     grupo:'De la güiña real',galope:'Galope de gato, que alterna el cuerpo estirado y recogido',
-    nota:'El gato más chico de América, de los bosques del sur. Es nocturna, trepa muy bien (cría en huecos de árboles), acecha agazapada y caza sobre todo ratones colilargo. Si se asusta, arquea el lomo y bufa.'}
+    nota:'El gato más chico de América, de los bosques del sur. Es nocturna, trepa muy bien (cría en huecos de árboles), acecha agazapada y caza sobre todo ratones colilargo. Si se asusta, arquea el lomo y bufa.'},
+  yorkie:{n:'Yorkshire',alto:72,cuadro:{dospatas:'pide'},salto:'salta',comida:'galletita',comidaNombre:'Galletita',comidaEnCuadro:true,arbusto:null,
+    nombres:{olfatea:'Rastrea con la nariz',dospatas:'Se para en dos patas a pedir',tronco:'Salta un tronco',brote:'Encuentra una galletita',ladra:'Ladra por el frenazo',duerme:'Se duerme enroscado'},
+    etiquetas:{olfatea:'Rastrear',dospatas:'Pedir',brote:'Galletita (1 km)',ladra:'Frenazo (ladra)'},
+    rotulos:{dospatas:'Pide',olfatea:'Rastrea'},
+    grupo:'Del Yorkshire real',galope:'Galope de perro chico, con las patas delanteras estiradas y las traseras empujando',
+    nota:'Terrier chico nacido en las fábricas textiles de Yorkshire (Inglaterra, siglo XIX), donde cazaba ratones metiéndose en rincones estrechos. Hoy es perro de compañía: valiente, curioso y muy ladrador. Los cachorros nacen negro y fuego; de adultos pasan a azul acero y dorado.'}
 };
 let ANI='pudu', A=ANIMALES.pudu;
 const nom=id=>(A.nombres&&A.nombres[id])||NOMBRE[id];
@@ -220,6 +226,8 @@ const SVG_OBJ={
   mosquita:'<svg width="18" height="14" viewBox="0 0 18 14"><ellipse cx="6" cy="4.5" rx="4" ry="2.2" fill="rgba(220,235,255,.75)" transform="rotate(-20 6 4.5)"/><ellipse cx="11" cy="4.2" rx="4" ry="2.2" fill="rgba(220,235,255,.75)" transform="rotate(20 11 4.2)"/><ellipse cx="9" cy="8" rx="3.6" ry="2.4" fill="#2b2a2e"/><circle cx="12.2" cy="7.4" r="1.6" fill="#3a2a22"/><path d="M6.5 10l-1.5 2.5M9 10.4v2.6M11.5 10l1.5 2.5" stroke="#2b2a2e" stroke-width=".7" stroke-linecap="round"/></svg>',
   // colilargo (Oligoryzomys longicaudatus): ratoncito del bosque del sur, lomo café grisáceo, guata clara y cola más larga que el cuerpo; es la presa principal de la güiña
   colilargo:'<svg width="32" height="16" viewBox="0 0 32 16"><ellipse cx="17" cy="14.8" rx="9" ry="1.2" fill="rgba(0,0,0,.25)"/><path d="M12 11c-4 1-7 0-9-2-1-1-2-1-2.5 0" stroke="#8d6e5a" stroke-width="1" fill="none" stroke-linecap="round"/><ellipse cx="18" cy="10" rx="7" ry="4.2" fill="#7b6656"/><path d="M12.5 11.6c3 1.6 8 1.6 11 0" stroke="#d9c8b4" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="25" cy="9.2" rx="3.6" ry="3" fill="#7b6656"/><circle cx="23.6" cy="5.8" r="2.1" fill="#b59a87"/><circle cx="23.6" cy="5.8" r="1.1" fill="#e7b8b0"/><circle cx="26.4" cy="8.4" r=".9" fill="#1b1209"/><circle cx="28.6" cy="9.6" r=".7" fill="#e7a0a0"/><path d="M15 13.6l-.6 1.4M21 13.6l.6 1.4" stroke="#5a463a" stroke-width=".9" stroke-linecap="round"/></svg>',
+  // galletita: premio de cachorro con forma de hueso, lo que come el Yorkshire (perro de compañía)
+  galletita:'<svg width="26" height="16" viewBox="0 0 26 16"><ellipse cx="13" cy="14.8" rx="9" ry="1.2" fill="rgba(0,0,0,.25)"/><path d="M7 6.2h12a3 3 0 1 1 2.2 3.8 3 3 0 1 1-2.2 3.8H7a3 3 0 1 1-2.2-3.8A3 3 0 1 1 7 6.2z" fill="#d9a35f" stroke="#a8723a" stroke-width="1"/><circle cx="10.5" cy="9.9" r=".7" fill="#a8723a"/><circle cx="13.5" cy="9.2" r=".7" fill="#a8723a"/><circle cx="16" cy="10.4" r=".7" fill="#a8723a"/></svg>',
   // brote: hoja tierna recién salida, lo que come el pudú en el prototipo (1 por km)
   brote:'<svg width="26" height="26" viewBox="0 0 26 26"><path d="M13 25V13" stroke="#3f7a2a" stroke-width="2" stroke-linecap="round"/><path d="M13 15C8 15 4 11 4 6c5 0 9 3 9 9z" fill="#7cc04a"/><path d="M13 13c0-5 4-9 9-9 0 5-4 9-9 9z" fill="#9bd65c"/><ellipse cx="13" cy="25" rx="6" ry="1.6" fill="rgba(0,0,0,.25)"/></svg>'
 };
