@@ -213,9 +213,25 @@ function _navDetenerAutoFollow(){
   const b=document.getElementById('btnNavRecenter'); if(b) b.style.display='flex';
 }
 function _navRecentrar(){
+  clearTimeout(_navVolverT); _navVolverT=null;
   navAutoFollow=true;
   const b=document.getElementById('btnNavRecenter'); if(b) b.style.display='none';
-  if(navMap && helmetMarker){ navMap.panTo(helmetMarker.getLatLng()); }
+  // Vuelve a zoom de pedaleo (si te habías alejado para ver la ruta, el ciclista quedaba diminuto).
+  if(navMap && helmetMarker){ navMap.setView(helmetMarker.getLatLng(), Math.max(navMap.getZoom(),16), {animate:true}); }
+}
+// Inty, 2026-10-08: "siempre tiene que volver al punto donde está el usuario, que pasen unos 5 segundos de
+// inactividad". Cualquier toque, pellizco o rueda sobre el mapa lo suelta del seguimiento (antes solo el
+// arrastre: con zoom de dos dedos te seguía arrastrando de vuelta) y a los 5 s sin tocarlo vuelve solo.
+let _navVolverT=null;
+const NAV_VOLVER_MS=5000;
+function _navTocado(){ _navDetenerAutoFollow(); clearTimeout(_navVolverT); _navVolverT=setTimeout(_navRecentrar, NAV_VOLVER_MS); }
+// Cada fix: te sigue. Los primeros 4 s de la navegación se deja ver la ruta completa (el fitBounds del inicio)
+// y después baja a zoom de pedaleo, como Google Maps.
+let _navInicioVista=0;
+function _navSeguir(lat,lon){
+  if(!navAutoFollow || !navMap) return;
+  if(Date.now()-_navInicioVista<4000) return;
+  if(navMap.getZoom()<15) navMap.setView([lat,lon],16,{animate:true}); else navMap.panTo([lat,lon]);
 }
 // ===== Alternativas de ruta, como Google Maps: si OSRM devuelve más de un
 // camino razonable, se muestran para elegir en vez de arrancar directo con el
@@ -344,7 +360,9 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   // automático para que puedas mirar lo que quieras — el botón 🎯 la retoma.
   navAutoFollow=true;
   const _btnNavRecenter=document.getElementById('btnNavRecenter'); if(_btnNavRecenter) _btnNavRecenter.style.display='none';
-  navMap.on('dragstart', _navDetenerAutoFollow);
+  navMap.on('dragstart', _navTocado);
+  ['pointerdown','wheel'].forEach(function(ev){ navMap.getContainer().addEventListener(ev, _navTocado, {passive:true}); });
+  _navInicioVista=Date.now(); clearTimeout(_navVolverT); _navVolverT=null;
   showHostelsOnNavMap(); subscribeToUsersOnNavMap();
   document.getElementById('navText').innerText="Calculando ruta..."; document.getElementById('navDist').innerText="";
   nextHydrateKm=5; nextEatKm=20;
@@ -390,7 +408,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon,t:Date.now()}; totalDistance=0;
     _logrosDelViaje=[]; _kmEsteViaje=0; // arranca el conteo del resumen de este viaje (navegación a destino)
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
-    if(lpBackgroundGeo.disponible()) lpBackgroundGeo.stop();
+    if(lpBackgroundGeo.disponible()) await lpBackgroundGeo.stop();
     lpWakeLock.enable();
     if(lpBackgroundGeo.disponible()){
       // Nativo: el GPS sigue guiando la navegación aunque la pantalla esté apagada.
