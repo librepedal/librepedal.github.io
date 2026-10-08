@@ -62,6 +62,6 @@ Datos reales: la cría nace con manchas blancas que pierde cerca de los 5 meses 
 ## Varios animales en el mockup de viaje (2026-10-07)
 - Inty: "sigue con las otras mascotas". Se va de a un animal; cada uno con acciones sacadas de su comportamiento real, no copiadas del pudú.
 - **Zorro culpeo hecho** (pendiente de revisión de Inty): 13 cuadros de Gemini en `transparentes/zorro-*.png` (versión liviana en `transparentes/mockup/`). Cambia "dos patas" por **escuchar un ruido en el pasto** (sin arbusto), el brote por **frutos de pimiento** (Schinus molle, el culpeo los come y dispersa sus semillas), salto juguetón propio y duerme enrollado en su cola.
-- Galope del zorro: galope rotatorio con dos vuelos, como los perros y otros carnívoros corredores (Biancardi y Minetti 2012; Hildebrand).
+- Galope del zorro: galope rotatorio con dos vuelos, como los perros y otros carnívoros corredores (Biancardi y Minetti, J. Exp. Biol. 2012).
 - El mockup elige animal con `ANIMALES` en `mockup-viaje.src.html`; `cargarAnimal` carga los cuadros aparte y los cambia de una vez (antes, cambiar de animal mientras cargaba dejaba la página en blanco).
 - Faltan: huillín, ranita de Darwin, güiña y Yorkshire.
