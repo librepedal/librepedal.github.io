@@ -7,6 +7,14 @@ https://claude.ai/artifact/Vy68jqzscPQ5uQT7jy9mmR) y armario por modelo con sus 
 **Se publica todo junto (B + C + D):** si alguien elige al Orbe y la barra, Inicio o el armario siguen mostrando al Clásico,
 la app queda incoherente. Hasta entonces, nada de esto se ve en producción.
 
+## ⚠️ Mensaje de Inty (2026-10-08, al cerrar la sesión)
+> "El de Libre Pedal, entonces tenemos que liberarla. Desde ya."
+
+Leído como: **prioridad = sacar esto a la app lo antes posible** (fases B+C+D juntas, publicar apenas estén verdes según el
+punto 10 del CLAUDE.md global). No respondió las 2 preguntas de abajo: confirmarlas al empezar (o, si Inty no está, usar las
+recomendaciones: el mapa muestra el modelo de cada uno; "Elige tu Pistero" aparece una vez también a quienes ya usan la app).
+Si "liberarla" significaba otra cosa (por ejemplo, lanzar la prueba gratis o la app en Play), preguntarle antes de actuar.
+
 ## Fase A — hecha (`2b5d580`)
 - `pistero-modelos/`: Cyberpunk, Orbe, Slime, Androide (copias de `feature/sobrevuelo-3d` = aprobado + 12 estados del
   sobrevuelo, único cambio `__pmRaf`), Casco vivo (`casco-vivo.js` = `pistero-frente.js`) y `modelos.js` (`PistModelos`).
