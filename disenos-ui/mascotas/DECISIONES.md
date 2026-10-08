@@ -65,3 +65,8 @@ Datos reales: la cría nace con manchas blancas que pierde cerca de los 5 meses 
 - Galope del zorro: galope rotatorio con dos vuelos, como los perros y otros carnívoros corredores (Biancardi y Minetti, J. Exp. Biol. 2012).
 - El mockup elige animal con `ANIMALES` en `mockup-viaje.src.html`; `cargarAnimal` carga los cuadros aparte y los cambia de una vez (antes, cambiar de animal mientras cargaba dejaba la página en blanco).
 - Faltan: huillín, ranita de Darwin, güiña y Yorkshire.
+
+## Pieza 3 de 3: entrega de la mascota (2026-10-07)
+- Panel de referencias: https://claude.ai/artifact/2X4QuGeonYiadh2KiQRtmS (fuente `entrega/`: `cabecera.html` con los estilos del panel de la pieza 1, `cuerpo.html` y `ref/*.jpg`; `node entrega/armar.cjs` arma `entrega/referencias.html`).
+- Referencias: Finch (elegir, nacer y ponerle nombre), Nintendogs (criadero: acariciar antes de elegir, nombre por voz, "Sorpréndeme"), Pokémon GO (huevo que nace caminando, guarda lugar y fecha; compañero con corazones cada 2 km, máx. 3 al día), Pikmin Bloom (adorno según el lugar, queda para después).
+- Propuesta de 4 pantallas (regalo en el canasto, elegir entre las 6 vivas, nombre por voz, primera salida) y 4 preguntas para Inty (cuándo llega, si se puede cambiar, gratis, nombre por voz). **Esperando su respuesta.**
