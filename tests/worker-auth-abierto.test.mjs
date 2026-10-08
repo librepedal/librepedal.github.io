@@ -155,6 +155,12 @@ async function pedir(e, body, ip) {
   ok(r.status === 503 && !r.data.token, 'evento: sin KV no entra (no podría recordar la marca)');
   r = await pedir(env({ CODIGO_EVENTO: undefined }), { modo: 'codigo', codigo: 'EVENTO2026', email: 'z@gmail.com' });
   ok(r.status === 401 && !r.data.token, 'evento: sin el secreto CODIGO_EVENTO, el código no sirve');
+  for (const escrito of ['EVENTO 2026', 'evento-2026', ' Evento2026 ']) {
+    r = await pedir(e, { modo: 'codigo', codigo: escrito, email: 'dictado' + escrito.length + escrito.charCodeAt(1) + '@gmail.com' });
+    ok(r.status === 200 && r.data.token, 'evento: el código escrito "' + escrito + '" (con espacio, guion o minúsculas) entra');
+  }
+  r = await pedir(e, { modo: 'codigo', codigo: 'TESTER 123', email: 'tester@gmail.com' });
+  ok(r.status === 401 && !r.data.token, 'tester: su código NO se normaliza (sigue exacto)');
   r = await pedir(e, { modo: 'codigo', codigo: 'EVENTO2025', email: 'z@gmail.com' });
   ok(r.status === 401 && !r.data.token, 'evento: código equivocado → 401');
   ok(RED.oauth === 1, 'el token OAuth de la cuenta de servicio se pide una vez y se reutiliza (' + RED.oauth + ')');

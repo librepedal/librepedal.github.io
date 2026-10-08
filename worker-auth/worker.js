@@ -258,7 +258,9 @@ export default {
 
       const permitidos = String(env.TESTERS_PERMITIDOS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       const esCodigoTester = !esAdmin && hayTester && codigosIguales(codigo, String(env.CODIGO_TESTER));
-      const esCodigoEvento = !esAdmin && hayEvento && codigosIguales(codigo, String(env.CODIGO_EVENTO));
+      // El del evento se dicta en voz alta: "LIBRE PEDAL", "libre-pedal" y "LibrePedal" valen igual.
+      const sinSeparadores = (s) => String(s).replace(/[\s\-_.]/g, '').toUpperCase();
+      const esCodigoEvento = !esAdmin && hayEvento && codigosIguales(sinSeparadores(codigo), sinSeparadores(env.CODIGO_EVENTO));
       if (esAdmin ? !codigosIguales(codigo, String(env.CODIGO_ADMIN)) : (!esCodigoTester && !esCodigoEvento)) {
         await registrarIntentoFallido(env, email);
         return json({ error: 'código incorrecto' }, 401);
