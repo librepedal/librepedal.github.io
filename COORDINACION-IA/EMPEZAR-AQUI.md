@@ -1,5 +1,7 @@
 # 🚀 EMPEZAR AQUÍ — cualquier cuenta Claude que retome LibrePedal
 
+> 🟢 **2026-10-08 tarde: 8.817 en producción — app ABIERTA a cualquier usuario (Google abierto + código del evento LIBREPEDAL), video 9:16 para redes, GPX como portabilidad, nombre editable. Play Store ya está en PRODUCCIÓN. ⚠️ Ficha de Play a medias (borrador): NO enviar la Alpha 8.802.** Lee primero `TRASPASO-2026-10-08-TARDE.md`.
+
 > 🟢 **2026-10-07 cierre: 8.812 en producción (actualiza al volver, avisos que vencen, "¿Sigue ahí?"); armario por modelo en curso en `design/armario-por-modelo` (8 piezas vector listas, 7 por dibujar con Gemini). ⚠️ Revisar la cuenta de Google antes de usar Gemini.** Lee primero `TRASPASO-2026-10-07-ARMARIO.md`.
 
 > 🟢 **2026-10-07 noche: 8.810 publicada; listas sin publicar `fix/ci-node22` y `fix/sobrevuelo-sin-bici` (8.811); "Elige tu Pistero" en maqueta (6 modelos, catálogo gratis de prueba).** Lee primero `TRASPASO-2026-10-07-NOCHE.md`.
