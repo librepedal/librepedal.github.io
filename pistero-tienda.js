@@ -163,3 +163,46 @@ function _ptRender(){
 // primer pintado del Pistero del usuario en la cabecera/pestañas (después del login,
 // _setExprPistero lo repinta con el personaje de esa cuenta)
 if(typeof document!=='undefined' && document.addEventListener) document.addEventListener('DOMContentLoaded', function(){ try{ _pintarMiPistero(true); }catch(e){ console.warn('[pistero] no se pudo pintar el Pistero del usuario', e); } });
+
+/* ===== NOMBRE EDITABLE EN EL PERFIL (2026-10-08) =====
+   Inty: "no sé en qué momento se identifica el usuario con algún nombre... habría que dar la opción".
+   Antes el nombre salía solo (el de la cuenta de Google o lo de antes del @) y no se podía cambiar.
+   Como WhatsApp/Strava: lápiz junto al nombre bajo Pistero, se edita ahí mismo, 2 a 25 caracteres.
+   Se guarda en este teléfono y en users/{cu} con nombreElegido:true (auth-sesion.js lo respeta al
+   volver a entrar con Google, que antes lo pisaba). El mapa en vivo lo toma en la próxima posición. */
+var NOMBRE_MAX=25;
+function _nombreLimpio(s){ return String(s==null?'':s).replace(/[\u0000-\u001f\u007f<>]/g,'').replace(/\s+/g,' ').trim().slice(0,NOMBRE_MAX); }
+function _nombreAyuda(txt,err){ var a=document.querySelector('#ptNombreEdit small'); if(!a) return; a.textContent=txt; a.className=err?'err':''; }
+function _nombreContar(){ var i=document.getElementById('ptNombreInput'), c=document.getElementById('ptNombreCont'); if(i&&c) c.textContent=i.value.length+'/'+NOMBRE_MAX; }
+function _nombreEditar(){
+  var ed=document.getElementById('ptNombreEdit'), i=document.getElementById('ptNombreInput'); if(!ed||!i) return;
+  i.value=_nombreLimpio(typeof nombreUsuario!=='undefined'?nombreUsuario:''); _nombreContar();
+  _nombreAyuda('Así te ven los demás ciclistas en el mapa y en el ranking.',false);
+  ed.hidden=false; try{ i.focus(); i.setSelectionRange(i.value.length,i.value.length); }catch(e){}
+}
+function _nombreCancelar(){ var ed=document.getElementById('ptNombreEdit'); if(ed) ed.hidden=true; }
+function _nombreGuardar(){
+  var i=document.getElementById('ptNombreInput'); if(!i) return;
+  var v=_nombreLimpio(i.value);
+  if(v.length<2){ _nombreAyuda('Escribe un nombre de al menos 2 letras.',true); try{ i.focus(); }catch(e){} return; }
+  if(typeof cu==='undefined'||!cu){ _nombreAyuda('Entra a tu cuenta para cambiar tu nombre.',true); return; }
+  nombreUsuario=v;
+  try{ localStorage.setItem('lp_nombre_'+cu,v); }catch(e){}
+  var n=document.getElementById('customizeCharacterName'); if(n) n.innerText=v;
+  _nombreCancelar();
+  try{
+    db.collection('users').doc(cu).set({nombre:v,nombreElegido:true},{merge:true}).catch(function(err){
+      try{ if(window.Sentry) Sentry.captureException(err); }catch(_e){}
+      _nombreEditar(); _nombreAyuda('Quedó en este teléfono, pero no se pudo guardar en tu cuenta. Revisa tu conexión y toca Guardar otra vez.',true);
+    });
+  }catch(e){}
+}
+(function(){
+  function wire(){
+    var i=document.getElementById('ptNombreInput'); if(!i) return;
+    i.addEventListener('input',_nombreContar);
+    i.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); _nombreGuardar(); } else if(e.key==='Escape'){ _nombreCancelar(); } });
+  }
+  if(typeof document==='undefined') return;
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wire); else wire();
+})();

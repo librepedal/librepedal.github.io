@@ -11,6 +11,7 @@ const CORE = [
   './',
   './index.html',
   './estilos.css',
+  './perfil-nombre.css',
   './esfera.js',
   './seguridad-sensores.js',
   './clima-datos.js',
