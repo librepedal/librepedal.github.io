@@ -36,7 +36,10 @@ const T0=26, T1=70; // bajo T0 es fondo; sobre T1 es pudú; entre medio, semitra
 const d=new Float32Array(W*H);
 for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=(y*W+x)*4;let s=0;for(let c=0;c<3;c++){const e=p[i+c]-fondo(x,y,c);s+=e*e}d[y*W+x]=Math.sqrt(s);
   // la sombra del piso que dibuja Gemini es azul oscuro: cuenta como fondo (el pudú es café: rojo > azul)
-  if(p[i+2]>p[i]+20&&p[i+2]>=p[i+1])d[y*W+x]=Math.min(d[y*W+x],T0)}
+  if(p[i+2]>p[i]+20&&p[i+2]>=p[i+1])d[y*W+x]=Math.min(d[y*W+x],T0);
+  // tono: el fondo es azul (azul - rojo ≈ 40); el pelaje negro del Yorkshire es neutro y en distancia quedaba cerca del fondo,
+  // así que el relleno desde los bordes le hacía hoyos (2026-10-07). Lo que es menos azul que el fondo se aleja del fondo.
+  const tf=fondo(x,y,2)-fondo(x,y,0), tp=p[i+2]-p[i]; if(tp<tf-12)d[y*W+x]=Math.max(d[y*W+x],(tf-tp)*2.2)}
 const alfa=new Float32Array(W*H).fill(1), vis=new Uint8Array(W*H), pila=[];
 for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(x<BOR||y<BOR||x>=W-BOR||y>=H-BOR){const k=y*W+x;vis[k]=1;alfa[k]=0;if(x===BOR-1||y===BOR-1||x===W-BOR||y===H-BOR)pila.push(k)}
 for(const k of pila.slice()){vis[k]=0}
@@ -50,7 +53,10 @@ while(pila.length){const k=pila.pop();if(vis[k])continue;vis[k]=1;
  for(let k0=0;k0<W*H;k0++){if(vis[k0]||v2[k0]||d[k0]>=T0+8)continue;const comp=[],st=[k0];v2[k0]=1;
    while(st.length){const k=st.pop();comp.push(k);const x=k%W,y=(k/W)|0;
      for(const q of [x>0?k-1:-1,x<W-1?k+1:-1,y>0?k-W:-1,y<H-1?k+W:-1])if(q>=0&&!vis[q]&&!v2[q]&&d[q]<T0+8){v2[q]=1;st.push(q)}}
-   if(comp.length>W*H/4000)for(const k of comp){alfa[k]=Math.max(0,(d[k]-T0)/(T1-T0));
+   // solo si el hueco tiene el tono del fondo (azul sobre rojo): el pelaje negro del Yorkshire o el pecho oscuro del huillín
+   // también quedan cerca del fondo en distancia, pero son neutros o cafés, y antes se vaciaban (2026-10-07)
+   let az=0;for(const k of comp)az+=p[k*4+2]-p[k*4];az/=comp.length;
+   if(comp.length>W*H/4000&&az>18)for(const k of comp){alfa[k]=Math.max(0,(d[k]-T0)/(T1-T0));
      // y su borde suave
      const x=k%W,y=(k/W)|0;for(const q of [k-1,k+1,k-W,k+W])if(q>=0&&q<W*H&&d[q]<T1&&!vis[q])alfa[q]=Math.min(alfa[q],Math.max(0,(d[q]-T0)/(T1-T0)))}}}
 // suavizado leve del borde (promedio 3x3 solo donde el alfa no es 0 ni 1)
