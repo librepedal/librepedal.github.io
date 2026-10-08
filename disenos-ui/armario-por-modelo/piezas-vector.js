@@ -305,6 +305,23 @@ var PIEZAS_VECTOR = (function(){
     return { quitar:function(){ parar(); im.remove(); } };
   }
 
+  // ---------- Cyberpunk · Grafitis del casco (arte de Gemini) ----------
+  // Referencia real: el tag de Nueva York hecho con marcador de apretar Krink K-60, que define el estilo "drippy": al apretar
+  // más el marcador, la pintura chorrea en hilos (spectrumstore.com/en/krink); y un tag de spray con su borde difuso
+  // (overspray). Dicen "Libre" y "Pedal" (Inty: "si el casco va a estar con grafiti que sea Libre Pedal"). Gemini los pintó
+  // editando la capa del casco (gemini/ciber-grafitis-v2.jpg): tag blanco que chorrea a la izquierda y tag rosado fluor a la
+  // derecha, sin tapar las ventilaciones. Se separó por color y diferencia, recortado a la silueta del casco
+  // (gemini/ciber-grafitis.png, x 480 y 189). Es pintura: NO toma el color de neón del estilo (pieza-img) y va en el grupo del
+  // casco, así que salta con él en la interferencia.
+  var GRA={x:480,y:189,w:424,h:113};
+  function ciberGrafitis(el){
+    var svg=el.querySelector('svg'), src=(window.PIEZAS_IMG||{}).ciberGrafitis; if(!svg||!src) return null;
+    var casco=svg.querySelector('g[id$="casco"]'); if(!casco) return null;
+    var im=nodo('image',{'class':'pieza-img pieza-grafitis',href:src,x:GRA.x,y:GRA.y,width:GRA.w,height:GRA.h});
+    var cab=casco.querySelector('.pieza-cables'); if(cab) casco.insertBefore(im,cab); else casco.appendChild(im);  // los cables quedan encima de la pintura
+    return { quitar:function(){ im.remove(); } };
+  }
+
   // ---------- Androide · Ojo de otro color ----------
   // Sus ojos son diafragmas de cámara (lib-vinilo.js: iris naranjo encendido, hojas, brillo). Referencia real: el
   // TRATAMIENTO de los lentes de cámara: un lente multicapa refleja pequeños destellos violeta y verde, y cada tratamiento
@@ -374,6 +391,6 @@ var PIEZAS_VECTOR = (function(){
       +lado(-1,.1)+lado(1,.55); }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
-  return { ciber:{ cables:ciberCables }, slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena, calcos:viniloCalcos },
+  return { ciber:{ cables:ciberCables, grafitis:ciberGrafitis }, slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena, calcos:viniloCalcos },
            casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
