@@ -336,6 +336,24 @@ function _filtrarSaltoVentana(historyArr, punto){
   if(dtMs>20000) return true; // último punto muy viejo (señal cortada un rato): re-ancla en vez de quedar pegado comparando contra algo obsoleto
   return _saltoEsPlausible(calculateDistance(last.lat,last.lon,punto.lat,punto.lon), dtMs);
 }
+// suma km al viaje (total, este viaje, modo, odómetro de mantención y calorías), igual para un fix normal y para un hueco
+function _sumarKmViaje(km){
+  if(!(km>0)) return;
+  us.di+=km; _kmEsteViaje+=km; _sumarKmModo(km);
+  if(typeof actividadTipo!=='undefined' && actividadTipo==='moto'){ if(typeof _sumarKmVehiculo==='function') _sumarKmVehiculo(km); } else { _sumarKmMantencion(km); }
+  us.c+=(km*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2);
+}
+// hueco de la pantalla apagada: el tramo entre ant y nuevo se rellena por el camino (OSRM) y se suma lo que el camino
+// tiene de más que la recta (la recta ya se sumó). Sin red: queda la recta. Si la ruta ya cambió (se guardó y se cerró), no toca nada.
+function _rellenarHueco(ant,nuevo){
+  const ruta=currentRoute;
+  lpHuecoGPS.porCamino(ant,nuevo,(typeof _osrmPerfil==='function'?_osrmPerfil():'cycling')).then(function(c){
+    if(!c || !ig || ruta!==currentRoute) return;
+    const extra=lpHuecoGPS.insertar(ruta,ant,nuevo,c); if(extra==null) return;
+    _sumarKmViaje(extra);
+    if(crl && crl.setLatLngs) crl.setLatLngs(ruta.map(function(q){ return [q.lat,q.lon]; }));
+  }).catch(function(e){ console.warn('[gps] hueco', e); });
+}
 function ug(p){
   // Bug real (2026-08-31): sin esta guarda, un fix de GPS que ya venía en camino cuando se
   // apaga/oculta el GPS (clearWatch no cancela una lectura en vuelo -- borde real en
@@ -358,6 +376,7 @@ function ug(p){
   // confirmado por la ventana de velocidad) y _saltoEsPlausible, que ya filtran el ruido.
   if(p.coords.accuracy && p.coords.accuracy>65){ _gpsBadgeToggle('gpsSignalBadge', true); return; }
   _gpsBadgeToggle('gpsSignalBadge', false);
+  if(typeof _rutaEsperaGPSTrasFondo!=='undefined') _rutaEsperaGPSTrasFondo=false;   // ya se sabe dónde estás (rutas.js: cierre por inactividad)
   const moved = us.la ? gd2(us.la,us.lo,la,lo) : 0; // km desde el último punto válido
   const _msDesdeUltimoFix=lastFixTime?(Date.now()-lastFixTime):0; // para el chequeo de velocidad plausible más abajo
   // Bug real (2026-08-30, reporte de Inty "marcó mi posición superlejos de donde estaba"):
@@ -433,15 +452,22 @@ function ug(p){
   // sin filtrar, así que manejar en modo Motorizado envejecía la cadena de tu bici.
   // Ahora Motorizado sube a su propio contador (mantencion-vehiculo.js) y el resto
   // sigue subiendo al de la bici, nunca los dos a la vez.
-  if(us.la && sp>0 && _saltoPosOK){ us.di+=moved; _kmEsteViaje+=moved; _sumarKmModo(moved); if(typeof actividadTipo!=='undefined' && actividadTipo==='moto'){ if(typeof _sumarKmVehiculo==='function') _sumarKmVehiculo(moved); } else { _sumarKmMantencion(moved); } us.c+=(moved*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2); }
+  // Hueco (2026-10-08, gps-hueco.js): volviste de la pantalla apagada y este punto está lejos del último. La ventana
+  // de velocidad da 0 (sus puntos tienen más de 12 s) y esos km se perdían: se suman, y el hueco se rellena por el camino.
+  const _ultPt=currentRoute.length?currentRoute[currentRoute.length-1]:null;
+  const _ptNuevo={lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)};
+  const _hueco=_saltoPosOK && typeof lpHuecoGPS!=='undefined' && lpHuecoGPS.esHueco(_ultPt,_ptNuevo);
+  if(us.la && (sp>0 || _hueco) && _saltoPosOK){ _sumarKmViaje(moved); }
+  if(_hueco){ ultimoMovimientoTime=Date.now(); rutaSegCerrada=false; }   // seguiste pedaleando con la pantalla apagada: la ruta no se cierra
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);
   // Todo lo visual/publicado (track guardado, marcador, posición que ven otros ciclistas)
   // solo se mueve con fixes plausibles — el glitch descartado no entra al historial.
   if(_saltoPosOK){
-    currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
+    currentRoute.push(_ptNuevo);
     if(crl){ crl.addLatLng([la,lo]); }
+    if(_hueco) _rellenarHueco(_ultPt,_ptNuevo);
     // Antes: mp.fitBounds() del trazado entero en cada fix (el mapa se alejaba sin parar y pisaba tus gestos).
     // Ahora te sigue a zoom de pedaleo y, si lo mueves, vuelve a ti a los 5 s (mapa-render.js).
     if(typeof _mpSeguirCiclista==='function') _mpSeguirCiclista(la,lo);
