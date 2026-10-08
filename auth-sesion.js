@@ -85,6 +85,12 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   // votarComunidad() más abajo.
   let _esUsuarioNuevo=false, _prevData=null;
   try{ const _prevDoc=await db.collection('users').doc(cu).get(); _esUsuarioNuevo=!_prevDoc.exists; if(_prevDoc.exists) _prevData=_prevDoc.data(); }catch(e){}
+  // 2026-10-08: si la persona eligió su nombre en el Perfil (pistero-tienda.js, _nombreGuardar), ese manda:
+  // antes cada login con Google lo pisaba con el nombre de la cuenta de Google (y en un teléfono nuevo, siempre).
+  if(_prevData && _prevData.nombreElegido && typeof _prevData.nombre==='string' && _prevData.nombre.trim()){
+    nombre=_prevData.nombre.trim().slice(0,25); nombreUsuario=nombre;
+    try{ localStorage.setItem('lp_nombre_'+cu,nombre); }catch(e){}
+  }
   // Si ya existía cuenta en la nube (celular nuevo, reinstalación o sesión perdida),
   // recupera el look y los ítems comprados con Darma en vez de pisarlos con los
   // valores por defecto de este dispositivo — antes esto sobrescribía en Firestore

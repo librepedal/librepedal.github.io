@@ -67,6 +67,7 @@
 try{ if(!localStorage.getItem('lp_session')) document.documentElement.classList.add('lp-sin-sesion'); }catch(e){}
 </script>
 <link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="perfil-nombre.css">
 </head>
 <body>
 <script>/* anti-parpadeo del tema: pone la clase antes de pintar. Default 'solido' = look actual. */
@@ -918,7 +919,15 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="pt-escena">
 <div class="pt-lanza" id="ptLanza"><b>Lanzamiento:</b> todo el armario gratis por tiempo limitado. Los precios que ves son los que tendrá después.</div>
 <div class="pt-top"><div id="customize-preview-svg" class="pt-pistero" onclick="_ptCambiarGesto()" title="Tócalo"></div>
-<div class="pt-top-der"><div class="character-name" id="customizeCharacterName">Tu Personaje</div><button type="button" class="ab sec pt-sorpresa" onclick="_ptPrueba=null;_pistSorpresa()"><i class="fas fa-dice"></i> Sorpréndeme</button></div></div>
+<div class="pt-top-der"><button type="button" class="pt-nombre" id="ptNombreBtn" onclick="_nombreEditar()" aria-label="Cambiar tu nombre"><span class="character-name" id="customizeCharacterName">Tu Personaje</span><i class="fas fa-pen"></i></button><button type="button" class="ab sec pt-sorpresa" onclick="_ptPrueba=null;_pistSorpresa()"><i class="fas fa-dice"></i> Sorpréndeme</button></div></div>
+<!-- 2026-10-08 Nombre editable (Inty: "habría que dar la opción" de elegir el nombre). Como WhatsApp/Strava:
+     lápiz junto al nombre, se edita ahí mismo, máx. 25, no vacío. Lógica en pistero-tienda.js (_nombre*). -->
+<div class="pt-nombre-edit" id="ptNombreEdit" hidden>
+<label for="ptNombreInput">Tu nombre en Libre Pedal</label>
+<div class="pt-nombre-fila"><input type="text" id="ptNombreInput" maxlength="25" autocomplete="nickname" enterkeyhint="done" spellcheck="false"><span id="ptNombreCont">0/25</span></div>
+<small>Así te ven los demás ciclistas en el mapa y en el ranking.</small>
+<div class="pt-nombre-btns"><button type="button" class="ab sec" onclick="_nombreCancelar()">Cancelar</button><button type="button" class="ab pt-nombre-ok" id="ptNombreGuardar" onclick="_nombreGuardar()">Guardar</button></div>
+</div>
 <div class="pt-compra" id="ptCompra"></div>
 <div class="pt-tabs" id="ptTabs" role="tablist" aria-label="Categorías del armario"></div>
 </div>
@@ -1014,7 +1023,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.816'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.817'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
