@@ -322,6 +322,29 @@ var PIEZAS_VECTOR = (function(){
     return { quitar:function(){ im.remove(); } };
   }
 
+  // ---------- Cyberpunk · Visor partido (arte de Gemini + luz corrida) ----------
+  // Referencia real: el vidrio de un teléfono que se cayó: se parte desde un punto de impacto con grietas finas en estrella y
+  // una grieta larga, pero la pantalla de abajo sigue prendida (en la prueba de caída del LG G4 la pantalla trizada siguió
+  // funcionando, gsmarena.com/newscomm-12258p2.php). Gemini trazó la grieta editando la capa de la cabeza (misma cámara,
+  // gemini/ciber-visor-v1.jpg); se separó solo lo que cae sobre el vidrio negro (gemini/ciber-visor.png, x 550 y 192).
+  // La grieta va ENCIMA de la luz del visor, y la luz sigue prendida a los dos lados: del lado derecho de la grieta se ve
+  // corrida unos píxeles, como la luz que cruza el borde de un vidrio partido. La grieta no toma el neón (pieza-img).
+  var VIS={x:550,y:192,w:254,h:321};
+  function ciberVisor(el){
+    var svg=el.querySelector('svg'), src=(window.PIEZAS_IMG||{}).ciberVisor; if(!svg||!src) return null;
+    var pant=svg.querySelector('g[id$="pant"]'); if(!pant||!pant.parentNode) return null;
+    var marco=pant.parentNode, frente=marco.parentNode, u='pzv'+(++uid), defs=defsDe(svg);
+    // la grieta larga va del impacto (618,297) a (770,507): se prolonga para partir la pantalla en dos lados
+    var cI=nodo('clipPath',{id:u+'i'}), cD=nodo('clipPath',{id:u+'d'});
+    cI.appendChild(nodo('path',{d:'M584 250 L837 600 L400 600 L400 250 Z'})); cD.appendChild(nodo('path',{d:'M584 250 L1000 250 L1000 600 L837 600 Z'}));
+    defs.appendChild(cI); defs.appendChild(cD);
+    if(!pant.id) pant.id=u+'p';
+    var izq=nodo('g',{'clip-path':'url(#'+u+'i)'}); marco.insertBefore(izq,pant); izq.appendChild(pant);
+    var der=nodo('g',{'clip-path':'url(#'+u+'d)'}); der.appendChild(nodo('use',{href:'#'+pant.id,transform:'translate(4 -3)'})); marco.appendChild(der);
+    var im=nodo('image',{'class':'pieza-img pieza-visor',href:src,x:VIS.x,y:VIS.y,width:VIS.w,height:VIS.h}); frente.appendChild(im);
+    return { quitar:function(){ marco.insertBefore(pant,izq); izq.remove(); der.remove(); im.remove(); cI.remove(); cD.remove(); } };
+  }
+
   // ---------- Androide · Ojo de otro color ----------
   // Sus ojos son diafragmas de cámara (lib-vinilo.js: iris naranjo encendido, hojas, brillo). Referencia real: el
   // TRATAMIENTO de los lentes de cámara: un lente multicapa refleja pequeños destellos violeta y verde, y cada tratamiento
@@ -391,6 +414,6 @@ var PIEZAS_VECTOR = (function(){
       +lado(-1,.1)+lado(1,.55); }
   var CASCO_DEFS=function(u){ return '<filter id="'+u+'cg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'; };
 
-  return { ciber:{ cables:ciberCables, grafitis:ciberGrafitis }, slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena, calcos:viniloCalcos },
+  return { ciber:{ cables:ciberCables, grafitis:ciberGrafitis, visor:ciberVisor }, slime:{ burbujas:slimeBurbujas, gotitas:slimeGotitas, fruta:slimeFruta }, orbe:{ chispas:orbeChispas, destello:orbeDestello, visera:orbeVisera }, vinilo:{ ojo:viniloOjo, antena:viniloAntena, calcos:viniloCalcos },
            casco:{ cejas:{svg:cascoCejas}, calcos:{svg:cascoCalcos}, luces:{svg:cascoLuces}, _defs:CASCO_DEFS } };
 })();
