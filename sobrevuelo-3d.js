@@ -439,7 +439,7 @@ function tarjetaCompartir(){
     }); });
 }
 function compartirViaje(){ var b=$('compartir'); if(b){ b.disabled=true; b.textContent='Preparando la imagen…'; }
-  tarjetaCompartir().then(function(blob){ var nom='libre-pedal-'+RUTA.nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png', file=new File([blob],nom,{type:'image/png'});
+  tarjetaCompartir().then(function(blob){ var nom='libre-pedal-'+RUTA.nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png', file=new File([blob],nom,{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})) return navigator.share({files:[file],title:RUTA.nombre,text:'Mi viaje en Libre Pedal'}).catch(function(){});
     var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); },4000); })
   .catch(function(e){ console.warn('[sobrevuelo] compartir', e); }).then(function(){ if(b){ b.disabled=false; b.textContent='Compartir imagen'; } }); }
@@ -995,7 +995,7 @@ function sb3CompartirVideo(){ if(!VID_ARCHIVO||!navigator.share) return;
     if(e&&e.name==='AbortError') return;   // cerró el menú de compartir: no es un error
     console.warn('[sobrevuelo] compartir video', e); if(typeof lpAviso==='function') lpAviso('No se pudo compartir el video. Inténtalo de nuevo.'); }); }
 function vidDescargar(file){ var url=URL.createObjectURL(file), a=document.createElement('a'); a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); },4000); }
-function vidNombre(){ return 'libre-pedal-'+(String(RUTA.nombre||'viaje').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'viaje')+'.mp4'; }
+function vidNombre(){ return 'libre-pedal-'+(String(RUTA.nombre||'viaje').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'viaje')+'.mp4'; }
 
 // ---------- la grabación ----------
 function sb3CrearVideo(){
@@ -1267,6 +1267,6 @@ window.abrirSobrevuelo3D=abrirSobrevuelo3D;
 window.cerrarSobrevuelo3D=cerrarSobrevuelo3D;
 // funciones puras para tests/sobrevuelo-3d.test.mjs y ganchos de prueba (no se usan en la app)
 window.__sb3test={hav:hav, pegarAlCamino:pegarAlCamino, sinPinchazos:sinPinchazos, solPos:solPos, luzDe:luzDe, caraSegun:caraSegun, planear:planear, tiemposReales:tiemposReales,
-  sb3Puntos:sb3Puntos, sobreLaPegada:sb3SobreLaPegada, videoVel:sb3VideoVel, videoSalida:sb3VideoSalida, elegirCodec:sb3ElegirCodec, vidZonaLibre:vidZonaLibre, VID:VID, vidDurTxt:vidDurTxt, crearVideo:sb3CrearVideo, videoArchivo:function(){ return VID_ARCHIVO; }, durVuelo:durVuelo, linea:linea, densificar:densificar, colorPend:colorPend, setD:function(x){ D=x; }, getD:function(){ return D; }, dbg:SB3DBG};
+  sb3Puntos:sb3Puntos, sobreLaPegada:sb3SobreLaPegada, videoVel:sb3VideoVel, videoSalida:sb3VideoSalida, elegirCodec:sb3ElegirCodec, vidZonaLibre:vidZonaLibre, VID:VID, vidDurTxt:vidDurTxt, crearVideo:sb3CrearVideo, videoArchivo:function(){ return VID_ARCHIVO; }, estadoVideo:function(){ return GRAB?{T:GRAB.T,finT:GRAB.finT,prog:prog,err:GRAB.err?String(GRAB.err):null,tiles:(function(){ try{ return mapa.areTilesLoaded(); }catch(e){ return null; } })()}:null; }, durVuelo:durVuelo, linea:linea, densificar:densificar, colorPend:colorPend, setD:function(x){ D=x; }, getD:function(){ return D; }, dbg:SB3DBG};
 
 })();
