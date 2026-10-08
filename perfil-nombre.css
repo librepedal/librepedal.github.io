@@ -1,0 +1,16 @@
+/* Nombre editable (2026-10-08): el nombre bajo Pistero con su lápiz, y el panel que se abre debajo (como WhatsApp/Strava) */
+.pt-nombre{display:flex;align-items:center;gap:7px;max-width:100%;background:none;border:0;padding:0;margin:0;color:inherit;cursor:pointer;text-align:left}
+.pt-nombre .character-name{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-nombre i{flex:0 0 auto;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(252,76,2,.14);border:1px solid rgba(252,76,2,.45);color:var(--p);font-size:.72rem}
+.pt-nombre:active i{transform:scale(.92)}
+.pt-nombre-edit{margin-top:8px;background:#141f33;border:1px solid rgba(252,76,2,.45);border-radius:14px;padding:12px}
+.pt-nombre-edit[hidden]{display:none}
+.pt-nombre-edit label{display:block;font-size:.8rem;font-weight:800;color:#e7edf6;margin-bottom:8px}
+.pt-nombre-fila{position:relative}
+.pt-nombre-fila input{width:100%;box-sizing:border-box;margin:0;padding:12px 58px 12px 12px;font-size:1rem}
+.pt-nombre-fila span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.72rem;color:#7d8ba0;pointer-events:none}
+.pt-nombre-edit small{display:block;margin-top:7px;font-size:.74rem;color:#9fb3c8;line-height:1.4}
+.pt-nombre-edit small.err{color:#f87171}
+.pt-nombre-btns{display:flex;gap:8px;margin-top:10px}
+.pt-nombre-btns .ab{flex:1;margin:0!important;padding:11px!important}
+.pt-nombre-btns .pt-nombre-ok{background:var(--p)!important;color:#0b1220!important;border:0!important;font-weight:900}
