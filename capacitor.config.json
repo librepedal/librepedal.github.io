@@ -27,6 +27,9 @@
       "librepedal-ia-sudamerica.inty405.workers.dev"
     ]
   },
+  "android": {
+    "useLegacyBridge": true
+  },
   "plugins": {
     "BackgroundGeolocation": {}
   }

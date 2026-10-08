@@ -166,6 +166,11 @@ async function autoGuardarRuta(conVoz, esCheckpoint){
 function finalizarRutaPorInactividad(){
   if(!ig || rutaSegCerrada || currentRoute.length<2) return;
   if(Date.now()-ultimoMovimientoTime<UMBRAL_INACTIVIDAD_RUTA) return;
+  // Sin ubicaciones no se sabe si estás quieto (2026-10-08, Inty: "el sobrevuelo llega hasta donde uno apaga el
+  // teléfono"): con la pantalla apagada la app instalada deja de recibir el GPS (gps-hueco.js) y, al volver, esto
+  // cerraba la ruta justo donde se apagó. Si la app pasó por segundo plano, se espera la primera ubicación nueva:
+  // ella dice si seguiste pedaleando (hueco) o si de verdad estabas parado (ahí sí se cierra).
+  if(_rutaEsperaGPSTrasFondo) return;
   const distSeg=Math.max(0,us.di-rutaSegDistIni);
   autoGuardarRuta(false,false);
   rutaSegCerrada=true; rutaSegDistIni=us.di;
@@ -174,6 +179,9 @@ function finalizarRutaPorInactividad(){
   if(distSeg>=0.1) h("Como llevas un rato quieto, guardé tu ruta: "+distSeg.toFixed(2)+" km. Cuando sigas pedaleando, empiezo una ruta nueva.");
 }
 setInterval(finalizarRutaPorInactividad,60000);
+// true desde que la app pasa a segundo plano grabando hasta que llega la primera ubicación nueva (ug() lo apaga)
+var _rutaEsperaGPSTrasFondo=false;
+if(typeof document!=='undefined' && document.addEventListener) document.addEventListener('visibilitychange',function(){ if(document.hidden && ig) _rutaEsperaGPSTrasFondo=true; });
 function renderRutas(){
   const targets=document.querySelectorAll('.js-rutas-list'); if(!targets.length) return;
   const arr=rutasLocales().slice().sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);}).slice(0,60);

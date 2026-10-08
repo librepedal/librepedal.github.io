@@ -76,6 +76,9 @@ function mlPolyline(latlngs, opts){
       return this;
     },
     addLatLng:function(ll){ this._coords.push([ll[1],ll[0]]); if(this._map&&this._map.getSource(id)) this._map.getSource(id).setData({type:'Feature',geometry:{type:'LineString',coordinates:this._coords}}); return this; },
+    // reemplaza todo el trazo (gps-hueco.js: el hueco de la pantalla apagada se rellena por el camino). Muta el mismo
+    // arreglo: el source se creó con él y addTo() lo usa si el estilo todavía no cargaba.
+    setLatLngs:function(lls){ var c=this._coords; c.length=0; (lls||[]).forEach(function(ll){ c.push([ll[1],ll[0]]); }); if(this._map&&this._map.getSource(id)) this._map.getSource(id).setData({type:'Feature',geometry:{type:'LineString',coordinates:c}}); return this; },
     getBounds:function(){ return mlLatLngBounds(this._coords.map(function(c){return {lat:c[1],lon:c[0]};})); },
     remove:function(){ if(this._map){ if(this._map.getLayer(haloId)) this._map.removeLayer(haloId); if(this._map.getLayer(id)) this._map.removeLayer(id); if(this._map.getSource(id)) this._map.removeSource(id); } }
   };

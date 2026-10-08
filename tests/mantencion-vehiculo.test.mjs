@@ -158,7 +158,7 @@ const correrRestaurar = new Function('us', 'nube', SRC + '\nfunction _mantData()
 {
   const GPS = readFileSync(join(raizProyecto, 'motor-gps.js'), 'utf8');
   debe('motor-gps.js decide entre _sumarKmVehiculo y _sumarKmMantencion según actividadTipo (no llama las dos)',
-       /actividadTipo==='moto'\)\{[^\n]*_sumarKmVehiculo\(moved\)[^\n]*\}\s*else\s*\{[^\n]*_sumarKmMantencion\(moved\)/.test(GPS));
+       /actividadTipo==='moto'\)\{[^\n]*_sumarKmVehiculo\((moved|km)\)[^\n]*\}\s*else\s*\{[^\n]*_sumarKmMantencion\((moved|km)\)/.test(GPS));   // km: desde 2026-10-08 todo pasa por _sumarKmViaje(km)
 
   // Simulación directa de la lógica extraída (sin todo el motor de GPS alrededor):
   const decidir = (actividadTipo, moved) => {
