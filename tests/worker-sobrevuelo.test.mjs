@@ -219,6 +219,7 @@ function cliente(fetchFn) {
     document: { getElementById: nada, createElement: () => ({ getContext: nada }), addEventListener() {}, removeEventListener() {}, querySelector: nada },
     window: { matchMedia: () => ({ matches: false }), addEventListener() {} } };
   vm.createContext(ctx);
+  for (const m of ['sobrevuelo-3d-vista.js', 'sobrevuelo-3d-pegada.js', 'sobrevuelo-video.js']) vm.runInContext(readFileSync(join(raiz, m), 'utf8'), ctx, { filename: m });
   vm.runInContext(readFileSync(join(raiz, 'sobrevuelo-3d.js'), 'utf8'), ctx, { filename: 'sobrevuelo-3d.js' });
   return ctx.window.__sb3test;
 }

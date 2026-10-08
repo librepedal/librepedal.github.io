@@ -180,7 +180,8 @@ var TOMAS={  // off = giro de la cámara respecto del avance (siempre hacia el v
 };
 var TRANS=reduce?4200:2800; // ms de cada cambio de plano (curva suave de entrada y salida)
 // zona libre del mapa (entre la barra de arriba y el panel de abajo) y dónde va Pistero dentro de ella (0 = arriba, 1 = abajo)
-function zonaLibre(){ var H=mapa.getContainer().clientHeight, pn=document.querySelector('.panel'), br=document.querySelector('.barra');
+function zonaLibre(){ if(GRAB) return V().vidZonaLibre();
+  var H=mapa.getContainer().clientHeight, pn=document.querySelector('.panel'), br=document.querySelector('.barra');
   var abajo=pn?Math.round(pn.getBoundingClientRect().height)-8:200, arriba=br?Math.round(br.getBoundingClientRect().bottom)+8:70; return {H:H,arriba:arriba,abajo:abajo,libre:Math.max(120,H-arriba-abajo)}; }
 // padding para que el punto quede a la fracción y de la zona libre (MapLibre centra el punto en el área con padding)
 function paddingPara(y){ var Z=zonaLibre(), py=Z.arriba+Z.libre*y, top=Math.max(0,Math.round(2*py-(Z.H-Z.abajo))); return {top:top,bottom:Z.abajo,left:0,right:0}; }
@@ -400,8 +401,8 @@ function mostrarResumen(){ var R=D.nuevo.resumen, el=$('resumen'); if(!R||!el) r
     +'<div class="rs-grid">'+fila('Distancia',kmTxt(R.dist))+fila('Tiempo',R.dur?durTxt(R.dur):'–')+fila('Subiste','+'+Math.round(R.sub)+' m')+fila('Subiendo',kmTxt(R.kmSube))+'</div>'
     +'<ul class="rs-hitos">'+hitos.map(function(h){ return '<li class="'+h[2]+'"><span>'+h[0]+'</span><b>'+h[1]+'</b></li>'; }).join('')+'</ul>';
   if(cajas&&cajas.inn){ cajas.k=.8; cajas.inn.style.transform='scale(.8)'; }   // en la vista general el rostro va chico
-  el.innerHTML+='<button class="btn play rs-comp" id="sb3-compartir">Compartir mi viaje</button>';
-  $('compartir').onclick=compartirViaje;
+  el.innerHTML+='<button class="btn play rs-comp" id="sb3-video">'+(window.SB3Video?SB3Video.VID_ICONO:'')+'Crear video para redes</button><button class="btn vel rs-comp rs-sec" id="sb3-compartir">Compartir imagen</button>';
+  $('video').onclick=sb3CrearVideo; $('compartir').onclick=compartirViaje;
   sb3Raiz().classList.add('fin'); if(!yaFin) setTimeout(function(){ encuadrar(1400); },60); }   // reencuadra sobre la tarjeta
 function cargarImg(src){ return new Promise(function(ok,mal){ var im=new Image(); im.onload=function(){ ok(im); }; im.onerror=mal; im.src=src; }); }
 function fotoMapa(){ return new Promise(function(ok){ mapa.once('render',function(){ try{ ok(mapa.getCanvas().toDataURL('image/jpeg',.92)); }catch(e){ console.warn('[sobrevuelo] foto del mapa', e); ok(null); } }); mapa.triggerRepaint(); }); }
@@ -437,11 +438,12 @@ function tarjetaCompartir(){
       return new Promise(function(ok){ cv.toBlob(ok,'image/png'); });
     }); });
 }
-function compartirViaje(){ var b=$('compartir'); if(b){ b.disabled=true; b.textContent='Preparando la imagen…'; }
-  tarjetaCompartir().then(function(blob){ var nom='libre-pedal-'+RUTA.nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png', file=new File([blob],nom,{type:'image/png'});
+function compartirViaje(){ if(sb3EsAppNativa()){ V().vidTarjeta('app-imagen'); return; }   // el WebView de Android no comparte ni descarga archivos (MDN: share() no existe en WebView Android): antes fallaba en silencio
+  var b=$('compartir'); if(b){ b.disabled=true; b.textContent='Preparando la imagen…'; }
+  tarjetaCompartir().then(function(blob){ var nom='libre-pedal-'+RUTA.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png', file=new File([blob],nom,{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})) return navigator.share({files:[file],title:RUTA.nombre,text:'Mi viaje en Libre Pedal'}).catch(function(){});
     var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); },4000); })
-  .catch(function(e){ console.warn('[sobrevuelo] compartir', e); }).then(function(){ if(b){ b.disabled=false; b.textContent='Compartir mi viaje'; } }); }
+  .catch(function(e){ console.warn('[sobrevuelo] compartir', e); }).then(function(){ if(b){ b.disabled=false; b.textContent='Compartir imagen'; } }); }
 function reiniciarEstado(){ sb3Raiz().classList.remove('fin'); intro=null; ritmoAct=0; huboCuesta=0; cam=null; espera=0; sigM=0; MASC.d=0; ganCuesta=0; ultAlt=null; exprAct='feliz'; exprCand=null; caraHasta=0; poseTemp=null; ppHasta=0; incl=0; var pp=$('pp'); if(pp) pp.classList.remove('on'); sb3Raiz().classList.remove('pp-on'); }
 function alOcultar(){ if(document.hidden && corriendo){ corriendo=false; actualizarBoton(); } }
 function iniciar(){ opts=(typeof _pistOpts==='function')?_pistOpts():{};
@@ -462,7 +464,7 @@ function iniciar(){ opts=(typeof _pistOpts==='function')?_pistOpts():{};
     sp.onchange=function(){ personaje=PERSONAJES[sp.value]; if(mapa&&modo==='nuevo'){ crearMarcador(); pintar(16,performance.now(),false); } }; }
   // pausa sola si la app pasa a segundo plano (batería y calor); tocar el mapa pausa o sigue
   document.addEventListener('visibilitychange',alOcultar);
-  mapa.on('click',function(){ if(modo==='nuevo' && !sb3Raiz().classList.contains('fin')) $('play').click(); });
+  mapa.on('click',function(){ if(modo==='nuevo' && !GRAB && !sb3Raiz().classList.contains('fin')) $('play').click(); });
   var bs=$('sonido'); if(bs){ var pintaS=function(){ bs.setAttribute('aria-pressed',SON.on); bs.classList.toggle('mudo',!SON.on); bs.title=SON.on?'Sonido: sí':'Sonido: no'; }; pintaS();
     bs.onclick=function(){ SON.on=!SON.on; try{ localStorage.setItem('lp_sbv_sonido',SON.on?'1':'0'); }catch(e){} if(!SON.on) vientoParar(); pintaS(); }; }
   $('vel').onclick=function(){ velX=velX===1?2:velX===2?4:1; this.textContent='×'+velX; };
@@ -621,7 +623,7 @@ function frame(ts){
   var esperaCarga=false;
   if(LIVIANO && modo==='nuevo'){
     var dAct=prog*D[modo].total;
-    if(cargaInicial){ var f0=faltanHasta(cargaInicial.hasta); esperaCarga=f0>0 && performance.now()-cargaInicial.t0<8000;
+    if(cargaInicial && !GRAB){ var f0=faltanHasta(cargaInicial.hasta); esperaCarga=f0>0 && performance.now()-cargaInicial.t0<8000;   /* grabando: se espera cada cuadro a que el mapa cargue (vidEsperarMapa, en sobrevuelo-video.js) */
       if(!esperaCarga) cargaInicial=null; actualizarCarga(); }
     if(ts-ultPre>400){ ultPre=ts; tilesTramo(dAct,dAct+3000); }
   }
@@ -634,7 +636,7 @@ function frame(ts){
     // ~5 s por km (como hoy), más lento subiendo y más rápido bajando; frena un poco antes de cada momento
     var ritmo=Math.max(.45,Math.min(1.7,1-g*6));
     if(modo==='nuevo' && L.momentos[sigM]){ var falta=L.momentos[sigM].d-d; if(falta<120 && L.momentos[sigM].cima) ritmo*=Math.max(.05,falta/120); }
-    if(LIVIANO && modo==='nuevo' && faltanHasta(d+350)>0) ritmo*=.35;   // la red viene atrasada: frena suave (no se ve el mapa cortado)
+    if(LIVIANO && !GRAB && modo==='nuevo' && faltanHasta(d+350)>0) ritmo*=.35;   // la red viene atrasada: frena suave (no se ve el mapa cortado)
     ritmoAct=suave(ritmoAct,ritmo,dt,700);
     prog=Math.min(1,prog+dt/durVuelo()*ritmoAct*velX);
   }
@@ -642,6 +644,7 @@ function frame(ts){
     if(m && espera<=0 && dd>=m.d-1){ primerPlano(m,ts); if(m.cima||m.fin||m.pausa){ espera=(m.pausa?1600:m.dur)/Math.min(2,velX); espTot=espera; } sonarMomento(m); sigM++; } }
   pintar(dt,ts,true);
   if(modo==='nuevo'){ var iS=enD(D.nuevo,prog*D.nuevo.total).i; sonidoCuadro(ts,D.nuevo.pend[iS],D.nuevo.vel?D.nuevo.vel[iS]:null); }
+  if(prog>=1 && espera<=0 && GRAB){ corriendo=false; GRAB.finT=GRAB.T; return; }   // grabando: sigue el cierre del video (vidCuadro)
   if(prog>=1 && espera<=0){ vientoParar(); corriendo=false; actualizarBoton(); setTimeout(function(){ if(modo==='nuevo') mostrarResumen(); else encuadrar(1800); },900); return; }
   if(!SB3DBG._manual) requestAnimationFrame(frame);
 }
@@ -829,125 +832,99 @@ function dibujarPerfil(){
   c.save(); c.shadowColor='#fc4c02'; c.shadowBlur=12; c.fillStyle='#fc4c02'; c.strokeStyle='#fff'; c.lineWidth=2; c.beginPath(); c.arc(x,y,5,0,7); c.fill(); c.stroke(); c.restore();
 }
 
-// ==================== integración con la app ====================
-// Estilos SOLO bajo #sb3 (la app tiene sus propias .btn, .panel, etc.: así no se pisan) y keyframes con prefijo sb3.
-var SB3_CSS='#sb3{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--surf:#141a2b;--surf-2:#0f1524;--br:rgba(255,255,255,.09);--tx:#e8edf6;--tx2:#9fb3c8;position:fixed;inset:0;z-index:99995;background:var(--d);color:var(--tx);font:500 14px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}'
-+'#sb3 *{box-sizing:border-box}'
-+'#sb3-mapa{position:absolute;inset:0}'
-+'#sb3 .barra{position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;display:flex;gap:8px;align-items:center;z-index:5}'
-+'#sb3 .titulo{flex:1;min-width:0;background:rgba(10,15,29,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--br);border-radius:14px;padding:8px 12px}'
-+'#sb3 .titulo b{display:block;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-+'#sb3 .titulo span{display:block;font-size:.68rem;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-+'#sb3 .cerrar{flex:none;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid var(--br);background:rgba(10,15,29,.82);color:var(--tx);cursor:pointer}'
-+'#sb3 .seg{display:flex;background:rgba(10,15,29,.82);backdrop-filter:blur(8px);border:1px solid var(--br);border-radius:12px;padding:3px}'
-+'#sb3 .seg button{border:0;background:none;color:var(--tx2);font:700 .78rem system-ui;padding:8px 10px;border-radius:9px;cursor:pointer}'
-+'#sb3 .seg button.on{background:var(--p);color:#0a0f1d}'
-+'#sb3 .capa{position:absolute;right:12px;bottom:calc(232px + env(safe-area-inset-bottom));z-index:5;transition:opacity .3s}'
-+'#sb3 .panel{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:10px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(10,15,29,0),rgba(10,15,29,.88) 22%,rgba(10,15,29,.97))}'
-+'#sb3 .datos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}'
-+'#sb3 .dato{background:var(--surf);border:1px solid var(--br);border-radius:12px;padding:7px 8px}'
-+'#sb3 .dato small{display:block;font-size:.62rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em}'
-+'#sb3 .dato b{font-size:1.02rem;font-variant-numeric:tabular-nums}'
-+'#sb3 .dato b i{font-style:normal;font-size:.7rem;color:var(--tx2);margin-left:2px}'
-+'#sb3 .perfil{position:relative;height:84px;background:var(--surf-2);border:1px solid var(--br);border-radius:12px;overflow:hidden;cursor:pointer;touch-action:none}'
-+'#sb3 .perfil canvas{width:100%;height:100%;display:block}'
-+'#sb3 .ctrl{display:flex;gap:8px;margin-top:8px;align-items:center}'
-+'#sb3 .btn{border:0;border-radius:12px;font:800 .85rem system-ui;padding:11px 14px;cursor:pointer}'
-+'#sb3 .play{background:var(--p);color:#0a0f1d;flex:1 0 auto;white-space:nowrap}'
-+'#sb3 .vel{background:var(--surf);color:var(--tx);border:1px solid var(--br)}'
-+'#sb3 .leyenda{display:flex;gap:10px;font-size:.66rem;color:var(--tx2);margin:0 2px 6px;flex-wrap:wrap;transition:opacity .3s}'
-+'#sb3 .leyenda i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:4px}'
-+'#sb3 .cargando{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:9;background:var(--d);font-weight:700;color:var(--tx2)}'
-+'#sb3.corriendo .leyenda,#sb3.corriendo .capa{opacity:0;pointer-events:none}'
-+'#sb3 .hito{font:800 11px system-ui;color:#0a0f1d;background:#ffd700;border-radius:8px;padding:3px 7px;box-shadow:0 0 12px rgba(255,215,0,.6),0 2px 6px rgba(0,0,0,.45);white-space:nowrap}'
-+'#sb3 .pp{position:absolute;left:12px;top:calc(66px + env(safe-area-inset-top));z-index:6;display:flex;align-items:center;gap:12px;padding:10px 16px;background:rgba(10,15,29,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--tx);border:1px solid var(--br);border-left:3px solid var(--ring,#39ff88);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;transform:translateY(-10px);transition:opacity .45s cubic-bezier(.2,.7,.2,1),transform .55s cubic-bezier(.2,.7,.2,1);pointer-events:none;max-width:calc(100% - 24px)}'
-+'#sb3 .pp.on{opacity:1;transform:none}'
-+'#sb3 .pp-texto b{display:block;font:800 1.05rem/1.1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:-.01em}'
-+'#sb3 .pp-texto span{display:block;margin-top:3px;font:600 .76rem system-ui;color:var(--tx2)}'
-+'#sb3 .pp.cansado,#sb3 .pp.enojado{--ring:#ff8a1f}#sb3 .pp.agotado{--ring:#ff2d6f}#sb3 .pp.adrenalina,#sb3 .pp.emocionado,#sb3 .pp.sorprendido{--ring:#22d3ff}#sb3 .pp.orgulloso{--ring:#ffd700}#sb3 .pp.contento{--ring:#39ff88}#sb3 .pp.pensando{--ring:#9fb3c8}'
-+'#sb3 .cara-mk{width:68px;height:84px;pointer-events:none;--c:#39ff88;--lat:1.15s}'
-+'#sb3 .cm-pin{position:absolute;left:50%;bottom:0;width:3px;height:20px;margin-left:-1.5px;border-radius:2px;background:linear-gradient(to top,#fff,var(--c) 45%,var(--c));box-shadow:0 0 8px var(--c)}'
-+'#sb3 .cm-in{position:absolute;left:1px;top:0;width:66px;height:66px;transform-origin:50% 100%}'
-/* Inty 2026-10-07: la cara completa, SIN anillo ni halo que late ("eso nunca lo pedí"), igual que el respaldo
-   (.sbv-rostro-c de estilos.css): 64×54 apoyada sobre el pin */
-+'#sb3 .cm-caras{position:absolute;left:1px;top:12px;width:64px;height:54px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}'
-+'#sb3 .cm-c{position:absolute;inset:0;opacity:0;transform:scale(.96);transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1)}'
-+'#sb3 .cm-c.on{opacity:1;transform:none}#sb3 .cm-c svg{width:100%;height:100%;display:block}'
-+'#sb3 .cm-gota{position:absolute;right:-2px;top:10px;width:9px;height:12px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#7fd0ff;box-shadow:0 0 6px #7fd0ff;opacity:0}'
-+'#sb3 .cara-mk.suda .cm-gota{animation:sb3Gota 1.4s ease-in infinite}'
-+'@keyframes sb3Gota{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(26px)}}'
-+'#sb3 .resumen{position:absolute;left:12px;right:12px;bottom:calc(176px + env(safe-area-inset-bottom));max-height:calc(100% - 260px);overflow:auto;z-index:6;max-width:520px;margin:0 auto;background:rgba(10,15,29,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--br);border-radius:18px;padding:14px;opacity:0;transform:translateY(14px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);pointer-events:none}'
-+'#sb3.fin .resumen{opacity:1;transform:none;pointer-events:auto}'
-+'#sb3.fin .datos,#sb3.fin .leyenda,#sb3.fin .pp{opacity:0;pointer-events:none}'
-+'#sb3 .rs-tit b{display:block;font:800 1.15rem/1.15 system-ui;letter-spacing:-.01em}#sb3 .rs-tit span{font:600 .74rem system-ui;color:var(--tx2)}'
-+'#sb3 .rs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}'
-+'#sb3 .rs-dato{background:var(--surf);border:1px solid var(--br);border-radius:12px;padding:7px 8px}#sb3 .rs-dato small{display:block;font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em}#sb3 .rs-dato b{font-size:.95rem;font-variant-numeric:tabular-nums}'
-+'#sb3 .rs-hitos{list-style:none;margin:0;padding:0;display:grid;gap:5px}'
-+'#sb3 .rs-hitos li{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.04);border-left:3px solid #39ff88;font-size:.78rem}'
-+'#sb3 .rs-hitos li span{color:var(--tx2)}#sb3 .rs-hitos li b{font-weight:700;text-align:right}'
-+'#sb3 .rs-hitos li.sube{border-color:#ff8a1f}#sb3 .rs-hitos li.empina{border-color:#ff2d6f}#sb3 .rs-hitos li.baja{border-color:#22d3ff}#sb3 .rs-hitos li.cima{border-color:#ffd700}'
-+'#sb3 .rs-comp{width:100%;margin-top:10px}'
-+'#sb3 .son{display:flex;align-items:center;justify-content:center;padding:9px 11px}#sb3 .son .tacha{display:none}#sb3 .son.mudo .onda{display:none}#sb3 .son.mudo .tacha{display:inline}#sb3 .son.mudo{color:var(--tx2)}'
-+'@media (max-width:420px){#sb3 .dato b{font-size:.92rem}}'
-+'@media (max-width:380px){#sb3 .rs-grid{grid-template-columns:repeat(2,1fr)}}'
-+'@media (max-height:700px){#sb3 .perfil{height:64px}#sb3 .dato{padding:5px 8px}#sb3 .dato b{font-size:.92rem}#sb3 .ctrl{margin-top:6px}#sb3 .btn{padding:9px 12px}#sb3 .resumen{bottom:calc(150px + env(safe-area-inset-bottom));padding:10px}#sb3 .rs-hitos li{padding:4px 8px}}'
-+'@media (prefers-reduced-motion:reduce){#sb3 .pp{transition:opacity .3s;transform:none}#sb3 .cara-mk.suda .cm-gota{animation:none}}';
+// ==================== VIDEO PARA REDES: el dibujo y la tarjeta están en sobrevuelo-video.js (SB3Video) ====================
+var GRAB=null;   // la grabación en curso (null = no se graba)
+function sb3EsAppNativa(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
+// el módulo de video con el estado del vuelo al día (se llama en cada uso: nunca dibuja con un estado viejo)
+function V(){ var M=window.SB3Video; if(!M) throw new Error('No se pudo cargar el creador de video. Recarga la página e inténtalo de nuevo.');
+  M.sync({mapa:mapa,marcador:marcador,D:D,cajas:cajas,exprAct:exprAct,prog:prog,capa:capa,GRAB:GRAB,RUTA:RUTA,fmt:fmt,colorPend:colorPend,enD:enD,$:$,cara:cara,sb3Raiz:sb3Raiz}); return M; }
 
-function sb3Estilos(){ if(document.getElementById('sb3-css')) return; var st=document.createElement('style'); st.id='sb3-css'; st.textContent=SB3_CSS; document.head.appendChild(st); }
-// la pantalla (mismos elementos que el prototipo; ids con prefijo sb3-). Íconos dibujados a medida (no emoji).
-function sb3Pantalla(){
-  var el=document.createElement('div'); el.id='sb3'; el.setAttribute('role','dialog'); el.setAttribute('aria-label','Sobrevuelo del viaje');
-  el.innerHTML='<div id="sb3-mapa"></div><div class="cargando" id="sb3-cargando">Preparando tu viaje…</div>'
-   +'<div class="barra"><div class="titulo"><b id="sb3-tit"></b><span id="sb3-titSub"></span></div>'
-   +'<button class="cerrar" id="sb3-cerrar" aria-label="Cerrar el sobrevuelo"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
-   +'<div class="pp" id="sb3-pp"><div class="pp-cara" hidden></div><div class="pp-texto"><b class="pp-txt"></b><span class="pp-sub"></span></div><div class="pp-masc"></div></div>'
-   +'<div class="capa"><div class="seg" id="sb3-capa"><button data-c="sat" class="on">Satélite</button><button data-c="calles">Calles</button></div></div>'
-   +'<div class="resumen" id="sb3-resumen"></div>'
-   +'<div class="panel"><div class="datos">'
-   +'<div class="dato"><small>Recorrido</small><b id="sb3-dKm">0,0<i>km</i></b></div>'
-   +'<div class="dato"><small id="sb3-lAlt">Altura</small><b id="sb3-dAlt">–<i>m</i></b></div>'
-   +'<div class="dato"><small>Pendiente</small><b id="sb3-dPend">–<i>%</i></b></div>'
-   +'<div class="dato"><small>Subido</small><b id="sb3-dSub">0<i>m</i></b></div></div>'
-   +'<div class="leyenda" id="sb3-leyenda"><span><i style="background:#39ff88;box-shadow:0 0 6px #39ff88"></i>plano</span><span><i style="background:#ffe14d;box-shadow:0 0 6px #ffe14d"></i>3–6 %</span><span><i style="background:#ff8a1f;box-shadow:0 0 6px #ff8a1f"></i>6–9 %</span><span><i style="background:#ff2d6f;box-shadow:0 0 6px #ff2d6f"></i>+9 %</span><span><i style="background:#22d3ff;box-shadow:0 0 6px #22d3ff"></i>bajada</span></div>'
-   +'<div class="perfil" id="sb3-perfil"><canvas id="sb3-cv"></canvas></div>'
-   +'<div class="ctrl"><button class="btn play" id="sb3-play">▶ Ver sobrevuelo</button>'
-   +'<button class="btn vel son" id="sb3-sonido" aria-label="Sonido del sobrevuelo"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" stroke="none"/><path class="onda" d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path class="onda" d="M18.2 6.5a8 8 0 0 1 0 11"/><path class="tacha" d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg></button>'
-   +'<button class="btn vel" id="sb3-vel">×1</button></div></div>';
-  document.body.appendChild(el); return el;
+// ---------- la grabación ----------
+function sb3CrearVideo(){
+  if(GRAB||!mapa||!D.nuevo) return;
+  if(sb3EsAppNativa()){ V().vidTarjeta('app'); return; }   // antes de gastar batería: ahí no se puede guardar ni compartir
+  if(typeof VideoEncoder!=='function'||typeof VideoFrame!=='function'){ V().vidTarjeta('error',{msg:'Este navegador no sabe crear videos. Ábrelo en Chrome actualizado.'}); return; }
+  var raiz=sb3Raiz(), el=$('mapa');
+  GRAB={T:0,finT:0,cancel:false,err:null,caras:{},cara:{},pp:{on:false,t:0},pr0:mapa.getPixelRatio(),son0:SON.on,vel0:velX,capaCss:el.style.cssText,cierre:null};
+  V().vidTarjeta('creando'); raiz.classList.add('grabando');
+  corriendo=false; vientoParar(); try{ cancelAnimationFrame(encuadreRAF); }catch(e){} SON.on=false; SB3DBG._manual=true;
+  var G=GRAB, enc=null, mux=null, i=0, dt=1000/V().VID.FPS;
+  var pasos=[function(){ return V().vidLoadMuxer(); },
+    function(){ return V().sb3ElegirCodec(function(cfg){ return VideoEncoder.isConfigSupported(cfg); }); }];
+  return pasos[0]().then(function(M){ G.M=M; return pasos[1](); }).then(function(cfg){
+    if(!cfg) throw new Error('Este teléfono no sabe codificar video MP4 (H.264).');
+    G.cv=document.createElement('canvas'); G.cv.width=V().VID.W; G.cv.height=V().VID.H; G.ctx=G.cv.getContext('2d');
+    mux=new G.M.Muxer({target:new G.M.ArrayBufferTarget(),video:{codec:'avc',width:V().VID.W,height:V().VID.H,frameRate:V().VID.FPS},fastStart:'in-memory'});
+    enc=new VideoEncoder({output:function(ch,meta){ mux.addVideoChunk(ch,meta); },error:function(e){ G.err=e; }});
+    enc.configure(cfg); G.enc=enc;
+    try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ G.wl=w; },function(){}); }catch(e){}
+    // el mapa del tamaño exacto del video (360x640 CSS × 3 = 1080x1920)
+    el.style.cssText='inset:auto;left:50%;top:0;width:'+(V().VID.W/V().VID.K)+'px;height:'+(V().VID.H/V().VID.K)+'px;margin-left:'+(-V().VID.W/V().VID.K/2)+'px';
+    mapa.setPixelRatio(V().VID.K); mapa.resize();
+    // desde el principio: la cámara arranca viendo todo el viaje y baja hasta la partida (arrancarIntro)
+    reiniciarEstado(); prog=0; sigM=0; cam=null; espera=0; velX=V().sb3VideoVel(durVuelo()); MASC.d=0;
+    var C0=V().vidCamaraTodo(rumboEn(D.nuevo,0)); if(C0) mapa.jumpTo({center:C0.c,zoom:C0.z,pitch:C0.pitch,bearing:C0.b,padding:C0.pad});
+    return Promise.all([cargarImg('logo-transparent.png').catch(function(){ return null; }),V().vidCara('feliz'),V().vidCara('orgulloso')]).then(function(r){ G.L=V().vidCapas(r[0]); return V().vidEsperarMapa(8000); });
+  }).then(function(){
+    return (function cuadro(){
+      if(G.cancel) throw new Error('cancelado');
+      if(G.err) throw G.err;
+      if(!SB3_ABIERTO) throw new Error('cerrado');
+      if(document.hidden) return V().vidEspera(300).then(cuadro);   // en segundo plano el navegador frena: se espera a volver
+      var tc=null;
+      if(!G.finT){
+        if(i===0){ corriendo=true; ultimo=-dt; precargarInicio(); cargaInicial=null; arrancarIntro(); }
+        if(G.T>=V().VID.TOPE){ prog=1; espera=0; sigM=D.nuevo.momentos.length; }   // tope de 60 s: el resto del vuelo se salta
+        G.T+=i?dt:0; if(!corriendo) corriendo=true; frame(G.T);
+      } else {
+        G.T+=dt; tc=G.T-G.finT;
+        if(!G.cierre){ G.cierre={de:{c:[mapa.getCenter().lng,mapa.getCenter().lat],z:mapa.getZoom(),pitch:mapa.getPitch(),b:mapa.getBearing(),pad:mapa.getPadding()},a:V().vidCamaraTodo(mapa.getBearing())}; }
+        var A=G.cierre.de, B=G.cierre.a||A, e=suaveS(tc/1800), L=function(a,b){ return a+(b-a)*e; };
+        mapa.jumpTo({center:[L(A.c[0],B.c[0]),L(A.c[1],B.c[1])],zoom:L(A.z,B.z),pitch:L(A.pitch,B.pitch),bearing:(A.b+giro(A.b,B.b)*e+360)%360,padding:{top:L(A.pad.top,0),bottom:L(A.pad.bottom,0),left:L(A.pad.left,0),right:L(A.pad.right,0)}});
+      }
+      return V().vidEsperarMapa(2500).then(function(){ return V().vidComponer(tc); }).then(function(){
+        var vf=new VideoFrame(G.cv,{timestamp:Math.round(i*1e6/V().VID.FPS),duration:Math.round(1e6/V().VID.FPS)});
+        enc.encode(vf,{keyFrame:i%60===0}); vf.close(); i++;
+        V().vidAvance(G.finT?92+8*Math.min(1,tc/V().VID.CIERRE):Math.min(92,prog*92));
+        return (function cola(){ return enc.encodeQueueSize>4?V().vidEspera(5).then(cola):Promise.resolve(); })();
+      }).then(function(){ if(G.finT && G.T-G.finT>=V().VID.CIERRE) return; return cuadro(); });
+    })();
+  }).then(function(){ return enc.flush(); }).then(function(){
+    if(G.err) throw G.err;
+    mux.finalize(); var blob=new Blob([mux.target.buffer],{type:'video/mp4'}), ms=i*1000/V().VID.FPS, file=null;
+    try{ file=new File([blob],V().vidNombre(),{type:'video/mp4'}); }catch(e){ file=blob; file.name=V().vidNombre(); }
+    V().ponArchivo(file); vidRestaurar();
+    var sal=V().sb3VideoSalida(file,navigator,sb3EsAppNativa());
+    if(sal==='compartir') V().vidTarjeta('compartir',{ms:ms}); else { V().vidDescargar(file); V().vidTarjeta('descargar',{ms:ms}); }
+    return file;
+  }).catch(function(e){
+    try{ if(enc&&enc.state!=='closed') enc.close(); }catch(_e){}
+    var cancelado=!SB3_ABIERTO||(e&&(e.message==='cancelado'||e.message==='cerrado')); if(!cancelado){ console.warn('[sobrevuelo] video', e); try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
+    vidRestaurar();
+    if(SB3_ABIERTO){ if(cancelado){ var t=$('vid'); if(t) t.remove(); sb3Raiz().classList.remove('vid-on'); } else V().vidTarjeta('error',{msg:(e&&e.message)||'Inténtalo de nuevo.'}); }
+    return null;
+  });
 }
+// deja el sobrevuelo como estaba: mapa de pantalla completa, sonido, velocidad, y vuelve al resumen
+function vidRestaurar(){ var G=GRAB; if(!G) return; GRAB=null; SB3DBG._manual=false; corriendo=false; SON.on=G.son0; velX=G.vel0;
+  try{ if(G.wl) G.wl.release(); }catch(e){}
+  sb3Raiz().classList.remove('grabando');
+  if(!mapa||!SB3_ABIERTO) return;
+  var el=$('mapa'); if(el) el.style.cssText=G.capaCss||''; try{ mapa.setPixelRatio(G.pr0); mapa.resize(); }catch(e){}
+  if(SB3DBG._fin) SB3DBG._fin(); }
+
+// ==================== integración con la app ====================
+// la vista (estilos bajo #sb3 y la estructura HTML de la pantalla) está en sobrevuelo-3d-vista.js
+function sb3Estilos(){ window.SB3Vista.estilos(); }  function sb3Pantalla(){ return window.SB3Vista.pantalla(); }
 function sb3SoportaWebGL(){ try{ var c=document.createElement('canvas'); return !!(window.WebGLRenderingContext&&(c.getContext('webgl2')||c.getContext('webgl'))); }catch(e){ return false; } }
 // puntos de la app: {lat,lon,t,alt} o [lat,lon,t,alt]. Se filtran los corruptos (mismo criterio que el Video 3D: un
 // punto sin lat/lon válidos ya rompió en producción) y los 0,0 (GPS sin señal).
 function sb3Puntos(puntos){ return (puntos||[]).map(function(p){ return Array.isArray(p)?{lat:+p[0],lon:+p[1],t:+p[2]||0}:(p?{lat:+p.lat,lon:+p.lon,t:+p.t||0}:null); })
   .filter(function(p){ return p&&isFinite(p.lat)&&isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180&&!(p.lat===0&&p.lon===0); }); }
-// línea pegada al camino guardada en el teléfono: llave PROPIA (no dentro de las rutas, para no comerles espacio y que
-// guardar una ruta nueva nunca falle por esto), 1 punto cada 25 m, máx. 10 rutas.
-var SB3_PEGADAS='lp_sbv3_pegadas';
-function sb3LeerPegada(id){ if(!id) return null; try{ var t=JSON.parse(localStorage.getItem(SB3_PEGADAS)||'{}'); return t[id]||null; }catch(e){ return null; } }
-function sb3GuardarPegada(id,coords,metodo){ if(!id||!coords||coords.length<2) return; try{
-  var t=JSON.parse(localStorage.getItem(SB3_PEGADAS)||'{}'), out=[coords[0]];
-  for(var i=1;i<coords.length;i++){ if(hav(out[out.length-1],coords[i])>=25||i===coords.length-1) out.push(coords[i]); }
-  t[id]={c:out.map(function(c){ return [+c[0].toFixed(5),+c[1].toFixed(5)]; }),m:metodo,f:Date.now()};
-  var ids=Object.keys(t).sort(function(a,b){ return (t[a].f||0)-(t[b].f||0); }); while(ids.length>10){ delete t[ids.shift()]; }
-  localStorage.setItem(SB3_PEGADAS,JSON.stringify(t)); }catch(e){ /* sin espacio: se vuelve a pegar la próxima vez, nada más */ } }
-
-// worker que pega cada ruta al camino UNA vez y la guarda (worker-sobrevuelo/): así no se le pide a Valhalla desde cada
-// teléfono. Si no responde (sin publicar, sin red, límite), pegarAlCamino sigue directo como antes.
-var SB3_WORKER='https://librepedal-sobrevuelo.librepedal.workers.dev';
-var SB3_METODOS={valhalla:1,parcial:1,gps:1};
-function sb3PorWorker(muestra){
-  if(!SB3_WORKER || typeof fetch!=='function') return Promise.reject(new Error('sin worker'));
-  var ctl=(typeof AbortController==='function')?new AbortController():null;
-  var to=setTimeout(function(){ if(ctl) ctl.abort(); },45000); /* una ruta larga y nueva tarda: de a 2 tramos en Valhalla */
-  return fetch(SB3_WORKER,{method:'POST',headers:{'content-type':'application/json'},signal:ctl?ctl.signal:undefined,
-      body:JSON.stringify({puntos:muestra.map(function(p){ return [+p.lat.toFixed(5),+p.lon.toFixed(5)]; })})})
-  .then(function(r){ if(!r.ok) throw new Error('worker '+r.status); return r.json(); })
-  .then(function(j){ clearTimeout(to);
-    var c=j&&j.c, ok=Array.isArray(c)&&c.length>=2&&c.every(function(p){ return p&&typeof p[0]==='number'&&typeof p[1]==='number'&&isFinite(p[0])&&isFinite(p[1])&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90; });
-    if(!ok||!SB3_METODOS[j.m]) throw new Error('respuesta inválida');
-    return {coords:c,metodo:j.m,motivo:(j.cache?'guardada ':'')+(j.t||'')}; },
-    function(e){ clearTimeout(to); throw e; });
-}
+// la línea pegada guardada en el teléfono y el worker que la pega: sobrevuelo-3d-pegada.js (SB3Pegada)
+function sb3Pegada(){ var P=window.SB3Pegada; if(!P) throw new Error('falta sobrevuelo-3d-pegada.js'); P.usar(hav); return P; }
+function sb3LeerPegada(id){ return sb3Pegada().leer(id); }  function sb3GuardarPegada(id,coords,metodo){ return sb3Pegada().guardar(id,coords,metodo); }
+function sb3PorWorker(muestra){ return sb3Pegada().porWorker(muestra); }
 
 var SB3_FIN=null, SB3_ABIERTO=false;
 // la raíz de la pantalla; si ya se cerró, una de mentira (un temporizador que llega tarde no rompe nada)
@@ -963,7 +940,7 @@ function abrirSobrevuelo3D(puntos, meta, alTerminar){
     // estado limpio en cada apertura (el módulo vive toda la sesión)
     corriendo=false; prog=0; ultimo=null; ultimoPinto=null; cargaInicial=null; perfilCache=null; marcador=null; cajas={}; cam=null; D={}; intro=null; espera=0; sigM=0; incl=0; ritmoAct=0; velX=1; capa='sat'; modo='nuevo';
     PRE.hechos={}; PRE.cola=[]; PRE.pendientes={}; PRE.total=0; PRE.listos=0;
-    RUTA.nombre=meta.nombre||'Tu viaje'; RUTA.metodo='';
+    RUTA.nombre=meta.nombre||'Tu viaje'; RUTA.metodo=''; RUTA.inicio=(pts[0]&&pts[0].t)||0; if(window.SB3Video) SB3Video.ponArchivo(null);
     $('cerrar').onclick=function(){ cerrarSobrevuelo3D(); };
     var guardada=sb3LeerPegada(meta.id), cg=$('cargando');
     if(cg) cg.textContent=guardada?'Preparando tu viaje…':'Pegando tu ruta al camino…';
@@ -976,6 +953,7 @@ function abrirSobrevuelo3D(puntos, meta, alTerminar){
   }catch(e){ console.warn('[sobrevuelo3d]', e); try{ cerrarSobrevuelo3D(true); }catch(_e){} return false; }
 }
 function cerrarSobrevuelo3D(silencioso){
+  if(GRAB) GRAB.cancel=true;   // se estaba creando un video: se corta (el bucle ve SB3_ABIERTO=false y no muestra error)
   corriendo=false; SB3_ABIERTO=false;
   try{ vientoParar(); }catch(e){}
   try{ cancelAnimationFrame(encuadreRAF); }catch(e){}
@@ -1016,6 +994,6 @@ window.abrirSobrevuelo3D=abrirSobrevuelo3D;
 window.cerrarSobrevuelo3D=cerrarSobrevuelo3D;
 // funciones puras para tests/sobrevuelo-3d.test.mjs y ganchos de prueba (no se usan en la app)
 window.__sb3test={hav:hav, pegarAlCamino:pegarAlCamino, sinPinchazos:sinPinchazos, solPos:solPos, luzDe:luzDe, caraSegun:caraSegun, planear:planear, tiemposReales:tiemposReales,
-  sb3Puntos:sb3Puntos, sobreLaPegada:sb3SobreLaPegada, durVuelo:durVuelo, linea:linea, densificar:densificar, colorPend:colorPend, setD:function(x){ D=x; }, getD:function(){ return D; }, dbg:SB3DBG};
+  sb3Puntos:sb3Puntos, sobreLaPegada:sb3SobreLaPegada, videoVel:function(){ return V().sb3VideoVel.apply(null,arguments); }, videoSalida:function(){ return V().sb3VideoSalida.apply(null,arguments); }, elegirCodec:function(){ return V().sb3ElegirCodec.apply(null,arguments); }, vidZonaLibre:function(){ return V().vidZonaLibre.apply(null,arguments); }, VID:function(){ return V().VID; }, vidDurTxt:function(){ return V().vidDurTxt.apply(null,arguments); }, crearVideo:sb3CrearVideo, videoArchivo:function(){ return window.SB3Video?SB3Video.archivo():null; }, estadoVideo:function(){ return GRAB?{T:GRAB.T,finT:GRAB.finT,prog:prog,err:GRAB.err?String(GRAB.err):null,tiles:(function(){ try{ return mapa.areTilesLoaded(); }catch(e){ return null; } })()}:null; }, durVuelo:durVuelo, linea:linea, densificar:densificar, colorPend:colorPend, setD:function(x){ D=x; }, getD:function(){ return D; }, dbg:SB3DBG};
 
 })();

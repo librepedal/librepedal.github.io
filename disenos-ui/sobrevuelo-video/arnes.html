@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<base href="/"><!-- como en la app: logo-transparent.png y mp4-muxer.js se piden desde la raíz -->
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arnés del sobrevuelo (sin Firebase)</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="estilos.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<!-- Solo los scripts que usa el sobrevuelo (Pistero y sonidos). Sin Firebase, sin Sentry, sin workers de la app:
+     la línea pegada se siembra en localStorage, así el sobrevuelo no llama al worker. Ruta sintética Futrono → Llifén. -->
+<script src="pistero-personalizacion-datos.js"></script>
+<script src="pistero-armario.js"></script>
+<script src="pistero-apariencia.js"></script>
+<script src="pistero-bici.js"></script>
+<script src="pistero-bici-atras.js"></script>
+<script src="pistero-sonidos.js"></script>
+<script src="sobrevuelo-3d-vista.js"></script>
+<script src="sobrevuelo-3d-pegada.js"></script>
+<script src="sobrevuelo-video.js"></script>
+<script src="sobrevuelo-3d.js"></script>
+<script>document.write('<script src="disenos-ui/sobrevuelo-video/cuadro-maqueta.js?v='+Date.now()+'"><\/script>')</script>
+</head>
+<body style="background:#0a0f1d">
+<script>
+window.lpAviso=window.lpAviso||function(m){ console.log('[aviso]',m); };
+Promise.all([fetch('disenos-ui/sobrevuelo-video/traza-gps.json').then(r=>r.json()),fetch('disenos-ui/sobrevuelo-video/traza-pegada.json').then(r=>r.json())]).then(function(r){
+  var id='prueba-futrono-llifen';
+  try{ var t={}; t[id]={c:r[1].map(c=>[+c[0].toFixed(5),+c[1].toFixed(5)]),m:'valhalla',f:Date.now()}; localStorage.setItem('lp_sbv3_pegadas',JSON.stringify(t)); }catch(e){}
+  window.__abrir=function(){ return abrirSobrevuelo3D(r[0],{id:id,nombre:'Futrono → Llifén'},function(){}); };
+  if(!/[?&]manual/.test(location.search)) window.__abrir();
+});
+</script>
+</body>
+</html>

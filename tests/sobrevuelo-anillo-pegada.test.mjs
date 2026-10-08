@@ -11,11 +11,12 @@ let f = 0, n = 0; const ok = (c, m) => { n++; if (!c) { f++; console.log('  ✗ 
 
 // ---------- 1) 3D: la cara sin anillo ni halo ----------
 const s3 = readFileSync(join(raiz, 'sobrevuelo-3d.js'), 'utf8');
+const s3css = s3 + readFileSync(join(raiz, 'sobrevuelo-3d-vista.js'), 'utf8');   // los estilos viven en sobrevuelo-3d-vista.js desde 2026-10-08
 const rostroHTML = (s3.match(/function crearRostro\(\)\{[\s\S]*?el\.innerHTML='([^']*)'/) || [])[1] || '';
 ok(rostroHTML.includes('cm-caras'), '3D: el rostro sigue teniendo su cara');
 ok(!/cm-anillo|cm-halo/.test(rostroHTML), '3D: el rostro no lleva anillo ni halo');
-ok(!/\.cm-anillo\{|\.cm-halo\{|sb3Late/.test(s3), '3D: sin estilos de anillo ni del halo que late');
-const carasCSS = (s3.match(/#sb3 \.cm-caras\{[^}]*\}/) || [''])[0];
+ok(!/\.cm-anillo\{|\.cm-halo\{|sb3Late/.test(s3css),'3D: sin estilos de anillo ni del halo que late');
+const carasCSS = (s3css.match(/#sb3 \.cm-caras\{[^}]*\}/) || [''])[0];
 ok(carasCSS && !/clip-path|border-radius/.test(carasCSS), '3D: la cara completa, sin recorte en círculo: ' + carasCSS);
 
 // ---------- 2) línea pegada con las horas y alturas del GPS ----------
@@ -26,6 +27,7 @@ const ctx3 = { console, Math, JSON, Object, Array, String, Number, RegExp, isFin
   document: { getElementById: () => null, createElement: () => ({ getContext: () => null }), addEventListener() {}, removeEventListener() {}, querySelector: () => null },
   window: { matchMedia: () => ({ matches: false }), addEventListener() {} } };
 vm.createContext(ctx3);
+for (const m of ['sobrevuelo-3d-vista.js', 'sobrevuelo-3d-pegada.js', 'sobrevuelo-video.js']) vm.runInContext(readFileSync(join(raiz, m), 'utf8'), ctx3, { filename: m });
 vm.runInContext(s3, ctx3, { filename: 'sobrevuelo-3d.js' });
 const T = ctx3.window.__sb3test;
 
