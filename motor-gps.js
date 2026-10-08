@@ -64,7 +64,11 @@ const lpBackgroundGeo = (function(){
       }
     },
     restart: async function(onLocation){ await this.stop(); await this.start(onLocation); },
-    stop: async function(){ if(BG && watcherId){ try{ await BG.removeWatcher({id:watcherId}); }catch(e){} watcherId=null; } },
+    // El id se suelta AL TIRO, antes de esperar a Android (2026-10-08): antes se borraba después del await, y
+    // calculateAndStartNavigation() hace stop() + start() seguidos sin esperar -- start() veía el id viejo,
+    // creía que ya había GPS corriendo y no creaba nada; medio segundo después stop() borraba ese watcher y la
+    // navegación quedaba sin GPS nativo. Y un stop() atrasado podía borrar el id del watcher NUEVO.
+    stop: async function(){ if(BG && watcherId){ const id=watcherId; watcherId=null; try{ await BG.removeWatcher({id:id}); }catch(e){} } },
     _p:function(){ return getBG(); }
   };
 })();
@@ -437,7 +441,10 @@ function ug(p){
   // solo se mueve con fixes plausibles — el glitch descartado no entra al historial.
   if(_saltoPosOK){
     currentRoute.push({lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)});
-    if(crl){ crl.addLatLng([la,lo]); mp.fitBounds(crl.getBounds(),{padding:[50,50]}); }
+    if(crl){ crl.addLatLng([la,lo]); }
+    // Antes: mp.fitBounds() del trazado entero en cada fix (el mapa se alejaba sin parar y pisaba tus gestos).
+    // Ahora te sigue a zoom de pedaleo y, si lo mueves, vuelve a ti a los 5 s (mapa-render.js).
+    if(typeof _mpSeguirCiclista==='function') _mpSeguirCiclista(la,lo);
     if(cu&&!ghostMode){ if(!lastPos||gd2(lastPos.lat,lastPos.lon,la,lo)>=0.05){ const plat=Math.round(la*100)/100, plon=Math.round(lo*100)/100; /* precisión ~1 km: privacidad, no revela tu ubicación exacta */ db.collection('users').doc(cu).set({lat:plat,lon:plon,lastUpdate:firebase.firestore.FieldValue.serverTimestamp(),visible:true},{merge:true}); _rtdPublicarPosicion(plat, plon); lastPos={lat:la,lon:lo}; } }
   }
   /* (las bromas por velocidad ahora se disparan mas arriba, para todas las velocidades) */

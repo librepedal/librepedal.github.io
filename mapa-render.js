@@ -284,6 +284,7 @@ async function im(){
     mp.on('contextmenu', function(e){ try{ const _lat=e.lngLat.lat.toFixed(6), _lon=e.lngLat.lng.toFixed(6); new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div class="lp-pop"><div class="lp-ic"><i class="fas fa-location-dot"></i></div><div class="lp-body"><div class="lp-t">Punto elegido</div><a href="#" class="lp-cta" onclick="irAlPuntoYNavegar('+_lat+','+_lon+',\'este punto\');return false"><i class="fas fa-compass"></i> Navegar aquí</a></div></div>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
     mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); mp.on('zoomend', _actualizarVisibilidadCiclistas); _actualizarVisibilidadCiclistas(); });
+    _mpVolverInstalar(mp); // vuelve solo a tu posición tras 5 s sin tocar el mapa (ver _mpVolverAlCiclista)
     mp.on('style.load', _aplicarTemaMapa); // aplica el tema de mapa (aventura/neón/arcade) en cada carga de estilo, y resetea (plano) en calles/topo/sat
   }catch(err){
     mp=null;
@@ -610,4 +611,51 @@ function toggleRadarOnMap(){
     if(radarCircle){ mp.removeLayer(radarCircle); radarCircle=null; }
     h("Radar desactivado.");
   }
+}
+
+/* ===== El mapa vuelve solo a tu posición (Inty, 2026-10-08: "si el usuario está buscando algo en el mapa,
+   hace zoom o se aleja para ver la ruta, siempre tiene que volver al punto geográfico donde está el usuario,
+   que pasen unos 5 segundos de inactividad"). Igual que Google Maps navegando: mientras no tocas el mapa te
+   sigue; si lo arrastras, haces zoom o lo giras, te deja mirar; a los 5 s sin tocarlo vuelve a ti.
+   Antes, grabando un paseo, cada fix hacía fitBounds() del trazado entero: el mapa se iba alejando cada vez
+   más (tu punto quedaba diminuto) y pisaba cualquier gesto tuyo -- "el mapa no se adecuaba a la ruta".
+   Solo cuentan los gestos del usuario: MapLibre marca con originalEvent los movimientos hechos con el dedo
+   o la rueda; los easeTo/flyTo del propio código no lo traen y no reinician la espera. ===== */
+const LP_VOLVER_MS=5000;
+let _mpToque=0, _mpVolverT=null, _mpYo=null;
+function _lpPosYo(){
+  if(typeof ig!=='undefined' && ig && typeof us!=='undefined' && us.la!=null) return {lat:us.la, lon:us.lo};
+  if(typeof currentUserLocation!=='undefined' && currentUserLocation) return currentUserLocation;
+  return null;
+}
+function _mpVolverInstalar(map){
+  function tocado(e){ if(!e || !e.originalEvent) return; _mpToque=Date.now(); clearTimeout(_mpVolverT); _mpVolverT=setTimeout(_mpVolverAlCiclista, LP_VOLVER_MS); }
+  ['dragstart','zoomstart','rotatestart','pitchstart'].forEach(function(ev){ map.on(ev, tocado); });
+}
+function _mpTocadoHace(){ return Date.now()-_mpToque; }
+// Zoom de pedaleo: se ve la calle y lo que viene; si estabas más cerca, se respeta tu zoom.
+function _mpZoomSeguir(){ const z=mp.getZoom(); return (typeof ig!=='undefined' && ig) ? Math.max(z,16) : Math.max(z,13); }
+function _mpVolverAlCiclista(){
+  _mpVolverT=null;
+  if(!mp || _mpTocadoHace()<LP_VOLVER_MS-50) return;
+  // Leyendo un globo (un hostal, un reporte) no se le quita de debajo: se espera a que lo cierre.
+  if(document.querySelector('#map .maplibregl-popup')){ _mpVolverT=setTimeout(_mpVolverAlCiclista, LP_VOLVER_MS); return; }
+  const yo=_lpPosYo(); if(!yo) return;
+  _mpPonerYo(yo.lat,yo.lon);
+  mp.easeTo({center:[yo.lon,yo.lat], zoom:_mpZoomSeguir(), duration:900});
+}
+// Cada fix del paseo (motor-gps.js): mueve tu marcador y, si no estás mirando otra cosa, te sigue.
+// Tu Pistero en el mapa: al volver a tu posición tienes que verte ahí (antes, sin viaje grabando, el mapa
+// centraba en ti pero no había nada que marcara dónde estabas).
+function _mpPonerYo(lat,lon){
+  if(!mp) return;
+  try{
+    if(!_mpYo && typeof riderMarkerHTML==='function'){ _mpYo=mlMarker([lat,lon],{icon:{html:riderMarkerHTML(selectedHelmet,skinColor(selectedSkin),true)}}).addTo(mp); }
+    else if(_mpYo) _mpYo.setLatLng([lat,lon]);
+  }catch(e){}
+}
+function _mpSeguirCiclista(lat,lon){
+  if(!mp) return;
+  _mpPonerYo(lat,lon);
+  if(_mpTocadoHace()>=LP_VOLVER_MS) mp.easeTo({center:[lon,lat], zoom:_mpZoomSeguir(), duration:800});
 }

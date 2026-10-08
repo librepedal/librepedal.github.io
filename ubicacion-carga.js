@@ -20,6 +20,7 @@ function getCurrentLocation(){
         // apenas llega el GPS real, hace zoom hasta tu ubicación en vez de dejarte
         // mirando medio país o medio Chile.
         if(mp) mp.flyTo({center:[pos.coords.longitude,pos.coords.latitude], zoom:15, duration:1800});
+        if(typeof _mpPonerYo==='function') _mpPonerYo(pos.coords.latitude,pos.coords.longitude);
         showSpeechBubble("Ubicación detectada"); fin(currentUserLocation);
       }, function(){ const qs=document.getElementById('quick-start'); if(qs) qs.value="Ubicación manual"; showSpeechBubble("No se pudo obtener el GPS"); fin(null); },
       {enableHighAccuracy:true, timeout:15000, maximumAge:0});
@@ -31,7 +32,7 @@ function getCurrentLocation(){
 // así que no hace falta "soltar" ningún seguimiento — solo centra en tu
 // posición actual, como el botón equivalente de Google Maps.
 function _mapaRecentrar(){
-  if(currentUserLocation){ if(mp) mp.flyTo({center:[currentUserLocation.lon,currentUserLocation.lat], zoom:15, duration:1200}); return; }
+  if(currentUserLocation){ if(mp) mp.flyTo({center:[currentUserLocation.lon,currentUserLocation.lat], zoom:15, duration:1200}); if(typeof _mpPonerYo==='function') _mpPonerYo(currentUserLocation.lat,currentUserLocation.lon); return; }
   getCurrentLocation().then(function(loc){ if(loc && mp) mp.flyTo({center:[loc.lon,loc.lat], zoom:15, duration:1200}); });
 }
 function showLoading(t){ try{ if(typeof _setExprPistero==='function') _setExprPistero('pensando'); }catch(e){} document.getElementById('loadingText').innerText=t; const ov=document.getElementById('loadingOverlay'); ov.classList.add('show'); ov.onclick=hideLoading; /* escape de emergencia: un toque la cierra si algo queda pegado */ cadenaIniciar(0.5); }

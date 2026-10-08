@@ -823,7 +823,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   us.la=lat; us.lo=lon;
   currentUserLocation={lat:lat, lon:lon, accuracy:accuracy};
   // Pausa manual: seguimos mostrando tu posición pero NO contamos km, tiempo ni recalculamos.
-  if(viajePausaManual){ if(helmetMarker&&navMap){ helmetMarker.setLatLng([lat,lon]); if(navAutoFollow) navMap.panTo([lat,lon]); } document.getElementById('navSpeed').innerText='0'; return; }
+  if(viajePausaManual){ if(helmetMarker&&navMap){ helmetMarker.setLatLng([lat,lon]); _navSeguir(lat,lon); } document.getElementById('navSpeed').innerText='0'; return; }
   const _now=Date.now();
   // Ventana de velocidad SEPARADA del registro de distancia (mismo patrón que el GPS
   // libre con posHistory/currentRoute): antes esto se calculaba sobre gpsPoints, que
@@ -870,7 +870,7 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
   else { gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)}); lastGpsPoint={lat:lat,lon:lon,t:_now}; }
   if(_saltoPosOKNav){
     _actualizarLiveTrack(lat,lon);
-    if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); if(navAutoFollow) navMap.panTo([lat,lon]); }
+    if(helmetMarker){ helmetMarker.setLatLng([lat,lon]); _navSeguir(lat,lon); }
   }
   L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#10b981',weight:4,opacity:0.7}).addTo(navMap);
   document.getElementById('navSpeed').innerText=Math.round(speed);
