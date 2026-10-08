@@ -4,9 +4,21 @@
     {
       "name": "librepedal-static",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "."],
+      "runtimeArgs": [
+        "serve",
+        "."
+      ],
       "port": 5173,
       "autoPort": true
+    },
+    {
+      "name": "maqueta-video",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "disenos-ui/sobrevuelo-video/servir-guardar.mjs",
+        "5180"
+      ],
+      "port": 5180
     }
   ]
 }
