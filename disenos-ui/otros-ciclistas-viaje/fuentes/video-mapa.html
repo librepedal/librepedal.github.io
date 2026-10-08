@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Video 3D (réplica del mapa de rutas.js)</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>html,body{margin:0;background:#000}#m{width:390px;height:693px}</style></head><body><div id="m"></div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+/* Réplica fiel del mapa del "Video 3D" (rutas.js initVideoMap + animación): estilo liberty de OpenFreeMap, relieve Mapterhorn x1.4,
+   línea recorrida #fc4c02 ancho 5, cámara zoom 15.4 / pitch 64 / rumbo de la ruta. Solo para capturar el fondo de la maqueta. */
+var R=6371000, rad=Math.PI/180;
+function hav(a,b){ var dLa=(b[1]-a[1])*rad, dLo=(b[0]-a[0])*rad, s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a[1]*rad)*Math.cos(b[1]*rad)*Math.sin(dLo/2)*Math.sin(dLo/2); return 2*R*Math.asin(Math.min(1,Math.sqrt(s))); }
+function rumbo(a,b){ var y=Math.sin((b[0]-a[0])*rad)*Math.cos(b[1]*rad), x=Math.cos(a[1]*rad)*Math.sin(b[1]*rad)-Math.sin(a[1]*rad)*Math.cos(b[1]*rad)*Math.cos((b[0]-a[0])*rad); return (Math.atan2(y,x)/rad+360)%360; }
+var L;
+function enD(d){ var c=L.c,cum=L.cum,lo=1,hi=c.length-1; d=Math.max(0,Math.min(L.total,d)); while(lo<hi){ var m=(lo+hi)>>1; if(cum[m]<d) lo=m+1; else hi=m; } var k=lo,f=(d-cum[k-1])/Math.max(1e-9,cum[k]-cum[k-1]); return {p:[c[k-1][0]+(c[k][0]-c[k-1][0])*f,c[k-1][1]+(c[k][1]-c[k-1][1])*f],k:k}; }
+var map=new maplibregl.Map({container:'m',style:'https://tiles.openfreemap.org/styles/liberty',center:[-72.39,-40.13],zoom:14,pitch:65,bearing:0,interactive:false,attributionControl:false,preserveDrawingBuffer:true});
+window._listo=false;
+map.on('load',function(){
+  map.addSource('terreno',{type:'raster-dem',url:'https://tiles.mapterhorn.com/tilejson.json'});
+  try{ map.setTerrain({source:'terreno',exaggeration:1.4}); }catch(e){}
+  map.addSource('ruta-recorrida',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[]}}});
+  map.addLayer({id:'ruta-recorrida-line',type:'line',source:'ruta-recorrida',paint:{'line-color':'#fc4c02','line-width':5,'line-opacity':0.95}});
+  fetch('traza-pegada.json').then(function(r){return r.json();}).then(function(c){ var cum=[0]; for(var i=1;i<c.length;i++) cum.push(cum[i-1]+hav(c[i-1],c[i])); L={c:c,cum:cum,total:cum[cum.length-1]}; window._listo=true; var q=new URLSearchParams(location.search); if(q.get("d")){ var d=+q.get("d"), o=(q.get("o")||"").split(",").filter(Boolean).map(Number); window._cuadro(d,o).then(function(r){ document.title="OK "+JSON.stringify(r); var p=document.createElement("pre"); p.id="pos"; p.textContent=JSON.stringify(r); p.style.cssText="position:absolute;left:-9999px"; document.body.appendChild(p); }); } });
+});
+// pone la cámara donde vas tú (d metros) y devuelve en pantalla dónde caen tú y los otros (metros sobre tu ruta)
+window._cuadro=function(d,otros){ var q=enD(d), brg=rumbo(enD(d-40).p,enD(d+160).p);
+  map.getSource('ruta-recorrida').setData({type:'Feature',geometry:{type:'LineString',coordinates:L.c.slice(0,q.k).concat([q.p])}});
+  map.jumpTo({center:q.p,zoom:15.4,pitch:64,bearing:brg});
+  return new Promise(function(ok){ map.once('idle',function(){ var yo=map.project(q.p); ok({yo:[yo.x,yo.y],otros:(otros||[]).map(function(o){ var pp=map.project(enD(o).p); return [pp.x,pp.y]; }),w:map.getContainer().clientWidth,h:map.getContainer().clientHeight}); }); }); };
+</script></body></html>

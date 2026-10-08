@@ -1,0 +1,364 @@
+<title>Otros ciclistas en tu viaje</title>
+<style>
+/* Layout: una columna de lectura (~720px) con "teléfonos" reales a la izquierda y la decisión al lado; en celular, todo en una columna.
+   Estética de la app (METODO-TRABAJO-DISENO): oscuro, naranja Libre Pedal, tipografía del sistema. Tema único oscuro, a propósito. */
+:root{
+  --bg:#0c0f14; --surf:#141a24; --surf2:#10151e; --line:rgba(232,238,248,.10);
+  --tx:#e8eef8; --tx2:#9fb0c6; --tx3:#6f8199;
+  --acento:#ff6a2b;          /* naranja Libre Pedal (UI) */
+  --video:#fc4c02;           /* naranja del Video 3D (rutas.js) */
+  --neon:#39ff88;            /* anillo de TU Pistero en el sobrevuelo (color de pendiente: plano) */
+  --otro:#ffffff;            /* el otro ciclista: siempre blanco neutro */
+  --ok:#39d98a; --no:#ff5d6c;
+  --f:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:500 15px/1.5 var(--f)}
+.pag{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.015em}
+h1{font-size:clamp(1.7rem,5vw,2.3rem);font-weight:850;line-height:1.08}
+h2{font-size:1.32rem;font-weight:800}
+h3{font-size:1rem;font-weight:750}
+p{margin:0;max-width:65ch}
+.eti{font:700 .7rem/1 var(--f);letter-spacing:.09em;text-transform:uppercase;color:var(--acento)}
+.sub{color:var(--tx2)}
+.cab{display:flex;flex-direction:column;gap:10px}
+.cab .meta{font-size:.82rem;color:var(--tx3)}
+section{display:flex;flex-direction:column;gap:16px}
+.hallazgo{border:1px solid var(--line);border-left:3px solid var(--acento);background:var(--surf2);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.hallazgo code{font-size:.82em;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:5px}
+.decid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.decid div{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.decid small{display:block;font:700 .66rem var(--f);letter-spacing:.07em;text-transform:uppercase;color:var(--tx3)}
+.decid b{display:block;margin-top:3px;font-size:.92rem}
+/* referencias */
+.refs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.ref{background:var(--surf);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.ref figure{margin:0;background:#fff;display:flex;gap:2px;justify-content:center;align-items:flex-start;max-height:300px;overflow:hidden;position:relative}
+.ref figure.osc{background:#0b0d10}
+.ref figure img{display:block;max-height:300px;width:auto;max-width:100%;object-fit:cover}
+.ref figure.dos img{width:50%;object-fit:cover;object-position:top}
+.ref .cuerpo{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.ref .fuente{font-size:.72rem;color:var(--tx3)}
+.ref .fuente a{color:var(--tx2)}
+.tv{display:grid;gap:4px;font-size:.84rem;margin:0;padding:0;list-style:none}
+.tv li{padding-left:18px;position:relative}
+.tv li:before{content:"";position:absolute;left:2px;top:.55em;width:8px;height:8px;border-radius:50%}
+.tv li.si:before{background:var(--ok)}
+.tv li.no:before{background:transparent;border:2px solid var(--no);width:7px;height:7px}
+.envol{position:relative;display:inline-block;line-height:0;max-width:100%}
+.borroso{position:absolute;border-radius:50%;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);background:rgba(80,70,140,.25)}
+.cita{border-left:3px solid var(--no);padding:10px 14px;background:var(--surf2);border-radius:0 12px 12px 0;font-size:.88rem;color:var(--tx2)}
+/* maqueta: teléfono con secuencia */
+.demo{display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:start}
+@media (max-width:680px){.demo{grid-template-columns:1fr;justify-items:center}}
+.tel{width:300px;max-width:100%;aspect-ratio:390/844;border-radius:30px;padding:7px;background:#05070a;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.5);position:relative}
+.tel .pant{position:relative;width:100%;height:100%;border-radius:24px;overflow:hidden;background:#0a0f1d}
+.tel img,.tel canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .55s}
+.tel img.on{opacity:1}
+.tel.v916{aspect-ratio:9/16}
+.tel.v916 canvas{opacity:1}
+.lado{display:flex;flex-direction:column;gap:12px;min-width:0}
+.pestanas{display:flex;gap:6px;flex-wrap:wrap}
+.pestanas button{font:700 .82rem var(--f);color:var(--tx2);background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+.pestanas button[aria-pressed="true"]{background:var(--acento);color:#160800;border-color:transparent}
+.pestanas button:focus-visible,.pasos button:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.pasos{display:grid;gap:6px;list-style:none;margin:0;padding:0}
+.pasos button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:26px 1fr;gap:10px;width:100%;padding:9px 11px;border-radius:12px;border:1px solid var(--line);background:var(--surf2);cursor:pointer}
+.pasos button[aria-current="true"]{border-color:rgba(255,106,43,.6);background:rgba(255,106,43,.08)}
+.pasos .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:800 .78rem var(--f);background:rgba(255,255,255,.07);color:var(--tx2)}
+.pasos button[aria-current="true"] .n{background:var(--acento);color:#160800}
+.pasos b{display:block;font-size:.88rem}
+.pasos span{display:block;font-size:.8rem;color:var(--tx2)}
+.nota{font-size:.8rem;color:var(--tx3)}
+.regla{display:flex;gap:10px;align-items:flex-start;background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.84rem}
+.regla .glifo{flex:none;margin-top:2px}
+/* resumen (copia de los estilos del resumen del sobrevuelo) */
+.rs{background:rgba(10,15,29,.92);border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:14px;max-width:420px;width:100%}
+.rs-tit b{display:block;font:800 1.15rem/1.15 var(--f)}.rs-tit span{font:600 .74rem var(--f);color:#9fb3c8}
+.rs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+@media (max-width:380px){.rs-grid{grid-template-columns:repeat(2,1fr)}}
+.rs-dato{background:#141a2b;border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:7px 8px}.rs-dato small{display:block;font-size:.6rem;color:#9fb3c8;text-transform:uppercase;letter-spacing:.04em}.rs-dato b{font-size:.95rem;font-variant-numeric:tabular-nums}
+.rs-hitos{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.rs-hitos li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.04);border-left:3px solid #39ff88;font-size:.78rem}
+.rs-hitos li span{color:#9fb3c8}.rs-hitos li b{font-weight:700;text-align:right}
+.rs-hitos li.sube{border-color:#ff8a1f}.rs-hitos li.empina{border-color:#ff2d6f}
+.rs-hitos li.cruce{border-color:#fff;background:rgba(255,255,255,.07)}
+.rs-hitos li.cruce b{display:flex;align-items:center;gap:6px}
+.nuevo{font:800 .58rem var(--f);letter-spacing:.08em;color:#160800;background:var(--acento);border-radius:5px;padding:2px 5px;margin-left:6px;vertical-align:middle}
+/* ajustes */
+.menu{background:#11161f;border:1px solid var(--line);border-radius:16px;padding:6px;max-width:420px;width:100%}
+.opcion{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 12px;border-radius:12px}
+.opcion+.opcion{border-top:1px solid var(--line)}
+.opcion b{display:block;font-size:.92rem}
+.opcion span{display:block;font-size:.8rem;color:var(--tx2);margin-top:2px}
+.sw{width:46px;height:28px;border-radius:999px;background:#2a3342;position:relative;border:0;cursor:pointer;flex:none}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#cfd8e6;transition:transform .2s}
+.sw[aria-checked="true"]{background:var(--acento)}
+.sw[aria-checked="true"]:after{transform:translateX(18px);background:#fff}
+.sw:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.estado{font-size:.8rem;color:var(--tx2);padding:4px 12px 10px}
+/* flujo */
+.flujo{display:grid;gap:8px;counter-reset:f;list-style:none;margin:0;padding:0}
+.flujo li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font-size:.88rem}
+.flujo li:before{counter-increment:f;content:counter(f);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surf);border:1px solid var(--line);font-weight:800;color:var(--acento)}
+.flujo li>span>b:first-child{display:block}
+.nunca{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.nunca div{border:1px dashed rgba(255,93,108,.45);border-radius:12px;padding:9px 11px;font-size:.84rem;color:var(--tx2)}
+.nunca b{color:var(--tx)}
+.pendiente{border:1px solid rgba(255,106,43,.45);background:rgba(255,106,43,.07);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.pendiente ol{margin:0;padding-left:20px;display:grid;gap:6px;font-size:.9rem}
+@media (prefers-reduced-motion:reduce){.tel img{transition:none}}
+</style>
+
+<main class="pag">
+  <header class="cab">
+    <span class="eti">Libre Pedal · maqueta para aprobar</span>
+    <h1>Otros ciclistas en tu viaje</h1>
+    <p class="sub">Cuando otro usuario de Libre Pedal pedaleó cerca tuyo y uno pasó al otro, ese momento aparece en tu sobrevuelo 3D y en tu video para redes. Todo lo que ves acá está renderizado con el sobrevuelo real, las caras reales de Pistero y la receta de dibujo del Video 3D.</p>
+    <span class="meta">8 de octubre de 2026 · rama <code>design/otros-ciclistas-viaje</code> · nada programado en la app todavía</span>
+  </header>
+
+  <section>
+    <span class="eti">Antes de diseñar</span>
+    <h2>Lo que encontré en el código</h2>
+    <div class="hallazgo">
+      <p><b>La posición en vivo no sirve para esto.</b> La app publica tu posición redondeada a 0,01° (~1 km) a propósito, por privacidad (<code>motor-gps.js:448</code>, <code>suscripciones-comunidad.js:12</code>). Con esa precisión es imposible saber quién pasó a quién.</p>
+      <p>Lo que sí sirve: el recorrido exacto de cada viaje ya se guarda en privado (<code>routesTrack</code>, solo el dueño lo lee), con la hora de cada punto. Un servidor puede comparar dos recorridos sin que ninguno de los dos usuarios vea el del otro, igual que hoy hace <code>worker-proximidad</code> con "hay un ciclista cerca".</p>
+    </div>
+    <div class="decid">
+      <div><small>Cómo se detecta · decidiste tú</small><b>Cruce al terminar el viaje (como Strava Flyby)</b></div>
+      <div><small>Qué se ve del otro · decidiste tú</small><b>Solo su Pistero, sin nombre. Nunca con modo fantasma.</b></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eti">Panel de referencias</span>
+    <h2>Cómo lo resuelven los mejores</h2>
+    <div class="refs">
+      <article class="ref">
+        <figure><span class="envol"><img src="{{img:flyby-cyclechat}}" alt="Captura real de Strava Flyby: la ruta del otro ciclista completa sobre el mapa y su foto de perfil"><span class="borroso" style="left:26.2%;top:7.2%;width:8.4%;height:8.9%"></span></span></figure>
+        <div class="cuerpo">
+          <h3>Strava Flyby</h3>
+          <p class="sub" style="font-size:.86rem">Al terminar, compara tu actividad con las de otros que anduvieron cerca a la misma hora y las reproduce juntas en un mapa con línea de tiempo. Muestra dónde pasaste a alguien y dónde te pasaron.</p>
+          <ul class="tv"><li class="si">Detectar después, con los recorridos completos: preciso y sin rastreo en vivo.</li><li class="si">Interruptor de privacidad propio ("Todos / Nadie").</li><li class="no">Muestra foto, nombre y la ruta entera del otro (en la captura: foto difuminada por mí).</li></ul>
+          <span class="fuente">Captura publicada en <a href="https://www.cyclechat.net/threads/strava-flyby.178841" target="_blank" rel="noopener">CycleChat</a> · reglas en <a href="https://support.strava.com/en-us/articles/15401996-how-do-flyby-privacy-controls-work-on-strava" target="_blank" rel="noopener">soporte de Strava</a></span>
+        </div>
+      </article>
+      <article class="ref">
+        <figure><img src="{{img:garmin-grouptrack}}" alt="Pantalla de Garmin Edge con GroupTrack: otros ciclistas como círculos con su inicial sobre el mapa"></figure>
+        <div class="cuerpo">
+          <h3>Garmin GroupTrack</h3>
+          <p class="sub" style="font-size:.86rem">En vivo, solo entre contactos que activaron LiveTrack, hasta 40 km. Cada ciclista es un círculo con una letra; tocándolo ves rumbo y posición.</p>
+          <ul class="tv"><li class="si">Marca del otro simple y distinta de la tuya (círculo con letra vs. tu flecha).</li><li class="no">Solo contactos y en vivo: no sirve para cruces con desconocidos.</li><li class="no">Garmin pide no mirarlo pedaleando.</li></ul>
+          <span class="fuente"><a href="https://www8.garmin.com/manuals/webhelp/edge1030/EN-US/GUID-0C183A1A-233D-4C26-ABEA-8DFBF6E2A57A.html" target="_blank" rel="noopener">Manual del Edge 1030</a></span>
+        </div>
+      </article>
+      <article class="ref">
+        <figure class="dos osc"><img src="{{img:relive-momentos}}" alt="Relive: momentos marcados con un globo sobre la línea del recorrido en 3D"><img src="{{img:relive-amigos}}" alt="Relive: tarjeta del video con 'y 4 amigos'"></figure>
+        <div class="cuerpo">
+          <h3>Relive</h3>
+          <p class="sub" style="font-size:.86rem">Video 3D de la ruta con "momentos" que saltan como globos sobre la línea, más el perfil de altura abajo. Los amigos solo aparecen si los etiquetas ("y 4 amigos").</p>
+          <ul class="tv"><li class="si">El momento se anuncia con una tarjeta y una marca en el perfil.</li><li class="si">Nadie aparece en tu video sin haberlo aceptado.</li><li class="no">No detecta cruces solo.</li></ul>
+          <span class="fuente">Capturas de la <a href="https://apps.apple.com/us/app/relive-hike-ride-memories/id1201703657" target="_blank" rel="noopener">ficha de Relive en App Store</a></span>
+        </div>
+      </article>
+      <article class="ref">
+        <div class="cuerpo">
+          <h3>La lección de privacidad</h3>
+          <div class="cita">Una ciclista en Inglaterra fue saludada por su nombre por un desconocido que la había encontrado en Flyby: la función mostraba su nombre, su foto y su recorrido completo, que terminaba en su casa.</div>
+          <ul class="tv"><li class="si">Por eso: del otro solo su Pistero, en un punto de <b>tu</b> ruta, durante unos minutos.</li><li class="si">Nunca su nombre, su foto, de dónde salió ni a dónde llegó.</li></ul>
+          <span class="fuente"><a href="https://totalwomenscycling.com/news/reader-story-followed-home-with-strava-flybys" target="_blank" rel="noopener">Total Women's Cycling</a></span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <span class="eti">Maqueta 1 · sobrevuelo 3D</span>
+    <h2>El cruce tiene su propia toma</h2>
+    <p class="sub">El director de tomas del sobrevuelo ya cambia de cámara en subidas, bajadas y cima. Un cruce agrega una toma más: cámara baja de lado, centrada entre los dos, en cámara lenta, para que se vea quién pasa a quién. Cuadros reales del sobrevuelo Futrono → Llifén.</p>
+    <div class="demo">
+      <div class="tel" aria-label="Secuencia del sobrevuelo"><div class="pant" id="pant-sbv">
+        <img src="{{img:a1}}" alt="Te pasa: el otro ciclista se acerca por detrás sobre tu línea" class="on" data-g="te" data-i="0">
+        <img src="{{img:a2}}" alt="Te pasa: van lado a lado y aparece la tarjeta 'Te pasó un ciclista'" data-g="te" data-i="1">
+        <img src="{{img:a3}}" alt="Te pasa: el otro ya va adelante" data-g="te" data-i="2">
+        <img src="{{img:b1}}" alt="Pasaste: el otro va adelante, subiendo" data-g="tu" data-i="0">
+        <img src="{{img:b2}}" alt="Pasaste: lado a lado en plena subida, tarjeta 'Pasaste a un ciclista'" data-g="tu" data-i="1">
+        <img src="{{img:b3}}" alt="Pasaste: quedó atrás" data-g="tu" data-i="2">
+      </div></div>
+      <div class="lado">
+        <div class="pestanas" role="group" aria-label="Tipo de cruce">
+          <button type="button" id="g-te" aria-pressed="true">Te pasó</button>
+          <button type="button" id="g-tu" aria-pressed="false">Pasaste</button>
+        </div>
+        <ol class="pasos" id="pasos"></ol>
+        <div class="regla"><span class="glifo" id="glifo-ej"></span><span><b>Marca en el perfil de altura.</b> Cada cruce queda marcado arriba del perfil, en el km exacto, con un dibujo propio: punto lleno = tú, anillo = el otro, y la curva muestra por dónde pasó. Blanco, para no confundirse con los colores de pendiente.</span></div>
+        <div class="regla"><span><b>El otro siempre en blanco.</b> Tu Pistero lleva el anillo del color de la pendiente (verde, amarillo, naranja, rosado, celeste). Si el otro usara color, se confundiría con eso; por eso el suyo es blanco y algo más chico.</span></div>
+        <p class="nota">En la app la tarjeta del cruce ocupa el mismo lugar que los avisos de Pistero ("¡No doy más!"). Aquí sale más abajo porque el prototipo tiene el título en dos líneas.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eti">Encontrado al probar la maqueta</span>
+    <h2>Dos avisos al mismo tiempo</h2>
+    <div class="demo">
+      <div class="tel"><div class="pant"><img src="{{img:b2-choque}}" class="on" alt="El aviso de Pistero '¡No doy más!' y la tarjeta del cruce salieron juntos en la misma subida"></div></div>
+      <div class="lado">
+        <p>En la subida del km 9, el aviso de Pistero "¡No doy más! quedan 240 m de cuesta" y la tarjeta del cruce salieron juntos, uno encima del otro.</p>
+        <div class="regla"><span><b>Regla:</b> nunca dos tarjetas a la vez. El cruce manda; si justo hay un momento de Pistero, ese espera a que termine la toma del cruce (o se salta si ya pasó su tramo). La cara de Pistero sí puede seguir cambiando: pasar a alguien con cara de esfuerzo en una cuesta de 12 % es lo más divertido del video.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eti">Maqueta 2 · Video 3D para TikTok e Instagram</span>
+    <h2>El cruce dentro del video 9:16</h2>
+    <p class="sub">Dibujado con la misma receta de <code>_dibujarCompositeVideo</code> (rutas.js): tu cara al 13 % del ancho en la punta de la línea, barra inferior al 16 % del alto con "Libre Pedal" en #fc4c02 y los km. Se agrega el otro Pistero (80 % de tu tamaño, aro blanco) y una franja con el cruce justo arriba de la barra.</p>
+    <div class="demo">
+      <div class="tel v916"><div class="pant"><canvas id="video" width="1080" height="1920" aria-label="Cuadro animado del video 9:16 con el cruce"></canvas></div></div>
+      <div class="lado">
+        <ul class="tv">
+          <li class="si">Sin nombre, sin foto: en redes solo se ve "un ciclista" y su Pistero.</li>
+          <li class="si">La franja dura lo mismo que la toma del cruce en el sobrevuelo (~4 s del video).</li>
+          <li class="si">Si en el viaje no hubo cruces, el video queda exactamente igual que hoy.</li>
+        </ul>
+        <p class="nota">Fondo: el mapa real del Video 3D (estilo de calles OpenFreeMap, relieve Mapterhorn, línea #fc4c02) en el km 4,5 de la ruta de prueba. En esta captura salió sin la inclinación 3D (Chrome sin pantalla); en la app el video va inclinado como siempre. El fondo está quieto: en el video real la cámara avanza contigo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eti">Maqueta 3 · resumen del viaje</span>
+    <h2>Los cruces en "Así fue tu viaje"</h2>
+    <div class="demo" style="grid-template-columns:1fr">
+      <div class="rs" aria-label="Resumen del sobrevuelo con los cruces">
+        <div class="rs-tit"><b>Futrono → Llifén</b><span>Así fue tu viaje</span></div>
+        <div class="rs-grid"><div class="rs-dato"><small>Distancia</small><b>21,4 km</b></div><div class="rs-dato"><small>Tiempo</small><b>1 h 25 min</b></div><div class="rs-dato"><small>Subiste</small><b>+279 m</b></div><div class="rs-dato"><small>Subiendo</small><b>3,4 km</b></div></div>
+        <ul class="rs-hitos">
+          <li class="sube"><span>La subida más dura</span><b>+40 m entre el km 8,7 y el 9,2</b></li>
+          <li class="empina"><span>Lo más empinado</span><b>13 % en el km 8,9</b></li>
+          <li class="cruce"><span>Te pasó un ciclista<span class="nuevo">NUEVO</span></span><b><span id="g-rs1"></span>km 4,6</b></li>
+          <li class="cruce"><span>Pasaste a un ciclista<span class="nuevo">NUEVO</span></span><b><span id="g-rs2"></span>km 9,0</b></li>
+        </ul>
+      </div>
+      <p class="nota">Valores reales que calcula el sobrevuelo para la ruta de prueba (más sus otras filas: mejor bajada, cima, lo más rápido). Tocar un cruce lleva el sobrevuelo a ese km (como hoy al tocar el perfil).</p>
+    </div>
+  </section>
+
+  <section>
+    <span class="eti">Maqueta 4 · privacidad</span>
+    <h2>Quién aparece y quién no</h2>
+    <div class="demo" style="grid-template-columns:1fr">
+      <div class="menu" role="group" aria-label="Ajustes de privacidad (maqueta interactiva)">
+        <div class="opcion"><div><b>Modo fantasma</b><span>Nadie te ve en el mapa. Tampoco apareces en viajes de otros.</span></div><button class="sw" id="sw-fantasma" role="switch" aria-checked="false" aria-label="Modo fantasma"></button></div>
+        <div class="opcion"><div><b>Aparecer en viajes de otros</b><span>Si pasas a alguien o te pasa, tu Pistero sale en su sobrevuelo y su video. Sin tu nombre.</span></div><button class="sw" id="sw-aparecer" role="switch" aria-checked="true" aria-label="Aparecer en viajes de otros"></button></div>
+        <p class="estado" id="estado" aria-live="polite"></p>
+      </div>
+      <ul class="tv">
+        <li class="si">Va junto al Modo fantasma, en el menú de tu perfil (donde está hoy).</li>
+        <li class="si">El modo fantasma manda: si estuviste en fantasma durante el viaje, no apareces aunque el otro interruptor esté activo.</li>
+        <li class="si">Funciona en las dos direcciones: si lo apagas, tampoco ves a otros en tus viajes (como Strava).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <span class="eti">Cómo funciona por dentro</span>
+    <h2>El cruce se calcula en el servidor, una vez</h2>
+    <ol class="flujo">
+      <li><span><b>Guardas tu viaje.</b> Igual que hoy: el recorrido exacto va a <code>routesTrack</code> (privado).</span></li>
+      <li><span><b>Un worker busca cruces.</b> Con permiso de servidor compara tu recorrido con los de quienes tenían activo "Aparecer en viajes de otros" y pedalearon a la misma hora por la misma zona.</span></li>
+      <li><span><b>Detecta quién pasó a quién.</b> Lleva al otro sobre tu ruta (metros desde tu partida) y busca el momento en que la diferencia cambia de signo estando a menos de ~25 m.</span></li>
+      <li><span><b>Te devuelve solo el cruce.</b> Km del cruce, quién quedó adelante, su Pistero y su avance sobre <b>tu</b> línea durante ±3 minutos. Se guarda junto a tu viaje.</span></li>
+      <li><span><b>El sobrevuelo y el video lo dibujan.</b> Sin red extra al reproducir.</span></li>
+    </ol>
+    <div class="nunca">
+      <div><b>Nunca sale del servidor:</b> el recorrido del otro, su nombre, su foto.</div>
+      <div><b>Nunca se ve:</b> dónde partió ni dónde llegó el otro.</div>
+      <div><b>Nunca en vivo:</b> nadie sabe que lo pasaste hasta que guardas el viaje.</div>
+    </div>
+  </section>
+
+  <section class="pendiente">
+    <span class="eti">Falta tu OK</span>
+    <ol>
+      <li>¿Apruebas el diseño (toma propia del cruce, Pistero del otro con aro blanco, tarjeta, marca en el perfil, franja en el video)?</li>
+      <li>"Aparecer en viajes de otros": ¿activado de entrada (con un aviso la primera vez) o apagado hasta que cada uno lo active? Recomiendo <b>activado con aviso</b>: lo que se muestra no identifica a nadie, y apagado casi nadie lo prendería y la función no tendría a quién mostrar.</li>
+    </ol>
+  </section>
+</main>
+
+<script>
+var CARAS={{CARAS}};
+function glifo(tipo,tam){ var col='#ffffff', otroB=tipo==='te-paso'?[7,5]:[7,21];
+  return '<svg viewBox="0 0 14 26" width="'+(tam*14/26)+'" height="'+tam+'" aria-hidden="true"><path d="'+(tipo==='te-paso'?'M7 18 C1 15 1 10 7 7':'M7 8 C13 11 13 16 7 19')+'" fill="none" stroke="'+col+'" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2.2 1.8"/><circle cx="7" cy="13" r="3.1" fill="#fff"/><circle cx="'+otroB[0]+'" cy="'+otroB[1]+'" r="2.6" fill="#0a0f1d" stroke="'+col+'" stroke-width="1.6"/></svg>'; }
+document.getElementById('glifo-ej').innerHTML=glifo('te-paso',26)+' '+glifo('lo-pasaste',26);
+document.getElementById('g-rs1').innerHTML=glifo('te-paso',16);
+document.getElementById('g-rs2').innerHTML=glifo('lo-pasaste',16);
+
+/* ---- secuencia del sobrevuelo ---- */
+var PASOS={te:[['Se acerca por detrás','Va en tu misma línea, ~110 m atrás. Aro blanco, sin nombre.'],['Lado a lado','La cámara baja de lado y va lenta. Sale "Te pasó un ciclista · km 4,6".'],['Queda adelante','Sigue en pantalla mientras ande cerca; después desaparece.']],
+           tu:[['Lo alcanzas','Va adelante en la subida, ~85 m. Tu anillo verde = pendiente suave.'],['Lado a lado en la cuesta','12 %: tu Pistero con cara de esfuerzo. "Pasaste a un ciclista · km 9,0".'],['Queda atrás','Tu Pistero adelante; el otro se pierde atrás.']]};
+var grupo='te', paso=0, timer=null, reducir=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function pintarPasos(){ var ol=document.getElementById('pasos'); ol.innerHTML=PASOS[grupo].map(function(p,i){ return '<li><button type="button" data-i="'+i+'"'+(i===paso?' aria-current="true"':'')+'><span class="n">'+(i+1)+'</span><span><b>'+p[0]+'</b><span>'+p[1]+'</span></span></button></li>'; }).join('');
+  ol.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ paso=+b.dataset.i; mostrar(); reiniciar(); }; }); }
+function mostrar(){ document.querySelectorAll('#pant-sbv img').forEach(function(im){ im.classList.toggle('on', im.dataset.g===grupo && +im.dataset.i===paso); }); pintarPasos(); }
+function reiniciar(){ if(timer) clearInterval(timer); if(reducir) return; timer=setInterval(function(){ paso=(paso+1)%3; mostrar(); }, 2600); }
+function elegir(g){ grupo=g; paso=0; document.getElementById('g-te').setAttribute('aria-pressed',g==='te'); document.getElementById('g-tu').setAttribute('aria-pressed',g==='tu'); mostrar(); reiniciar(); }
+document.getElementById('g-te').onclick=function(){ elegir('te'); };
+document.getElementById('g-tu').onclick=function(){ elegir('tu'); };
+mostrar(); reiniciar();
+
+/* ---- privacidad ---- */
+var swF=document.getElementById('sw-fantasma'), swA=document.getElementById('sw-aparecer');
+function estado(){ var f=swF.getAttribute('aria-checked')==='true', a=swA.getAttribute('aria-checked')==='true';
+  document.getElementById('estado').textContent = f ? 'En modo fantasma: no apareces en el mapa ni en viajes de otros.' : (a ? 'Tu Pistero puede salir en el viaje de quien pases o te pase. Tu nombre, nunca.' : 'No apareces en viajes de otros, y tampoco verás cruces en los tuyos.'); }
+[swF,swA].forEach(function(s){ s.onclick=function(){ s.setAttribute('aria-checked', s.getAttribute('aria-checked')==='true'?'false':'true'); estado(); }; });
+estado();
+
+/* ---- Video 3D: misma receta que _dibujarCompositeVideo (rutas.js) ---- */
+(function(){
+  var cv=document.getElementById('video'), ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+  var fondo=new Image(); fondo.src='{{img:video-fondo}}';
+  function svgImg(s){ var im=new Image(); im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s.replace('<svg ','<svg width="200" height="168" ')); return im; }
+  var yoIm=svgImg(CARAS.yo), otroIm=svgImg(CARAS.b);
+  var YO={x:540,y:959.5}, KM0=4.545, DIST=21.4, CAL=642;
+  function cara(im,x,y,esc,aro){ var w=W*0.13*esc, h=w*(84/100); ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle='rgba(0,0,0,0.30)'; ctx.beginPath(); ctx.ellipse(0,h*0.42,w*0.34,h*0.11,0,0,Math.PI*2); ctx.fill();
+    if(aro){ ctx.beginPath(); ctx.arc(0,-h*0.12,w*0.47,0,Math.PI*2); ctx.fillStyle='rgba(10,15,29,0.55)'; ctx.fill(); ctx.lineWidth=W*0.006; ctx.strokeStyle='#ffffff'; ctx.stroke(); }
+    if(im.complete&&im.naturalWidth) ctx.drawImage(im,-w/2,-h*0.62,w,h); ctx.restore(); }
+  function redondo(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  var T0=performance.now(), CICLO=7000;
+  function cuadro(ts){
+    var t=reducir?0.5:((ts-T0)%CICLO)/CICLO;
+    ctx.clearRect(0,0,W,H);
+    if(fondo.complete&&fondo.naturalWidth){ var e=Math.max(W/fondo.naturalWidth,H/fondo.naturalHeight); ctx.drawImage(fondo,(W-fondo.naturalWidth*e)/2,(H-fondo.naturalHeight*e)/2,fondo.naturalWidth*e,fondo.naturalHeight*e); }
+    // el otro avanza por la línea: de 330 px atrás a 330 px adelante (en pantalla, la línea va hacia arriba)
+    var dy=330-660*t, a=Math.abs(dy), lado=a<130?(1-a/130):0, off=Math.round(150*Math.sin(lado*Math.PI/2));
+    var ox=YO.x-off, oy=YO.y+dy;
+    if(off>0){ ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(YO.x,oy); ctx.lineTo(ox,oy-off*0.1); ctx.stroke(); ctx.restore(); }
+    // orden de dibujo: el que va más cerca de la cámara (más abajo) encima
+    if(dy<0){ cara(otroIm,ox,oy-off*0.1,0.8,true); cara(yoIm,YO.x,YO.y,1,false); } else { cara(yoIm,YO.x,YO.y,1,false); cara(otroIm,ox,oy-off*0.1,0.8,true); }
+    var barH=H*0.16, pad=W*0.045, fs=W*0.028;
+    // franja del cruce (nueva), visible ~4 s alrededor del momento en que van lado a lado
+    var vis=Math.max(0,Math.min(1,(0.62-Math.abs(t-0.5))/0.08)); vis=Math.min(1,vis);
+    if(t>0.22&&t<0.86){ var al=Math.min(1,(t-0.22)/0.05,(0.86-t)/0.05), bh=H*0.085, by=H-barH-pad*0.6-bh;
+      ctx.save(); ctx.globalAlpha=al; ctx.fillStyle='rgba(0,0,0,0.62)'; redondo(pad*0.6,by,W-pad*1.2,bh,bh*0.28); ctx.fill();
+      ctx.fillStyle='#ffffff'; ctx.fillRect(pad*0.6,by+bh*0.18,W*0.006,bh*0.64);
+      var cx=pad*0.6+W*0.07, cy=by+bh*0.66; cara(yoIm,cx+W*0.075,cy,0.62,false); cara(otroIm,cx+W*0.13,cy,0.5,true);
+      var adelante=t>0.5; ctx.fillStyle='#fff'; ctx.font='800 '+(fs*1.25)+'px system-ui,sans-serif'; ctx.textAlign='left';
+      ctx.fillText(adelante?'Te pasó un ciclista':'Viene un ciclista', pad*0.6+W*0.27, by+bh*0.47);
+      ctx.fillStyle='rgba(255,255,255,0.72)'; ctx.font='600 '+(fs*0.95)+'px system-ui,sans-serif'; ctx.fillText('km 4,6 · por tu izquierda', pad*0.6+W*0.27, by+bh*0.8); ctx.restore(); }
+    ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,H-barH,W,barH);
+    ctx.fillStyle='#fc4c02'; ctx.font='700 '+fs+'px system-ui,sans-serif'; ctx.textAlign='left'; ctx.fillText('Libre Pedal',pad,H-barH*0.62);
+    var km=KM0+(t-0.5)*0.12; ctx.fillStyle='#fff'; ctx.font='800 '+(fs*1.6)+'px system-ui,sans-serif'; ctx.fillText(km.toFixed(2)+' km',pad,H-barH*0.2);
+    ctx.textAlign='right'; ctx.font='600 '+fs+'px system-ui,sans-serif'; ctx.fillText(Math.round(CAL*km/DIST)+' cal',W-pad,H-barH*0.2);
+    if(!reducir) requestAnimationFrame(cuadro);
+  }
+  var listos=0; [fondo,yoIm,otroIm].forEach(function(im){ im.onload=function(){ if(++listos===3) requestAnimationFrame(cuadro); }; });
+  setTimeout(function(){ if(listos<3) requestAnimationFrame(cuadro); },1500);
+})();
+</script>
