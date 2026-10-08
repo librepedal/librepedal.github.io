@@ -535,7 +535,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem"><i class="fas fa-road"></i> Tus rutas grabadas</h4>
 <div id="trips-rutas-list" class="js-rutas-list"></div>
 <input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
-<button class="ab" style="margin-top:6px" onclick="document.getElementById('gpxFileInput').click()"><i class="fas fa-download"></i> Importar ruta (archivo GPX)</button>
+<button class="ab" style="margin-top:6px" onclick="document.getElementById('gpxFileInput').click()"><i class="fas fa-arrow-up-from-bracket"></i> Importar ruta desde otra app (archivo GPX)</button>
 <button class="ab sec" style="margin-top:6px" onclick="showAllRoutesOnMap()"><i class="fas fa-map"></i> Ver todas en el mapa</button>
 <div id="map-routes-all" style="margin-top:12px;display:none"><div id="map-all-routes"></div></div>
 <h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem"><i class="fas fa-clipboard"></i> Viajes planificados</h4>
@@ -981,6 +981,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div class="chart-container"><h4 style="margin:0 0 8px 0;color:var(--p);font-size:0.9rem">Km por viaje</h4><div class="chart-bar" id="chartKm"></div></div>
 <div class="chart-container"><h4 style="margin:0 0 8px 0;color:var(--g);font-size:0.9rem">Duración por viaje (min)</h4><div class="chart-bar" id="chartDuration"></div></div>
 <div class="chart-container"><h4 style="margin:0 0 8px 0;color:var(--r);font-size:0.9rem">Calorías por viaje</h4><div class="chart-bar" id="chartCal"></div></div>
+<button class="ab" style="background:#3b82f6;color:#fff" onclick="exportarDatosGPX()"><i class="fas fa-download"></i> Descargar ruta actual (GPX)</button>
 <button class="ab sec" onclick="volverAtras()"><i class="fas fa-arrow-left"></i> Volver</button>
 </section>
 </main>
@@ -1013,7 +1014,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.815'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.816'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */

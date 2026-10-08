@@ -1,7 +1,6 @@
-// Video 3D de la ruta (rutas.js) para redes + sin publicidad a la competencia. Inty, 2026-10-08:
-// - "dice que está exportando el archivo GPX... y además está publicando en la competencia. Yo quiero publicar en
-//   TikTok, en Instagram, Facebook" → fuera los botones "Exportar GPX" (Mis rutas y Estadísticas) y los nombres
-//   Strava/Komoot/Wikiloc de lo que se ve; el botón con el ícono de compartir es el que comparte.
+// Video 3D de la ruta (rutas.js) para redes + GPX solo como portabilidad. Inty, 2026-10-08:
+// - "está exportando el archivo GPX... y además está publicando en la competencia" (el botón con ícono de compartir
+//   exportaba GPX con "Súbela a Strava...") → compartir es compartir; el GPX va en su propio botón de descarga, sin nombres ajenos.
 // - "no sé si se descarga el video, no sé dónde se descarga... debería dar la opción también de compartir"
 //   → al terminar de grabar: botón "Compartir video" si el teléfono comparte archivos; si no, descarga diciendo dónde;
 //   en la app instalada (donde la descarga no hace nada) se dice la verdad.
@@ -17,14 +16,29 @@ const leer = (f) => readFileSync(join(raiz, f), 'utf8');
 let f = 0, n = 0; const ok = (c, m) => { n++; if (!c) { f++; console.log('  ✗ ' + m); } };
 const rutas = leer('rutas.js'), index = leer('index.html'), como = leer('como-funciona.html');
 
-// ---------- 1. Sin GPX a la vista ni la competencia ----------
-ok(!/onclick="exportarRutaGPX/.test(rutas.replace(/\\'/g, "'")) && !/exportarRutaGPX\(\\'/.test(rutas), 'Mis rutas: no hay botón "Exportar GPX"');
-ok(!/onclick="exportarDatosGPX\(\)"/.test(index), 'Estadísticas: no hay botón "Exportar GPX"');
-ok(/title="Compartir este viaje"[^>]*><i class="fas fa-share-from-square">/.test(rutas), 'Mis rutas: el ícono de compartir está en el botón que comparte');
+// ---------- 1. GPX = portabilidad, sin parecer "compartir" ni nombrar a la competencia ----------
+// Inty 2026-10-08 (después): "el archivo es para que la gente, si quiere migrar los datos que tiene en nuestra app, pueda
+// hacerlo... y si quiere cambiarse de la competencia a Libre Pedal, tenga la opción de subir sus datos". Vuelve, bien rotulado.
+const motor = leer('motor-navegacion.js');
+ok(/title="Descargar GPX \(llevar tu ruta a otra app\)" onclick="exportarRutaGPX\([^)]*\)"><i class="fas fa-download">/.test(rutas), 'Mis rutas: botón "Descargar GPX" con ícono de descarga');
+ok(index.includes("onclick=\"exportarDatosGPX()\"><i class=\"fas fa-download\"></i> Descargar ruta actual (GPX)"), "Estadísticas: \"Descargar ruta actual (GPX)\"");
+ok(/title="Compartir este viaje"[^>]*><i class="fas fa-share-from-square">/.test(rutas), 'Mis rutas: el ícono de compartir está SOLO en el botón que comparte');
+ok((rutas.match(/fa-share-from-square/g) || []).length === 1, 'el ícono de compartir no se usa en otro botón de Mis rutas');
+ok(index.includes("Importar ruta desde otra app (archivo GPX)"), "importar GPX desde otra app sigue");
+ok(/Descargar GPX/.test(como), 'cómo funciona explica la descarga GPX');
 const visible = (html) => html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/gi, '');
-ok(!/strava|komoot|wikiloc/i.test(visible(index)), 'index.html: ningún texto visible nombra a Strava, Komoot o Wikiloc');
-ok(!/strava|komoot|wikiloc/i.test(visible(como)), 'como-funciona.html: no nombra a la competencia');
-ok(/Importar ruta \(archivo GPX\)/.test(index), 'importar GPX sigue (sin nombres ajenos)');
+ok(!/strava|komoot|wikiloc/i.test(visible(index)) && !/strava|komoot|wikiloc/i.test(visible(como)), 'ningún texto visible nombra a Strava, Komoot o Wikiloc');
+ok(!/Súbela a Strava/.test(motor) && /GPX_LISTO/.test(motor), 'el aviso al descargar no nombra a la competencia');
+{ // en la app instalada no anuncia una descarga que no ocurre
+  const i = motor.indexOf('const GPX_LISTO'), j = motor.indexOf('function exportarDatosGPX');
+  const reg = { avisos: [], descargas: 0 };
+  const mk = (nativa) => { const c = { Blob, URL: { createObjectURL: () => 'b', revokeObjectURL() {} }, setTimeout() {}, lpAviso: (m) => reg.avisos.push(m),
+    window: nativa ? { Capacitor: { isNativePlatform: () => true } } : {},
+    document: { createElement: () => ({ click() { reg.descargas++; } }), body: { appendChild() {}, removeChild() {} } } };
+    vm.createContext(c); vm.runInContext(motor.slice(i, j).replace('const GPX_LISTO', 'var GPX_LISTO') + '\nthis.d=_descargarGPX;', c); return c; };
+  ok(mk(true).d('<gpx/>', 'r') === false && reg.descargas === 0 && /Chrome/.test(reg.avisos[0] || ''), 'app instalada: no finge descargar, dice cómo');
+  ok(mk(false).d('<gpx/>', 'r') === true && reg.descargas === 1, 'navegador: descarga el .gpx');
+}
 
 // ---------- 2. Botones del video ----------
 ok(/id="btnCompartirVideo"[^>]*display:none[^>]*onclick="compartirVideoRuta\(\)"/.test(index), 'existe el botón "Compartir video", oculto al inicio');
