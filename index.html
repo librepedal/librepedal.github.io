@@ -623,7 +623,9 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <div id="poi-mapa-manual" style="display:none;margin-bottom:8px">
     <div id="poi-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div>
     <p id="poiMapaManualEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto.</p>
+    <button class="bg" type="button" style="margin-top:6px;display:none" id="btnPoiUsarPunto" onclick="usarPuntoPoiMarcado()"><i class="fas fa-check"></i> Usar este punto</button>
   </div>
+  <button class="ab sec" type="button" style="margin:0 0 8px;display:none;text-align:left" id="poiPuntoElegido" onclick="togglePoiMapaManual()"><i class="fas fa-location-dot" style="color:var(--p)"></i> Punto elegido en el mapa · <u>Cambiar</u></button>
   <div id="poi-cats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0"></div>
   <textarea id="poi-desc" rows="2" placeholder="Cuéntalo con detalle (ej: agua gratis en la bencinera, o mirador con vista al lago)..." maxlength="500"></textarea>
   <button class="ab" style="margin-top:6px" onclick="agregarPOI()"><i class="fas fa-location-dot"></i> Compartir con la comunidad (+15 Darma)</button>
@@ -1023,7 +1025,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.820'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.821'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
