@@ -7,6 +7,10 @@ name: Construir AAB firmado (Google Play)
 # para subir directo.
 on:
   workflow_dispatch:
+  # 2026-10-08: también al subir una rama release/play-* (la rama de lanzamiento ya trae lo nativo junto: GPS con
+  # pantalla apagada + Google Sign-In). Así se compila sin tener que entrar a GitHub. Nunca sube nada a Play.
+  push:
+    branches: [ 'release/play-*' ]
 
 jobs:
   build:
@@ -92,6 +96,24 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon --stacktrace
+
+      # Verificar el ARTEFACTO, no el log (ESTADO-LOGIN-GOOGLE.md: en agosto salieron 3 AAB sin el plugin de login
+      # porque se compilaron desde la rama equivocada). Falla si falta algo de lo que tiene que viajar en la app.
+      - name: Revisar el AAB por dentro (plugins nativos y configuración)
+        run: |
+          AAB=$(ls android/app/build/outputs/bundle/release/*.aab | head -1)
+          echo "AAB: $AAB ($(du -h "$AAB" | cut -f1))"
+          unzip -p "$AAB" base/assets/capacitor.plugins.json > /tmp/plugins.json
+          unzip -p "$AAB" base/assets/capacitor.config.json > /tmp/config.json
+          echo "--- plugins nativos:"; cat /tmp/plugins.json; echo
+          echo "--- configuración:"; cat /tmp/config.json; echo
+          node -e '
+            const p=require("/tmp/plugins.json").map(x=>x.pkg), c=require("/tmp/config.json"); const falta=[];
+            for (const k of ["@capacitor-community/background-geolocation","@capacitor-community/text-to-speech","@capacitor-community/speech-recognition","@capacitor/local-notifications","@capacitor-firebase/authentication"]) if(!p.includes(k)) falta.push("plugin "+k);
+            if(!(c.android&&c.android.useLegacyBridge===true)) falta.push("android.useLegacyBridge=true (GPS y voz con la pantalla apagada)");
+            if(c.server&&c.server.url!=="https://librepedal.cl") falta.push("server.url debe ser https://librepedal.cl");
+            if(falta.length){ console.error("FALTA EN EL AAB: "+falta.join(" · ")); process.exit(1); }
+            console.log("AAB OK: "+p.length+" plugins, useLegacyBridge, server.url="+c.server.url);'
 
       - name: Borrar el keystore del runner (no debe quedar ni como artefacto)
         if: always()
