@@ -195,7 +195,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div id="saver" onclick="toggleSaver()">
   <div class="saver-spd"><span id="saverSpd">0</span><small>km/h</small></div>
   <div class="saver-km"><span id="saverKm">0.00</span> km</div>
-  <div class="saver-hint"><i class="fas fa-battery-half"></i> Modo ahorro · GPS y voz siguen activos<br>Toca la pantalla para volver</div>
+  <div class="saver-hint"><i class="fas fa-battery-half"></i> Modo bolsillo · Pistero te sigue guiando<br>No apagues con el botón de encendido · toca para volver</div>
 </div>
 <div id="pisteroBubble"></div>
 <button id="pwaInstall" onclick="instalarPWA()" style="display:none;position:fixed;left:14px;bottom:80px;z-index:2100;align-items:center;gap:7px;background:var(--p);color:#03121a;border:none;padding:10px 14px;border-radius:24px;font-weight:800;font-size:0.82rem;box-shadow:0 4px 14px rgba(252,76,2,0.35);cursor:pointer"><i class="fas fa-download"></i> Instalar app</button>
@@ -1023,7 +1023,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 /* ===== AUTO-REPARACIÓN DE CACHÉ =====
    Si el teléfono cargó una versión vieja, lo detecta comparando con version.txt
    (de la red, sin caché) y se limpia + recarga solo. Así nunca te quedas pegado. */
-const APP_VERSION='8.819'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
+const APP_VERSION='8.820'; /* OJO: debe coincidir SIEMPRE con version.txt — el deploy la genera desde aquí */
 /* NOTA: los errores globales (window.onerror / unhandledrejection) ya los captura Sentry
    (su Loader Script instala sus propios handlers con stack trace y dedup). No los duplicamos.
    Las defensas útiles del arranque son _lsJSON (datos corruptos) y _fetchT (timeouts de red). */
@@ -1371,6 +1371,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 </script>
 <script src="gps-hueco.js"></script>
 <script src="motor-gps.js"></script>
+<script src="modo-bolsillo.js"></script>
 <script>
 </script>
 <script src="rutas.js"></script>
