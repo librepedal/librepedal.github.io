@@ -166,7 +166,15 @@ async function _entrarConGoogleNativo(){
     if(typeof hideLoading==='function') hideLoading();
     var code=(err&&err.code)||'';
     if(code==='ERR_CANCELED') return; // el usuario cerró el selector de cuenta, no es un error real
-    _lpAvisoLogin('No se pudo entrar con Google: '+((err&&err.message)||err));
+    var msg=String((err&&err.message)||err||'');
+    // Credential Manager de Android responde "No credentials available" (en inglés) cuando el
+    // teléfono no tiene ninguna cuenta de Google agregada -- visto validando en emulador el
+    // 2026-10-03. Se traduce a algo que el usuario pueda resolver solo.
+    if(/no credentials available/i.test(msg)){
+      _lpAvisoLogin('No hay ninguna cuenta de Google en este teléfono.\n\nAgrega una en Ajustes > Cuentas, o entra con el código de la prueba.');
+      return;
+    }
+    _lpAvisoLogin('No se pudo entrar con Google: '+msg);
   }
 }
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
@@ -195,8 +203,10 @@ async function _entrarConGoogle(){
   try{
     var _esAppNativa = (typeof window.Capacitor!=='undefined') && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
     if(_esAppNativa){
-      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualizá Libre Pedal desde Play Store para activarlo.\n\nMientras tanto podés entrar con tu correo: escribilo arriba y tocá "Enviarme el enlace".');
-      var _em=document.getElementById('em'); if(_em){ try{ _em.scrollIntoView({behavior:'smooth',block:'center'}); _em.focus(); }catch(e){} }
+      // El bloque del link mágico (#em) está oculto desde el 17-ago: mandar ahí dejaba al
+      // usuario frente a un campo invisible. La vía que sí está visible es la del código.
+      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualiza Libre Pedal desde Play Store para activarlo.\n\nMientras tanto puedes entrar con el código de la prueba: escríbelo arriba junto a tu correo.');
+      var _ct=document.getElementById('codigoTesterInput'); if(_ct){ try{ _ct.scrollIntoView({behavior:'smooth',block:'center'}); _ct.focus(); }catch(e){} }
       return;
     }
   }catch(_e2){}
