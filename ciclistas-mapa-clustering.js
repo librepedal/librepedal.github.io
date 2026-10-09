@@ -68,6 +68,21 @@ function _actualizarVisibilidadCiclistas(){
   if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas();
 }
 function _pintarUnCiclista(u){ const marker=mlMarker([u.lat,u.lon],{icon:{html:riderMarkerHTML(u.helmet,u.jersey,false,u.pistOpts)}}).addTo(mp).bindPopup(_lpPopupCiclista(u.nombre,u.helmet,u.id,u.pistOpts)); sm.push(marker); }
+// Inty 2026-10-09: "no se están mostrando en el mapa los demás ciclistas que se registraron con el código LIBREPEDAL".
+// Cada posición se publica redondeada a ~1 km (privacidad: motor-gps.js / publicarUbicacionInicial), así que en un
+// evento todos quedan con la MISMA coordenada; con zoom >= 10 (sin agrupar) se dibujaban uno encima del otro y se veía
+// uno solo. Los que coinciden se abren en abanico alrededor del punto (en píxeles: no agrega precisión) y se ven todos.
+function _abanicoCoincidentes(lista, proyectar, desproyectar){
+  const grupos={}; lista.forEach(function(u){ const k=u.lat.toFixed(5)+','+u.lon.toFixed(5); (grupos[k]=grupos[k]||[]).push(u); });
+  const out=[];
+  Object.keys(grupos).forEach(function(k){
+    const g=grupos[k]; if(g.length===1){ out.push(g[0]); return; }
+    const c=proyectar([g[0].lon,g[0].lat]), r=Math.min(26+4*g.length,70);
+    g.forEach(function(u,i){ const a=-Math.PI/2+2*Math.PI*i/g.length, ll=desproyectar([c.x+r*Math.cos(a), c.y+r*Math.sin(a)]);
+      out.push(Object.assign({},u,{lat:ll.lat, lon:ll.lng})); });
+  });
+  return out;
+}
 function _renderMainMapUsers(docs){
   if(!mp) return;
   sm.forEach(function(m){mp.removeLayer(m);}); sm=[]; usuariosCercanosData=[];
@@ -81,7 +96,7 @@ function _renderMainMapUsers(docs){
     }
   });
   const celda=_celdaClusterParaZoom(mp.getZoom());
-  if(celda<=0 || vivos.length<2){ vivos.forEach(_pintarUnCiclista); return; }
+  if(celda<=0 || vivos.length<2){ _abanicoCoincidentes(vivos, function(ll){ return mp.project(ll); }, function(p){ return mp.unproject(p); }).forEach(_pintarUnCiclista); return; }
   const buckets={};
   vivos.forEach(function(u){ const p=mp.project([u.lon,u.lat]); const key=Math.round(p.x/celda)+'_'+Math.round(p.y/celda); (buckets[key]=buckets[key]||[]).push(u); });
   Object.keys(buckets).forEach(function(k){
