@@ -10,9 +10,12 @@ let poiMapaManual=null, poiManualCoords=null, poiManualMarker=null;
 function togglePoiMapaManual(){
   const cont=document.getElementById('poi-mapa-manual'), btn=document.getElementById('btnPoiMapaManual');
   const abrir=cont.style.display==='none';
-  cont.style.display=abrir?'block':'none';
   btn.innerText=abrir?'✖️ Cerrar mapa':'📍 No lo encuentra: márcalo directo en el mapa';
+  if(!abrir && poiManualCoords){ usarPuntoPoiMarcado(); return; }   // cerrar con un punto marcado = usar ese punto
+  cont.style.display=abrir?'block':'none';
   if(!abrir) return;
+  _poiPuntoListo(false);   // "Cambiar": vuelve a mostrar el mapa (con el punto que ya estaba) y su botón
+  const u=document.getElementById('btnPoiUsarPunto'); if(u) u.style.display=poiManualCoords?'block':'none';
   if(!poiMapaManual){
     const yo=currentUserLocation || (us.la!=null?{lat:us.la,lon:us.lo}:null);
     poiMapaManual=new maplibregl.Map({container:'poi-mapa-manual-inner', style:LP_ESTILO_CALLES, center:yo?[yo.lon,yo.lat]:[-70.65,-33.45], zoom:yo?14:5});
@@ -22,10 +25,27 @@ function togglePoiMapaManual(){
       poiManualCoords={lat:e.lngLat.lat, lon:e.lngLat.lng};
       if(poiManualMarker) poiManualMarker.remove();
       poiManualMarker=new maplibregl.Marker({color:'#fc4c02'}).setLngLat(e.lngLat).addTo(poiMapaManual);
-      document.getElementById('poiMapaManualEstado').innerText='📍 Punto marcado — listo para compartir.';
+      document.getElementById('poiMapaManualEstado').innerText='📍 Punto marcado. Si está bien, toca "Usar este punto"; si no, toca otro lugar del mapa.';
+      const u=document.getElementById('btnPoiUsarPunto'); if(u) u.style.display='block';
     });
   }
   setTimeout(function(){ poiMapaManual.resize(); },250);
+}
+// Inty 2026-10-09: "falta un botón para designar el punto requerido" -- al marcar en el mini mapa no había nada que
+// confirmar (había que adivinar que tocaba bajar a la categoría). Igual que "Navegar hasta este punto" del viaje: se
+// confirma el punto, el mapa se cierra, queda a la vista "Punto elegido en el mapa · Cambiar" y se baja a lo que falta.
+function usarPuntoPoiMarcado(){
+  if(!poiManualCoords){ lpAviso('Toca el mapa donde está el punto exacto.'); return; }
+  const cont=document.getElementById('poi-mapa-manual'); if(cont) cont.style.display='none';
+  const btn=document.getElementById('btnPoiMapaManual'); if(btn) btn.style.display='none';
+  const u=document.getElementById('btnPoiUsarPunto'); if(u) u.style.display='none';
+  const el=document.getElementById('poiPuntoElegido'); if(el) el.style.display='block';
+  const cats=document.getElementById('poi-cats'); if(cats && cats.scrollIntoView) cats.scrollIntoView({behavior:'smooth',block:'center'});
+}
+// vuelve el formulario a "sin punto elegido" (al compartir o al cerrar el mapa sin haber marcado)
+function _poiPuntoListo(si){
+  const el=document.getElementById('poiPuntoElegido'); if(el) el.style.display=si?'block':'none';
+  const btn=document.getElementById('btnPoiMapaManual'); if(btn) btn.style.display=si?'none':'';
 }
 // Elegir un destino de navegación tocando el mapa (como "seleccionar en el mapa" de
 // Google Maps): para puntos que no aparecen en ninguna búsqueda porque no están
@@ -104,6 +124,7 @@ async function agregarPOI(){
     poiManualCoords=null; if(poiManualMarker){ poiManualMarker.remove(); poiManualMarker=null; }
     document.getElementById('poi-mapa-manual').style.display='none';
     document.getElementById('btnPoiMapaManual').innerText='📍 No lo encuentra: márcalo directo en el mapa';
+    _poiPuntoListo(false); { const u=document.getElementById('btnPoiUsarPunto'); if(u) u.style.display='none'; }
     try{ _pisteroMood='contento'; }catch(e){} h(_conf?'¡Punto compartido en '+comuna+'! Ya está en el mapa para toda la comunidad. Quince de Darma para ti. 🙌':'Sin señal ahora: tu punto quedó guardado en el teléfono y aparece en el mapa de la comunidad apenas vuelva la conexión. Quince de Darma para ti.');
   }catch(err){ lpAviso('No se pudo compartir: '+(err.code||err.message)); }
   finally{ _agregandoPOI=false; }
