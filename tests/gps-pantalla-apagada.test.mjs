@@ -36,7 +36,7 @@ const SRC = [
   leer('gps-hueco.js'),
   vel, bloque(leer('motor-navegacion.js'), 'function calculateDistance('),
   bloque(gps, 'function _saltoEsPlausible('), bloque(gps, 'function _velocidadHardware('), bloque(gps, 'function _velMaxPlausibleKmh('),
-  bloque(gps, 'function _filtrarSaltoVentana('), bloque(gps, 'function _sumarKmViaje('), bloque(gps, 'function _rellenarHueco('),
+  bloque(gps, 'function _filtrarSaltoVentana('), bloque(gps, 'function _sumarKmViaje('), bloque(gps, 'function _frasesTrasHueco('), bloque(gps, 'function _rellenarHueco('),
   bloque(gps, 'function ug('),
   'var UMBRAL_INACTIVIDAD_RUTA=12*60*1000; var ultimoMovimientoTime=0, rutaSegCerrada=true, rutaSegDistIni=0;',
   bloque(rutas, 'function finalizarRutaPorInactividad('),
@@ -54,7 +54,7 @@ function simular() {
     fetch: (url) => { llamadas.osrm++; return Promise.resolve({ ok: true, json: () => Promise.resolve(ctx.__osrm(url)) }); },
     ig: true, us: { di: 0, c: 0, la: null, lo: null }, currentRoute: [], posHistory: [], pendienteHistory: [], lastFixTime: 0, spAnterior: 0,
     maxSpeed: 0, speedReadings: [], puntosGuardados: 0, segmentosCargados: true, _kmEsteViaje: 0, ghostMode: true, cu: null, lastPos: null, mp: { removeLayer() {} }, mlPolyline: () => ({ addTo() { return this; }, addLatLng() {}, setLatLngs() {} }),
-    actividadTipo: 'ciclismo',
+    actividadTipo: 'ciclismo', kmUltimaFrase: 0, _ultimoHitoKm: 0,
     crl: { pts: [], addLatLng(ll) { this.pts.push(ll); }, setLatLngs(l) { llamadas.setLatLngs++; this.pts = l.slice(); } },
     h: (t) => llamadas.hablo.push(t), _osrmPerfil: () => 'cycling',
   };
@@ -94,6 +94,7 @@ const espera = () => new Promise((r) => setTimeout(r, 30));
   await espera();
   const r = S.ctx.currentRoute, i = r.indexOf(a);
   ok(S.llamadas.osrm === 1, 'pide el camino una sola vez');
+  ok(Math.abs(S.ctx.kmUltimaFrase - S.ctx.us.di) < 1e-9 && S.ctx._ultimoHitoKm === Math.floor(S.ctx.us.di / 10), 'los km del hueco no disparan una ráfaga de frases (el contador parte desde aquí)');
   ok(r.length === antes + 3 && r[i + 1].est && r[i + 2].est && !r[i + 3].est, 'el hueco se rellena con los puntos del camino (marcados como estimados), no con una recta');
   ok(r[i + 1].t > a.t && r[i + 2].t > r[i + 1].t && r[i + 3].t > r[i + 2].t, 'los puntos del camino llevan tiempos en orden (el sobrevuelo los recorre bien)');
   ok(S.llamadas.setLatLngs === 1 && S.ctx.crl.pts.length === r.length, 'la línea del mapa se redibuja con el camino');

@@ -422,56 +422,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     anunciarClimaRuta(destLat,destLon,'Clima en tu destino'); // antes de salir a pedalear
   }catch(err){ console.error(err); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'No pude calcular la ruta: parece que estás sin señal. Prueba de nuevo cuando tengas internet.' : 'No pude calcular la ruta ahora. Inténtalo otra vez.'); endNavigation(); }
 }
-/* MODO EQUIVOCADO — reporte real de Inty (2026-07-14): iba en AUTO a 82 km/h pero la app estaba
-   en modo BICI, así que Pistero le hablaba de pedalear y de tomar agua. Los umbrales por modo ya
-   existían y estaban bien; el problema era que nadie le avisaba a la app que había cambiado de
-   vehículo. 82 km/h sostenidos NO son pedaleando: la app tiene que darse cuenta sola.
-   Se cambia UNA vez por sesión y se avisa siempre, con cómo revertirlo. */
-let _velAltaDesde=0, _autoModoHecho=false;
-// 2026-09-04: caso INVERSO, reporte real de un tester (120 km Victoria->Los Ángeles en
-// bici) — usó "Viaje rápido" sin fijarse en qué modo quedó seleccionado (sus propias
-// palabras: "qué modalidad, no tengo ni idea"), y quedó en modo MOTO pedaleando de
-// verdad. Pistero le repitió tips para CONDUCTORES ("la ciclovía no es estacionamiento,
-// se la provocaste tú") -- info sin sentido para alguien que ES el ciclista, no un auto
-// cerca de uno. La función de arriba SOLO cubre "vas muy rápido para ser bici" (return
-// inmediato si m==='moto', línea siguiente) -- nunca miraba el caso contrario.
-// La señal tiene que ser robusta para no molestar a un motorizado real parado en un
-// taco largo: no basta con "va lento ahora" (eso le pasa a cualquier auto en la
-// ciudad) -- hace falta ir SOSTENIDO en rango de ciclista (3-35 km/h) durante un rato
-// largo (20 min de movimiento real, sin contar el tiempo detenido en semáforos/tacos)
-// SIN HABER TOCADO NI UNA VEZ una velocidad inequívocamente motorizada. Un auto real,
-// en 20 minutos de trayecto, en algún momento acelera por sobre eso -- un ciclista real,
-// casi nunca.
-let _movBiciDesde=0, _autoModoHechoInverso=false;
-function _detectarModoEquivocadoInverso(sp){
-  const m=(typeof actividadTipo!=='undefined')?actividadTipo:'ciclismo';
-  if(m!=='moto' || _autoModoHechoInverso){ return; }
-  const TECHO_INEQUIVOCO=45; // por sobre esto, es vehículo con certeza -- reinicia la racha
-  if(sp>TECHO_INEQUIVOCO){ _movBiciDesde=0; return; }
-  if(!sp){ return; } // detenido (semáforo/taco): pausa la cuenta, no la reinicia -- le pasa a cualquier vehículo real
-  if(sp>=3 && sp<=35){ // rango típico de ciclista
-    if(!_movBiciDesde){ _movBiciDesde=Date.now(); return; }
-    if(Date.now()-_movBiciDesde>1200000){ // 20 min sostenidos sin tocar el techo motorizado
-      _autoModoHechoInverso=true;
-      try{ elegirActividad('ciclismo', true); }catch(e){}
-      h('Oye, llevas un buen rato pedaleando a '+Math.round(sp)+' por hora y tenías el modo vehículo puesto, así que me cambié a modo bici. Si me equivoqué, cámbialo en tu perfil.');
-    }
-  } else { _movBiciDesde=0; } // ni en rango de bici ni motorizado claro (ej. muy lento sin estar detenido): sin evidencia, no cuenta
-}
-function _detectarModoEquivocado(sp){
-  const m=(typeof actividadTipo!=='undefined')?actividadTipo:'ciclismo';
-  if(m==='moto' || _autoModoHecho){ _detectarModoEquivocadoInverso(sp); return; }
-  if(!sp){ _velAltaDesde=0; return; }
-  const techo=(m==='trekking')?18:50; // a pie >18 km/h, o en bici >50 km/h, sostenidos = vas en vehículo
-  if(sp>techo){
-    if(!_velAltaDesde){ _velAltaDesde=Date.now(); return; }
-    if(Date.now()-_velAltaDesde>60000){ // un minuto entero, para no confundir una bajada rápida
-      _autoModoHecho=true;
-      try{ elegirActividad('moto', true); }catch(e){}
-      h('Oye, llevas un rato a '+Math.round(sp)+' por hora. Eso no es pedaleando, así que me cambié a modo vehículo para no hablarte tonteras de bici. Si me equivoqué, cámbialo en tu perfil.');
-    }
-  } else { _velAltaDesde=0; }
-}
+// Detección de modo equivocado (bici <-> vehículo): modo-equivocado.js
 // Reporte real de Inty (2026-07-14): "voy en auto y recomienda agua". En modo vehículo no
 // corresponde — nadie necesita hidratarse cada 5 km ni comer una barra por ir manejando.
 function checkFuel(distKm){

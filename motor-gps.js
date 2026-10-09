@@ -343,6 +343,10 @@ function _sumarKmViaje(km){
   if(typeof actividadTipo!=='undefined' && actividadTipo==='moto'){ if(typeof _sumarKmVehiculo==='function') _sumarKmVehiculo(km); } else { _sumarKmMantencion(km); }
   us.c+=(km*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2);
 }
+// Inty 2026-10-09: "está disparando muchas frases". Los km del hueco entran de golpe y bromasDelCamino() (una frase
+// cada 1,5 km) y el hito de cada 10 km los tomaban como km sin comentar: ráfaga de frases al volver. El hueco no se
+// comenta: los contadores parten desde donde estás ahora.
+function _frasesTrasHueco(){ try{ kmUltimaFrase=us.di; _ultimoHitoKm=Math.floor(us.di/10); }catch(e){} }
 // hueco de la pantalla apagada: el tramo entre ant y nuevo se rellena por el camino (OSRM) y se suma lo que el camino
 // tiene de más que la recta (la recta ya se sumó). Sin red: queda la recta. Si la ruta ya cambió (se guardó y se cerró), no toca nada.
 function _rellenarHueco(ant,nuevo){
@@ -350,7 +354,7 @@ function _rellenarHueco(ant,nuevo){
   lpHuecoGPS.porCamino(ant,nuevo,(typeof _osrmPerfil==='function'?_osrmPerfil():'cycling')).then(function(c){
     if(!c || !ig || ruta!==currentRoute) return;
     const extra=lpHuecoGPS.insertar(ruta,ant,nuevo,c); if(extra==null) return;
-    _sumarKmViaje(extra);
+    _sumarKmViaje(extra); _frasesTrasHueco();
     if(crl && crl.setLatLngs) crl.setLatLngs(ruta.map(function(q){ return [q.lat,q.lon]; }));
   }).catch(function(e){ console.warn('[gps] hueco', e); });
 }
@@ -458,7 +462,7 @@ function ug(p){
   const _ptNuevo={lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)};
   const _hueco=_saltoPosOK && typeof lpHuecoGPS!=='undefined' && lpHuecoGPS.esHueco(_ultPt,_ptNuevo);
   if(us.la && (sp>0 || _hueco) && _saltoPosOK){ _sumarKmViaje(moved); }
-  if(_hueco){ ultimoMovimientoTime=Date.now(); rutaSegCerrada=false; }   // seguiste pedaleando con la pantalla apagada: la ruta no se cierra
+  if(_hueco){ ultimoMovimientoTime=Date.now(); rutaSegCerrada=false; _frasesTrasHueco(); }   // seguiste pedaleando con la pantalla apagada: la ruta no se cierra
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);
   if(typeof _chequearCofre==='function') _chequearCofre(la,lo,sp);
