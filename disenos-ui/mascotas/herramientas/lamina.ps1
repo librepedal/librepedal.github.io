@@ -7,7 +7,7 @@ $filas = @(
   @("Pudú",       @("pudu-cria-v8-ojos-grandes","pudu-joven-v2","pudu-adulto-v1","pudu-cria-hambre","pudu-cria-descuidado")),
   @("Zorro culpeo",@("zorro-cria","zorro-joven","zorro-adulto","zorro-cria-hambre","zorro-cria-descuidado")),
   @("Huillín",    @("huillin-cria","huillin-joven","huillin-adulto","huillin-cria-hambre","huillin-cria-descuidado")),
-  @("Ranita de Darwin",@("rana-cria","rana-joven","rana-adulto","rana-cria-hambre","rana-cria-descuidado")),
+  @("Ranita de Darwin",@("rana-cria-v2","rana-joven","rana-adulto","rana-cria-hambre","rana-cria-descuidado")),
   @("Güiña",      @("guina-cria","guina-joven","guina-adulto","guina-cria-hambre","guina-cria-descuidado")),
   @("Yorkshire",  @("yorkie-cria","yorkie-joven","yorkie-adulto","yorkie-cria-hambre","yorkie-cria-descuidado"))
 )
@@ -34,6 +34,7 @@ for ($r=0; $r -lt $filas.Count; $r++) {
   $ty = [single]($y + $cellH/2 - 30); $g.DrawString($filas[$r][0], $f1, $br, [System.Drawing.RectangleF]::new(8, $ty, $lab-12, 70))
   for ($c=0; $c -lt $nc; $c++) {
     $ip = Join-Path $d ($filas[$r][1][$c] + ".png")
+    if (-not (Test-Path $ip)) { $ip = Join-Path $d ($filas[$r][1][$c] + ".jpg") }   # originales de Gemini en .jpg (ranita nueva, 2026-10-08)
     if (-not (Test-Path $ip)) { continue }
     $im = [System.Drawing.Image]::FromFile($ip)
     # imagen completa (16:9), quitando el borde oscuro de la captura
