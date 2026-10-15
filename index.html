@@ -1010,6 +1010,31 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div id="modalContent"></div>
 </div>
 
+<!-- Radio de rodada (rodada-radio.js / rodada-radio-ui.js) — maqueta aprobada por Inty 2026-10-15 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="rr-bici" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM12 17.5V14l-3-3 4-3 2 3h2"/></symbol>
+  <symbol id="rr-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M3 13l2-5a2 2 0 0 1 2-1.3h10A2 2 0 0 1 19 8l2 5v4h-2M3 13v4h2M3 13h18"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/></symbol>
+  <symbol id="rr-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="rr-oreja" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2.5" y="14" width="4.5" height="6.5" rx="1.6"/><rect x="17" y="14" width="4.5" height="6.5" rx="1.6"/></symbol>
+</svg>
+<div class="rr-pildora" id="rrPildora" hidden><button type="button" onclick="radioPanelAbrir()" aria-label="Abrir la radio de la rodada"><span class="rr-vivo"></span><span id="rrPildoraTxt">Radio</span></button></div>
+<section class="rr-panel" id="rrPanel" hidden aria-label="Radio de la rodada">
+  <div class="rr-barra">
+    <span class="rr-chip"><span class="rr-vivo"></span><span id="rrTitulo">RADIO</span></span>
+    <span class="rr-chip" id="rrCuantos">1 en la sala</span>
+    <button type="button" class="rr-icono" onclick="radioPanelMinimizar()" aria-label="Minimizar la radio"><i class="fas fa-chevron-down"></i></button>
+  </div>
+  <div class="rr-aviso" id="rrAviso" role="status" hidden></div>
+  <div class="rr-rol" id="rrRol"><div class="rr-ico"><svg width="20" height="20"><use href="#rr-oreja"/></svg></div><div><strong id="rrRolTitulo">Escuchas la radio</strong><span id="rrRolSub">Hablan la Punta y la Cola</span></div></div>
+  <div class="rr-peloton" id="rrPeloton" aria-label="Orden del pelotón"></div>
+  <div class="rr-entrante" id="rrEntrante" hidden><svg width="18" height="18"><use href="#rr-oreja"/></svg><span id="rrEntranteTxt"></span><span class="rr-ola"><i></i><i></i><i></i><i></i><i></i></span></div>
+  <button type="button" class="rr-ptt rr-apagado" id="rrPtt" aria-label="Mantén apretado para hablar"><svg width="22" height="22"><use href="#rr-radio"/></svg><span id="rrPttTxt">Solo hablan la Punta y la Cola</span></button>
+  <div class="rr-pie">
+    <label class="rr-aud"><input type="checkbox" id="rrAudifono" onchange="radioAudifono(this.checked)"> Hablar con el botón del audífono</label>
+    <button type="button" class="rr-salir" onclick="radioSalirDesdePanel()">Salir de la radio</button>
+  </div>
+</section>
+
 <div class="lp-dialog" id="lpDialog">
   <div class="lp-dialog-box">
     <p id="lpDialogMsg"></p>
@@ -1445,6 +1470,7 @@ try{ db.enablePersistence({synchronizeTabs:true}).catch(function(e){ console.war
 </script>
 <script src="rodadas.js"></script>
 <script src="rodada-radio.js"></script>
+<script src="rodada-radio-ui.js"></script>
 <script>
 </script>
 <script src="recomendacion-rutas.js"></script>

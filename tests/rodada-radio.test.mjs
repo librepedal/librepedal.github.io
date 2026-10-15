@@ -6,7 +6,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = readFileSync(join(raiz, 'rodada-radio.js'), 'utf8');
+// \r\n → \n: en Windows git puede dejar los archivos con CRLF, y las búsquedas de fin de función usan '\n}\n'.
+const SRC = readFileSync(join(raiz, 'rodada-radio.js'), 'utf8').replace(/\r\n/g, '\n');
 const RULES = JSON.parse(readFileSync(join(raiz, 'database.rules.json'), 'utf8'));
 const HTML = readFileSync(join(raiz, 'index.html'), 'utf8');
 const SW = readFileSync(join(raiz, 'sw.js'), 'utf8');
@@ -161,6 +162,39 @@ t('sw.js lo precachea', /'\.\/rodada-radio\.js'/.test(SW));
 // ---- El canal de avisos de un toque ya tiene regla (antes Firestore negaba todo) ----
 t('firestore.rules tiene match /rodadaAvisos', /match \/rodadaAvisos\/\{id\}/.test(FSR));
 t('rodadaAvisos: escribir exige estar inscrito', /esAsistente\(request\.resource\.data\.rodada\)/.test(FSR));
+
+// ---- Pantalla (maqueta aprobada 2026-10-15): filas del pelotón ----
+const UI = readFileSync(join(raiz, 'rodada-radio-ui.js'), 'utf8').replace(/\r\n/g, '\n');
+const ROD = readFileSync(join(raiz, 'rodadas.js'), 'utf8');
+{
+  const iF = UI.indexOf('function radioFilasPeloton('); const fF = UI.indexOf('\n}\n', iF) + 2;
+  const F = new Function('radioHuecos', UI.slice(UI.indexOf('const RR_FILAS_MAX'), UI.indexOf('\n', UI.indexOf('const RR_FILAS_MAX'))) + '\n' + UI.slice(iF, fF) + '\nreturn radioFilasPeloton;')(R.radioHuecos);
+  const muchos = {}; for (let i = 0; i < 18; i++) muchos['c' + String(i).padStart(2, '0')] = m(12400 - i * 30);
+  muchos.manuel = m(11000); muchos.auto = m(10800, 'auto');
+  const ord = R.radioOrdenarPeloton(muchos, AHORA);
+  const filas = F(ord, { punta: 'c00', cola: 'auto' }, 'c00');
+  const nombres = filas.filter(f => f.tipo === 'm');
+  t('20 en la sala: se ven pocas filas (≤ 7)', filas.length <= 7);
+  t('la Punta va primero y marcada', nombres[0].uid === 'c00' && nombres[0].punta);
+  t('la Cola (auto) va al final y marcada', nombres[nombres.length - 1].uid === 'auto' && nombres[nombres.length - 1].cola && nombres[nombres.length - 1].auto);
+  t('el medio se resume en "+N ciclistas"', filas.some(f => f.tipo === 'grupo' && f.cuantos === ord.length - 4));
+  t('el hueco de 890 m (último del grupo → Manuel) se marca como 900 m', filas.some(f => f.tipo === 'hueco' && f.metros === 900));
+  const iH = filas.findIndex(f => f.tipo === 'hueco');
+  t('la marca va justo antes de Manuel (el primero que quedó atrás), no arriba', filas[iH + 1] && filas[iH + 1].uid === 'manuel');
+  const yoMedio = F(ord, { punta: 'c00', cola: 'auto' }, 'c09');
+  t('si estás en el medio, igual te ves', yoMedio.some(f => f.tipo === 'm' && f.uid === 'c09' && f.yo));
+  const pocos = F(R.radioOrdenarPeloton({ a: m(300), b: m(200), c: m(100) }, AHORA), { punta: 'a', cola: 'c' }, 'b');
+  t('con pocos se ven todos, sin resumen', pocos.length === 3 && !pocos.some(f => f.tipo === 'grupo'));
+}
+t('el botón apagado dice por qué (no hay botones que no respondan)', /Solo hablan la Punta y la Cola/.test(UI) && /b\.disabled=!habla/.test(UI));
+t('si se suelta antes de abrir el micrófono, se corta al abrir', /if\(ok && !apretado\) radioTerminarDeHablar\(\)/.test(UI));
+t('botón del audífono: Media Session + tecla multimedia', /mediaSession\.setActionHandler/.test(UI) && /MediaPlayPause/.test(UI));
+t('audífono: un toque graba, otro envía', /if\(_radioRecorder\)\{ radioTerminarDeHablar\(\)/.test(UI));
+t('si deja de ser Punta/Cola se apaga el audífono', /if\(!habla\) radioAudifono\(false, true\)/.test(UI));
+t('la rodada ofrece "Entrar a la radio" a los confirmados el día', /Entrar a la radio de la rodada/.test(ROD) && /voy && typeof radioEntrarDesdeRodada/.test(ROD));
+t('al volver a abrir la app, se reengancha sola', /radioReanudar\(\)/.test(ROD));
+t('index.html tiene el panel y carga la pantalla', /id="rrPanel"/.test(HTML) && /<script src="rodada-radio-ui\.js"><\/script>/.test(HTML));
+t('sw.js precachea la pantalla', /'\.\/rodada-radio-ui\.js'/.test(SW));
 
 console.log('  rodada-radio.test.mjs: ' + ok + ' OK' + (fail ? ', ' + fail + ' FALLAN' : ''));
 process.exit(fail ? 1 : 0);

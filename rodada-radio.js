@@ -202,6 +202,7 @@ function _radioAplicarRoles(nuevos){
 function _radioRevisarGrupo(){
   const ahora=Date.now(), rol=radioMiRol();
   const ord=radioOrdenarPeloton(_radioMiembros, ahora);
+  if(typeof radioAlActualizar==='function') try{ radioAlActualizar(ord); }catch(e){}
   if(rol==='punta' && ahora-_radioUltHueco>AVISO_HUECO_CADA_MS){
     const huecos=radioHuecos(ord);
     if(huecos.length){
@@ -314,7 +315,8 @@ function _radioSiguiente(){
   if(Date.now()-msg.ts>RADIO_VIGENCIA_MS){ _radioSiguiente(); return; }
   const a=new Audio(msg.audio);
   _radioSonando=a;
-  const fin=function(){ clearInterval(_radioVigia); _radioVigia=null; _radioSonando=null; setTimeout(_radioSiguiente, 300); };
+  const fin=function(){ clearInterval(_radioVigia); _radioVigia=null; _radioSonando=null; if(typeof radioAlEntrante==='function') try{ radioAlEntrante(null); }catch(e){} setTimeout(_radioSiguiente, 300); };
+  if(typeof radioAlEntrante==='function') try{ radioAlEntrante(msg); }catch(e){}
   a.onended=fin; a.onerror=fin;
   // Si Pistero arranca a hablar a mitad del mensaje (un giro), la radio se pausa y retoma después.
   _radioVigia=setInterval(function(){
@@ -324,4 +326,4 @@ function _radioSiguiente(){
   }, 250);
   a.play().catch(fin);
 }
-function radioCallar(){ _radioCola=[]; if(_radioSonando){ try{ _radioSonando.pause(); }catch(e){} } clearInterval(_radioVigia); _radioVigia=null; _radioSonando=null; }
+function radioCallar(){ _radioCola=[]; if(_radioSonando){ try{ _radioSonando.pause(); }catch(e){} } clearInterval(_radioVigia); _radioVigia=null; _radioSonando=null; if(typeof radioAlEntrante==='function') try{ radioAlEntrante(null); }catch(e){} }
