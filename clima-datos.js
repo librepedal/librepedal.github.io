@@ -170,7 +170,7 @@ function _avisarVientoEnContra(rumbo){
   if(ahora-_vientoUltimoAviso<VIENTO_MIN_ENTRE_AVISOS) return;
   if(_diferenciaAngular(_climaBase.direccion, rumbo)>VIENTO_ANGULO_CONTRA) return;
   _vientoUltimoAviso=ahora;
-  h('Viento en contra, como '+Math.round(_climaBase.viento)+' kilómetros por hora. Vas a sentir más resistencia de lo normal.');
+  hCharla('Viento en contra, como '+Math.round(_climaBase.viento)+' kilómetros por hora. Vas a sentir más resistencia de lo normal.'); // tope de charla (voz-motor.js)
 }
 async function vigilarClima(lat,lon){
   // vozActiva solo bloquea el AVISO hablado — si el modulo de efectos visuales de clima
@@ -220,7 +220,7 @@ async function vigilarClima(lat,lon){
     _climaUltimoAviso=ahora;
     // Prioridad SEGURIDAD solo para tormenta: lo demás no debe pisar una instrucción de ruta.
     if(cambio.severidad>=3 && typeof hUrgente==='function') hUrgente(cambio.texto);
-    else if(!vozOcupada() && !vozCola.length) h(cambio.texto);
+    else if(!vozOcupada() && !vozCola.length) hCharla(cambio.texto); // el resto, por el tope de charla
   }catch(e){}
 }
 async function _avisoLluviaProactivo(lat,lon){
@@ -242,7 +242,7 @@ async function _avisoLluviaProactivo(lat,lon){
     const maxProb=Math.max.apply(null, proximas2h.length?proximas2h:[0]);
     if(maxProb>=60){
       _avisoLluviaHecho=true;
-      if(!vozOcupada() && !vozCola.length) h('Ojo, viene probabilidad alta de lluvia en las próximas horas — '+Math.round(maxProb)+' por ciento. Si puedes, busca techo o apúrate.');
+      if(!vozOcupada() && !vozCola.length) hCharla('Ojo, viene probabilidad alta de lluvia en las próximas horas — '+Math.round(maxProb)+' por ciento. Si puedes, busca techo o apúrate.');
     }
   }catch(e){}
 }
@@ -269,7 +269,7 @@ function _verificarFatiga(duracionActivaMs, speedActual){
     const pisoAbsoluto=(typeof actividadTipo!=='undefined' && actividadTipo==='trekking')?2.5:10;
     if(caidaPct>=0.25 && velActual<=pisoAbsoluto){
       _avisoFatigaHecho=true;
-      if(!vozOcupada() && !vozCola.length){ try{ _pisteroMood='cansado'; }catch(e){} h('Se nota que bajaste harto el ritmo respecto a como arrancaste. Si puedes, date un respiro corto, toma agua y sigue con calma.'); }
+      if(!vozOcupada() && !vozCola.length){ try{ _pisteroMood='cansado'; }catch(e){} hCharla('Se nota que bajaste harto el ritmo respecto a como arrancaste. Si puedes, date un respiro corto, toma agua y sigue con calma.'); }
     }
   }catch(e){}
 }

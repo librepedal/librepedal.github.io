@@ -213,12 +213,13 @@ function bromasDelCamino(sp, kmRutaTotal){
   if(vozOcupada()||vozCola.length) return;
   const _cm=(typeof _charlaMult==='function')?_charlaMult():1; // "cuánto habla Pistero" (Ajustes): escala la cadencia
   const _kmEntreFrases=(typeof kmRutaTotal==='number' && kmRutaTotal>0) ? Math.max(1.5, kmRutaTotal/BROMAS_OBJETIVO_RUTA) : 1.5;
+  // Todas pasan por hCharla (voz-motor.js): máximo 3 frases de charla por viaje (Inty 2026-10-15).
   if(sp===0){
-    if(Date.now()-lastFraseParadoTime>=1200000*_cm){ const _fr=obtenerFraseUnica('parado'); if(_fr){ h(_fr); lastFraseParadoTime=Date.now(); } } // parado
+    if(Date.now()-lastFraseParadoTime>=1200000*_cm){ const _fr=obtenerFraseUnica('parado'); if(_fr){ hCharla(_fr); lastFraseParadoTime=Date.now(); } } // parado
   } else if(zonaActual==='ciudad'){
-    if(Date.now()-tFraseCiudad>=240000*_cm){ const _fr=(Math.random()<0.25)?obtenerFraseUnica('profunda'):obtenerFraseUnica('ciudad'); if(_fr){ h(_fr); tFraseCiudad=Date.now(); } } // ciudad
+    if(Date.now()-tFraseCiudad>=240000*_cm){ const _fr=(Math.random()<0.25)?obtenerFraseUnica('profunda'):obtenerFraseUnica('ciudad'); if(_fr){ hCharla(_fr); tFraseCiudad=Date.now(); } } // ciudad
   } else {
-    if(us.di-kmUltimaFrase>=_kmEntreFrases*_cm){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ h(_fr); kmUltimaFrase=us.di; } } // carretera
+    if(us.di-kmUltimaFrase>=_kmEntreFrases*_cm){ const _fr=(sp<18&&Math.random()<0.3)?obtenerFraseUnica('profunda'):obtenerFrasePorVelocidad(sp); if(_fr){ hCharla(_fr); kmUltimaFrase=us.di; } } // carretera
   }
   /* Auditoria 2026-07-20: el banco `motivacional` estaba escrito y traducido a 4 paises
      (cl/ar/mx/es/co) y NADIE lo pedia nunca -> frases que el usuario jamas iba a oir.
@@ -235,7 +236,7 @@ function bromasDelCamino(sp, kmRutaTotal){
   if(_hito>0 && _hito>_ultimoHitoKm){
     _ultimoHitoKm=_hito;
     const _fh=obtenerFraseUnica('motivacional');
-    if(_fh) h((_hito*10)+' kilómetros. '+_fh);
+    if(_fh) hCharla((_hito*10)+' kilómetros. '+_fh);
   }
 }
 /* ===== PENDIENTE EN VIVO: usa la altitud del GPS (misma fuente del perfil de
