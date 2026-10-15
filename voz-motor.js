@@ -399,6 +399,7 @@ function _reproducirVoz(item){
   // verificacion de compras (nunca el cliente -- ver firestore.rules, premiumSinTocar()).
   if(vozMejorada && !_esPremium()){
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
+    _vozPlazoUrgente(item, durEst, miGen);
     _vozGoogleRuntime(item, durEst, miGen);
     return;
   }
@@ -428,15 +429,42 @@ function _reproducirVoz(item){
     const _id = VOCES_MANIFEST && VOCES_MANIFEST.map && VOCES_MANIFEST.map[item.t];
     if(_idEL && typeof _vozArchivoEL==='function'){
       vozTimerFin=setTimeout(_vozSiguiente, 12000);
+      _vozPlazoUrgente(item, durEst, miGen);
       _vozArchivoEL(item, durEst, _idEL, miGen);
       return;
     }
     vozTimerFin=setTimeout(_vozSiguiente, 12000);
+    _vozPlazoUrgente(item, durEst, miGen);
     _vozElevenRuntime(item, durEst, miGen, false, { idEL:_idEL, idAz:_id });
     return;
   }
   vozTimerFin=setTimeout(_vozSiguiente, Math.round(durEst*1.4)+800); // respaldo con margen: solo actúa si el motor se quedó pegado
   _vozNativaOWeb(item, durEst);
+}
+/* GIROS QUE NO ESPERAN A INTERNET (2026-10-15, fallas del evento; COORDINACION-IA/ENCARGO-SIN-SENAL-2026-10-14.md
+   paso 1). Con una rayita de señal, la voz en vivo se queda colgada cargando y a los 12 s el temporizador de
+   _reproducirVoz la abandona y pasa a la frase siguiente: la indicación de giro se pierde sin decir nada. En plena
+   bajada, eso es un giro que no escuchas. Ahora un giro (NAV) o un aviso de seguridad tiene 2 s para empezar a
+   sonar con la voz buena; si no, habla la voz del teléfono, que no necesita red.
+   Cómo sabe que la voz buena ya arrancó, sin tocar cada motor: todos ellos, al cargar el audio
+   (onloadedmetadata), reemplazan vozTimerFin por uno ajustado al largo real; y si una cadena ya cayó sola a la
+   nativa, _vozNativaOWeb también lo reemplaza. Si a los 2 s vozTimerFin sigue siendo el mismo de la partida y el
+   audio no está corriendo, nada suena todavía. Antes de hablar con la nativa se sube el turno (vozGen): así el
+   play() de la voz en vivo, que rechaza con AbortError al pausarse, no arranca su respaldo encima (ver la nota
+   de vozGen y tests/voz-sin-pisarse.test.mjs). Las frases menos importantes siguen esperando como siempre: una
+   anécdota puede llegar tarde, un giro no. */
+const VOZ_PLAZO_URGENTE_MS=2000;
+function _vozPlazoUrgente(item, durEst, miGen){
+  if(!((item.prio||0)>=PRIO_VOZ.NAV)) return;
+  const tf=vozTimerFin;
+  setTimeout(function(){
+    if(miGen!==vozGen) return;            // se cortó, terminó o ya cambió de frase: nada que rescatar
+    if(vozTimerFin!==tf) return;          // ya cargó la voz buena, o la cadena ya cayó sola a la nativa
+    const a=_vozNeuralAudio;
+    if(a && !a.paused && a.currentTime>0) return; // audio sin duración conocida pero ya sonando
+    vozGen++;
+    _vozNativaOWeb(item, durEst);
+  }, VOZ_PLAZO_URGENTE_MS);
 }
 function _vozNativaOWeb(item, durEst){ const miGen=vozGen; _vozAudiosVivos.forEach(_vozSoltar); _vozNeuralAudio=null;
   clearTimeout(vozTimerFin); vozTimerFin=setTimeout(_vozSiguiente, Math.round((durEst||_durEstVoz(item.limpio))*1.4)+800);

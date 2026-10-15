@@ -120,6 +120,52 @@ async function telefono(red) {
   t('nativa cortada: su "interrupted" tardío no adelanta la cola ni deja dos voces', T.pisadas.length === 0, JSON.stringify(T.pisadas));
 }
 
+// ---------- 1b) giros que no esperan a internet (fallas del evento, 2026-10-15) ----------
+// Con una rayita de señal la voz en vivo se queda colgada. Un giro o un aviso de seguridad tiene 2 s para empezar;
+// si no, habla la voz del teléfono. Lo menos importante sigue esperando a la voz buena como siempre.
+const nativaDe = (T, txt) => T.escuchado.find((x) => x.que.startsWith('nativa:') && txt.startsWith(x.que.slice(7)));
+const buenaDe = (T) => T.escuchado.find((x) => /^(eltts|gtts|edgetts):/.test(x.que));
+for (const [nombre, prep] of [['premium (ElevenLabs)', ''], ['gratis (Google)', 'GATE_PREMIUM_ACTIVO=true']]) {
+  for (const prio of ['NAV', 'SEGURIDAD']) {
+    const T = await telefono(() => ({ lat: 30000, dur: 2500 })); // la voz en vivo nunca llega a tiempo
+    if (prep) T.ev(prep);
+    const txt = 'Gira a la izquierda en 150 metros';
+    T.ev(`h(${JSON.stringify(txt)}, PRIO_VOZ.${prio})`);
+    await T.correrHasta(2100);
+    const n = nativaDe(T, txt);
+    t(`${nombre}, ${prio} con señal colgada: suena la voz del teléfono en ≤ 2 s`, !!n && n.t <= 2000, JSON.stringify(T.escuchado));
+    await T.correrHasta(60000);
+    t(`${nombre}, ${prio}: la voz en vivo abandonada no suena después`, !buenaDe(T) && T.pisadas.length === 0, JSON.stringify(T.escuchado));
+  }
+}
+{
+  const T = await telefono(() => ({ lat: 30000, dur: 2500 }));
+  T.ev("h('Vas a 18 kilómetros por hora', PRIO_VOZ.INFO)");
+  await T.correrHasta(5000);
+  t('un dato (INFO) con señal colgada no salta a la nativa a los 2 s', !T.escuchado.length, JSON.stringify(T.escuchado));
+}
+{
+  const T = await telefono(() => ({ lat: 900, dur: 2500 })); // señal buena: la voz buena llega antes de 2 s
+  T.ev("h('Gira a la derecha en 300 metros', PRIO_VOZ.NAV)");
+  await T.correrHasta(20000);
+  t('con señal buena el giro suena con la voz buena, sin nativa', !!buenaDe(T) && !T.escuchado.some((x) => x.que.startsWith('nativa:')), JSON.stringify(T.escuchado));
+}
+{
+  // la voz buena carga a los 1,5 s pero dura 6 s: el plazo de 2 s no la corta a la mitad
+  const T = await telefono(() => ({ lat: 1500, dur: 6000 }));
+  T.ev("h('Gira a la derecha en 300 metros', PRIO_VOZ.NAV)");
+  await T.correrHasta(20000);
+  t('voz buena ya sonando a los 2 s: no se corta para meter la nativa', T.escuchado.length === 1 && !T.escuchado[0].que.startsWith('nativa:'), JSON.stringify(T.escuchado));
+}
+{
+  // giro colgado y, detrás, otro giro: los dos se oyen y nunca a la vez
+  const T = await telefono((url) => (decodeURIComponent(url).includes('Primero') ? { lat: 30000, dur: 2000 } : { lat: 300, dur: 2000 }));
+  T.ev("h('Primero a la izquierda', PRIO_VOZ.NAV); h('Luego a la derecha', PRIO_VOZ.NAV)");
+  await T.correrHasta(40000);
+  t('giro colgado + giro en cola: se oyen los dos', T.escuchado.length === 2, JSON.stringify(T.escuchado));
+  t('giro colgado + giro en cola: nunca a la vez', T.pisadas.length === 0, JSON.stringify(T.pisadas));
+}
+
 // ---------- 2) navegación simulada: 800 viajes con red al azar, por los 4 caminos de voz ----------
 // 0 = voz en vivo (ElevenLabs) · 1 = con frases pregrabadas (voces-el/) · 2 = voz gratis (Google, premium activo)
 // 3 = voz mejorada apagada (solo la del navegador/teléfono)

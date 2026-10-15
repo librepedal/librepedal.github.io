@@ -66,13 +66,14 @@ function correr(overrides) {
   const fn = new Function(
     '_esPremium', 'vozMejorada', 'VOCES_MANIFEST_EL', 'VOCES_MANIFEST', '_vozArchivoEL', '_vozElevenRuntime',
     'vozGen', 'vozHablando', 'vozPrioActual', 'vozTimerFin', 'PRIO_VOZ', '_durEstVoz',
-    'mostrarBocadillo', '_pisteroHabla', '_vozSiguiente', 'setTimeout', 'clearTimeout', '_vozCallarTodo',
+    'mostrarBocadillo', '_pisteroHabla', '_vozSiguiente', 'setTimeout', 'clearTimeout', '_vozCallarTodo', '_vozPlazoUrgente',
     REPRODUCIR + '\nreturn _reproducirVoz;'
   );
   const _reproducirVoz = fn(
     _esPremium, o.vozMejorada, o.VOCES_MANIFEST_EL, o.VOCES_MANIFEST, _vozArchivoEL, _vozElevenRuntime,
     vozGen, vozHablando, vozPrioActual, vozTimerFin, PRIO_VOZ, _durEstVoz,
-    mostrarBocadillo, _pisteroHabla, _vozSiguiente, setTimeout, clearTimeout, () => {} // _vozCallarTodo (2026-10-07): calla lo anterior; aquí no hay audio
+    mostrarBocadillo, _pisteroHabla, _vozSiguiente, setTimeout, clearTimeout, () => {}, // _vozCallarTodo (2026-10-07): calla lo anterior; aquí no hay audio
+    () => {} // _vozPlazoUrgente (2026-10-15): el plazo de 2 s de los giros se prueba en tests/voz-sin-pisarse.test.mjs
   );
   _reproducirVoz({ t: o.itemTexto, limpio: o.itemTexto, prio: PRIO_VOZ.INFO });
   return llamadas;
