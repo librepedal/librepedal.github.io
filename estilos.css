@@ -432,6 +432,52 @@ main{flex:1;padding:10px;scroll-behavior:smooth}
    Rediseño 2026-07-29: las 4 capas pasaron a UN botón "Capas" (la barra ya no envuelve en
    varias filas), así que la barra encoge ~50px y el mapa recupera ese alto (el mapa manda). */
 #map-hostel-select.show{display:block}
+/* ===== Un solo mapa (mapa-unico.js) — maqueta aprobada 2026-10-15 =====
+   Ya no hay section-info ni fila de botones arriba del mapa: el mapa gana ese alto. */
+.mapa-unico #map{height:calc(100dvh - 230px);margin-bottom:0}
+@supports not (height: 100dvh){ .mapa-unico #map{ height:calc(100vh - 230px); } }
+.mapa-unico .map-zoom-ctrl{top:72px}
+.mapa-unico .map-estilo-btn{top:72px}
+.mu-arriba{position:absolute;top:10px;left:10px;right:10px;z-index:560}
+.mu-buscar{position:relative;display:flex;align-items:center;gap:10px;background:rgba(10,13,18,.94);border:1px solid #232b38;border-radius:14px;padding:4px 6px 4px 14px;color:#8f9bad;box-shadow:0 8px 20px -10px #000}
+.mu-buscar input{flex:1;min-width:0;background:transparent;border:none;color:#e8edf4;font-size:.95rem;padding:9px 0;margin:0;outline:none}
+.mu-ir{background:#ff6a2b;color:#120700;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:.9rem;flex:none}
+.mu-buscar #sugerencias-dest{border-radius:0 0 12px 12px}
+.mu-ayuda{position:absolute;left:50%;top:44%;transform:translateX(-50%);z-index:540;background:rgba(0,0,0,.8);border:1px dashed #8f9bad;border-radius:12px;padding:8px 12px;font-size:.78rem;color:#e8edf4;white-space:nowrap;pointer-events:none;animation:muTitila 2.4s ease-in-out infinite}
+@keyframes muTitila{50%{opacity:.45}}
+#fabReportar.mu-mas{width:54px;height:54px;right:14px;bottom:72px;border-radius:50%;background:#ff6a2b;color:#120700;font-size:1.4rem;box-shadow:0 6px 16px -4px #000;filter:none}
+.mapa-unico .map-recenter-btn{bottom:136px}
+.mu-abajo{position:absolute;left:10px;right:80px;bottom:12px;z-index:560;display:flex;gap:8px}
+.mu-chip{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(10,13,18,.94);border:1px solid #232b38;border-radius:14px;padding:12px;font-weight:600;font-size:.9rem;color:#e8edf4;margin:0}
+.mu-chip-chico{flex:0 0 48px;padding:12px 0}
+.mu-chip.on{border-color:#2bc4b4;color:#2bc4b4}
+.mu-rec{width:12px;height:12px;border-radius:50%;background:#ef4444;flex:none}
+.mu-chip.mu-grabando{border-color:#ef4444}
+.mu-chip.mu-grabando .mu-rec{border-radius:2px;animation:muTitila 1.4s infinite}
+.mu-hoja{position:absolute;left:0;right:0;bottom:0;z-index:600;background:#0f141c;border-top:1px solid #232b38;border-radius:20px 20px 0 0;padding:10px 16px 16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 -10px 30px rgba(0,0,0,.5);animation:muSube .28s cubic-bezier(.2,.8,.2,1)}
+.mu-hoja[hidden]{display:none}
+@keyframes muSube{from{transform:translateY(40%);opacity:.4}}
+.mu-hoja h3{margin:0;font-size:1rem;color:#e8edf4}
+.mu-asa{width:40px;height:4px;border-radius:2px;background:#232b38;align-self:center}
+.mu-lugar{font-size:.74rem;color:#8f9bad}
+.mu-dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mu-accion{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;border-radius:14px;border:1px solid #232b38;background:#141922;color:#e8edf4;font-weight:600;font-size:.9rem;margin:0}
+.mu-accion i{font-size:1.3rem}
+.mu-accion.mu-pri{background:#ff6a2b;border-color:#ff6a2b;color:#120700}
+.mu-cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mu-cat{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:12px;border:1.5px solid #232b38;background:#141922;color:#e8edf4;font-size:.74rem;text-align:center;margin:0}
+.mu-cat i{color:var(--c);font-size:1.25rem}
+.mu-cat[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,#141922)}
+.mu-subs{display:flex;flex-wrap:wrap;gap:6px}
+.mu-subs[hidden]{display:none}
+.mu-sub{background:#141922;border:1px solid #232b38;color:#c9d2de;border-radius:20px;padding:6px 11px;font-size:.74rem;margin:0}
+.mu-sub[aria-pressed="true"]{border-color:#ff6a2b;color:#e8edf4}
+#muNota{background:#000;border:1px solid #232b38;border-radius:10px;padding:10px;color:#e8edf4;font-size:.85rem;margin:0}
+.mu-publicar{background:#ff6a2b;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:.95rem;color:#120700;margin:0}
+.mu-publicar[disabled]{background:#141922;color:#8f9bad}
+.mu-pin{cursor:grab}
+.mu-hoja button:focus-visible,.mu-chip:focus-visible,.mu-ir:focus-visible{outline:2px solid #ffd700;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.mu-ayuda,.mu-hoja,.mu-chip.mu-grabando .mu-rec{animation:none}}
 .cd{background:#0f1728;padding:14px;border-radius:14px;margin-bottom:10px;border:0.5px solid rgba(255,255,255,0.07)}
 #sugerencias-dest{position:absolute;top:100%;left:0;right:0;z-index:1500;background:#0d1426;border:1px solid var(--p);border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;display:none;box-shadow:0 8px 18px rgba(0,0,0,0.5)}
 #sugerencias-dest.show{display:block}
