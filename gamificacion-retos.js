@@ -152,6 +152,8 @@ function mostrarResumenAnual(){
   document.getElementById('wrappedCerrar').onclick=function(){ overlay.remove(); };
   document.getElementById('wrappedDescargar').onclick=function(){
     canvas.toBlob(function(blob){
+      // compartir-nativo.js: en la web descarga; en la app abre "Guardar en el teléfono"/Drive (antes no hacía nada)
+      if(typeof lpGuardarArchivo==='function'){ lpGuardarArchivo(blob, 'libre-pedal-'+anio+'.png', 'Mi año en Libre Pedal'); return; }
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a'); a.href=url; a.download='libre-pedal-'+anio+'.png'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(function(){ URL.revokeObjectURL(url); },4000);

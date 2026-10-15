@@ -569,7 +569,8 @@ function _videoListo(blob, nombre, tipo){
     return '¡Tu video está listo! Toca "Compartir video" para subirlo a TikTok, Instagram o donde quieras.';
   }
   btn.style.display='none';
-  if(_esAppNativa()) return 'Esta versión de la app todavía no puede guardar el video. Para descargarlo y compartirlo, abre librepedal.cl en Chrome.';
+  // App instalada: comparte por los plugins nativos (compartir-nativo.js). Si es una versión vieja sin ellos, se pide actualizar (no "abre Chrome").
+  if(_esAppNativa()) return (typeof LP_ACTUALIZAR_APP!=='undefined') ? LP_ACTUALIZAR_APP : 'Actualiza Libre Pedal en Play Store para guardar el video.';
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download=nombre; document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); },4000);

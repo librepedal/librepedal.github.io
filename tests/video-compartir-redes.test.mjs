@@ -29,15 +29,20 @@ ok(/Descargar GPX/.test(como), 'cómo funciona explica la descarga GPX');
 const visible = (html) => html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/gi, '');
 ok(!/strava|komoot|wikiloc/i.test(visible(index)) && !/strava|komoot|wikiloc/i.test(visible(como)), 'ningún texto visible nombra a Strava, Komoot o Wikiloc');
 ok(!/Súbela a Strava/.test(motor) && /GPX_LISTO/.test(motor), 'el aviso al descargar no nombra a la competencia');
-{ // en la app instalada no anuncia una descarga que no ocurre
+{ // 2026-10-15: el GPX pasa por lpGuardarArchivo (compartir-nativo.js): descarga en la web, compartir/guardar en la app.
+  // Pistero solo confirma cuando de verdad se guardó (nunca anuncia una descarga que no ocurrió).
   const i = motor.indexOf('const GPX_LISTO'), j = motor.indexOf('function exportarDatosGPX');
-  const reg = { avisos: [], descargas: 0 };
-  const mk = (nativa) => { const c = { Blob, URL: { createObjectURL: () => 'b', revokeObjectURL() {} }, setTimeout() {}, lpAviso: (m) => reg.avisos.push(m),
-    window: nativa ? { Capacitor: { isNativePlatform: () => true } } : {},
-    document: { createElement: () => ({ click() { reg.descargas++; } }), body: { appendChild() {}, removeChild() {} } } };
-    vm.createContext(c); vm.runInContext(motor.slice(i, j).replace('const GPX_LISTO', 'var GPX_LISTO') + '\nthis.d=_descargarGPX;', c); return c; };
-  ok(mk(true).d('<gpx/>', 'r') === false && reg.descargas === 0 && /Chrome/.test(reg.avisos[0] || ''), 'app instalada: no finge descargar, dice cómo');
-  ok(mk(false).d('<gpx/>', 'r') === true && reg.descargas === 1, 'navegador: descarga el .gpx');
+  const mk = (resultado) => { const reg = { guardados: [], dichos: [] }; const c = { Blob, setTimeout() {}, h: (m) => reg.dichos.push(m),
+    lpGuardarArchivo: (blob, nombre) => { reg.guardados.push({ nombre, tipo: blob.type }); return Promise.resolve(resultado); } };
+    vm.createContext(c); vm.runInContext(motor.slice(i, j).replace('const GPX_LISTO', 'var GPX_LISTO') + '\nthis.d=_descargarGPX;', c); return { c, reg }; };
+  const espera = () => new Promise((r) => setImmediate(r));
+  const web = mk('descargado'); web.c.d('<gpx/>', 'Mi ruta'); await espera();
+  ok(web.reg.guardados[0] && web.reg.guardados[0].nombre === 'Mi_ruta.gpx' && web.reg.guardados[0].tipo === 'application/gpx+xml', 'el .gpx se entrega a lpGuardarArchivo con su nombre y tipo');
+  ok(web.reg.dichos.length === 1, 'navegador: al descargarse, Pistero lo confirma');
+  const app = mk('compartido'); app.c.d('<gpx/>', 'r'); await espera();
+  ok(app.reg.dichos.length === 1 && /quedó donde la mandaste/.test(app.reg.dichos[0]), 'app instalada: se guarda/comparte por el menú de Android y lo confirma');
+  const vieja = mk('actualizar'); vieja.c.d('<gpx/>', 'r'); await espera();
+  ok(vieja.reg.dichos.length === 0, 'app vieja sin plugins: no anuncia una descarga que no ocurrió (lpGuardarArchivo ya pidió actualizar)');
 }
 
 // ---------- 2. Botones del video ----------
@@ -82,7 +87,8 @@ function escenario({ puedeCompartir, nativa }) {
 }
 {
   const e = escenario({ puedeCompartir: false, nativa: true });
-  ok(e.reg.descargas.length === 0 && e.btn.style.display === 'none' && /Chrome/.test(e.msg), 'app instalada sin compartir: no finge descargar, dice cómo hacerlo');
+  // 2026-10-15: solo una app VIEJA (sin plugins nativos) llega aquí: pide actualizar, nunca "abre Chrome".
+  ok(e.reg.descargas.length === 0 && e.btn.style.display === 'none' && /Play Store/.test(e.msg) && !/Chrome/.test(e.msg), 'app vieja sin compartir: no finge descargar, pide actualizar la app');
 }
 
 // ---------- 4. Formato 9:16 a 1080x1920 ----------

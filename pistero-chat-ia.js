@@ -225,7 +225,8 @@ async function pisteroPorVoz(){
     return;
   }
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ h('En la app escríbeme la pregunta aquí abajo; la voz funciona en Chrome.'); const i=document.getElementById('pisteroInput'); if(i){ try{ i.focus(); }catch(e){} } return; }
+  // 2026-10-15: no mandar a Chrome. En la app el micrófono es nativo (arriba); llegar aquí en la app = versión vieja.
+  if(!SR){ h(((typeof _cnEsApp==='function')?_cnEsApp():!!window.Capacitor) ? 'Para hablarme por voz, actualiza Libre Pedal en Play Store. Mientras tanto, escríbeme la pregunta aquí abajo.' : 'Este navegador no permite dictar por voz; escríbeme la pregunta aquí abajo.'); const i=document.getElementById('pisteroInput'); if(i){ try{ i.focus(); }catch(e){} } return; }
   if(!window.isSecureContext){ h('La voz solo funciona desde la página publicada.'); return; }
   try{ pararVoz(); }catch(e){}
   _pausarManosLibres();

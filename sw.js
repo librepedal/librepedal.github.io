@@ -16,6 +16,7 @@ const CORE = [
   './seguridad-sensores.js',
   './clima-datos.js',
   './voz-motor.js',
+  './compartir-nativo.js',
   './reportes.js',
   './rutas.js',
   './mapa-render.js',

@@ -865,9 +865,20 @@ function _gpxDeRuta(pts, nombre){
 // que pueda subirlos". Devuelve true si se descargó. En la app instalada (WebView de Android) descargar un blob no hace
 // nada: se dice la verdad en vez de anunciar una descarga que no ocurrió.
 const GPX_LISTO='Ruta descargada en formato GPX. Con ese archivo puedes llevarla a otra app de ciclismo.';
+// 2026-10-15: en la app instalada también (compartir-nativo.js): abre el menú de Android con "Guardar
+// en el teléfono", Drive, WhatsApp... Pistero confirma solo si de verdad se guardó/compartió, por eso
+// esta función habla ella misma y devuelve false (los llamadores no repiten el aviso).
 function _descargarGPX(gpx, nombre){
-  try{ if(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()){ lpAviso('Esta versión de la app todavía no puede guardar archivos. Para descargar tus rutas en GPX, abre librepedal.cl en Chrome.'); return false; } }catch(e){}
-  const blob=new Blob([gpx],{type:'application/gpx+xml'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=(nombre||'libre-pedal-ruta').replace(/[^\w-]+/g,'_').slice(0,50)+'.gpx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },3000);
+  const blob=new Blob([gpx],{type:'application/gpx+xml'});
+  const archivo=(nombre||'libre-pedal-ruta').replace(/[^\w-]+/g,'_').slice(0,50)+'.gpx';
+  if(typeof lpGuardarArchivo==='function'){
+    lpGuardarArchivo(blob, archivo, nombre||'Ruta Libre Pedal').then(function(r){
+      if(r==='descargado') h(GPX_LISTO);
+      else if(r==='compartido') h('Listo, tu ruta en GPX quedó donde la mandaste. Con ese archivo puedes llevarla a otra app de ciclismo.');
+    });
+    return false;
+  }
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=archivo; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },3000);
   return true;
 }
 function exportarDatosGPX(){ if(gpsPoints.length===0){ lpAviso("No hay una ruta activa para exportar"); return; } if(_descargarGPX(_gpxDeRuta(gpsPoints,'Ruta Libre Pedal'),'libre-pedal-ruta')) h(GPX_LISTO); }
@@ -1340,7 +1351,9 @@ async function toggleMic(){
   }
   // 2) Web (Chrome): reconocimiento del navegador.
   if(!recognition){
-    h("En la app instalada el micrófono aún no está disponible; escríbeme aquí abajo a dónde vamos. (En Chrome la voz sí funciona.)");
+    // 2026-10-15: en la app instalada el micrófono es nativo (arriba). Llegar aquí en la app = versión vieja sin el plugin.
+    const _enApp=(typeof _cnEsApp==='function')?_cnEsApp():!!window.Capacitor;
+    h(_enApp ? "Para dictarme por voz, actualiza Libre Pedal en Play Store. Mientras tanto, escríbeme aquí abajo a dónde vamos." : "Este navegador no permite dictar por voz; escríbeme aquí abajo a dónde vamos.");
     const qd=document.getElementById('quick-dest'); if(qd){ try{ qd.focus(); }catch(e){} }
     return;
   }

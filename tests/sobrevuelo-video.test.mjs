@@ -42,11 +42,13 @@ ok((await V.sb3ElegirCodec(() => Promise.resolve({ supported: false }))) === nul
 
 // ---------- 5) la app instalada no falla en silencio ----------
 const s3 = leer('sobrevuelo-3d.js'), sv = leer('sobrevuelo-video.js');
-ok(/function compartirViaje\(\)\{ if\(sb3EsAppNativa\(\)\)\{ V\(\)\.vidTarjeta\('app-imagen'\); return; \}/.test(s3), '"Compartir mi viaje" en la app instalada avisa en vez de fallar en silencio');
-ok(/estado==='app-imagen'[^\n]*Abre librepedal\.cl en Chrome/.test(sv), 'el aviso de la imagen dice qué hacer: abrir librepedal.cl en Chrome');
-ok(/estado==='app'\)[^\n]*Abre librepedal\.cl en Chrome/.test(sv), 'el aviso del video dice qué hacer: abrir librepedal.cl en Chrome');
-ok(!/sí se comparte desde aquí/.test(sv), 'ningún aviso promete que la imagen se comparte desde la app (no es cierto)');
-ok(/if\(sb3EsAppNativa\(\)\)\{ V\(\)\.vidTarjeta\('app'\); return; \}/.test(s3), 'en la app instalada el video no se empieza a grabar (no gasta batería para nada)');
+// 2026-10-15 (compartir-nativo.js): la app instalada SÍ comparte con los plugins nativos. Solo una versión VIEJA
+// sin ellos avisa, y lo que dice es "actualiza la app", nunca "abre Chrome" (Inty: "esto debería funcionar desde la app").
+ok(/function compartirViaje\(\)\{ if\(sb3SinCompartirEnApp\(\)\)\{ V\(\)\.vidTarjeta\('app-imagen'\); return; \}/.test(s3), '"Compartir mi viaje" en una app vieja sin compartir avisa en vez de fallar en silencio');
+ok(/function sb3SinCompartirEnApp\(\)\{ return sb3EsAppNativa\(\) && !\(typeof lpPuedeCompartirArchivos==='function' && lpPuedeCompartirArchivos\(\)\); \}/.test(s3), 'con los plugins nativos la app comparte la imagen y el video');
+ok(/estado==='app-imagen'[^\n]*Play Store/.test(sv) && !/estado==='app-imagen'[^\n]*Chrome/.test(sv), 'el aviso de la imagen pide actualizar la app, no ir a Chrome');
+ok(/estado==='app'\)[^\n]*Play Store/.test(sv) && !/estado==='app'\)[^\n]*Chrome/.test(sv), 'el aviso del video pide actualizar la app, no ir a Chrome');
+ok(/if\(sb3SinCompartirEnApp\(\)\)\{ V\(\)\.vidTarjeta\('app'\); return; \}/.test(s3), 'en una app vieja sin compartir el video no se empieza a grabar (no gasta batería para nada)');
 
 // ---------- 6) los módulos nuevos se cargan antes del sobrevuelo y quedan offline ----------
 const html = leer('index.html'), sw = leer('sw.js');
