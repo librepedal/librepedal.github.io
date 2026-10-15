@@ -33,6 +33,7 @@ function bloque(src, desde) {
 const gps = leer('motor-gps.js'), rutas = leer('rutas.js'), vel = leer('motor-gps-velocidad.js');
 const linea = (src, re) => (src.match(re) || [''])[0];
 const SRC = [
+  leer('km-viaje.js'), // 2026-10-15: el kilometraje de ug() se cuenta con kmvContadorLibre (km honestos)
   leer('gps-hueco.js'),
   vel, bloque(leer('motor-navegacion.js'), 'function calculateDistance('),
   bloque(gps, 'function _saltoEsPlausible('), bloque(gps, 'function _velocidadHardware('), bloque(gps, 'function _velMaxPlausibleKmh('),
@@ -98,7 +99,10 @@ const espera = () => new Promise((r) => setTimeout(r, 30));
   ok(r.length === antes + 3 && r[i + 1].est && r[i + 2].est && !r[i + 3].est, 'el hueco se rellena con los puntos del camino (marcados como estimados), no con una recta');
   ok(r[i + 1].t > a.t && r[i + 2].t > r[i + 1].t && r[i + 3].t > r[i + 2].t, 'los puntos del camino llevan tiempos en orden (el sobrevuelo los recorre bien)');
   ok(S.llamadas.setLatLngs === 1 && S.ctx.crl.pts.length === r.length, 'la línea del mapa se redibuja con el camino');
-  ok(Math.abs((S.ctx.us.di - kmAntes) - 3.4) < 0.05, `los km del hueco son los del camino (${(S.ctx.us.di - kmAntes).toFixed(2)} de 3,40)`);
+  // 2026-10-15 (km-viaje.js): el contador confirma cada tramo con la posición siguiente, así que los últimos metros
+  // antes de apagar la pantalla se suman al volver, junto con el hueco. Lo que tiene que calzar es el TOTAL del viaje:
+  // 149 tramos de 15 m pedaleados (2,235 km) + 3,40 km de camino con la pantalla apagada.
+  ok(Math.abs(S.ctx.us.di - (2.235 + 3.4)) < 0.06, `el total del viaje calza: pedaleado + camino del hueco (${S.ctx.us.di.toFixed(2)} de 5,64)`);
   // y sigue grabando normal después
   for (let k = 0; k < 10; k++) { S.avanzar(2000); S.fix(bLat + 0.000135 * (k + 1), bLon); }
   ok(S.ctx.currentRoute.length === antes + 3 + 10, 'después del hueco sigue grabando en la misma ruta');

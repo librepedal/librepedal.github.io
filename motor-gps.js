@@ -114,6 +114,7 @@ async function toggleGPS(silencioso){
     if(!(await lpAsegurarUbicacion())) return;
     rutaDocId=null; puntosGuardados=0; spAnterior=0;
     _logrosDelViaje=[]; _kmEsteViaje=0; // arranca el conteo del resumen de este viaje
+    if(typeof kmvContadorLibre!=='undefined') kmvContadorLibre.reiniciar(); // km-viaje.js: el primer punto del paseo es el ancla
     ultimoMovimientoTime=Date.now(); rutaSegCerrada=true; rutaSegDistIni=us.di;
     // Reinicia el reloj de "parado" al prender el GPS: si no, como este reloj
     // arranca en 0 en una sesión nueva, el aviso de "revisa la bici/pinchazo"
@@ -166,6 +167,7 @@ async function toggleGPS(silencioso){
     ig=false; _lpWLoff(); detenerDeteccionCaidas(); _detenerCronometroDash();
     if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
     if(btn){ btn.innerHTML="<i class='fas fa-location-dot'></i> Grabar un paseo"; btn.style.background=""; btn.style.borderColor=""; btn.style.color=""; }
+    if(typeof kmvContadorLibre!=='undefined'){ const _kFin=kmvContadorLibre.fin(); if(_kFin>0) _sumarKmViaje(_kFin); } // el último tramo que quedaba por confirmar
     if(currentRoute.length>1){ autoGuardarRuta(false,false); }
     sincronizarStats();
     if(cu&&!ghostMode){ db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true}); _rtdOcultarPosicion(); }
@@ -439,7 +441,16 @@ function ug(p){
   avisarReportesCercanos(la,lo,sp);
   _avisoLluviaProactivo(la,lo); vigilarClima(la,lo);
   _verificarFatiga(tiempoActivoMs(), sp);
-  // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado).
+  // KM (km-viaje.js, Inty 2026-10-15: "no podemos entregar datos falsos"): el kilometraje ya no
+  // depende de la ventana de velocidad, que daba 0 cuando las posiciones llegan cada 15-30 s
+  // (pantalla apagada, bolsillo, mala señal) o bajo 6 km/h, y esos tramos se perdían enteros
+  // (caso real: Río Claro → Parque Inglés quedó en 0,27 km en 136 min). Se cuenta por distancia
+  // real a un punto ancla (≥30 m, ≥2 km/h), así el temblor del GPS estando quieto no suma.
+  const _ptKm={lat:la,lon:lo,t:Date.now(),acc:(p.coords.accuracy||0)};
+  const _ultPtK=currentRoute.length?currentRoute[currentRoute.length-1]:null;
+  const _huecoK=_saltoPosOK && typeof lpHuecoGPS!=='undefined' && lpHuecoGPS.esHueco(_ultPtK,_ptKm);
+  if(_saltoPosOK && typeof kmvContadorLibre!=='undefined'){ const _kTramo=kmvContadorLibre.tramo(_ptKm, _huecoK); if(_kTramo>0) _sumarKmViaje(_kTramo); }
+  // JITTER: ignora desplazamientos < 12 m (deriva del GPS estando parado) para el trazado.
   if(us.la && moved<0.012){ return; }
   // Salto implausible (rebote de señal, glitch del chip GPS): no lo sumamos al
   // kilometraje, pero igual re-anclamos la posición para que el PRÓXIMO fix se
@@ -460,9 +471,10 @@ function ug(p){
   // Hueco (2026-10-08, gps-hueco.js): volviste de la pantalla apagada y este punto está lejos del último. La ventana
   // de velocidad da 0 (sus puntos tienen más de 12 s) y esos km se perdían: se suman, y el hueco se rellena por el camino.
   const _ultPt=currentRoute.length?currentRoute[currentRoute.length-1]:null;
-  const _ptNuevo={lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null)};
+  // acc: precisión del GPS en metros — kmTrazado() la usa para no contar temblor como km (km-viaje.js)
+  const _ptNuevo={lat:la,lon:lo,t:Date.now(),alt:(p.coords.altitude!=null?p.coords.altitude:null),acc:(p.coords.accuracy?Math.round(p.coords.accuracy):0)};
   const _hueco=_saltoPosOK && typeof lpHuecoGPS!=='undefined' && lpHuecoGPS.esHueco(_ultPt,_ptNuevo);
-  if(us.la && (sp>0 || _hueco) && _saltoPosOK){ _sumarKmViaje(moved); }
+  // (los km de este tramo ya se sumaron arriba con kmvContadorLibre — antes: solo si sp>0 o hueco)
   if(_hueco){ ultimoMovimientoTime=Date.now(); rutaSegCerrada=false; _frasesTrasHueco(); }   // seguiste pedaleando con la pantalla apagada: la ruta no se cierra
   us.la=la; us.lo=lo;
   if(typeof _chequearZonaRoja==='function') _chequearZonaRoja(la,lo);

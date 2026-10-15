@@ -423,6 +423,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
     tripStartTime=Date.now(); gpsPoints=[{lat:startLat,lon:startLon,timestamp:Date.now()}]; lastGpsPoint={lat:startLat,lon:startLon,t:Date.now()}; totalDistance=0;
     _logrosDelViaje=[]; _kmEsteViaje=0; // arranca el conteo del resumen de este viaje (navegación a destino)
     if(typeof revisarVozSinConexion==='function') revisarVozSinConexion(); // sin señal los giros van con la voz del teléfono: que tenga español (voz-sin-conexion.js)
+    if(typeof kmvContadorNav!=='undefined'){ kmvContadorNav.reiniciar(); kmvContadorNav.tramo({lat:startLat,lon:startLon,t:Date.now()}); } // km-viaje.js: el inicio es el ancla
     if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
     if(lpBackgroundGeo.disponible()) await lpBackgroundGeo.stop();
     lpWakeLock.enable();

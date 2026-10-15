@@ -56,6 +56,7 @@ const CORE = [
   './funciones-mapa-viajes.js',
   './modo-equivocado.js',
   './motor-navegacion.js',
+  './km-viaje.js',
   './gps-hueco.js',
   './motor-gps.js',
   './modo-bolsillo.js',
