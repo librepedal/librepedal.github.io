@@ -15,6 +15,45 @@
         "$other": { ".validate": false }
       }
     },
+    "rodadaRadio": {
+      "$rodada": {
+        ".read": "auth != null && data.child('miembros').child(auth.uid).exists()",
+        "miembros": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['tipo','avance','ts'])",
+            "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "tipo": { ".validate": "newData.val() === 'bici' || newData.val() === 'auto'" },
+            "avance": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 2000000" },
+            "ts": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "roles": {
+          ".write": "auth != null && root.child('rodadaRadio').child($rodada).child('miembros').child(auth.uid).exists()",
+          ".validate": "newData.hasChildren(['punta','cola','arbitro','ts']) && newData.child('arbitro').val() === auth.uid",
+          "punta": { ".validate": "newData.isString() && newData.val().length <= 128" },
+          "cola": { ".validate": "newData.isString() && newData.val().length <= 128" },
+          "arbitro": { ".validate": "newData.isString()" },
+          "ts": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        },
+        "msgs": {
+          ".indexOn": ["ts", "de"],
+          "$msg": {
+            ".write": "auth != null && ((!data.exists() && newData.child('de').val() === auth.uid) || (!newData.exists() && data.child('de').val() === auth.uid))",
+            ".validate": "newData.hasChildren(['de','rol','audio','ts']) && (newData.child('rol').val() === 'punta' || newData.child('rol').val() === 'cola') && root.child('rodadaRadio').child($rodada).child('roles').child(newData.child('rol').val()).val() === auth.uid",
+            "de": { ".validate": "newData.isString()" },
+            "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "rol": { ".validate": "newData.isString()" },
+            "audio": { ".validate": "newData.isString() && newData.val().beginsWith('data:audio/') && newData.val().length <= 120000" },
+            "dur": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20000" },
+            "ts": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
     "liveTracking": {
       "$id": {
         ".read": false,

@@ -31,6 +31,7 @@ const CORE = [
   './social.js',
   './segmentos.js',
   './rodadas.js',
+  './rodada-radio.js',
   './blindaje-firestore.js',
   './pistero-personalizacion-datos.js',
   './app-estado-global.js',
