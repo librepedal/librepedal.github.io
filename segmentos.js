@@ -33,7 +33,7 @@ function _verificarSegmentos(lat,lon){
     if(!s.inicio||!s.fin) return;
     const est=segmentosEstado[s.id]||(segmentosEstado[s.id]={armado:false,inicioMs:null});
     if(!est.armado){
-      if(calculateDistance(lat,lon,s.inicio.lat,s.inicio.lon)<SEGMENTO_RADIO_M){ est.armado=true; est.inicioMs=Date.now(); h('Entraste al segmento '+s.nombre+'. ¡Dale con todo!'); }
+      if(calculateDistance(lat,lon,s.inicio.lat,s.inicio.lon)<SEGMENTO_RADIO_M){ est.armado=true; est.inicioMs=Date.now(); hCharla('Entraste al segmento '+s.nombre+'. ¡Dale con todo!'); }
     } else if(calculateDistance(lat,lon,s.fin.lat,s.fin.lon)<SEGMENTO_RADIO_M){
       const tiempoMs=Date.now()-est.inicioMs;
       est.armado=false;

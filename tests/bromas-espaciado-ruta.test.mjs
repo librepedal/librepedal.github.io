@@ -39,7 +39,8 @@ function contarBromasEnRecorrido(kmTotales, kmRutaTotal, pasoKm) {
   const fn = new Function(
     'vozActiva', 'vozOcupada', 'vozCola', '_charlaMult', 'zonaActual',
     'us', 'h', 'obtenerFraseUnica', 'obtenerFrasePorVelocidad',
-    'let lastFraseParadoTime=0, tFraseCiudad=0, kmUltimaFrase=0, _ultimoHitoKm=0;\n' + bloque + '\nreturn bromasDelCamino;'
+    // hCharla (tope de 3 por viaje, 2026-10-15) fuera de un viaje habla igual que h: aquí se prueba el espaciado propio.
+    'const hCharla=h; let lastFraseParadoTime=0, tFraseCiudad=0, kmUltimaFrase=0, _ultimoHitoKm=0;\n' + bloque + '\nreturn bromasDelCamino;'
   );
   const vozCola = [];
   const bromasDelCamino = fn(
@@ -97,7 +98,7 @@ function contarBromasEnRecorrido(kmTotales, kmRutaTotal, pasoKm) {
   const fn = new Function(
     'vozActiva', 'vozOcupada', 'vozCola', '_charlaMult', 'zonaActual',
     'us', 'h', 'obtenerFraseUnica', 'obtenerFrasePorVelocidad', 'Date',
-    'let lastFraseParadoTime=0, tFraseCiudad=0, kmUltimaFrase=0, _ultimoHitoKm=0;\n' + bloque + '\nreturn bromasDelCamino;'
+    'const hCharla=h; let lastFraseParadoTime=0, tFraseCiudad=0, kmUltimaFrase=0, _ultimoHitoKm=0;\n' + bloque + '\nreturn bromasDelCamino;'
   );
   let tiempoSim = 1000000;
   const DateM = { now: () => tiempoSim };

@@ -252,6 +252,7 @@ function calcularGastos(){
   function mostrar(){
     const tut=document.getElementById('tutorialOverlay');
     if(document.hidden||(tut&&tut.classList.contains('on'))||vozOcupada()){ prox(); return; } // ocupado: vuelve más rato
+    if(typeof _enViaje==='function' && _enViaje()){ prox(); return; } // pedaleando no se asoma: "¿y si salimos a pedalear?" en plena ruta sobra (tope de charla, 2026-10-15)
     if(!peek) crear();
     peek.classList.add('peek');
     hAmbiente(frasesTravieso[Math.floor(Math.random()*frasesTravieso.length)]);
@@ -352,6 +353,47 @@ function h(t, prio){
   _reproducirVoz(item);
 }
 function hAmbiente(t){ if(typeof micOn!=='undefined'&&micOn) return; h(t, PRIO_VOZ.AMBIENTE); } // broma/anécdota: calla si te está escuchando; nunca pisa nada
+/* ===== TOPE DE CHARLA POR VIAJE (Inty, 2026-10-15) =====
+   "Hay muchos mensajes que se repiten mucho y es algo que pedí que no sucediera. Vamos a
+   disparar frases de Pistero durante el viaje solo 3 veces desde el punto A al punto B."
+   Durante un viaje (navegar o grabar) SIEMPRE suenan: giros, subidas/bajadas, seguridad y lo
+   que el usuario pide. Todo lo demás —bromas, ánimo, ritmo, agua/comida, anécdotas, clima,
+   viento, cansancio, puntos cercanos— pasa por hCharla(): máximo 3 por viaje, repartidas
+   (navegando: recién al 25 %, 50 % y 75 % de la ruta; grabando: la primera a los 10 min y
+   después cada 15 min) y ninguna repetida. Lo que no cabe se descarta, no se encola: una
+   frase de ánimo atrasada 20 km no sirve. Fuera de un viaje, hCharla() habla como siempre. */
+const CHARLA_MAX_VIAJE=3, CHARLA_PRIMERA_MS=10*60000, CHARLA_ENTRE_MS=15*60000;
+let _charla={viaje:null, dichas:0, ultima:0, textos:new Set()};
+// Pura (tests/pistero-tope-charla.test.mjs): ¿puede sonar esta frase ahora?
+// est: {dichas, ultima, textos:Set} · ctx: {texto, ahora, inicio, kmHechos, kmRuta}
+function charlaPermitida(est, ctx){
+  if(est.dichas>=CHARLA_MAX_VIAJE) return false;
+  if(est.textos.has(ctx.texto)) return false;
+  if(ctx.kmRuta>0) return ctx.kmHechos >= ctx.kmRuta*(est.dichas+1)/(CHARLA_MAX_VIAJE+1);
+  if(ctx.ahora-ctx.inicio < CHARLA_PRIMERA_MS) return false;
+  return !est.ultima || ctx.ahora-est.ultima >= CHARLA_ENTRE_MS;
+}
+function _enViaje(){
+  const nav=document.getElementById('nav-screen');
+  return !!((nav && nav.classList.contains('active')) || (typeof ig!=='undefined' && ig));
+}
+// prio por defecto INFO; ambiente=true usa hAmbiente (calla si te está escuchando).
+function hCharla(t, ambiente){
+  if(!t) return false;
+  if(!_enViaje()){ if(ambiente) hAmbiente(t); else h(t); return true; }
+  const inicio=(typeof tripStartTime!=='undefined' && tripStartTime)||Date.now();
+  if(_charla.viaje!==inicio) _charla={viaje:inicio, dichas:0, ultima:0, textos:new Set()}; // viaje nuevo
+  const navegando=!!(document.getElementById('nav-screen') && document.getElementById('nav-screen').classList.contains('active'));
+  const ctx={texto:t, ahora:Date.now(), inicio:inicio,
+    kmHechos:(typeof totalDistance!=='undefined' && totalDistance)||0,
+    kmRuta:(navegando && typeof routeTotalDistance!=='undefined' && routeTotalDistance>0)?routeTotalDistance:0};
+  if(!charlaPermitida(_charla, ctx)) return false;
+  if(vozOcupada() || vozCola.length) return false; // no gasta el cupo si ahora no puede sonar
+  if(ambiente && typeof micOn!=='undefined' && micOn) return false;
+  _charla.dichas++; _charla.ultima=ctx.ahora; _charla.textos.add(t);
+  if(ambiente) hAmbiente(t); else h(t);
+  return true;
+}
 function hCorta(t){ h(t, PRIO_VOZ.NAV); }        // navegación/tutorial: corta lo menos importante, pero NO pisa seguridad ni otro giro
 function hUrgente(t){ try{ _pisteroMood='enojado'; }catch(e){} h(t, PRIO_VOZ.SEGURIDAD); } // caída/SOS: manda sobre todo
 function _durEstVoz(txt){ return Math.min(55000, Math.max(1800, txt.length*75)); }

@@ -273,7 +273,7 @@ async function contarAnecdotaDelLugar(clave, full, lat, lon){
     if(texto.length>240) texto=frases[0];
     _marcarAnecdota(elegido.title);
     const intros=['Dato de por aquí:','Fíjate en esto:','Un dato del lugar:','Para que sepas:','Mira qué interesante:'];
-    hAmbiente(intros[Math.floor(Math.random()*intros.length)]+' '+texto);
+    hCharla(intros[Math.floor(Math.random()*intros.length)]+' '+texto, true); // tope de 3 por viaje (voz-motor.js)
   }catch(e){}
 }
 // "Cuéntame otra historia de este lugar" / mitos / leyendas / nombre antiguo,

@@ -582,7 +582,7 @@ function avisarPuntosCercanos(lat,lon,speed){
     if(_dist<=_radio && _acercandose){
       puntosAvisados.add(id);
       const nombre=(d.title||'').replace(/^[^\wÁÉÍÓÚáéíóúñÑ]+/,'').trim();
-      h(FRASES_AVISO[tipo]+(nombre?(' '+nombre+'.'):''));
+      hCharla(FRASES_AVISO[tipo]+(nombre?(' '+nombre+'.'):'')); // agua/mirador/hospedaje: tope de charla (voz-motor.js)
       return;
     }
   }

@@ -427,8 +427,9 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
 // corresponde — nadie necesita hidratarse cada 5 km ni comer una barra por ir manejando.
 function checkFuel(distKm){
   if(typeof actividadTipo!=='undefined' && actividadTipo==='moto') return;
-  if(distKm>=nextHydrateKm){ h("Llevas "+Math.round(distKm)+" kilómetros. Toma un par de tragos de agua para no deshidratarte."); nextHydrateKm+=5; }
-  if(distKm>=nextEatKm){ h("Vas en "+Math.round(distKm)+" kilómetros. Come algo ligero, una fruta o una barra, para recargar energía."); nextEatKm+=20; }
+  // Por el tope de charla (voz-motor.js): antes sonaba cada 5 km todo el viaje.
+  if(distKm>=nextHydrateKm){ hCharla("Llevas "+Math.round(distKm)+" kilómetros. Toma un par de tragos de agua para no deshidratarte."); nextHydrateKm+=5; }
+  if(distKm>=nextEatKm){ hCharla("Vas en "+Math.round(distKm)+" kilómetros. Come algo ligero, una fruta o una barra, para recargar energía."); nextEatKm+=20; }
 }
 /* ===== RITMO vs TU PROMEDIO HISTÓRICO ===== */
 // us.sumVelDist guarda la suma de (velocidad media de cada viaje * sus km); dividido
@@ -453,8 +454,8 @@ function compararRitmoHistorico(distanciaKm, duracionActivaMs){
   const velActual=distanciaKm/(duracionActivaMs/3600000);
   const diffPct=(velActual-velHistorica)/velHistorica;
   kmUltimoRitmoComentado=distanciaKm;
-  if(diffPct>0.15) h('Vas más rápido que tu promedio de siempre, ¡buen ritmo!');
-  else if(diffPct<-0.15) h('Vas más lento que tu ritmo habitual. Tranquilo, disfruta el camino.');
+  if(diffPct>0.15) hCharla('Vas más rápido que tu promedio de siempre, ¡buen ritmo!');
+  else if(diffPct<-0.15) hCharla('Vas más lento que tu ritmo habitual. Tranquilo, disfruta el camino.');
 }
 let _unsubUsersOnNavMap=null;
 let _navMapUsersActive=false;

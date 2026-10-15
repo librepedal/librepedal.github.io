@@ -54,7 +54,8 @@ function _soltarTipRuta(){
   if(!dispo.length){ _tipsUsados=[]; dispo=pool; }
   const tip=dispo[Math.floor(Math.random()*dispo.length)];
   _tipsUsados.push(tip); if(_tipsUsados.length>60) _tipsUsados=_tipsUsados.slice(-60);
-  if(typeof hAmbiente==='function') hAmbiente(tip);
+  if(typeof hCharla==='function') hCharla(tip, true); // tope de 3 frases por viaje (voz-motor.js)
+  else if(typeof hAmbiente==='function') hAmbiente(tip);
 }
 const lpSalud = (function(){
   let timer=null, mins=0;
@@ -68,7 +69,9 @@ const lpSalud = (function(){
   function tick(){
     if(!activo()) return;
     mins++;
-    recurrentes.forEach(function(r){ if(mins % r.cada === 0 && typeof h==='function') h(r.msg); });
+    // Agua/estirar/comer/bloqueador pasan por el tope de charla: antes sonaban cada 20/35/60/90 min
+    // todo el viaje, y eran lo que más se repetía (Inty 2026-10-15).
+    recurrentes.forEach(function(r){ if(mins % r.cada === 0){ if(typeof hCharla==='function') hCharla(r.msg); else if(typeof h==='function') h(r.msg); } });
     if(mins>0 && mins % 11 === 7) _soltarTipRuta(); // Tip de ruta cada ~11 min, prioridad baja
   }
   return {
