@@ -1,0 +1,270 @@
+<title>Maqueta Un Solo Mapa</title>
+<style>
+/* Layout: un teléfono interactivo a la izquierda (4 estados), las decisiones de cada estado a la derecha; se apilan en móvil. */
+:root{
+  --bg:#0c0f14; --panel:#141922; --linea:#232b38; --texto:#e8edf4; --suave:#8f9bad;
+  --naranjo:#ff6a2b; --teal:#2bc4b4; --violeta:#a855f7; --dorado:#ffd700; --rojo:#ef4444; --azul:#3b82f6; --verde:#22c55e;
+  --tierra:#1a2230; --calle:#2a3446; --agua:#123047; --parque:#15291f;
+  --f-titulo:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-cuerpo:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-dato:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--texto);font-family:var(--f-cuerpo);font-size:15px;line-height:1.5;padding:28px 16px 64px}
+.envolver{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:32px}
+header h1{font-family:var(--f-titulo);font-weight:700;font-size:2.4rem;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--suave);max-width:64ch}
+.eti{font-family:var(--f-dato);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--naranjo)}
+.antes{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.antes span{font-family:var(--f-dato);font-size:.74rem;border:1px solid var(--linea);border-radius:20px;padding:4px 10px;color:var(--suave)}
+.antes b{color:var(--rojo);font-weight:600}
+.pasos{display:flex;gap:6px;flex-wrap:wrap}
+.pasos button{font:500 .8rem var(--f-cuerpo);background:var(--panel);color:var(--suave);border:1px solid var(--linea);border-radius:20px;padding:7px 13px;cursor:pointer}
+.pasos button[aria-pressed="true"]{color:var(--texto);border-color:var(--naranjo)}
+.pasos button:focus-visible,.tel button:focus-visible{outline:2px solid var(--dorado);outline-offset:2px}
+.bloque{display:grid;grid-template-columns:350px 1fr;gap:36px;align-items:start}
+@media (max-width:820px){.bloque{grid-template-columns:1fr}.tel{margin:0 auto}}
+.decis{min-width:0;display:flex;flex-direction:column;gap:14px}
+.decis h2{font-family:var(--f-titulo);font-size:1.7rem;margin:0;text-wrap:balance}
+.decis ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;color:#c9d2de;max-width:62ch}
+.decis b{color:var(--texto)}
+.preg{border:1px solid var(--linea);border-radius:10px;padding:12px 14px;background:var(--panel)}
+.preg .eti{color:var(--dorado)}
+.preg p{margin:4px 0 0;font-size:.92rem;color:#c9d2de}
+
+/* Teléfono */
+.tel{width:340px;max-width:100%;height:680px;border-radius:34px;border:8px solid #1d2430;background:#0a0d12;overflow:hidden;position:relative;box-shadow:0 30px 60px -30px #000;user-select:none}
+.mapa{position:absolute;inset:0;cursor:crosshair;touch-action:none}
+.mapa svg{width:100%;height:100%;display:block}
+.barra-sup{position:absolute;top:12px;left:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:3}
+.buscar{display:flex;align-items:center;gap:10px;background:#0a0d12ee;border:1px solid var(--linea);border-radius:14px;padding:11px 14px;color:var(--suave);font-size:.95rem;box-shadow:0 8px 20px -10px #000}
+.buscar .mic{margin-left:auto;width:30px;height:30px;border-radius:50%;background:var(--naranjo);color:#120700;display:grid;place-items:center;flex:none}
+.giro{display:flex;align-items:center;gap:12px;background:#0f5132;border-radius:14px;padding:12px 14px;box-shadow:0 8px 20px -10px #000}
+.giro .flecha{width:40px;height:40px;flex:none}
+.giro strong{display:block;font-size:1.25rem;font-family:var(--f-titulo);letter-spacing:.01em}
+.giro span{font-size:.8rem;color:#bfe8d2}
+.fab{position:absolute;right:14px;width:54px;height:54px;border-radius:50%;border:none;display:grid;place-items:center;cursor:pointer;z-index:3;box-shadow:0 6px 16px -4px #000}
+.fab.mas{bottom:96px;background:var(--naranjo);color:#120700}
+.fab.yo{bottom:160px;background:#0a0d12ee;border:1px solid var(--linea);color:var(--texto);width:44px;height:44px;right:19px}
+.inf{position:absolute;left:12px;right:12px;bottom:14px;z-index:3;display:flex;gap:8px}
+.inf .chip-grande{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:#0a0d12ee;border:1px solid var(--linea);border-radius:14px;padding:13px;font-weight:600;font-size:.92rem;color:var(--texto)}
+.eta{flex:1;display:flex;justify-content:space-between;align-items:center;background:#0a0d12ee;border:1px solid var(--linea);border-radius:14px;padding:10px 14px;font-family:var(--f-dato);font-size:.8rem;color:var(--suave);font-variant-numeric:tabular-nums}
+.eta b{display:block;color:var(--texto);font-size:1.05rem}
+.eta .fin{background:var(--rojo);color:#fff;border:none;border-radius:10px;padding:8px 12px;font:600 .8rem var(--f-cuerpo)}
+.pin{position:absolute;z-index:2;transform:translate(-50%,-100%);pointer-events:none;transition:opacity .2s}
+.anillo{position:absolute;z-index:2;width:70px;height:70px;border-radius:50%;border:3px solid var(--naranjo);transform:translate(-50%,-50%) scale(.3);opacity:0;pointer-events:none}
+.anillo.on{animation:carga .6s ease-out forwards}
+@keyframes carga{to{transform:translate(-50%,-50%) scale(1);opacity:.9}}
+.hoja{position:absolute;left:0;right:0;bottom:0;z-index:4;background:#0f141c;border-top:1px solid var(--linea);border-radius:20px 20px 0 0;padding:10px 16px 18px;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;gap:12px}
+.hoja.on{transform:none}
+.asa{width:40px;height:4px;border-radius:2px;background:var(--linea);align-self:center}
+.hoja h3{margin:0;font-size:1rem}
+.hoja .lugar{font-family:var(--f-dato);font-size:.74rem;color:var(--suave)}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.accion{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;border-radius:14px;border:1px solid var(--linea);background:var(--panel);color:var(--texto);font:600 .9rem var(--f-cuerpo);cursor:pointer}
+.accion.pri{background:var(--naranjo);border-color:var(--naranjo);color:#120700}
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cat{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:12px;border:1.5px solid var(--linea);background:var(--panel);color:var(--texto);font:500 .74rem var(--f-cuerpo);cursor:pointer;text-align:center}
+.cat[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.cat svg{color:var(--c)}
+.nota{background:#000;border:1px solid var(--linea);border-radius:10px;padding:10px;color:var(--suave);font-size:.84rem}
+.publicar{background:var(--naranjo);border:none;border-radius:12px;padding:13px;font:700 .95rem var(--f-cuerpo);color:#120700;cursor:pointer}
+.publicar[disabled]{background:var(--panel);color:var(--suave);cursor:default}
+.toast{position:absolute;left:16px;right:16px;bottom:84px;z-index:5;background:#0a0d12f2;border:1px solid var(--verde);border-radius:12px;padding:10px 12px;font-size:.84rem;transform:translateY(20px);opacity:0;transition:.3s;pointer-events:none}
+.toast.on{transform:none;opacity:1}
+.ayuda{position:absolute;left:50%;top:46%;z-index:2;transform:translateX(-50%);background:#000c;border:1px dashed var(--suave);border-radius:12px;padding:8px 12px;font-size:.78rem;color:var(--texto);white-space:nowrap;pointer-events:none;animation:titila 2.4s ease-in-out infinite}
+@keyframes titila{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+footer{color:var(--suave);font-size:.8rem;font-family:var(--f-dato)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+  <symbol id="i-yo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><path d="M12 3.5v5.4M12 20.5v-5.4M3.5 12h5.4M20.5 12h-5.4"/></symbol>
+  <symbol id="i-grabar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#ef4444"/></symbol>
+  <symbol id="i-ir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4.5 20.3l.7.7L12 18l6.8 3 .7-.7z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.2 7-12.4A7 7 0 1 0 5 8.6C5 13.8 12 21 12 21z"/><circle cx="12" cy="8.5" r="2.2"/></symbol>
+  <symbol id="i-estrella" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+  <symbol id="i-gota" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3s6.5 7.2 6.5 11.4a6.5 6.5 0 0 1-13 0C5.5 10.2 12 3 12 3z"/></symbol>
+  <symbol id="i-camara" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.2"/></symbol>
+  <symbol id="i-tienda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M9 21v-7h6v7"/></symbol>
+  <symbol id="i-peligro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+</svg>
+
+<div class="envolver">
+  <header>
+    <div class="eti">Maqueta para aprobar · LibrePedal · 15-oct</div>
+    <h1>Un solo mapa</h1>
+    <p>Hoy la app tiene tres mapas: el chico de "Viaje rápido", el "Mapa" y el de navegación. Propongo uno solo, que sirve para buscar, explorar, dejar puntos y navegar sin cambiar de pantalla. Prueba el teléfono: mantén apretado cualquier lugar del mapa.</p>
+    <div class="antes"><span><b>Sale</b> Viaje rápido como pantalla aparte</span><span><b>Sale</b> el mapa chico "No lo encuentro"</span><span><b>Sale</b> el mapa aparte de navegación</span><span><b>Sale</b> el menú que se cierra solo a los 6 s</span></div>
+  </header>
+
+  <div class="pasos" role="group" aria-label="Estados de la maqueta">
+    <button type="button" data-e="mapa" aria-pressed="true">1 · El mapa</button>
+    <button type="button" data-e="menu" aria-pressed="false">2 · Mantener apretado</button>
+    <button type="button" data-e="punto" aria-pressed="false">3 · Dejar un punto</button>
+    <button type="button" data-e="nav" aria-pressed="false">4 · Navegando</button>
+  </div>
+
+  <section class="bloque">
+    <div class="tel" id="tel" aria-label="Teléfono de la maqueta">
+      <div class="mapa" id="mapa">
+        <svg viewBox="0 0 340 680" aria-hidden="true">
+          <rect width="340" height="680" fill="var(--tierra)"/>
+          <path d="M-10 470 C 60 430 120 520 200 480 S 330 420 360 450 L360 700 L-10 700 Z" fill="var(--agua)"/>
+          <path d="M210 120 C 260 110 300 160 290 220 C 280 260 230 250 215 210 Z" fill="var(--parque)"/>
+          <g stroke="var(--calle)" stroke-width="9" fill="none" stroke-linecap="round">
+            <path d="M-10 300 C 80 290 150 330 220 310 S 330 280 360 290"/>
+            <path d="M120 -10 C 130 120 100 220 130 330 S 150 420 140 470"/>
+            <path d="M240 -10 L 250 180 C 255 250 300 300 360 330"/>
+          </g>
+          <g stroke="var(--calle)" stroke-width="4" fill="none" opacity=".8">
+            <path d="M-10 160 L 360 190"/><path d="M40 -10 L 60 420"/><path d="M190 200 L 330 90"/>
+          </g>
+          <path id="rutaNav" d="M130 330 C 150 300 190 315 220 310 S 280 290 300 250" stroke="var(--naranjo)" stroke-width="5" fill="none" stroke-linecap="round" opacity="0"/>
+          <g id="puntos">
+            <g transform="translate(70 230)"><circle r="13" fill="#0a0d12" stroke="var(--azul)" stroke-width="2"/><use href="#i-camara" x="-8" y="-8" width="16" height="16" style="color:var(--azul)"/></g>
+            <g transform="translate(275 175)"><circle r="13" fill="#0a0d12" stroke="var(--rojo)" stroke-width="2"/><use href="#i-peligro" x="-8" y="-8" width="16" height="16" style="color:var(--rojo)"/></g>
+          </g>
+          <g id="nuevoPunto" opacity="0"></g>
+          <g transform="translate(130 330)"><circle r="16" fill="var(--naranjo)" opacity=".18"/><circle r="7" fill="var(--naranjo)" stroke="#fff" stroke-width="2"/></g>
+        </svg>
+      </div>
+      <div class="ayuda" id="ayuda">Mantén apretado un lugar del mapa</div>
+      <div class="anillo" id="anillo"></div>
+      <svg class="pin" id="pin" width="34" height="42" viewBox="0 0 24 30" style="opacity:0"><path d="M12 29s9-9.3 9-16A9 9 0 1 0 3 13c0 6.7 9 16 9 16z" fill="var(--naranjo)" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="12.5" r="3.4" fill="#fff"/></svg>
+
+      <div class="barra-sup">
+        <div class="buscar" id="buscar"><svg width="20" height="20"><use href="#i-lupa"/></svg>¿A dónde vamos?<span class="mic"><svg width="16" height="16"><use href="#i-mic"/></svg></span></div>
+        <div class="giro" id="giro" hidden><svg class="flecha" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V11a3 3 0 0 1 3-3h9M14 4l4 4-4 4"/></svg><div><strong>En 200 m, a la derecha</strong><span>por Camino a Llifén</span></div></div>
+      </div>
+      <button type="button" class="fab yo" aria-label="Volver a mi ubicación"><svg width="22" height="22"><use href="#i-yo"/></svg></button>
+      <button type="button" class="fab mas" id="fabMas" aria-label="Dejar un punto donde estoy"><svg width="26" height="26"><use href="#i-mas"/></svg></button>
+      <div class="inf" id="infReposo"><div class="chip-grande"><svg width="16" height="16"><use href="#i-grabar"/></svg>Grabar un paseo</div></div>
+      <div class="inf" id="infNav" hidden><div class="eta"><div><b>12:48</b>llegada</div><div><b>8,4 km</b>faltan</div><div><b>18</b>km/h</div><button type="button" class="fin">Terminar</button></div></div>
+
+      <div class="toast" id="toast" role="status"></div>
+
+      <div class="hoja" id="hojaMenu" aria-label="¿Qué quieres hacer aquí?">
+        <div class="asa"></div>
+        <div><h3>¿Qué quieres hacer aquí?</h3><div class="lugar">Camino a Llifén · a 1,2 km de ti</div></div>
+        <div class="dos">
+          <button type="button" class="accion pri" id="btnIr"><svg width="24" height="24"><use href="#i-ir"/></svg>Ir aquí</button>
+          <button type="button" class="accion" id="btnDejar"><svg width="24" height="24"><use href="#i-pin"/></svg>Dejar un punto aquí</button>
+        </div>
+      </div>
+
+      <div class="hoja" id="hojaPunto" aria-label="Dejar un punto">
+        <div class="asa"></div>
+        <div><h3>¿Qué hay aquí?</h3><div class="lugar" id="lugarPunto">Camino a Llifén · el punto que marcaste</div></div>
+        <div class="cats" id="cats">
+          <button type="button" class="cat" style="--c:var(--violeta)" data-c="Punto de interés" aria-pressed="false"><svg width="22" height="22"><use href="#i-estrella"/></svg>Punto de interés</button>
+          <button type="button" class="cat" style="--c:var(--teal)" data-c="Agua" aria-pressed="false"><svg width="22" height="22"><use href="#i-gota"/></svg>Agua</button>
+          <button type="button" class="cat" style="--c:var(--azul)" data-c="Mirador" aria-pressed="false"><svg width="22" height="22"><use href="#i-camara"/></svg>Mirador</button>
+          <button type="button" class="cat" style="--c:#f59e0b" data-c="Servicio" aria-pressed="false"><svg width="22" height="22"><use href="#i-tienda"/></svg>Servicio</button>
+          <button type="button" class="cat" style="--c:var(--rojo)" data-c="Peligro" aria-pressed="false"><svg width="22" height="22"><use href="#i-peligro"/></svg>Peligro</button>
+          <button type="button" class="cat" style="--c:var(--azul)" data-c="Control" aria-pressed="false"><svg width="22" height="22"><use href="#i-escudo"/></svg>Control</button>
+        </div>
+        <div class="nota">Nombre o nota (opcional) · ej: "Cascada escondida"</div>
+        <button type="button" class="publicar" id="publicar" disabled>Elige qué hay aquí</button>
+      </div>
+    </div>
+
+    <div class="decis" id="decis"></div>
+  </section>
+
+  <footer>Rama: design/un-solo-mapa — es solo diseño, todavía no cambia nada de la app.</footer>
+</div>
+
+<script>
+(function(){
+  var DECIS={
+    mapa:{eti:'Estado 1 · al abrir', t:'Un mapa que sirve para todo', l:[
+      '<b>Arriba, "¿A dónde vamos?"</b> con el micrófono al lado. Es lo que hoy está en "Viaje rápido", pero encima del mapa.',
+      '<b>Abajo, "Grabar un paseo"</b>, la otra cosa que se hace al salir.',
+      '<b>El botón "+" naranjo</b> deja un punto donde estás parado, con un toque. Está siempre, también navegando.',
+      '<b>Mantener apretado</b> cualquier lugar abre las dos opciones: ir ahí o dejar un punto. Así funcionan Google Maps y Waze.',
+      'La primera vez aparece la ayuda "Mantén apretado un lugar del mapa"; después no vuelve a salir.'],
+      p:'La velocidad grande que hoy está en Viaje rápido pasa a la pantalla de navegación y a la esfera. Con el mapa quieto no sirve.'},
+    menu:{eti:'Estado 2 · mantener apretado', t:'Dos opciones, nada más', l:[
+      'Al mantener apretado se dibuja un anillo y cae un pin en ese lugar.',
+      'Sube una hoja con <b>"Ir aquí"</b> y <b>"Dejar un punto aquí"</b>. Son botones grandes, para usar con guantes.',
+      'La hoja <b>no se cierra sola</b>: se cierra tocando fuera o bajándola. Hoy el menú se cierra a los 6 segundos.',
+      'Reemplaza al mapa chico "No lo encuentro: elegir en el mapa".'],
+      p:''},
+    punto:{eti:'Estado 3 · dejar un punto', t:'Seis tipos claros y un botón', l:[
+      '<b>"Punto de interés" existe</b>, en violeta. Hoy no hay cómo marcar una cascada o una casona: solo Peligro, Control, Servicio y Mirador.',
+      'Agua queda aparte porque es lo que más busca un ciclista.',
+      'Un toque elige el tipo y el botón de abajo cambia a "Publicar". La nota es opcional.',
+      'El punto queda donde está el pin, no donde estás tú. Se puede arrastrar para afinarlo.',
+      '<b>Sin cuenta completa</b>, en vez del error técnico de hoy, el mensaje dice "Para dejar puntos, entra con tu cuenta de Google" con el botón para hacerlo.'],
+      p:'Los subtipos de hoy (hoyo, ripio, animal, etc.) siguen existiendo: al elegir Peligro aparece una segunda fila chica. ¿Lo dejamos así o los muestro todos de una?'},
+    nav:{eti:'Estado 4 · navegando', t:'El mismo mapa, en modo ruta', l:[
+      'Al tocar "Ir aquí" no se abre otra pantalla: el buscador se transforma en el <b>cartel del próximo giro</b> y abajo aparecen llegada, km que faltan y velocidad.',
+      'Es el mismo mapa, con el mismo estilo, los mismos puntos y la misma comunidad. Hoy el mapa de navegación es otro y no muestra nada de eso.',
+      'El <b>"+"</b> sigue ahí: en ruta, un toque deja un punto donde vas.',
+      '"Terminar" en rojo cierra el viaje y guarda la ruta.'],
+      p:'Esto toca el motor de navegación (hoy usa otro mapa). Lo haría en dos etapas: primero un solo mapa para buscar y dejar puntos, y después la navegación sobre ese mismo mapa.'}
+  };
+  var est='mapa', cat=null;
+  var $=function(id){ return document.getElementById(id); };
+  var botones=[].slice.call(document.querySelectorAll('.pasos button'));
+  function decis(e){
+    var d=DECIS[e];
+    $('decis').innerHTML='<div class="eti">'+d.eti+'</div><h2>'+d.t+'</h2><ul>'+d.l.map(function(x){ return '<li>'+x+'</li>'; }).join('')+'</ul>'+(d.p?'<div class="preg"><div class="eti">Para decidir</div><p>'+d.p+'</p></div>':'');
+  }
+  function pinEn(x,y){ var p=$('pin'); p.style.left=x+'px'; p.style.top=y+'px'; p.style.opacity=1; }
+  function ir(e){
+    est=e; botones.forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.e===e); });
+    $('hojaMenu').classList.toggle('on', e==='menu');
+    $('hojaPunto').classList.toggle('on', e==='punto');
+    $('ayuda').hidden=(e!=='mapa');
+    var nav=(e==='nav');
+    $('buscar').hidden=nav; $('giro').hidden=!nav; $('infReposo').hidden=nav; $('infNav').hidden=!nav;
+    $('rutaNav').setAttribute('opacity', nav?'1':'0');
+    if(e==='mapa'){ $('pin').style.opacity=0; }
+    if(e==='menu' && $('pin').style.opacity!=='1') pinEn(205,330);
+    if(e==='punto'){ if($('pin').style.opacity!=='1') pinEn(205,330); elegir(null); }
+    if(nav){ $('pin').style.opacity=0; }
+    decis(e);
+  }
+  botones.forEach(function(b){ b.addEventListener('click', function(){ ir(b.dataset.e); }); });
+
+  // Mantener apretado de verdad (550 ms) sobre el mapa
+  var mapa=$('mapa'), t=null, largo=false;
+  mapa.addEventListener('pointerdown', function(ev){
+    if(est==='nav') return;
+    largo=false;
+    var r=$('tel').getBoundingClientRect(), x=ev.clientX-r.left-8, y=ev.clientY-r.top-8;
+    var a=$('anillo'); a.style.left=x+'px'; a.style.top=y+'px'; a.classList.remove('on'); void a.offsetWidth; a.classList.add('on');
+    t=setTimeout(function(){ largo=true; a.classList.remove('on'); pinEn(x,y); $('lugarPunto').textContent='Camino a Llifén · el punto que marcaste'; ir('menu'); }, 550);
+  });
+  ['pointerup','pointerleave','pointercancel'].forEach(function(n){ mapa.addEventListener(n, function(){ clearTimeout(t); $('anillo').classList.remove('on'); }); });
+  // Un toque corto fuera de la hoja la cierra; el clic que llega al soltar un "mantener apretado" no.
+  mapa.addEventListener('click', function(){ if(largo){ largo=false; return; } if(est==='menu'||est==='punto') ir('mapa'); });
+
+  $('btnIr').addEventListener('click', function(){ ir('nav'); });
+  $('btnDejar').addEventListener('click', function(){ ir('punto'); });
+  $('fabMas').addEventListener('click', function(){ pinEn(130,330); $('lugarPunto').textContent='Donde estás ahora'; ir('punto'); });
+  function elegir(b){
+    cat=b?b.dataset.c:null;
+    [].slice.call(document.querySelectorAll('.cat')).forEach(function(x){ x.setAttribute('aria-pressed', x===b); });
+    var p=$('publicar'); p.disabled=!cat; p.textContent=cat?'Publicar '+cat.toLowerCase():'Elige qué hay aquí';
+  }
+  [].slice.call(document.querySelectorAll('.cat')).forEach(function(b){ b.addEventListener('click', function(){ elegir(b); }); });
+  $('publicar').addEventListener('click', function(){
+    if(!cat) return;
+    var nombre=cat;
+    ir('mapa'); $('ayuda').hidden=true;
+    var toast=$('toast'); toast.textContent='Listo: "'+nombre+'" quedó en el mapa. Gracias por aportar.'; toast.classList.add('on');
+    setTimeout(function(){ toast.classList.remove('on'); }, 2600);
+    $('lugarPunto').textContent='Camino a Llifén · el punto que marcaste';
+  });
+  ir('mapa');
+})();
+</script>
