@@ -33,7 +33,24 @@ async function _mostrarBienvenidaFundador(){
   }catch(e){}
 }
 async function _cargarEstadoFundador(){ try{ if(!cu||typeof db==='undefined') return; try{ var _cf=JSON.parse(localStorage.getItem('lp_fundador_'+cu)||'null'); if(_cf){ _miNumFundador=_cf.no; _esFundador=!!_cf.es; } }catch(e){} const me=await db.collection('users').doc(cu).get(); const ts=me.exists?me.data().createdAt:null; if(!ts) return; const agg=await db.collection('users').where('createdAt','<',ts).count().get(); _miNumFundador=(agg.data().count||0)+1; _esFundador=_miNumFundador<=(typeof LP_FUNDADORES_CUPO!=='undefined'?LP_FUNDADORES_CUPO:1000); try{ localStorage.setItem('lp_fundador_'+cu, JSON.stringify({no:_miNumFundador,es:_esFundador})); }catch(e){} }catch(e){} }
-function _ganarDarma(n){ var mult=_esFundador?2:1; us.d+=Math.round((n||0)*mult); if(typeof au==='function') au(); if(typeof sincronizarStats==='function') sincronizarStats(); }
+/* 2026-10-15 (auditoría): los aportes (reportes, puntos, alojamiento) daban Darma sin límite, y el Darma
+   cuenta para sorteos y premios: se podía "farmear" publicando reportes en serie. Ahora los aportes dan
+   Darma hasta DARMA_APORTES_DIA veces por día (el aporte se publica igual). Devuelve lo ganado de verdad,
+   para que el mensaje no prometa Darma que no se dio. */
+var DARMA_APORTES_DIA=5;
+function _ganarDarma(n, esAporte){
+  if(esAporte){
+    var hoy=new Date().toISOString().slice(0,10);
+    if(!us.darmaHoy || us.darmaHoy.f!==hoy) us.darmaHoy={f:hoy, n:0};
+    if(us.darmaHoy.n>=DARMA_APORTES_DIA) return 0;
+    us.darmaHoy.n++;
+  }
+  var mult=_esFundador?2:1, g=Math.round((n||0)*mult); us.d+=g;
+  if(typeof au==='function') au(); if(typeof sincronizarStats==='function') sincronizarStats();
+  return g;
+}
+// Frase honesta sobre el Darma ganado (para h()): con el tope del día alcanzado no promete nada.
+function _textoDarma(g){ return g>0 ? (g+' de Darma para ti.') : 'Hoy ya sumaste el máximo de Darma por aportes; igual quedó publicado.'; }
 // km de BICICLETA para confianza (ciclismo+cicloviaje+mtb; NO auto ni trekking) — pedido de Inty
 function _kmBiciConfianza(){ var m=(us&&us.dm)||{}; var bike=(Number(m.ciclismo)||0)+(Number(m.cicloviaje)||0)+(Number(m.mtb)||0); if(bike<=0){ var modo=(typeof actividadTipo!=="undefined"&&actividadTipo)?actividadTipo:"ciclismo"; if(modo==="ciclismo"||modo==="cicloviaje"||modo==="mtb") return (us&&us.di)||0; } return bike; }
 var LP_KM_CONFIANZA=10; // km de bici reales para acciones sensibles (anti cuentas falsas)

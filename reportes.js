@@ -75,9 +75,11 @@ async function reportarPorVozRapido(cat){
   try{
     let comuna='Mi zona';
     try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+loc.lat+'&lon='+loc.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
-    await db.collection('reportes').add({cat:cat, text:voz.texto, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
-    _ganarDarma(15); au(); if(typeof sincronizarStats==='function') sincronizarStats();
-    return voz.confirma;
+    // 2026-10-15: sin señal, esperar al servidor dejaba a Pistero mudo (es un comando por voz, en ruta).
+    // lpEscrituraConTope: a los 8 s responde igual y dice la verdad.
+    const _conf=await lpEscrituraConTope(db.collection('reportes').add({cat:cat, text:voz.texto, user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()}));
+    _ganarDarma(15, true); // aporte: con tope diario (gamificacion-darma.js)
+    return _conf ? voz.confirma : 'Sin señal ahora: tu aviso quedó guardado en el teléfono y llega a la comunidad apenas vuelva la conexión.';
   }catch(err){ return 'No se pudo enviar el aviso, inténtalo de nuevo en un rato.'; }
 }
 // ===== Consulta de peligros en una RUTA concreta ("Pistero, ¿hay policías en mi
@@ -163,6 +165,13 @@ const _POLICIA_CHISTOSO=[
   "Eeeh… buenos días, buenas tardes… hay control a tres kilómetros, no má."
 ];
 let _distPrevRep={};
+// "a 300 metros" / "a 1,4 kilómetros" — la distancia de verdad, redondeada como la diría una persona.
+function _distanciaHablada(m){
+  if(!(m>=0)) return 'cerca';
+  if(m<60) return 'justo aquí';
+  if(m<1000) return 'a '+(Math.round(m/50)*50)+' metros';
+  return 'a '+(Math.round(m/100)/10).toString().replace('.',',')+' kilómetros';
+}
 // ===== "¿Sigue ahí?" al pasar (Inty 2026-10-07, como Waze): después de pasar a menos de 150 m de un
 // peligro vigente, aparece una tarjeta con dos botones grandes. Si no tocas nada, se va sola y no
 // pasa nada. Una vez por aviso; nunca al autor, a quien ya votó ni a quien aún no puede votar. =====
@@ -222,14 +231,17 @@ function avisarReportesCercanos(lat,lon,speed){
     const _acercandose=(_prev===undefined)||(dist<_prev);
     if(dist<=umbral && _acercandose){
       reportesAvisados.add(id);
-      if(esPolicia && esMoto && pisteroPersonalidad==='humoristico'){
+      // 2026-10-15 (auditoría "sin datos falsos"): la frase chistosa dice "a tres kilómetros" y sonaba aunque
+      // el control estuviera a 500 m; y los peligros decían "a unos metros" aunque estuvieran a 600 m.
+      // Ahora la distancia dicha es la real (_distanciaHablada), y el chiste solo cuando de verdad son ~3 km.
+      if(esPolicia && esMoto && pisteroPersonalidad==='humoristico' && dist>=2500){
         h(_POLICIA_CHISTOSO[(_policiaAlterna++)%_POLICIA_CHISTOSO.length]); // frase torpe pre-grabada, alternada
       } else if(esPolicia){
-        const km=dist/1000;
-        h('Atento, control de carabineros reportado por la comunidad '+(km>=1?('a '+km.toFixed(1).replace('.',',')+' kilómetros'):'a unos metros')+'. Tranquilo y a lo legal.');
+        h('Atento, control de carabineros reportado por la comunidad '+_distanciaHablada(dist)+'. Tranquilo y a lo legal.');
       } else {
         const c=REPORTE_CATS[r.cat];
-        h('Ojo, '+c.e+' '+c.l.toLowerCase()+' reportado por la comunidad a unos metros: '+r.text);
+        const det=(r.text||'').trim();
+        h('Ojo, '+c.e+' '+c.l.toLowerCase()+' reportado por la comunidad '+_distanciaHablada(dist)+(det?(': '+det):'.'));
       }
       return;
     }
@@ -338,7 +350,7 @@ async function enviarReporte(){
       if(difEl && difEl.value) data.dificultad=difEl.value;
     }
     const _conf=await lpEscrituraConTope(db.collection('reportes').add(data));
-    _ganarDarma(15); au(); sincronizarStats();
+    const _dGan=_ganarDarma(15, true); // aporte: con tope diario (gamificacion-darma.js)
     _cerrarReporteRapido();
     // 2026-08-23: pedido de Inty tras probar en vivo — publicaba bien pero si el mapa
     // estaba muy alejado (más del umbral de ~30km visibles que ya usan los reportes,
@@ -352,8 +364,8 @@ async function enviarReporte(){
         mp.easeTo({center:[loc.lon,loc.lat], duration:500});
       }
     }catch(e){}
-    try{ _pisteroMood='contento'; }catch(e){} h(_conf?'¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. Quince de Darma para ti.':'Sin señal ahora: tu reporte quedó guardado en el teléfono y aparece en el mapa de '+comuna+' apenas vuelva la conexión. Quince de Darma para ti.');
-  }catch(err){ lpAviso('No se pudo enviar: '+err.message); }
+    try{ _pisteroMood='contento'; }catch(e){ console.warn('[reportes] no se pudo animar al Pistero', e); } h(_conf?'¡Gracias por aportar a la comunidad! Tu dato ya está en el mapa de '+comuna+'. '+_textoDarma(_dGan):'Sin señal ahora: tu reporte quedó guardado en el teléfono y aparece en el mapa de '+comuna+' apenas vuelva la conexión. '+_textoDarma(_dGan));
+  }catch(err){ lpAviso('No se pudo enviar: '+lpErrorHumano(err)); }
   finally{ _enviandoReporte=false; }
 }
 function tiempoTranscurrido(ts){ if(!ts||!ts.seconds) return 'recién'; const s=Math.floor(Date.now()/1000)-ts.seconds; if(s<60) return 'recién'; const m=Math.floor(s/60); if(m<60) return 'hace '+m+' min'; const h2=Math.floor(m/60); if(h2<24) return 'hace '+h2+' h'; const d=Math.floor(h2/24); if(d<7) return 'hace '+d+' día'+(d>1?'s':''); const w=Math.floor(d/7); return 'hace '+w+' sem'; }

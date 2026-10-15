@@ -387,7 +387,7 @@ async function conectarPulsometro(){
     device.addEventListener('gattserverdisconnected', function(){ bleHR=null; _actualizarBleUI(); if(bleHRDevice===device) _reconectarBLE(device, suscribir, 'Pulsómetro', function(){ return bleHRDevice===device; }); });
     _actualizarBleUI();
     h('Pulsómetro conectado.');
-  }catch(e){ if(e.name!=='NotFoundError') lpAviso('No se pudo conectar el pulsómetro: '+e.message); }
+  }catch(e){ if(e.name!=='NotFoundError') lpAviso('No se pudo conectar el pulsómetro: '+lpErrorHumano(e)); }
 }
 async function conectarPotenciometro(){
   if(!_bleDisponible()){ lpAviso('Tu navegador no soporta Bluetooth (usa Chrome en Android, con el Bluetooth del celular encendido).'); return; }
@@ -404,7 +404,7 @@ async function conectarPotenciometro(){
     device.addEventListener('gattserverdisconnected', function(){ blePower=null; _actualizarBleUI(); if(blePowerDevice===device) _reconectarBLE(device, suscribir, 'Potenciómetro', function(){ return blePowerDevice===device; }); });
     _actualizarBleUI();
     h('Potenciómetro conectado.');
-  }catch(e){ if(e.name!=='NotFoundError') lpAviso('No se pudo conectar el potenciómetro: '+e.message); }
+  }catch(e){ if(e.name!=='NotFoundError') lpAviso('No se pudo conectar el potenciómetro: '+lpErrorHumano(e)); }
 }
 function desconectarBluetooth(){
   if(bleHRDevice && bleHRDevice.gatt.connected) bleHRDevice.gatt.disconnect();

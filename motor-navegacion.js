@@ -586,7 +586,7 @@ async function guardarRutaNavegada(){
   const origenNombre=await nombreDeLugar(pts[0].lat,pts[0].lon);
   const destinoNombre=navDestName?navDestName.split(',')[0].trim():await nombreDeLugar(pts[pts.length-1].lat,pts[pts.length-1].lon);
   const nombreRuta=origenNombre+' → '+destinoNombre;
-  const data={localId:localId,user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*kcalPorKm()),savedAt:Date.now()};
+  const data={localId:localId,user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*kcalPorKm()),savedAt:Date.now(),modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo')};
   guardarRutaLocalObj(data); renderRutas();
   _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()});
   revisarRetosCumplidos();

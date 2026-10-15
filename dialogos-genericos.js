@@ -4,6 +4,25 @@
 // lpConfirmar/lpPedirTexto usan un modal propio y devuelven una Promise para poder
 // seguir escribiendo "if(await lpConfirmar(...))" casi igual que con confirm().
 function lpAviso(msg){ mostrarBocadillo(String(msg), 6000); }
+/* 2026-10-15 (auditoría "app al 100"): 17 lugares mostraban el error tal cual lo entrega Firebase/el
+   navegador, en inglés técnico ("Missing or insufficient permissions", "auth/popup-closed-by-user"...).
+   lpErrorHumano(err) lo traduce a qué pasó y qué hacer; el código queda al final para soporte.
+   Pura: tests/datos-reales.test.mjs. */
+function lpErrorHumano(err){
+  const code=String((err&&err.code)||'').toLowerCase(), msg=String((err&&err.message)||err||'').toLowerCase(), nom=String((err&&err.name)||'');
+  const t=function(s){ return s+(code?(' (código: '+code+')'):''); };
+  if(/popup-closed-by-user|cancelled-popup-request|user-cancel/.test(code+msg)) return 'cerraste la ventana de Google antes de terminar. Inténtalo de nuevo.';
+  if(/popup-blocked/.test(code+msg)) return 'el navegador bloqueó la ventana de Google. Permite las ventanas emergentes para librepedal.cl.';
+  if(/network|failed to fetch|unavailable|offline|internet|load failed/.test(code+msg)) return 'no hay conexión a internet. Inténtalo cuando tengas señal.';
+  if(/permission|insufficient|unauthenticated/.test(code+msg)) return t('tu cuenta no tiene permiso para esto. Entra con tu cuenta de Google o tu correo e inténtalo de nuevo.');
+  if(/too-many-requests|resource-exhausted|quota/.test(code+msg)) return t('hubo demasiados intentos o el servicio está saturado. Espera unos minutos.');
+  if(/invalid-email/.test(code+msg)) return 'el correo no es válido. Revísalo.';
+  if(/expired-action-code|invalid-action-code/.test(code+msg)) return 'el enlace venció o ya se usó. Pide uno nuevo.';
+  if(/unauthorized-domain/.test(code+msg)) return t('esta dirección no está autorizada para entrar con Google.');
+  if(nom==='NotAllowedError' || /notallowed|denied/.test(msg)) return 'no se dio el permiso necesario. Revísalo en los ajustes del teléfono.';
+  if(nom==='NotFoundError') return 'no se encontró el dispositivo.';
+  return t('ocurrió un error inesperado. Inténtalo de nuevo; si sigue, avísanos');
+}
 function _lpDialogCerrar(){ document.getElementById('lpDialog').classList.remove('on'); }
 function lpConfirmar(msg){
   return new Promise(function(resolve){

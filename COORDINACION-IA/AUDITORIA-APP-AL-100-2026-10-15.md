@@ -24,6 +24,31 @@ Método: buscar en el código **cada número que la app muestra o dice** y **cad
 | 14 | Pistero repetía frases (agua cada 20 min, tips cada 11, travieso) | Generadores sin tope | Máx. 3 de charla por viaje | `fix/pistero-menos-frases` |
 | 15 | Giros perdidos con señal débil | Voz en vivo colgada 12 s | Voz del teléfono a los 2 s | `fix/giros-sin-senal` |
 
+## Segunda pasada (corregido, con test en `tests/datos-reales.test.mjs`)
+
+| # | Qué estaba mal | Arreglo |
+|---|---|---|
+| 16 | Retos y "Mi año" sumaban GPX importados (se cumplía un reto importando un archivo) y viajes en auto | `rutaCuentaComoRecorrida()`; las rutas guardan `modo` |
+| 17 | Contador de viajes incluía rutas importadas | Ídem |
+| 18 | Darma de aportes sin límite (farmeable para sorteos/premios); mensajes prometían "quince de Darma" siempre | Tope de 5 aportes/día; el mensaje dice lo ganado de verdad |
+| 19 | Segmentos: con posiciones cada 25 s no se armaban o cerraban tarde | Paso por el tramo entre posiciones, hora interpolada |
+| 20 | Segmentos de ida y vuelta: récord de 0 s | Hay que alejarse 150 m antes de cerrar |
+| 21 | Segmentos: tiempos en auto en la tabla de ciclistas; marcas imposibles | No se arma en vehículo; >90 km/h en línea recta se descarta |
+| 22 | Segmentos sin señal: "primera vez"/"récord" + Darma falsos (caché vacía) | Solo se afirma si el dato viene del servidor |
+| 23 | Resumen de viaje: "km/h prom." con las paradas | Velocidad en movimiento, rotulada así |
+| 24 | Auto-pausa pausaba el reloj mientras pedaleabas (posiciones espaciadas) | Pausa solo si los km no avanzan en 1 min |
+| 25 | Desnivel: una cuesta gradual marcaba ~0 m | Acumulación con umbral de 3 m; perfiles viejos se recalculan |
+| 26 | Reportes: "a unos metros" a 600 m; chiste "control a tres kilómetros" a 500 m | Distancia real dicha |
+| 27 | SOS sin señal: la app quedaba muda | Responde a los 8 s y recuerda el 133 |
+| 28 | Aviso por voz, aviso de rodada y tiempo de segmento mudos sin señal | Responden de inmediato y dicen la verdad |
+| 29 | 17 errores mostrados en inglés técnico ("Missing or insufficient permissions") | `lpErrorHumano()`: qué pasó y qué hacer |
+
+## Probar en el teléfono (no se puede comprobar desde el computador)
+
+- Botones 133/131/132 y "Enviar por WhatsApp" del SOS dentro de la app instalada.
+- Compartir (video, imagen, GPX, resumen del año) con la versión nueva de Play.
+- Km y segmentos con la pantalla apagada en un trayecto conocido.
+
 ## Requiere acción de Inty
 
 - **Nueva versión en Play Store** para que la app instalada tenga los plugins de compartir/archivos (#12). Sin eso, la app vieja muestra "actualiza la app".
@@ -35,13 +60,8 @@ Método: buscar en el código **cada número que la app muestra o dice** y **cad
 - Ciclistas del mapa: no hay datos inventados (solo usuarios reales).
 - Ranking: ya separa km por modo (`kmPorModo`).
 
-## Por revisar en la próxima pasada (no revisado aún)
+## Por revisar en la próxima pasada
 
-- Retos y Darma: qué km cuentan y si se pueden duplicar.
-- Segmentos: tiempos con posiciones espaciadas (mismo problema que #1).
-- Resumen de viaje y "Wrapped" del año: origen de cada número.
-- Desnivel/subida mostrada en rutas.
-- Avisos de reportes: vigencia y distancia.
-- SOS y seguir en vivo: flujo completo en la app (con #12 ya comparten).
-- Inicio de sesión (correo, Google, código) en la app instalada.
-- Funcionamiento sin señal de cada pantalla.
+- Guardados que esperan al servidor en pantallas de casa (perfil, votación, sorteo, solicitud de amistad): con mala señal quedan sin respuesta. Mismo arreglo que #28.
+- Avisos de reportes en ruta: hoy por distancia en línea recta; en navegación conviene solo los que están sobre la ruta.
+- Inicio de sesión de punta a punta en la app instalada (correo, Google, código del evento): requiere el teléfono.

@@ -23,7 +23,7 @@ async function enviarLinkMagico(e){
     if(err && err.code==='auth/quota-exceeded'){
       _lpAvisoLogin('Hoy se llenó el cupo de correos de la app — no es culpa tuya.\n\nEscribile a Inty por WhatsApp y te manda un enlace directo para entrar al toque. Mañana el envío por correo vuelve a funcionar solo.');
     } else {
-      _lpAvisoLogin('No se pudo enviar el enlace'+_code+': '+((err&&err.message)||err));
+      _lpAvisoLogin('No se pudo enviar el enlace'+_code+': '+lpErrorHumano(err));
     }
   }
 }

@@ -90,11 +90,12 @@ async function enviarAvisoRodada(tipo){
   }
   _rodadaUltimoEnvio=ahora;
   try{
-    await db.collection('rodadaAvisos').add({
+    // 2026-10-15: sin señal, esperar al servidor dejaba el aviso sin respuesta (en plena ruta). A los 4 s se dice la verdad.
+    const _conf=await lpEscrituraConTope(db.collection('rodadaAvisos').add({
       rodada:rodadaActivaId, uid:cu, nombre:(typeof nombreUsuario!=='undefined'?nombreUsuario:'Ciclista'),
       tipo:tipo, ts:Date.now()
-    });
-    h('Avisado al grupo.', PRIO_VOZ.INFO);
+    }), 4000);
+    h(_conf ? 'Avisado al grupo.' : 'Sin señal: el aviso sale al grupo apenas haya conexión.', PRIO_VOZ.INFO);
   }catch(e){ lpAviso('No se pudo enviar el aviso.'); }
 }
 /* Escucha los avisos del grupo. Solo los NUEVOS: al entrar no se relee el historial,

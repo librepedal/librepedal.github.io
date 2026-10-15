@@ -343,6 +343,7 @@ function _filtrarSaltoVentana(historyArr, punto){
 function _sumarKmViaje(km){
   if(!(km>0)) return;
   us.di+=km; _kmEsteViaje+=km; _sumarKmModo(km);
+  if(typeof _ultimoKmTs!=='undefined') _ultimoKmTs=Date.now(); // la auto-pausa sabe que te estás moviendo (app-estado-global.js)
   if(typeof actividadTipo!=='undefined' && actividadTipo==='moto'){ if(typeof _sumarKmVehiculo==='function') _sumarKmVehiculo(km); } else { _sumarKmMantencion(km); }
   us.c+=(km*kcalPorKm()); au(); // calorías según la actividad (pistero-tipo-actividad.js): en vehículo, 0 const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2);
 }
