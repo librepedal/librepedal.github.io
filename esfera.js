@@ -19,8 +19,10 @@ const esferaItems=[
  // y se elimina la duplicación (4 de 12 ya estaban en header/Inicio). Lo que sale NO se pierde:
  // sigue en "☰ Menú clásico" y en sus pestañas (Mis viajes/Bitácora/Stats/Logros, Guía, Novedades,
  // Ajustes). Criterio: Ley de Hick + menos-es-más. Antes: 12 · Ahora: 5.
- {i:_ICO('<circle cx="12" cy="12" r="9"/><path d="M10 8.3l6.2 3.7-6.2 3.7z" fill="currentColor" stroke="none"/>'),t:'Viaje rápido',v:'dash'},
+ // 2026-10-15 (maqueta "Un solo mapa"): "Viaje rápido" sale — buscar destino vive en el Mapa. Su lugar lo toma
+ // "Grabar", lo otro que se hace al salir (antes había que entrar a Viaje rápido para encontrarlo).
  {i:_ICO('<path d="M12 21s7-7.2 7-12.4A7 7 0 1 0 5 8.6C5 13.8 12 21 12 21z"/><circle cx="12" cy="8.5" r="2.2"/>'),t:'Mapa',v:'map'},
+ {i:_ICO('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>'),t:'Grabar',fn:'muGrabar'},
  {i:_ICO('<path d="M15.4 3.6a4.2 4.2 0 0 0-5.5 5.5l-6 6a1.6 1.6 0 0 0 0 2.3l1.7 1.7a1.6 1.6 0 0 0 2.3 0l6-6a4.2 4.2 0 0 0 5.5-5.5l-2.9 2.9-2.6-2.6z"/>'),t:'Taller',v:'mac'},
  {i:_ICO('<circle cx="6.5" cy="17.5" r="2.6"/><circle cx="17" cy="15.4" r="2.6"/><path d="M9.1 17.5V6.6l10.5-2.1v10.9"/><path d="M9.1 10.2l10.5-2.1"/>'),t:'Música',v:'musica'},
  {i:_ICO('<path d="M12 3.4L21 19.4H3z"/><path d="M12 9.4v4.2M12 17h.01"/>'),t:'SOS',fn:'enviarSOS'}

@@ -20,6 +20,7 @@ const CORE = [
   './reportes.js',
   './rutas.js',
   './mapa-render.js',
+  './mapa-unico.js',
   './auth.js',
   './auth-vinculo.js',
   './auth-sesion.js',

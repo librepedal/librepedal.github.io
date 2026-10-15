@@ -284,8 +284,9 @@ async function im(){
     // Botón "ubícame": lo tocas y el mapa vuela hasta tu posición real con un punto
     // azul que se mueve solo mientras te desplazas (control nativo de MapLibre).
     mp.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true,showAccuracyCircle:true}),'top-right');
-    // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
-    mp.on('contextmenu', function(e){ try{ const _lat=e.lngLat.lat.toFixed(6), _lon=e.lngLat.lng.toFixed(6); new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div class="lp-pop"><div class="lp-ic"><i class="fas fa-location-dot"></i></div><div class="lp-body"><div class="lp-t">Punto elegido</div><a href="#" class="lp-cta" onclick="irAlPuntoYNavegar('+_lat+','+_lon+',\'este punto\');return false"><i class="fas fa-compass"></i> Navegar aquí</a></div></div>').addTo(mp); }catch(_){} });
+    // Mantén presionado (o clic derecho) en cualquier punto del mapa: "Ir aquí" o "Dejar un punto aquí"
+    // (mapa-unico.js, maqueta "Un solo mapa" aprobada 2026-10-15). Antes solo ofrecía navegar.
+    if(typeof muEnganchar==='function') muEnganchar(mp);
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
     mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); if(typeof rrecCargarEnMapa==='function') rrecCargarEnMapa(); mp.on('zoomend', _actualizarVisibilidadCiclistas); _actualizarVisibilidadCiclistas(); });
     _mpVolverInstalar(mp); // vuelve solo a tu posición tras 5 s sin tocar el mapa (ver _mpVolverAlCiclista)

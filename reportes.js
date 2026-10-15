@@ -23,6 +23,10 @@ var REPORTE_CATS={ // var a propósito: leida desde fuera de este archivo (rende
   taller:{g:'servicio',e:'🔧',fa:'screwdriver-wrench',l:'Taller de bicis',c:'#22d3ee',h:'Dónde arreglar o inflar, y si atiende ciclistas'},
   alojamiento:{g:'servicio',e:'🏕️',fa:'tent',l:'Dónde dormir',c:'#10b981',h:'Campings, hospedajes, acampada libre y precios'},
   mirador:{g:'lugar',e:'📸',fa:'mountain-sun',l:'Mirador',c:'#3b82f6',h:'Spots para detenerse y registrar el paisaje'},
+  // 2026-10-15 (maqueta "Un solo mapa" aprobada por Inty): no había cómo marcar una cascada o una casona,
+  // ni dónde rellenar agua — lo que más busca un ciclista.
+  interes:{g:'lugar',e:'⭐',fa:'star',l:'Punto de interés',c:'#a855f7',h:'Algo que vale la pena ver: cascada, casona, sendero'},
+  agua:{g:'servicio',e:'💧',fa:'droplet',l:'Agua',c:'#2bc4b4',h:'Vertiente, llave o agua potable para rellenar'},
   superficie:{g:'lugar',e:'🛣️',fa:'road',l:'Estado del camino',c:'#8b5cf6',h:'Asfalto, ripio o tierra — y qué tan exigente está'},
   policia:{g:'control',e:'👮',fa:'shield-halved',l:'Control policial',c:'#3b82f6',h:'Carabineros o fiscalización en la ruta'}
 };
@@ -310,6 +314,28 @@ function toggleReporteMapa(){
 }
 function seleccionarCatReporte(k){ reporteCatSel=k; document.querySelectorAll('#repCats .rep-cat').forEach(function(el){ el.style.borderColor = el.getAttribute('data-k')===k ? REPORTE_CATS[k].c : '#2a3147'; el.style.background = el.getAttribute('data-k')===k ? 'rgba(255,255,255,0.05)' : 'transparent'; }); const extra=document.getElementById('repSuperficieExtra'); if(extra) extra.style.display=(k==='superficie')?'block':'none'; }
 let _enviandoReporte=false;
+/* Publica un punto desde el mapa único (mapa-unico.js): misma escritura que enviarReporte, sin
+   depender del formulario viejo. Devuelve true si quedó publicado (o en cola sin señal). */
+async function publicarPuntoMapa(cat, texto, loc){
+  if(!REPORTE_CATS[cat] || !loc) return false;
+  if(_enviandoReporte) return false;
+  _enviandoReporte=true;
+  try{
+    let comuna='Mi zona';
+    try{ const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&accept-language=es&zoom=12&lat='+loc.lat+'&lon='+loc.lon); const j=await r.json(); const a=j.address||{}; comuna=a.city||a.town||a.village||a.municipality||a.county||a.state||'Mi zona'; }catch(e){}
+    const data={cat:cat, text:String(texto||'').slice(0,500), user:cu, nombre:nombreUsuario, lat:loc.lat, lon:loc.lon, comuna:comuna, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()};
+    const _conf=await lpEscrituraConTope(db.collection('reportes').add(data));
+    _ganarDarma(15); au(); sincronizarStats();
+    try{ _pisteroMood='contento'; }catch(e){}
+    h(_conf?'Listo: "'+REPORTE_CATS[cat].l+'" quedó en el mapa de '+comuna+'. Gracias por aportar, quince de Darma.':'Sin señal ahora: tu punto quedó guardado en el teléfono y aparece en el mapa apenas vuelva la conexión.');
+    return true;
+  }catch(err){
+    const sinPermiso=/permission|insufficient/i.test((err&&err.message)||'');
+    lpAviso(sinPermiso?'No se pudo publicar: tu cuenta no tiene permiso para dejar puntos. Entra con Google e inténtalo de nuevo.':'No se pudo publicar el punto. Revisa tu señal e inténtalo de nuevo.');
+    return false;
+  }
+  finally{ _enviandoReporte=false; }
+}
 async function enviarReporte(){
   if(!reporteCatSel){ lpAviso('Elige primero una categoría'); return; }
   // 2026-08-23: la descripción pasa a OPCIONAL (pedido de Inty: "esto tiene que ser
