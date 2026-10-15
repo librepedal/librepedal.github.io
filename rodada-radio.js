@@ -175,9 +175,14 @@ function _radioPublicarPosicion(){
     rtdb.ref(_radioBase()+'/miembros/'+cu).set({
       nombre:(typeof nombreUsuario!=='undefined' && nombreUsuario)||'Ciclista',
       tipo:_radioMiTipo(), avance:_radioAvanceM(), ts:Date.now()
-    }).catch(function(){});
+    }).catch(function(err){
+      // Sin las reglas de Firebase publicadas la base rechaza todo: decirlo una vez, no culpar a la señal.
+      if(_radioSinPermiso(err) && !_radioAvisoPermiso){ _radioAvisoPermiso=true; lpAviso('La radio no está habilitada todavía en el servidor. Avísale a Libre Pedal.'); }
+    });
   }catch(e){}
 }
+let _radioAvisoPermiso=false;
+function _radioSinPermiso(err){ const t=String((err && (err.code||err.message))||'').toLowerCase(); return t.indexOf('permission')>=0; }
 function _radioLatido(){
   _radioPublicarPosicion();
   const ahora=Date.now();
@@ -273,7 +278,7 @@ function _radioEnviarGrabacion(){
       rtdb.ref(_radioBase()+'/msgs').push({
         de:cu, nombre:(typeof nombreUsuario!=='undefined' && nombreUsuario)||'Ciclista',
         rol:rol, audio:audio, dur:Math.min(dur, RADIO_MAX_MS), ts:Date.now()
-      }).catch(function(){ lpAviso('Sin señal: el mensaje no salió.'); });
+      }).catch(function(err){ lpAviso(_radioSinPermiso(err) ? 'La radio no está habilitada todavía: el mensaje no salió.' : 'Sin señal: el mensaje no salió.'); });
     }catch(e){ lpAviso('No se pudo enviar el mensaje.'); }
     _radioLimpiarMisViejos();
   };
