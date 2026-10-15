@@ -133,15 +133,21 @@ if [ -d "$SRC/señuelos" ]; then
   echo "  ✓ señuelos puestos (desalojan la caché del incidente 2026-07-20)"
 fi
 
-echo "→ publicando..."
+# CF_BRANCH (2026-10-15): vista previa para probar en el teléfono SIN tocar librepedal.cl.
+# Con una rama distinta de main, Cloudflare Pages publica en https://<rama>.librepedal.pages.dev
+# y deja producción igual. Sin CF_BRANCH, es main como siempre.
+RAMA_CF="${CF_BRANCH:-main}"
+DOMINIO_CHEQUEO="librepedal.cl"
+[ "$RAMA_CF" != "main" ] && DOMINIO_CHEQUEO="$RAMA_CF.librepedal.pages.dev"
+echo "→ publicando (rama de Cloudflare: $RAMA_CF)..."
 cd "$OUT"
 CLOUDFLARE_API_TOKEN="$TOK" CLOUDFLARE_ACCOUNT_ID="$ACC" \
-  npx wrangler pages deploy . --project-name=librepedal --branch=main --commit-dirty=true
+  npx wrangler pages deploy . --project-name=librepedal --branch="$RAMA_CF" --commit-dirty=true
 
 echo "→ verificando que los secretos NO estén públicos..."
 sleep 10
 for f in MI-CLOUDFLARE.txt MI-SENTRY.txt MI-KEYSTORE-PLAYSTORE.txt; do
-  b=$(curl -s --max-time 30 "https://librepedal.cl/$f" -o /dev/null -w "%{size_download}")
+  b=$(curl -s --max-time 30 "https://$DOMINIO_CHEQUEO/$f" -o /dev/null -w "%{size_download}")
   if [ "$b" -lt 100000 ]; then echo "  ⚠ $f devuelve $b bytes (debería ser el fallback de ~785 KB). Revisar."; fi
 done
 echo "✓ listo"

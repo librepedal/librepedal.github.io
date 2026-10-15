@@ -1,0 +1,40 @@
+name: Vista previa (para probar sin tocar librepedal.cl)
+
+# 2026-10-15: Inty quiere probar en su teléfono varias ramas juntas antes de publicar.
+# Cada push a una rama prueba/... publica una VISTA PREVIA en
+#   https://prueba-<nombre>.librepedal.pages.dev
+# librepedal.cl (producción, rama main) no se toca. Mismo deploy-seguro.sh que producción.
+# OJO: la vista previa usa la MISMA base de datos real (Firebase). Lo que se publique
+# probando (puntos, rutas) lo ve todo el mundo: borrarlo después.
+
+on:
+  push:
+    branches: ['prueba/**']
+  workflow_dispatch:
+
+jobs:
+  vista-previa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Tests (nada roto a la vista previa tampoco)
+        run: node tests/run.mjs
+
+      - name: Publicar vista previa
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CF_TOKEN" ]; then echo "::error::Falta CLOUDFLARE_API_TOKEN"; exit 1; fi
+          # prueba/integracion -> prueba-integracion (Cloudflare usa la rama como subdominio)
+          export CF_BRANCH="$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr -cd 'a-zA-Z0-9-' | tr 'A-Z' 'a-z')"
+          printf 'TOKEN = %s\nACCOUNT_ID = %s\n' "$CF_TOKEN" "$CF_ACCOUNT" > MI-CLOUDFLARE.txt
+          chmod +x deploy-seguro.sh || true
+          bash deploy-seguro.sh
+          rm -f MI-CLOUDFLARE.txt
+          echo "### Vista previa lista: https://${CF_BRANCH}.librepedal.pages.dev" >> "$GITHUB_STEP_SUMMARY"
