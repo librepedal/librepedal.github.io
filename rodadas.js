@@ -48,7 +48,10 @@ async function verRodadas(){
       const voy=asistentes.indexOf(cu)!==-1;
       const fecha=new Date(r.fecha).toLocaleString('es-CL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
       const rutaHTML=r.ruta ? ('<p style="color:var(--g)"><i class="fas fa-road"></i> '+escapeHTML(r.ruta.nombreRuta)+' · '+r.ruta.distance.toFixed(1)+' km'+(r.ruta.subida?(' · <i class="fas fa-arrow-trend-up"></i> '+r.ruta.subida+'m'):'')+'</p>') : '';
-      return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4><p><i class="fas fa-calendar"></i> '+fecha+' · <i class="fas fa-location-dot"></i> '+escapeHTML(r.puntoEncuentro||'')+'</p>'+rutaHTML+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')+'<p style="color:#7d8ba0;font-size:0.72rem">Organiza: '+escapeHTML(r.nombreCreador||'Ciclista')+' · '+asistentes.length+' confirmados</p><button class="ab '+(voy?'sec':'')+'" style="margin:0" onclick="toggleAsistenciaRodada(\''+r.id+'\')">'+(voy?'<i class="fas fa-circle-check"></i> Vas · toca para cancelar':'<i class="fas fa-person-biking"></i> Confirmar asistencia')+'</button></div>';
+      // Radio de la rodada (rodada-radio-ui.js): se ofrece a los confirmados desde 2 h antes hasta 12 h después de la hora.
+      const radioAbierta = voy && typeof radioEntrarDesdeRodada==='function' && ahora>=r.fecha-7200000 && ahora<=r.fecha+43200000;
+      const radioBtn = radioAbierta ? '<button class="ab rr-entrar" style="margin:8px 0 0" onclick="radioEntrarDesdeRodada(\''+r.id+'\',\''+escapeHTML(r.creadoPor||'')+'\','+escapeHTML(JSON.stringify(r.titulo||'Rodada'))+')"><svg width="18" height="18" style="vertical-align:-3px"><use href="#rr-radio"/></svg> Entrar a la radio de la rodada</button>' : '';
+      return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4><p><i class="fas fa-calendar"></i> '+fecha+' · <i class="fas fa-location-dot"></i> '+escapeHTML(r.puntoEncuentro||'')+'</p>'+rutaHTML+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')+'<p style="color:#7d8ba0;font-size:0.72rem">Organiza: '+escapeHTML(r.nombreCreador||'Ciclista')+' · '+asistentes.length+' confirmados</p><button class="ab '+(voy?'sec':'')+'" style="margin:0" onclick="toggleAsistenciaRodada(\''+r.id+'\')">'+(voy?'<i class="fas fa-circle-check"></i> Vas · toca para cancelar':'<i class="fas fa-person-biking"></i> Confirmar asistencia')+'</button>'+radioBtn+'</div>';
     }).join('');
   }catch(e){ document.getElementById('rodadasList').innerHTML='<p style="color:#888">No se pudieron cargar las rodadas.</p>'; }
 }
@@ -158,6 +161,7 @@ async function toggleAsistenciaRodada(id){
 function _rodadasAvisadasLS(){ try{ return JSON.parse(localStorage.getItem('lp_rodadas_avisadas_'+cu))||[]; }catch(e){ return []; } }
 async function revisarRodadasProximas(){
   if(!cu) return;
+  if(typeof radioReanudar==='function') radioReanudar(); // la app se cerró a mitad de rodada: vuelve a la radio sola
   try{
     const ahora=Date.now(), en24h=ahora+86400000;
     const snap=await db.collection('rodadas').where('fecha','>=',ahora).where('fecha','<=',en24h).limit(20).get();

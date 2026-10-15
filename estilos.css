@@ -500,6 +500,49 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .novedad-fecha{color:#7d8ba0;font-size:0.68rem;white-space:nowrap}
 .novedad-card h4{margin:0 0 5px;color:#fff;font-size:0.88rem}
 .novedad-card p{margin:0 0 8px;color:#b8c4d4;font-size:0.78rem;line-height:1.4}
+/* Radio de rodada (rodada-radio-ui.js) — maqueta aprobada 2026-10-15 */
+:root{--rr-naranjo:#ff6a2b;--rr-teal:#2bc4b4;--rr-dorado:#ffd700;--rr-panel:#141922;--rr-linea:#232b38;--rr-suave:#8f9bad}
+/* z-index 4600: sobre la esfera (#esferaScreen 4500) y los modales (4000), bajo el login (5000) y lpDialog (6500).
+   Si se abre un modal con el panel desplegado, el panel se minimiza solo (rodada-radio-ui.js). */
+.rr-panel{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:4600;background:#0a0d12f2;border:1px solid var(--rr-linea);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:72vh;overflow:auto;box-shadow:0 -10px 30px rgba(0,0,0,.5);color:#e8edf4}
+.rr-panel[hidden],.rr-pildora[hidden]{display:none}
+.rr-barra{display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--rr-suave)}
+.rr-barra .rr-chip:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rr-chip{background:#000a;border:1px solid var(--rr-linea);border-radius:20px;padding:3px 9px;display:inline-flex;gap:6px;align-items:center}
+.rr-icono{background:transparent;border:1px solid var(--rr-linea);color:#e8edf4;border-radius:50%;width:30px;height:30px;flex:none}
+.rr-vivo{width:7px;height:7px;border-radius:50%;background:#ff4d5e;animation:rrLat 1.4s infinite;flex:none}
+@keyframes rrLat{50%{opacity:.25}}
+.rr-aviso{background:#000d;border:1px solid var(--rr-naranjo);border-radius:12px;padding:8px 12px;font-size:0.84rem}
+.rr-rol{display:flex;align-items:center;gap:10px;background:var(--rr-panel);border:1px solid var(--rr-linea);border-radius:12px;padding:10px 12px}
+.rr-rol .rr-ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:rgba(255,106,43,.14);color:var(--rr-naranjo);flex:none}
+.rr-rol.rr-oyente .rr-ico{background:rgba(43,196,180,.14);color:var(--rr-teal)}
+.rr-rol strong{display:block;font-size:0.95rem}
+.rr-rol span{font-size:0.78rem;color:var(--rr-suave)}
+.rr-peloton{display:flex;flex-direction:column;gap:4px;font-size:0.82rem}
+.rr-fila{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:5px 8px;border-radius:8px}
+.rr-fila.rr-yo{background:#ffffff0d}
+.rr-km{font-size:0.74rem;color:var(--rr-suave);font-variant-numeric:tabular-nums}
+.rr-tag{font-size:0.6rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:6px}
+.rr-tag.rr-p{background:rgba(255,106,43,.15);color:var(--rr-naranjo)}
+.rr-tag.rr-c{background:rgba(43,196,180,.15);color:var(--rr-teal)}
+.rr-hueco{font-size:0.72rem;color:var(--rr-dorado);padding:2px 8px}
+.rr-entrante{display:flex;align-items:center;gap:10px;border-radius:12px;padding:9px 12px;background:rgba(43,196,180,.1);border:1px solid rgba(43,196,180,.33);color:var(--rr-teal);font-size:0.84rem}
+.rr-entrante[hidden]{display:none}
+.rr-ola{display:inline-flex;gap:3px;align-items:center;height:20px;margin-left:auto}
+.rr-ola i{width:3px;background:currentColor;border-radius:2px;height:30%;animation:rrOla .9s ease-in-out infinite}
+.rr-ola i:nth-child(2){animation-delay:.1s}.rr-ola i:nth-child(3){animation-delay:.2s}.rr-ola i:nth-child(4){animation-delay:.3s}.rr-ola i:nth-child(5){animation-delay:.15s}
+@keyframes rrOla{50%{height:100%}}
+.rr-ptt{height:84px;border-radius:18px;border:2px solid var(--rr-naranjo);background:rgba(255,106,43,.08);color:#e8edf4;font-weight:600;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}
+.rr-ptt.rr-grabando{background:var(--rr-naranjo);color:#120700}
+.rr-ptt.rr-apagado{border-color:var(--rr-linea);background:var(--rr-panel);color:var(--rr-suave);cursor:default}
+.rr-ptt:focus-visible,.rr-salir:focus-visible,.rr-icono:focus-visible{outline:2px solid var(--rr-dorado);outline-offset:2px}
+.rr-pie{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:0.76rem;color:var(--rr-suave)}
+.rr-aud{display:inline-flex;align-items:center;gap:6px}
+.rr-salir{background:transparent;border:1px solid var(--rr-linea);color:var(--rr-suave);border-radius:20px;padding:6px 12px;font-size:0.76rem}
+.rr-pildora{position:fixed;left:10px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:4600}
+.rr-pildora button{display:inline-flex;align-items:center;gap:8px;background:#0a0d12f2;color:#e8edf4;border:1px solid var(--rr-naranjo);border-radius:20px;padding:8px 14px;font-size:0.8rem;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.ab.rr-entrar{background:rgba(255,106,43,.12);border:1px solid var(--rr-naranjo);color:#e8edf4}
+@media (prefers-reduced-motion:reduce){.rr-vivo,.rr-ola i{animation:none}}
 .novedad-bottom{display:flex;justify-content:space-between;align-items:center}
 .novedad-bottom a{color:var(--p);font-size:0.78rem;font-weight:700;text-decoration:none}
 .novedad-del{background:none;border:none;cursor:pointer;font-size:0.85rem;opacity:0.7;padding:0 4px}

@@ -523,6 +523,27 @@ service cloud.firestore {
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
+    // Canal de rodada (rodadas.js): avisos de un toque entre los del grupo. Faltaba esta
+    // regla (2026-10-15) -- el catch-all del final negaba TODO, así que cada aviso fallaba
+    // con "No se pudo enviar el aviso" y nadie oía nada. Solo los confirmados en esa rodada
+    // leen y escriben; el aviso es de un tipo conocido y no se edita después.
+    match /rodadaAvisos/{id} {
+      function esAsistente(rid) {
+        return exists(/databases/$(database)/documents/rodadas/$(rid))
+          && request.auth.uid in get(/databases/$(database)/documents/rodadas/$(rid)).data.asistentes;
+      }
+      // Leer: cualquiera con sesión. Un aviso es solo "hoyo"/"paramos" + un nombre, y una regla
+      // con get() que dependa de resource.data no la puede probar Firestore en un listado
+      // (where rodada==id) -- se rechazaría la consulta entera. Escribir sí exige estar inscrito.
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.tipo in ['hoyo','autoatras','frenando','quedado','pinchazo','paramos']
+        && request.resource.data.rodada is string && esAsistente(request.resource.data.rodada)
+        && strOk('nombre', 60) && request.resource.data.ts is number;
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
     // Alertas SOS de la comunidad: ANONIMAS y de ubicacion GRUESA (~5km, sin identidad ni
     // ubicacion exacta). Cualquiera autenticado puede pedir ayuda (create) y recibir (read);
     // el dato ya es seguro por diseno. Inmutable: sin update/delete.
