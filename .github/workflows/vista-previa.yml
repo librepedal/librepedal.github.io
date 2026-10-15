@@ -20,7 +20,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22' # worker-sobrevuelo.test.mjs usa node:sqlite (Node 22+), igual que tests.yml
 
       - name: Tests (nada roto a la vista previa tampoco)
         run: node tests/run.mjs
