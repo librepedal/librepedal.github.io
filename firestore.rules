@@ -523,6 +523,23 @@ service cloud.firestore {
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
+    // Rutas recomendadas (rutas-recomendadas.js): GPX que sube cualquier usuario con cuenta
+    // real para que la comunidad la vea en el mapa y la descargue. Pública para leer; solo el
+    // autor la edita o la quita. Tope de puntos = RREC_MAX_PUNTOS del cliente.
+    match /rutasRecomendadas/{id} {
+      allow read: if true;
+      allow create: if signedInReal() && request.resource.data.autor == request.auth.uid
+        && strOk('nombre', 100) && strOk('desc', 400) && strOk('nombreAutor', 60)
+        && request.resource.data.puntos is list && request.resource.data.puntos.size() >= 2
+        && request.resource.data.puntos.size() <= 1500
+        && request.resource.data.distance is number && request.resource.data.celda is string;
+      allow update: if signedIn() && resource.data.autor == request.auth.uid
+        && request.resource.data.autor == request.auth.uid
+        && strOk('nombre', 100) && strOk('desc', 400)
+        && request.resource.data.puntos.size() <= 1500;
+      allow delete: if signedIn() && (resource.data.autor == request.auth.uid || isAdmin());
+    }
+
     // Alertas SOS de la comunidad: ANONIMAS y de ubicacion GRUESA (~5km, sin identidad ni
     // ubicacion exacta). Cualquiera autenticado puede pedir ayuda (create) y recibir (read);
     // el dato ya es seguro por diseno. Inmutable: sin update/delete.
