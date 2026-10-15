@@ -1,0 +1,70 @@
+name: App de prueba (APK aparte, carga la vista previa)
+
+# 2026-10-15: Inty necesita probar en el teléfono, DENTRO de la app, lo que está en la vista previa
+# (compartir con plugins nativos, micrófono, GPS con pantalla apagada...) sin tocar la app de Play
+# ni librepedal.cl. Este workflow arma un APK APARTE:
+#   - otro paquete (cl.librepedal.prueba) → se instala JUNTO a la app de Play, no la reemplaza
+#   - nombre "Libre Pedal PRUEBA"
+#   - carga https://<rama>.librepedal.pages.dev (la vista previa de esta rama)
+#   - con los mismos plugins nativos que la próxima versión (package.json de la rama)
+# El APK queda en Releases con la etiqueta "app-prueba" (descarga directa desde el teléfono).
+# OJO: usa la MISMA base de datos real (Firebase): lo que se publique probando lo ve todo el mundo.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['prueba/**']
+    paths: ['package.json', 'capacitor.config.json', 'scripts/**', '.github/workflows/app-prueba.yml', 'resources/**']
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '21' }
+
+      - name: Configurar como app de prueba (otro paquete, carga la vista previa)
+        run: |
+          RAMA="$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr -cd 'a-zA-Z0-9-' | tr 'A-Z' 'a-z')"
+          URL="https://${RAMA}.librepedal.pages.dev"
+          node -e '
+            const fs=require("fs"); const c=JSON.parse(fs.readFileSync("capacitor.config.json","utf8"));
+            const url=process.argv[1]; const host=new URL(url).host;
+            c.appId="cl.librepedal.prueba"; c.appName="Libre Pedal PRUEBA";
+            c.server.url=url; c.server.allowNavigation=[host].concat(c.server.allowNavigation||[]);
+            fs.writeFileSync("capacitor.config.json", JSON.stringify(c,null,2));
+            console.log("App de prueba →", url);
+          ' "$URL"
+          echo "URL_PRUEBA=$URL" >> "$GITHUB_ENV"
+
+      - run: npm install
+      - run: node scripts/copy-web.js
+      - run: npx cap add android
+      - name: SDK Android 36
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          SDKMANAGER=$(find "$SDK_ROOT" -maxdepth 5 -name sdkmanager -type f 2>/dev/null | head -1)
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "build-tools;35.0.0"
+      - run: npx @capacitor/assets generate --android
+      - run: node scripts/patch-android.js
+      - run: npx cap sync android
+      - name: Compilar APK
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Renombrar
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk LibrePedal-PRUEBA.apk
+      - uses: actions/upload-artifact@v4
+        with: { name: LibrePedal-PRUEBA, path: LibrePedal-PRUEBA.apk, if-no-files-found: error }
+      - name: Publicar en Releases (descarga directa desde el teléfono)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: app-prueba
+          name: "Libre Pedal PRUEBA (no es la app de Play)"
+          prerelease: true
+          body: "App de PRUEBA: se instala junto a la app de Play y carga ${{ env.URL_PRUEBA }}. Usa la base de datos real. Para instalar: descarga LibrePedal-PRUEBA.apk en el teléfono y ábrelo (Android pedirá permitir instalar desde el navegador)."
+          files: LibrePedal-PRUEBA.apk
