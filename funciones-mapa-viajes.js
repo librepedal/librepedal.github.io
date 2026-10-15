@@ -799,6 +799,7 @@ function _tileXY(lat,lon,zoom){ const n=Math.pow(2,zoom); const x=Math.floor((lo
 async function descargarMapaRuta(){
   const btn=document.getElementById('btnDescargarMapa');
   if(!routeLine){ h('Todavía no tengo una ruta calculada para descargar.'); return; }
+  if(typeof revisarVozSinConexion==='function') revisarVozSinConexion(); // el mapa sin señal sirve de poco si los giros no se oyen (voz-sin-conexion.js)
   if(!('serviceWorker' in navigator) || !navigator.serviceWorker.controller){ lpAviso('La descarga offline necesita que la app esté instalada/activa como PWA.'); return; }
   const b=routeLine.getBounds();
   const urls=[];
