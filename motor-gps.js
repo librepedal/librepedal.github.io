@@ -343,7 +343,7 @@ function _sumarKmViaje(km){
   if(!(km>0)) return;
   us.di+=km; _kmEsteViaje+=km; _sumarKmModo(km);
   if(typeof actividadTipo!=='undefined' && actividadTipo==='moto'){ if(typeof _sumarKmVehiculo==='function') _sumarKmVehiculo(km); } else { _sumarKmMantencion(km); }
-  us.c+=(km*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2);
+  us.c+=(km*kcalPorKm()); au(); // calorías según la actividad (pistero-tipo-actividad.js): en vehículo, 0 const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2);
 }
 // Inty 2026-10-09: "está disparando muchas frases". Los km del hueco entran de golpe y bromasDelCamino() (una frase
 // cada 1,5 km) y el hito de cada 10 km los tomaban como km sin comentar: ráfaga de frases al volver. El hueco no se

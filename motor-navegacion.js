@@ -169,7 +169,7 @@ async function recalcularRuta(lat,lon){
     h('Por esta zona no tengo un camino claro marcado. Sigue no más, cualquier cosa te aviso.');
   }
   try{
-    const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+lon+','+lat+';'+navDestLon+','+navDestLat+'?overview=full&geometries=geojson&steps=true';
+    const url=urlRuteo('route', lon+','+lat+';'+navDestLon+','+navDestLat, 'overview=full&geometries=geojson&steps=true');
     const resp=await _fetchT(url, 15000); const data=await resp.json();
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ navRecalculando=false; return; }
     const route=data.routes[0], steps=route.legs[0].steps;
@@ -381,7 +381,7 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   iniciarDeteccionCaidas();
   iniciarSeguimientoSegmentos(startLat,startLon);
   try{
-    const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true&alternatives=true';
+    const url=urlRuteo('route', startLon+','+startLat+';'+destLon+','+destLat, 'overview=full&geometries=geojson&steps=true&alternatives=true');
     const resp=await _fetchT(url, 15000); const data=await resp.json();
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ lpAviso("No pude calcular la ruta"); endNavigation(); return; }
     // Si hay más de un camino razonable, se elige antes de arrancar (como Google
@@ -501,6 +501,7 @@ function checkNavigationSteps(lat,lon,speed){
   let rem=0; for(let i=currentStepIndex;i<navSteps.length;i++) rem+=navSteps[i].distance;
   document.getElementById('navDist').innerText=formatDistance(rem);
   document.getElementById('etaDist').innerText=(rem/1000).toFixed(2)+' km';
+  _actualizarLlegada(rem/1000);
   // Aviso ANTICIPADO real: a 120m del giro (no del final del tramo actual),
   // con margen de sobra para que llegue a tiempo aunque la voz esté ocupada
   // con otra cosa (showStepInstruction interrumpe, no encola). El paso
@@ -529,6 +530,28 @@ function checkNavigationSteps(lat,lon,speed){
     _navDistPrev = dist;
   }
 }
+/* HORA DE LLEGADA HONESTA (2026-10-15). Antes se calculaba UNA vez al partir, con el tiempo del
+   servidor de rutas (que además era de auto para todos: ver urlRuteo) y no se movía más aunque
+   fueras más lento o te detuvieras. Ahora se recalcula con lo que falta: a tu velocidad real del
+   viaje (km hechos / tiempo en movimiento) cuando ya hay 10 min y 1 km de datos; antes de eso, a la
+   velocidad que estimó la ruta. Pura: tests/datos-reales.test.mjs. */
+function llegadaEstimadaMin(kmFaltan, kmHechos, msActivos, kmRuta, minRuta){
+  if(!(kmFaltan>=0)) return null;
+  let v=0;
+  if(msActivos>=600000 && kmHechos>=1) v=kmHechos/(msActivos/3600000);
+  if(!(v>=1) && kmRuta>0 && minRuta>0) v=kmRuta/(minRuta/60);
+  if(!(v>=1)) return null;
+  return Math.round(kmFaltan/v*60);
+}
+function _actualizarLlegada(kmFaltan){
+  try{
+    const min=llegadaEstimadaMin(kmFaltan, totalDistance, (typeof tiempoActivoMs==='function')?tiempoActivoMs():0, routeTotalDistance, routeTotalDuration);
+    if(min==null) return;
+    const llega=new Date(Date.now()+min*60000);
+    document.getElementById('etaTime').innerText=llega.getHours().toString().padStart(2,'0')+':'+llega.getMinutes().toString().padStart(2,'0');
+    document.getElementById('etaDuration').innerText=(min>=60?(Math.floor(min/60)+' h '+(min%60)+' min'):(min+' min'));
+  }catch(e){}
+}
 function showStepInstruction(i){ if(i>=navSteps.length) return; const step=navSteps[i]; document.getElementById('navIcon').innerText=getStepIcon(step.maneuver.type,step.maneuver.modifier); document.getElementById('navText').innerText=step.instruction; document.getElementById('navDist').innerText=formatDistance(step.distance); showAlert(step.instruction); hCorta(step.instruction); lastSpokenStep=i; /* marca el paso como YA dicho: evita que checkNavigationSteps repita el arranque ("Comienza el recorrido") por estar parado en el origen — redundancia real reportada por Inty */ }
 function getStepIcon(type,modifier){ switch(type){ case 'depart':return '🚴'; case 'arrive':return '🏁'; case 'turn': if(modifier&&modifier.indexOf('left')!==-1) return '⬅️'; if(modifier&&modifier.indexOf('right')!==-1) return '➡️'; return '🔄'; case 'roundabout': case 'rotary': return '🔁'; case 'fork': return '🔱'; case 'continue': return '⬆️'; default: return '➡️'; } }
 function showAlert(text){ const a=document.getElementById('navAlert'); a.innerText=text; a.classList.add('show'); setTimeout(function(){ a.classList.remove('show'); },3000); }
@@ -551,7 +574,7 @@ async function guardarRutaNavegada(){
   const origenNombre=await nombreDeLugar(pts[0].lat,pts[0].lon);
   const destinoNombre=navDestName?navDestName.split(',')[0].trim():await nombreDeLugar(pts[pts.length-1].lat,pts[pts.length-1].lon);
   const nombreRuta=origenNombre+' → '+destinoNombre;
-  const data={localId:localId,user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*30),savedAt:Date.now()};
+  const data={localId:localId,user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:totalDistance,calories:Math.round(totalDistance*kcalPorKm()),savedAt:Date.now()};
   guardarRutaLocalObj(data); renderRutas();
   _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,nombreRuta:nombreRuta,points:pts,startTime:data.startTime,endTime:data.endTime,distance:totalDistance,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()});
   revisarRetosCumplidos();
@@ -609,12 +632,12 @@ async function _intentarReanudarNavegacion(){
   document.getElementById('navDistTotal').innerText=totalDistance.toFixed(2);
   h('Recuperé tu viaje a '+(data.destName?data.destName.split(',')[0].trim():'tu destino')+', seguimos.');
 }
-function finishTripAuto(){ navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).then(function(){ }).catch(function(){ }); }
+function finishTripAuto(){ navGuardado=true; _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs()); const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*kcalPorKm()),pointCount:gpsPoints.length}}).then(function(){ }).catch(function(){ }); }
 function formatDistance(m){ if(m<1000) return Math.round(m)+' m'; return (m/1000).toFixed(1)+' km'; }
 function showHostelsOnNavMap(){ allHostels.forEach(function(hh){ if(hh.lat&&hh.lon){ L.marker([hh.lat,hh.lon],{icon:L.divIcon({className:'',html:'<div style="background:#ffd700;width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px #ffd700"></div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(navMap).bindPopup('<b>'+escapeHTML(hh.name)+'</b><br>'+escapeHTML(hh.location)); } }); }
 function drawGpsRoute(){ if(gpsPoints.length<2) return; if(routeLine) navMap.removeLayer(routeLine); routeLine=L.polyline(gpsPoints.map(function(p){return [p.lat,p.lon];}),{color:'#fc4c02',weight:5,opacity:0.8}).addTo(navMap); if(gpsPoints.length>10) navMap.fitBounds(routeLine.getBounds(),{padding:[50,50]}); }
 function showSpeechBubble(text){ const b=document.getElementById('speechBubble'); if(!b) return; b.innerText=text; b.classList.add('show'); setTimeout(function(){ b.classList.remove('show'); },4000); }
-async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigation(); return; } if(await lpConfirmar("¿Terminar y guardar el viaje?")){ if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } navGuardado=true; const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; if(currentTrip){ try{ await db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}); }catch(e){ } } else { guardarRutaNavegada(); } setTimeout(endNavigation,2500); } }
+async function finishTrip(){ if(!currentTrip&&gpsPoints.length===0){ endNavigation(); return; } if(await lpConfirmar("¿Terminar y guardar el viaje?")){ if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } navGuardado=true; const el=Math.floor((Date.now()-tripStartTime)/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60; const dur=hh>0?hh+'h '+mm+'min':mm+' min'; if(currentTrip){ try{ await db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*kcalPorKm()),pointCount:gpsPoints.length}}); }catch(e){ } } else { guardarRutaNavegada(); } setTimeout(endNavigation,2500); } }
 // Si el usuario cierra con "✕" sin haber pasado por "Terminar" ni por la llegada
 // automática, igual guardamos lo recorrido hasta ahí (nunca se pierde el track).
 function endNavigation(){
@@ -627,7 +650,7 @@ function endNavigation(){
     if(currentTrip){
       _actualizarVelocidadHistorica(totalDistance, tiempoActivoMs());
       const el=Math.floor(tiempoActivoMs()/1000), mins=Math.floor(el/60), hh=Math.floor(mins/60), mm=mins%60, dur=hh>0?hh+'h '+mm+'min':mm+' min';
-      db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*30),pointCount:gpsPoints.length}}).catch(function(){});
+      db.collection('trips').doc(currentTrip.id).update({status:'completed',completedAt:firebase.firestore.FieldValue.serverTimestamp(),gpsData:{points:gpsPoints,distance:totalDistance,duration:dur,calories:Math.round(totalDistance*kcalPorKm()),pointCount:gpsPoints.length}}).catch(function(){});
     } else {
       guardarRutaNavegada();
     }
@@ -871,7 +894,7 @@ function importarGPX(input){
       let dist=0; for(let i=1;i<points.length;i++){ dist+=calculateDistance(points[i-1].lat,points[i-1].lon,points[i].lat,points[i].lon)/1000; }
       const nom=xml.getElementsByTagName('name')[0];
       const nombre=(nom && nom.textContent && nom.textContent.trim()) || file.name.replace(/\.(gpx|xml)$/i,'') || 'Ruta importada';
-      const ruta={ localId:'imp_'+Date.now(), nombreRuta:nombre, points:points, distance:dist, calories:Math.round(dist*30), startTime:(points[0].timestamp||Date.now()), importada:true };
+      const ruta={ localId:'imp_'+Date.now(), nombreRuta:nombre, points:points, distance:dist, calories:Math.round(dist*kcalPorKm()), startTime:(points[0].timestamp||Date.now()), importada:true };
       rutasLocalesSet(rutasLocales().concat([ruta]));
       if(typeof renderRutas==='function') renderRutas();
       input.value='';

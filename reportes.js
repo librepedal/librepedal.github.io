@@ -99,7 +99,7 @@ function _extraerDestinoConsulta(t){
   return (m && m[1]) ? limpiarDestino(m[1]) : null;
 }
 async function _obtenerRutaGeometria(startLat,startLon,destLat,destLon){
-  const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson';
+  const url=urlRuteo('route', startLon+','+startLat+';'+destLon+','+destLat, 'overview=full&geometries=geojson');
   const resp=await _fetchT(url, 15000);
   const data=await resp.json();
   if(data.code!=='Ok'||!data.routes||!data.routes.length) return null;

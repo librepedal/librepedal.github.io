@@ -131,7 +131,7 @@ async function nombreDeLugar(lat,lon){
 // us.di/us.c — contadores de la cuenta, no de la ruta — y el número no tenía cómo calzar con la
 // línea del mapa (Inty 2026-10-15: "no podemos estar entregando datos falsos").
 function _kmRuta(pts){ const k=(typeof kmTrazado==='function')?kmTrazado(pts):0; return Math.round(k*100)/100; }
-function saveRouteToHistory(route){ if(!cu||!route||route.length<2) return; const localId='l'+route[0].t; const _km=_kmRuta(route); const data={localId:localId,user:cu,nombre:nombreUsuario,points:route.slice(),startTime:route[0].t,endTime:route[route.length-1].t,distance:_km,calories:Math.round(_km*30),savedAt:Date.now(),kmCorregidos:true}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,pointsPub:_puntosPublicos(data.points),startTime:data.startTime,endTime:data.endTime,distance:_km,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}, data.points); }
+function saveRouteToHistory(route){ if(!cu||!route||route.length<2) return; const localId='l'+route[0].t; const _km=_kmRuta(route); const data={localId:localId,user:cu,nombre:nombreUsuario,points:route.slice(),startTime:route[0].t,endTime:route[route.length-1].t,distance:_km,calories:Math.round(_km*kcalPorKm()),savedAt:Date.now(),kmCorregidos:true}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,pointsPub:_puntosPublicos(data.points),startTime:data.startTime,endTime:data.endTime,distance:_km,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}, data.points); }
 // Auto-guardado: SIEMPRE queda en el celular (sí o sí); la nube es respaldo. El id estable
 // es el timestamp del 1er punto, así se ACTUALIZA la misma ruta y no se duplica.
 // El nombre "Origen → Destino" solo se calcula (pide geocoding real) en los guardados
@@ -144,7 +144,7 @@ async function autoGuardarRuta(conVoz, esCheckpoint){
   const _miSegmento=currentRoute; // referencia vigente al entrar -- ver el guard de más abajo
   const pts=currentRoute.slice(), localId='l'+pts[0].t;
   const _km=_kmRuta(pts); // km de ESTA ruta (su trazado), no el contador de la cuenta
-  const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:_km,calories:Math.round(_km*30),savedAt:Date.now(),kmCorregidos:true};
+  const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:_km,calories:Math.round(_km*kcalPorKm()),savedAt:Date.now(),kmCorregidos:true};
   const fb={user:cu,nombre:nombreUsuario,pointsPub:_puntosPublicos(pts),startTime:data.startTime,endTime:data.endTime,distance:_km,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()};
   if(!esCheckpoint){
     const origenNombre=await nombreDeLugar(pts[0].lat,pts[0].lon);
