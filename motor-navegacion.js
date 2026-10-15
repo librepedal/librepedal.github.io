@@ -875,6 +875,7 @@ function importarGPX(input){
       if(typeof renderRutas==='function') renderRutas();
       input.value='';
       h('¡Importé "'+nombre+'", '+dist.toFixed(1)+' kilómetros! Ya está en tu historial: tócala para verla o pedalearla.');
+      if(typeof rrecOfrecerPublicar==='function') setTimeout(function(){ rrecOfrecerPublicar(points, nombre); }, 1200); // ¿recomendarla a la comunidad? (rutas-recomendadas.js)
     }catch(e){ input.value=''; lpAviso('No pude leer ese GPX. ¿Seguro que es un archivo de ruta?'); }
   };
   reader.onerror=function(){ input.value=''; lpAviso('No pude abrir el archivo.'); };

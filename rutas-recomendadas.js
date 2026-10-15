@@ -120,3 +120,85 @@ async function rrecBorrar(id){
   try{ await db.collection(RREC_COLECCION).doc(id).delete(); h('Quitaste la ruta de las recomendadas.'); return true; }
   catch(e){ lpAviso('No se pudo quitar la ruta.'); return false; }
 }
+
+/* ---------- En el mapa (maqueta aprobada por Inty 2026-10-15, disenos-ui/rodada-radio-gpx) ---------- */
+
+let _rrecDatos=[], _rrecLineas=[], _rrecIntentos=0;
+// Se llama cuando el mapa principal carga (mapa-render.js) y después de publicar una ruta.
+async function rrecCargarEnMapa(){
+  if(typeof mp==='undefined' || !mp) return;
+  const yo=(typeof currentUserLocation!=='undefined' && currentUserLocation) || ((typeof us!=='undefined' && us && us.la!=null)?{lat:us.la, lon:us.lo}:null);
+  if(!yo){ if(_rrecIntentos++<6) setTimeout(rrecCargarEnMapa, 20000); return; } // todavía sin GPS: reintenta un rato
+  _rrecDatos=(await rrecListarCerca(yo.lat, yo.lon)).filter(function(r){ return r.puntos && r.puntos.length>1; });
+  rrecRepintar();
+}
+// Dibuja (o vuelve a dibujar tras cambiar la capa del mapa, que borra todo lo agregado).
+function rrecRepintar(){
+  if(typeof mp==='undefined' || !mp) return;
+  _rrecLineas.forEach(function(x){ try{ x.off(); }catch(e){} try{ mp.removeLayer(x.linea); }catch(e){} try{ x.inicio.remove(); }catch(e){} });
+  _rrecLineas=_rrecDatos.map(function(r){
+    const linea=mlPolyline(r.puntos.map(function(p){ return [p.lat,p.lon]; }), {color:RREC_COLOR, weight:4, opacity:0.9}).addTo(mp);
+    const abrir=function(){ rrecVerTarjeta(r.id); };
+    const cursor=function(){ try{ mp.getCanvas().style.cursor='pointer'; }catch(e){} };
+    const sinCursor=function(){ try{ mp.getCanvas().style.cursor=''; }catch(e){} };
+    mp.on('click', linea._id, abrir); mp.on('mouseenter', linea._id, cursor); mp.on('mouseleave', linea._id, sinCursor);
+    // Una línea de 4 px cuesta tocarla con el dedo: el punto de partida es el blanco fácil.
+    const inicio=mlMarker([r.inicio.lat, r.inicio.lon], {icon:{html:'<div class="rrec-inicio" role="button" aria-label="Ruta recomendada: '+escapeHTML(r.nombre||'')+'"></div>'}}).addTo(mp);
+    try{ inicio._ml.getElement().addEventListener('click', function(ev){ ev.stopPropagation(); abrir(); }); }catch(e){}
+    return {linea:linea, inicio:inicio, off:function(){ mp.off('click', linea._id, abrir); mp.off('mouseenter', linea._id, cursor); mp.off('mouseleave', linea._id, sinCursor); }};
+  });
+}
+function _rrecPorId(id){ return _rrecDatos.find(function(r){ return r.id===id; }); }
+const _RREC_LEYENDA='<div class="rrec-leyenda"><span><i style="background:'+RREC_COLOR+'"></i>Recomendada</span><span><i style="background:#ffd700"></i>Tus rutas</span><span><i style="background:#fc4c02"></i>En curso</span></div>';
+function rrecVerTarjeta(id){
+  const r=_rrecPorId(id); if(!r) return;
+  if(typeof _modalVolverA!=='undefined') _modalVolverA=null;
+  document.getElementById('modalTitle').innerHTML='<i class="fas fa-route"></i> Ruta recomendada';
+  const esMia=(typeof cu!=='undefined' && cu && r.autor===cu);
+  document.getElementById('modalContent').innerHTML=_RREC_LEYENDA+
+    '<div class="rrec-tarjeta"><span class="rrec-sello">Ruta recomendada</span>'+
+    '<h4>'+escapeHTML(r.nombre||'Ruta recomendada')+'</h4>'+
+    '<div class="rrec-datos"><span><b>'+(r.distance||0).toFixed(1)+'</b> km</span>'+(r.subida?'<span><b>'+r.subida+'</b> m subida</span>':'')+'<span>de '+escapeHTML(r.nombreAutor||'un ciclista')+'</span></div>'+
+    (r.desc?'<p class="rrec-desc">'+escapeHTML(r.desc)+'</p>':'')+
+    '<div class="rrec-botones"><button class="ab rrec-pri" onclick="rrecPedalear(\''+r.id+'\')"><i class="fas fa-person-biking"></i> Pedalearla</button>'+
+    '<button class="ab sec" onclick="rrecDescargarGPX(\''+r.id+'\')"><i class="fas fa-download"></i> Bajar GPX</button></div>'+
+    (esMia?'<button class="ab sec rrec-quitar" onclick="rrecQuitarDesdeTarjeta(\''+r.id+'\')"><i class="fas fa-trash-can"></i> Quitar de las recomendadas</button>':'')+
+    '</div>';
+  document.getElementById('userModal').classList.add('on');
+}
+/* Pedalearla: la ruta queda en TUS rutas (dorado, con perfil de elevación y todo lo demás) y
+   Pistero te lleva hasta su punto de partida. La navegación giro a giro por un trazado GPX no
+   existe todavía en la app: hasta el inicio se navega como a cualquier destino, y desde ahí la
+   línea violeta queda en el mapa para seguirla. */
+function rrecPedalear(id){
+  const r=_rrecPorId(id); if(!r) return;
+  try{
+    const ya=rutasLocales().some(function(x){ return x.rrecId===id; });
+    if(!ya){
+      rutasLocalesSet(rutasLocales().concat([{ localId:'rrec_'+id, rrecId:id, nombreRuta:r.nombre||'Ruta recomendada', points:r.puntos, distance:r.distance||0, calories:Math.round((r.distance||0)*30), startTime:Date.now(), importada:true }]));
+      if(typeof renderRutas==='function') renderRutas();
+    }
+  }catch(e){}
+  if(typeof closeModal==='function') closeModal();
+  irAlPuntoYNavegar(r.inicio.lat, r.inicio.lon, 'el inicio de '+(r.nombre||'la ruta'));
+}
+async function rrecQuitarDesdeTarjeta(id){
+  if(!(await lpConfirmar('¿Quitar esta ruta de las recomendadas? Deja de verse en el mapa de todos.'))) return;
+  if(await rrecBorrar(id)){ _rrecDatos=_rrecDatos.filter(function(r){ return r.id!==id; }); rrecRepintar(); if(typeof closeModal==='function') closeModal(); }
+}
+/* Después de importar un GPX (importarGPX, motor-navegacion.js) se ofrece recomendarla. Se
+   pregunta SIEMPRE antes de publicar, también si entró por "Recomendar una ruta a la
+   comunidad": publicar es para todos y no se hace sin un sí explícito. La descripción es
+   opcional (lpPedirTexto devuelve null tanto vacío como cancelado: las dos cosas = sin texto). */
+let _rrecDesdeBoton=false;
+function rrecSubirGPX(){ _rrecDesdeBoton=true; document.getElementById('gpxFileInput').click(); }
+async function rrecOfrecerPublicar(points, nombre){
+  const directo=_rrecDesdeBoton; _rrecDesdeBoton=false;
+  if(typeof cu==='undefined' || !cu) return;
+  const pregunta=(directo?'¿Publicar "'+nombre+'" como ruta recomendada?':'¿Recomiendas "'+nombre+'" a la comunidad?')+
+    '\nSe verá en violeta en el mapa de todos y la podrán bajar en GPX. Para cuidar tu casa, se borran 200 m del inicio y del final.';
+  if(!(await lpConfirmar(pregunta))) return;
+  const desc=await lpPedirTexto('Cuéntale a los demás cómo es (opcional).', 'Ej: ripio los últimos 5 km, buena sombra');
+  const id=await rrecPublicar(points, nombre, desc||'');
+  if(id) rrecCargarEnMapa();
+}

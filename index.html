@@ -537,6 +537,7 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <div id="trips-rutas-list" class="js-rutas-list"></div>
 <input type="file" accept=".gpx,.xml,application/gpx+xml" id="gpxFileInput" style="display:none" onchange="importarGPX(this)">
 <button class="ab" style="margin-top:6px" onclick="document.getElementById('gpxFileInput').click()"><i class="fas fa-arrow-up-from-bracket"></i> Importar ruta desde otra app (archivo GPX)</button>
+<div class="rrec-tarjeta" style="margin-top:10px"><h4>Recomendar una ruta tuya</h4><p class="rrec-desc">Sube el GPX de una ruta que ya hiciste. Para cuidar tu casa, se borran 200 m del inicio y del final antes de publicarla.</p><button class="ab sec" style="margin:0" onclick="rrecSubirGPX()"><i class="fas fa-arrow-up-from-bracket"></i> Subir archivo GPX</button></div>
 <button class="ab sec" style="margin-top:6px" onclick="showAllRoutesOnMap()"><i class="fas fa-map"></i> Ver todas en el mapa</button>
 <div id="map-routes-all" style="margin-top:12px;display:none"><div id="map-all-routes"></div></div>
 <h4 style="color:var(--p);margin:16px 0 6px 0;font-size:0.9rem"><i class="fas fa-clipboard"></i> Viajes planificados</h4>

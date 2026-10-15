@@ -243,6 +243,7 @@ function toggleCapaMapa(){
   mp.setStyle(_estiloDeCapa(capaMapaTipo), {diff:false});
   mp.once('idle',function(){
     if(crl && crl._coords && crl._coords.length>1){ crl._map=null; crl.addTo(mp); }
+    if(typeof rrecRepintar==='function') rrecRepintar(); // el cambio de estilo borra las rutas recomendadas (rutas-recomendadas.js)
   });
   _actualizarBtnCapaMapa();
   try{ h('Mapa '+(LP_CAPA_NOMBRE[capaMapaTipo]||capaMapaTipo)+'.'); }catch(e){}
@@ -286,7 +287,7 @@ async function im(){
     // Mantén presionado (o clic derecho) en cualquier punto del mapa para navegar ahí — como las apps grandes.
     mp.on('contextmenu', function(e){ try{ const _lat=e.lngLat.lat.toFixed(6), _lon=e.lngLat.lng.toFixed(6); new maplibregl.Popup({offset:12}).setLngLat(e.lngLat).setHTML('<div class="lp-pop"><div class="lp-ic"><i class="fas fa-location-dot"></i></div><div class="lp-body"><div class="lp-t">Punto elegido</div><a href="#" class="lp-cta" onclick="irAlPuntoYNavegar('+_lat+','+_lon+',\'este punto\');return false"><i class="fas fa-compass"></i> Navegar aquí</a></div></div>').addTo(mp); }catch(_){} });
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
-    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); mp.on('zoomend', _actualizarVisibilidadCiclistas); _actualizarVisibilidadCiclistas(); });
+    mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); if(typeof rrecCargarEnMapa==='function') rrecCargarEnMapa(); mp.on('zoomend', _actualizarVisibilidadCiclistas); _actualizarVisibilidadCiclistas(); });
     _mpVolverInstalar(mp); // vuelve solo a tu posición tras 5 s sin tocar el mapa (ver _mpVolverAlCiclista)
     mp.on('style.load', _aplicarTemaMapa); // aplica el tema de mapa (aventura/neón/arcade) en cada carga de estilo, y resetea (plano) en calles/topo/sat
   }catch(err){

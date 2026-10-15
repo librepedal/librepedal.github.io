@@ -93,5 +93,22 @@ const bloque = FSR.slice(FSR.indexOf('match /rutasRecomendadas/'), FSR.indexOf('
 t('crear exige cuenta real y ser el autor', /signedInReal\(\)/.test(bloque) && /autor == request\.auth\.uid/.test(bloque));
 t('tope de 1500 puntos en la regla', /size\(\) <= 1500/.test(bloque));
 
+// ---- Pantalla (maqueta aprobada 2026-10-15) ----
+const MAPA = readFileSync(join(raiz, 'mapa-render.js'), 'utf8');
+const NAV = readFileSync(join(raiz, 'motor-navegacion.js'), 'utf8');
+const CSS = readFileSync(join(raiz, 'estilos.css'), 'utf8');
+t('el mapa carga las recomendadas al iniciar', /mp\.once\('load'[^\n]*rrecCargarEnMapa\(\)/.test(MAPA));
+t('al cambiar la capa del mapa se vuelven a dibujar', /rrecRepintar\(\)/.test(MAPA));
+t('importar un GPX ofrece recomendarla', /rrecOfrecerPublicar\(points, nombre\)/.test(NAV));
+t('nunca publica sin un sí explícito (lpConfirmar antes de rrecPublicar)', (() => {
+  const i = SRC.indexOf('async function rrecOfrecerPublicar'); const b = SRC.slice(i, SRC.indexOf('\n}\n', i));
+  return b.indexOf('lpConfirmar(') > -1 && b.indexOf('lpConfirmar(') < b.indexOf('rrecPublicar(');
+})());
+t('la tarjeta trae Pedalearla y Bajar GPX', /Pedalearla/.test(SRC) && /Bajar GPX/.test(SRC));
+t('solo el autor ve "Quitar"', /esMia=\(typeof cu!=='undefined' && cu && r\.autor===cu\)/.test(SRC));
+t('el inicio de la ruta se puede tocar (blanco fácil con el dedo)', /rrec-inicio/.test(SRC) && /\.rrec-inicio\{/.test(CSS));
+t('Rutas trae "Recomendar una ruta tuya"', /Recomendar una ruta tuya/.test(HTML) && /onclick="rrecSubirGPX\(\)"/.test(HTML));
+t('el violeta de la tarjeta es el mismo de la línea', /\.ab\.rrec-pri\{background:#a855f7/.test(CSS));
+
 console.log('  rutas-recomendadas.test.mjs: ' + ok + ' OK' + (fail ? ', ' + fail + ' FALLAN' : ''));
 process.exit(fail ? 1 : 0);
