@@ -542,7 +542,8 @@ export default {
     const ORIGENES_OK = ["https://librepedal.cl", "https://www.librepedal.cl", "https://librepedal-web.pages.dev"];
     const origenReq = request.headers.get("Origin") || "";
     const cors = {
-      "Access-Control-Allow-Origin": ORIGENES_OK.includes(origenReq) ? origenReq : ORIGENES_OK[0],
+      // 2026-10-15: también las vistas previas de prueba (https://<rama>.librepedal.pages.dev), mismo dueño.
+      "Access-Control-Allow-Origin": (ORIGENES_OK.includes(origenReq) || /^https:\/\/[a-z0-9-]+\.librepedal\.pages\.dev$/.test(origenReq)) ? origenReq : ORIGENES_OK[0],
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
       "Vary": "Origin"

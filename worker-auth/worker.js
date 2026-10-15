@@ -176,8 +176,12 @@ const ORIGENES_OK = ['https://librepedal.cl', 'https://www.librepedal.cl', 'http
 export default {
   async fetch(request, env) {
     const origenReq = request.headers.get('Origin') || '';
+    // 2026-10-15: también las vistas previas de prueba (https://<rama>.librepedal.pages.dev, vista-previa.yml),
+    // para poder probar el login en la app de prueba sin tocar producción. Mismo dueño (cuenta de Cloudflare
+    // de LibrePedal): nadie ajeno puede publicar en ese subdominio.
+    const _origenOk = ORIGENES_OK.includes(origenReq) || /^https:\/\/[a-z0-9-]+\.librepedal\.pages\.dev$/.test(origenReq);
     const cors = {
-      'Access-Control-Allow-Origin': ORIGENES_OK.includes(origenReq) ? origenReq : ORIGENES_OK[0],
+      'Access-Control-Allow-Origin': _origenOk ? origenReq : ORIGENES_OK[0],
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Vary': 'Origin'
