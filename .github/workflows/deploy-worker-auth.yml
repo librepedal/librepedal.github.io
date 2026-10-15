@@ -1,0 +1,35 @@
+name: Publicar servidor de autenticación (worker-auth)
+
+# 2026-10-15, con visto bueno de Inty: publicar worker-auth para que la app de prueba (vista previa
+# *.librepedal.pages.dev) pueda iniciar sesión. Antes se publicaba a mano con wrangler desde la máquina
+# de Inty (LECCIONES-APRENDIDAS: "Deploy del Worker = wrangler deploy, manual"). Corre solo cuando
+# cambia worker-auth/ en una rama prueba/** o en main, o a mano. Los secretos del Worker (cuenta de
+# servicio de Firebase, etc.) viven en Cloudflare y wrangler deploy NO los toca.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['prueba/**', 'main']
+    paths: ['worker-auth/**', '.github/workflows/deploy-worker-auth.yml']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Publicar con wrangler
+        working-directory: worker-auth
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '024bc85be759cbf54b131202a0a1d183' }}
+        run: npx --yes wrangler@3.114.0 deploy
+      - name: Comprobar que acepta la vista previa
+        run: |
+          sleep 5
+          H=$(curl -s -o /dev/null -D - -X OPTIONS -H "Origin: https://prueba-integracion.librepedal.pages.dev" https://librepedal-auth.librepedal.workers.dev | tr -d '\r' | grep -i '^access-control-allow-origin')
+          echo "$H"
+          echo "$H" | grep -q 'prueba-integracion.librepedal.pages.dev' || { echo "::error::El servidor no acepta todavía la vista previa"; exit 1; }
+          H2=$(curl -s -o /dev/null -D - -X OPTIONS -H "Origin: https://librepedal.cl" https://librepedal-auth.librepedal.workers.dev | tr -d '\r' | grep -i '^access-control-allow-origin')
+          echo "$H2"; echo "$H2" | grep -q 'https://librepedal.cl' || { echo "::error::librepedal.cl dejó de estar aceptado"; exit 1; }
