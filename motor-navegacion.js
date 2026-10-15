@@ -435,21 +435,33 @@ function checkFuel(distKm){
 // us.sumVelDist guarda la suma de (velocidad media de cada viaje * sus km); dividido
 // por us.di (km totales de siempre) da el promedio histórico ponderado por distancia
 // — un viaje de 40km pesa más en el promedio que uno de 2km, que es lo justo.
+/* 2026-10-15 (auditoría "sin datos falsos"): el promedio se dividía por us.di — TODOS los km de la
+   cuenta — pero la suma solo se alimentaba al navegar: los paseos grabados y los km en auto bajaban
+   el promedio sin aportar velocidad, y Pistero decía "vas más rápido que tu promedio" sin que fuera
+   cierto. Ahora la suma y sus km van juntos (us.kmVelDist), se alimentan al navegar Y al grabar,
+   y los viajes en vehículo no se mezclan con los de bici. */
 function _actualizarVelocidadHistorica(distanciaKm, duracionActivaMs){
+  if(typeof actividadTipo!=='undefined' && actividadTipo==='moto') return; // no mezclar auto con bici
   if(!distanciaKm || distanciaKm<0.3 || !duracionActivaMs || duracionActivaMs<60000) return; // muy corto para ser representativo
   const velEsteViaje=distanciaKm/(duracionActivaMs/3600000);
   if(!isFinite(velEsteViaje) || velEsteViaje<=0 || velEsteViaje>80) return; // descarta outliers imposibles
   us.sumVelDist=(us.sumVelDist||0)+velEsteViaje*distanciaKm;
+  us.kmVelDist=(us.kmVelDist||0)+distanciaKm;
   gd();
+}
+// Velocidad media histórica EN MOVIMIENTO (km/h) de tus viajes en bici o a pie; null si aún no hay datos confiables.
+function velMediaHistorica(){
+  if(!(us.kmVelDist>=1) || !(us.sumVelDist>0)) return null;
+  return us.sumVelDist/us.kmVelDist;
 }
 let kmUltimoRitmoComentado=0;
 function compararRitmoHistorico(distanciaKm, duracionActivaMs){
   if(!vozActiva || vozOcupada() || vozCola.length) return;
-  const kmHistoricos=us.sumVelDist?us.di:0;
-  if(!kmHistoricos || kmHistoricos<10) return; // recién empezando, sin promedio propio confiable todavía
+  if(typeof actividadTipo!=='undefined' && actividadTipo==='moto') return; // el promedio es de bici/pie
+  if(!(us.kmVelDist>=10)) return; // recién empezando, sin promedio propio confiable todavía
   if(!distanciaKm || distanciaKm<2 || duracionActivaMs<180000) return; // deja pasar el arranque del viaje
   if(distanciaKm-kmUltimoRitmoComentado<3) return; // un aviso cada 3km, no más seguido
-  const velHistorica=us.sumVelDist/us.di;
+  const velHistorica=velMediaHistorica();
   if(velHistorica<3) return;
   const velActual=distanciaKm/(duracionActivaMs/3600000);
   const diffPct=(velActual-velHistorica)/velHistorica;
@@ -839,8 +851,12 @@ function updateStatsView(){
   document.getElementById('statTrips').innerText=_totalViajesCompletos();
   document.getElementById('statCal').innerText=Math.round(us.c);
   document.getElementById('statDarma').innerText=us.d;
-  document.getElementById('statAvgSpeed').innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0';
-  document.getElementById('statMaxSpeed').innerText=maxSpeed.toFixed(1); var _kgC=_co2Evitado(us.di); var _sc=document.getElementById('statCo2'); if(_sc) _sc.innerText=_fmtCo2(_kgC); var _scl=document.getElementById('statCo2Lbl'); if(_scl) _scl.innerText='CO₂ evitado · ~'+_arbolesEq(_kgC).toFixed(1)+' árboles/año';
+  // 2026-10-15: antes era el promedio de cada lectura del GPS de ESTA sesión, con cada segundo detenido como 0,
+  // y se perdía al cerrar la app. Ahora: tu velocidad media en movimiento de todos tus viajes en bici o a pie.
+  { const _vm=velMediaHistorica(); document.getElementById('statAvgSpeed').innerText=_vm!=null?_vm.toFixed(1):'–'; }
+  // 2026-10-15: máxima de tus viajes en bici/a pie guardada (antes: solo esta sesión, y contaba el auto);
+  // CO₂ evitado solo con km a pulso (antes contaba los km manejando como CO₂ "evitado").
+  document.getElementById('statMaxSpeed').innerText=(us.vmax>0?us.vmax:maxSpeed).toFixed(1); var _kgC=_co2Evitado(typeof kmAPulso==='function'?kmAPulso():us.di); var _sc=document.getElementById('statCo2'); if(_sc) _sc.innerText=_fmtCo2(_kgC); var _scl=document.getElementById('statCo2Lbl'); if(_scl) _scl.innerText='CO₂ evitado · ~'+_arbolesEq(_kgC).toFixed(1)+' árboles/año';
   actualizarMiPuesto();
   const perf=Math.min(100,Math.round((us.di/10)*100));
   document.getElementById('statPerformanceFill').style.width=perf+'%';

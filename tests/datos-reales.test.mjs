@@ -44,6 +44,30 @@ const ACT = lee('pistero-tipo-actividad.js'), NAV = lee('motor-navegacion.js');
   t('nadie calcula calorías con km × 30 fijo', conTreinta.length === 0, conTreinta.join(', '));
   t('navegar usa _sumarKmViaje (vehículo no gasta la cadena de la bici)', /if\(dkm>0\)\{ totalDistance\+=dkm; _sumarKmViaje\(dkm\); \}/.test(lee('funciones-mapa-viajes.js')));
 }
+// ---- 3b) Velocidad media histórica ----
+{
+  const us = {}; let actividadTipo = 'ciclismo';
+  const F = new Function('us', 'gd', 'getAct', 'let actividadTipo; ' + bloque(NAV, 'function _actualizarVelocidadHistorica(').replace("typeof actividadTipo!=='undefined' && actividadTipo==='moto'", "getAct()==='moto'") + '\n' + bloque(NAV, 'function velMediaHistorica(') + '\nreturn {_actualizarVelocidadHistorica, velMediaHistorica};')(us, () => {}, () => actividadTipo);
+  F._actualizarVelocidadHistorica(20, 3600000);            // 20 km en 1 h de bici
+  actividadTipo = 'moto'; F._actualizarVelocidadHistorica(60, 3600000); actividadTipo = 'ciclismo'; // 60 km en auto: no cuenta
+  F._actualizarVelocidadHistorica(10, 3600000);            // 10 km en 1 h
+  t('promedio ponderado por km de tus viajes en bici (20 y 10 km/h → 16,7)', Math.abs(F.velMediaHistorica() - 16.667) < 0.01, F.velMediaHistorica());
+  t('los km en auto no se mezclan', us.kmVelDist === 30);
+  t('sin datos, no inventa un promedio', new Function('us', bloque(NAV, 'function velMediaHistorica(') + '\nreturn velMediaHistorica;')({})() === null);
+  t('Estadísticas: Vel. media ya no promedia lecturas con paradas en 0', !/statAvgSpeed'\)\.innerText=speedReadings/.test(NAV));
+  t('grabar un paseo también alimenta la velocidad media', /_actualizarVelocidadHistorica\(_kmEsteViaje, tiempoActivoMs\(\)\)/.test(lee('motor-gps.js')));
+  t('a Pistero se le manda la media histórica real', /c\.velMediaKmh=\+_vm\.toFixed\(1\)/.test(lee('pistero-chat-ia.js')));
+}
+// ---- 3c) Logros, CO₂ y máxima: los km en auto no cuentan como pedaleados ----
+{
+  const LOG = lee('gamificacion-logros.js'), DAR = lee('gamificacion-darma.js');
+  const k = (us) => new Function('us', bloque(LOG, 'function kmAPulso(') + '\nreturn kmAPulso();')(us);
+  t('km a pulso = total menos lo hecho en vehículo', k({ di: 120, dm: { ciclismo: 70, moto: 50 } }) === 70);
+  t('cuenta vieja sin detalle por modo: el total', k({ di: 30 }) === 30);
+  t('ningún logro de km usa el total con auto (us.di)', !/val:function\(\)\{return us\.di;\}/.test(LOG));
+  t('CO₂ evitado sin km manejando (Inicio y Estadísticas)', !/_co2Evitado\(us\.di\)/.test(DAR) && !/_co2Evitado\(us\.di\)/.test(NAV));
+  t('velocidad máxima histórica sin el auto', /us\.vmax=sp/.test(lee('motor-gps.js')) && /actividadTipo!=='moto'\)\) us\.vmax=sp/.test(lee('motor-gps.js')));
+}
 // ---- 4) Compartir y guardar en la app instalada ----
 {
   const SRC = lee('compartir-nativo.js');

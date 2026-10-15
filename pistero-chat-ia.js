@@ -29,7 +29,8 @@ function _pisteroContexto(){
     const velActual=elVel?(parseFloat(elVel.innerText)||0):0;
     c.enMovimiento = (navActivo || (typeof ig!=='undefined'&&ig)) && velActual>=3;
     if(typeof trips!=='undefined'&&trips) c.viajesCompletados=trips.filter(function(t){return t.status==='completed';}).length;
-    if(typeof speedReadings!=='undefined'&&speedReadings.length) c.velMediaKmh=+(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1);
+    // 2026-10-15: se manda como "velocidad media histórica": tiene que serlo (antes era el promedio de esta sesión con las paradas en 0)
+    if(typeof velMediaHistorica==='function'){ const _vm=velMediaHistorica(); if(_vm!=null) c.velMediaKmh=+_vm.toFixed(1); }
     c.ultimasRutas=rutasLocales().slice(-4).reverse().map(function(r){ return {nombre:r.nombreRuta||null, km:+(r.distance||0).toFixed(1), fecha:new Date(r.startTime).toLocaleDateString()}; });
   }catch(e){}
   return c;

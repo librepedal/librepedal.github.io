@@ -1,17 +1,22 @@
 /* ===== GAMIFICACIÓN: Logros (gratis) + Ranking Top 100 ===== */
 function statViajesCompletados(){ return (typeof trips!=='undefined'&&trips)?trips.filter(function(t){return t&&t.status==='completed';}).length:0; }
 function statBitacora(){ const pre='lp_diario_'+(cu||'anon')+'_'; return Object.keys(localStorage).filter(function(k){return k.indexOf(pre)===0;}).length; }
+/* 2026-10-15 (auditoría "sin datos falsos"): los logros de km ("Primer pedaleo", "Cicloviajero: 1000 km,
+   ¡elegible a premios!") usaban us.di, que suma TODOS los km — también los hechos en modo Motorizado.
+   Se podía ganar un logro (y un premio) manejando. Ahora cuentan solo los km a pulso (bici o a pie).
+   Para cuentas viejas sirve igual: total menos lo registrado en vehículo (us.dm.moto). */
+function kmAPulso(){ const total=Number(us&&us.di)||0, auto=Number(us&&us.dm&&us.dm.moto)||0; return Math.max(0, total-auto); }
 const LOGROS=[
   {e:'<i class="fas fa-hands-clapping"></i>',t:'Bienvenido',d:'Te uniste a la comunidad',val:function(){return 1;},meta:1,u:''},
-  {e:'<i class="fas fa-bicycle"></i>',t:'Primer pedaleo',d:'Tu primer kilómetro',val:function(){return us.di;},meta:1,u:'km'},
-  {e:'<i class="fas fa-person-biking"></i>',t:'¡Mira mamá, sin rueditas!',d:'Tus primeros 10 km',val:function(){return us.di;},meta:10,u:'km'},
-  {e:'<i class="fas fa-binoculars"></i>',t:'Explorador',d:'50 km recorridos',val:function(){return us.di;},meta:50,u:'km'},
-  {e:'<i class="fas fa-gauge-high"></i>',t:'Centenario',d:'100 km recorridos',val:function(){return us.di;},meta:100,u:'km'},
-  {e:'<i class="fas fa-fire"></i>',t:'Fondista',d:'250 km recorridos',val:function(){return us.di;},meta:250,u:'km'},
-  {e:'<i class="fas fa-mountain"></i>',t:'Rutero',d:'500 km recorridos',val:function(){return us.di;},meta:500,u:'km'},
-  {e:'<i class="fas fa-medal"></i>',t:'Cicloviajero',d:'1000 km — ¡elegible a premios!',val:function(){return us.di;},meta:1000,u:'km'},
-  {e:'<i class="fas fa-earth-americas"></i>',t:'Trotamundos',d:'2500 km recorridos',val:function(){return us.di;},meta:2500,u:'km'},
-  {e:'<i class="fas fa-trophy"></i>',t:'Leyenda del pedal',d:'5000 km recorridos',val:function(){return us.di;},meta:5000,u:'km'},
+  {e:'<i class="fas fa-bicycle"></i>',t:'Primer pedaleo',d:'Tu primer kilómetro',val:function(){return kmAPulso();},meta:1,u:'km'},
+  {e:'<i class="fas fa-person-biking"></i>',t:'¡Mira mamá, sin rueditas!',d:'Tus primeros 10 km',val:function(){return kmAPulso();},meta:10,u:'km'},
+  {e:'<i class="fas fa-binoculars"></i>',t:'Explorador',d:'50 km recorridos',val:function(){return kmAPulso();},meta:50,u:'km'},
+  {e:'<i class="fas fa-gauge-high"></i>',t:'Centenario',d:'100 km recorridos',val:function(){return kmAPulso();},meta:100,u:'km'},
+  {e:'<i class="fas fa-fire"></i>',t:'Fondista',d:'250 km recorridos',val:function(){return kmAPulso();},meta:250,u:'km'},
+  {e:'<i class="fas fa-mountain"></i>',t:'Rutero',d:'500 km recorridos',val:function(){return kmAPulso();},meta:500,u:'km'},
+  {e:'<i class="fas fa-medal"></i>',t:'Cicloviajero',d:'1000 km — ¡elegible a premios!',val:function(){return kmAPulso();},meta:1000,u:'km'},
+  {e:'<i class="fas fa-earth-americas"></i>',t:'Trotamundos',d:'2500 km recorridos',val:function(){return kmAPulso();},meta:2500,u:'km'},
+  {e:'<i class="fas fa-trophy"></i>',t:'Leyenda del pedal',d:'5000 km recorridos',val:function(){return kmAPulso();},meta:5000,u:'km'},
   {e:'<i class="fas fa-handshake"></i>',t:'Primer aporte',d:'Gana 10 de Darma aportando',val:function(){return us.d;},meta:10,u:''},
   {e:'<i class="fas fa-seedling"></i>',t:'Colaborador',d:'50 de Darma',val:function(){return us.d;},meta:50,u:''},
   {e:'<i class="fas fa-star"></i>',t:'Pilar de la comunidad',d:'150 de Darma',val:function(){return us.d;},meta:150,u:''},
