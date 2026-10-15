@@ -883,7 +883,10 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
       // punto correcto. Mismo bug real que en ug() (GPS libre): sin exigir speed>0, el
       // ruido normal del GPS estando quieto se colaba de a poco al kilometraje aunque
       // "speed" (ya calculada arriba, con ventana de varios puntos) mostrara 0 = parado.
-      if(speed>0 && _saltoPosOKNav){ const dkm=dist/1000; totalDistance+=dkm; us.di+=dkm; _kmEsteViaje+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
+      // km-viaje.js (2026-10-15): antes solo con speed>0 — con posiciones espaciadas (pantalla apagada,
+      // mala señal) o bajo 6 km/h la velocidad de ventana daba 0 y el tramo se perdía. Ahora por distancia real.
+      const dkm=(_saltoPosOKNav && typeof kmvContadorNav!=='undefined') ? kmvContadorNav.tramo({lat:lat,lon:lon,t:_now}, false) : ((speed>0 && _saltoPosOKNav)?dist/1000:0);
+      if(dkm>0){ totalDistance+=dkm; us.di+=dkm; _kmEsteViaje+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
       if(_saltoPosOKNav) gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)});
       lastGpsPoint={lat:lat,lon:lon,t:_now};
     }
