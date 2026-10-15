@@ -130,6 +130,8 @@ function _distPuntoASegmento(plat,plon, alat,alon, blat,blon){
   return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
 }
 function verificarDesviacion(lat,lon){
+  // Navegando un GPX no hay destino al cual recalcular: se guía de vuelta a la línea (navegar-gpx.js).
+  if(typeof navModoGPX!=='undefined' && navModoGPX && typeof gpxnVerificar==='function'){ gpxnVerificar(lat,lon); return; }
   if(navRecalculando) return;
   const pts=rutaLatLngs;
   if(!pts || pts.length<2) return;
@@ -152,6 +154,7 @@ function verificarDesviacion(lat,lon){
 }
 async function recalcularRuta(lat,lon){
   if(navRecalculando || navDestLat==null) return;
+  if(typeof navModoGPX!=='undefined' && navModoGPX) return; // un GPX no se recalcula: gpxnVerificar guía de vuelta a la línea
   navRecalculando=true; navFixesFueraDeRuta=0;
   navUltimoRecalcTime=Date.now();
   navRecalcIntentos++;
@@ -332,12 +335,16 @@ function _detectarEleccionRutaPorVoz(t){
   if(m){ const idx=parseInt(m[1]||m[2],10)-1; if(idx>=0 && idx<n) return idx; }
   return null;
 }
-async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName){
+// rutaGPX (opcional, navegar-gpx.js): ruta ya armada desde un GPX ({pasos, latlngs, distancia,
+// duracion, perfil}). Con ella no se llama a OSRM: los giros salen de la forma de la ruta y el
+// resto del motor (avisos de giro, pendientes, llegada) funciona igual.
+async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,destName,rutaGPX){
   trackEvent('funcion','navegacion');
   // Si ya había una navegación en curso (ej. el usuario pide por voz un destino nuevo
   // sin haber terminado el anterior), la cerramos primero para que guarde su avance
   // en vez de perderlo silenciosamente al pisar el estado con la ruta nueva.
   if(document.getElementById('nav-screen').classList.contains('active')) endNavigation();
+  if(rutaGPX && typeof gpxnEmpezar==='function') gpxnEmpezar(rutaGPX); else if(typeof gpxnTerminar==='function') gpxnTerminar();
   _detenerGpsLibreSiActivo();
   // 2026-08-23: los reportes ya no se enganchan al iniciar sesion. Aca SI hacen falta
   // aunque no hayas pasado por el mapa: _avisoSuperficieRuta() los usa para avisarte del
@@ -381,6 +388,11 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
   iniciarDeteccionCaidas();
   iniciarSeguimientoSegmentos(startLat,startLon);
   try{
+    let route, steps=null, latlngs;
+    if(rutaGPX){
+      route={distance:rutaGPX.distancia, duration:rutaGPX.duracion};
+      latlngs=rutaGPX.latlngs;
+    } else {
     const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+startLon+','+startLat+';'+destLon+','+destLat+'?overview=full&geometries=geojson&steps=true&alternatives=true';
     const resp=await _fetchT(url, 15000); const data=await resp.json();
     if(data.code!=='Ok'||!data.routes||!data.routes.length){ lpAviso("No pude calcular la ruta"); endNavigation(); return; }
@@ -391,13 +403,16 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
       document.getElementById('navText').innerText="Elige tu ruta...";
       _rutaIdx=await _elegirRutaAlternativa(data.routes);
     }
-    const route=data.routes[_rutaIdx], steps=route.legs[0].steps;
-    const latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
-    rutaLatLngs=latlngs; _prefetchPerfilRuta();
+    route=data.routes[_rutaIdx]; steps=route.legs[0].steps;
+    latlngs=route.geometry.coordinates.map(function(c){return [c[1],c[0]];});
+    }
+    rutaLatLngs=latlngs;
+    // Un GPX con alturas trae su propio perfil (sirve sin señal); si no, se pide como siempre.
+    if(rutaGPX && rutaGPX.perfil && rutaGPX.perfil.length){ rutaPerfil=rutaGPX.perfil; pendAntAvisadas.clear(); pendAntCooldown=0; } else _prefetchPerfilRuta();
     if(routeLine) navMap.removeLayer(routeLine);
     routeLine=L.polyline(latlngs,{color:'#fc4c02',weight:6,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(navMap);
     navMap.fitBounds(routeLine.getBounds(),{padding:[80,80]});
-    navSteps=steps.map(function(step,index){ return {instruction:getTurnInstruction(step.maneuver.type,step.maneuver.modifier,step.name),distance:step.distance,maneuver:step.maneuver,geometry:step.geometry,index:index}; });
+    navSteps=rutaGPX ? rutaGPX.pasos : steps.map(function(step,index){ return {instruction:getTurnInstruction(step.maneuver.type,step.maneuver.modifier,step.name),distance:step.distance,maneuver:step.maneuver,geometry:step.geometry,index:index}; });
     currentStepIndex=0; lastSpokenStep=-1; _navDistPrev=Infinity; routeTotalDistance=route.distance/1000; routeTotalDuration=Math.round(route.duration/60);
     const arrival=new Date(Date.now()+route.duration*1000);
     document.getElementById('etaTime').innerText=arrival.getHours().toString().padStart(2,'0')+':'+arrival.getMinutes().toString().padStart(2,'0');
@@ -418,8 +433,13 @@ async function calculateAndStartNavigation(startLat,startLon,destLat,destLon,des
       gpsWatchId=navigator.geolocation.watchPosition(_navGeoCallback,function(err){ console.error("GPS:",err); },gpsAhorro?{enableHighAccuracy:false,maximumAge:8000,timeout:15000}:{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
     }
     if(navSteps.length>0) showStepInstruction(0);
+    if(rutaGPX){
+      showSpeechBubble("Ruta "+destName);
+      h("Vamos por "+destName+". Te aviso cada giro, y las subidas y bajadas antes de llegar. Tú mira el camino.");
+    } else {
     showSpeechBubble("En ruta a "+destName.split(',')[0]);
     h("Vamos a "+destName.split(',')[0]+". Yo te voy guiando, tú disfruta el camino.");
+    }
     anunciarClimaRuta(destLat,destLon,'Clima en tu destino'); // antes de salir a pedalear
   }catch(err){ console.error(err); lpAviso(((err&&err.name==='AbortError')||!navigator.onLine) ? 'No pude calcular la ruta: parece que estás sin señal. Prueba de nuevo cuando tengas internet.' : 'No pude calcular la ruta ahora. Inténtalo otra vez.'); endNavigation(); }
 }
@@ -623,6 +643,7 @@ function endNavigation(){
   // cerraste la navegación, seguía sonando (o la cola se seguía vaciando) de un viaje
   // que ya terminó — instrucciones de giro sonando segundos después de cerrar el mapa.
   pararVoz();
+  if(typeof gpxnTerminar==='function') gpxnTerminar(); // sale del modo "navegar un GPX" (navegar-gpx.js)
   _limpiarEstadoNavGuardado(); // el viaje terminó de forma normal: no hay nada que reanudar después
   if(!navGuardado && gpsPoints.length>=2){
     if(currentTrip){
@@ -877,6 +898,7 @@ function importarGPX(input){
       if(typeof renderRutas==='function') renderRutas();
       input.value='';
       h('¡Importé "'+nombre+'", '+dist.toFixed(1)+' kilómetros! Ya está en tu historial: tócala para verla o pedalearla.');
+      if(typeof rrecOfrecerPublicar==='function') setTimeout(function(){ rrecOfrecerPublicar(points, nombre); }, 1200); // ¿recomendarla a la comunidad? (rutas-recomendadas.js)
     }catch(e){ input.value=''; lpAviso('No pude leer ese GPX. ¿Seguro que es un archivo de ruta?'); }
   };
   reader.onerror=function(){ input.value=''; lpAviso('No pude abrir el archivo.'); };
