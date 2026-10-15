@@ -100,7 +100,7 @@ function corregirKmRutasLocales(){
     const horas=(r.endTime&&r.startTime&&r.endTime>r.startTime)?(r.endTime-r.startTime)/3600000:null;
     const creible=horas ? (kt/horas>=3) : true;
     if(kt>kg*1.15 && kt-kg>0.3 && creible){
-      r.distanciaAntes=kg; r.distance=Math.round(kt*100)/100; r.calories=Math.round(r.distance*30); n++;
+      r.distanciaAntes=kg; r.distance=Math.round(kt*100)/100; r.calories=Math.round(r.distance*(typeof kcalPorKm==='function'?kcalPorKm():30)); n++;
       if(r.firebaseId && typeof db!=='undefined'){ try{ db.collection('routes').doc(r.firebaseId).update({distance:r.distance, calories:r.calories}).catch(function(){}); }catch(e){} }
     }
   });

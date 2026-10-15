@@ -887,7 +887,9 @@ function _navPosUpdate(lat,lon,accuracy,speedMs,altitude){
       // km-viaje.js (2026-10-15): antes solo con speed>0 — con posiciones espaciadas (pantalla apagada,
       // mala señal) o bajo 6 km/h la velocidad de ventana daba 0 y el tramo se perdía. Ahora por distancia real.
       const dkm=(_saltoPosOKNav && typeof kmvContadorNav!=='undefined') ? kmvContadorNav.tramo({lat:lat,lon:lon,t:_now}, false) : ((speed>0 && _saltoPosOKNav)?dist/1000:0);
-      if(dkm>0){ totalDistance+=dkm; us.di+=dkm; _kmEsteViaje+=dkm; _sumarKmModo(dkm); _sumarKmMantencion(dkm); us.c+=dkm*30; au(); }
+      // _sumarKmViaje (motor-gps.js): km, calorías según la actividad y el odómetro de la bici O del vehículo.
+      // Antes navegando en modo Motorizado se gastaba la cadena de la bici y se sumaban calorías de pedalear.
+      if(dkm>0){ totalDistance+=dkm; _sumarKmViaje(dkm); }
       if(_saltoPosOKNav) gpsPoints.push({lat:lat,lon:lon,speed:speed,timestamp:_now,alt:(altitude!=null?altitude:null)});
       lastGpsPoint={lat:lat,lon:lon,t:_now};
     }

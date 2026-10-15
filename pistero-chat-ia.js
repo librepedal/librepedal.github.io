@@ -29,7 +29,8 @@ function _pisteroContexto(){
     const velActual=elVel?(parseFloat(elVel.innerText)||0):0;
     c.enMovimiento = (navActivo || (typeof ig!=='undefined'&&ig)) && velActual>=3;
     if(typeof trips!=='undefined'&&trips) c.viajesCompletados=trips.filter(function(t){return t.status==='completed';}).length;
-    if(typeof speedReadings!=='undefined'&&speedReadings.length) c.velMediaKmh=+(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1);
+    // 2026-10-15: se manda como "velocidad media histórica": tiene que serlo (antes era el promedio de esta sesión con las paradas en 0)
+    if(typeof velMediaHistorica==='function'){ const _vm=velMediaHistorica(); if(_vm!=null) c.velMediaKmh=+_vm.toFixed(1); }
     c.ultimasRutas=rutasLocales().slice(-4).reverse().map(function(r){ return {nombre:r.nombreRuta||null, km:+(r.distance||0).toFixed(1), fecha:new Date(r.startTime).toLocaleDateString()}; });
   }catch(e){}
   return c;
@@ -225,7 +226,8 @@ async function pisteroPorVoz(){
     return;
   }
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ h('En la app escríbeme la pregunta aquí abajo; la voz funciona en Chrome.'); const i=document.getElementById('pisteroInput'); if(i){ try{ i.focus(); }catch(e){} } return; }
+  // 2026-10-15: no mandar a Chrome. En la app el micrófono es nativo (arriba); llegar aquí en la app = versión vieja.
+  if(!SR){ h(((typeof _cnEsApp==='function')?_cnEsApp():!!window.Capacitor) ? 'Para hablarme por voz, actualiza Libre Pedal en Play Store. Mientras tanto, escríbeme la pregunta aquí abajo.' : 'Este navegador no permite dictar por voz; escríbeme la pregunta aquí abajo.'); const i=document.getElementById('pisteroInput'); if(i){ try{ i.focus(); }catch(e){} } return; }
   if(!window.isSecureContext){ h('La voz solo funciona desde la página publicada.'); return; }
   try{ pararVoz(); }catch(e){}
   _pausarManosLibres();

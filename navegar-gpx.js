@@ -260,7 +260,9 @@ async function _gpxnMatch(ruta){
   const coords=idx.map(function(i){ return ruta.latlngs[i][1].toFixed(5)+','+ruta.latlngs[i][0].toFixed(5); }).join(';');
   const radios=idx.map(function(){ return 25; }).join(';');
   const perfil=(typeof _osrmPerfil==='function')?_osrmPerfil():'cycling';
-  const r=await _fetchT('https://router.project-osrm.org/match/v1/'+perfil+'/'+coords+'?steps=true&overview=false&gaps=ignore&tidy=true&radiuses='+radios, 12000);
+  // Solo se usan los NOMBRES de calles y si hay cruce: son los mismos para bici y auto, así que el
+  // servidor de autos sirve (el de perfiles reales no acepta /match). Los tiempos NO salen de aquí.
+  const r=await _fetchT('https://router.project-osrm.org/match/v1/driving/'+coords+'?steps=true&overview=false&gaps=ignore&tidy=true&radiuses='+radios, 12000);
   const j=await r.json();
   if(!j || j.code!=='Ok' || !j.matchings) return null;
   const pasos=[];
@@ -278,7 +280,8 @@ async function _gpxnMatch(ruta){
 }
 async function _gpxnAcercamiento(yo, ini){
   const perfil=(typeof _osrmPerfil==='function')?_osrmPerfil():'cycling';
-  const r=await _fetchT('https://router.project-osrm.org/route/v1/'+perfil+'/'+yo.lon+','+yo.lat+';'+ini[1]+','+ini[0]+'?overview=full&geometries=geojson&steps=true', 12000);
+  // Tramo hasta el inicio con perfil REAL (urlRuteo): camino y tiempo de bici/pie, no de auto.
+  const r=await _fetchT(urlRuteo('route', yo.lon+','+yo.lat+';'+ini[1]+','+ini[0], 'overview=full&geometries=geojson&steps=true', perfil), 12000);
   const j=await r.json();
   if(!j || j.code!=='Ok' || !j.routes || !j.routes.length) return null;
   const route=j.routes[0];

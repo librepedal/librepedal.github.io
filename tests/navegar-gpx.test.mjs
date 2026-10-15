@@ -162,7 +162,8 @@ function bloque(src, desde) {
   const dichos = []; let llego = false;
   const el = { innerText: '' };
   const motor = new Function('navSteps', 'calculateDistance', 'formatDistance', 'document', 'showStepInstruction', 'showArrival',
-    'let currentStepIndex=0, lastSpokenStep=-1, _navDistPrev=Infinity;\n' + bloque(NAV, 'function checkNavigationSteps(') +
+    // _actualizarLlegada (hora de llegada en vivo, auditoría 2026-10-15) no es parte de esta prueba
+    'let currentStepIndex=0, lastSpokenStep=-1, _navDistPrev=Infinity; const _actualizarLlegada=function(){};\n' + bloque(NAV, 'function checkNavigationSteps(') +
     '\nreturn {paso:checkNavigationSteps, set ls(v){lastSpokenStep=v;}, get idx(){return currentStepIndex;}};');
   let M;
   M = motor(r.pasos, (a, b, c, d) => G.gpxnDist({ lat: a, lon: b }, { lat: c, lon: d }), (m) => m + ' m', { getElementById: () => el },

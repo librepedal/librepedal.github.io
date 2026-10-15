@@ -17,6 +17,7 @@ const CORE = [
   './clima-datos.js',
   './voz-motor.js',
   './voz-sin-conexion.js',
+  './compartir-nativo.js',
   './reportes.js',
   './rutas.js',
   './mapa-render.js',

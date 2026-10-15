@@ -24,7 +24,9 @@ var lpHuecoGPS=(function(){
   // pide el camino entre a y b. Devuelve Promise<{pts:[{lat,lon}], km}> o null (sin red, sin ruta o ruta absurda)
   function porCamino(a, b, perfil, fetchFn){
     fetchFn=fetchFn||(typeof fetch==='function'?fetch:null); if(!fetchFn) return Promise.resolve(null);
-    var url='https://router.project-osrm.org/route/v1/'+(perfil||'cycling')+'/'+a.lon+','+a.lat+';'+b.lon+','+b.lat+'?overview=full&geometries=geojson';
+    // urlRuteo (pistero-tipo-actividad.js): servidor con perfil REAL de bici/pie; el de demo era siempre de auto
+    var coords=a.lon+','+a.lat+';'+b.lon+','+b.lat;
+    var url=(typeof urlRuteo==='function') ? urlRuteo('route', coords, 'overview=full&geometries=geojson', perfil||'cycling') : 'https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson';
     var recta=_km(a,b);
     return Promise.resolve().then(function(){ return fetchFn(url); })
       .then(function(r){ return r&&r.ok?r.json():null; })

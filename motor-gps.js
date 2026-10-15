@@ -168,6 +168,7 @@ async function toggleGPS(silencioso){
     if(liveTrackActivo){ liveTrackActivo=false; _actualizarBtnSeguimientoVivo(); if(liveTrackId) db.collection('liveTracking').doc(liveTrackId).update({activo:false}).catch(function(){}); }
     if(btn){ btn.innerHTML="<i class='fas fa-location-dot'></i> Grabar un paseo"; btn.style.background=""; btn.style.borderColor=""; btn.style.color=""; }
     if(typeof kmvContadorLibre!=='undefined'){ const _kFin=kmvContadorLibre.fin(); if(_kFin>0) _sumarKmViaje(_kFin); } // el último tramo que quedaba por confirmar
+    if(typeof _actualizarVelocidadHistorica==='function') _actualizarVelocidadHistorica(_kmEsteViaje, tiempoActivoMs()); // los paseos también cuentan para tu velocidad media (antes solo navegar)
     if(currentRoute.length>1){ autoGuardarRuta(false,false); }
     sincronizarStats();
     if(cu&&!ghostMode){ db.collection('users').doc(cu).set({lat:null,lon:null},{merge:true}); _rtdOcultarPosicion(); }
@@ -344,7 +345,7 @@ function _sumarKmViaje(km){
   if(!(km>0)) return;
   us.di+=km; _kmEsteViaje+=km; _sumarKmModo(km);
   if(typeof actividadTipo!=='undefined' && actividadTipo==='moto'){ if(typeof _sumarKmVehiculo==='function') _sumarKmVehiculo(km); } else { _sumarKmMantencion(km); }
-  us.c+=(km*30); au(); const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2);
+  us.c+=(km*kcalPorKm()); au(); // calorías según la actividad (pistero-tipo-actividad.js): en vehículo, 0 const _sk=document.getElementById('saverKm'); if(_sk) _sk.innerText=us.di.toFixed(2);
 }
 // Inty 2026-10-09: "está disparando muchas frases". Los km del hueco entran de golpe y bromasDelCamino() (una frase
 // cada 1,5 km) y el hito de cada 10 km los tomaban como km sin comentar: ráfaga de frases al volver. El hueco no se
@@ -425,6 +426,7 @@ function ug(p){
   if(_saltoPosOK) _actualizarLiveTrack(la,lo);
   if(!segmentosCargados){ segmentosCargados=true; iniciarSeguimientoSegmentos(la,lo); } else { _verificarSegmentos(la,lo); }
   if(sp>maxSpeed) maxSpeed=sp;
+  if(sp>(us.vmax||0) && (typeof actividadTipo==='undefined' || actividadTipo!=='moto')) us.vmax=sp; // máxima histórica a pulso (Estadísticas)
   speedReadings.push(sp);
   // Al DETENERTE (pasar de moverte a 0), guarda automáticamente la ruta hecha (checkpoint).
   if(sp===0 && spAnterior>0 && currentRoute.length>=2 && currentRoute.length>puntosGuardados){ autoGuardarRuta(true,true); }

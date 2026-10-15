@@ -438,7 +438,7 @@ function tarjetaCompartir(){
       return new Promise(function(ok){ cv.toBlob(ok,'image/png'); });
     }); });
 }
-function compartirViaje(){ if(sb3EsAppNativa()){ V().vidTarjeta('app-imagen'); return; }   // el WebView de Android no comparte ni descarga archivos (MDN: share() no existe en WebView Android): antes fallaba en silencio
+function compartirViaje(){ if(sb3SinCompartirEnApp()){ V().vidTarjeta('app-imagen'); return; }   // el WebView de Android no comparte ni descarga archivos (MDN: share() no existe en WebView Android): antes fallaba en silencio
   var b=$('compartir'); if(b){ b.disabled=true; b.textContent='Preparando la imagen…'; }
   tarjetaCompartir().then(function(blob){ var nom='libre-pedal-'+RUTA.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png', file=new File([blob],nom,{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})) return navigator.share({files:[file],title:RUTA.nombre,text:'Mi viaje en Libre Pedal'}).catch(function(){});
@@ -835,6 +835,8 @@ function dibujarPerfil(){
 // ==================== VIDEO PARA REDES: el dibujo y la tarjeta están en sobrevuelo-video.js (SB3Video) ====================
 var GRAB=null;   // la grabación en curso (null = no se graba)
 function sb3EsAppNativa(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
+// 2026-10-15: la app instalada SÍ comparte (compartir-nativo.js). Solo una versión vieja sin los plugins no puede.
+function sb3SinCompartirEnApp(){ return sb3EsAppNativa() && !(typeof lpPuedeCompartirArchivos==='function' && lpPuedeCompartirArchivos()); }
 // el módulo de video con el estado del vuelo al día (se llama en cada uso: nunca dibuja con un estado viejo)
 function V(){ var M=window.SB3Video; if(!M) throw new Error('No se pudo cargar el creador de video. Recarga la página e inténtalo de nuevo.');
   M.sync({mapa:mapa,marcador:marcador,D:D,cajas:cajas,exprAct:exprAct,prog:prog,capa:capa,GRAB:GRAB,RUTA:RUTA,fmt:fmt,colorPend:colorPend,enD:enD,$:$,cara:cara,sb3Raiz:sb3Raiz}); return M; }
@@ -842,8 +844,8 @@ function V(){ var M=window.SB3Video; if(!M) throw new Error('No se pudo cargar e
 // ---------- la grabación ----------
 function sb3CrearVideo(){
   if(GRAB||!mapa||!D.nuevo) return;
-  if(sb3EsAppNativa()){ V().vidTarjeta('app'); return; }   // antes de gastar batería: ahí no se puede guardar ni compartir
-  if(typeof VideoEncoder!=='function'||typeof VideoFrame!=='function'){ V().vidTarjeta('error',{msg:'Este navegador no sabe crear videos. Ábrelo en Chrome actualizado.'}); return; }
+  if(sb3SinCompartirEnApp()){ V().vidTarjeta('app'); return; }   // antes de gastar batería: ahí no se puede guardar ni compartir
+  if(typeof VideoEncoder!=='function'||typeof VideoFrame!=='function'){ V().vidTarjeta('error',{msg:sb3EsAppNativa()?'Tu teléfono necesita actualizar "Android System WebView" desde Play Store para crear videos.':'Este navegador no sabe crear videos. Prueba con Chrome actualizado.'}); return; }
   var raiz=sb3Raiz(), el=$('mapa');
   GRAB={T:0,finT:0,cancel:false,err:null,caras:{},cara:{},pp:{on:false,t:0},pr0:mapa.getPixelRatio(),son0:SON.on,vel0:velX,capaCss:el.style.cssText,cierre:null};
   V().vidTarjeta('creando'); raiz.classList.add('grabando');
@@ -894,7 +896,7 @@ function sb3CrearVideo(){
     mux.finalize(); var blob=new Blob([mux.target.buffer],{type:'video/mp4'}), ms=i*1000/V().VID.FPS, file=null;
     try{ file=new File([blob],V().vidNombre(),{type:'video/mp4'}); }catch(e){ file=blob; file.name=V().vidNombre(); }
     V().ponArchivo(file); vidRestaurar();
-    var sal=V().sb3VideoSalida(file,navigator,sb3EsAppNativa());
+    var sal=V().sb3VideoSalida(file,navigator,sb3SinCompartirEnApp());
     if(sal==='compartir') V().vidTarjeta('compartir',{ms:ms}); else { V().vidDescargar(file); V().vidTarjeta('descargar',{ms:ms}); }
     return file;
   }).catch(function(e){

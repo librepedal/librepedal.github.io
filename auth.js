@@ -195,7 +195,7 @@ async function _entrarConGoogle(){
   try{
     var _esAppNativa = (typeof window.Capacitor!=='undefined') && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
     if(_esAppNativa){
-      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualizá Libre Pedal desde Play Store para activarlo.\n\nMientras tanto podés entrar con tu correo: escribilo arriba y tocá "Enviarme el enlace".');
+      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualiza Libre Pedal desde Play Store para activarlo.\n\nMientras tanto puedes entrar con tu correo: escríbelo arriba y toca "Enviarme el enlace".');
       var _em=document.getElementById('em'); if(_em){ try{ _em.scrollIntoView({behavior:'smooth',block:'center'}); _em.focus(); }catch(e){} }
       return;
     }

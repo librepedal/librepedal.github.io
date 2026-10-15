@@ -23,6 +23,28 @@ function _modoIconHTML(id){ return '<img src="iconos-modo/'+id+'.png" alt="" loa
 let actividadTipo=localStorage.getItem('lp_actividad')||'ciclismo';
 function _actividadActual(){ return ACTIVIDADES.find(function(a){return a.id===actividadTipo;})||ACTIVIDADES[0]; }
 function _osrmPerfil(){ return _actividadActual().osrm; }
+/* RUTEO CON PERFIL REAL (2026-10-15, auditoría "sin datos falsos"). router.project-osrm.org es un
+   servidor de demostración que SOLO tiene el perfil de auto: con /cycling/ o /foot/ en la URL
+   devuelve exactamente la misma ruta y el mismo tiempo que en auto (probado: 22,86 km en 46,6 min
+   para los tres perfiles). Resultado: la hora de llegada de un ciclista o caminante era la de un
+   auto, y la ruta podía mandarlo por la carretera principal. Los servidores OSRM de FOSSGIS
+   (routing.openstreetmap.de, mismo formato de respuesta) tienen perfiles reales de bici y a pie:
+   misma prueba, bici 142,6 min (9,6 km/h, con pendientes) y a pie 304 min (4,5 km/h).
+   Auto sigue en router.project-osrm.org. Allí la parte de perfil de la URL va siempre "driving". */
+/* CALORÍAS POR ACTIVIDAD (2026-10-15, auditoría "sin datos falsos"). Antes eran km × 30 para todo:
+   manejando en modo Motorizado la app sumaba calorías que nadie quemó, y caminando contaba la mitad.
+   Valores de referencia para una persona de ~75 kg (la app no pide el peso): bici en ruta
+   ~0,4 kcal/kg/km; cicloviaje con carga y MTB, más; caminar ~0,8 kcal/kg/km; vehículo, 0. */
+const KCAL_POR_KM={ciclismo:30, cicloviaje:38, mtb:42, trekking:60, moto:0};
+function kcalPorKm(act){
+  const a=act||(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo');
+  return Object.prototype.hasOwnProperty.call(KCAL_POR_KM, a) ? KCAL_POR_KM[a] : KCAL_POR_KM.ciclismo;
+}
+const RUTEO_BASE={cycling:'https://routing.openstreetmap.de/routed-bike/', foot:'https://routing.openstreetmap.de/routed-foot/', driving:'https://router.project-osrm.org/'};
+function urlRuteo(servicio, coords, query, perfil){
+  const p=perfil||_osrmPerfil(), base=RUTEO_BASE[p]||RUTEO_BASE.driving;
+  return base+servicio+'/v1/driving/'+coords+(query?('?'+query):'');
+}
 // La app entera usa var(--p)/var(--g) para su color principal y de acento (116 y 57
 // usos respectivos en toda la hoja de estilos) — cambiar estas dos variables en
 // :root basta para que TODA la app adopte el tono del modo elegido, sin tener que

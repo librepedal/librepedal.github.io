@@ -51,9 +51,9 @@ function au(){
   if(us.d>50)us.n="Explorador"; if(us.d>150)us.n="Nómada"; if(us.d>500)us.n="Leyenda";
   document.getElementById('nv').innerText=us.n+" ("+us.d+")";
   var dd=document.getElementById('darmaDash'); if(dd) dd.innerText=us.d;
-  var _avgS=document.getElementById('avgSpeed'); if(_avgS) _avgS.innerText=speedReadings.length>0?(speedReadings.reduce(function(a,b){return a+b;},0)/speedReadings.length).toFixed(1):'0';
+  var _avgS=document.getElementById('avgSpeed'); if(_avgS){ var _vm=(typeof velMediaHistorica==='function')?velMediaHistorica():null; _avgS.innerText=_vm!=null?_vm.toFixed(1):'–'; } // 2026-10-15: media real en movimiento, no lecturas de la sesión con paradas en 0
   var _tt=document.getElementById('totalTrips'); var _tripsCompletos=_totalViajesCompletos(); if(_tt) _tt.innerText=_tripsCompletos;
-  var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(us.di));
+  var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(typeof kmAPulso==='function'?kmAPulso():us.di)); // 2026-10-15: manejando no se evita CO₂
   const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); if(pf){ pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); }
   var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1)+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
   // 2026-08-24: renderMantencion() reconstruye el innerHTML de 5 tarjetas — solo

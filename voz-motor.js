@@ -200,7 +200,7 @@ async function calcularKmRutaPlanificada(){
     let total=0;
     for(let i=0;i<puntos.length-1;i++){
       const a=puntos[i], b=puntos[i+1];
-      const url='https://router.project-osrm.org/route/v1/'+_osrmPerfil()+'/'+a.lon+','+a.lat+';'+b.lon+','+b.lat+'?overview=false';
+      const url=urlRuteo('route', a.lon+','+a.lat+';'+b.lon+','+b.lat, 'overview=false');
       const r=await fetch(url); const j=await r.json();
       if(j.code==='Ok' && j.routes && j.routes[0]) total+=j.routes[0].distance/1000;
     }
