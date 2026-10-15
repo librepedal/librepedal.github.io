@@ -167,9 +167,8 @@ function rrecVerTarjeta(id){
   document.getElementById('userModal').classList.add('on');
 }
 /* Pedalearla: la ruta queda en TUS rutas (dorado, con perfil de elevación y todo lo demás) y
-   Pistero te lleva hasta su punto de partida. La navegación giro a giro por un trazado GPX no
-   existe todavía en la app: hasta el inicio se navega como a cualquier destino, y desde ahí la
-   línea violeta queda en el mapa para seguirla. */
+   Pistero la guía por voz giro a giro (navegar-gpx.js), llevándote primero hasta su inicio si
+   estás lejos. */
 function rrecPedalear(id){
   const r=_rrecPorId(id); if(!r) return;
   try{
@@ -180,7 +179,8 @@ function rrecPedalear(id){
     }
   }catch(e){}
   if(typeof closeModal==='function') closeModal();
-  irAlPuntoYNavegar(r.inicio.lat, r.inicio.lon, 'el inicio de '+(r.nombre||'la ruta'));
+  if(typeof navegarRutaGPX==='function') navegarRutaGPX(r.puntos, r.nombre||'la ruta recomendada');
+  else irAlPuntoYNavegar(r.inicio.lat, r.inicio.lon, 'el inicio de '+(r.nombre||'la ruta'));
 }
 async function rrecQuitarDesdeTarjeta(id){
   if(!(await lpConfirmar('¿Quitar esta ruta de las recomendadas? Deja de verse en el mapa de todos.'))) return;
