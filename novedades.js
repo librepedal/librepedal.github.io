@@ -49,7 +49,7 @@ async function publicarNovedad(){
     await db.collection('novedades').add({titulo:titulo,categoria:categoria,fecha:fecha,desc:desc,link:link,ts:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('nov-titulo').value=''; document.getElementById('nov-fecha').value=''; document.getElementById('nov-desc').value=''; document.getElementById('nov-link').value='';
     h('Novedad publicada.');
-  }catch(e){ lpAviso('No se pudo publicar: '+e.message); }
+  }catch(e){ lpAviso('No se pudo publicar: '+lpErrorHumano(e)); }
 }
 async function eliminarNovedad(id){
   if(cu!==ADMIN_ID) return;

@@ -136,7 +136,11 @@ function _mostrarResumenViaje(){
   if(kmViaje<0.05 && !logros.length) return; // viaje nulo (se tocó el botón sin pedalear nada): no hay nada que celebrar
   var duracionMs=tripStartTime?Math.max(0,Date.now()-tripStartTime):0;
   var minutos=Math.max(0,Math.round(duracionMs/60000));
-  var velMedia=duracionMs>0?(kmViaje/(duracionMs/3600000)):0;
+  // 2026-10-15 (auditoría): antes era km / tiempo TOTAL (con paradas) rotulado "km/h prom." — con un almuerzo
+  // de por medio salía muy por debajo de lo pedaleado. Ahora: en movimiento (sin pausas), rotulado así.
+  var activoMs=(typeof tiempoActivoMs==='function')?tiempoActivoMs():0;
+  if(!(activoMs>0) || activoMs>duracionMs) activoMs=duracionMs;
+  var velMedia=activoMs>0?(kmViaje/(activoMs/3600000)):0;
   var medallasHTML=logros.map(function(l,i){
     return '<div class="rv-medalla"><div class="rv-medalla-ic-wrap" style="--rv-d:'+(i*180)+'ms"><span class="rv-medalla-ic">'+l.e+'</span></div><div class="rv-medalla-nombre">'+escapeHTML(l.t)+'</div></div>';
   }).join('');
@@ -144,7 +148,7 @@ function _mostrarResumenViaje(){
     +'<div class="rv-stats">'
     +'<div class="rv-stat"><b>'+kmViaje.toFixed(2)+'</b><span>km</span></div>'
     +'<div class="rv-stat"><b>'+minutos+'</b><span>min</span></div>'
-    +'<div class="rv-stat"><b>'+velMedia.toFixed(1)+'</b><span>km/h prom.</span></div>'
+    +'<div class="rv-stat"><b>'+velMedia.toFixed(1)+'</b><span>km/h en movimiento</span></div>'
     +'</div>'
     +(logros.length?('<h4 class="rv-titulo-logros">¡'+logros.length+' logro'+(logros.length>1?'s':'')+' nuevo'+(logros.length>1?'s':'')+'!</h4><div class="rv-medallas">'+medallasHTML+'</div>'):'');
   var modal=document.getElementById('resumenViajeModal');

@@ -96,6 +96,7 @@ const NAV_RECALC_COOLDOWN_MS=22000, NAV_RECALC_MAX_SEGUIDOS=3, NAV_RECALC_BACKOF
 // el reloj del viaje no debería seguir corriendo como si estuvieras pedaleando. Se
 // paran ambas cosas (visual + cómputo) al detectar sp===0 y se retoman solas al moverte.
 let viajePausedMs=0, viajePausedDesde=null, viajePausaManual=false;
+var _ultimoKmTs=0; // última vez que el contador de km avanzó (lo marca _sumarKmViaje, motor-gps.js)
 function tiempoActivoMs(){
   if(!tripStartTime) return 0;
   const elapsedTotal=Date.now()-tripStartTime;
@@ -128,8 +129,13 @@ function _actualizarPausaViaje(sp, badgeId){
   // Si el ciclista puso pausa MANUAL, mandamos nosotros: la auto-pausa por velocidad
   // no debe reanudar sola ni apagar el aviso. Se queda pausado hasta tocar Reanudar.
   if(viajePausaManual){ const elm=document.getElementById(badgeId); if(elm) elm.style.display='inline-flex'; return; }
-  const enPausa = (sp===0);
-  if(enPausa && !viajePausedDesde){ viajePausedDesde=Date.now(); }
+  // 2026-10-15 (auditoría): sp===0 solo no basta — con posiciones cada 15-30 s (pantalla apagada) la
+  // velocidad de ventana da 0 aunque vayas pedaleando, y el reloj se pausaba casi todo el viaje (promedio
+  // "en movimiento" inflado). Estás detenido solo si además el contador de km (km-viaje.js) lleva 1 min
+  // sin avanzar; y la pausa parte desde la última vez que avanzaste, no desde ahora.
+  const _movReciente = _ultimoKmTs>0 && (Date.now()-_ultimoKmTs)<60000;
+  const enPausa = (sp===0 && !_movReciente);
+  if(enPausa && !viajePausedDesde){ viajePausedDesde=(_ultimoKmTs>tripStartTime)?_ultimoKmTs:Date.now(); }
   else if(!enPausa && viajePausedDesde){ viajePausedMs+=(Date.now()-viajePausedDesde); viajePausedDesde=null; }
   const el=document.getElementById(badgeId); if(el) el.style.display=enPausa?'inline-flex':'none';
 }

@@ -6,7 +6,7 @@
 const SEGMENTO_RADIO_M=40;
 var segmentosActivos=[], segmentosEstado={}, segmentosCargados=false; // var a propósito: reseteadas/leidas desde fuera de este archivo (fin de viaje, bucle de GPS)
 async function iniciarSeguimientoSegmentos(lat,lon){
-  segmentosEstado={}; segmentosActivos=[];
+  segmentosEstado={}; segmentosActivos=[]; _segPrev=null;
   try{
     // Bounding box aproximado (~5km) alrededor del punto de partida: Firestore no
     // tiene geo-queries nativas sin infraestructura extra, y para esta escala alcanza
@@ -27,16 +27,46 @@ function _actualizarBadgeSegmento(){
     else { el.style.display='none'; }
   });
 }
+/* 2026-10-15 (auditoría "sin datos falsos"), tres errores que daban marcas falsas:
+   1. Con posiciones cada 15-30 s (pantalla apagada) se saltaba el círculo de 40 m del inicio o del fin:
+      el segmento no se armaba o cerraba tarde. Ahora se mira el TRAMO entre la posición anterior y la
+      actual, y la hora de paso se interpola (segPaso, pura).
+   2. Segmento de ida y vuelta (inicio = fin): se armaba y cerraba en el mismo instante → "récord" de
+      0 s. Ahora para cerrar hay que haberse alejado al menos 150 m del inicio. (No se usa el largo
+      guardado del segmento: los creados desde paseos grabados antes de este arreglo traen un largo
+      equivocado — ver km-viaje.js.)
+   3. En vehículo se registraban tiempos en la tabla de los ciclistas. Ahora no se arma en modo Motorizado.
+   Además se descarta una marca imposible: más de 90 km/h promedio en línea recta (un mínimo seguro). */
+const SEGMENTO_SALIDA_M=150;
+function segPaso(prev, cur, punto, radioM){
+  // ¿el tramo prev→cur pasa a menos de radioM de punto? Devuelve la hora de paso (ms) o null.
+  const k=111320, c=Math.cos(punto.lat*Math.PI/180);
+  const bx=(cur.lon-punto.lon)*k*c, by=(cur.lat-punto.lat)*k;
+  if(!prev) return Math.hypot(bx,by)<radioM ? cur.t : null;
+  const ax=(prev.lon-punto.lon)*k*c, ay=(prev.lat-punto.lat)*k;
+  const dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy;
+  let t=len2>0?-(ax*dx+ay*dy)/len2:1; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(ax+t*dx, ay+t*dy)<radioM ? Math.round(prev.t+(cur.t-prev.t)*t) : null;
+}
+let _segPrev=null;
 function _verificarSegmentos(lat,lon){
+  const cur={lat:lat, lon:lon, t:Date.now()}, prev=_segPrev; _segPrev=cur;
   if(!segmentosActivos.length) return;
+  if(typeof actividadTipo!=='undefined' && actividadTipo==='moto') return; // la tabla es de quienes van a pulso
   segmentosActivos.forEach(function(s){
     if(!s.inicio||!s.fin) return;
-    const est=segmentosEstado[s.id]||(segmentosEstado[s.id]={armado:false,inicioMs:null});
+    const est=segmentosEstado[s.id]||(segmentosEstado[s.id]={armado:false,inicioMs:null,salio:false});
     if(!est.armado){
-      if(calculateDistance(lat,lon,s.inicio.lat,s.inicio.lon)<SEGMENTO_RADIO_M){ est.armado=true; est.inicioMs=Date.now(); hCharla('Entraste al segmento '+s.nombre+'. ¡Dale con todo!'); }
-    } else if(calculateDistance(lat,lon,s.fin.lat,s.fin.lon)<SEGMENTO_RADIO_M){
-      const tiempoMs=Date.now()-est.inicioMs;
+      const tIni=segPaso(prev, cur, s.inicio, SEGMENTO_RADIO_M);
+      if(tIni!=null){ est.armado=true; est.inicioMs=tIni; est.salio=false; hCharla('Entraste al segmento '+s.nombre+'. ¡Dale con todo!'); }
+    } else {
+      if(!est.salio){ if(calculateDistance(lat,lon,s.inicio.lat,s.inicio.lon)>SEGMENTO_SALIDA_M) est.salio=true; else return; } // ida y vuelta: primero hay que irse
+      const tFin=segPaso(prev, cur, s.fin, SEGMENTO_RADIO_M);
+      if(tFin==null) return;
+      const tiempoMs=tFin-est.inicioMs;
       est.armado=false;
+      const rectaKm=calculateDistance(s.inicio.lat,s.inicio.lon,s.fin.lat,s.fin.lon)/1000;
+      if(!(tiempoMs>0) || rectaKm/(tiempoMs/3600000)>90) return; // marca imposible: no se guarda
       _guardarTiempoSegmento(s, tiempoMs);
     }
   });
@@ -47,17 +77,23 @@ async function _guardarTiempoSegmento(segmento, tiempoMs){
     // Compara contra tu propia mejor marca ANTES de guardar la nueva, para poder
     // avisar si fue récord personal — de otra forma solo sabrías el tiempo pelado,
     // sin nada con qué compararlo hasta entrar a la tabla de líderes.
-    let esRecord=false, mejoraSeg=null;
+    let esRecord=false, mejoraSeg=null, sabido=false;
     try{
       const prevSnap=await db.collection('segmentoTiempos').where('segmentoId','==',segmento.id).where('user','==',cu).get();
+      // 2026-10-15: sin señal la consulta responde con lo guardado en el teléfono (puede estar vacío): no se
+      // afirma "primera vez" ni "récord" (ni se da Darma) si el dato no viene del servidor.
+      sabido=!(prevSnap.metadata && prevSnap.metadata.fromCache);
       const prevMin=prevSnap.docs.reduce(function(m,d){ const t=d.data().tiempoMs; return (t!=null && t<m)?t:m; }, Infinity);
-      if(prevMin!==Infinity && tiempoMs<prevMin){ esRecord=true; mejoraSeg=Math.round((prevMin-tiempoMs)/1000); }
-      else if(prevMin===Infinity){ esRecord=true; } // primera vez que lo corres
+      if(sabido && prevMin!==Infinity && tiempoMs<prevMin){ esRecord=true; mejoraSeg=Math.round((prevMin-tiempoMs)/1000); }
+      else if(sabido && prevMin===Infinity){ esRecord=true; } // primera vez que lo corres
     }catch(e){}
-    await db.collection('segmentoTiempos').add({segmentoId:segmento.id, user:cu, nombre:nombreUsuario||'Ciclista', tiempoMs:tiempoMs, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()});
+    // 2026-10-15: sin señal, esperar al servidor dejaba el resultado del segmento sin decir hasta volver la conexión.
+    // La marca queda en cola y sube sola; el resultado se dice ya.
+    await lpEscrituraConTope(db.collection('segmentoTiempos').add({segmentoId:segmento.id, user:cu, nombre:nombreUsuario||'Ciclista', tiempoMs:tiempoMs, authUid:window.lpUID||null, ts:firebase.firestore.FieldValue.serverTimestamp()}), 4000);
     const tiempoTxt=_fmtSegmentoTiempo(tiempoMs);
-    if(esRecord && mejoraSeg){ h('¡Nuevo récord personal en '+segmento.nombre+'! '+tiempoTxt+', '+mejoraSeg+' segundos más rápido que tu mejor marca. +10 Darma por la marca nueva.'); _ganarDarma(10); au(); sincronizarStats(); }
-    else if(esRecord){ h('¡Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'! Primera vez que lo corres, esa es tu marca a superar. +10 Darma.'); _ganarDarma(10); au(); sincronizarStats(); }
+    if(esRecord && mejoraSeg){ const _g=_ganarDarma(10); h('¡Nuevo récord personal en '+segmento.nombre+'! '+tiempoTxt+', '+mejoraSeg+' segundos más rápido que tu mejor marca. '+_g+' de Darma por la marca nueva.'); }
+    else if(esRecord){ const _g=_ganarDarma(10); h('¡Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'! Primera vez que lo corres, esa es tu marca a superar. '+_g+' de Darma.'); }
+    else if(!sabido){ h('Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'. Sin señal no puedo compararlo con tus marcas; queda guardado y lo verás en la tabla.'); }
     else { h('Terminaste el segmento '+segmento.nombre+' en '+tiempoTxt+'. No superaste tu mejor marca, así que esta vuelta no suma Darma — pero sigue quedando en tu historial.'); }
     _actualizarBadgeSegmento();
   }catch(e){}
@@ -69,7 +105,7 @@ async function crearSegmentoDesdeRuta(localId){
   if(!nombre || !nombre.trim()) return;
   const inicio=r.points[0], fin=r.points[r.points.length-1];
   try{
-    await db.collection('segmentos').add({nombre:nombre.trim(), desc:'', inicio:{lat:inicio.lat,lon:inicio.lon}, fin:{lat:fin.lat,lon:fin.lon}, distanciaKm:r.distance||0, creadoPor:cu, nombreCreador:nombreUsuario||'Ciclista', ts:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection('segmentos').add({nombre:nombre.trim(), desc:'', inicio:{lat:inicio.lat,lon:inicio.lon}, fin:{lat:fin.lat,lon:fin.lon}, distanciaKm:(typeof kmTrazado==='function'?Math.round(kmTrazado(r.points)*100)/100:(r.distance||0)), creadoPor:cu, nombreCreador:nombreUsuario||'Ciclista', ts:firebase.firestore.FieldValue.serverTimestamp()});
     h('Segmento "'+nombre.trim()+'" creado. Ya cualquiera puede competir por el mejor tiempo ahí.');
   }catch(e){ lpAviso('No se pudo crear el segmento.'); }
 }

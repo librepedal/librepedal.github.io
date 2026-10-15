@@ -6,7 +6,8 @@
    que es el flujo principal de la app; los viajes multi-destino no suman acá. */
 function calcularProgresoReto(reto){
   const ini=reto.fechaInicio, fin=reto.fechaFin;
-  return rutasLocales().filter(function(r){ return r.startTime>=ini && r.startTime<=fin; }).reduce(function(s,r){ return s+(r.distance||0); },0);
+  // rutaCuentaComoRecorrida (rutas.js): sin GPX importados, recomendadas ni vehículo (2026-10-15)
+  return rutasLocales().filter(function(r){ return r.startTime>=ini && r.startTime<=fin && (typeof rutaCuentaComoRecorrida!=='function' || rutaCuentaComoRecorrida(r)); }).reduce(function(s,r){ return s+(r.distance||0); },0);
 }
 // Antes de esto, "cumplir" un reto solo se notaba si entrabas a mirar la pantalla de
 // Retos por curiosidad — nadie te avisaba justo cuando de verdad lo lograbas pedaleando.
@@ -24,8 +25,8 @@ async function revisarRetosCumplidos(){
       const km=calcularProgresoReto(r);
       if(km>=(r.metaKm||Infinity)){
         yaAvisados.push(doc.id);
-        h('¡Cumpliste el reto "'+r.titulo+'"! Sumaste '+km.toFixed(0)+' de '+r.metaKm+' km. +30 Darma extra por lograrlo.');
-        _ganarDarma(30); au(); sincronizarStats();
+        const _dG=_ganarDarma(30);
+        h('¡Cumpliste el reto "'+r.titulo+'"! Sumaste '+km.toFixed(0)+' de '+r.metaKm+' km. '+_dG+' de Darma extra por lograrlo.');
       }
     }
     try{ localStorage.setItem('lp_retos_cumplidos_'+cu, JSON.stringify(yaAvisados)); }catch(e){}
@@ -78,7 +79,7 @@ async function crearReto(){
    servicios externos, se calcula con las rutas que ya están guardadas en el celular. */
 function calcularResumenAnual(anio){
   const ini=new Date(anio,0,1).getTime(), fin=new Date(anio+1,0,1).getTime();
-  const rutas=rutasLocales().filter(function(r){ return r.startTime>=ini && r.startTime<fin; });
+  const rutas=rutasLocales().filter(function(r){ return r.startTime>=ini && r.startTime<fin && (typeof rutaCuentaComoRecorrida!=='function' || rutaCuentaComoRecorrida(r)); }); // "Mi año": solo lo recorrido a pulso
   const totalKm=rutas.reduce(function(s,r){return s+(r.distance||0);},0);
   const totalCal=rutas.reduce(function(s,r){return s+(r.calories||0);},0);
   const viajeMax=rutas.reduce(function(m,r){return (r.distance||0)>m?(r.distance||0):m;},0);

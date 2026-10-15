@@ -68,6 +68,68 @@ const ACT = lee('pistero-tipo-actividad.js'), NAV = lee('motor-navegacion.js');
   t('CO₂ evitado sin km manejando (Inicio y Estadísticas)', !/_co2Evitado\(us\.di\)/.test(DAR) && !/_co2Evitado\(us\.di\)/.test(NAV));
   t('velocidad máxima histórica sin el auto', /us\.vmax=sp/.test(lee('motor-gps.js')) && /actividadTipo!=='moto'\)\) us\.vmax=sp/.test(lee('motor-gps.js')));
 }
+// ======== Segunda pasada (2026-10-15): retos, Darma, segmentos, resumen, desnivel, reportes, SOS, errores, sin señal ========
+{
+  const RUT = lee('rutas.js'), RET = lee('gamificacion-retos.js'), DAR = lee('gamificacion-darma.js'), SEG = lee('segmentos.js');
+  const REP = lee('reportes.js'), SOS = lee('sos-comunitario.js'), LOG = lee('gamificacion-logros.js'), APP = lee('app-estado-global.js'), DLG = lee('dialogos-genericos.js');
+  // Retos / resumen del año / viajes: sin GPX importados, recomendadas ni auto
+  const cuenta = new Function(bloque(RUT, 'function rutaCuentaComoRecorrida(') + '\nreturn rutaCuentaComoRecorrida;')();
+  t('reto: un GPX importado NO cuenta (se cumplía un reto sin pedalear)', cuenta({ importada: true, distance: 500 }) === false);
+  t('reto: un viaje en auto NO cuenta', cuenta({ modo: 'moto' }) === false);
+  t('reto: una ruta pedaleada sí', cuenta({ modo: 'ciclismo' }) === true && cuenta({}) === true);
+  t('retos y "Mi año" usan ese filtro', (RET.match(/rutaCuentaComoRecorrida\(r\)/g) || []).length >= 2);
+  t('las rutas guardan con qué actividad se hicieron', /modo:\(typeof actividadTipo!=='undefined'\?actividadTipo:'ciclismo'\)/.test(RUT));
+  // Darma: tope diario de aportes y mensajes honestos
+  {
+    const us = { d: 0 };
+    const g = new Function('us', 'au', 'sincronizarStats', 'let _esFundador=false; ' + DAR.slice(DAR.indexOf('var DARMA_APORTES_DIA'), DAR.indexOf('\n', DAR.indexOf('var DARMA_APORTES_DIA'))) + '\n' + bloque(DAR, 'function _ganarDarma(') + '\n' + bloque(DAR, 'function _textoDarma(') + '\nreturn {_ganarDarma, _textoDarma};')(us, () => {}, () => {});
+    let total = 0; for (let i = 0; i < 20; i++) total += g._ganarDarma(15, true);
+    t('20 reportes en un día dan Darma solo por 5 (no se puede farmear para los sorteos)', total === 75 && us.d === 75, total);
+    t('pasado el tope, el mensaje no promete Darma', /máximo de Darma/.test(g._textoDarma(0)) && g._textoDarma(15) === '15 de Darma para ti.');
+    t('ningún aporte promete "Quince de Darma" fijo', !/Quince de Darma para ti/.test(REP) && !/Quince de Darma para ti/.test(lee('funciones-mapa-viajes.js')));
+  }
+  // Segmentos
+  {
+    const calc = (a, b, c, d) => { const R = 6371000, r = Math.PI / 180, x = (d - b) * r * Math.cos(((a + c) / 2) * r), y = (c - a) * r; return Math.hypot(x, y) * R; };
+    const paso = new Function('calculateDistance', bloque(SEG, 'function segPaso(') + '\nreturn segPaso;')(calc);
+    const P = (n, t) => ({ lat: -40 + n / 111320, lon: -72, t });
+    const tPaso = paso(P(-60, 0), P(80, 25000), { lat: -40, lon: -72 }, 40); // pasa por el punto entre dos posiciones a 140 m
+    t('segmento: con posiciones cada 25 s detecta el paso por el inicio aunque ninguna caiga en el círculo', tPaso != null && Math.abs(tPaso - 25000 * 60 / 140) < 50, tPaso);
+    t('segmento: un tramo que pasa lejos no cuenta', paso(P(-60, 0), P(80, 25000), { lat: -40, lon: -71.99 }, 40) === null);
+    t('segmento de ida y vuelta: primero hay que alejarse 150 m (antes daba récord de 0 s)', /if\(!est\.salio\)\{ if\(calculateDistance\(lat,lon,s\.inicio\.lat,s\.inicio\.lon\)>SEGMENTO_SALIDA_M\) est\.salio=true; else return; \}/.test(SEG));
+    t('segmento: en auto no se registran tiempos', /actividadTipo==='moto'\) return; \/\/ la tabla es de quienes van a pulso/.test(SEG));
+    t('segmento: sin señal no afirma "primera vez"/"récord" ni da Darma', /sabido=!\(prevSnap\.metadata && prevSnap\.metadata\.fromCache\)/.test(SEG) && /if\(sabido && prevMin===Infinity\)/.test(SEG));
+  }
+  // Resumen de viaje y auto-pausa
+  t('resumen: la velocidad es en movimiento y lo dice', /km\/h en movimiento/.test(LOG) && /tiempoActivoMs\(\)/.test(bloque(LOG, 'function _mostrarResumenViaje(')));
+  t('auto-pausa: no pausa si los km avanzaron en el último minuto (posiciones espaciadas)', /const enPausa = \(sp===0 && !_movReciente\);/.test(APP) && /_ultimoKmTs=Date\.now\(\)/.test(lee('motor-gps.js')));
+  // Desnivel: una subida gradual se cuenta
+  {
+    const calcD = new Function('calculateDistance', bloque(RUT, 'function calcularDesnivel(') + '\nreturn calcularDesnivel;')((a, b, c, d) => Math.hypot((c - a) * 111320, (d - b) * 85000));
+    const pts = []; for (let i = 0; i <= 200; i++) pts.push({ lat: -40 + i * 15 / 111320, lon: -72, alt: 100 + i * 15 * 0.05 }); // 3 km al 5 %: 150 m de subida
+    const d = calcD(pts);
+    t('desnivel: 3 km al 5 % suman ~150 m de subida (antes ~0: cada punto subía menos de 1,5 m)', d && Math.abs(d.subida - 150) <= 6, d && d.subida);
+    t('desnivel: los perfiles guardados con el cálculo viejo se recalculan', /cache\.v===2/.test(RUT));
+  }
+  // Reportes: la distancia dicha es la real
+  {
+    const dh = new Function(bloque(REP, 'function _distanciaHablada(') + '\nreturn _distanciaHablada;')();
+    t('reporte: dice la distancia real ("a 600 metros", no "a unos metros")', dh(612) === 'a 600 metros' && dh(1430) === 'a 1,4 kilómetros');
+    t('control policial en modo humor: el chiste de "tres kilómetros" solo si de verdad está lejos', /pisteroPersonalidad==='humoristico' && dist>=2500/.test(REP));
+  }
+  // SOS sin señal
+  t('SOS: sin señal no queda mudo (lpEscrituraConTope) y recuerda el 133', /lpEscrituraConTope\(_prom, 8000\)/.test(SOS) && /llamadas de emergencia funcionan con cualquier antena/.test(SOS));
+  t('aviso por voz y aviso de rodada tampoco quedan mudos sin señal', /const _conf=await lpEscrituraConTope\(db\.collection\('reportes'\)/.test(REP) && /lpEscrituraConTope\(db\.collection\('rodadaAvisos'\)/.test(lee('rodadas.js')));
+  // Errores en lenguaje humano
+  {
+    const eh = new Function(bloque(DLG, 'function lpErrorHumano(') + '\nreturn lpErrorHumano;')();
+    t('error: "Missing or insufficient permissions" → explicación en español', /no tiene permiso/.test(eh({ code: 'permission-denied', message: 'Missing or insufficient permissions.' })));
+    t('error: cerrar la ventana de Google se explica', /cerraste la ventana de Google/.test(eh({ code: 'auth/popup-closed-by-user' })));
+    t('error: sin conexión se explica', /no hay conexión/.test(eh(new TypeError('Failed to fetch'))));
+    const crudos = JS.filter(f => /lpAviso\([^)]*\b(err|e)\.(message|code)\b|_lpAvisoLogin\([^)]*\(err&&err\.message\)/.test(lee(f)));
+    t('ningún aviso al usuario muestra el error técnico crudo', crudos.length === 0, crudos.join(', '));
+  }
+}
 // ---- 4) Compartir y guardar en la app instalada ----
 {
   const SRC = lee('compartir-nativo.js');

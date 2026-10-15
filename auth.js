@@ -136,7 +136,7 @@ async function _entrarConCodigoTester(){
         });
       }
     }catch(_s){}
-    _lpAvisoLogin('No se pudo entrar: '+((err&&err.message)||err));
+    _lpAvisoLogin('No se pudo entrar: '+lpErrorHumano(err));
   }
 }
 (function(){
@@ -166,7 +166,7 @@ async function _entrarConGoogleNativo(){
     if(typeof hideLoading==='function') hideLoading();
     var code=(err&&err.code)||'';
     if(code==='ERR_CANCELED') return; // el usuario cerró el selector de cuenta, no es un error real
-    _lpAvisoLogin('No se pudo entrar con Google: '+((err&&err.message)||err));
+    _lpAvisoLogin('No se pudo entrar con Google: '+lpErrorHumano(err));
   }
 }
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
@@ -266,7 +266,7 @@ async function _completarDesdeGoogle(user){
   }catch(err){
     _lpDbg('completarDesdeGoogle:CATCH', {msg: err && err.message, stack: err && err.stack && err.stack.substring(0,300)});
     if(typeof hideLoading==='function') hideLoading();
-    _lpAvisoLogin('No se pudo entrar con Google: '+((err&&err.message)||err));
+    _lpAvisoLogin('No se pudo entrar con Google: '+lpErrorHumano(err));
     var a=document.getElementById('auth'); if(a) a.style.display='flex'; rm(MG); fg('todos'); initCustomization();
   }
 }
@@ -284,7 +284,7 @@ async function _gisCallback(resp){
     else if(typeof hideLoading==='function'){ hideLoading(); }
   }catch(err){
     if(typeof hideLoading==='function') hideLoading();
-    _lpAvisoLogin('No se pudo entrar con Google: '+((err&&err.message)||err));
+    _lpAvisoLogin('No se pudo entrar con Google: '+lpErrorHumano(err));
   }
 }
 function _initGIS(n){

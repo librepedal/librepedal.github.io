@@ -25,7 +25,7 @@ async function _completarDesdeLinkMagico(){
     // _lpAvisoLogin y no lpAviso: en la pantalla de login lpAviso() es MUDO
     // (mostrarBocadillo se niega a mostrarse fuera de v-pistero/v-map), así que un
     // enlace vencido o ya usado dejaba al tester mirando una pantalla sin explicación.
-    _lpAvisoLogin('No se pudo completar el ingreso: '+((err&&err.message)||err)+'. Pedí el enlace de nuevo.');
+    _lpAvisoLogin('No se pudo completar el ingreso: '+lpErrorHumano(err)+'. Pedí el enlace de nuevo.');
     if(authEl) authEl.style.display='flex'; rm(MG); fg('todos'); initCustomization();
   }
 }

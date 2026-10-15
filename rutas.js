@@ -9,7 +9,12 @@ function rutasLocalesSet(arr){ try{ localStorage.setItem(_rutasKey(), JSON.strin
 // directo (sin pasar por el planificador, que es como sale la mayoría) veía 6 viajes en
 // la esfera y 0 en las otras dos pantallas, mismo usuario, misma carga de página. Un
 // solo lugar para esta cuenta evita que un cuarto contador futuro repita el mismo hueco.
-function _totalViajesCompletos(){ return rutasLocales().length + trips.filter(function(t){return t.status==='completed';}).length; }
+/* 2026-10-15 (auditoría "sin datos falsos"): ¿esta ruta la recorrió de verdad el usuario a pulso?
+   No cuentan las importadas de un GPX (pueden ser de otra persona: importando un archivo de 500 km
+   se cumplía un reto sin pedalear), las recomendadas guardadas para pedalear después, ni las hechas
+   en vehículo (modo, guardado desde esta versión; las viejas no lo traen y cuentan como antes). */
+function rutaCuentaComoRecorrida(r){ return !!r && !r.importada && !r.rrecId && r.modo!=='moto'; }
+function _totalViajesCompletos(){ return rutasLocales().filter(rutaCuentaComoRecorrida).length + trips.filter(function(t){return t.status==='completed';}).length; }
 function guardarRutaLocalObj(data){ const arr=rutasLocales(); const i=arr.findIndex(function(r){return r.localId===data.localId;}); if(i>=0){ arr[i]=Object.assign(arr[i],data); } else { arr.push(data); } rutasLocalesSet(arr); return arr; }
 // PRIVACIDAD real (hub #201, 2026-09-04): /routes es pública a propósito (alimenta
 // "Rutas para ti" -- ver recomendacion-rutas.js), pero hasta hoy guardaba `points`
@@ -131,7 +136,7 @@ async function nombreDeLugar(lat,lon){
 // us.di/us.c — contadores de la cuenta, no de la ruta — y el número no tenía cómo calzar con la
 // línea del mapa (Inty 2026-10-15: "no podemos estar entregando datos falsos").
 function _kmRuta(pts){ const k=(typeof kmTrazado==='function')?kmTrazado(pts):0; return Math.round(k*100)/100; }
-function saveRouteToHistory(route){ if(!cu||!route||route.length<2) return; const localId='l'+route[0].t; const _km=_kmRuta(route); const data={localId:localId,user:cu,nombre:nombreUsuario,points:route.slice(),startTime:route[0].t,endTime:route[route.length-1].t,distance:_km,calories:Math.round(_km*kcalPorKm()),savedAt:Date.now(),kmCorregidos:true}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,pointsPub:_puntosPublicos(data.points),startTime:data.startTime,endTime:data.endTime,distance:_km,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}, data.points); }
+function saveRouteToHistory(route){ if(!cu||!route||route.length<2) return; const localId='l'+route[0].t; const _km=_kmRuta(route); const data={localId:localId,user:cu,nombre:nombreUsuario,points:route.slice(),startTime:route[0].t,endTime:route[route.length-1].t,distance:_km,calories:Math.round(_km*kcalPorKm()),savedAt:Date.now(),kmCorregidos:true,modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo')}; guardarRutaLocalObj(data); renderRutas(); _subirRutaNube(localId,{user:cu,nombre:nombreUsuario,pointsPub:_puntosPublicos(data.points),startTime:data.startTime,endTime:data.endTime,distance:_km,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()}, data.points); }
 // Auto-guardado: SIEMPRE queda en el celular (sí o sí); la nube es respaldo. El id estable
 // es el timestamp del 1er punto, así se ACTUALIZA la misma ruta y no se duplica.
 // El nombre "Origen → Destino" solo se calcula (pide geocoding real) en los guardados
@@ -144,7 +149,7 @@ async function autoGuardarRuta(conVoz, esCheckpoint){
   const _miSegmento=currentRoute; // referencia vigente al entrar -- ver el guard de más abajo
   const pts=currentRoute.slice(), localId='l'+pts[0].t;
   const _km=_kmRuta(pts); // km de ESTA ruta (su trazado), no el contador de la cuenta
-  const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:_km,calories:Math.round(_km*kcalPorKm()),savedAt:Date.now(),kmCorregidos:true};
+  const data={localId:localId,user:cu,nombre:nombreUsuario,points:pts,startTime:pts[0].t,endTime:pts[pts.length-1].t,distance:_km,calories:Math.round(_km*kcalPorKm()),savedAt:Date.now(),kmCorregidos:true,modo:(typeof actividadTipo!=='undefined'?actividadTipo:'ciclismo')};
   const fb={user:cu,nombre:nombreUsuario,pointsPub:_puntosPublicos(pts),startTime:data.startTime,endTime:data.endTime,distance:_km,calories:data.calories,savedAt:firebase.firestore.FieldValue.serverTimestamp()};
   if(!esCheckpoint){
     const origenNombre=await nombreDeLugar(pts[0].lat,pts[0].lon);
@@ -254,16 +259,21 @@ function calcularDesnivel(points){
     const ini=Math.max(0,i-2), fin=Math.min(arr.length,i+3), tramo=arr.slice(ini,fin);
     return tramo.reduce(function(s,x){return s+x.alt;},0)/tramo.length;
   });
-  let subida=0, bajada=0, distAcum=0;
+  /* 2026-10-15 (auditoría "sin datos falsos"): antes solo sumaba si entre DOS PUNTOS SEGUIDOS subía más de
+     1,5 m. Con puntos cada 12-25 m, una cuesta normal (5 %) sube 0,6-1,25 m por punto: no se contaba nada y
+     una subida de cientos de metros marcaba casi 0. Ahora se acumula contra un punto de referencia y se cuenta
+     cada vez que el cambio pasa DESNIVEL_UMBRAL_M (filtra el ruido sin perder las subidas graduales). */
+  const DESNIVEL_UMBRAL_M=3;
+  let subida=0, bajada=0, distAcum=0, ref=suavizado[0];
   const perfil=[{dist:0,alt:suavizado[0]}];
   for(let i=1;i<validos.length;i++){
     const d=calculateDistance(validos[i-1].lat,validos[i-1].lon,validos[i].lat,validos[i].lon);
     distAcum+=d;
-    const delta=suavizado[i]-suavizado[i-1];
-    if(delta>1.5) subida+=delta; else if(delta<-1.5) bajada+=-delta;
+    const dif=suavizado[i]-ref;
+    if(dif>=DESNIVEL_UMBRAL_M){ subida+=dif; ref=suavizado[i]; } else if(dif<=-DESNIVEL_UMBRAL_M){ bajada+=-dif; ref=suavizado[i]; }
     perfil.push({dist:distAcum,alt:suavizado[i]});
   }
-  return {subida:Math.round(subida), bajada:Math.round(bajada), altMax:Math.round(Math.max.apply(null,suavizado)), altMin:Math.round(Math.min.apply(null,suavizado)), perfil:perfil};
+  return {subida:Math.round(subida), bajada:Math.round(bajada), altMax:Math.round(Math.max.apply(null,suavizado)), altMin:Math.round(Math.min.apply(null,suavizado)), perfil:perfil, v:2};
 }
 
 /* ===== PERFIL AFINADO CON DEM REAL (2026-07-14, pedido de Inty con
@@ -350,7 +360,7 @@ function verPerfilElevacion(id){
     return modal && modal.classList.contains('on') && t && t.innerText.indexOf('elevaci')!==-1;
   }
   async function conPuntos(points, firebaseId, cache){
-    if(cache && cache.perfil && cache.perfil.length){ pintar(cache); return; }
+    if(cache && cache.perfil && cache.perfil.length && cache.v===2){ pintar(cache); return; } // v:2 = desnivel con el cálculo corregido; lo anterior se recalcula
     const dGps=calcularDesnivel(points);
     if(dGps){ pintar(dGps, true); } else { pintarCargando(); }
 

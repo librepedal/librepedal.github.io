@@ -50,10 +50,17 @@ async function _broadcastSOS(lat,lon){
     // db.collection().add() fallaba (típico: sin señal en ruta rural), el catch avisaba
     // el error pero el límite ya había quedado activo, bloqueando en silencio cualquier
     // reintento en los siguientes 2 minutos con un mensaje falso ("ya avisaste").
-    var _ref=await db.collection('sosAlertas').add({ clat:clat, clon:clon, ts:firebase.firestore.FieldValue.serverTimestamp() });
+    // 2026-10-15 (auditoría): sin señal, add() no resuelve hasta que vuelve la conexión (la escritura queda en
+    // cola en el teléfono): en plena emergencia la app se quedaba MUDA, sin decir si avisó. Ahora a los 8 s
+    // sin confirmación se dice la verdad (sale apenas haya señal) y se recuerda el 133, que funciona con
+    // cualquier antena aunque no tengas datos.
+    var _prom=db.collection('sosAlertas').add({ clat:clat, clon:clon, ts:firebase.firestore.FieldValue.serverTimestamp() });
+    _prom.then(function(_ref){ try{ window._misSOS=window._misSOS||{}; if(_ref&&_ref.id) window._misSOS[_ref.id]=1; }catch(e){ console.warn('[sos] no se pudo marcar el SOS propio', e); } }).catch(function(e){ console.warn('[sos] el envío del SOS falló', e); });
+    var _conf=(typeof lpEscrituraConTope==='function') ? await lpEscrituraConTope(_prom, 8000) : !!(await _prom);
     window._ultimoSOSbc=now;
-    try{ window._misSOS=window._misSOS||{}; if(_ref&&_ref.id) window._misSOS[_ref.id]=1; }catch(e){}
-    if(typeof h==='function') h('Listo: avisamos a los ciclistas de tu zona, sin tu ubicacion exacta ni tu nombre. Si estas en peligro, llama tambien al 133.');
+    if(typeof h==='function') h(_conf
+      ? 'Listo: avisamos a los ciclistas de tu zona, sin tu ubicacion exacta ni tu nombre. Si estas en peligro, llama tambien al 133.'
+      : 'No hay señal de datos: el aviso a la comunidad queda guardado y sale apenas haya conexion. Llama al 133: las llamadas de emergencia funcionan con cualquier antena.');
   }catch(e){ if(typeof lpAviso==='function') lpAviso('No se pudo avisar a la comunidad ahora. Usa la llamada al 133 y tus contactos.'); }
 }
 function enviarSOS(){
