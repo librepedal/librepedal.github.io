@@ -69,7 +69,8 @@ ok('se corta en 2 líneas con "…"', l.length === 2 && l[1].endsWith('…') && 
 console.log('\nDISEÑO APROBADO Y BOTONES:');
 ok('mapa con relieve: OpenFreeMap + DEM Terrarium', /tiles\.openfreemap\.org\/styles\/dark/.test(src) && /elevation-tiles-prod\/terrarium/.test(src) && /hillshade/.test(src));
 ok('MapLibre se carga con verificación de integridad', /FV_ML_SRI = 'sha384-/.test(src) && /s\.integrity = FV_ML_SRI/.test(src));
-ok('sin señal: la tarjeta cae al trazo solo (nunca queda vacía)', /_fvEncajar\(puntos/.test(src) && /setTimeout\(function\(\)\{ fin\(null\); \}, 15000\)/.test(src));
+ok('sin señal: la tarjeta cae al trazo solo (nunca queda vacía, tope 25 s)', /_fvEncajar\(puntos/.test(src) && /setTimeout\(function\(\)\{ fin\(null\); \}, 25000\)/.test(src));
+ok('la foto se recorta a su zona (no se mete bajo los datos)', /ctx\.rect\(0, 0, W, H\); ctx\.clip\(\);/.test(src));
 ok('la foto es opcional: "Quitar la foto" la quita', /Quitar la foto/.test(src) && lee('estilos.css').includes('.fv-pill[hidden]{display:none}') && /_fv\.foto = null/.test(src));
 ok('altimetría con máx. y mín.', /'máx\. ' \+ mx/.test(src) && /'mín\. ' \+ mn/.test(src));
 const rutas = lee('rutas.js');

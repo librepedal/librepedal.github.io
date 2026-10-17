@@ -136,7 +136,7 @@ function _fvMapa(clave, puntos, w, h){
       document.body.appendChild(cont);
       var map, listo = false;
       var fin = function(r){ if(listo) return; listo = true; clearTimeout(tope); try{ map && map.remove(); }catch(e){} cont.remove(); ok(r); };
-      var tope = setTimeout(function(){ fin(null); }, 15000);
+      var tope = setTimeout(function(){ fin(null); }, 25000); // teléfonos modestos: la tarjeta grande puede tardar
       try{
         map = new ml.Map({ container: cont, style: FV_ESTILO, interactive: false, attributionControl: false, preserveDrawingBuffer: true, pixelRatio: 1, fadeDuration: 0 });
       }catch(e){ fin(null); return; }
@@ -276,9 +276,12 @@ function _fvBloque(ctx, o, W, top, post){
   });
   return yv + 36;
 }
+// La foto cubre SOLO su zona (0..H): sin el recorte, una foto vertical se pasaba por debajo del bloque de datos.
 function _fvFondoFoto(ctx, W, H, foto){
   var s = Math.max(W / foto.width, H / foto.height), w = foto.width * s, h = foto.height * s;
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
   ctx.drawImage(foto, (W - w) / 2, (H - h) / 2, w, h);
+  ctx.restore();
 }
 // o: {foto?, formato, stats, perfil?, mapa?, titulo, fecha, logo?}
 function fvDibujar(canvas, o){
