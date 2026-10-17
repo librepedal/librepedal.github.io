@@ -67,6 +67,12 @@
   .seg b{display:block;color:var(--ink);font-size:.94rem;margin-bottom:3px}
   .seg span{color:var(--sub);font-size:.85rem}
 
+  .pasos{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));counter-reset:paso}
+  .paso{position:relative;background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:22px 20px}
+  .paso .num{width:34px;height:34px;border-radius:10px;background:rgba(252,76,2,.15);color:var(--p);font-weight:800;font-size:1.05rem;display:grid;place-items:center;margin-bottom:12px}
+  .paso h3{font-size:1rem;font-weight:700;margin-bottom:6px}
+  .paso p{color:var(--sub);font-size:.9rem}
+
   footer{border-top:1px solid var(--edge);padding:34px 0;text-align:center;color:var(--sub);font-size:.87rem}
   footer a{color:var(--sub);text-decoration:none;margin:0 9px;white-space:nowrap}
   footer a:hover{color:var(--ink)}
@@ -108,6 +114,19 @@
   </div>
 </section>
 
+<section id="como-usar">
+  <div class="wrap">
+    <h2>Cómo se usa</h2>
+    <p class="lead">Nada que configurar antes de salir. Así es la primera vez.</p>
+    <div class="pasos">
+      <div class="paso"><div class="num">1</div><h3>Entra con tu cuenta de Google</h3><p>Un toque, sin contraseñas. Elige casco, color y lentes para tu personaje.</p></div>
+      <div class="paso"><div class="num">2</div><h3>Dile a Pistero a dónde vas</h3><p>Escribe o dicta el destino. Calcula la ruta en bici y te guía giro a giro, hablado, sin que mires la pantalla.</p></div>
+      <div class="paso"><div class="num">3</div><h3>En el camino aparece solo</h3><p>Hospedajes, talleres, avisos de otros ciclistas y rutas que otros ya recomendaron, justo donde los vas a necesitar.</p></div>
+      <div class="paso"><div class="num">4</div><h3>Súmate o comparte</h3><p>Únete a una rodada grupal con radio para el camino, o comparte tu recorrido cuando termines, en dos toques.</p></div>
+    </div>
+  </div>
+</section>
+
 <section id="todo">
   <div class="wrap">
     <h2>Lo que encuentras en la ruta</h2>
@@ -116,7 +135,7 @@
 
       <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 11h4M19 9v4"/></svg></span>Comunidad que reporta</h3><p>Perros sueltos, hoyos, controles, miradores y puntos de agua marcados por otros ciclistas. Hospedajes, "te doy alojo", chat y rodadas grupales.</p></div>
 
-      
+      <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 1 5.4-5.4z"/></svg></span>Taller al día</h3><p>La mantención de tu bici o vehículo, con avisos antes de que la cadena o las pastillas te fallen en el camino.</p></div>
 
       <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="6.5" cy="17" r="3.2"/><circle cx="17.5" cy="17" r="3.2"/><path d="M6.5 17 10 8h4l3.5 9"/><path d="M10 8h6"/></svg></span>Aviso de ciclista adelante</h3><p>Si vas manejando y hay alguien pedaleando más adelante, se te avisa por voz antes de que lo veas. Sin mirar la pantalla, y recordándote el metro y medio que es ley en Chile.</p></div>
 
@@ -133,8 +152,6 @@
       <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 15a4 4 0 0 1 .6-7.9 5.5 5.5 0 0 1 10.6-1.6A4.5 4.5 0 0 1 19 15z"/><path d="M8 19l1.5-3M12 20l1.5-3M16 19l1.5-3"/></svg></span>Clima que se vigila solo</h3><p>No solo el pronóstico al salir: la app lo sigue mirando y te avisa si cambia — lluvia, viento en contra o si baja la temperatura.</p></div>
 
       <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 17l5-8 4 5 3-4 6 7z"/><circle cx="8" cy="6" r="2"/></svg></span>Cuestas antes de sufrirlas</h3><p>Te avisa la subida o la bajada con anticipación, ajustada a cómo viajas: no es lo mismo advertirle a una bici a 20 que a un auto a 60.</p></div>
-
-      
 
       <div class="card"><h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M18 5h3v2a3 3 0 0 1-3 3M6 5H3v2a3 3 0 0 0 3 3"/></svg></span>Logros y rankings</h3><p>Segmentos, tabla de líderes, retos y tu resumen del año. Cada disciplina compite con los suyos: el que anda en auto no compite con el que pedalea.</p></div>
 
