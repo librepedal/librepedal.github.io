@@ -15,7 +15,7 @@ async function _mostrarBienvenidaFundador(){
     if(num==null){ try{ var me=await db.collection('users').doc(cu).get(); var ts=me.exists?me.data().createdAt:null; if(ts){ var agg=await db.collection('users').where('createdAt','<',ts).count().get(); num=(agg.data().count||0)+1; es=num<=CUPO; } }catch(e){} }
     var mt=document.getElementById('modalTitle'), mc=document.getElementById('modalContent'), um=document.getElementById('userModal');
     if(!mt||!mc||!um) return;
-    var pist=(typeof _pistoNuevo==='function')?_pistoNuevo('contento').replace('<svg ','<svg width="78" height="65" '):'';
+    var pist=(typeof _pistAvatarMio==='function')?_pistAvatarMio('contento').replace('<svg ','<svg width="78" height="65" '):((typeof _pistoNuevo==='function')?_pistoNuevo('contento').replace('<svg ','<svg width="78" height="65" '):'');
     var titulo, sub, benef='';
     if(es && num){ mt.innerHTML='<i class="fas fa-medal" style="color:#ffd700"></i> \u00a1Eres Socio Fundador!'; titulo='Socio Fundador'; sub='Eres de los primeros '+CUPO+'. Tu lugar es tuyo para siempre.'; benef='<ul style="font-size:0.8rem;color:#cdd6e6;line-height:1.7;margin:10px 0;padding-left:18px"><li>Insignia de fundador \u00fanica</li><li><b>Doble Darma</b> por cada acci\u00f3n</li><li>Prioridad y entradas extra en los sorteos</li><li>Acceso anticipado a lo nuevo</li></ul>'; }
     else { mt.innerHTML='<i class="fas fa-hands-clapping"></i> \u00a1Bienvenido!'; titulo='Ya eres parte de la comunidad'; sub='Bienvenido a Libre Pedal, el movimiento ciclista.'; }
@@ -74,7 +74,7 @@ function au(){
   var _tt=document.getElementById('totalTrips'); var _tripsCompletos=_totalViajesCompletos(); if(_tt) _tt.innerText=_tripsCompletos;
   var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(typeof kmAPulso==='function'?kmAPulso():us.di)); // 2026-10-15: manejando no se evita CO₂
   const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); if(pf){ pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); }
-  var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1)+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
+  var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1).replace('.',',')+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
   // 2026-08-24: renderMantencion() reconstruye el innerHTML de 5 tarjetas — solo
   // vale la pena si Taller es la pantalla que se está viendo ahora mismo. Antes
   // corría en CADA punto de GPS sin importar qué pantalla estuviera abierta (mapa,

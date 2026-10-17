@@ -54,7 +54,9 @@ done
 # `.well-known` (2026-08-15): Android App Links necesita `assetlinks.json` servido en
 # `/.well-known/assetlinks.json` — al ser carpeta oculta (empieza con punto) no la agarra
 # ningún glob de arriba, así que va explícita.
-for d in icons img images assets fonts sonidos audio functions voces voces-el demo-voces resources iconos-modo .well-known; do
+# `pistero-modelos` (2026-10-16, Elige tu Pistero): los modelos por capas (*.js, se cargan por nombre armado en
+# JS: modelos.js -> BASE+id+'-capas.js') y sus imágenes (capas .webp y miniaturas .png). Solo material público.
+for d in icons img images assets fonts sonidos audio functions voces voces-el demo-voces resources iconos-modo pistero-modelos .well-known; do
   [ -d "$d" ] && cp -r "$d" "$OUT/"
 done
 cp *.png *.jpg *.jpeg *.svg *.webp *.mp3 *.ogg *.mp4 "$OUT/" 2>/dev/null || true

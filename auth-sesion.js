@@ -131,6 +131,7 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   // una mantencion como hecha durante la PRIMERA sesion de una cuenta no subia nada
   // hasta el proximo recargo de pagina.
   _mantListoParaSubir=true;
+  try{ if(typeof recuperarKmCortos==='function') setTimeout(recuperarKmCortos, 1500); }catch(e){} // km de rutas que quedaron cortas -> al total (2026-10-16)
   try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
   localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
   localStorage.setItem('lp_lens_'+cu,selectedLens);
@@ -183,6 +184,9 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   // 2026-08-15: los timeouts fijos (2600ms / 1050ms) para abrirEsfera() no esperaban a
   // que terminara la voz -- el mensaje de primera vez (~17s estimados) quedaba cortado
   // por el flash+sonido de abrirEsfera(). Ahora se espera a que vozHablando sea false.
+  // 2026-10-04: la bienvenida de Pistero (bienvenida-huella.js, una vez por cuenta) va
+  // ANTES del saludo de siempre; al cerrarla sigue exactamente el flujo de antes.
+  var _seguirTrasBienvenida=function(recienVista){
   if(localStorage.getItem('lp_tut_'+cu)!=='done'){
     setTimeout(function(){
       _pisteroIntroPrimeraVez(nombre);
@@ -190,10 +194,15 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
     }, 500);
   } else {
     setTimeout(function(){
-      if(!_pisteroIntroPrimeraVez(nombre)) h(saludoBienvenida(nombre));
+      if(!_pisteroIntroPrimeraVez(nombre) && !recienVista) h(saludoBienvenida(nombre));
       _esperarFinVoz(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); });
     },600);
   }
+  };
+  if(typeof pioCargarMiEstado==='function') pioCargarMiEstado();
+  var _trasBienvenida=function(rv){ if(typeof epIniciar==='function') epIniciar(function(){ _seguirTrasBienvenida(rv); }); else _seguirTrasBienvenida(rv); }; // 2026-10-16: Elige tu Pistero, una vez por cuenta
+  if(typeof bhIniciar==='function') bhIniciar(nombre,_trasBienvenida); else _trasBienvenida();
+  if(cu===ADMIN_ID && typeof pioAdminContar==='function') pioAdminContar();
 }
 
 async function _completarLoginVerificado(cuVal, nombre, e_val){
