@@ -64,7 +64,7 @@ const uidDe = (token) => { const p = JSON.parse(Buffer.from(token.split('.')[1],
   return crypto.verify('sha256', Buffer.from(token.split('.').slice(0, 2).join('.')), servicio.publicKey, Buffer.from(token.split('.')[2], 'base64url')) ? p.uid : 'FIRMA-MALA'; };
 
 // ---------- red simulada ----------
-const RED = { firestore: [], oauth: 0, cuentas: new Set(), firestoreFalla: false };
+const RED = { firestore: [], oauth: 0, cuentas: new Set(), firestoreFalla: false, privados: new Map(), privConsultas: 0 };
 globalThis.fetch = async (url, init) => {
   url = String(url);
   if (url.includes('securetoken@system.gserviceaccount.com')) return new Response(JSON.stringify({ k1: pem(google.publicKey, 'spki') }));
@@ -73,6 +73,14 @@ globalThis.fetch = async (url, init) => {
     const a = new URLSearchParams(init.body).get('assertion');
     const ok = crypto.verify('sha256', Buffer.from(a.split('.').slice(0, 2).join('.')), servicio.publicKey, Buffer.from(a.split('.')[2], 'base64url'));
     return ok ? new Response(JSON.stringify({ access_token: 'tok-servicio' })) : new Response('{}', { status: 400 });
+  }
+  const mp = url.match(/^https:\/\/firestore\.googleapis\.com\/v1\/projects\/librepedal-cb983\/databases\/\(default\)\/documents\/usersPrivate\/([^?]+)/);
+  if (mp) {
+    RED.privConsultas++;
+    if ((init.headers || {}).Authorization !== 'Bearer tok-servicio') return new Response('{}', { status: 403 });
+    if (RED.firestoreFalla) return new Response('{}', { status: 500 });
+    const correo = RED.privados.get(decodeURIComponent(mp[1]));
+    return correo ? new Response(JSON.stringify({ fields: { email: { stringValue: correo } } })) : new Response('{}', { status: 404 });
   }
   const m = url.match(/^https:\/\/firestore\.googleapis\.com\/v1\/projects\/librepedal-cb983\/databases\/\(default\)\/documents\/users\/([^?]+)/);
   if (m) {
@@ -119,7 +127,7 @@ async function pedir(e, body, ip) {
     .setIssuer('https://securetoken.google.com/' + PROJECT).setAudience(PROJECT).setExpirationTime(now + 3600).sign(otra.privateKey);
   r = await pedir(e, { idToken: falso });
   ok(r.status === 401 && !r.data.token, 'Google: idToken firmado por otra llave → 401');
-  ok(RED.firestore.length === 0, 'Google no consulta Firestore');
+  ok(RED.firestore.length === 0, 'Google no consulta users/ (solo usersPrivate, para saber quién es el dueño del cu)');
 }
 
 // ---------- 2. Código del evento ----------
@@ -255,6 +263,67 @@ async function pedir(e, body, ip) {
   ok(r.status === 200 && r.data.token, 'admin verificado por Google también queda marcado, sin romper nada');
   r = await pedir(env(), { modo: 'codigo', codigo: 'ADMIN999', email: 'intyrivera.a@gmail.com' });
   ok(r.status === 200 && uidDe(r.data.token) === 'intyrivera_a_gmail_com', 'admin: CODIGO_ADMIN (propio, no el compartido) sigue funcionando igual');
+}
+
+// ---------- 6. Auditoría 2026-10-17 (#3): dos correos distintos, el mismo cu ----------
+// cuDeEmail cambia todo lo que no es letra/número por '_': 'intyrivera@a-gmail.com' da el cu
+// del admin real (intyrivera.a@gmail.com). Con un dominio propio y el correo verificado por
+// Google, antes se recibía un token como el admin (o como cualquier persona con punto en su correo).
+{
+  const claimsDeToken = (t) => JSON.parse(Buffer.from(t.split('.')[1], 'base64url').toString()).claims || null;
+  RED.privados = new Map([['intyrivera_a_gmail_com', 'intyrivera.a@gmail.com'], ['juan_perez_gmail_com', 'Juan.Perez@gmail.com']]);
+
+  // 6a. El ataque contra el admin: correo verificado de OTRO dominio que produce su mismo cu.
+  const e = env();
+  let r = await pedir(e, { idToken: await idToken('intyrivera@a-gmail.com') });
+  ok(r.status === 403 && !r.data.token && /choca con otra cuenta/.test(r.data.error), 'FIX #3: un correo que choca con el cu del admin NO recibe token (403)');
+  ok(!e.RATE_LIMIT_AUTH.m.has('verificado:intyrivera_a_gmail_com') && !e.RATE_LIMIT_AUTH.m.has('dueno:intyrivera_a_gmail_com'), 'FIX #3: el intento rechazado no deja marcas sobre la cuenta ajena');
+
+  // 6b. El admin real sigue entrando, y su token trae el claim adm (lo exige isAdmin()).
+  r = await pedir(e, { idToken: await idToken('intyrivera.a@gmail.com') });
+  ok(r.status === 200 && uidDe(r.data.token) === 'intyrivera_a_gmail_com', 'el admin real entra por Google');
+  ok(claimsDeToken(r.data.token) && claimsDeToken(r.data.token).adm === true, 'el token del admin trae claims.adm = true');
+  ok(e.RATE_LIMIT_AUTH.m.get('dueno:intyrivera_a_gmail_com') === 'intyrivera.a@gmail.com', 'el cu del admin queda atado a su correo');
+  r = await pedir(e, { modo: 'codigo', codigo: 'ADMIN999', email: 'intyrivera.a@gmail.com' });
+  ok(r.status === 200 && claimsDeToken(r.data.token) && claimsDeToken(r.data.token).adm === true, 'con CODIGO_ADMIN también trae claims.adm');
+
+  // 6c. Nadie más recibe el claim admin.
+  r = await pedir(e, { idToken: await idToken('cualquiera@gmail.com') });
+  ok(r.status === 200 && claimsDeToken(r.data.token) === null, 'un usuario normal no recibe claims');
+
+  // 6d. El mismo ataque contra un usuario normal con punto en el correo (dueño en usersPrivate,
+  // guardado con mayúsculas: se compara sin distinguirlas).
+  r = await pedir(e, { idToken: await idToken('juan@perez-gmail.com') });
+  ok(r.status === 403 && !r.data.token, 'FIX #3: juan@perez-gmail.com no entra a la cuenta de juan.perez@gmail.com');
+  r = await pedir(e, { idToken: await idToken('juan.perez@gmail.com') });
+  ok(r.status === 200 && uidDe(r.data.token) === 'juan_perez_gmail_com', 'el dueño real (mismo correo, otras mayúsculas en usersPrivate) entra');
+
+  // 6e. Cuenta sin usersPrivate: el primer correo la ata, y otro que choca ya no entra.
+  r = await pedir(e, { idToken: await idToken('ana.diaz@gmail.com') });
+  ok(r.status === 200 && e.RATE_LIMIT_AUTH.m.get('dueno:ana_diaz_gmail_com') === 'ana.diaz@gmail.com', 'cuenta nueva: el primer correo queda como dueño');
+  const consultas = RED.privConsultas;
+  r = await pedir(e, { idToken: await idToken('ana.diaz@gmail.com') });
+  ok(r.status === 200 && RED.privConsultas === consultas, 'con la atadura en KV ya no se consulta Firestore');
+  r = await pedir(e, { idToken: await idToken('ana@diaz-gmail.com') });
+  ok(r.status === 403 && !r.data.token, 'FIX #3: un correo que choca con una cuenta ya atada no entra');
+
+  // 6f. Por código (tester/evento) rige lo mismo.
+  r = await pedir(e, { modo: 'codigo', codigo: 'EVENTO2026', email: 'ana@diaz-gmail.com' });
+  ok(r.status === 403 && !r.data.token, 'FIX #3: el código del evento tampoco sirve con un correo que choca');
+  const e2 = env({ TESTERS_PERMITIDOS: 'tester@gmail.com, tester-gmail@com' });
+  r = await pedir(e2, { modo: 'codigo', codigo: 'TESTER123', email: 'tester@gmail.com' });
+  ok(r.status === 200, 'tester: entra y ata su cu');
+  r = await pedir(e2, { modo: 'codigo', codigo: 'TESTER123', email: 'tester-gmail@com' });
+  ok(r.status === 403 && !r.data.token, 'FIX #3: otro tester con un correo que choca no entra a esa cuenta');
+
+  // 6g. Falla cerrada: si no se puede leer usersPrivate, no se emite token.
+  RED.firestoreFalla = true;
+  r = await pedir(env(), { idToken: await idToken('nadie.aun@gmail.com') });
+  ok(r.status === 503 && !r.data.token, 'Firestore caído y sin atadura previa → 503 sin token');
+  RED.firestoreFalla = false;
+  r = await pedir(env({ RATE_LIMIT_AUTH: undefined }), { idToken: await idToken('x@gmail.com') });
+  ok(r.status === 503 && !r.data.token, 'sin KV no se emite token (no se puede comprobar el dueño)');
+  RED.privados = new Map();
 }
 
 console.log(`worker-auth abierto: ${n - f}/${n} OK`);

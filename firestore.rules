@@ -63,8 +63,13 @@ service cloud.firestore {
     // Admin real: tu `cu` (correo transformado) es literalmente el uid de Firebase
     // Auth una vez que tu sesión subió al token personalizado — antes de eso
     // (sesión anónima vieja, sin recargar) esto da false, ver nota de arriba.
+    // Auditoría 2026-10-17 (#3): el uid sale de cuDeEmail(), que no es inyectivo -- otro
+    // correo verificado (p. ej. intyrivera@a-gmail.com) daba este MISMO uid. Ahora el
+    // worker-auth emite el claim adm:true SOLO para el correo exacto del admin, y además
+    // ata cada uid a su correo dueño. Se exigen las dos cosas.
     function isAdmin() {
-      return request.auth.uid == 'intyrivera_a_gmail_com';
+      return request.auth.uid == 'intyrivera_a_gmail_com'
+        && request.auth.token.get('adm', false) == true;
     }
 
     // `premium` (2026-09-04): estado de suscripcion paga, escrito SOLO por el
@@ -179,13 +184,30 @@ service cloud.firestore {
       let par = request.auth.uid < otroId ? request.auth.uid + '_' + otroId : otroId + '_' + request.auth.uid;
       return exists(/databases/$(database)/documents/amistades/$(par));
     }
+    // Auditoría 2026-10-17 (#1): antes bastaba ser `a` o `b` para crear la amistad, sin
+    // ninguna solicitud aceptada detrás -- cualquiera se declaraba "amigo" de cualquiera y
+    // leía su perfilPrivado (fotos y relatos). Ahora el doc trae `req` (id de la solicitud)
+    // y esa solicitud tiene que estar ACEPTADA y ser entre estas dos personas. Solo el
+    // destinatario puede aceptar (ver friendRequests), así que no se puede fabricar.
+    function solicitudAceptadaEntre(reqId, a, b) {
+      let s = get(/databases/$(database)/documents/friendRequests/$(reqId)).data;
+      return s.status == 'accepted'
+        && ((s.get('from', '') == a && s.get('to', '') == b) || (s.get('from', '') == b && s.get('to', '') == a));
+    }
     match /amistades/{id} {
       allow read: if false;
       allow create: if signedInReal()
+        && request.resource.data.keys().hasOnly(['a', 'b', 'req'])
+        && request.resource.data.req is string
         && (request.auth.uid == request.resource.data.a || request.auth.uid == request.resource.data.b)
         && request.resource.data.a < request.resource.data.b
-        && id == request.resource.data.a + '_' + request.resource.data.b;
-      allow update, delete: if false;
+        && id == request.resource.data.a + '_' + request.resource.data.b
+        && exists(/databases/$(database)/documents/friendRequests/$(request.resource.data.req))
+        && solicitudAceptadaEntre(request.resource.data.req, request.resource.data.a, request.resource.data.b);
+      allow update: if false;
+      // Cualquiera de los dos puede deshacer la amistad (antes nadie podía, ni la víctima
+      // de una amistad fabricada).
+      allow delete: if signedIn() && (request.auth.uid == resource.data.a || request.auth.uid == resource.data.b);
     }
 
     // Perfil de comunidad PRIVADO (fotos + relatos, 2026-08-14): a diferencia de
@@ -341,9 +363,27 @@ service cloud.firestore {
       // decir "sigue ahí" / "ya no está", pero SOLO tocando los campos de confirmación —
       // no puede alterar el texto, la categoría ni la ubicación del reporte de otro.
       // Sin esto, los botones 👍/🚫 fallan en silencio para todos menos el autor.
-      allow update: if signedIn()
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['confirmadoPor', 'desmentidoPor', 'lastConfirm']);
+      // Auditoría 2026-10-17 (#4): antes solo se limitaban los CAMPOS, no sus valores, y valía
+      // una sesión anónima: con un solo update se vaciaba/llenaba confirmadoPor/desmentidoPor de
+      // cualquier reporte (y con el umbral de 1 desmentido se borraban del mapa todos los avisos
+      // de peligro), o se movía lastConfirm al pasado/futuro. Ahora: cuenta real, y el voto
+      // agrega EXACTAMENTE tu uid (una vez) a una sola lista; "sigue ahí" fija lastConfirm a la
+      // hora del servidor (la app ya manda serverTimestamp()).
+      allow update: if signedInReal() && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['confirmadoPor', 'lastConfirm'])
+          && votoSoloAgregaMiUid('confirmadoPor')
+          && request.resource.data.lastConfirm == request.time)
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['desmentidoPor'])
+          && votoSoloAgregaMiUid('desmentidoPor')));
+    }
+    function votoSoloAgregaMiUid(campo) {
+      let antes = resource.data.get(campo, []);
+      let despues = request.resource.data.get(campo, []);
+      return antes is list && despues is list
+        && !(request.auth.uid in antes)
+        && !(request.auth.uid in resource.data.get(campo == 'confirmadoPor' ? 'desmentidoPor' : 'confirmadoPor', []))
+        && despues.size() == antes.size() + 1
+        && despues.toSet().difference(antes.toSet()) == [request.auth.uid].toSet();
     }
 
     // Alertas de ruta. Auditoría 2026-09-27: update/delete estaba abierto a CUALQUIER
@@ -421,7 +461,10 @@ service cloud.firestore {
 
     // Viajes planificados (el usuario gestiona los suyos desde la app)
     match /trips/{id} {
-      allow read: if true;
+      // Auditoría 2026-10-17 (#2): era `if true` -- el track GPS exacto de cada viaje
+      // terminado (gpsData.points: casa, rutina, horas) se leía SIN cuenta. La app solo lee
+      // los propios (where('user','==',cu), funciones-mapa-viajes.js), así que esto no rompe nada.
+      allow read: if signedIn() && (resource.data.get('user', '') == request.auth.uid || isAdmin());
       // Auditoría 2026-09-22: `create` no validaba gpsData.distance -- saveAndStartTrip()
       // (funciones-mapa-viajes.js) nunca manda `gpsData` al crear el viaje (lo agrega
       // recién `update` al terminar, ver comentario de abajo), así que aplicar el mismo
@@ -443,8 +486,20 @@ service cloud.firestore {
       // Auditoría 2026-09-16: cero validación de campos ni de autor -- cualquiera podía
       // crear una solicitud "de parte de" otro usuario, o inflar el documento hasta el
       // límite de 1MB de Firestore.
-      allow create: if signedInReal() && autorEsUnoMismo() && strOk('to', 120) && strOk('status', 20);
-      allow update: if signedIn();
+      // Auditoría 2026-10-17 (#1/#5): la solicitud nace SIEMPRE 'pending' y a nombre de quien
+      // la envía (antes se podía crear ya 'accepted'), y solo el DESTINATARIO la responde,
+      // tocando nada más que `status` (antes cualquiera, incluso anónimo, cambiaba from/to/status
+      // de solicitudes ajenas). Eso es lo que hace confiable el chequeo de /amistades.
+      allow create: if signedInReal() && autorEsUnoMismo()
+        && request.resource.data.get('from', '') == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.to is string && request.resource.data.to.size() <= 120
+        && request.resource.data.to != request.auth.uid
+        && strOk('fromNombre', 80);
+      allow update: if signedInReal() && resource.data.get('to', '') == request.auth.uid
+        && resource.data.get('status', '') == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['accepted', 'rejected'];
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -516,7 +571,10 @@ service cloud.firestore {
     // frases ajenas llamando la API directo, aunque la UI lo ocultara.
     match /frasesComunidad/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('texto', 140) && strOk('nombre', 60) && autorEsUnoMismo();
+      // Auditoría 2026-10-17 (#7): el create no exigía aprobada:false -- cualquiera creaba su
+      // frase ya aprobada y Pistero se la decía a TODOS (app-estado-global.js la carga al iniciar).
+      allow create: if signedInReal() && strOk('texto', 140) && strOk('nombre', 60) && autorEsUnoMismo()
+        && request.resource.data.aprobada == false;
       allow update, delete: if isAdmin();
     }
 
@@ -655,10 +713,22 @@ service cloud.firestore {
     // Alertas SOS de la comunidad: ANONIMAS y de ubicacion GRUESA (~5km, sin identidad ni
     // ubicacion exacta). Cualquiera autenticado puede pedir ayuda (create) y recibir (read);
     // el dato ya es seguro por diseno. Inmutable: sin update/delete.
+    // Auditoría 2026-10-17 (#8): el create aceptaba cualquier campo y cualquier `ts` -- 15 docs
+    // con ts en el año 2100 ocupaban para siempre la ventana orderBy('ts','desc').limit(15)
+    // del listener (ningún SOS real volvía a entrar), y sin clat la alerta le salía a todos.
+    // Ahora: solo clat/clon/ts, ts = hora del servidor (la app manda serverTimestamp()), y
+    // coordenadas válidas. Sigue abierto a la sesión anónima a propósito: un SOS no debe
+    // fallar porque el token personalizado no alcanzó a llegar. El admin puede limpiar.
     match /sosAlertas/{id} {
       allow read: if signedIn();
-      allow create: if signedIn() && strOk("comuna", 80);
-      allow update, delete: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['clat', 'clon', 'ts'])
+        && request.resource.data.keys().hasAll(['clat', 'clon', 'ts'])
+        && request.resource.data.ts == request.time
+        && request.resource.data.clat is number && request.resource.data.clat >= -90 && request.resource.data.clat <= 90
+        && request.resource.data.clon is number && request.resource.data.clon >= -180 && request.resource.data.clon <= 180;
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     // Reseñas de la app (estrellas + comentario). Sin esta regla el catch-all de abajo

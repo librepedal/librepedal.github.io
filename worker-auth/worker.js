@@ -33,7 +33,7 @@ const PROJECT = 'librepedal-cb983';
 const ISS = 'https://securetoken.google.com/' + PROJECT;
 const CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 const AUD = 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit';
-// La cuenta admin real (ver isAdmin() en firestore.rules: uid == cuDeEmail(ADMIN_EMAIL)).
+// La cuenta admin real (ver isAdmin() en firestore.rules: uid == cuDeEmail(ADMIN_EMAIL) Y claim adm, ver claimsDe).
 const ADMIN_EMAIL = 'intyrivera.a@gmail.com';
 
 // Comparación de largo constante: no filtrar el código a fuerza de medir tiempos.
@@ -167,6 +167,40 @@ async function usuarioExiste(env, cu) {
   if (r.status === 404) return false;
   throw new Error('firestore: ' + r.status);
 }
+
+// SEGURIDAD (auditoría 2026-10-17, hallazgo #3 de firestore.rules): cuDeEmail() no es
+// inyectivo -- 'juan.perez@gmail.com' y 'juan@perez-gmail.com' dan el MISMO cu. Con un
+// dominio propio (p. ej. a-gmail.com) y un correo verificado ahí, alguien recibía un token
+// con el uid de otra persona, incluido el del admin. Cambiar el uid de todas las cuentas
+// sería una migración enorme; en vez de eso, cada cu queda ATADO al primer correo que lo
+// usa (KV 'dueno:<cu>'), y para cuentas que ya existían antes de esta marca, al correo
+// guardado en usersPrivate/{cu}. Un correo distinto que choca con un cu ajeno no entra.
+// Lanza si no se puede comprobar (quien llama falla cerrado).
+async function correoGuardado(env, cu) {
+  const tok = await tokenServicio(env);
+  const url = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/usersPrivate/'
+    + encodeURIComponent(cu) + '?mask.fieldPaths=email';
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + tok } });
+  if (r.status === 404) return null;
+  if (r.status !== 200) throw new Error('firestore: ' + r.status);
+  const d = await r.json().catch(() => null);
+  const v = d && d.fields && d.fields.email && d.fields.email.stringValue;
+  return v ? String(v).trim().toLowerCase() : null;
+}
+async function correoEsDuenoDelCu(env, cu, email) {
+  email = String(email).trim().toLowerCase();
+  const fijado = await env.RATE_LIMIT_AUTH.get('dueno:' + cu);
+  if (fijado) return fijado === email;
+  const guardado = await correoGuardado(env, cu);
+  if (guardado && guardado !== email) return false;
+  await env.RATE_LIMIT_AUTH.put('dueno:' + cu, email);
+  return true;
+}
+const CHOQUE_DE_CUENTA = 'ese correo choca con otra cuenta de Libre Pedal; escríbenos para ayudarte a entrar';
+// El admin ya no se reconoce solo por el uid (que, por lo de arriba, otro correo podía
+// producir): el token lleva además el claim adm:true, que se emite SOLO para el correo
+// exacto del admin. isAdmin() en firestore.rules exige las dos cosas.
+const claimsDe = (email) => (String(email).trim().toLowerCase() === ADMIN_EMAIL ? { adm: true } : null);
 
 // Orígenes reales de la app (mismo patrón ya usado en worker-ia): CORS no frena un
 // script/curl (eso lo hace el límite por IP de arriba), pero sí evita que este Worker se
@@ -322,11 +356,19 @@ export default {
           catch (e) { return json({ error: 'no se pudo comprobar el correo, intenta de nuevo' }, 503); }
         }
       }
+      // Último chequeo antes de firmar (así un intento rechazado más arriba nunca deja atado
+      // un cu a un correo ajeno): ¿este correo es el dueño de ese cu? Ver correoEsDuenoDelCu.
+      if (!env.RATE_LIMIT_AUTH) return json({ error: 'el ingreso por código no está disponible ahora' }, 503);
+      let esDueno;
+      try { esDueno = await correoEsDuenoDelCu(env, cuDeEmail(email), email); }
+      catch (e) { return json({ error: 'no se pudo comprobar la cuenta, intenta de nuevo' }, 503); }
+      if (!esDueno) return json({ error: CHOQUE_DE_CUENTA }, 403);
       try {
         const key = await importPKCS8(atob(env.FIREBASE_PRIVATE_KEY_B64), 'RS256');
         const now = Math.floor(Date.now() / 1000);
         const cu = cuDeEmail(email);
-        const token = await new SignJWT({ uid: cu })
+        const claims = claimsDe(email);
+        const token = await new SignJWT(claims ? { uid: cu, claims } : { uid: cu })
           .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
           .setIssuedAt(now)
           .setIssuer(env.FIREBASE_CLIENT_EMAIL)
@@ -356,20 +398,31 @@ export default {
     // verificado), así que entra cualquier cuenta. Antes además se exigía estar en
     // TESTERS_PERMITIDOS (prueba cerrada); Inty pidió abrirla a cualquier usuario.
 
-    // Marca esta cuenta como verificada de verdad (ver el chequeo 'verificado:' más arriba,
-    // en la entrada por código) -- de ahora en más, ningún código compartido sirve para ella.
-    // Best-effort: si KV falla, no debe cortar un login real ya probado por Google/el correo.
-    try { if (env.RATE_LIMIT_AUTH) await env.RATE_LIMIT_AUTH.put('verificado:' + cu, String(Date.now())); } catch (e) {}
-
     if (!env.FIREBASE_PRIVATE_KEY_B64 || !env.FIREBASE_CLIENT_EMAIL) {
       // Deploy de staging sin la llave de firma: confirma la verificación pero no emite token.
       return json({ cu, email: payload.email, staging: true, note: 'verificado OK; sin llave de firma en este deploy' });
     }
+
+    // Que Google verifique el correo no basta: otro correo verificado puede producir el mismo
+    // cu (ver correoEsDuenoDelCu). Falla cerrada: sin poder comprobarlo, no se emite token.
+    if (!env.RATE_LIMIT_AUTH) return json({ error: 'el ingreso no está disponible ahora, intenta de nuevo' }, 503);
+    let esDueno;
+    try { esDueno = await correoEsDuenoDelCu(env, cu, payload.email); }
+    catch (e) { return json({ error: 'no se pudo comprobar la cuenta, intenta de nuevo' }, 503); }
+    if (!esDueno) return json({ error: CHOQUE_DE_CUENTA }, 403);
+
+    // Marca esta cuenta como verificada de verdad (ver el chequeo 'verificado:' más arriba,
+    // en la entrada por código) -- de ahora en más, ningún código compartido sirve para ella.
+    // Va DESPUÉS del chequeo de dueño: un correo que choca no debe poder marcar la cuenta ajena.
+    // Best-effort: si KV falla, no debe cortar un login real ya probado por Google/el correo.
+    try { await env.RATE_LIMIT_AUTH.put('verificado:' + cu, String(Date.now())); } catch (e) {}
+
     try {
       const privateKeyPem = atob(env.FIREBASE_PRIVATE_KEY_B64);
       const key = await importPKCS8(privateKeyPem, 'RS256');
       const now = Math.floor(Date.now() / 1000);
-      const token = await new SignJWT({ uid: cu })
+      const claims = claimsDe(payload.email);
+      const token = await new SignJWT(claims ? { uid: cu, claims } : { uid: cu })
         .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
         .setIssuedAt(now)
         .setIssuer(env.FIREBASE_CLIENT_EMAIL)

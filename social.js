@@ -58,9 +58,22 @@ async function showFriendRequests(){ _modalVolverA=null; document.getElementById
 // pueda chequear "son amigos" con un exists() simple, sin necesitar una query -- ver
 // perfil-comunidad.js. set() sin merge:false es idempotente (mismo id, mismo contenido),
 // así que llamarla de nuevo sobre una amistad que ya tiene su espejo no hace daño.
-function _asegurarAmistadEspejo(otherUid){
+// Auditoría 2026-10-17: la regla de /amistades exige `req`, el id de la solicitud ACEPTADA
+// entre los dos (antes cualquiera se declaraba amigo de cualquiera). Si no se conoce (el
+// self-heal de abrirChatAmigo), se busca la solicitud aceptada en cualquiera de los dos sentidos.
+async function _solicitudAceptadaCon(otherUid){
+  const res=await Promise.all([
+    db.collection('friendRequests').where('from','==',cu).where('to','==',otherUid).get(),
+    db.collection('friendRequests').where('from','==',otherUid).where('to','==',cu).get()
+  ]);
+  const d=res[0].docs.concat(res[1].docs).find(function(x){ return x.data().status==='accepted'; });
+  return d?d.id:null;
+}
+async function _asegurarAmistadEspejo(otherUid, reqId){
   const a=cu<otherUid?cu:otherUid, b=cu<otherUid?otherUid:cu;
-  return db.collection('amistades').doc(a+'_'+b).set({a:a,b:b});
+  const req=reqId||await _solicitudAceptadaCon(otherUid);
+  if(!req) throw new Error('sin solicitud aceptada con '+otherUid);
+  return db.collection('amistades').doc(a+'_'+b).set({a:a,b:b,req:req});
 }
 // Guardia de reentrada (encontrado en la revisión de este PR, mismo patrón ya usado en
 // _agregandoHostel/_enviandoReporte/etc): un doble-tap rápido en "Aceptar" antes de que
@@ -84,7 +97,7 @@ function acceptFriendRequest(reqId,fromUser){
     // perfil privado del nuevo amigo. Ahora se espera la escritura y, si falla, se avisa
     // en vez de mostrar éxito falso -- y además abrirChatAmigo() la reintenta sola la
     // próxima vez que se abre esa conversación (self-heal, ver más abajo).
-    _asegurarAmistadEspejo(fromUser).then(function(){
+    _asegurarAmistadEspejo(fromUser, reqId).then(function(){
       h("¡Nuevo amigo agregado!"); showAmigosYSolicitudes();
     }).catch(function(err){
       try{ if(window.Sentry) Sentry.captureException(err,{tags:{donde:'acceptFriendRequest.amistades'}}); }catch(_e){}
