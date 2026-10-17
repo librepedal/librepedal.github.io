@@ -203,5 +203,59 @@ async function pedir(e, body, ip) {
   ok(bloqueado, 'misma IP: un script que sigue probando termina frenado (429)');
 }
 
+// ---------- 5. Auditoría 2026-10-17: suplantación con el código compartido + correo ajeno ----------
+// Hallazgo real: CODIGO_TESTER es UN SOLO código para todo el grupo -- antes de este fix,
+// código + el correo de CUALQUIER tester real daba un token válido COMO esa persona, sin
+// pedirle ninguna prueba de serlo. Lo mismo, en un caso más angosto, con el código del evento
+// y la marca en KV: una vez "fichado" un correo, servía para siempre, incluso después de que
+// la persona real se registrara de verdad.
+{
+  // 5a. Mientras nadie demostró ser dueño de su cuenta de verdad, el código sigue funcionando
+  // IGUAL que siempre (cero regresión para quien nunca hizo login verificado).
+  let r = await pedir(env(), { modo: 'codigo', codigo: 'TESTER123', email: 'otra@gmail.com' });
+  ok(r.status === 200 && uidDe(r.data.token) === 'otra_gmail_com', 'antes de verificar: el código de tester sigue entrando como antes (sin regresión)');
+
+  // 5b. El ataque real: "otra@gmail.com" nunca pidió nada -- alguien con el código compartido
+  // (filtrado, adivinado, o un tester malicioso) entra COMO ella sabiendo solo su correo público.
+  const eAtaque = env();
+  r = await pedir(eAtaque, { modo: 'codigo', codigo: 'TESTER123', email: 'otra@gmail.com' });
+  ok(r.status === 200 && uidDe(r.data.token) === 'otra_gmail_com', 'ataque (antes del fix de fondo): código + correo ajeno = token válido como esa persona -- confirma que el hueco existía');
+
+  // 5c. Ahora "otra@gmail.com" entra de verdad por Google (el único camino que prueba quién es).
+  const eReal = env();
+  r = await pedir(eReal, { idToken: await idToken('otra@gmail.com') });
+  ok(r.status === 200 && uidDe(r.data.token) === 'otra_gmail_com', 'la dueña real entra por Google');
+  ok(eReal.RATE_LIMIT_AUTH.m.has('verificado:otra_gmail_com'), 'Google deja la marca "verificado" en KV para esa cuenta');
+
+  // 5d. EL FIX: con esa cuenta ya marcada como verificada, el código compartido (tester o
+  // evento) YA NO SIRVE para ella NUNCA MÁS -- cierra la suplantación de 5b para siempre.
+  r = await pedir(eReal, { modo: 'codigo', codigo: 'TESTER123', email: 'otra@gmail.com' });
+  ok(r.status === 403 && !r.data.token && /ya inició sesión/.test(r.data.error), 'FIX: tras verificar por Google, el código de tester queda bloqueado para esa cuenta (403)');
+  r = await pedir(eReal, { modo: 'codigo', codigo: 'EVENTO2026', email: 'otra@gmail.com' });
+  ok(r.status === 403 && !r.data.token && /ya inició sesión/.test(r.data.error), 'FIX: tampoco el código de evento sirve tras verificar (cierra el mismo hueco por ese camino)');
+
+  // 5e. Variante del hallazgo 2: alguien "ficha" un correo nuevo con el código del evento,
+  // y DESPUÉS la persona real se registra de verdad con Google -- antes, el fichador seguía
+  // entrando para siempre por la marca 'evento:' en KV, aunque la cuenta ya tuviera dueña real.
+  const eFichado = env();
+  r = await pedir(eFichado, { modo: 'codigo', codigo: 'EVENTO2026', email: 'fichada@gmail.com' });
+  ok(r.status === 200 && r.data.token, 'alguien ficha un correo nuevo con el código del evento');
+  r = await pedir(eFichado, { idToken: await idToken('fichada@gmail.com') });
+  ok(r.status === 200 && r.data.token, 'la dueña real llega después y se registra de verdad con Google (mismo cu)');
+  r = await pedir(eFichado, { modo: 'codigo', codigo: 'EVENTO2026', email: 'fichada@gmail.com' });
+  ok(r.status === 403 && !r.data.token, 'FIX: el fichador ya NO puede seguir entrando con el código del evento tras eso (antes, la marca en KV se lo permitía para siempre)');
+
+  // 5f. Falla cerrada: sin KV no se puede comprobar "verificado", así que el código no entra
+  // (igual criterio que el resto de los chequeos de impersonación de este archivo).
+  r = await pedir(env({ RATE_LIMIT_AUTH: undefined }), { modo: 'codigo', codigo: 'TESTER123', email: 'otra@gmail.com' });
+  ok(r.status === 503 && !r.data.token, 'sin KV, el código no entra (no se puede descartar una suplantación) -- falla cerrada');
+
+  // 5g. El admin no se toca por este cambio: sigue exigiendo SU código propio, nunca el compartido.
+  r = await pedir(env(), { idToken: await idToken('intyrivera.a@gmail.com') });
+  ok(r.status === 200 && r.data.token, 'admin verificado por Google también queda marcado, sin romper nada');
+  r = await pedir(env(), { modo: 'codigo', codigo: 'ADMIN999', email: 'intyrivera.a@gmail.com' });
+  ok(r.status === 200 && uidDe(r.data.token) === 'intyrivera_a_gmail_com', 'admin: CODIGO_ADMIN (propio, no el compartido) sigue funcionando igual');
+}
+
 console.log(`worker-auth abierto: ${n - f}/${n} OK`);
 process.exit(f ? 1 : 0);
