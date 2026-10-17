@@ -461,9 +461,14 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   </div>
 </details>
 <details class="soc-group">
-  <summary><span class="soc-ic"><i class="fas fa-lock"></i> </span><span><b>Privacidad</b><small>Compartir ubicación en vivo</small></span></summary>
+  <summary><span class="soc-ic"><i class="fas fa-lock"></i> </span><span><b>Privacidad</b><small>Compartir ubicación en vivo · modo fantasma</small></span></summary>
   <div class="quick-links" style="margin-top:9px">
     <button class="ab sec" style="margin:0" id="btnSeguimientoVivo" onclick="toggleSeguimientoVivo()"><i class="fas fa-satellite-dish"></i> Compartir ubicación en vivo</button>
+    <!-- 2026-10-17 (Inty: "modo fantasma debería estar más accesible"): antes SOLO vivía
+         en el menú chico de la ficha de usuario (arriba, junto a "Novato") -- se agrega
+         acá también, en Privacidad, donde alguien buscando este tipo de ajuste realmente
+         mira. updateGhostButton() (auth-sesion.js) ya actualiza los dos botones juntos. -->
+    <button class="ab sec" style="margin:0" id="ghostBtnAjustes" onclick="toggleGhost()"><i class="fas fa-ghost"></i> Modo fantasma: OFF</button>
   </div>
 </details>
 <details class="soc-group">
@@ -611,6 +616,11 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
   <div class="mu-abajo">
     <button type="button" class="mu-chip" id="muGrabar" onclick="muGrabar()"><span class="mu-rec"></span><span id="muGrabarTxt">Grabar un paseo</span></button>
     <button type="button" class="mu-chip mu-chip-chico" onclick="toggleCapaCiclistas(this)" title="Ver otros ciclistas en el mapa" aria-label="Ver otros ciclistas"><i class="fas fa-person-biking"></i></button>
+    <!-- 2026-10-17 (Inty: "Rodada debería estar asociada al mapa, está como en Comunidad"):
+         se agrega acá, en la fila de acciones del mapa -- no se saca de Comunidad (mismo
+         criterio aditivo de siempre), solo se suma esta entrada donde tiene más sentido
+         encontrarla: justo al lado de grabar y ver ciclistas en vivo. -->
+    <button type="button" class="mu-chip mu-chip-chico" onclick="verRodadas()" title="Rodadas grupales" aria-label="Rodadas grupales"><i class="fas fa-walkie-talkie"></i></button>
   </div>
   <div class="mu-hoja" id="muHojaMenu" hidden aria-label="¿Qué quieres hacer aquí?">
     <div class="mu-asa"></div>
