@@ -374,6 +374,21 @@ function _restaurarDesdeNube(nube){
     if(!us.dm || typeof us.dm!=='object') us.dm={};
     for(const m in nube.kmPorModo){ if((Number(nube.kmPorModo[m])||0)>(Number(us.dm[m])||0)){ us.dm[m]=Number(nube.kmPorModo[m])||0; restaurado=true; } }
   }
+  // 2026-10-17 (bug real, encontrado en vivo contra Firestore -- cuenta con km:0.07 pero
+  // kmPorModo sumando ~126 reales): `us.di` (el total que se muestra en Estadísticas) y
+  // `us.dm` (el desglose por modo) se restauran arriba cada uno por su cuenta, el mayor
+  // entre nube y local -- pero nunca se CRUZAN entre sí. Si en algún momento pasado (otro
+  // bug, otra versión, un dispositivo que no alcanzó a sincronizar bien) el total quedó
+  // atrás mientras el desglose seguía avanzando, nada en este código lo notaba ni lo
+  // corregía jamás: cada sync siguiente solo comparaba al total contra el total, nunca
+  // contra la suma real de sus partes. El desglose por modo es el registro más detallado
+  // que tenemos (se escribe en la MISMA llamada que el total, _sumarKmViaje en
+  // motor-gps.js) así que si su suma es mayor, es la fuente más confiable: se usa para
+  // corregir el total hacia arriba, nunca hacia abajo.
+  if(us.dm && typeof us.dm==='object'){
+    let _sumaDm=0; for(const _m in us.dm){ _sumaDm+=Number(us.dm[_m])||0; }
+    if(_sumaDm>(Number(us.di)||0)+0.05){ us.di=_sumaDm; restaurado=true; }
+  }
   const kmMantNube=Number(nube.mantKm)||0, kmMantLocal=Number(us.mantKm)||0;
   if(kmMantNube>kmMantLocal+0.05){ us.mantKm=kmMantNube; restaurado=true; }
   if(nube.mant && typeof nube.mant==='object'){
