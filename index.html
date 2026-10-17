@@ -748,6 +748,14 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
     <button class="ab sec" style="margin:0" onclick="verRodadas()"><i class="fas fa-person-biking"></i> Rodadas grupales</button>
     <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="cv('novedades')"><i class="fas fa-newspaper"></i> Novedades del ciclismo</button>
     <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="bhAbrirMapa()"><i class="fas fa-shoe-prints"></i> Mapa de huellas</button>
+    <!-- 2026-10-17 (Inty: "no se sabe si se envió o no la propuesta"): "Dejar mi huella" solo
+         se podía abrir UNA vez, en el momento exacto de la bienvenida de cuenta nueva (ver
+         bienvenida-huella.js:173) -- quien la cerraba sin dejar su idea, o quería volver más
+         tarde a dejar la segunda, no tenía ningún botón para encontrarlo de nuevo. bhAbrirHuella()
+         ya resuelve bien el estado real (consulta Firestore en vivo, nunca localStorage): si
+         ya dejaste las 2, muestra "Ya dejaste tus 2 huellas" + el mapa; si no, el formulario con
+         el contador correcto ("Puedes dejar 2 ideas" / "Te queda 1 idea"). Solo faltaba ESTE botón. -->
+    <button class="ab sec" style="margin:0;background:rgba(255,215,0,0.1);border:1px solid var(--g);color:var(--g)" onclick="bhAbrirHuella()"><i class="fas fa-shoe-prints"></i> Dejar mi huella</button>
     <button class="ab sec" style="margin:0" onclick="mostrarFundadores()"><i class="fas fa-medal"></i> Socios Fundadores</button>
   </div>
 </details>
