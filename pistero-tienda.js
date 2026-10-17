@@ -101,7 +101,19 @@ function _ptRarezaMax(o){ var mx='c'; Object.keys(PIST_TIER).forEach(function(k)
 function _ptTabs(){ return PIST_TABS.map(function(T){ return '<button type="button" role="tab" class="pt-tab'+(T.id===_ptTab?' on':'')+'" aria-selected="'+(T.id===_ptTab)+'" onclick="_ptAbrirTab(\''+T.id+'\')"><span class="pt-tab-i">'+T.i+'</span><span>'+T.n+'</span></button>'; }).join(''); }
 function _ptAbrirTab(id){ _ptTab=id; _ptPrueba=null; _ptMotor=false; _ptRender(); var pn=document.getElementById('ptPanel'); if(pn) pn.scrollTop=0;
   // deja la tienda entera a la vista (Pistero + pestañas + lista) bajo la cabecera
-  var ti=document.getElementById('pistTienda'), hd=document.querySelector('header'); if(ti){ var y=ti.getBoundingClientRect().top-(hd?hd.getBoundingClientRect().height:0)-6; if(Math.abs(y)>8) try{ window.scrollBy({top:y,behavior:'smooth'}); }catch(e){ /* gate:permitido scroll cosmetico */ } } var b=document.querySelector('.pt-tab.on'); if(b&&b.scrollIntoView) try{ b.scrollIntoView({block:'nearest',inline:'center'}); }catch(e){ /* gate:permitido scroll cosmetico, navegadores viejos */ } }
+  // 2026-10-17 (Inty: "al tocar Bici se corre la pantalla y no puedo volver"): `<body>`
+  // tiene su propio overflow-y:auto (ver estilos.css) -- es el que de verdad se ve
+  // scrollear en pantalla. `window.scrollBy` mueve el scroll del documento/ventana, que
+  // acá es OTRO contenedor aparte, invisible. Probado en vivo contra el sitio real: cada
+  // toque de pestaña dejaba el scroll de la ventana corrido (300+ px, confirmado con
+  // window.scrollY) sin que el body se moviera ni un pixel -- nada se veía mal a simple
+  // vista, pero quedaba un scroll "fantasma" acumulado que en el navegador real del
+  // teléfono interfiere con el próximo gesto de deslizar (de ahí "no puedo volver").
+  // OJO: document.scrollingElement NO sirve acá -- en este documento resuelve a
+  // <html>, no a <body>, así que el scroll fantasma seguía igual (también probado en
+  // vivo). Apuntar directo a document.body sí lo saca: confirmado que tras esto
+  // window.scrollY queda en 0, sin scroll fantasma.
+  var ti=document.getElementById('pistTienda'), hd=document.querySelector('header'); if(ti){ var y=ti.getBoundingClientRect().top-(hd?hd.getBoundingClientRect().height:0)-6; if(Math.abs(y)>8) try{ document.body.scrollBy({top:y,behavior:'smooth'}); }catch(e){ /* gate:permitido scroll cosmetico */ } } var b=document.querySelector('.pt-tab.on'); if(b&&b.scrollIntoView) try{ b.scrollIntoView({block:'nearest',inline:'center'}); }catch(e){ /* gate:permitido scroll cosmetico, navegadores viejos */ } }
 function _ptFiltrar(f){ _ptFiltro=(_ptFiltro===f)?'':f; _ptRender(); }
 function _ptElegir(k,id){
   if(k==='motorTipo') _ptMotor=true; else if(PIST_TABS_BICI.indexOf(_ptTab)>=0) _ptMotor=false;
