@@ -78,11 +78,19 @@ function _bhCapa(id, html){
 function _bhCerrar(id){ var v = document.getElementById(id); if(v) v.remove(); }
 var _bhAudio = null;
 // Reproduce un mp3 pregrabado y resuelve al terminar. Sin archivo/sin permiso de audio:
-// espera lo que tardaría en decirse (~62 ms por letra) para mantener el ritmo.
+// Pistero lo dice con su voz de siempre (h(), la misma cola del resto de la app) y se espera
+// lo que tardaría en decirse (~62 ms por letra) para mantener el ritmo del texto en pantalla.
+// (2026-10-16: los mp3 no se pudieron generar -- ElevenLabs con pago pendiente --, y sin esto la
+// bienvenida quedaba muda.)
 function _bhDecir(id, texto){
   return new Promise(function(ok){
     var listo = false, fin = function(){ if(!listo){ listo = true; ok(); } };
-    var espera = function(){ setTimeout(fin, Math.max(1600, String(texto || '').length * 62)); };
+    var yaEspera = false; // onerror y el catch de play() pueden llegar los dos: hablar una sola vez
+    var espera = function(){
+      if(yaEspera) return; yaEspera = true;
+      try{ if(texto && typeof h === 'function') h(String(texto)); }catch(e){}
+      setTimeout(fin, Math.max(1600, String(texto || '').length * 62));
+    };
     try{
       if(_bhAudio){ try{ _bhAudio.pause(); }catch(e){} }
       var a = new Audio('voces-el/bienvenida/' + _bhGenero() + '-' + id + '.mp3');
@@ -93,7 +101,7 @@ function _bhDecir(id, texto){
     }catch(e){ espera(); }
   });
 }
-function _bhCallar(){ if(_bhAudio){ try{ _bhAudio.pause(); }catch(e){} _bhAudio = null; } }
+function _bhCallar(){ if(_bhAudio){ try{ _bhAudio.pause(); }catch(e){} _bhAudio = null; } try{ if(typeof pararVoz === 'function') pararVoz(); }catch(e){} }
 
 /* ---------- datos ---------- */
 var _bhYo = null; // {num, fundador}
