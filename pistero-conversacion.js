@@ -287,15 +287,23 @@ const tutorialSteps=[
   {view:'ajustes', sel:'#vozBtn', d:'En Ajustes controlas la voz de Pistero, el ahorro de pantalla y de GPS.'},
   {view:'map', sel:'#btnCapaMapa', d:'Tu mapa, más limpio: calles o topográfico con un toque, y tu ruta se marca en dorado a medida que avanzas.'},
   {view:'map', sel:'#fabReportar', d:'Reporta a la comunidad: peligros, picadas o miradores. Ganas Darma.'},
-  {view:'map', sel:'button[onclick="toggleRadarOnMap()"]', d:'Ciclistas: mira a otros pedaleros en el mapa, cada uno con su casco.'},
+  {view:'map', sel:'button[onclick="toggleCapaCiclistas(this)"]', d:'Ciclistas: mira a otros pedaleros en el mapa, cada uno con su casco.'},
   {view:'chat', sel:'#v-chat .quick-links', d:'Social: tus amigos, solicitudes y chats privados.'},
-  {view:'chat', sel:'button[onclick="verRodadas()"]', d:'Rodadas grupales: organiza o súmate a una salida con la comunidad. Una vez confirmada tu asistencia, se abre una radio para hablar con el grupo mientras pedaleas.'},
+  {view:'chat', sel:'#v-chat button[onclick="verRodadas()"]', d:'Rodadas grupales: organiza o súmate a una salida con la comunidad. Una vez confirmada tu asistencia, se abre una radio para hablar con el grupo mientras pedaleas.'},
   {view:'chat', sel:'button[onclick="verRecomendacionRutas()"]', d:'Rutas para ti: recomendaciones reales de otros ciclistas, según tu distancia habitual.'},
   {view:'mac', sel:'#v-mac .section-info', d:'Taller: guía paso a paso según el síntoma, derivación al taller cuando es de seguridad, y la mantención de tu bici o vehículo.'},
   {view:'customize', sel:'#epTarjeta', d:'Tu Pistero tiene varios modelos para elegir, no solo el Clásico. Toca "Cambiar modelo" cuando quieras probar otro — se ve igual en todas partes: tu chip, el mapa, el ranking.'},
   {view:'customize', sel:'#estilosGrid', d:'En Perfil armas tu personaje y eliges el estilo de la esfera. ¡A rodar!'}
 ];
 let tutorialIdx=0;
+// 2026-10-17, pedido de Inty: para una cuenta recién creada el tutorial forzado arranca enseñando
+// SOLO el mapa (los pasos de abajo) -- el resto de la app sigue bloqueada en el nav (ver _navIr en
+// app-estado-global.js) hasta terminar el primer viaje. El tour completo (tutorialSteps entero)
+// sigue intacto y disponible para quien lo pide por chat o toca "Ver tutorial" en Ajustes.
+var TUT_PASOS_MAPA=[0,1,2,3,5,6,11,12,13];
+var _tutLista=null; // null = tour completo; array de índices = tour acotado (ej. solo mapa)
+function _tutPaso(i){ return tutorialSteps[_tutLista?_tutLista[i]:i]; }
+function _tutLargo(){ return _tutLista?_tutLista.length:tutorialSteps.length; }
 function tutSetPanel(el,x,y,w,h2){ el.style.left=x+'px'; el.style.top=y+'px'; el.style.width=Math.max(0,w)+'px'; el.style.height=Math.max(0,h2)+'px'; el.style.display='block'; }
 function tutSpotlight(el){
   const T=document.getElementById('tutDimT'),B=document.getElementById('tutDimB'),L=document.getElementById('tutDimL'),R=document.getElementById('tutDimR'),ring=document.getElementById('tutRing');
@@ -309,7 +317,15 @@ function tutSpotlight(el){
   ring.style.display='block'; ring.style.left=x+'px'; ring.style.top=y+'px'; ring.style.width=w+'px'; ring.style.height=h2+'px';
 }
 function startTutorial(){
-  tutorialIdx=0;
+  tutorialIdx=0; _tutLista=null;
+  document.getElementById('tutorialOverlay').classList.add('on');
+  const banner=document.getElementById('tutBanner');
+  if(banner){ banner.classList.remove('hide'); clearTimeout(banner._hideTO); banner._hideTO=setTimeout(function(){ banner.classList.add('hide'); },4500); }
+  renderTutorial();
+}
+// Tour corto de bienvenida (solo mapa) para cuentas nuevas -- ver TUT_PASOS_MAPA arriba.
+function startTutorialMapa(){
+  tutorialIdx=0; _tutLista=TUT_PASOS_MAPA;
   document.getElementById('tutorialOverlay').classList.add('on');
   const banner=document.getElementById('tutBanner');
   if(banner){ banner.classList.remove('hide'); clearTimeout(banner._hideTO); banner._hideTO=setTimeout(function(){ banner.classList.add('hide'); },4500); }
@@ -340,17 +356,17 @@ const TUTORIAL_TEMAS={
 };
 function mostrarPasoTutorial(indice){
   if(indice==null || !tutorialSteps[indice]) return;
-  tutorialIdx=indice;
+  tutorialIdx=indice; _tutLista=null; // un pedido puntual por chat siempre apunta al tour completo, no al acotado
   document.getElementById('tutorialOverlay').classList.add('on');
   const banner=document.getElementById('tutBanner');
   if(banner){ banner.classList.remove('hide'); clearTimeout(banner._hideTO); banner._hideTO=setTimeout(function(){ banner.classList.add('hide'); },4500); }
   renderTutorial();
 }
 function renderTutorial(){
-  const s=tutorialSteps[tutorialIdx];
-  document.getElementById('tutProgress').innerText=(tutorialIdx+1)+' / '+tutorialSteps.length;
+  const s=_tutPaso(tutorialIdx);
+  document.getElementById('tutProgress').innerText=(tutorialIdx+1)+' / '+_tutLargo();
   document.getElementById('tutPrev').style.visibility=tutorialIdx===0?'hidden':'visible';
-  document.getElementById('tutNext').innerText=tutorialIdx===tutorialSteps.length-1?'¡A pedalear!':'Siguiente ▶';
+  document.getElementById('tutNext').innerText=tutorialIdx===_tutLargo()-1?'¡A pedalear!':'Siguiente ▶';
   // El paso de Pistero necesita abrirPistero() (no solo cv()): así deja el chat
   // inicializado con su saludo real, no la sección en blanco sin historial.
   if(s.view==='pistero') abrirPistero(); else if(s.view) cv(s.view);
@@ -366,6 +382,13 @@ function renderTutorial(){
     requestAnimationFrame(function(){ requestAnimationFrame(function(){ tutSpotlight(el); h(s.d); }); });
   }, s.view?260:0);
 }
-function tutNext(){ if(tutorialIdx<tutorialSteps.length-1){ tutorialIdx++; renderTutorial(); } else { closeTutorial(); } }
+function tutNext(){ if(tutorialIdx<_tutLargo()-1){ tutorialIdx++; renderTutorial(); } else { closeTutorial(); } }
 function tutPrev(){ if(tutorialIdx>0){ tutorialIdx--; renderTutorial(); } }
-function closeTutorial(){ document.getElementById('tutorialOverlay').classList.remove('on'); if(cu) localStorage.setItem('lp_tut_'+cu,'done'); hCorta("¡Listo! Ya conoces lo básico. Cualquier duda, tócame el micrófono. ¡A rodar!"); _esperarFinVoz(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); }); }
+function closeTutorial(){
+  document.getElementById('tutorialOverlay').classList.remove('on');
+  var fueSoloMapa=(_tutLista===TUT_PASOS_MAPA);
+  if(cu) localStorage.setItem('lp_tut_'+cu,'done');
+  _tutLista=null;
+  hCorta(fueSoloMapa?'¡Listo! Ya sabes usar el mapa. Haz tu primer viaje y de a poco te voy mostrando el resto de la app.':'¡Listo! Ya conoces lo básico. Cualquier duda, tócame el micrófono. ¡A rodar!');
+  _esperarFinVoz(function(){ if(typeof abrirEsfera==='function') abrirEsfera(); });
+}

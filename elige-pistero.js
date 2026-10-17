@@ -8,11 +8,12 @@
      junta datos). Llave: lp_pm_elegido_<cu> + pistOpts.modelo en Firestore (otros teléfonos).
    - Armario: tarjeta "Tu Pistero" + "Cambiar modelo" arriba de la tienda.
    - El modelo elegido se ve en la app: chip de usuario, barra de abajo, "Pregúntale a Pistero",
-     ranking/perfil de comunidad y pantalla de Fundadores (_pistAvatar). Los lugares chicos usan una
-     imagen fija del modelo real (pistero-modelos/img/mini-*.png, herramientas/pistero-modelos/
-     miniaturas.mjs): una animación por capas ahí no se nota y gasta batería.
-   - Pendiente (fase C/D resto): piezas del armario por modelo, sobrevuelo y marcador del mapa con el
-     modelo. Hasta entonces esos lugares siguen con el Clásico.
+     ranking/perfil de comunidad, pantalla de Fundadores, marcador propio y de otros ciclistas en el
+     mapa (en vivo y en navegación), popup de ciclista y preview de la Tienda (_pistAvatar, 2026-10-17).
+     Los lugares chicos usan una imagen fija del modelo real (pistero-modelos/img/mini-*.png,
+     herramientas/pistero-modelos/miniaturas.mjs): una animación por capas ahí no se nota y gasta batería.
+   - Pendiente (fase C/D resto): piezas del armario por modelo (accesorios/ropa propios de cada
+     personaje) y sobrevuelo. Hasta entonces esos lugares siguen con el Clásico.
    Datos de la prueba (sin datos personales): epContar() suma en pistModelosStats/{id}. */
 
 var EP_IDS = ['ciber', 'orbe', 'slime', 'vinilo', 'casco', 'clasico'];

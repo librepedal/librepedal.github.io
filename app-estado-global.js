@@ -61,6 +61,30 @@ function toggleCharla(){
   try{ if(typeof h==='function'){ h(pisteroCharla==='callado'?'Voy a hablar solo lo justo.' : pisteroCharla==='hablador'?'Buena, te acompaño más seguido.' : 'Listo, ritmo normal.'); } }catch(e){}
 }
 try{ if(document.readyState!=='loading'){ setTimeout(updateCharlaBtn,300); } else { document.addEventListener('DOMContentLoaded', function(){ setTimeout(updateCharlaBtn,300); }); } }catch(e){}
+
+// ===== Onboarding progresivo (pedido de Inty 2026-10-17): se enseña primero a usar el mapa;
+// Pistero/Social/Perfil quedan bloqueados en el nav hasta terminar el primer viaje real. A un
+// usuario YA activo (con km reales ya cargados desde la nube, us.di>0) nunca se le bloquea nada,
+// aunque sea la primera vez que abre la app en ESTE dispositivo/localStorage -- eso evitaría que
+// un usuario real con historial se quede afuera de su propio Perfil por limpiar caché o cambiar
+// de celular. Ante cualquier error, nunca bloquea (fail-open).
+function _navMapaBloqueada(){
+  try{
+    if(typeof cu!=='undefined' && cu && localStorage.getItem('lp_primer_viaje_'+cu)) return false;
+    if(typeof us!=='undefined' && us && (Number(us.di)||0) > 0) return false;
+    return true;
+  }catch(e){ return false; }
+}
+function _navPintarBloqueo(){
+  var bloq=_navMapaBloqueada();
+  ['nbPistero','nbSocial','nbPerfil'].forEach(function(id){ var b=document.getElementById(id); if(b) b.classList.toggle('bloqueado', bloq); });
+}
+function _navIr(destino){
+  if(_navMapaBloqueada()){ if(typeof lpAviso==='function') lpAviso('Esto se desbloquea al terminar tu primer viaje. ¡Usa el mapa para empezar!'); return; }
+  if(destino==='pistero'){ if(typeof abrirPistero==='function') abrirPistero(); }
+  else if(typeof cv==='function') cv(destino);
+}
+try{ if(document.readyState!=='loading'){ setTimeout(_navPintarBloqueo,400); } else { document.addEventListener('DOMContentLoaded', function(){ setTimeout(_navPintarBloqueo,400); }); } }catch(e){}
 let lastFraseTime = 0;
 // El diálogo de "parado" (revisar la bici, tomar agua...) necesita SU PROPIO reloj,
 // igual que ciudad/carretera lo tienen (tFraseCiudad/kmUltimaFrase). Antes reusaba

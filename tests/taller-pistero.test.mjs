@@ -59,7 +59,10 @@ ok(J(`_pistBiciSVG({},{pose:'caballito'})`).includes('rotate(-15'), 'caballito l
 // 5) precios: tope $1.000, inclusión y seguridad gratis
 ok(J('Object.keys(PIST_RAREZA).every(function(k){ return PIST_RAREZA[k].clp<=1000; })'), 'ningún precio pasa de $1.000');
 for (const [k, id] of [['biciTipo', 'handbike'], ['biciTipo', 'triciclo'], ['biciExtra', 'luces'], ['bandera', 'chile'], ['biciCol2', '#123456']]) ok(J(`_ptTier('${k}','${id}')`) === 'c', `${k}:${id} gratis`);
-ok(J("PIST_TABS.some(function(t){return t.id==='pintura';}) && PIST_TABS_BICI.length===6"), 'la tienda tiene las pestañas del Taller');
+// 2026-10-17: PIST_TABS (lo que se MUESTRA) se achicó a solo Casco (PIST_TABS_SOLO_CASCO, pedido
+// de Inty para la prueba cerrada) -- pero el catálogo completo sigue intacto en PIST_TABS_COMPLETO,
+// que es lo que este test debe seguir verificando (nada se borró, solo se apagó en la UI).
+ok(J("PIST_TABS_COMPLETO.some(function(t){return t.id==='pintura';}) && PIST_TABS_BICI.length===6"), 'la tienda tiene las pestañas del Taller');
 
 // 6) sonidos (pistero-sonidos.js): cada pieza que se vende tiene un sonido que existe, y sin
 //    Web Audio (o con la voz en OFF) no se rompe nada

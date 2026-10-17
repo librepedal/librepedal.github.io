@@ -157,6 +157,10 @@ function _mostrarResumenViaje(){
   var logros=_logrosDelViaje.slice(); _logrosDelViaje=[];
   var kmViaje=_kmEsteViaje; _kmEsteViaje=0;
   if(kmViaje<0.05 && !logros.length) return; // viaje nulo (se tocó el botón sin pedalear nada): no hay nada que celebrar
+  // 2026-10-17, pedido de Inty: Social/Pistero/Perfil quedan bloqueados en el nav hasta terminar el
+  // primer viaje real -- la app se enseña de a poco, empezando solo por el mapa. Este es el momento
+  // exacto en que ese primer viaje se cuenta como terminado.
+  if(kmViaje>=0.05 && cu){ try{ localStorage.setItem('lp_primer_viaje_'+cu,'1'); }catch(e){} if(typeof _navPintarBloqueo==='function') _navPintarBloqueo(); }
   var duracionMs=tripStartTime?Math.max(0,Date.now()-tripStartTime):0;
   var minutos=Math.max(0,Math.round(duracionMs/60000));
   // 2026-10-15 (auditoría): antes era km / tiempo TOTAL (con paradas) rotulado "km/h prom." — con un almuerzo

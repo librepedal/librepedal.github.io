@@ -67,8 +67,11 @@ function bhRedondear(x){ return Math.round(x * 10) / 10; }
 function _bhEsc(s){ return (typeof escapeHTML === 'function') ? escapeHTML(s) : String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function _bhGenero(){ return (typeof pisteroGenero !== 'undefined' && pisteroGenero === 'c') ? 'c' : 'l'; }
 function _bhCara(){
-  try{ var o = _pistOpts(); return _pisteroExprSVG('feliz', _pistCascoCol(), _pistPielCol(), o.lentes, o.bigote, o.acc, o); }
-  catch(e){ return ''; }
+  try{
+    var o = _pistOpts();
+    if(typeof _pistAvatar==='function' && typeof epMiModelo==='function' && epMiModelo()!=='clasico') return _pistAvatar(o,'feliz');
+    return _pisteroExprSVG('feliz', _pistCascoCol(), _pistPielCol(), o.lentes, o.bigote, o.acc, o);
+  } catch(e){ return ''; }
 }
 function _bhCapa(id, html){
   var v = document.getElementById(id); if(v) v.remove();

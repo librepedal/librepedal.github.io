@@ -988,6 +988,10 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
 .nb:active{transform:scale(.88)}
 .nb.on{color:var(--p)}
 .nb.on::after{content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--p);box-shadow:0 0 8px var(--p)}
+/* Onboarding progresivo (2026-10-17): Pistero/Social/Perfil "candado" hasta el primer viaje */
+.nb-candado{display:none;position:absolute;top:3px;right:8px;font-size:.58rem;color:#8b96ad}
+.nb.bloqueado{opacity:.45}
+.nb.bloqueado .nb-candado{display:block}
 /* Tarjetas: leve profundidad al tocar */
 .cd,.stat-card,.hostel-card,.rec-card,.route-history-item,.gi,.repair-tip{transition:transform .15s,box-shadow .2s}
 .cd:active,.hostel-card:active,.rec-card:active,.route-history-item:active,.gi:active{transform:translateY(1px)}
