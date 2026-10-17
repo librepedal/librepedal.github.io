@@ -166,13 +166,50 @@ async function _entrarConGoogleNativo(){
     if(typeof hideLoading==='function') hideLoading();
     var code=(err&&err.code)||'';
     if(code==='ERR_CANCELED') return; // el usuario cerró el selector de cuenta, no es un error real
+    var msg=String((err&&err.message)||err||'');
+    // Credential Manager de Android responde "No credentials available" (en inglés) cuando el
+    // teléfono no tiene ninguna cuenta de Google agregada -- visto validando en emulador el
+    // 2026-10-03. Se traduce a algo que el usuario pueda resolver solo.
+    if(/no credentials available/i.test(msg)){
+      _lpAvisoLogin('No hay ninguna cuenta de Google en este teléfono.\n\nAgrega una en Ajustes > Cuentas y vuelve a tocar "Entrar con Google".');
+      return;
+    }
     _lpAvisoLogin('No se pudo entrar con Google: '+lpErrorHumano(err));
   }
 }
 // ENTRAR CON GOOGLE (un toque, sin correos): redirect es lo más confiable en PWA móvil.
+// Modo de la pantalla de ingreso:
+//  'web'    -> navegador: Google por popup.
+//  'nativo' -> app instalada CON @capacitor-firebase/authentication: Google nativo.
+//  'viejo'  -> app instalada SIN el plugin (AAB anterior): Google no puede funcionar ahí (ver la nota
+//              de _entrarConGoogle), así que solo en este caso se deja la caja del código.
+// Ojo: lpPlugin() no sirve para decidir esto -- registerPlugin() devuelve un proxy aunque el plugin no
+// exista en el APK, y falla recién al usarlo. isPluginAvailable() sí lo sabe.
+function _lpModoLogin(){
+  try{
+    var C=window.Capacitor;
+    if(!C || !C.isNativePlatform || !C.isNativePlatform()) return 'web';
+    if(typeof C.isPluginAvailable==='function') return C.isPluginAvailable('FirebaseAuthentication') ? 'nativo' : 'viejo';
+    return (C.Plugins && C.Plugins.FirebaseAuthentication) ? 'nativo' : 'viejo';
+  }catch(e){ return 'web'; }
+}
+function _lpAplicarModoLogin(){
+  var modo=_lpModoLogin();
+  function ver(id,disp){ var el=document.getElementById(id); if(el) el.style.display=disp; }
+  if(modo==='viejo'){
+    ver('cajaCodigoTester','block'); ver('sepGoogle','none'); ver('gbtn','none'); ver('gbtnFallback','none');
+    ver('avisoActualizarApp','block');
+  }else{
+    ver('cajaCodigoTester','none'); ver('sepGoogle','none'); ver('avisoActualizarApp','none');
+    ver('gbtnFallback','flex');
+  }
+  return modo;
+}
+(function(){
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_lpAplicarModoLogin); else _lpAplicarModoLogin();
+})();
 async function _entrarConGoogle(){
-  var pluginNativo=lpPlugin('FirebaseAuthentication');
-  if(pluginNativo){ return _entrarConGoogleNativo(); }
+  if(_lpModoLogin()==='nativo'){ return _entrarConGoogleNativo(); }
   // Diagnóstico SOLO a consola (nunca en pantalla): el 2026-08-16 esto era un alert()
   // visible y quedó desplegado un rato — cualquiera que entrara por la web veía un JSON
   // crudo al tocar el botón. Sirve para depurar por qué el plugin nativo no aparece en
@@ -195,8 +232,10 @@ async function _entrarConGoogle(){
   try{
     var _esAppNativa = (typeof window.Capacitor!=='undefined') && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
     if(_esAppNativa){
-      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualiza Libre Pedal desde Play Store para activarlo.\n\nMientras tanto puedes entrar con tu correo: escríbelo arriba y toca "Enviarme el enlace".');
-      var _em=document.getElementById('em'); if(_em){ try{ _em.scrollIntoView({behavior:'smooth',block:'center'}); _em.focus(); }catch(e){} }
+      // El bloque del link mágico (#em) está oculto desde el 17-ago: mandar ahí dejaba al
+      // usuario frente a un campo invisible. La vía que sí está visible es la del código.
+      _lpAvisoLogin('Entrar con Google todavía no está disponible en esta versión de la app.\n\nActualiza Libre Pedal desde Play Store para activarlo.\n\nMientras tanto puedes entrar con el código de la prueba: escríbelo arriba junto a tu correo.');
+      var _ct=document.getElementById('codigoTesterInput'); if(_ct){ try{ _ct.scrollIntoView({behavior:'smooth',block:'center'}); _ct.focus(); }catch(e){} }
       return;
     }
   }catch(_e2){}
@@ -300,7 +339,7 @@ function _initGIS(n){
   if(n<50){ setTimeout(function(){ _initGIS(n+1); }, 150); }
   else { var fb=document.getElementById('gbtnFallback'); if(fb) fb.style.display='flex'; } // GIS no cargó: botón de respaldo
 }
-try{ var fb=document.getElementById('gbtnFallback'); if(fb) fb.style.display='flex'; }catch(e){} // GIS/FedCM desactivado: origin_mismatch persistente, se usa el flujo probado (popup/redirect)
+try{ _lpAplicarModoLogin(); }catch(e){} // botón de Google según el modo (en la app vieja no se muestra). GIS/FedCM desactivado: origin_mismatch persistente, se usa el flujo probado (popup/redirect)
 
 // Arranque de auth: NO pisar con login anónimo una sesión verificada persistida.
 (function(){

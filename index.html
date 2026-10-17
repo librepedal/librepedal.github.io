@@ -162,8 +162,14 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <!-- Google queda ABAJO y discreto: todavía no funciona en la app instalada (necesita el
      plugin nativo, retirado el 17-ago por el crash al abrir). Se deja en su sitio para
      reactivarlo sin rehacer nada cuando esté resuelto. -->
-<div style="text-align:center;margin:20px 0 8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
+<div id="sepGoogle" style="text-align:center;margin:20px 0 8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
   <p style="color:#7d8ba0;font-size:0.72rem;margin:0 0 10px">o entra con Google</p>
+</div>
+<!-- 2026-10-16 (Inty): sin código de invitación. auth.js (_lpAplicarModoLogin) deja SOLO "Entrar con
+     Google" en la web y en la app con el plugin nativo; la caja del código queda únicamente en la app
+     vieja (sin plugin), donde Google no puede funcionar, junto a este aviso para actualizar. -->
+<div id="avisoActualizarApp" style="display:none;margin:14px 0 0;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#cbd5e1;font-size:.8rem;line-height:1.5;text-align:center">
+  Para entrar con Google, actualiza Libre Pedal desde <a href="https://play.google.com/store/apps/details?id=cl.librepedal.app" target="_blank" rel="noopener" style="color:var(--p);font-weight:700">Play Store</a>.
 </div>
 <div id="gbtn" style="display:flex;justify-content:center;min-height:44px"></div>
 <button type="button" id="gbtnFallback" onclick="_entrarConGoogle()" style="display:none;width:100%;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)">

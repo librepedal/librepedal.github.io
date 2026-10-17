@@ -118,6 +118,40 @@ if (bloque) {
   console.log('Los permisos ya estaban presentes.');
 }
 
+// ===== Google Sign-In nativo (2026-10-03) =====
+// @capacitor-firebase/authentication declara play-services-auth / credentials / googleid
+// como `compileOnly` SALVO que rgcfaIncludeGoogle sea true (ver su android/build.gradle).
+// Sin eso compila igual, pero esas clases NO viajan en el APK/AAB: con providers
+// ["google.com"] el plugin instancia GoogleAuthProviderHandler al cargar -> NoClassDefFoundError
+// -> la app se cae AL ABRIR. Esa es la causa real del crash del 16/17-ago (build 29780919),
+// que se atribuyó "al plugin" sin traza y llevó a retirarlo. Nunca se había seteado.
+const variablesPath = path.join(__dirname, '..', 'android', 'variables.gradle');
+if (fs.existsSync(variablesPath)) {
+  let vars = fs.readFileSync(variablesPath, 'utf8');
+  if (vars.indexOf('rgcfaIncludeGoogle') === -1) {
+    vars = vars.replace(/ext\s*\{/, 'ext {\n    rgcfaIncludeGoogle = true');
+    fs.writeFileSync(variablesPath, vars);
+    console.log('variables.gradle: rgcfaIncludeGoogle = true (Google Sign-In nativo)');
+  }
+} else {
+  console.error('No se encontró android/variables.gradle — no se pudo activar Google Sign-In nativo.');
+  process.exit(1);
+}
+// google-services.json (proyecto Firebase librepedal-cb983, paquete cl.librepedal.app, con las
+// huellas SHA-1 de la clave de carga y de la firma de Play): el plugin necesita FirebaseApp
+// inicializado y el default_web_client_id que genera el plugin de Gradle google-services a partir
+// de este archivo. El template de Capacitor aplica ese plugin solo si el archivo existe en
+// android/app/ al configurar Gradle, así que se copia acá (antes de cualquier build).
+const gsOrigen = path.join(__dirname, '..', 'google-services.json');
+const gsDestino = path.join(__dirname, '..', 'android', 'app', 'google-services.json');
+if (fs.existsSync(gsOrigen)) {
+  fs.copyFileSync(gsOrigen, gsDestino);
+  console.log('google-services.json copiado a android/app/');
+} else {
+  console.error('Falta google-services.json en la raíz — Google Sign-In nativo no funcionaría.');
+  process.exit(1);
+}
+
 // Auditoría de cumplimiento Play Store 2026-09-23 (pedido de Inty: "mil por ciento de
 // certeza de que estamos cumpliendo con todo" antes de cualquier envío): hasta acá este
 // script parchaba MainActivity.onCreate() para pedir RECORD_AUDIO apenas arrancaba la
