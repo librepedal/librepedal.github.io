@@ -10,8 +10,10 @@
      · tiempo EN MOVIMIENTO calculado de los puntos (no la hora de inicio a fin, que incluye paradas);
      · desnivel solo si los puntos traen altitud, con el mismo umbral de 3 m que el resto de la app;
        si no hay altitud, el dato no se muestra (nunca se inventa un 0).
-   - Mapa: teselas oscuras de CARTO (datos de OpenStreetMap, permiten CORS). Si no cargan (sin señal),
-     la tarjeta queda con el trazo solo, sin romper la imagen. Atribución dentro de la imagen.
+   - Mapa: teselas de OpenStreetMap (las mismas de la app; permiten CORS) oscurecidas con el mismo
+     filtro que el mapa de huellas. CARTO quedó descartado: sus teselas ahora piden clave ("API KEY
+     REQUIRED", visto el 2026-10-16). Si no cargan (sin señal), la tarjeta queda con el trazo solo, sin
+     romper la imagen. Atribución dentro de la imagen.
    - Compartir: navigator.share con archivo (web y app con @capacitor/share vía compartir-nativo.js);
      si no se puede, lpGuardarArchivo (descarga / menú de la app). */
 
@@ -78,15 +80,19 @@ function _fvMerc(lat, lon, z){
   var s = 256 * Math.pow(2, z), sin = Math.sin(Math.max(-85, Math.min(85, lat)) * Math.PI / 180);
   return { x: (lon + 180) / 360 * s, y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * s };
 }
-// Zoom y centro para que la ruta quepa en w x h con margen.
+// Zoom entero de las teselas, escala extra (1 a 2) para que la ruta LLENE el recuadro (con solo zooms
+// enteros podía quedar a la mitad) y centro, en píxeles de mundo de ese zoom.
 function _fvEncuadre(pts, w, h, margen){
   var z = 17;
   for(; z > 1; z--){
     var mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity;
     for(var i = 0; i < pts.length; i++){ var p = _fvMerc(pts[i].lat, pts[i].lon, z); if(p.x < mnx) mnx = p.x; if(p.x > mxx) mxx = p.x; if(p.y < mny) mny = p.y; if(p.y > mxy) mxy = p.y; }
-    if(mxx - mnx <= w - 2 * margen && mxy - mny <= h - 2 * margen) return { z: z, cx: (mnx + mxx) / 2, cy: (mny + mxy) / 2 };
+    if(mxx - mnx <= w - 2 * margen && mxy - mny <= h - 2 * margen){
+      var sx = (w - 2 * margen) / Math.max(1, mxx - mnx), sy = (h - 2 * margen) / Math.max(1, mxy - mny);
+      return { z: z, s: Math.max(1, Math.min(2, sx, sy)), cx: (mnx + mxx) / 2, cy: (mny + mxy) / 2 };
+    }
   }
-  var c = _fvMerc(pts[0].lat, pts[0].lon, 1); return { z: 1, cx: c.x, cy: c.y };
+  var c = _fvMerc(pts[0].lat, pts[0].lon, 1); return { z: 1, s: 1, cx: c.x, cy: c.y };
 }
 
 /* ---------- dibujo ---------- */
@@ -102,7 +108,7 @@ function _fvTesela(z, x, y){
     var t = setTimeout(function(){ ok(null); }, 6000);
     im.onload = function(){ clearTimeout(t); ok(im); };
     im.onerror = function(){ clearTimeout(t); ok(null); };
-    im.src = 'https://' + 'abcd'[(x + y) % 4] + '.basemaps.cartocdn.com/dark_all/' + z + '/' + x + '/' + y + '@2x.png';
+    im.src = 'https://tile.openstreetmap.org/' + z + '/' + x + '/' + y + '.png';
   });
   return _fvTeselas[k];
 }
@@ -126,24 +132,32 @@ function _fvTrazo(ctx, xy, grosor){
 // Ruta en un rectángulo: con mapa de fondo (conMapa) o solo el trazo.
 async function _fvRutaEn(ctx, pts, x, y, w, h, conMapa, grosor){
   if(pts.length < 2) return;
-  var e = _fvEncuadre(pts, w, h, Math.round(Math.min(w, h) * 0.12));
-  var ox = e.cx - w / 2, oy = e.cy - h / 2;
+  var e = _fvEncuadre(pts, w, h, Math.round(Math.min(w, h) * 0.12)), S = e.s, T = 256 * S;
+  // Mundo (zoom e.z) -> lienzo: centro de la ruta al centro del recuadro, escalado por S.
+  var aX = function(wx){ return x + w / 2 + (wx - e.cx) * S; }, aY = function(wy){ return y + h / 2 + (wy - e.cy) * S; };
   ctx.save(); _fvRedondo(ctx, x, y, w, h, conMapa ? 28 : 0); if(conMapa) ctx.clip();
   if(conMapa){
     ctx.fillStyle = '#0d1426'; ctx.fillRect(x, y, w, h);
-    var tx0 = Math.floor(ox / 256), tx1 = Math.floor((ox + w) / 256), ty0 = Math.floor(oy / 256), ty1 = Math.floor((oy + h) / 256);
+    var ox = e.cx - w / 2 / S, oy = e.cy - h / 2 / S;
+    var tx0 = Math.floor(ox / 256), tx1 = Math.floor((ox + w / S) / 256), ty0 = Math.floor(oy / 256), ty1 = Math.floor((oy + h / S) / 256);
     var pedidos = [];
     for(var tx = tx0; tx <= tx1; tx++) for(var ty = ty0; ty <= ty1; ty++){
       if(ty < 0 || ty >= Math.pow(2, e.z)) continue;
-      (function(tx, ty){ pedidos.push(_fvTesela(e.z, tx, ty).then(function(im){ if(im){ try{ ctx.drawImage(im, x + tx * 256 - ox, y + ty * 256 - oy, 256, 256); }catch(_e){} } })); })(tx, ty);
+      (function(tx, ty){ pedidos.push(_fvTesela(e.z, tx, ty)); })(tx, ty);
     }
-    await Promise.all(pedidos);
+    var ims = await Promise.all(pedidos), k = 0;
+    try{ ctx.filter = 'invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6)'; }catch(_e){}
+    for(var tx2 = tx0; tx2 <= tx1; tx2++) for(var ty2 = ty0; ty2 <= ty1; ty2++){
+      if(ty2 < 0 || ty2 >= Math.pow(2, e.z)) continue;
+      var im = ims[k++]; if(im){ try{ ctx.drawImage(im, aX(tx2 * 256), aY(ty2 * 256), T + 0.5, T + 0.5); }catch(_e){} }
+    }
+    try{ ctx.filter = 'none'; }catch(_e){}
   }
-  var xy = pts.map(function(p){ var m = _fvMerc(p.lat, p.lon, e.z); return { x: x + m.x - ox, y: y + m.y - oy }; });
+  var xy = pts.map(function(p){ var m = _fvMerc(p.lat, p.lon, e.z); return { x: aX(m.x), y: aY(m.y) }; });
   _fvTrazo(ctx, xy, grosor);
   if(conMapa){
-    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = '600 15px system-ui,sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.fillText('© OpenStreetMap © CARTO', x + w - 12, y + h - 8);
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = '600 15px system-ui,sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText('© OpenStreetMap', x + w - 12, y + h - 8);
   }
   ctx.restore();
   if(conMapa){ ctx.save(); _fvRedondo(ctx, x, y, w, h, 28); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 4; ctx.stroke(); ctx.restore(); }
@@ -180,17 +194,20 @@ async function fvDibujar(canvas, o){
   _fvTexto(ctx, 'LIBRE PEDAL', M, 112, '700 52px ' + FV_TIT, '#ffffff');
   _fvTexto(ctx, 'librepedal.cl', W - M, 108, '600 30px system-ui,sans-serif', 'rgba(255,255,255,.85)', 'right');
   // Datos abajo: título de la ruta y la fecha, y la fila de cifras.
-  var yBase = H - M - 30;
-  var cols = datos.length, cw = (W - 2 * M) / cols;
+  // Hasta 3 datos en una fila; con 4, grilla de 2x2 (en una fila "1 h 05 min" se montaba con el vecino).
+  var yBase = H - M - 30, porFila = datos.length > 3 ? 2 : datos.length, filas = Math.ceil(datos.length / porFila);
+  var cw = (W - 2 * M) / porFila, tam = 84, altoFila = tam + 40 + 34;
   datos.forEach(function(d, i){
-    var cx = M + cw * i;
-    _fvTexto(ctx, d.l.toUpperCase(), cx, yBase, '600 26px system-ui,sans-serif', 'rgba(255,255,255,.8)');
-    ctx.font = '700 ' + (cols > 3 ? 70 : 84) + 'px ' + FV_TIT;
+    var fila = Math.floor(i / porFila), col = i % porFila;
+    var cx = M + cw * col, yl = yBase - (filas - 1 - fila) * altoFila;
+    _fvTexto(ctx, d.l.toUpperCase(), cx, yl, '600 26px system-ui,sans-serif', 'rgba(255,255,255,.8)');
+    var f = tam; ctx.font = '700 ' + f + 'px ' + FV_TIT;
+    while(f > 40 && ctx.measureText(d.v).width + (d.u ? 70 : 0) > cw - 16){ f -= 4; ctx.font = '700 ' + f + 'px ' + FV_TIT; }
     var vw = ctx.measureText(d.v).width;
-    _fvTexto(ctx, d.v, cx, yBase - 40, '700 ' + (cols > 3 ? 70 : 84) + 'px ' + FV_TIT, '#ffffff');
-    if(d.u) _fvTexto(ctx, d.u, cx + vw + 8, yBase - 40, '700 34px ' + FV_TIT, '#fc4c02');
+    _fvTexto(ctx, d.v, cx, yl - 40, '700 ' + f + 'px ' + FV_TIT, '#ffffff');
+    if(d.u) _fvTexto(ctx, d.u, cx + vw + 8, yl - 40, '700 34px ' + FV_TIT, '#fc4c02');
   });
-  var yTit = yBase - 40 - (cols > 3 ? 70 : 84) - 34;
+  var yTit = yBase - (filas - 1) * altoFila - 40 - tam - 34;
   if(o.fecha) _fvTexto(ctx, o.fecha, M, yTit, '600 28px system-ui,sans-serif', 'rgba(255,255,255,.85)');
   if(o.titulo){
     var t = String(o.titulo); ctx.font = '700 50px ' + FV_TIT;

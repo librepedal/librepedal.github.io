@@ -62,8 +62,10 @@ ok('decimales con coma', F._fvDatos(F._fvStats(ruta))[0].v === '10,0', F._fvDato
 
 console.log('\nEL MAPA ENCUADRA TODA LA RUTA:');
 const P = F._fvPuntos(pts), e = F._fvEncuadre(P, 520, 520, 60);
-const xy = P.map(p => { const m = F._fvMerc(p.lat, p.lon, e.z); return { x: m.x - e.cx + 260, y: m.y - e.cy + 260 }; });
-ok('todos los puntos dentro del recuadro con margen', xy.every(p => p.x >= 60 && p.x <= 460 && p.y >= 60 && p.y <= 460), 'z=' + e.z);
+const xy = P.map(p => { const m = F._fvMerc(p.lat, p.lon, e.z); return { x: (m.x - e.cx) * e.s + 260, y: (m.y - e.cy) * e.s + 260 }; });
+ok('todos los puntos dentro del recuadro con margen', xy.every(p => p.x >= 59.5 && p.x <= 460.5 && p.y >= 59.5 && p.y <= 460.5), 'z=' + e.z + ' s=' + e.s);
+const alto = Math.max(...xy.map(p => p.y)) - Math.min(...xy.map(p => p.y)), ancho = Math.max(...xy.map(p => p.x)) - Math.min(...xy.map(p => p.x));
+ok('la ruta llena el recuadro (no queda a la mitad)', Math.max(alto, ancho) > 390, Math.round(Math.max(alto, ancho)));
 ok('con el mayor acercamiento posible (un zoom más ya no cabe)', (() => {
   const z = e.z + 1; let a = Infinity, b = -Infinity;
   P.forEach(p => { const m = F._fvMerc(p.lat, p.lon, z); a = Math.min(a, m.y); b = Math.max(b, m.y); });
