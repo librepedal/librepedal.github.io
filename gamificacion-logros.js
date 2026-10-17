@@ -127,6 +127,29 @@ function _anunciarLogro(l){
   try{ if(typeof h==='function') h(_fraseLogro(l)); }catch(e){}
   try{ _logrosDelViaje.push(l); }catch(e){}
 }
+// ENSEÑAR DE A POCO (pedido de Inty, 2026-10-17): la app tiene mucho, y mostrarlo todo de
+// una (el tutorial largo) satura. En vez de eso, cada vez que alguien termina un viaje se
+// le enseña -- hablado y escrito -- UNA función nueva, nunca repetida. La primera, a
+// propósito, es compartir la ruta: lo primero que tiene sentido hacer apenas terminas de
+// pedalear. El índice avanza por cuenta en localStorage; cuando se acaban las lecciones,
+// el resumen vuelve a quedar como siempre, sin forzar nada.
+var LECCIONES_VIAJE=[
+  {t:'¿Viste el botón de la cámara? Así compartes tu ruta: tu foto con el mapa y tus datos reales, lista para tus redes.'},
+  {t:'Para la próxima salida en grupo: arma una Rodada. Un toque avisa a todos, y la punta y la cola se hablan por radio sin soltar el manubrio.'},
+  {t:'Un dato: en Rutas para ti hay caminos que ya probaron otros ciclistas, según cuánto sueles andar tú.'},
+  {t:'En Taller puedes anotar cuándo cambiaste la cadena o las pastillas. Te avisamos antes de que te fallen en el camino.'},
+  {t:'¿Sabías que existe el Modo fantasma? Si alguna vez quieres pedalear sin que te vean en el mapa, está en tu Perfil.'}
+];
+function _siguienteLeccionViaje(){
+  if(!cu) return null;
+  try{
+    var key='lp_leccion_'+cu;
+    var i=parseInt(localStorage.getItem(key)||'0',10);
+    if(!(i>=0) || i>=LECCIONES_VIAJE.length) return null;
+    localStorage.setItem(key, String(i+1));
+    return LECCIONES_VIAJE[i];
+  }catch(e){ return null; }
+}
 // Cierre del viaje (pedido de Inty 2026-08-26: "hoy terminar la ruta queda mudo,
 // sin ningún resumen"). Reusa el look de medalla de Logros (.lg-medal), con una
 // entrada especial -- no es un componente nuevo, es la misma medalla en grande.
@@ -152,6 +175,10 @@ function _mostrarResumenViaje(){
     +'</div>'
     +(kmViaje>=0.05?'<button type="button" class="fv-btn fv-pri" style="margin:12px 0 4px" onclick="fvDesdeResumen()"><i class="fas fa-camera"></i> Foto del viaje para compartir</button>':'')
     +(logros.length?('<h4 class="rv-titulo-logros">¡'+logros.length+' logro'+(logros.length>1?'s':'')+' nuevo'+(logros.length>1?'s':'')+'!</h4><div class="rv-medallas">'+medallasHTML+'</div>'):'');
+  var leccion=(kmViaje>=0.05 && typeof _siguienteLeccionViaje==='function')?_siguienteLeccionViaje():null;
+  if(leccion){
+    html+='<div style="display:flex;gap:9px;align-items:flex-start;margin-top:14px;padding:11px 12px;background:rgba(252,76,2,.08);border:1px solid rgba(252,76,2,.3);border-radius:12px;text-align:left"><i class="fas fa-lightbulb" style="color:var(--p);margin-top:2px"></i><span style="font-size:.82rem;color:#dfe7ff;line-height:1.5">'+escapeHTML(leccion.t)+'</span></div>';
+  }
   var modal=document.getElementById('resumenViajeModal');
   if(!modal){
     modal=document.createElement('div'); modal.id='resumenViajeModal'; modal.className='rv-overlay';
@@ -160,6 +187,7 @@ function _mostrarResumenViaje(){
   }
   document.getElementById('rvContenido').innerHTML=html;
   requestAnimationFrame(function(){ modal.classList.add('on'); });
+  if(leccion){ setTimeout(function(){ try{ if(typeof h==='function') h(leccion.t); }catch(e){} }, 1400); }
 }
 var _logrosListo=false;
 function _logrosDesbKey(){ return 'lp_logros_desb_'+(cu||'anon'); }
