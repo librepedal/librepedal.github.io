@@ -77,6 +77,7 @@ const CORE = [
   './prevuelo-intro-pistero.js',
   './bienvenida-huella.js',
   './pioneros.js',
+  './foto-viaje.js',
   './recomendacion-rutas.js',
   './rutas-recomendadas.js',
   './navegar-gpx.js',
