@@ -64,7 +64,12 @@ function _ptLimpiar(o){ Object.keys(PIST_TIER).forEach(function(k){ if(o[k] && !
 
 // Íconos de pestaña hechos a medida (trazo fino, mismo lenguaje que iconos-lucide.js)
 function _ptIco(d){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>'; }
-var PIST_TABS=[
+// 2026-10-17, pedido de Inty: para la prueba cerrada la Tienda se achica a SOLO el color del casco
+// (mismo trato en todos los modelos de "Elige tu Pistero", nada de piezas sueltas por ahora). El resto
+// de pestañas queda completo en PIST_TABS_COMPLETO, apagado con un flag -- nada se borró, se reactiva
+// poniendo PIST_TABS_SOLO_CASCO en false cuando se vaya soltando el armario por modelo (fase C/D).
+var PIST_TABS_SOLO_CASCO=true;
+var PIST_TABS_COMPLETO=[
   {id:'casco',n:'Casco',i:_ptIco('<path d="M3 15a9 8 0 0 1 18 0z"/><path d="M12 7v7"/><path d="M7.5 9.5l1 2.5M16.5 9.5l-1 2.5"/>'),g:[{k:'casco',t:'Color'},{k:'acabado',t:'Acabado'}]},
   {id:'diseno',n:'Diseño',i:_ptIco('<path d="M3 16a9 8 0 0 1 18 0z"/><path d="M12.5 8.5l-2.5 4h3l-2 3.5"/>'),g:[{k:'diseno',t:'Diseño'},{k:'disenoCol',t:'Color del diseño'}]},
   {id:'acc',n:'Accesorios',i:_ptIco('<path d="M4 18l-1-10 5 4 4-7 4 7 5-4-1 10z"/><path d="M4 18h16"/>'),g:[{k:'acc',t:'Accesorio de casco'},{k:'accCol',t:'Color del accesorio'}]},
@@ -82,6 +87,7 @@ var PIST_TABS=[
   {id:'estela',n:'Estela',i:_ptIco('<circle cx="17" cy="12" r="3"/><path d="M13 9.5H5M13.5 12H3M13 14.5H6"/>'),g:[{k:'estela',t:'Estela al pedalear'}]},
   {id:'piel',n:'Piel',i:_ptIco('<path d="M12 3c4 5 6 8.2 6 11a6 6 0 0 1-12 0c0-2.8 2-6 6-11z"/>'),g:[{k:'piel',t:'Tono de piel'}]}
 ];
+var PIST_TABS=PIST_TABS_SOLO_CASCO ? PIST_TABS_COMPLETO.filter(function(t){ return t.id==='casco'; }) : PIST_TABS_COMPLETO;
 // Encuadre de las tarjetas (2026-10-04, Inty: "unos Pisteros más grandes, otros más chicos, no caen
 // bien en la tarjeta"). Antes cada pestaña recortaba distinto (la cabeza medía 44 px en Piel y 55 en
 // Casco) y algunas piezas se salían (espejo, banderín, afro). Ahora hay DOS encuadres fijos, medidos
@@ -129,7 +135,7 @@ function _ptCambiarGesto(){ _ptGesto=(_ptGesto+1)%5; _ptPreview(); }
 function _ptPreview(){
   var box=document.getElementById('customize-preview-svg'); if(!box) return;
   var o=_ptOpts(), gestos=['feliz','contento','guino','sorprendido','emocionado'];
-  var enBici=(PIST_TABS_BICI.indexOf(_ptTab)>=0&&typeof _pistBiciSVG==='function'), svg=enBici?_pistBiciSVG(o,{expr:gestos[_ptGesto],vehiculo:_ptMotor?(o.motorTipo==='moto'?'moto':'auto'):''}):_pistoDe(o,gestos[_ptGesto]), mx=_ptRarezaMax(o);
+  var enBici=(PIST_TABS_BICI.indexOf(_ptTab)>=0&&typeof _pistBiciSVG==='function'), svg=enBici?_pistBiciSVG(o,{expr:gestos[_ptGesto],vehiculo:_ptMotor?(o.motorTipo==='moto'?'moto':'auto'):''}):(typeof _pistAvatar==='function'?_pistAvatar(o,gestos[_ptGesto]):_pistoDe(o,gestos[_ptGesto])), mx=_ptRarezaMax(o);
   box.className='pt-pistero r-'+mx+(enBici?' en-bici':'');
   box.innerHTML=svg+(mx==='l'||mx==='e'?'<span class="pt-chispa s1"></span><span class="pt-chispa s2"></span><span class="pt-chispa s3"></span><span class="pt-chispa s4"></span>':'');
   var n=document.getElementById('customizeCharacterName'); if(n&&typeof nombreUsuario!=='undefined'&&nombreUsuario) n.innerText=nombreUsuario;

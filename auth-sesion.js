@@ -63,13 +63,15 @@ async function _reenviarLinkMagico(email){
 // Paso 2: se llama al volver del correo, con la sesión YA verificada y el token uid==cu listo.
 async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   cu=cuVal; if(typeof _cargarEstadoFundador==='function') _cargarEstadoFundador();
-  // Guard movido AQUÍ (antes vivía solo dentro de _mostrarBienvenidaFundador, que corre
-  // 900ms después): si el login se dispara dos veces casi seguidas (doble tap real del
-  // usuario, o el propio SDK de auth reemitiendo el evento), se agendaban dos setTimeout
-  // antes de que cualquiera alcanzara a escribir el flag en localStorage — ambos pasaban
-  // el chequeo y el modal de bienvenida aparecía dos veces. Marcar el flag AQUÍ, de forma
-  // síncrona antes de agendar, cierra esa ventana de carrera.
-  if(typeof _mostrarBienvenidaFundador==='function' && cuVal && !localStorage.getItem('lp_onboard_'+cuVal)){ localStorage.setItem('lp_onboard_'+cuVal,'1'); setTimeout(_mostrarBienvenidaFundador,900); }
+  // 2026-10-17 (pedido de Inty: "hay un desfase en el mensaje de bienvenida"): ESTA cuenta
+  // disparaba por su cuenta, 900ms después del login, la bienvenida VIEJA (modal genérico
+  // de gamificacion-darma.js, _mostrarBienvenidaFundador) -- al mismo tiempo que más abajo
+  // (bhIniciar, línea ~204) arranca la bienvenida de PANTALLA COMPLETA real y aprobada
+  // (bienvenida-huella.js, 2026-10-04), que ya cubre lo mismo (insignia de Fundador +
+  // resumen de funciones) mejor y en el orden correcto (bienvenida -> Elige tu Pistero ->
+  // tutorial del mapa). Las dos competían por la pantalla casi al mismo tiempo. Se saca
+  // SOLO el disparo automático -- _mostrarBienvenidaFundador() sigue intacta en el código
+  // por si se quiere usar a mano más adelante (ej. un botón "Ver mi insignia").
   nombreUsuario=nombre;
   const paisSel=localStorage.getItem('lp_pending_pais')||'auto';
   if(paisSel!=='auto'){ paisUsuario=paisSel; } else { paisUsuario=null; }
@@ -126,6 +128,7 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   // reales, justo la firma de este bug). Restaurar primero vuelve esa escritura
   // inofensiva: sube de vuelta el mismo maximo que ya tenia.
   _restaurarDesdeNube(_prevData);
+  try{ if(typeof _navPintarBloqueo==='function') _navPintarBloqueo(); }catch(e){} // recién aquí us.di ya trae el km real de la nube
   // Se abre la compuerta de mantencion tambien en ESTE camino (antes solo la abria
   // sincronizarAlEntrar(), que este login nunca llama): sin esto, ganar Darma o marcar
   // una mantencion como hecha durante la PRIMERA sesion de una cuenta no subia nada
@@ -190,7 +193,11 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   if(localStorage.getItem('lp_tut_'+cu)!=='done'){
     setTimeout(function(){
       _pisteroIntroPrimeraVez(nombre);
-      _esperarFinVoz(function(){ if(cu) localStorage.setItem('lp_tut_'+cu,'done'); if(typeof abrirEsfera==='function') abrirEsfera(); });
+      // 2026-10-17: antes esto marcaba "lp_tut" como visto con solo la voz de bienvenida,
+      // sin mostrar nunca el tour visual real (startTutorial) -- por eso "el tutorial no
+      // funcionaba": nadie lo veía jamás de forma automática. Ahora, al terminar de hablar,
+      // se lanza el tour corto de SOLO el mapa (closeTutorial es quien marca "done" al cerrarlo).
+      _esperarFinVoz(function(){ if(typeof startTutorialMapa==='function') startTutorialMapa(); else if(typeof abrirEsfera==='function') abrirEsfera(); });
     }, 500);
   } else {
     setTimeout(function(){

@@ -170,8 +170,13 @@ function _mantencionAvisoPreViaje(){
   }catch(e){}
 }
 /* El vehículo NO compite: es un rol de apoyo, no una disciplina. Sus kilómetros se
-   registran igual (sirven para tus propias estadísticas) pero no entran a ningún ranking. */
-const MODOS_QUE_COMPITEN={ciclismo:'Ruta',mtb:'MTB / Gravel',trekking:'Trekking'};
+   registran igual (sirven para tus propias estadísticas) pero no entran a ningún ranking.
+   2026-10-17 (bug real, encontrado contra Firestore real: la propia cuenta de Inty tiene
+   kmPorModo.cicloviaje:82.18 pero no aparecía en NINGÚN Top 100): faltaba 'cicloviaje' aquí.
+   Es una de las 5 actividades reales de la app (pistero-tipo-actividad.js) -- la insignia, de
+   hecho ("cicloviajeros" es como se llaman los usuarios de Libre Pedal) -- y _kmPorModoParaNube()
+   ya sube ese km normal a Firestore desde siempre; solo faltaba la pestaña para mostrarlo. */
+const MODOS_QUE_COMPITEN={ciclismo:'Ruta',cicloviaje:'Cicloviaje',mtb:'MTB / Gravel',trekking:'Trekking'};
 function _modoCompite(m){ return !!MODOS_QUE_COMPITEN[m]; }
 /* Arma el mapa de kilómetros por modo SIEMPRE con todas las claves que compiten, aunque
    valgan 0.

@@ -8,12 +8,24 @@ function miniHelmetSVG(helmetId, accent){ const hd=helmetDesigns.find(function(x
   +'<circle cx="41" cy="63" r="2.4" fill="#16203a"/><circle cx="61" cy="63" r="2.4" fill="#16203a"/>'
   +'<path d="M42 72 Q50 78 58 72" stroke="#7a4a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
   +'</svg>'; }
-function riderMarkerHTML(helmetId, accent, mine, opts){ if(!mine && opts && typeof opts==='object' && typeof _pistoDe==='function'){ return '<div class="helmet-pin"><div class="hp-in" style="--blink-delay:'+(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s">'+_pistoDe(opts,'feliz')+'</div></div>'; } var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''}; var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff'); var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0'; var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s'; return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+_pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o)+'</div></div>'; }
+function riderMarkerHTML(helmetId, accent, mine, opts){
+  if(!mine && opts && typeof opts==='object' && typeof _pistAvatar==='function'){ return '<div class="helmet-pin"><div class="hp-in" style="--blink-delay:'+(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s">'+_pistAvatar(opts,'feliz')+'</div></div>'; }
+  if(!mine && opts && typeof opts==='object' && typeof _pistoDe==='function'){ return '<div class="helmet-pin"><div class="hp-in" style="--blink-delay:'+(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s">'+_pistoDe(opts,'feliz')+'</div></div>'; }
+  var _o=(mine&&typeof _pistOpts==='function')?_pistOpts():{casco:helmetId,piel:'claro',lentes:''};
+  var _cc=(mine&&typeof _pistCascoCol==='function')?_pistCascoCol():(((typeof helmetDesigns!=='undefined'&&helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color||'#00aaff');
+  var _pc=(mine&&typeof _pistPielCol==='function')?_pistPielCol():'#f4c9a0';
+  var blinkDelay=(Math.random()*RIDER_BLINK_MAX_S).toFixed(2)+'s';
+  // 2026-10-17: el marcador del mapa (tuyo, en navegación y el de otros ciclistas) ya respeta el
+  // modelo elegido en "Elige tu Pistero" -- antes se quedaba siempre en el Clásico (fase C/D pendiente).
+  var svg=(mine && typeof _pistAvatar==='function' && typeof epMiModelo==='function' && epMiModelo()!=='clasico') ? _pistAvatar(_o,'feliz') : _pisteroExprSVG('feliz', _cc, _pc, _o.lentes, _o.bigote, _o.acc, _o);
+  return '<div class="helmet-pin'+(mine?' mine':'')+'"><div class="hp-in" style="--blink-delay:'+blinkDelay+'">'+svg+'</div></div>';
+}
 // Popup de un ciclista en el mapa (2026-08-31, pedido de Inty: "no quiero nada generico").
 // Reusa EXACTAMENTE el mismo color de casco que ya pinta riderMarkerHTML() para el pin
 // (busca en helmetDesigns por helmetId) y dibuja el mismo Pistero, más grande, adentro del
 // popup -- cero datos nuevos, cero lecturas extra a Firestore.
 function _lpAvatarSVG(helmetId, opts){
+  if(opts && typeof opts==='object' && typeof _pistAvatar==='function'){ var oo=_pistNormal(opts); return {cc:_lpColCasco(oo.casco), svg:_pistAvatar(oo,'feliz')}; }
   if(opts && typeof opts==='object' && typeof _pistoDe==='function'){ var oo=_pistNormal(opts); return {cc:_lpColCasco(oo.casco), svg:_pistoDe(oo,'feliz')}; }
   var cc = ((typeof helmetDesigns!=='undefined' && helmetDesigns.find(function(h){return h.id===helmetId;}))||{}).color || '#00aaff';
   var svg = (typeof _pisteroExprSVG==='function') ? _pisteroExprSVG('feliz', cc, '#f4c9a0', '', '', '', {casco:helmetId,piel:'claro',lentes:''}) : '';

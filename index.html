@@ -620,7 +620,10 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
          se agrega acá, en la fila de acciones del mapa -- no se saca de Comunidad (mismo
          criterio aditivo de siempre), solo se suma esta entrada donde tiene más sentido
          encontrarla: justo al lado de grabar y ver ciclistas en vivo. -->
-    <button type="button" class="mu-chip mu-chip-chico" onclick="verRodadas()" title="Rodadas grupales" aria-label="Rodadas grupales"><i class="fas fa-walkie-talkie"></i></button>
+    <!-- 2026-10-17 (Inty: "el icono de rodada tampoco se entiende"): fa-walkie-talkie hablaba de
+         radio/comunicación, no de "varias personas pedaleando juntas". fa-people-group (verificado
+         en el Font Awesome 6.4.0 real que carga la app) comunica el grupo, que es lo que es una Rodada. -->
+    <button type="button" class="mu-chip mu-chip-chico" onclick="verRodadas()" title="Rodadas grupales" aria-label="Rodadas grupales"><i class="fas fa-people-group"></i></button>
   </div>
   <div class="mu-hoja" id="muHojaMenu" hidden aria-label="¿Qué quieres hacer aquí?">
     <div class="mu-asa"></div>
@@ -1052,9 +1055,12 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <nav>
 <button class="nb on" onclick="cv('dash');abrirEsfera()"><i class="fas fa-house"></i><span>Inicio</span></button>
 <button class="nb" onclick="cv('map')"><i class="fas fa-map-location-dot"></i><span>Mapa</span></button>
-<button class="nb" onclick="abrirPistero()"><span class="lp-mi-pistero nb-pist"><i class="fas fa-comment-dots"></i></span><span>Pistero</span></button>
-<button class="nb" onclick="cv('chat')"><i class="fas fa-comments"></i><span>Social</span></button>
-<button class="nb" onclick="cv('customize')"><i class="fas fa-user"></i><span>Perfil</span></button>
+<!-- 2026-10-17: Pistero/Social/Perfil arrancan "bloqueados" (candado via JS, _navPintarBloqueo en
+     app-estado-global.js) hasta que la cuenta termina su primer viaje -- pedido de Inty: enseñar
+     primero el mapa y soltar el resto de a poco. _navIr() corta el paso y avisa si aún no corresponde. -->
+<button class="nb" id="nbPistero" onclick="_navIr('pistero')"><span class="lp-mi-pistero nb-pist"><i class="fas fa-comment-dots"></i></span><i class="fas fa-lock nb-candado" aria-hidden="true"></i><span>Pistero</span></button>
+<button class="nb" id="nbSocial" onclick="_navIr('chat')"><i class="fas fa-comments"></i><i class="fas fa-lock nb-candado" aria-hidden="true"></i><span>Social</span></button>
+<button class="nb" id="nbPerfil" onclick="_navIr('customize')"><i class="fas fa-user"></i><i class="fas fa-lock nb-candado" aria-hidden="true"></i><span>Perfil</span></button>
 </nav>
 
 <div class="user-list-modal" id="userModal">
