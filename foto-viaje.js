@@ -333,9 +333,12 @@ async function _fvRender(){
   var est = document.getElementById('fvEstado');
   var datos = { foto: _fv.foto, formato: _fv.formato, stats: _fv.stats, perfil: _fv.perfil, titulo: _fv.ruta.nombreRuta || 'Mi viaje en bici', fecha: _fvFecha(_fv.ruta), logo: _fv.logo, mapa: null };
   // 1) al tiro con el trazo solo; 2) cuando llega el mapa con relieve, se repinta
+  var pMapa = _fvMapaParaFormato(), yaListo = false;
+  pMapa.then(function(){ yaListo = true; });
+  await Promise.resolve();
   fvDibujar(cv, datos);
-  if(est){ est.hidden = false; est.textContent = 'Cargando el mapa…'; }
-  var mapa = await _fvMapaParaFormato();
+  if(est && !yaListo){ est.hidden = false; est.textContent = 'Cargando el mapa…'; }
+  var mapa = await pMapa;
   if(!_fv || gen !== _fv.gen) return;
   if(mapa){ datos.mapa = mapa; fvDibujar(cv, datos); }
   if(est){ if(mapa) est.hidden = true; else { est.hidden = false; est.textContent = 'Sin conexión: la ruta va sin el mapa de fondo.'; } }
@@ -406,9 +409,8 @@ function fvAbrirConRuta(ruta){
     + '<div class="fv-top"><button type="button" class="fv-volver" aria-label="Volver"><i class="fas fa-arrow-left"></i></button><h3>Foto del viaje</h3>'
     + '<div class="fv-seg" role="group" aria-label="Formato"><button type="button" data-fv-formato="historia">Historia</button><button type="button" data-fv-formato="post">Publicación</button></div></div>'
     + '<div class="fv-lienzo"><canvas id="fvCanvas" aria-label="Vista previa de la imagen para compartir"></canvas>'
-    + '<div class="fv-sobre"><button type="button" id="fvBtnFoto" class="fv-pill"></button><button type="button" id="fvBtnQuitar" class="fv-pill" hidden><i class="fas fa-xmark"></i> Solo el mapa</button></div>'
-    + '<p id="fvEstado" class="fv-estado" hidden></p></div>'
-    + '<div class="fv-ctrl"><button type="button" id="fvBtnGuardar" class="fv-btn fv-sec"><i class="fas fa-download"></i> Guardar</button>'
+    + '<div class="fv-sobre"><button type="button" id="fvBtnFoto" class="fv-pill"></button><button type="button" id="fvBtnQuitar" class="fv-pill fv-pill-x" aria-label="Quitar la foto (solo el mapa)" title="Quitar la foto" hidden><i class="fas fa-xmark"></i></button></div></div>'
+    + '<div class="fv-ctrl"><p id="fvEstado" class="fv-estado" hidden></p><button type="button" id="fvBtnGuardar" class="fv-btn fv-sec"><i class="fas fa-download"></i> Guardar</button>'
     + '<button type="button" id="fvBtnCompartir" class="fv-btn fv-pri"><i class="fas fa-share-nodes"></i> Compartir</button>'
     + '<input type="file" id="fvArchivo" accept="image/*" hidden></div>';
   document.body.appendChild(capa);

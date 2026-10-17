@@ -70,7 +70,7 @@ console.log('\nDISEÑO APROBADO Y BOTONES:');
 ok('mapa con relieve: OpenFreeMap + DEM Terrarium', /tiles\.openfreemap\.org\/styles\/dark/.test(src) && /elevation-tiles-prod\/terrarium/.test(src) && /hillshade/.test(src));
 ok('MapLibre se carga con verificación de integridad', /FV_ML_SRI = 'sha384-/.test(src) && /s\.integrity = FV_ML_SRI/.test(src));
 ok('sin señal: la tarjeta cae al trazo solo (nunca queda vacía)', /_fvEncajar\(puntos/.test(src) && /setTimeout\(function\(\)\{ fin\(null\); \}, 15000\)/.test(src));
-ok('la foto es opcional: "Solo el mapa" la quita', /Solo el mapa/.test(src) && /_fv\.foto = null/.test(src));
+ok('la foto es opcional: "Quitar la foto" la quita', /Quitar la foto/.test(src) && /fv-pill[hidden]{display:none}/.test(lee("estilos.css")) && /_fv\.foto = null/.test(src));
 ok('altimetría con máx. y mín.', /'máx\. ' \+ mx/.test(src) && /'mín\. ' \+ mn/.test(src));
 const rutas = lee('rutas.js');
 ok('Mis rutas: Compartir abre la hoja (foto, sobrevuelo, mensaje)', /onclick="fvHojaCompartir\(/.test(rutas) && /data-a="foto"/.test(src) && /data-a="vuelo"/.test(src) && /data-a="texto"/.test(src));
