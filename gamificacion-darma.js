@@ -72,7 +72,7 @@ function au(){
   var _tt=document.getElementById('totalTrips'); var _tripsCompletos=_totalViajesCompletos(); if(_tt) _tt.innerText=_tripsCompletos;
   var _c2d=document.getElementById('co2Dash'); if(_c2d) _c2d.innerText=_fmtCo2(_co2Evitado(typeof kmAPulso==='function'?kmAPulso():us.di)); // 2026-10-15: manejando no se evita CO₂
   const perf=Math.min(100,Math.round((us.di/10)*100)); const pf=document.getElementById('performanceFill'); if(pf){ pf.style.width=perf+'%'; if(pf.parentElement) pf.parentElement.setAttribute('data-pct',perf+'%'); }
-  var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1)+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
+  var _resumen=document.getElementById('dashResumenTxt'); if(_resumen) _resumen.innerText=us.di.toFixed(1).replace('.',',')+' km · '+_tripsCompletos+(_tripsCompletos===1?' viaje':' viajes');
   // 2026-08-24: renderMantencion() reconstruye el innerHTML de 5 tarjetas — solo
   // vale la pena si Taller es la pantalla que se está viendo ahora mismo. Antes
   // corría en CADA punto de GPS sin importar qué pantalla estuviera abierta (mapa,
