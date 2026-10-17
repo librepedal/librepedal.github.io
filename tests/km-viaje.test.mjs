@@ -117,13 +117,75 @@ t('kmASumar: 25 m con precisión de 40 m no suma (puede ser error del GPS)', K.k
   t('una sola vez: la segunda pasada no cambia nada', K.corregirKmRutasLocales() === 0);
 }
 
+// ---- Lo recuperado llega al TOTAL de la cuenta (Inty 2026-10-16: "200 km que no se ven en el total") ----
+{
+  const us = { di: 100, dm: { ciclismo: 100 }, c: 0, mantKm: 0 };
+  const guardado = {}; let subidas = 0, avisos = [];
+  const mk = (listo) => new Function('rutasLocales', 'rutasLocalesSet', 'renderRutas', 'db', 'us', '_mantListoParaSubir', '_sumarKmMantencion', 'sincronizarStats', 'au', 'cu', 'localStorage', 'lpAviso', 'h', 'kcalPorKm',
+    SRC + '\nreturn {sumarKmRecuperados, recuperarKmCortos};')(
+    () => almacen.rutas, (a) => { almacen.rutas = a; }, () => {}, { collection: () => ({ doc: () => ({ update: () => Promise.resolve() }) }) },
+    us, listo, (km) => { us.mantKm += km; }, () => { subidas++; }, () => {}, 'inty', { setItem: (k, v) => { guardado[k] = v; } }, (m) => avisos.push(m), () => {}, () => 30);
+  // estado que dejó la 8.824: rutas ya corregidas (distanciaAntes) pero sin sumar al total
+  almacen.rutas = [
+    { localId: 'a', distance: 62.4, distanciaAntes: 3.1, points: [], modo: 'ciclismo' },
+    { localId: 'b', distance: 81.0, distanciaAntes: 0.27, points: [] },
+    { localId: 'c', distance: 5.0, points: [] },                                   // nunca se corrigió: no se toca
+    { localId: 'd', distance: 30, distanciaAntes: 2, importada: true, points: [] }, // importada: no suma
+  ];
+  const antesDeLeerNube = mk(false).sumarKmRecuperados();
+  t('no suma antes de leer la nube (la nube podría pisarlo)', antesDeLeerNube === 0 && us.di === 100, us.di);
+  const F = mk(true);
+  const km = F.sumarKmRecuperados();
+  const esperado = (62.4 - 3.1) + (81.0 - 0.27);
+  t('suma al total lo que se recuperó en cada ruta', Math.abs(km - esperado) < 1e-9 && Math.abs(us.di - (100 + esperado)) < 1e-9, us.di);
+  t('y al desglose por disciplina (ranking)', Math.abs(us.dm.ciclismo - (100 + esperado)) < 1e-9, JSON.stringify(us.dm));
+  t('y al odómetro de la mantención', Math.abs(us.mantKm - esperado) < 1e-9, us.mantKm);
+  t('lo guarda en el teléfono y lo sube a la nube', !!guardado.lp_u_inty && subidas === 1);
+  t('una sola vez por ruta', F.sumarKmRecuperados() === 0 && Math.abs(us.di - (100 + esperado)) < 1e-9);
+  t('las importadas no suman', !almacen.rutas[3].kmSumadosAlTotal || us.di < 100 + esperado + 1);
+  // una ruta que la 8.824 "corrigió" con temblor de una noche quieto: se rebaja antes de sumar
+  let sq = 5; const rq = () => { sq = (sq * 16807) % 2147483647; return sq / 2147483647 - 0.5; };
+  const noche = []; for (let i = 0; i < 12 * 180; i++) noche.push(Object.assign(aLL(rq() * 100, rq() * 100), { t: 1e12 + i * 20000 }));
+  const diAntes = us.di;
+  almacen.rutas.push({ localId: 'inflada', distance: 15.5, distanciaAntes: 0.4, points: noche });
+  F.sumarKmRecuperados();
+  const rInf = almacen.rutas.find(x => x.localId === 'inflada');
+  t('ruta inflada por temblor: vuelve a su valor honesto y casi no suma', rInf.distance < 1 && us.di - diAntes < 0.6, JSON.stringify({ d: rInf.distance, sumo: us.di - diAntes }));
+  // recuperarKmCortos avisa con los km
+  almacen.rutas.push({ localId: 'e', distance: 40, distanciaAntes: 1, points: [] });
+  const r = F.recuperarKmCortos();
+  t('recuperarKmCortos avisa cuántos km volvieron', r.km === 39 && avisos.some(a => /Recuperé 39 kil/.test(a)), JSON.stringify(avisos));
+}
+// ---- Trazados viejos SIN precisión: las horas quieto con mala señal no suman (2026-10-16) ----
+{
+  let sd = 11; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647 - 0.5; };
+  const quietoSinAcc = (h, cada, ruido, t0, e0 = 0, n0 = 0) => { const p = []; for (let i = 0; i < h * 3600 / cada; i++) p.push(Object.assign(aLL(e0 + rnd() * 2 * ruido, n0 + rnd() * 2 * ruido), { t: t0 + i * cada * 1000 })); return p; };
+  const andarSinAcc = (km, kmh, cada, t0, e0, n0) => { const p = []; const paso = kmh / 3.6 * cada, n = Math.round(km * 1000 / paso); for (let i = 0; i <= n; i++) { const d = i * paso; p.push(Object.assign(aLL(e0 + d * 0.8, n0 + d * 0.6), { t: t0 + i * cada * 1000 })); } return p; };
+  for (const r of [40, 60]) t(`12 h quieto con ±${r} m, sin precisión: casi nada (antes 15-41 km falsos)`, K.kmTrazado(quietoSinAcc(12, 20, r, 1e12)) < 1, K.kmTrazado(quietoSinAcc(12, 20, r, 1e12)).toFixed(2));
+  // 3 días de 65 km con 2 noches de 12 h grabando en el camping
+  let pts = [], tt = 1e12, e = 0, n = 0;
+  for (let d = 0; d < 3; d++) { const a = andarSinAcc(65, 15, 25, tt, e, n); pts = pts.concat(a); tt = a[a.length - 1].t + 25000; e += 65000 * 0.8; n += 65000 * 0.6; if (d < 2) { const q = quietoSinAcc(12, 20, 40, tt, e, n); pts = pts.concat(q); tt = q[q.length - 1].t + 20000; } }
+  const kt = K.kmTrazado(pts);
+  t('viaje de 3 días con noches: ~195 km reales (±3 %)', Math.abs(kt - 195) / 195 < 0.03, kt.toFixed(1));
+  almacen.rutas = [Object.assign({ localId: 'v3', distance: 4.2, points: pts }, { startTime: pts[0].t, endTime: pts[pts.length - 1].t })];
+  K.corregirKmRutasLocales();
+  t('y se corrige aunque el promedio con las noches sea bajo', Math.abs(almacen.rutas[0].distance - 195) / 195 < 0.03, almacen.rutas[0].distance);
+}
+// enganches: corre al leer la nube y al abrir Mis rutas
+{
+  const LOG = lee('gamificacion-logros.js'), SES = lee('auth-sesion.js');
+  t('al terminar de leer la nube', /_mantListoParaSubir=true;\n\s*try\{ if\(typeof recuperarKmCortos==='function'\) recuperarKmCortos\(\); \}/.test(LOG));
+  t('también en el login de cuenta nueva', /recuperarKmCortos/.test(SES));
+  t('al abrir Mis rutas', /recuperarKmCortos\(\)/.test(RUTAS));
+}
+
 // ---- Enganches ----
 t('grabar: el km ya no depende de la ventana (sp>0)', !/if\(us\.la && \(sp>0 \|\| _hueco\) && _saltoPosOK\)\{ _sumarKmViaje\(moved\); \}/.test(GPS) && /kmvContadorLibre\.tramo\(_ptKm, _huecoK\)/.test(GPS));
 t('grabar: el contador parte de cero en cada paseo', /kmvContadorLibre\.reiniciar\(\)/.test(GPS));
 t('navegar: tampoco depende de speed>0', /kmvContadorNav\.tramo\(\{lat:lat,lon:lon,t:_now\}, false\)/.test(NAVF));
 t('navegar: el inicio es el ancla', /kmvContadorNav\.reiniciar\(\); kmvContadorNav\.tramo\(\{lat:startLat,lon:startLon/.test(NAV));
 t('la ruta guardada lleva SUS km (no us.di de la cuenta)', !/distance:us\.di/.test(RUTAS) && /distance:_km/.test(RUTAS));
-t('al cargar tus rutas se corrigen las viejas', /corregirKmRutasLocales\(\)/.test(RUTAS));
+t('al cargar tus rutas se corrigen las viejas (y suman al total)', /recuperarKmCortos\(\)/.test(RUTAS) && /n=corregirKmRutasLocales\(\)/.test(SRC));
 t('index.html carga km-viaje.js antes que motor-gps.js', HTML.indexOf('<script src="km-viaje.js">') > 0 && HTML.indexOf('<script src="km-viaje.js">') < HTML.indexOf('<script src="motor-gps.js">'));
 t('sw.js lo precachea', /'\.\/km-viaje\.js'/.test(SW));
 

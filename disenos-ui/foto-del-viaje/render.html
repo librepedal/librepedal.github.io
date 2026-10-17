@@ -1,0 +1,53 @@
+<!doctype html><meta charset="utf-8">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>html,body{margin:0;background:#000}#m{position:absolute;left:0;top:0}</style>
+<div id="m"></div>
+<script>
+window.render3d=async function(o){
+  const el=document.getElementById('m'); el.style.width=o.w+'px'; el.style.height=o.h+'px';
+  const map=new maplibregl.Map({container:'m',style:o.style,interactive:false,attributionControl:false,preserveDrawingBuffer:true,pixelRatio:1,fadeDuration:0,center:o.center,zoom:o.zoom,pitch:o.pitch,bearing:o.bearing,maxPitch:85});
+  await new Promise(r=>map.on('load',r));
+  map.addSource('dem3',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:14});
+  map.setTerrain({source:'dem3',exaggeration:o.exag||1.6});
+  try{ map.setSky({'sky-color':'#f2a65a','horizon-color':'#ffd9a8','fog-color':'#c98a5a','sky-horizon-blend':0.6,'horizon-fog-blend':0.5,'fog-ground-blend':0.4}); }catch(e){}
+  map.getStyle().layers.forEach(l=>{ if(l.type==='symbol') map.setLayoutProperty(l.id,'visibility','none'); });
+  await new Promise(r=>{ map.once('idle',r); map.triggerRepaint(); });
+  await new Promise(r=>setTimeout(r,1500));
+  return {img:map.getCanvas().toDataURL('image/jpeg',0.86)};
+};
+window.render=async function(o){
+  const el=document.getElementById('m'); el.style.width=o.w+'px'; el.style.height=o.h+'px';
+  const map=new maplibregl.Map({container:'m',style:o.style,interactive:false,attributionControl:false,preserveDrawingBuffer:true,pixelRatio:1,fadeDuration:0});
+  await new Promise(r=>map.on('load',r));
+  const c=o.coords; let b=new maplibregl.LngLatBounds(c[0],c[0]); c.forEach(p=>b.extend(p));
+  map.fitBounds(b,{padding:o.pad,animate:false,bearing:0,pitch:0});
+  if(o.tema==='noche'){
+    const st=map.getStyle();
+    st.layers.forEach(l=>{
+      try{
+        if(l.type==='background') map.setPaintProperty(l.id,'background-color','#0e1628');
+        else if(l.type==='fill' && /water/.test(l.id)) map.setPaintProperty(l.id,'fill-color','#0a2440');
+        else if(l.type==='fill' && /park|wood|landcover|grass|forest/.test(l.id)) map.setPaintProperty(l.id,'fill-color','#12203a');
+        else if(l.type==='line' && /water|river|stream/.test(l.id)) map.setPaintProperty(l.id,'line-color','#123a62');
+        else if(l.type==='line' && /(road|highway|street|path|track|bridge|tunnel)/.test(l.id) && !/casing|outline/.test(l.id)) map.setPaintProperty(l.id,'line-color','#3b4d6e');
+        else if(l.type==='line' && /casing|outline|rail/.test(l.id)) map.setPaintProperty(l.id,'line-color','#17233b');
+        else if(l.type==='line' && /boundary|admin/.test(l.id)) map.setLayoutProperty(l.id,'visibility','none');
+        else if(l.type==='symbol'){ map.setPaintProperty(l.id,'text-color','#a9bad3'); map.setPaintProperty(l.id,'text-halo-color','#0e1628'); map.setPaintProperty(l.id,'text-halo-width',1.4); if(/poi|housenumber|road_shield|shield/.test(l.id)) map.setLayoutProperty(l.id,'visibility','none'); }
+      }catch(e){}
+    });
+    map.addSource('dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:14});
+    const primeraLinea=st.layers.find(l=>l.type==='line'||l.type==='symbol');
+    map.addLayer({id:'relieve',type:'hillshade',source:'dem',paint:{'hillshade-shadow-color':'#050912','hillshade-highlight-color':'#3a5683','hillshade-accent-color':'#0a1222','hillshade-exaggeration':0.55,'hillshade-illumination-direction':315}}, primeraLinea&&primeraLinea.id);
+  }
+  if(o.tema==='claro'){
+    map.addSource('dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:14});
+    const st=map.getStyle(); const primeraLinea=st.layers.find(l=>l.type==='line'||l.type==='symbol');
+    map.addLayer({id:'relieve',type:'hillshade',source:'dem',paint:{'hillshade-shadow-color':'#5b6b55','hillshade-highlight-color':'#ffffff','hillshade-exaggeration':0.45}}, primeraLinea&&primeraLinea.id);
+  }
+  await new Promise(r=>{ map.once('idle',r); map.triggerRepaint(); });
+  await new Promise(r=>setTimeout(r,800));
+  const pts=c.map(p=>{const q=map.project(p);return [Math.round(q.x*10)/10,Math.round(q.y*10)/10];});
+  return {img:map.getCanvas().toDataURL('image/jpeg',0.86), pts, zoom:map.getZoom()};
+};
+</script>

@@ -76,9 +76,9 @@ function correr(setup) {
     c.tripStartTime = Date.now() - 32 * 60000; // 32 minutos atrás
     c._logrosDelViaje = [];
   });
-  debe('calcula los km del viaje', /14\.70/.test(rvContenido.innerHTML));
+  debe('calcula los km del viaje (con coma, como el resto de la app)', />14,7</.test(rvContenido.innerHTML));
   debe('calcula los minutos del viaje (~32)', />32</.test(rvContenido.innerHTML));
-  debe('calcula la velocidad media (14.7km / 32min ≈ 27.6 km/h)', /27\.6/.test(rvContenido.innerHTML));
+  debe('calcula la velocidad media (14,7 km / 32 min ≈ 27,6 km/h)', />27,6</.test(rvContenido.innerHTML));
 }
 
 // Un solo logro nuevo: singular correcto, una medalla.

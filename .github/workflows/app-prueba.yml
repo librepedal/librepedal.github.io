@@ -38,6 +38,16 @@ jobs:
             c.appId="cl.librepedal.prueba"; c.appName="Libre Pedal PRUEBA";
             c.server.url=url; c.server.allowNavigation=[host].concat(c.server.allowNavigation||[]);
             fs.writeFileSync("capacitor.config.json", JSON.stringify(c,null,2));
+            // google-services.json solo trae cl.librepedal.app y el plugin de Gradle aborta si no
+            // encuentra el paquete (2026-10-16, al sumar Google Sign-In nativo). Se agrega una copia
+            // del cliente con el paquete de prueba: compila; Google nativo NO funciona en esta app de
+            // prueba (Firebase no conoce ese paquete ni su firma), se prueba con la app real.
+            if(fs.existsSync("google-services.json")){
+              const g=JSON.parse(fs.readFileSync("google-services.json","utf8"));
+              const base=g.client.find(x=>x.client_info.android_client_info.package_name==="cl.librepedal.app")||g.client[0];
+              const copia=JSON.parse(JSON.stringify(base)); copia.client_info.android_client_info.package_name=c.appId;
+              g.client.push(copia); fs.writeFileSync("google-services.json", JSON.stringify(g,null,2));
+            }
             console.log("App de prueba →", url);
           ' "$URL"
           echo "URL_PRUEBA=$URL" >> "$GITHUB_ENV"

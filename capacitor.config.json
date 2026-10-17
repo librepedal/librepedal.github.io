@@ -31,6 +31,10 @@
     "useLegacyBridge": true
   },
   "plugins": {
-    "BackgroundGeolocation": {}
+    "BackgroundGeolocation": {},
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com"]
+    }
   }
 }

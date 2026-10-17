@@ -357,5 +357,7 @@ function _pistNormal(o){
   if(!_LP_HEX.test(String(r.casco)) && !PIST_CASCO.some(function(h){return h.id===r.casco;})) r.casco=PIST_DEF.casco;
   if(!r.cuello && r.pano) r.cuello='panoleta';
   if(r.cuello && !r.pano) r.pano='#fc4c02';
+  // modelo de Pistero (elige-pistero.js): solo los 6 de la prueba; cualquier otro valor -> Clásico
+  if(['ciber','orbe','slime','vinilo','casco','clasico'].indexOf(r.modelo)<0) r.modelo='clasico';
   return r;
 }
