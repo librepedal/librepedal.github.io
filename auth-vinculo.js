@@ -96,9 +96,10 @@ window.onload = async function(){
     // rama (logueada) a propósito: #auth tiene z-index 5000 vs 4000 del modal, sin sesión
     // el modal quedaría tapado por la pantalla de login -- abrirlo ahí sería un cambio
     // más grande (ver perfiles sin loguearse), fuera de alcance de este fix puntual.
+    // XSS 2026-10-17: ?perfil= solo acepta ids de cuenta reales (cuDeEmail), nunca código del enlace.
     try{
       const _pid=new URLSearchParams(location.search).get('perfil');
-      if(_pid && typeof verPerfilUsuario==='function'){ verPerfilUsuario(_pid); history.replaceState(null,'',location.origin+location.pathname); }
+      if(_pid && /^[A-Za-z0-9_]{1,128}$/.test(_pid) && typeof verPerfilUsuario==='function'){ verPerfilUsuario(_pid); history.replaceState(null,'',location.origin+location.pathname); }
     }catch(e){}
     // 2026-08-15: antes eran 2 timeouts de tiempo fijo (950ms para abrirEsfera, 3000ms
     // para el mic de manos libres) adivinando cuanto dura el saludo -- con saludos

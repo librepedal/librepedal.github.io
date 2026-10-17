@@ -4,7 +4,7 @@ let novedadesCache=[], novedadesCatActiva='todos';
 const NOVEDADES_CAT_LABEL={competencia:'🏁 Competencia',rodada:'🚴 Rodada',cicloturismo:'🌎 Cicloturismo',oficial:'🏛️ Oficial'};
 function subscribeToNovedades(){
   db.collection('novedades').orderBy('ts','desc').limit(60).onSnapshot(function(snapshot){
-    novedadesCache=snapshot.docs.map(function(doc){ return Object.assign({id:doc.id},doc.data()); });
+    novedadesCache=snapshot.docs.map(function(doc){ return Object.assign({},doc.data(),{id:doc.id}); });
     renderNovedadesList();
     const admin=document.getElementById('novedades-admin'); if(admin) admin.style.display=(cu===ADMIN_ID)?'block':'none';
   }, function(){
@@ -27,7 +27,7 @@ function renderNovedadesList(){
       +'<div class="novedad-top"><span class="novedad-badge">'+(NOVEDADES_CAT_LABEL[n.categoria]||n.categoria||'')+'</span>'+(n.fecha?'<span class="novedad-fecha">'+escapeHTML(n.fecha)+'</span>':'')+'</div>'
       +'<h4>'+escapeHTML(n.titulo||'')+'</h4>'
       +(n.desc?'<p>'+escapeHTML(n.desc)+'</p>':'')
-      +'<div class="novedad-bottom">'+(_linkSeguro(n.link)?'<a href="'+encodeURI(n.link)+'" target="_blank" rel="noopener">Ver más →</a>':'<span></span>')+(esAdmin?'<button class="novedad-del" onclick="eliminarNovedad(\''+n.id+'\')"><i class="fas fa-trash-can"></i> </button>':'')+'</div>'
+      +'<div class="novedad-bottom">'+(_linkSeguro(n.link)?'<a href="'+encodeURI(n.link)+'" target="_blank" rel="noopener">Ver más →</a>':'<span></span>')+(esAdmin?'<button class="novedad-del" onclick="eliminarNovedad(\''+jsArg(n.id)+'\')"><i class="fas fa-trash-can"></i> </button>':'')+'</div>'
       +'</div>';
   }).join('');
 }

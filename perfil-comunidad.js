@@ -156,7 +156,7 @@
       html += '</div>';
 
       if(!esPropio){
-        html += '<button class="ab sec" style="margin-top:10px" onclick="compartirPerfilComunidad(\''+userId+'\')"><i class="fas fa-share-nodes"></i> Compartir este perfil</button>';
+        html += '<button class="ab sec" style="margin-top:10px" onclick="compartirPerfilComunidad(\''+jsArg(userId)+'\')"><i class="fas fa-share-nodes"></i> Compartir este perfil</button>';
       }
       box.innerHTML = html;
     }catch(e){
