@@ -21,7 +21,7 @@ const ctx = {
   console, Math, JSON, Object, Array, String, Number, RegExp, Set, Promise, isFinite, Date,
   setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0,
   window: { lpUID: 'yo' }, cu: 'yo', vozActiva: false, vozCola: [], vozOcupada: () => false, actividadTipo: 'ciclismo',
-  h() {}, mostrarBocadillo() {}, lpAviso() {}, au() {}, _ganarDarma() {}, escapeHTML: (s) => String(s),
+  h() {}, mostrarBocadillo() {}, lpAviso() {}, au() {}, _ganarDarma() {}, escapeHTML: (s) => String(s), jsArg: (s) => String(s),
   _esCiclistaConfiable: () => true, LP_KM_CONFIANZA: 10,
   calculateDistance: (a, b, c, d) => { const R = 6371000, r = Math.PI / 180, x = (d - b) * r * Math.cos(((a + c) / 2) * r), y = (c - a) * r; return Math.sqrt(x * x + y * y) * R; },
   mp: { removeLayer() {}, closePopup() {} }, _escalaVisibleKm: () => 5, lpBadgeHTML: () => '<i></i>',

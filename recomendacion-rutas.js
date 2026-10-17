@@ -35,7 +35,7 @@ async function verRecomendacionRutas(){
     // se pide directo con un filtro de Firestore sobre el mismo campo que ordena (no
     // necesita índice compuesto), así siempre trae rutas del rango que corresponde.
     const snap=await db.collection('routes').where('distance','>=',minKm).where('distance','<=',maxKm).orderBy('distance').limit(200).get();
-    const candidatas=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());})
+    const candidatas=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});})
       .filter(function(r){
         // pointsPub (privacidad, hub #201): track difuminado -- recortado en las puntas y
         // redondeado, nunca el domicilio/destino real de otro ciclista. Fallback a .points
@@ -49,7 +49,7 @@ async function verRecomendacionRutas(){
       .slice(0,8);
     let html=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem;margin-top:0">Tu promedio es <strong style="color:var(--g)">'+perfil.avgKm.toFixed(1)+' km</strong> en '+perfil.totalViajes+' viajes. Estas rutas de otros ciclistas cerca tuyo te ayudan a subir el nivel de a poco:</p>';
     if(!candidatas.length){ html+='<p style="color:#7d8ba0;font-size:0.82rem">Todavía no hay rutas de otros ciclistas en ese rango de distancia cerca tuyo. Vuelve más adelante.</p>'; }
-    else { html+=candidatas.map(function(r){ const pts=r.pointsPub||r.points; const distCerca=(calculateDistance(yo.lat,yo.lon,pts[0].lat,pts[0].lon)/1000).toFixed(0); return '<div class="novedad-card"><h4>'+(r.distance||0).toFixed(1)+' km</h4><p>De '+escapeHTML(r.nombre||'un ciclista')+' · a '+distCerca+' km de ti</p><button class="ab sec" style="margin:0" onclick="closeModal();showSingleRoute(\''+r.id+'\')"><i class="fas fa-eye"></i> Ver en el mapa</button></div>'; }).join(''); }
+    else { html+=candidatas.map(function(r){ const pts=r.pointsPub||r.points; const distCerca=(calculateDistance(yo.lat,yo.lon,pts[0].lat,pts[0].lon)/1000).toFixed(0); return '<div class="novedad-card"><h4>'+(r.distance||0).toFixed(1)+' km</h4><p>De '+escapeHTML(r.nombre||'un ciclista')+' · a '+distCerca+' km de ti</p><button class="ab sec" style="margin:0" onclick="closeModal();showSingleRoute(\''+jsArg(r.id)+'\')"><i class="fas fa-eye"></i> Ver en el mapa</button></div>'; }).join(''); }
     c.innerHTML=html;
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar recomendaciones.</p>'; }
 }

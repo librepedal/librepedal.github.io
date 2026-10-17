@@ -14,7 +14,7 @@ async function iniciarSeguimientoSegmentos(lat,lon){
     // longitud en el cliente.
     const delta=0.045;
     const snap=await db.collection('segmentos').where('inicio.lat','>=',lat-delta).where('inicio.lat','<=',lat+delta).limit(50).get();
-    segmentosActivos=snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); }).filter(function(s){ return s.inicio && s.inicio.lon!=null && s.inicio.lon>=lon-delta && s.inicio.lon<=lon+delta; });
+    segmentosActivos=snap.docs.map(function(d){ return Object.assign({},d.data(),{id:d.id}); }).filter(function(s){ return s.inicio && s.inicio.lon!=null && s.inicio.lon>=lon-delta && s.inicio.lon<=lon+delta; });
   }catch(e){ segmentosActivos=[]; }
 }
 function _fmtSegmentoTiempo(ms){ const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000); return m+':'+(s<10?'0':'')+s; }
@@ -126,7 +126,7 @@ async function verSegmentos(){
     // desde la UI normal, sin bypasear nada. Fix: el nombre ya NO se interpola en el
     // onclick; va en un atributo data-nombre (contexto HTML normal, un solo nivel de
     // parseo) y se lee desde ahí con this.dataset.nombre al momento del click.
-    c.innerHTML=_btnVolverModal()+snap.docs.map(function(d){ const s=d.data(); const nomEsc=escapeHTML(s.nombre||''); return '<div class="novedad-card"><h4>'+nomEsc+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" data-nombre="'+nomEsc+'" onclick="verTablaLideresSegmento(\''+d.id+'\',this.dataset.nombre)"><i class="fas fa-trophy"></i> Ver tabla de líderes</button></div>'; }).join('');
+    c.innerHTML=_btnVolverModal()+snap.docs.map(function(d){ const s=d.data(); const nomEsc=escapeHTML(s.nombre||''); return '<div class="novedad-card"><h4>'+nomEsc+'</h4><p>'+(s.distanciaKm||0).toFixed(2)+' km · por '+escapeHTML(s.nombreCreador||'Ciclista')+'</p><button class="ab sec" style="margin:0" data-nombre="'+nomEsc+'" onclick="verTablaLideresSegmento(\''+jsArg(d.id)+'\',this.dataset.nombre)"><i class="fas fa-trophy"></i> Ver tabla de líderes</button></div>'; }).join('');
   }catch(e){ c.innerHTML=_btnVolverModal()+'<p style="color:#888">No se pudieron cargar los segmentos.</p>'; }
 }
 async function verTablaLideresSegmento(segmentoId, nombre){

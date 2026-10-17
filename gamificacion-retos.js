@@ -42,7 +42,7 @@ async function verRetos(){
     const ahora=Date.now();
     const snap=await db.collection('retos').orderBy('fechaFin','desc').limit(30).get();
     const activos=[], pasados=[];
-    snap.forEach(function(d){ const r=Object.assign({id:d.id},d.data()); (r.fechaFin>=ahora?activos:pasados).push(r); });
+    snap.forEach(function(d){ const r=Object.assign({},d.data(),{id:d.id}); (r.fechaFin>=ahora?activos:pasados).push(r); });
     if(!activos.length && !pasados.length){ c.innerHTML=_btnVolverModal()+'<p style="color:#9fb3c8;font-size:0.85rem">Todavía no hay retos activos.</p>'; return; }
     function tarjeta(r){
       const km=calcularProgresoReto(r);

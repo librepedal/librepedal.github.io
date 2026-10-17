@@ -538,7 +538,7 @@ const LP_PUNTO_CAT={
 };
 function _lpPopupPunto(titulo,desc,cat,lat,lon){
   const x=LP_PUNTO_CAT[cat]||{fa:'location-dot',c:'#fc4c02'};
-  return '<div class="lp-pop" style="--cc:'+x.c+'"><div class="lp-ic"><i class="fas fa-'+x.fa+'"></i></div><div class="lp-body"><div class="lp-t">'+escapeHTML(titulo||'Punto')+'</div>'+(desc?'<div class="lp-d">'+escapeHTML(desc)+'</div>':'')+'<a href="#" class="lp-cta" onclick="irAlPuntoYNavegar('+lat+','+lon+');return false"><i class="fas fa-compass"></i> Ir aquí</a></div></div>';
+  return '<div class="lp-pop" style="--cc:'+x.c+'"><div class="lp-ic"><i class="fas fa-'+x.fa+'"></i></div><div class="lp-body"><div class="lp-t">'+escapeHTML(titulo||'Punto')+'</div>'+(desc?'<div class="lp-d">'+escapeHTML(desc)+'</div>':'')+'<a href="#" class="lp-cta" onclick="irAlPuntoYNavegar('+Number(lat)+','+Number(lon)+');return false"><i class="fas fa-compass"></i> Ir aquí</a></div></div>';
 }
 function _renderizarPuntosVisibles(){
   if(!mp) return;

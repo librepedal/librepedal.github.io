@@ -41,17 +41,17 @@ async function verRodadas(){
     const ahora=Date.now();
     const snap=await db.collection('rodadas').orderBy('fecha','asc').limit(50).get();
     const cont=document.getElementById('rodadasList');
-    const futuras=[]; snap.forEach(function(d){ const r=Object.assign({id:d.id},d.data()); if(r.fecha>=ahora-3600000) futuras.push(r); });
+    const futuras=[]; snap.forEach(function(d){ const r=Object.assign({},d.data(),{id:d.id}); if(r.fecha>=ahora-3600000) futuras.push(r); });
     if(!futuras.length){ cont.innerHTML='<p style="color:#9fb3c8;font-size:0.85rem">No hay rodadas próximas. ¡Organiza la primera!</p>'; return; }
     cont.innerHTML=futuras.map(function(r){
       const asistentes=r.asistentes||[];
       const voy=asistentes.indexOf(cu)!==-1;
       const fecha=new Date(r.fecha).toLocaleString('es-CL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-      const rutaHTML=r.ruta ? ('<p style="color:var(--g)"><i class="fas fa-road"></i> '+escapeHTML(r.ruta.nombreRuta)+' · '+r.ruta.distance.toFixed(1)+' km'+(r.ruta.subida?(' · <i class="fas fa-arrow-trend-up"></i> '+r.ruta.subida+'m'):'')+'</p>') : '';
+      const rutaHTML=r.ruta ? ('<p style="color:var(--g)"><i class="fas fa-road"></i> '+escapeHTML(r.ruta.nombreRuta)+' · '+(Number(r.ruta.distance)||0).toFixed(1)+' km'+(r.ruta.subida?(' · <i class="fas fa-arrow-trend-up"></i> '+Math.round(Number(r.ruta.subida)||0)+'m'):'')+'</p>') : '';
       // Radio de la rodada (rodada-radio-ui.js): se ofrece a los confirmados desde 2 h antes hasta 12 h después de la hora.
       const radioAbierta = voy && typeof radioEntrarDesdeRodada==='function' && ahora>=r.fecha-7200000 && ahora<=r.fecha+43200000;
-      const radioBtn = radioAbierta ? '<button class="ab rr-entrar" style="margin:8px 0 0" onclick="radioEntrarDesdeRodada(\''+r.id+'\',\''+escapeHTML(r.creadoPor||'')+'\','+escapeHTML(JSON.stringify(r.titulo||'Rodada'))+')"><svg width="18" height="18" style="vertical-align:-3px"><use href="#rr-radio"/></svg> Entrar a la radio de la rodada</button>' : '';
-      return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4><p><i class="fas fa-calendar"></i> '+fecha+' · <i class="fas fa-location-dot"></i> '+escapeHTML(r.puntoEncuentro||'')+'</p>'+rutaHTML+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')+'<p style="color:#7d8ba0;font-size:0.72rem">Organiza: '+escapeHTML(r.nombreCreador||'Ciclista')+' · '+asistentes.length+' confirmados</p><button class="ab '+(voy?'sec':'')+'" style="margin:0" onclick="toggleAsistenciaRodada(\''+r.id+'\')">'+(voy?'<i class="fas fa-circle-check"></i> Vas · toca para cancelar':'<i class="fas fa-person-biking"></i> Confirmar asistencia')+'</button>'+radioBtn+'</div>';
+      const radioBtn = radioAbierta ? '<button class="ab rr-entrar" style="margin:8px 0 0" onclick="radioEntrarDesdeRodada(\''+jsArg(r.id)+'\',\''+jsArg(r.creadoPor||'')+'\','+escapeHTML(JSON.stringify(r.titulo||'Rodada'))+')"><svg width="18" height="18" style="vertical-align:-3px"><use href="#rr-radio"/></svg> Entrar a la radio de la rodada</button>' : '';
+      return '<div class="novedad-card"><h4>'+escapeHTML(r.titulo||'')+'</h4><p><i class="fas fa-calendar"></i> '+fecha+' · <i class="fas fa-location-dot"></i> '+escapeHTML(r.puntoEncuentro||'')+'</p>'+rutaHTML+(r.desc?'<p>'+escapeHTML(r.desc)+'</p>':'')+'<p style="color:#7d8ba0;font-size:0.72rem">Organiza: '+escapeHTML(r.nombreCreador||'Ciclista')+' · '+asistentes.length+' confirmados</p><button class="ab '+(voy?'sec':'')+'" style="margin:0" onclick="toggleAsistenciaRodada(\''+jsArg(r.id)+'\')">'+(voy?'<i class="fas fa-circle-check"></i> Vas · toca para cancelar':'<i class="fas fa-person-biking"></i> Confirmar asistencia')+'</button>'+radioBtn+'</div>';
     }).join('');
   }catch(e){ document.getElementById('rodadasList').innerHTML='<p style="color:#888">No se pudieron cargar las rodadas.</p>'; }
 }
@@ -131,7 +131,7 @@ function salirCanalRodada(){
 function _botoneraRodada(){
   return Object.keys(RODADA_AVISOS).map(function(k){
     const a=RODADA_AVISOS[k];
-    return '<button class="ab sec" style="margin:0;min-height:56px;font-size:0.86rem" onclick="enviarAvisoRodada(\''+k+'\')">'+a.e+'<br>'+a.l+'</button>';
+    return '<button class="ab sec" style="margin:0;min-height:56px;font-size:0.86rem" onclick="enviarAvisoRodada(\''+jsArg(k)+'\')">'+a.e+'<br>'+a.l+'</button>';
   }).join('');
 }
 async function toggleAsistenciaRodada(id){

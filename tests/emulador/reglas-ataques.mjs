@@ -150,5 +150,45 @@ ok(await escribir(tAnon, 'sosAlertas/s6', { clat: -33.45, clon: -70.65 }, { crea
 ok(!(await borrar(tA, 'sosAlertas/s5')), 'un usuario no borra alertas');
 ok(await borrar(tok(ADM, { claims: { adm: true } }), 'sosAlertas/s6'), 'el admin puede limpiar alertas falsas');
 
+// ===== XSS cero clic: rodadas / recommendations / hostels editables por cualquiera =====
+console.log('XSS rodadas');
+const XSS = "x'+alert(1)+'<img src=x onerror=alert(1)>";
+await escribir(ADMIN, 'rodadas/rd1', { titulo: 'Salida', fecha: Date.now() + 86400000, creadoPor: A, asistentes: [A], user: A, authUid: A, ruta: { nombreRuta: 'R', distance: 10, subida: 120 } });
+ok(!(await escribir(tAnon, 'rodadas/rd1', { ruta: { nombreRuta: 'R', distance: 10, subida: XSS } }, { actualizar: true })), 'ataque: anónimo mete HTML en ruta.subida de una rodada ajena → rechazado');
+ok(!(await escribir(tX, 'rodadas/rd1', { creadoPor: XSS }, { actualizar: true })), 'ataque: reescribir creadoPor ajeno → rechazado');
+ok(!(await escribir(tX, 'rodadas/rd1', { fecha: 1 }, { actualizar: true })), 'ataque: clavar la rodada arriba con fecha:1 → rechazado');
+ok(!(await escribir(tX, 'rodadas/rd1', { asistentes: [A, X, B] }, { actualizar: true })), 'ataque: anotar a otro como asistente → rechazado');
+ok(!(await escribir(tX, 'rodadas/rd1', { asistentes: [] }, { actualizar: true })), 'ataque: sacar a otros de la lista → rechazado');
+ok(await escribir(tX, 'rodadas/rd1', { asistentes: [A, X] }, { actualizar: true }), 'legítimo: anotarse (arrayUnion(cu))');
+ok(await escribir(tX, 'rodadas/rd1', { asistentes: [A] }, { actualizar: true }), 'legítimo: borrarse (arrayRemove(cu))');
+ok(!(await escribir(tX, "rodadas/x'onerror", { titulo: 'a', fecha: 1, creadoPor: X, asistentes: [X], user: X }, { crear: true })), 'ataque: id de documento con comillas → rechazado');
+ok(!(await escribir(tX, 'rodadas/rd2', { titulo: 'a', fecha: 1, creadoPor: X, asistentes: [X], user: X, id: XSS }, { crear: true })), 'ataque: campo `id` falso en los datos → rechazado');
+ok(!(await escribir(tX, 'rodadas/rd3', { titulo: 'a', fecha: 1, creadoPor: X, asistentes: [X], user: X, ruta: { nombreRuta: 'R', distance: 1, subida: XSS } }, { crear: true })), 'ataque: crear con subida como texto → rechazado');
+ok(await escribir(tX, 'rodadas/rd4', { titulo: 'Salida', desc: '', puntoEncuentro: 'Plaza', fecha: Date.now() + 86400000, creadoPor: X, nombreCreador: 'X', asistentes: [X], authUid: X, ruta: { nombreRuta: 'R', distance: 12.5, subida: null } }, { crear: true, ahora: ['ts'] }), 'legítimo: crear una rodada como la app');
+
+console.log('XSS recommendations');
+await escribir(ADMIN, 'recommendations/rc1', { user: A, title: 'Café', lat: -33.4, lon: -70.6, likes: 1, likedBy: [A], ratingSum: 4, votes: 1, ratedBy: { [A]: 4 } });
+ok(!(await escribir(tAnon, 'recommendations/rc1', { lat: XSS }, { actualizar: true })), 'ataque: anónimo pone texto en lat (entraba a un onclick) → rechazado');
+ok(!(await escribir(tX, 'recommendations/rc1', { lat: XSS }, { actualizar: true })), 'ataque: usuario cambia lat de una recomendación ajena → rechazado');
+ok(!(await escribir(tX, 'recommendations/rc1', { likes: 9999 }, { actualizar: true })), 'ataque: inflar likes → rechazado');
+ok(await escribir(tX, 'recommendations/rc1', { likes: 2, likedBy: [A, X] }, { actualizar: true }), 'legítimo: "me gusta"');
+ok(await escribir(tX, 'recommendations/rc1', { likes: 1, likedBy: [A] }, { actualizar: true }), 'legítimo: quitar el "me gusta"');
+ok(!(await escribir(tX, 'recommendations/rc1', { likes: 2, likedBy: [A, B] }, { actualizar: true })), 'ataque: "me gusta" a nombre de otro → rechazado');
+ok(await escribir(tX, 'recommendations/rc1', { ratedBy: { [A]: 4, [X]: 5 }, votes: 2, ratingSum: 9 }, { actualizar: true }), 'legítimo: valorar 5 estrellas');
+ok(await escribir(tX, 'recommendations/rc1', { ratedBy: { [A]: 4, [X]: 3 }, votes: 2, ratingSum: 7 }, { actualizar: true }), 'legítimo: cambiar mi valoración a 3');
+ok(!(await escribir(tX, 'recommendations/rc1', { ratedBy: { [A]: 4, [X]: 1000 }, votes: 2, ratingSum: 1004 }, { actualizar: true })), 'ataque: valoración de 1000 estrellas → rechazado');
+ok(!(await escribir(tX, 'recommendations/rc1', { ratedBy: { [A]: 1, [X]: 3 }, votes: 2, ratingSum: 4 }, { actualizar: true })), 'ataque: cambiar la valoración de otro → rechazado');
+ok(!(await escribir(tX, 'recommendations/rc2', { user: X, title: 'a', lat: XSS, lon: 1, likes: 0, likedBy: [], ratingSum: 0, votes: 0, ratedBy: {} }, { crear: true })), 'ataque: crear con lat como texto → rechazado');
+ok(!(await escribir(tX, 'recommendations/rc3', { user: X, title: 'a', likes: 500, likedBy: [], ratingSum: 0, votes: 0, ratedBy: {} }, { crear: true })), 'ataque: crear con 500 likes → rechazado');
+ok(await escribir(tX, 'recommendations/rc4', { user: X, nombre: 'X', title: 'Café', cat: 'cafe', desc: 'rico', lat: -33.4, lon: -70.6, likes: 0, likedBy: [], ratingSum: 0, votes: 0, ratedBy: {}, authUid: X }, { crear: true, ahora: ['ts'] }), 'legítimo: crear una recomendación como la app');
+
+console.log('XSS hostels');
+await escribir(ADMIN, 'hostels/h1', { user: A, name: 'Casa', lat: -33.4, lon: -70.6 });
+ok(!(await escribir(tAnon, 'hostels/h1', { id: XSS }, { actualizar: true })), 'ataque: anónimo mete un `id` falso en un alojamiento → rechazado');
+ok(!(await escribir(tX, 'hostels/h1', { lat: 'texto' }, { actualizar: true })), 'ataque: lat como texto (vaciaba la lista para todos) → rechazado');
+ok(!(await escribir(tA, 'hostels/h1', { name: 'Casa 2' }, { actualizar: true })), 'nadie actualiza hostels (la app no lo hace; los votos van a guiComments)');
+ok(!(await escribir(tX, 'hostels/h2', { user: X, name: 'a', lat: XSS }, { crear: true })), 'ataque: crear con lat como texto → rechazado');
+ok(await escribir(tX, 'hostels/h3', { user: X, nombre: 'X', tipo: 'casa', name: 'Casa', location: 'Viña', desc: '', ratingSum: 0, votes: 0, ratedBy: {}, lat: -33, lon: -71, authUid: X }, { crear: true, ahora: ['ts'] }), 'legítimo: crear un alojamiento como la app');
+
 console.log(`\nreglas en emulador: ${n - f}/${n} OK`);
 process.exit(f ? 1 : 0);

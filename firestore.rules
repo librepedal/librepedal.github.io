@@ -137,6 +137,39 @@ service cloud.firestore {
             && request.resource.data.gpsData.distance >= 0
             && request.resource.data.gpsData.distance <= 1000);
     }
+    // Auditoría 2026-10-17 (XSS): ids de documento elegidos por el atacante (Firestore permite
+    // ' " < >) y un campo `id` dentro de los datos (pisaba el id real en el cliente) terminaban
+    // dentro de onclick. Los ids automáticos de la app son 20 letras/números.
+    function idDocOk(docId) {
+      return docId.matches('^[A-Za-z0-9_-]{1,64}$') && !('id' in request.resource.data);
+    }
+    // true si el campo no viene, o viene como número (lat/lon/subida/distance llegaban como
+    // texto y entraban crudos al HTML, o rompían el mapa para todos).
+    function numSiViene(campo) {
+      return !(campo in request.resource.data) || request.resource.data[campo] is number;
+    }
+    // Agrega o quita EXACTAMENTE tu propio uid de una lista (asistentes, likedBy), nada más.
+    function soloMiUidEnLista(campo) {
+      let antes = resource.data.get(campo, []);
+      let despues = request.resource.data.get(campo, []);
+      return antes is list && despues is list && (
+        (!(request.auth.uid in antes) && despues.size() == antes.size() + 1
+          && despues.toSet().difference(antes.toSet()) == [request.auth.uid].toSet())
+        || ((request.auth.uid in antes) && despues.size() == antes.size() - 1
+          && antes.toSet().difference(despues.toSet()) == [request.auth.uid].toSet()));
+    }
+    // Valoración 1-5 con ratedBy.<uid>, votes y ratingSum coherentes (valorar(), funciones-mapa-viajes.js).
+    function valoracionPropiaOk() {
+      let antes = resource.data.get('ratedBy', {});
+      let despues = request.resource.data.get('ratedBy', {});
+      let previo = antes.get(request.auth.uid, 0);
+      let nuevo = despues.get(request.auth.uid, 0);
+      return antes is map && despues is map
+        && despues.diff(antes).affectedKeys().hasOnly([request.auth.uid])
+        && nuevo is int && nuevo >= 1 && nuevo <= 5
+        && request.resource.data.get('votes', 0) == resource.data.get('votes', 0) + (previo == 0 ? 1 : 0)
+        && request.resource.data.get('ratingSum', 0) == resource.data.get('ratingSum', 0) + nuevo - previo;
+    }
     function statsIncrementoPlausible(campo, maxDelta) {
       return !(campo in request.resource.data) || !(campo in resource.data)
         || (request.resource.data[campo] is number && resource.data[campo] is number
@@ -411,8 +444,21 @@ service cloud.firestore {
     // de la función. delete sí se restringe: nadie borra la recomendación de otro.
     match /recommendations/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('title', 120) && strOk('desc', 800) && autorEsUnoMismo();
-      allow update: if signedIn() && strOk('title', 120) && strOk('desc', 800);
+      allow create: if signedInReal() && strOk('title', 120) && strOk('desc', 800) && autorEsUnoMismo()
+        && idDocOk(id) && numSiViene('lat') && numSiViene('lon')
+        && request.resource.data.get('likes', 0) == 0 && request.resource.data.get('likedBy', []) == []
+        && request.resource.data.get('votes', 0) == 0 && request.resource.data.get('ratingSum', 0) == 0
+        && request.resource.data.get('ratedBy', {}) == {};
+      // Auditoría 2026-10-17 (XSS cero clic): el update era `if signedIn()` y dejaba poner texto
+      // en lat/lon (entraba crudo a un onclick) o inflar likes de cualquier recomendación. La app
+      // solo hace dos cosas: "me gusta" (likes ±1 con tu uid) y valorar (ratedBy.<tu uid>).
+      allow update: if signedInReal() && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy'])
+          && soloMiUidEnLista('likedBy')
+          && request.resource.data.get('likes', 0) == resource.data.get('likes', 0)
+               + (request.auth.uid in resource.data.get('likedBy', []) ? -1 : 1))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratedBy', 'votes', 'ratingSum'])
+          && valoracionPropiaOk()));
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -420,8 +466,13 @@ service cloud.firestore {
     // las pone cualquier usuario, no solo el dueño. delete sí se restringe.
     match /hostels/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('name', 120) && strOk('location', 200) && strOk('desc', 800) && autorEsUnoMismo();
-      allow update: if signedIn();
+      allow create: if signedInReal() && strOk('name', 120) && strOk('location', 200) && strOk('desc', 800) && autorEsUnoMismo()
+        && idDocOk(id) && numSiViene('lat') && numSiViene('lon');
+      // Auditoría 2026-10-17 (XSS cero clic): era `if signedIn()` sin nada más -- cualquiera,
+      // incluso anónimo, reescribía cualquier alojamiento (id falso dentro de onclick, lat como
+      // texto que vaciaba la lista, foto de 1 MB). Los votos de alojamientos viven en guiComments
+      // (valorar('hostels',...)), así que la app no actualiza hostels nunca.
+      allow update: if false;
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 
@@ -652,8 +703,22 @@ service cloud.firestore {
     // de asistentes), no solo quien la creó. delete sí se restringe al creador.
     match /rodadas/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400) && autorEsUnoMismo();
-      allow update: if signedIn() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400);
+      allow create: if signedInReal() && strOk('titulo', 100) && strOk('puntoEncuentro', 150) && strOk('desc', 400) && autorEsUnoMismo()
+        && idDocOk(id) && request.resource.data.fecha is number
+        && request.resource.data.get('creadoPor', '') == request.auth.uid
+        && request.resource.data.get('asistentes', []) == [request.auth.uid]
+        && (!('ruta' in request.resource.data) || (request.resource.data.ruta is map
+            && request.resource.data.ruta.keys().hasOnly(['nombreRuta', 'distance', 'subida'])
+            && request.resource.data.ruta.get('nombreRuta', '') is string && request.resource.data.ruta.get('nombreRuta', '').size() <= 120
+            && request.resource.data.ruta.get('distance', 0) is number
+            && (request.resource.data.ruta.get('subida', null) == null || request.resource.data.ruta.subida is number)));
+      // Auditoría 2026-10-17 (XSS cero clic): el update era `if signedIn()` sin límite de campos
+      // (incluso anónimo): cualquiera reescribía ruta.subida / creadoPor / fecha / punto de
+      // encuentro de una rodada AJENA, y eso se pintaba crudo al abrir "Rodadas grupales".
+      // La app solo hace una cosa: sumarte o sacarte de `asistentes` (toggleAsistenciaRodada).
+      allow update: if signedInReal()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['asistentes'])
+        && soloMiUidEnLista('asistentes');
       allow delete: if signedIn() && isOwnerOrLegacy();
     }
 

@@ -20,7 +20,7 @@ const rutas = leer('rutas.js'), index = leer('index.html'), como = leer('como-fu
 // Inty 2026-10-08 (después): "el archivo es para que la gente, si quiere migrar los datos que tiene en nuestra app, pueda
 // hacerlo... y si quiere cambiarse de la competencia a Libre Pedal, tenga la opción de subir sus datos". Vuelve, bien rotulado.
 const motor = leer('motor-navegacion.js');
-ok(/title="Descargar GPX \(llevar tu ruta a otra app\)" onclick="exportarRutaGPX\([^)]*\)"><i class="fas fa-download">/.test(rutas), 'Mis rutas: botón "Descargar GPX" con ícono de descarga');
+ok(/title="Descargar GPX \(llevar tu ruta a otra app\)" onclick="exportarRutaGPX\([^"]*\)"><i class="fas fa-download">/.test(rutas), 'Mis rutas: botón "Descargar GPX" con ícono de descarga');
 ok(index.includes("onclick=\"exportarDatosGPX()\"><i class=\"fas fa-download\"></i> Descargar ruta actual (GPX)"), "Estadísticas: \"Descargar ruta actual (GPX)\"");
 ok(/title="Compartir este viaje"[^>]*><i class="fas fa-share-from-square">/.test(rutas), 'Mis rutas: el ícono de compartir está SOLO en el botón que comparte');
 ok((rutas.match(/fa-share-from-square/g) || []).length === 1, 'el ícono de compartir no se usa en otro botón de Mis rutas');

@@ -29,5 +29,11 @@ ok(/aprobada == false/.test(bloque('frasesComunidad')), '#7 frasesComunidad nace
 const sos = bloque('sosAlertas');
 ok(/hasOnly\(\['clat', 'clon', 'ts'\]\)/.test(sos) && /ts == request\.time/.test(sos), '#8 sosAlertas: solo clat/clon/ts y ts = hora del servidor');
 
+const rod = bloque('rodadas');
+ok(/hasOnly\(\['asistentes'\]\)/.test(rod) && /soloMiUidEnLista\('asistentes'\)/.test(rod) && !/allow update: if signedIn\(\) && strOk/.test(rod), 'XSS rodadas: solo te sumas o sacas tú de asistentes');
+const rec = bloque('recommendations');
+ok(/soloMiUidEnLista\('likedBy'\)/.test(rec) && /valoracionPropiaOk\(\)/.test(rec) && /numSiViene\('lat'\)/.test(rec), 'XSS recommendations: solo like/valoración propios y lat/lon numéricos');
+ok(/allow update: if false;/.test(bloque('hostels')) && /idDocOk\(id\)/.test(bloque('hostels')), 'XSS hostels: nadie los actualiza e id de documento normal');
+
 console.log(`reglas auditoría 2026-10-17: ${n - f}/${n} OK`);
 process.exit(f ? 1 : 0);

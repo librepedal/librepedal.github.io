@@ -106,7 +106,7 @@ async function rrecListarCerca(lat, lon){
   if(lat==null || lon==null) return [];
   try{
     const snap=await db.collection(RREC_COLECCION).where('celda','in',rrecCeldasVecinas(lat, lon)).limit(60).get();
-    return snap.docs.map(function(doc){ return Object.assign({id:doc.id}, doc.data()); });
+    return snap.docs.map(function(doc){ return Object.assign({},doc.data(),{id:doc.id}); });
   }catch(e){ return []; }
 }
 function rrecDescargarGPX(id){
@@ -158,11 +158,11 @@ function rrecVerTarjeta(id){
   document.getElementById('modalContent').innerHTML=_RREC_LEYENDA+
     '<div class="rrec-tarjeta"><span class="rrec-sello">Ruta recomendada</span>'+
     '<h4>'+escapeHTML(r.nombre||'Ruta recomendada')+'</h4>'+
-    '<div class="rrec-datos"><span><b>'+(r.distance||0).toFixed(1)+'</b> km</span>'+(r.subida?'<span><b>'+r.subida+'</b> m subida</span>':'')+'<span>de '+escapeHTML(r.nombreAutor||'un ciclista')+'</span></div>'+
+    '<div class="rrec-datos"><span><b>'+(r.distance||0).toFixed(1)+'</b> km</span>'+(r.subida?'<span><b>'+Math.round(Number(r.subida)||0)+'</b> m subida</span>':'')+'<span>de '+escapeHTML(r.nombreAutor||'un ciclista')+'</span></div>'+
     (r.desc?'<p class="rrec-desc">'+escapeHTML(r.desc)+'</p>':'')+
-    '<div class="rrec-botones"><button class="ab rrec-pri" onclick="rrecPedalear(\''+r.id+'\')"><i class="fas fa-person-biking"></i> Pedalearla</button>'+
-    '<button class="ab sec" onclick="rrecDescargarGPX(\''+r.id+'\')"><i class="fas fa-download"></i> Bajar GPX</button></div>'+
-    (esMia?'<button class="ab sec rrec-quitar" onclick="rrecQuitarDesdeTarjeta(\''+r.id+'\')"><i class="fas fa-trash-can"></i> Quitar de las recomendadas</button>':'')+
+    '<div class="rrec-botones"><button class="ab rrec-pri" onclick="rrecPedalear(\''+jsArg(r.id)+'\')"><i class="fas fa-person-biking"></i> Pedalearla</button>'+
+    '<button class="ab sec" onclick="rrecDescargarGPX(\''+jsArg(r.id)+'\')"><i class="fas fa-download"></i> Bajar GPX</button></div>'+
+    (esMia?'<button class="ab sec rrec-quitar" onclick="rrecQuitarDesdeTarjeta(\''+jsArg(r.id)+'\')"><i class="fas fa-trash-can"></i> Quitar de las recomendadas</button>':'')+
     '</div>';
   document.getElementById('userModal').classList.add('on');
 }

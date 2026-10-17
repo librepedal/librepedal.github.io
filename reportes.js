@@ -289,7 +289,7 @@ function reportarEnRuta(){
     const hijos=Object.keys(REPORTE_CATS).filter(function(x){ return REPORTE_CATS[x].g===gk; });
     if(!hijos.length) return;
     html+='<div style="margin:10px 0 4px;font-size:0.82rem;font-weight:700;color:#e2e8f0">'+g.l+'</div>';
-    hijos.forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+k+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.7rem;line-height:1.1;margin-bottom:2px">'+_repIco(c)+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; }); });
+    hijos.forEach(function(k){ const c=REPORTE_CATS[k]; html+='<div class="rep-cat" data-k="'+k+'" onclick="seleccionarCatReporte(\''+jsArg(k)+'\')" style="border:2px solid #2a3147;border-radius:12px;padding:12px;cursor:pointer;text-align:center"><div style="font-size:1.7rem;line-height:1.1;margin-bottom:2px">'+_repIco(c)+'</div><div style="font-weight:800;font-size:0.82rem;color:'+c.c+'">'+c.l+'</div><div style="font-size:0.64rem;color:#7d8ba0;margin-top:3px;line-height:1.2">'+c.h+'</div></div>'; }); });
   html+='</div><div id="repSuperficieExtra" style="display:none;margin-top:10px"><select id="repSuperficieTipo"><option value="">Tipo de superficie...</option>'+Object.keys(SUPERFICIE_TIPOS).map(function(k){return '<option value="'+k+'">'+SUPERFICIE_TIPOS[k]+'</option>';}).join('')+'</select><select id="repDificultad" style="margin-top:6px"><option value="">Dificultad del tramo...</option>'+Object.keys(DIFICULTAD_NIVELES).map(function(k){return '<option value="'+k+'">'+DIFICULTAD_NIVELES[k]+'</option>';}).join('')+'</select></div><textarea id="repText" rows="3" placeholder="Cuenta el dato con detalle (ej: almacén con pan amasado caliente al km 12)..." maxlength="500" style="width:100%;margin-top:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;font-size:0.9rem"></textarea>'
     +'<button class="ab sec" type="button" style="margin-top:8px" id="btnReporteMapa" onclick="toggleReporteMapa()"><i class="fas fa-location-dot"></i> No estoy ahí: marcar el punto en el mapa</button>'
     +'<div id="reporte-mapa-manual" style="display:none;margin-top:8px"><div id="reporte-mapa-manual-inner" style="height:220px;border-radius:10px;overflow:hidden"></div><p id="reporteMapaEstado" style="font-size:0.7rem;color:#9fb3c8;margin:6px 0 0">Toca el mapa donde está el punto exacto — no tiene que ser donde estás parado tú ahora.</p></div>'
@@ -399,8 +399,8 @@ function tiempoTranscurrido(ts){ if(!ts||!ts.seconds) return 'recién'; const s=
 function _confirmBtnsHTML(id){
   if(!id) return '';
   return '<div style="margin-top:7px;display:flex;gap:6px">'
-    +'<button onclick="confirmarReporte(\''+id+'\',true)" style="flex:1;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer"><i class="fas fa-thumbs-up"></i> Sigue ahí</button>'
-    +'<button onclick="confirmarReporte(\''+id+'\',false)" style="flex:1;background:rgba(255,90,90,0.14);border:1px solid #ff5a5a;color:#ff8a8a;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer"><i class="fas fa-ban"></i> Ya no está</button>'
+    +'<button onclick="confirmarReporte(\''+jsArg(id)+'\',true)" style="flex:1;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer"><i class="fas fa-thumbs-up"></i> Sigue ahí</button>'
+    +'<button onclick="confirmarReporte(\''+jsArg(id)+'\',false)" style="flex:1;background:rgba(255,90,90,0.14);border:1px solid #ff5a5a;color:#ff8a8a;border-radius:8px;padding:6px 8px;font-size:0.72rem;font-weight:700;cursor:pointer"><i class="fas fa-ban"></i> Ya no está</button>'
     +'</div>';
 }
 function _confirmCountsHTML(r){
@@ -467,7 +467,7 @@ function renderReporteMarkers(){
     const c=REPORTE_CATS[r.cat]||REPORTE_CATS.util;
     const badge=lpBadgeHTML(_repIco(c), r.cat==='critico'?c.c:null);
     const extra=(r.superficie||r.dificultad)?('<br>'+(r.superficie?SUPERFICIE_TIPOS[r.superficie]||'':'')+' '+(r.dificultad?DIFICULTAD_NIVELES[r.dificultad]||'':'')):'';
-    const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+_repIco(c)+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</small>'+_confirmCountsHTML(r)+'<br><a href="#" onclick="irAlPuntoYNavegar('+r.lat+','+r.lon+',\''+escapeHTML(c.l).replace(/'/g,"\\'")+'\');return false" style="color:#fc4c02;font-weight:700"><i class="fas fa-compass"></i> Ir aquí</a>'+_confirmBtnsHTML(r.id));
+    const mk=mlMarker([r.lat,r.lon],{icon:{html:badge}}).addTo(mp).bindPopup('<b>'+_repIco(c)+' '+c.l+'</b>'+extra+'<br>'+escapeHTML(r.text)+'<br><small>'+escapeHTML(r.nombre||'Ciclista')+' · '+tiempoTranscurrido(r.lastConfirm||r.ts)+'</small>'+_confirmCountsHTML(r)+'<br><a href="#" onclick="irAlPuntoYNavegar('+Number(r.lat)+','+Number(r.lon)+',\''+jsArg(c.l)+'\');return false" style="color:#fc4c02;font-weight:700"><i class="fas fa-compass"></i> Ir aquí</a>'+_confirmBtnsHTML(r.id));
     reporteMarkers.push(mk);
   });
 }
