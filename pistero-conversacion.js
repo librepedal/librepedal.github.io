@@ -289,6 +289,8 @@ const tutorialSteps=[
   {view:'map', sel:'#fabReportar', d:'Reporta a la comunidad: peligros, picadas o miradores. Ganas Darma.'},
   {view:'map', sel:'button[onclick="toggleRadarOnMap()"]', d:'Ciclistas: mira a otros pedaleros en el mapa, cada uno con su casco.'},
   {view:'chat', sel:'#v-chat .quick-links', d:'Social: tus amigos, solicitudes y chats privados.'},
+  {view:'chat', sel:'button[onclick="verRodadas()"]', d:'Rodadas grupales: organiza o súmate a una salida con la comunidad. Una vez confirmada tu asistencia, se abre una radio para hablar con el grupo mientras pedaleas.'},
+  {view:'chat', sel:'button[onclick="verRecomendacionRutas()"]', d:'Rutas para ti: recomendaciones reales de otros ciclistas, según tu distancia habitual.'},
   {view:'mac', sel:'#v-mac .section-info', d:'Taller: guía paso a paso según el síntoma, derivación al taller cuando es de seguridad, y la mantención de tu bici o vehículo.'},
   {view:'customize', sel:'#estilosGrid', d:'En Perfil armas tu personaje y eliges el estilo de la esfera. ¡A rodar!'}
 ];
@@ -329,8 +331,10 @@ const TUTORIAL_TEMAS={
   reportar:12, peligro:12, reporte:12,
   ciclistas:13, radar:13,
   social:14, amigos:14, mensajes:14, chat:14, solicitudes:14,
-  taller:15, reparar:15, bici:15, mecanica:15,
-  perfil:16, personaje:16, casco:16, personalizar:16
+  rodada:15, rodadas:15, grupal:15, salida:15,
+  recomendadas:16, descubre:16,
+  taller:17, reparar:17, bici:17, mecanica:17,
+  perfil:18, personaje:18, casco:18, personalizar:18
 };
 function mostrarPasoTutorial(indice){
   if(indice==null || !tutorialSteps[indice]) return;
