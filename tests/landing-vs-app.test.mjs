@@ -43,8 +43,13 @@ for (const [etq, ua] of [['moderno (; wv))', UA_WEBVIEW_MODERNO], ['viejo (Versi
 
 // 2) Navegadores reales (Chrome Android, Chrome escritorio, Safari iPhone) -> landing
 for (const [etq, ua] of [['Chrome Android real', UA_CHROME_ANDROID_REAL], ['Chrome escritorio', UA_CHROME_DESKTOP], ['Safari iPhone', UA_SAFARI_IPHONE]]) {
-  const { siguioALaApp, texto } = await correr('/', { ua });
+  const { siguioALaApp, texto, res } = await correr('/', { ua });
   ok(!siguioALaApp && texto === '<landing/>', etq + ' ve la landing, no la app');
+  // Bug real encontrado en vivo (2026-10-17): pedir "/landing.html" dispara el redirect 308
+  // automático de Cloudflare Pages (toda URL .html redirige a su version sin extensión) y
+  // env.ASSETS.fetch() pasa por esa misma lógica -- el visitante recibía un 308 vacío en vez
+  // del contenido. Tiene que pedirse la URL limpia "/landing" de entrada.
+  ok(res.headers.get('x-fetched') === '/landing', etq + ': pide la URL limpia "/landing", no "/landing.html" (evita el 308 de Cloudflare Pages)');
 }
 
 // 3) Sin User-Agent (curl, bot) -> landing (nunca se asume WebView por defecto)

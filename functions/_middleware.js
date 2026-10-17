@@ -58,5 +58,9 @@ export async function onRequest(context) {
   if (esApp) return next();
 
   // Navegador normal: landing, no la app funcional.
-  return env.ASSETS.fetch(new Request(new URL('/landing.html', url), request));
+  // OJO: pedimos "/landing" (URL limpia), NO "/landing.html" -- Cloudflare Pages redirige
+  // (308) automáticamente toda URL con extensión .html a su versión sin extensión, y
+  // env.ASSETS.fetch() pasa por esa misma lógica (confirmado en vivo: /landing.html
+  // devolvía el 308 en vez del contenido). Pedir la URL limpia de entrada se lo salta.
+  return env.ASSETS.fetch(new Request(new URL('/landing', url), request));
 }
