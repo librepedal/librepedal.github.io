@@ -288,6 +288,20 @@ async function im(){
     // (mapa-unico.js, maqueta "Un solo mapa" aprobada 2026-10-15). Antes solo ofrecía navegar.
     if(typeof muEnganchar==='function') muEnganchar(mp);
     mp.on('error',function(e){ try{ console.error('MapLibre error:',e&&e.error); if(window.Sentry) Sentry.captureException((e&&e.error)||new Error('MapLibre error desconocido')); }catch(e2){} });
+    // El sprite del estilo "liberty" (OpenFreeMap, externo) no trae ícono para TODAS las
+    // categorías de OSM (ej. sports_centre/atm/gate) -- sin esto, MapLibre tira warning en
+    // consola y esos puntos del mapa quedan invisibles (ningún ícono = no se dibuja nada).
+    // Un punto genérico simple evita ambas cosas sin depender de que el sprite externo
+    // agregue esos íconos algún día.
+    mp.on('styleimagemissing',function(e){
+      if(mp.hasImage(e.id)) return;
+      const tam=24, c=document.createElement('canvas'); c.width=tam; c.height=tam;
+      const ctx=c.getContext('2d');
+      ctx.beginPath(); ctx.arc(tam/2,tam/2,tam/2-2,0,2*Math.PI);
+      ctx.fillStyle='#ff6a3d'; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle='#ffffff'; ctx.stroke();
+      mp.addImage(e.id, ctx.getImageData(0,0,tam,tam), {pixelRatio:2});
+    });
     mp.once('load',function(){ if(!ghostMode) subscribeToUsers(); subscribeToMapPoints(); if(typeof _dibujarZonasRojas==='function') _dibujarZonasRojas(); if(typeof _cargarEstadoCofres==='function') _cargarEstadoCofres(); if(typeof _iniciarEscuchaSOS==='function') _iniciarEscuchaSOS(); if(typeof rrecCargarEnMapa==='function') rrecCargarEnMapa(); mp.on('zoomend', _actualizarVisibilidadCiclistas); _actualizarVisibilidadCiclistas(); });
     _mpVolverInstalar(mp); // vuelve solo a tu posición tras 5 s sin tocar el mapa (ver _mpVolverAlCiclista)
     mp.on('style.load', _aplicarTemaMapa); // aplica el tema de mapa (aventura/neón/arcade) en cada carga de estilo, y resetea (plano) en calles/topo/sat

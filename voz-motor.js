@@ -248,7 +248,10 @@ function calcularGastos(){
 (function(){
   const frasesTravieso=["¡Buuu! ¿Me extrañabas?","¿y si salimos a pedalear un rato?","Aquí vigilando que no se oxide la cadena.","Me aburrí de esperar, ¡vamos a rodar!","Revisa el aire de las ruedas","Tócame el micrófono y te llevo donde quieras.","¿Sabías que la primera vuelta en bici de la historia terminó en un árbol? Tú lo haces mejor."];
   let peek=null;
-  function crear(){ peek=document.createElement('div'); peek.id='pisteroPeek'; peek.textContent='🚴'; peek.title='¡Pistero!'; peek.onclick=function(){ ocultar(); h('¡Me pillaste! Dime a dónde vamos.'); }; document.body.appendChild(peek); }
+  // 2026-10-17 (reporte de Inty, probando en vivo): usaba el emoji 🚴 -- contra la regla
+  // del proyecto de nunca emoji, siempre el personaje propio. Mismo patrón que ya usa
+  // la bienvenida (gamificacion-darma.js): _pistoNuevo() + resize del <svg> generado.
+  function crear(){ peek=document.createElement('div'); peek.id='pisteroPeek'; peek.innerHTML=(typeof _pistoNuevo==='function')?_pistoNuevo('feliz').replace('<svg ','<svg width="56" height="56" '):''; peek.title='¡Pistero!'; peek.onclick=function(){ ocultar(); h('¡Me pillaste! Dime a dónde vamos.'); }; document.body.appendChild(peek); }
   function mostrar(){
     const tut=document.getElementById('tutorialOverlay');
     if(document.hidden||(tut&&tut.classList.contains('on'))||vozOcupada()){ prox(); return; } // ocupado: vuelve más rato

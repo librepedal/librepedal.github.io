@@ -42,6 +42,7 @@ function _abrirSubmenuReporte(catFan, btnEl){
 function _cerrarReporteRapido(){
   var q=document.getElementById('repQuick'); if(q) q.remove();
   reporteMapa=null; reporteMapaCoords=null; reporteMapaMarker=null;
+  try{ window.dispatchEvent(new Event('resize')); }catch(e){} // ver nota en _elegirSubcategoriaReporte
 }
 function _elegirSubcategoriaReporte(key){
   try{
@@ -64,6 +65,15 @@ function _elegirSubcategoriaReporte(key){
     if(!q){ q=document.createElement('div'); q.id='repQuick'; q.className='rep-quick'; document.body.appendChild(q); }
     q.innerHTML=html;
     requestAnimationFrame(function(){ q.classList.add('on'); });
+    // 2026-10-17 (Inty: "un roce" al dejar un aviso): este cuadro es `position:fixed;
+    // bottom:20px`, full-width -- el botón "Publicar" queda justo en la franja fija donde
+    // vive #micBtn (z-index 2200). El detector que atenúa el orbe cuando tapa un botón real
+    // (ver motor-navegacion.js, _revisarMicTapaBoton) solo escucha scroll/resize, nunca se
+    // entera de que este cuadro apareció por JS -- mismo bug ya encontrado y arreglado hoy
+    // en el sobrevuelo (sobrevuelo-viaje.js). Se fuerza un resize sintético para que el
+    // detector corra ahora mismo, no en el próximo scroll (que puede no llegar nunca: el
+    // cuadro cabe entero sin scrollear).
+    try{ window.dispatchEvent(new Event('resize')); }catch(e){}
   }catch(e){ try{ if(window.Sentry) Sentry.captureException(e); }catch(_e){} }
 }
 function abrirAbanicoReporte(){

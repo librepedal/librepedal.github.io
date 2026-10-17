@@ -26,6 +26,8 @@ async function _mostrarBienvenidaFundador(){
         '<div><i class="fas fa-location-dot" style="color:var(--p);width:22px"></i> Graba tus rutas sin apretar nada</div>'+
         '<div><i class="fas fa-comment-dots" style="color:var(--p);width:22px"></i> Pistero te acompa\u00f1a por voz</div>'+
         '<div><i class="fas fa-users" style="color:var(--p);width:22px"></i> Comunidad que se cuida (SOS y zonas rojas)</div>'+
+        '<div><i class="fas fa-wrench" style="color:var(--p);width:22px"></i> Taller: la mantenci\u00f3n de tu bici o veh\u00edculo, al d\u00eda</div>'+
+        '<div><i class="fas fa-route" style="color:var(--p);width:22px"></i> Rutas recomendadas y rodadas grupales con la comunidad</div>'+
         '<div><i class="fas fa-face-smile" style="color:var(--p);width:22px"></i> Personaliza tu Pistero en Perfil</div>'+
       '</div>'+
       '<button class="bg" onclick="_cerrarBienvenida()"><i class="fas fa-bicycle"></i> \u00a1A pedalear!</button>';

@@ -110,9 +110,33 @@ const CORE = [
 self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(CACHE)
-      // addAll falla si UN recurso falla; cacheamos uno a uno para tolerar fallos.
-      .then(function (c) { return Promise.allSettled(CORE.map(function (u) { return c.add(u); })); })
-      .then(function () { return self.skipWaiting(); })
+      // addAll falla si UN recurso falla; cacheamos uno a uno para tolerar fallos
+      // (un .ogg o .wav que no cargó por una red lenta no debe bloquear toda la
+      // actualización). PERO un .js a medio cachear es harina de otro costal: los
+      // archivos de código se referencian entre sí como variables globales
+      // compartidas (ver app-estado-global.js) -- si esta instalación deja ALGUNO
+      // de ellos sin actualizar mientras el resto sí queda en la versión nueva, la
+      // próxima carga puede mezclar código viejo y nuevo del mismo nombre de
+      // variable en dos archivos distintos y tirar un SyntaxError real en
+      // producción ("Identifier ya declarado") que rompe hasta la barra de
+      // navegación -- confirmado en Sentry 2026-10-17, en más de una sesión real.
+      // Por eso: si falla CUALQUIER .js, no activamos esta versión (nos quedamos
+      // en la anterior, consistente) -- mejor seguir en la versión vieja completa
+      // que pasar a una mezcla rota.
+      .then(function (c) {
+        return Promise.allSettled(CORE.map(function (u) { return c.add(u).then(function(){return {u:u, ok:true};}, function(err){return {u:u, ok:false, err:err};}); }));
+      })
+      .then(function (resultados) {
+        var fallosJs = resultados
+          .map(function(r){ return r.status==='fulfilled' ? r.value : {u:null, ok:false}; })
+          .filter(function(r){ return !r.ok && r.u && /\.js$/.test(r.u); });
+        if (fallosJs.length) {
+          // Se queda en la versión anterior (no skipWaiting); el navegador reintentará
+          // instalar esta misma versión más adelante por su cuenta.
+          throw new Error('Instalación incompleta, archivos JS sin cachear: ' + fallosJs.map(function(f){return f.u;}).join(', '));
+        }
+        return self.skipWaiting();
+      })
   );
 });
 

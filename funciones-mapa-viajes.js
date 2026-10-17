@@ -521,7 +521,16 @@ function sugerirDestino(q){
       if(currentUserLocation){ const d=3,lo=currentUserLocation.lon,la=currentUserLocation.lat; url+='&viewbox='+(lo-d)+','+(la+d)+','+(lo+d)+','+(la-d); }
       try{ const r=await fetch(url); g=await r.json(); }catch(e){}
     }
-    if(!g||!g.length){ box.innerHTML='<div class="sug" style="color:#7d8ba0">Sin resultados para "'+escapeHTML(q)+'"</div>'; box.classList.add('show'); return; }
+    // 2026-10-17 (queja real de Inty: "nos están contando algunas direcciones"): este
+    // cuadro de sugerencias SOLO usa Photon+Nominatim (gratis, liviano -- corre en cada
+    // pausa al tipear). geocodeDestino() (la búsqueda real al tocar "Ir") es muchísimo
+    // más fuerte: suma variantes fonéticas, interpolación Overpass por número de casa, y
+    // Google Geocoding como último respaldo pagado (ver _geocodeGoogle) -- verificado en
+    // vivo que SÍ funciona y está lejísimos del tope de gasto mensual. "Sin resultados"
+    // acá sonaba a veredicto final y hacía que la gente se rindiera sin tocar "Ir" --
+    // nunca llegaban a activar la búsqueda fuerte. El mensaje ahora deja claro que esto
+    // es solo el primer filtro rápido, no la búsqueda de verdad.
+    if(!g||!g.length){ box.innerHTML='<div class="sug" style="color:#7d8ba0">No aparece mientras escribo "'+escapeHTML(q)+'" — toca <b>Ir</b> igual: ahí busco más a fondo (incluye el número exacto de la casa).</div>'; box.classList.add('show'); return; }
     // titulo/resto se muestran como HTML: igual que en el resto de la app (rutas,
     // chat, comunidad) van por escapeHTML antes de insertarse — display_name viene
     // de OpenStreetMap, una fuente externa editable por cualquiera, y antes se
