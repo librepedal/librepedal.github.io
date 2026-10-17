@@ -206,7 +206,8 @@ function renderRutas(){
 // Muestra al toque lo local (garantizado) y fusiona rutas viejas que estén SOLO en la nube.
 function loadRoutesList(){ if(!cu) return;
   // Una vez: las rutas guardadas antes del arreglo de km (2026-10-15) con menos km que su propio trazado se corrigen (km-viaje.js).
-  try{ if(typeof corregirKmRutasLocales==='function'){ const _n=corregirKmRutasLocales(); if(_n>0) h('Corregí los kilómetros de '+_n+(_n===1?' ruta':' rutas')+' que habían quedado cortos. Ahora coinciden con lo que muestra el trazado.'); } }catch(e){}
+  // y desde 2026-10-16 lo recuperado también se suma al total de la cuenta (recuperarKmCortos avisa cuántos km).
+  try{ if(typeof recuperarKmCortos==='function') recuperarKmCortos(); }catch(e){}
   renderRutas();
   try{ db.collection('routes').where('user','==',cu).limit(100).get().then(function(snapshot){ const arr=rutasLocales(); let changed=false;
     const borradas=_rutasBorradas();

@@ -131,6 +131,7 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   // una mantencion como hecha durante la PRIMERA sesion de una cuenta no subia nada
   // hasta el proximo recargo de pagina.
   _mantListoParaSubir=true;
+  try{ if(typeof recuperarKmCortos==='function') setTimeout(recuperarKmCortos, 1500); }catch(e){} // km de rutas que quedaron cortas -> al total (2026-10-16)
   try{ localStorage.setItem('lp_unlocked_'+cu, JSON.stringify(_unlockedFinal)); }catch(e){}
   localStorage.setItem('lp_helmet_'+cu,selectedHelmet);
   localStorage.setItem('lp_lens_'+cu,selectedLens);

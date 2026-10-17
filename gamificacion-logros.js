@@ -495,6 +495,7 @@ function sincronizarAlEntrar(){
       // algo mejor, ya está fusionado en `us.mant`. Antes de este punto una subida habría
       // pisado el historial de la nube con arrays vacíos (ver nota en sincronizarStats).
       _mantListoParaSubir=true;
+      try{ if(typeof recuperarKmCortos==='function') recuperarKmCortos(); }catch(e){} // km de rutas que quedaron cortas -> al total (2026-10-16)
       sincronizarStats(); // recién ahora se sube, con el número correcto
       try{ _iniciarLogros(); }catch(e){} // baseline de logros: registra lo ya ganado SIN anunciar; habilita anuncios reales
     }catch(e){
