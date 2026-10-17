@@ -113,15 +113,17 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
      esfera, no hace falta pedirlo en el login. #modoRegistroGrid ya no existe en el DOM
      a propósito: renderModoRegistro() lo detecta (if(!c) return) y no hace nada, no se
      borró esa función para no tocar el resto de los call sites que la llaman en cadena. -->
-<!-- BLOQUE DEL LINK MÁGICO — OCULTO durante la prueba cerrada (2026-08-17).
-     Por qué: el envío por correo NO está entregando. El SMTP propio (Brevo) descarta
-     los mensajes porque a librepedal.cl le faltan SPF y DKIM, y el mailer de Firebase
-     tiene un cupo diario que 3 pruebas agotan. Un tester escribía su correo, tocaba
-     "Enviarme el enlace" y no le llegaba nada — la peor experiencia posible, porque
-     parece que la app está rota. Se vuelve a mostrar cuando el correo entregue de
-     verdad. Los campos quedan en el DOM (no se borran) para no romper el código que
-     los lee; solo se ocultan. -->
-<div id="bloqueLinkMagico" style="display:none">
+<!-- BLOQUE DEL LINK MÁGICO — reactivado 2026-10-17 (auditoría tras el lanzamiento a
+     producción). Llevaba OCULTO desde el 17-ago por un problema real de entrega de
+     correo (SPF/DKIM) -- pero quedó así por 2 meses, mucho después de que la app
+     pasara a "abierta" (2026-10-08, ver worker-auth/worker.js) donde CUALQUIERA puede
+     entrar por este camino, no solo testers. Con esto oculto, un usuario nuevo que
+     toca "Entrar con Google" en la app instalada recibe el aviso "entra con tu
+     correo, escríbelo arriba" (_entrarConGoogle en auth.js) apuntando a un campo que
+     no podía ver: callejón sin salida real para cualquiera sin el código de tester.
+     OJO: la entrega de correo (SPF/DKIM) NO quedó reverificada en este cambio -- toca
+     probar en vivo que el enlace llega de verdad antes de confiar en este camino. -->
+<div id="bloqueLinkMagico">
 <input type="text" id="nombre-input" placeholder="Tu nombre" maxlength="60" style="border:2px solid var(--g)">
 <input type="email" id="em" placeholder="correo@ejemplo.com" maxlength="100">
 <select id="pais-input" title="Tu país (adapta las frases a tu jerga)">
@@ -147,10 +149,16 @@ try{document.body.classList.add('tema-'+((localStorage.getItem('lp_tema_ui')==='
 <p style="color:#7d8ba0;font-size:0.72rem;margin-top:8px;text-align:center">Te llega un enlace al correo para entrar seguro (sin contraseña).</p>
 </div><!-- /bloqueLinkMagico -->
 
-<!-- ENTRADA POR CÓDIGO — la ÚNICA vía durante la prueba cerrada, y por eso va primera,
-     grande y abierta. Antes era un enlace chico al final de la pantalla y la gente no lo
-     encontraba. No depende del correo ni de Google: solo del worker propio. -->
-<div id="cajaCodigoTester" style="margin-top:6px;padding:16px;border:2px solid var(--p);border-radius:14px;background:rgba(252,76,2,.07)">
+<!-- ENTRADA POR CÓDIGO — oculta 2026-10-17 (auditoría de seguridad tras el lanzamiento).
+     Era "la ÚNICA vía durante la prueba cerrada"; con la app ABIERTA (2026-10-08) ya no
+     hace falta, y dejarla visible es puro riesgo sin beneficio: CODIGO_TESTER es UN SOLO
+     código compartido a los ~51 testers (ver worker-auth/worker.js l.238-247, admitido
+     ahí mismo como "riesgo menor pendiente") -- cualquiera que lo supiera, probándolo con
+     el correo PÚBLICO de cualquier tester (ej. el de Inty), conseguía una sesión real
+     como esa persona, sin tocar su casilla ni su teléfono. No se borra el bloque (mismo
+     criterio que bloqueLinkMagico): solo se oculta, por si un tester real todavía lo
+     necesita se puede reactivar a mano. -->
+<div id="cajaCodigoTester" style="display:none;margin-top:6px;padding:16px;border:2px solid var(--p);border-radius:14px;background:rgba(252,76,2,.07)">
   <p style="font-size:.95rem;color:#e7edf6;font-weight:800;margin:0 0 4px">Entrar con código</p>
   <p style="font-size:.78rem;color:#9fb3c8;margin:0 0 12px;line-height:1.5">Escribe el código que te dieron y tu correo.</p>
   <input type="text" id="codigoTesterInput" placeholder="Código" autocomplete="off" maxlength="40" style="width:100%;margin-bottom:9px;font-size:1.05rem;letter-spacing:.06em;text-align:center;font-weight:700;text-transform:uppercase">
