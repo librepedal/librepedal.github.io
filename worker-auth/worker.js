@@ -270,6 +270,36 @@ export default {
         return json({ error: 'código incorrecto' }, 401);
       }
 
+      // SEGURIDAD CRÍTICA (auditoría 2026-10-17, confirmada contra el código real): CODIGO_TESTER
+      // es UN SOLO código compartido a todo el grupo -- antes de este cambio, con el código + el
+      // correo de CUALQUIER tester real (de la lista TESTERS_PERMITIDOS) se emitía un token válido
+      // COMO esa persona, sin pedirle NINGUNA prueba de ser ella (ni idToken, ni contraseña, ni
+      // link al correo). Línea 273 (antes de este cambio) solo validaba que el correo estuviera en
+      // la lista -- esa lista ES precisamente la de las víctimas posibles. El código del evento
+      // tenía la misma falla en un caso más angosto: una vez que alguien "fichaba" un correo con
+      // el código del evento (marca en KV), podía seguir entrando con ese código PARA SIEMPRE,
+      // incluso después de que la persona real se registrara de verdad con Google (que no revisa
+      // si el correo ya fue "fichado" -- ver comentario de la línea ~325).
+      //
+      // Fix: una cuenta que alguna vez probó ser su dueña de verdad (Google o el enlace mágico --
+      // el único camino que de verdad verifica el correo, ver verificarIdToken) queda marcada
+      // 'verificado:<cu>' en KV (se pone más abajo, justo después de derivar `cu` en ese camino).
+      // Desde ese momento, NINGÚN código compartido (tester ni evento) vuelve a servir para esa
+      // cuenta -- tiene que entrar por la vía verificada, siempre. Cero cambio de comportamiento
+      // para quien todavía no hizo nunca un login verificado (sigue exactamente como hoy); la
+      // protección se activa sola, cuenta por cuenta, a medida que cada persona entra de verdad
+      // por primera vez. FALLA CERRADA a propósito (como el resto de los chequeos de impersonación
+      // de este archivo): si no se puede comprobar KV, no se arriesga a dejar pasar una suplantación.
+      if (!esAdmin && (esCodigoTester || esCodigoEvento)) {
+        if (!env.RATE_LIMIT_AUTH) return json({ error: 'el ingreso por código no está disponible ahora' }, 503);
+        let verificado;
+        try { verificado = await env.RATE_LIMIT_AUTH.get('verificado:' + cuDeEmail(email)); }
+        catch (e) { return json({ error: 'no se pudo comprobar la cuenta, intenta de nuevo' }, 503); }
+        if (verificado) {
+          return json({ error: 'esa cuenta ya inició sesión antes con Google o el enlace del correo -- entra por ahí, el código ya no sirve para ella' }, 403);
+        }
+      }
+
       if (esCodigoTester && permitidos.indexOf(email) === -1) {
         return json({ error: 'ese correo no está en la lista de testers de la prueba cerrada' }, 403);
       }
@@ -325,6 +355,11 @@ export default {
     // App abierta (2026-10-08): el idToken ya prueba QUIÉN es (firma de Google, correo
     // verificado), así que entra cualquier cuenta. Antes además se exigía estar en
     // TESTERS_PERMITIDOS (prueba cerrada); Inty pidió abrirla a cualquier usuario.
+
+    // Marca esta cuenta como verificada de verdad (ver el chequeo 'verificado:' más arriba,
+    // en la entrada por código) -- de ahora en más, ningún código compartido sirve para ella.
+    // Best-effort: si KV falla, no debe cortar un login real ya probado por Google/el correo.
+    try { if (env.RATE_LIMIT_AUTH) await env.RATE_LIMIT_AUTH.put('verificado:' + cu, String(Date.now())); } catch (e) {}
 
     if (!env.FIREBASE_PRIVATE_KEY_B64 || !env.FIREBASE_CLIENT_EMAIL) {
       // Deploy de staging sin la llave de firma: confirma la verificación pero no emite token.
