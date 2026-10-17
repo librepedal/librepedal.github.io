@@ -75,6 +75,8 @@ const CORE = [
   './sobrevuelo-3d.js',
   './abanico-reporte.js',
   './prevuelo-intro-pistero.js',
+  './bienvenida-huella.js',
+  './pioneros.js',
   './recomendacion-rutas.js',
   './rutas-recomendadas.js',
   './navegar-gpx.js',
