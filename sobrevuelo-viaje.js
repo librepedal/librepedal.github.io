@@ -326,6 +326,13 @@ function _ofrecerSobrevueloFin(coords, modo, localId){
     var o=_sbvOverlay();
     var tit=document.getElementById('lpSbvTitulo'); if(tit) tit.textContent='¿Ver el sobrevuelo de tu viaje?';
     o.style.display='block';
+    // Bug real confirmado en dispositivo (2026-10-17): el orbe fijo de Pistero (#micBtn,
+    // motor-navegacion.js) solo revisa si tapa un botón real al hacer scroll/resize -- esta
+    // hoja aparece sin ninguno de los dos eventos, así que "Ver sobrevuelo"/"Guardar
+    // ruta"/"Descartar" quedaban completamente intocables (probado: ningún punto del área
+    // de los 3 botones respondía al toque). Un resize sintético reusa el mismo chequeo que
+    // ya existe para este tipo exacto de solapamiento, sin tocar su lógica.
+    try{ window.dispatchEvent(new Event('resize')); }catch(e){}
     document.getElementById('lpSbvVer').onclick=function(){
       o.style.display='none';
       var deSiempre=function(){ if(typeof cv==='function') cv('map'); _sbvConPegada(localId,coords,function(c){ setTimeout(function(){ reproducirSobrevuelo(c, modo, function(){ o.style.display='block'; }); },320); }); };
