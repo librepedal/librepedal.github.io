@@ -219,7 +219,7 @@ async function cerrarSesion(){ if(ulp){ulp();ulp=null;} if(await lpConfirmar("¿
 function toggleGhost(){ ghostMode=!ghostMode; localStorage.setItem('lp_ghost_'+cu,ghostMode); updateGhostButton(); if(ghostMode){ if(ulp){ulp();ulp=null;} db.collection('users').doc(cu).set({visible:false,lat:null,lon:null},{merge:true}); _rtdOcultarPosicion(); h("Modo fantasma activado. Nadie te ve."); } else { subscribeToUsers(); h("Modo fantasma desactivado. Vuelves al mapa."); } }
 // Ahora vive dentro del menú de la ficha de usuario: sin fondo de píldora, el estado
 // se marca con el cian de Pistero cuando está activo.
-function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerText='👻 Modo fantasma: '+(ghostMode?'ON':'OFF'); btn.style.color=ghostMode?'#12b3a6':''; }
+function updateGhostButton(){ const btn=document.getElementById('ghostBtn'); if(!btn) return; btn.innerHTML='<i class="fas fa-ghost"></i> Modo fantasma: '+(ghostMode?'ON':'OFF'); btn.style.color=ghostMode?'#12b3a6':''; const b2=document.getElementById('ghostBtnAjustes'); if(b2) b2.innerHTML='<i class="fas fa-ghost"></i> Modo fantasma: '+(ghostMode?'ON':'OFF'); }
 function toggleUserMenu(e){ if(e&&e.stopPropagation) e.stopPropagation(); const m=document.getElementById('uMenu'); if(m) m.classList.toggle('on'); }
 function cerrarUserMenu(){ const m=document.getElementById('uMenu'); if(m) m.classList.remove('on'); }
 document.addEventListener('click', function(e){ if(!e.target.closest || !e.target.closest('.uchip-wrap')) cerrarUserMenu(); });
