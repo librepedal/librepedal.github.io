@@ -25,8 +25,16 @@ function bloque(desde) {
   console.log('  FALLA: no pude balancear -> ' + desde); process.exit(1);
 }
 
-const SRC = 'var _logrosDelViaje=[], _kmEsteViaje=0, tripStartTime=0;\n'
+// LECCIONES_VIAJE es un array literal (no un bloque {}): bloque() balancea llaves, así
+// que no sirve para extraerlo tal cual (encontraría el primer {t:'...'} del array, no el
+// array entero). _siguienteLeccionViaje() sí es extraíble y es lo que de verdad hay que
+// probar (el mecanismo de avance/persistencia); se le da un array de prueba propio.
+const SRC = 'var _logrosDelViaje=[], _kmEsteViaje=0, tripStartTime=0, cu=null;\n'
+  + 'var LECCIONES_VIAJE=[{t:"lección de prueba uno"},{t:"lección de prueba dos"}];\n'
+  + 'var _lsMem={};\n'
+  + 'var localStorage={ getItem:function(k){ return Object.prototype.hasOwnProperty.call(_lsMem,k)?_lsMem[k]:null; }, setItem:function(k,v){ _lsMem[k]=String(v); } };\n'
   + 'function escapeHTML(s){ return String(s).replace(/[&<>"\']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",\'"\':"&quot;","\'":"&#39;"}[c]; }); }\n'
+  + bloque('function _siguienteLeccionViaje()')
   + bloque('function _mostrarResumenViaje()');
 
 function montarDOM() {
@@ -55,7 +63,7 @@ const debe = (nombre, cond) => { if (cond) ok++; else { fail++; console.log('  F
 
 function correr(setup) {
   const { document, modal, rvContenido } = montarDOM();
-  const ctx = { document, requestAnimationFrame: (fn) => fn(), console, Math, Date };
+  const ctx = { document, requestAnimationFrame: (fn) => fn(), setTimeout: (fn) => fn(), console, Math, Date };
   vm.createContext(ctx);
   vm.runInContext(SRC, ctx);
   if (setup) setup(ctx);
@@ -115,6 +123,28 @@ function correr(setup) {
   });
   debe('vacía _logrosDelViaje después de mostrar el resumen', ctx._logrosDelViaje.length === 0);
   debe('vacía _kmEsteViaje después de mostrar el resumen', ctx._kmEsteViaje === 0);
+}
+
+// Lecciones progresivas (pedido de Inty, 2026-10-17): una función nueva por viaje, nunca
+// repetida, y solo si hay cuenta (cu). Reusa el mismo ctx entre llamadas para probar que
+// SÍ avanza de una lección a la siguiente (localStorage persiste dentro del mismo VM).
+{
+  const { ctx, rvContenido } = correr((c) => { c.cu = 'tester1'; c._kmEsteViaje = 5; c.tripStartTime = Date.now() - 10 * 60000; c._logrosDelViaje = []; });
+  debe('primer viaje con cuenta: muestra la lección 1', /lección de prueba uno/.test(rvContenido.innerHTML));
+
+  ctx._kmEsteViaje = 6; ctx.tripStartTime = Date.now() - 10 * 60000; ctx._logrosDelViaje = [];
+  ctx._mostrarResumenViaje();
+  debe('segundo viaje, misma cuenta: avanza a la lección 2 (no repite la 1)', /lección de prueba dos/.test(rvContenido.innerHTML) && !/lección de prueba uno/.test(rvContenido.innerHTML));
+
+  ctx._kmEsteViaje = 7; ctx.tripStartTime = Date.now() - 10 * 60000; ctx._logrosDelViaje = [];
+  ctx._mostrarResumenViaje();
+  debe('tercer viaje, ya sin lecciones: no revienta ni repite nada', !/lección de prueba/.test(rvContenido.innerHTML));
+}
+
+// Sin cuenta (cu=null, ej. antes de iniciar sesión): nunca debería intentar mostrar una lección.
+{
+  const { rvContenido } = correr((c) => { c.cu = null; c._kmEsteViaje = 5; c.tripStartTime = Date.now() - 10 * 60000; c._logrosDelViaje = []; });
+  debe('sin cuenta: no se muestra ninguna lección', !/lección de prueba/.test(rvContenido.innerHTML));
 }
 
 console.log(`\n${ok} ok, ${fail} fallas — resumen-viaje.test.mjs`);
