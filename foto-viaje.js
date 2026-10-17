@@ -245,6 +245,17 @@ function _fvTarjetaMapa(ctx, mapa, puntos, x, y, w, h, radio, grosor){
   _fvRedondo(ctx, x, y, w, h, radio); ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.lineWidth = 3; ctx.stroke();
   if(mapa && mapa.img) _fvTexto(ctx, '© OpenStreetMap', x + w - 16, y + h - 14, '500 16px ' + FV_TXT, 'rgba(255,255,255,.6)', 'right');
 }
+// "ALTURA MÁX.  203 m": etiqueta como las de las cifras (Barlow 22, espaciada) + valor en Barlow Condensed blanco.
+function _fvMarcaAltura(ctx, etiqueta, valor, x, y, lado){
+  var fEt = '600 22px ' + FV_TXT, fVal = '700 34px ' + FV_DISP, fU = '700 22px ' + FV_DISP, sp = 2.5, hueco = 12;
+  ctx.font = fEt; var anchoEt = 0; for(var i = 0; i < etiqueta.length; i++) anchoEt += ctx.measureText(etiqueta[i]).width + sp;
+  ctx.font = fVal; var v = String(valor), anchoV = ctx.measureText(v).width;
+  ctx.font = fU; var anchoU = ctx.measureText('m').width;
+  var total = anchoEt + hueco + anchoV + 6 + anchoU, x0 = lado === 'right' ? x - total : x;
+  _fvEspaciado(ctx, etiqueta, x0, y, fEt, 'rgba(255,255,255,.72)', sp);
+  _fvTexto(ctx, v, x0 + anchoEt + hueco, y + 2, fVal, '#fff');
+  _fvTexto(ctx, 'm', x0 + anchoEt + hueco + anchoV + 6, y + 2, fU, FV_NAR);
+}
 // Altimetría: área con degradado naranja, línea, máx. arriba a la derecha y mín. abajo a la izquierda.
 function _fvAltimetria(ctx, perfil, x, y, w, h){
   var P = perfil.perfil, dt = P[P.length - 1].dist || 1, mn = perfil.altMin, mx = perfil.altMax, span = Math.max(1, mx - mn);
@@ -253,8 +264,10 @@ function _fvAltimetria(ctx, perfil, x, y, w, h){
   var gp = ctx.createLinearGradient(0, y, 0, y + h); gp.addColorStop(0, 'rgba(252,76,2,.55)'); gp.addColorStop(1, 'rgba(252,76,2,0)'); ctx.fillStyle = gp; ctx.fill();
   ctx.beginPath(); P.forEach(function(p, i){ i ? ctx.lineTo(X(p), Y(p)) : ctx.moveTo(X(p), Y(p)); });
   ctx.strokeStyle = FV_NAR; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.stroke();
-  _fvTexto(ctx, 'máx. ' + mx + ' m', x + w, y - 12, '600 21px ' + FV_TXT, 'rgba(255,255,255,.6)', 'right');
-  _fvTexto(ctx, 'mín. ' + mn + ' m', x, y + h + 32, '600 21px ' + FV_TXT, 'rgba(255,255,255,.6)', 'left');
+  // Mismo lenguaje que las cifras de arriba (Inty, 2026-10-16: "el máx. 203 m se ve distinto a lo demás"):
+  // la etiqueta en mayúsculas espaciadas como DISTANCIA, y el valor en la tipografía de los números.
+  _fvMarcaAltura(ctx, 'ALTURA MÁX.', mx, x + w, y - 14, 'right');
+  _fvMarcaAltura(ctx, 'ALTURA MÍN.', mn, x, y + h + 40, 'left');
 }
 // Bloque de datos: nombre, fecha, cifras y altimetría. Devuelve nada; dibuja desde `top`.
 function _fvBloque(ctx, o, W, top, post){

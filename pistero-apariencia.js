@@ -68,6 +68,9 @@ function _setExprPistero(expr){
   _pintarMiPistero();
   _pisteroExprActual=expr;
   var svg=(typeof _pistOpts==='function')?_pisteroExprSVG(expr, _pistCascoCol(), _pistPielCol(), _pistOpts().lentes, _pistOpts().bigote, _pistOpts().acc, _pistOpts()):_pisteroExprSVG(expr);
+  // 2026-10-16: con otro modelo elegido (Elige tu Pistero), el botón de Pistero lo muestra a él; sin esto el
+  // botón grande de Inicio seguía siendo el Clásico mientras el chip y la barra ya mostraban el elegido.
+  try{ if(typeof _pistAvatar==='function' && typeof epMiModelo==='function' && epMiModelo()!=='clasico') svg=_pistAvatar(_pistOpts(), expr); }catch(e){}
   var ids=['micBtn','esMic'];
   for(var i=0;i<ids.length;i++){ var b=document.getElementById(ids[i]); if(!b) continue; var c=b.querySelector('.orb-cara'); if(c) c.innerHTML=svg; }
   _aplicarMirada();

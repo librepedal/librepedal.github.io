@@ -929,7 +929,9 @@ body[data-vista="pistero"] #micBtn,body[data-vista="customize"] #micBtn{display:
    duplicaba lo que Pistero decía y tapaba el mapa. Ahora es una FRANJA FINA tipo subtítulo,
    centrada abajo: transcripción en vivo + respuesta, sin ruido. pointer-events:none deja
    tocar los FAB que quedan debajo. */
-#pisteroBubble{position:fixed;bottom:76px;left:12px;right:12px;max-width:560px;margin:0 auto;background:rgba(10,15,29,0.9);border:0.5px solid rgba(255,255,255,0.12);border-left:2px solid var(--p);color:#eaf1ff;padding:8px 13px;border-radius:10px;font-size:0.8rem;font-weight:600;z-index:2100;opacity:0;transform:translateY(6px);transition:0.22s;pointer-events:none;line-height:1.3;text-align:left;box-shadow:0 4px 16px rgba(0,0,0,0.42);backdrop-filter:blur(4px)}
+/* 2026-10-16: el aviso va ARRIBA del botón de Pistero (#micBtn: bottom 78px, 80px de alto). En bottom:76px
+   el botón tapaba el medio del texto (visto en la prueba en teléfono: "Recuperé 196 kilómetros..."). */
+#pisteroBubble{position:fixed;bottom:calc(166px + env(safe-area-inset-bottom,0px));left:12px;right:12px;max-width:560px;margin:0 auto;background:rgba(10,15,29,0.9);border:0.5px solid rgba(255,255,255,0.12);border-left:2px solid var(--p);color:#eaf1ff;padding:8px 13px;border-radius:10px;font-size:0.8rem;font-weight:600;z-index:2100;opacity:0;transform:translateY(6px);transition:0.22s;pointer-events:none;line-height:1.3;text-align:left;box-shadow:0 4px 16px rgba(0,0,0,0.42);backdrop-filter:blur(4px)}
 #pisteroBubble.show{opacity:1;transform:translateY(0)}
 #tutorialOverlay{position:fixed;inset:0;z-index:7000;display:none;pointer-events:none}
 #tutorialOverlay.on{display:block}

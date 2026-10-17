@@ -72,7 +72,7 @@ ok('MapLibre se carga con verificación de integridad', /FV_ML_SRI = 'sha384-/.t
 ok('sin señal: la tarjeta cae al trazo solo (nunca queda vacía, tope 25 s)', /_fvEncajar\(puntos/.test(src) && /setTimeout\(function\(\)\{ fin\(null\); \}, 25000\)/.test(src));
 ok('la foto se recorta a su zona (no se mete bajo los datos)', /ctx\.rect\(0, 0, W, H\); ctx\.clip\(\);/.test(src));
 ok('la foto es opcional: "Quitar la foto" la quita', /Quitar la foto/.test(src) && lee('estilos.css').includes('.fv-pill[hidden]{display:none}') && /_fv\.foto = null/.test(src));
-ok('altimetría con máx. y mín.', /'máx\. ' \+ mx/.test(src) && /'mín\. ' \+ mn/.test(src));
+ok('altimetría con máx. y mín. en el mismo estilo que las cifras', /_fvMarcaAltura\(ctx, 'ALTURA MÁX\.', mx/.test(src) && /_fvMarcaAltura\(ctx, 'ALTURA MÍN\.', mn/.test(src));
 const rutas = lee('rutas.js');
 ok('Mis rutas: Compartir abre la hoja (foto, sobrevuelo, mensaje)', /onclick="fvHojaCompartir\(/.test(rutas) && /data-a="foto"/.test(src) && /data-a="vuelo"/.test(src) && /data-a="texto"/.test(src));
 ok('el GPX conserva su propio botón (compartir es compartir)', !/data-a="gpx"/.test(src) && /title="Descargar GPX \(llevar tu ruta a otra app\)"/.test(rutas));

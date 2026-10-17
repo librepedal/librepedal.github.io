@@ -45,6 +45,7 @@ ok('después de la bienvenida, antes del saludo', /epIniciar\(function\(\)\{ _se
 
 console.log('\nEN TODA LA APP:');
 ok('chip, barra y "Pregúntale a Pistero" usan el modelo', /_pistAvatar\(o,'feliz'\)/.test(lee('pistero-apariencia.js')));
+ok('el botón de Pistero (micrófono de Inicio y de la esfera) también', /epMiModelo\(\)!=='clasico'\) svg=_pistAvatar\(_pistOpts\(\), expr\)/.test(lee('pistero-apariencia.js')));
 ok('ranking y perfil de otros', /_pistAvatar\(\(d\.pistOpts/.test(lee('gamificacion-ranking.js')));
 ok('_pistNormal solo deja modelos de la prueba', /indexOf\(r\.modelo\)<0\) r\.modelo='clasico'/.test(lee('pistero-armario.js')));
 const html = lee('index.html');

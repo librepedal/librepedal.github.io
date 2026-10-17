@@ -146,9 +146,9 @@ function _mostrarResumenViaje(){
   }).join('');
   var html=''
     +'<div class="rv-stats">'
-    +'<div class="rv-stat"><b>'+kmViaje.toFixed(2)+'</b><span>km</span></div>'
+    +'<div class="rv-stat"><b>'+kmViaje.toFixed(kmViaje>=100?0:1).replace('.',',')+'</b><span>km</span></div>'
     +'<div class="rv-stat"><b>'+minutos+'</b><span>min</span></div>'
-    +'<div class="rv-stat"><b>'+velMedia.toFixed(1)+'</b><span>km/h en movimiento</span></div>'
+    +'<div class="rv-stat"><b>'+velMedia.toFixed(1).replace('.',',')+'</b><span>km/h en movimiento</span></div>'
     +'</div>'
     +(kmViaje>=0.05?'<button type="button" class="fv-btn fv-pri" style="margin:12px 0 4px" onclick="fvDesdeResumen()"><i class="fas fa-camera"></i> Foto del viaje para compartir</button>':'')
     +(logros.length?('<h4 class="rv-titulo-logros">¡'+logros.length+' logro'+(logros.length>1?'s':'')+' nuevo'+(logros.length>1?'s':'')+'!</h4><div class="rv-medallas">'+medallasHTML+'</div>'):'');
