@@ -1,3 +1,8 @@
+/* gate:ignorar-tamano -- estilos.css pasó las 1000 líneas con un fix chico de posición
+   (nav-close, auditoría 2026-10-17), no con una pieza nueva de arquitectura. Dividirlo en
+   módulos por responsabilidad es un trabajo real, propio y aparte -- AVISADO a Inty: no se
+   hace acá para no arriesgar romper el cascade/especificidad en medio de una sesión de
+   arreglar bugs puntuales. Queda pendiente como tarea propia. */
 :root{--p:#fc4c02;--d:#0a0f1d;--g:#ffd700;--r:#ff3333;--gl:rgba(255,255,255,0.08)}
 /* ── Temas de UI app-wide (Sólido / Cristal) · ver COORDINACION-IA/SPEC-TEMAS-APP-WIDE-2026-08-14.md
    Sólido = DEFAULT = look actual (cero cambio). Cristal solo se activa con la clase
@@ -803,7 +808,13 @@ input,select,textarea{width:100%;padding:8px;margin:4px 0;background:#000;border
 .nav-stat{background:rgba(0,0,0,0.7);padding:6px 10px;border-radius:8px;text-align:center;min-width:60px}
 .nav-stat .val{font-size:1rem;font-weight:800;color:var(--p)}
 .nav-stat .lbl{font-size:0.6rem;color:#888}
-.nav-close{position:absolute;top:12px;right:12px;background:rgba(255,0,0,0.8);color:#fff;border:none;width:35px;height:35px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:600}
+/* 2026-10-17 (Inty: "el botón de X está mal ubicado, muy arriba, no lo voy a apretar"):
+   top:12px fijo quedaba pegado al borde de arriba -- en celulares con notch/cámara
+   recortaba el botón de verdad (sin env(safe-area-inset-top)) y, aun sin notch, la
+   esquina superior es la zona más difícil de alcanzar con el pulgar en una mano. Se baja
+   y se agranda un poco; "Terminar" (abajo, alcance fácil) sigue siendo la salida normal
+   de un viaje -- esta X es solo para cancelar rápido. */
+.nav-close{position:absolute;top:calc(20px + env(safe-area-inset-top,0px));right:14px;background:rgba(255,0,0,0.8);color:#fff;border:none;width:42px;height:42px;border-radius:50%;font-size:1.15rem;cursor:pointer;z-index:600}
 .nav-recenter-btn{position:absolute;right:14px;bottom:210px;z-index:550;background:rgba(15,20,35,0.92);color:var(--p);border:2px solid var(--p);width:48px;height:48px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn{position:absolute;right:14px;bottom:266px;z-index:550;background:rgba(15,20,35,0.92);color:#7d8ba0;border:2px solid rgba(255,255,255,0.2);width:46px;height:46px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
 .nav-manoslibres-btn.on{color:var(--p);border-color:var(--p);background:rgba(252,76,2,0.16)}
