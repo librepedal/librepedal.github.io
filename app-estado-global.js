@@ -53,7 +53,7 @@ let frasesUsadas = {lento:[], normal:[], rapido:[], parado:[], motivacional:[], 
 let pisteroCharla = (function(){ try{ return localStorage.getItem('lp_charla')||'normal'; }catch(e){ return 'normal'; } })();
 function _charlaMult(){ return pisteroCharla==='callado' ? 2.6 : pisteroCharla==='hablador' ? 0.55 : 1; }
 function _charlaLabel(){ return pisteroCharla==='callado'?'Callado':pisteroCharla==='hablador'?'Hablador':'Normal'; }
-function updateCharlaBtn(){ var b=document.getElementById('btnCharla'); if(b) b.innerHTML='🗣️ Pistero habla: '+_charlaLabel(); }
+function updateCharlaBtn(){ var b=document.getElementById('btnCharla'); if(b) b.innerHTML='<i class="fas fa-comment-dots"></i> Pistero habla: '+_charlaLabel(); }
 function toggleCharla(){
   pisteroCharla = pisteroCharla==='normal' ? 'hablador' : pisteroCharla==='hablador' ? 'callado' : 'normal';
   try{ localStorage.setItem('lp_charla', pisteroCharla); }catch(e){}
