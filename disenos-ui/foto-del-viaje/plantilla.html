@@ -1,0 +1,375 @@
+<title>Maqueta Foto del Viaje</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Maqueta para aprobar: arriba los 3 diseños de la imagen en tamaño de teléfono (se puede subir una foto propia),
+   abajo dónde vive cada botón en la app. Look único: el de Libre Pedal (azul noche + naranja), no sigue el tema del visor. */
+:root{
+  --noche:#0a0f1d; --sup:#121a2d; --sup2:#0e1526; --borde:rgba(159,179,200,.16);
+  --naranja:#fc4c02; --naranja2:#ff6a1f; --tx:#e8eeff; --sub:#9fb3c8; --tenue:#6f7f98; --ok:#3ddc84;
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-txt:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--noche);color:var(--tx);font-family:var(--f-txt);font-size:16px;line-height:1.55;margin:0;padding-inline:16px;padding-block:28px 72px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:44px}
+h1,h2,h3{font-family:var(--f-disp);margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:clamp(2.2rem,6vw,3.4rem);line-height:.98;font-weight:800}
+h1 em{font-style:normal;color:var(--naranja)}
+h2{font-size:1.75rem;font-weight:700;line-height:1.1}
+h3{font-size:1.2rem;font-weight:700}
+p{margin:0;max-width:68ch}
+.sub{color:var(--sub)}
+.eyebrow{font-family:var(--f-disp);font-weight:600;font-size:.86rem;letter-spacing:.16em;text-transform:uppercase;color:var(--naranja)}
+header{display:grid;gap:12px}
+.ref{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start;border:1px solid var(--borde);background:var(--sup2);border-radius:16px;padding:16px 18px;max-width:820px}
+.ref b{font-family:var(--f-disp);font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+.ref p{font-size:.95rem}
+.ref a{color:var(--naranja2)}
+
+/* ---------- estudio de diseños ---------- */
+.estudio{display:grid;gap:18px}
+.barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:9px;min-height:46px;padding:0 20px;border-radius:13px;font-weight:700;font-size:.95rem;color:#16090a;background:linear-gradient(180deg,var(--naranja2),var(--naranja));box-shadow:0 6px 18px rgba(252,76,2,.28)}
+.btn.sec{background:var(--sup);color:var(--tx);border:1px solid var(--borde);box-shadow:none}
+.btn:focus-visible,.seg button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.btn svg{width:18px;height:18px;flex:none}
+.seg{display:inline-flex;background:var(--sup);border:1px solid var(--borde);border-radius:12px;padding:3px}
+.seg button{all:unset;cursor:pointer;padding:9px 14px;border-radius:9px;font-weight:600;font-size:.88rem;color:var(--sub)}
+.seg button[aria-pressed="true"]{background:var(--noche);color:var(--tx);box-shadow:0 0 0 1px var(--borde)}
+.nota-foto{font-size:.84rem;color:var(--tenue)}
+.disenos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.diseno{display:grid;gap:12px;align-content:start}
+.lienzo{position:relative;border-radius:22px;overflow:hidden;background:#000;box-shadow:0 22px 50px rgba(0,0,0,.55);border:1px solid var(--borde)}
+.lienzo canvas{display:block;width:100%;height:auto}
+.diseno h3{display:flex;align-items:baseline;gap:10px}
+.diseno h3 span{font-family:var(--f-txt);font-size:.78rem;font-weight:600;color:var(--tenue);letter-spacing:.08em;text-transform:uppercase}
+.diseno p{font-size:.92rem;color:var(--sub)}
+.diseno h3 .recomendado,.recomendado{display:inline-block;font-family:var(--f-disp);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:#16090a;background:var(--naranja);border-radius:6px;padding:2px 8px;font-weight:700}
+
+/* ---------- dónde van los botones ---------- */
+.ubicacion{display:grid;gap:20px}
+.telefonos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.tel{border-radius:34px;border:9px solid #1b2233;background:var(--noche);overflow:hidden;aspect-ratio:9/17;max-width:100%;position:relative;display:flex;flex-direction:column;font-size:13px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.tel-cap{display:grid;gap:4px}
+.tel-cap b{font-family:var(--f-disp);font-size:1.1rem}
+.tel-cap span{font-size:.9rem;color:var(--sub)}
+.hdr{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #1f2738;font-weight:700}
+.hdr svg{width:18px;height:18px;color:var(--sub)}
+.cont{flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.item{background:var(--sup);border:1px solid var(--borde);border-radius:14px;padding:10px 12px;display:grid;gap:8px}
+.item b{font-size:.92rem}
+.item small{color:var(--sub);font-size:.74rem}
+.iconos{display:flex;gap:6px;flex-wrap:wrap}
+.iconos i{width:30px;height:30px;border-radius:9px;background:var(--sup2);border:1px solid var(--borde);display:grid;place-items:center}
+.iconos i svg{width:15px;height:15px;color:var(--sub)}
+.iconos i.mal{outline:2px dashed rgba(255,90,90,.55);outline-offset:1px}
+.fila2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pbtn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:38px;border-radius:11px;font-weight:700;font-size:.8rem;background:var(--sup2);border:1px solid var(--borde);color:var(--tx)}
+.pbtn.pri{background:var(--naranja);border-color:var(--naranja);color:#16090a}
+.pbtn svg{width:15px;height:15px}
+.hoja{position:absolute;left:0;right:0;bottom:0;background:#141c30;border-radius:20px 20px 0 0;border-top:1px solid var(--borde);padding:10px 14px 16px;display:grid;gap:6px;box-shadow:0 -20px 40px rgba(0,0,0,.45)}
+.hoja .asa{width:40px;height:4px;border-radius:2px;background:#3a4560;margin:0 auto 6px}
+.op{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:center;padding:8px 6px;border-radius:12px}
+.op.dest{background:rgba(252,76,2,.12);border:1px solid rgba(252,76,2,.4)}
+.op .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--sup2);border:1px solid var(--borde)}
+.op .ic svg{width:18px;height:18px;color:var(--naranja2)}
+.op b{font-size:.86rem;display:block}
+.op small{font-size:.72rem;color:var(--sub)}
+.velo{position:absolute;inset:0;background:rgba(5,8,16,.55)}
+.edit-prev{flex:1;min-height:0;margin:10px 12px 0;border-radius:14px;overflow:hidden;position:relative;background:#000}
+.edit-prev img{width:100%;height:100%;object-fit:cover;display:block}
+.pill{position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:6px;background:rgba(10,15,29,.78);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 11px;font-size:.74rem;font-weight:700;backdrop-filter:blur(6px)}
+.pill svg{width:14px;height:14px}
+.minis{display:flex;gap:8px;padding:10px 12px 0}
+.minis span{flex:1;aspect-ratio:9/16;border-radius:8px;overflow:hidden;border:2px solid transparent;background:#000}
+.minis span.on{border-color:var(--naranja)}
+.minis img{width:100%;height:100%;object-fit:cover;display:block}
+.acciones{display:grid;grid-template-columns:1fr 1.6fr;gap:8px;padding:10px 12px 14px}
+
+.decisiones{border-top:1px solid var(--borde);padding-top:22px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 30px}
+.decisiones div{display:grid;gap:4px}
+.decisiones b{font-family:var(--f-disp);font-size:1.1rem}
+.decisiones p{font-size:.93rem;color:var(--sub)}
+.pie{font-size:.8rem;color:var(--tenue)}
+@media (max-width:900px){ .disenos,.telefonos{grid-template-columns:minmax(0,1fr)} .diseno,.tel-bloque{max-width:420px;width:100%;justify-self:center} .decisiones{grid-template-columns:minmax(0,1fr)} }
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+</style>
+
+<main class="wrap">
+  <header>
+    <div class="eyebrow">Libre Pedal · maqueta para aprobar · foto del viaje</div>
+    <h1>Tu foto, tu ruta <em>y tus números</em></h1>
+    <p class="sub">Tres diseños para la imagen que se comparte al terminar un viaje. Ruta real de ejemplo: Futrono → Llifén, 19,5 km, +430 m. Sube una foto tuya del viaje para verlos con ella; nada sale de tu teléfono.</p>
+    <div class="ref">
+      <b>Referencia</b>
+      <p>Strava (2025) comparte un "sticker" transparente: trazo de la ruta, distancia, desnivel y tiempo, y su logo, encima de tu foto (<a href="https://www.bikeradar.com/news/strava-sticker-stats-spring-2025-updates" target="_blank" rel="noopener">BikeRadar</a>). Lo adoptamos (diseño 1) y lo superamos con un mapa real con relieve de la zona (diseños 2 y 3), que Strava no ofrece.</p>
+    </div>
+  </header>
+
+  <section class="estudio" aria-labelledby="t-est">
+    <div class="barra">
+      <h2 id="t-est">Los tres diseños</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <div class="seg" role="group" aria-label="Formato">
+          <button type="button" id="fmt-historia" aria-pressed="true">Historia 9:16</button>
+          <button type="button" id="fmt-post" aria-pressed="false">Publicación 4:5</button>
+        </div>
+        <label class="btn" for="foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>Probar con mi foto</label>
+        <input type="file" id="foto" accept="image/*" hidden>
+      </div>
+    </div>
+    <p class="nota-foto" id="nota-foto">Fondo de ejemplo: vista aérea del Lago Ranco (imagen satelital Esri y relieve). Con tu foto se ve como quedará de verdad.</p>
+    <div class="disenos">
+      <div class="diseno">
+        <div class="lienzo"><canvas id="c1" aria-label="Diseño 1, sticker"></canvas></div>
+        <h3>Sticker <span>como Strava</span></h3>
+        <p>El trazo de la ruta y tres números, sin cajas. La foto manda. Es el formato que la gente ya conoce de Strava.</p>
+      </div>
+      <div class="diseno">
+        <div class="lienzo"><canvas id="c2" aria-label="Diseño 2, mapa pequeño"></canvas></div>
+        <h3>Mapa pequeño <span class="recomendado">Recomendado</span></h3>
+        <p>Una tarjeta con el mapa real de la zona, con relieve, y la ruta encima. Lo que pediste: "sale como un mapa pequeño".</p>
+      </div>
+      <div class="diseno">
+        <div class="lienzo"><canvas id="c3" aria-label="Diseño 3, postal"></canvas></div>
+        <h3>Postal <span>foto + mapa + perfil</span></h3>
+        <p>La foto arriba y abajo el mapa panorámico con el perfil de subidas y bajadas. La más completa, para una salida que vale la pena contar.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="ubicacion" aria-labelledby="t-ubi">
+    <h2 id="t-ubi">Dónde va cada botón</h2>
+    <p class="sub">Hoy cada ruta guardada tiene 9 íconos seguidos y la cámara quedó perdida entre ellos. Propuesta: un solo botón "Compartir" que abre una hoja con las opciones, y la foto como opción principal. Al terminar un viaje, la foto es el botón principal del resumen.</p>
+    <div class="telefonos">
+      <div class="tel-bloque" style="display:grid;gap:10px">
+        <div class="tel" aria-label="Hoy: Mis rutas con 9 íconos">
+          <div class="hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Mis rutas</div>
+          <div class="cont">
+            <div class="item"><b>Futrono → Llifén</b><small>12 oct · 19,5 km · en la nube</small>
+              <div class="iconos">{{ICONOS_HOY}}</div></div>
+            <div class="item" style="opacity:.55"><b>Llifén → Huequecura</b><small>11 oct · 24,1 km</small><div class="iconos">{{ICONOS_HOY}}</div></div>
+          </div>
+        </div>
+        <div class="tel-cap"><b>Hoy</b><span>9 botones del mismo tamaño: no se sabe cuál es el importante.</span></div>
+      </div>
+      <div class="tel-bloque" style="display:grid;gap:10px">
+        <div class="tel" aria-label="Propuesta: Mis rutas con hoja de compartir">
+          <div class="hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Mis rutas</div>
+          <div class="cont">
+            <div class="item"><b>Futrono → Llifén</b><small>12 oct · 19,5 km · +430 m</small>
+              <div class="fila2"><span class="pbtn">{{IC_VER}}Ver en el mapa</span><span class="pbtn pri">{{IC_COMP}}Compartir</span></div></div>
+            <div class="item" style="opacity:.55"><b>Llifén → Huequecura</b><small>11 oct · 24,1 km</small><div class="fila2"><span class="pbtn">{{IC_VER}}Ver en el mapa</span><span class="pbtn">{{IC_COMP}}Compartir</span></div></div>
+          </div>
+          <div class="velo"></div>
+          <div class="hoja">
+            <div class="asa"></div>
+            <div class="op dest"><span class="ic">{{IC_FOTO}}</span><span><b>Foto del viaje</b><small>Tu foto con el mapa y los datos</small></span></div>
+            <div class="op"><span class="ic">{{IC_VUELO}}</span><span><b>Video del sobrevuelo</b><small>Tu ruta en 3D, vertical</small></span></div>
+            <div class="op"><span class="ic">{{IC_TXT}}</span><span><b>Enviar por mensaje</b><small>Texto con los km y el link</small></span></div>
+            <div class="op"><span class="ic">{{IC_GPX}}</span><span><b>Descargar GPX</b><small>Para llevarla a otra app</small></span></div>
+          </div>
+        </div>
+        <div class="tel-cap"><b>Propuesta: Mis rutas</b><span>Dos botones por ruta. "Compartir" abre la hoja; navegar, perfil, segmento y borrar quedan al abrir la ruta.</span></div>
+      </div>
+      <div class="tel-bloque" style="display:grid;gap:10px">
+        <div class="tel" aria-label="Propuesta: editor de la foto">
+          <div class="hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Foto del viaje</div>
+          <div class="edit-prev"><img id="prev-editor" alt="Vista previa del diseño elegido"><span class="pill">{{IC_FOTO}}Cambiar foto</span></div>
+          <div class="minis"><span class="on"><img id="mini2" alt="Mapa pequeño"></span><span><img id="mini1" alt="Sticker"></span><span><img id="mini3" alt="Postal"></span></div>
+          <div class="acciones"><span class="pbtn">{{IC_GUARDAR}}Guardar</span><span class="pbtn pri">{{IC_COMP}}Compartir</span></div>
+        </div>
+        <div class="tel-cap"><b>Propuesta: el editor</b><span>La imagen grande, el cambio de foto encima de ella, los diseños como miniaturas y una sola acción principal.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="decisiones" aria-label="Decisiones">
+    <div><b>Datos que salen en la imagen</b><p>Distancia, tiempo en movimiento (sin las paradas) y desnivel positivo. El desnivel solo aparece si el viaje tiene altitud real; nunca se pone un 0 inventado.</p></div>
+    <div><b>El mapa</b><p>Mapa vectorial de OpenStreetMap con relieve sombreado, en los colores de la app. Gratis y sin clave. Si no hay señal, la tarjeta muestra solo el trazo.</p></div>
+    <div><b>La marca</b><p>Logo oficial y librepedal.cl, chicos, en una esquina. La foto y el viaje son lo principal.</p></div>
+    <div><b>Formatos</b><p>Historia 9:16 (1080 × 1920) para Instagram y WhatsApp, y publicación 4:5 (1080 × 1350) para el muro. Se comparte directo al menú del teléfono.</p></div>
+  </section>
+  <p class="pie">Mapas © OpenStreetMap, OpenFreeMap. Relieve: Terrarium (AWS Open Data). Fondo de ejemplo: Esri World Imagery. Ruta y perfil reales calculados con OSRM y Open-Meteo.</p>
+</main>
+
+<script>
+(function(){
+var D={{DATOS}};
+var IM={};
+function cargar(k,src){ return new Promise(function(ok){ var i=new Image(); i.onload=function(){ IM[k]=i; ok(); }; i.onerror=function(){ ok(); }; i.src=src; }); }
+var formato='historia', foto=null;
+var F={historia:{w:1080,h:1920}, post:{w:1080,h:1350}};
+var NAR='#fc4c02', DISP='"Barlow Condensed","Arial Narrow",sans-serif', TXT='Barlow,system-ui,sans-serif';
+
+function fondo(ctx,W,H,img){
+  var s=Math.max(W/img.width,H/img.height), w=img.width*s, h=img.height*s;
+  ctx.drawImage(img,(W-w)/2,(H-h)/2,w,h);
+}
+function velo(ctx,W,H,desde,a){ var g=ctx.createLinearGradient(0,H*desde,0,H); g.addColorStop(0,'rgba(5,8,16,0)'); g.addColorStop(1,'rgba(5,8,16,'+a+')'); ctx.fillStyle=g; ctx.fillRect(0,H*desde,W,H*(1-desde)); }
+function velotop(ctx,W,h,a){ var g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(5,8,16,'+a+')'); g.addColorStop(1,'rgba(5,8,16,0)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,h); }
+function sombra(ctx,b,c){ ctx.shadowColor=c||'rgba(0,0,0,.55)'; ctx.shadowBlur=b; ctx.shadowOffsetY=b/4; }
+function sinSombra(ctx){ ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.shadowOffsetY=0; }
+function texto(ctx,t,x,y,font,color,align){ ctx.font=font; ctx.fillStyle=color; ctx.textAlign=align||'left'; ctx.textBaseline='alphabetic'; ctx.fillText(t,x,y); }
+function espaciado(ctx,t,x,y,font,color,sp){ ctx.font=font; ctx.fillStyle=color; ctx.textAlign='left'; var cx=x; for(var i=0;i<t.length;i++){ ctx.fillText(t[i],cx,y); cx+=ctx.measureText(t[i]).width+sp; } return cx-x; }
+function marca(ctx,x,y,tam,align){
+  var L=IM.logo; if(!L) return;
+  var w=tam, h=tam*L.height/L.width; var lx=align==='right'?x-w:x;
+  sombra(ctx,14); ctx.drawImage(L,lx,y,w,h); sinSombra(ctx);
+}
+// trazo sobre puntos en px
+function trazo(ctx,xy,g,glow){
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.beginPath(); xy.forEach(function(p,i){ i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); });
+  if(glow){ ctx.save(); ctx.shadowColor='rgba(252,76,2,.9)'; ctx.shadowBlur=g*2.6; ctx.strokeStyle='rgba(252,76,2,.85)'; ctx.lineWidth=g; ctx.stroke(); ctx.restore(); }
+  ctx.strokeStyle='rgba(10,15,29,.55)'; ctx.lineWidth=g+6; ctx.stroke();
+  ctx.strokeStyle=NAR; ctx.lineWidth=g; ctx.stroke();
+  ctx.strokeStyle='rgba(255,214,190,.9)'; ctx.lineWidth=Math.max(1.5,g*0.22); ctx.stroke();
+  var a=xy[0], b=xy[xy.length-1], r=g*1.15;
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(a[0],a[1],r+4,0,7); ctx.fill(); ctx.fillStyle=getOk(); ctx.beginPath(); ctx.arc(a[0],a[1],r,0,7); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(b[0],b[1],r+4,0,7); ctx.fill(); ctx.fillStyle=NAR; ctx.beginPath(); ctx.arc(b[0],b[1],r,0,7); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(b[0],b[1],r*0.42,0,7); ctx.fill();
+}
+function getOk(){ return '#3ddc84'; }
+// ruta proyectada a un recuadro (para el sticker: sin mapa)
+function encajar(x,y,w,h){
+  var P=D.ruta.map(function(c){ var la=c[1]*Math.PI/180; return [c[0], -Math.log(Math.tan(Math.PI/4+la/2))*180/Math.PI]; });
+  var mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9; P.forEach(function(p){ mnx=Math.min(mnx,p[0]); mxx=Math.max(mxx,p[0]); mny=Math.min(mny,p[1]); mxy=Math.max(mxy,p[1]); });
+  var s=Math.min(w/(mxx-mnx),h/(mxy-mny)), ox=x+(w-(mxx-mnx)*s)/2, oy=y+(h-(mxy-mny)*s)/2;
+  return P.map(function(p){ return [ox+(p[0]-mnx)*s, oy+(p[1]-mny)*s]; });
+}
+function datosHTML(){ return D.datos; }
+
+// ---- 1 · Sticker ----
+function d1(cv){
+  var W=F[formato].w, H=F[formato].h; cv.width=W; cv.height=H; var ctx=cv.getContext('2d');
+  fondo(ctx,W,H,foto||IM.fondo); velo(ctx,W,H,.45,.62); velotop(ctx,W,240,.35);
+  var M=72, alto=formato==='post'?300:400, base=H-M-(formato==='post'?40:70);
+  // números apilados, alineados a la izquierda, como el sticker de Strava
+  var filas=D.datos, y=base;
+  for(var i=filas.length-1;i>=0;i--){
+    var d=filas[i];
+    sombra(ctx,18);
+    espaciado(ctx,d.l.toUpperCase(),M,y,'600 30px '+TXT,'rgba(255,255,255,.82)',3);
+    ctx.font='700 '+(formato==='post'?92:112)+'px '+DISP; var vw=ctx.measureText(d.v).width;
+    texto(ctx,d.v,M,y-38,'700 '+(formato==='post'?92:112)+'px '+DISP,'#fff');
+    texto(ctx,d.u,M+vw+12,y-38,'600 '+(formato==='post'?40:46)+'px '+DISP,'#fff');
+    sinSombra(ctx);
+    y-= (formato==='post'?150:178);
+  }
+  // trazo de la ruta encima de los números
+  var bx=M, by=y-alto+40, bw=alto*1.15;
+  sombra(ctx,24,'rgba(0,0,0,.6)');
+  var xy=encajar(bx,by,bw,alto-40);
+  ctx.lineJoin='round'; ctx.lineCap='round'; ctx.beginPath(); xy.forEach(function(p,i){ i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); });
+  ctx.strokeStyle='#fff'; ctx.lineWidth=11; ctx.stroke(); sinSombra(ctx);
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(xy[0][0],xy[0][1],13,0,7); ctx.fill();
+  var b=xy[xy.length-1]; ctx.beginPath(); ctx.arc(b[0],b[1],15,0,7); ctx.fill(); ctx.fillStyle=NAR; ctx.beginPath(); ctx.arc(b[0],b[1],9,0,7); ctx.fill();
+  marca(ctx,W-M,H-M-150,150,'right');
+}
+// ---- 2 · Mapa pequeño ----
+function d2(cv){
+  var W=F[formato].w, H=F[formato].h; cv.width=W; cv.height=H; var ctx=cv.getContext('2d');
+  fondo(ctx,W,H,foto||IM.fondo); velo(ctx,W,H,.38,.88); velotop(ctx,W,260,.45);
+  var M=64;
+  marca(ctx,M,M-6,118,'left');
+  espaciado(ctx,'LIBREPEDAL.CL',W-M-262,M+62,'600 26px '+TXT,'rgba(255,255,255,.85)',3);
+  // tarjeta de mapa
+  var cs=formato==='post'?500:620, cx=M, cy=H-M-(formato==='post'?250:330)-cs;
+  ctx.save(); sombra(ctx,40,'rgba(0,0,0,.6)'); redondo(ctx,cx,cy,cs,cs,34); ctx.fillStyle='#0e1628'; ctx.fill(); sinSombra(ctx); ctx.clip();
+  var m=IM.mapa, mz=D.mapa; // 1000x1000 con su proyección
+  ctx.drawImage(m,cx,cy,cs,cs);
+  var k=cs/1000; trazo(ctx,mz.pts.map(function(p){ return [cx+p[0]*k, cy+p[1]*k]; }), 9, true);
+  ctx.restore();
+  redondo(ctx,cx,cy,cs,cs,34); ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=3; ctx.stroke();
+  texto(ctx,'© OpenStreetMap',cx+cs-16,cy+cs-14,'500 15px '+TXT,'rgba(255,255,255,.55)','right');
+  // nombre y fecha a la derecha de la tarjeta (historia) o encima (post)
+  var tx=cx+cs+36, ty=cy+70;
+  if(formato==='post'){ tx=cx+cs+32; }
+  sombra(ctx,16);
+  var nom=D.nombre.split(' → ');
+  texto(ctx,nom[0],tx,ty,'700 54px '+DISP,'#fff'); texto(ctx,'→ '+nom[1],tx,ty+58,'700 54px '+DISP,'#fff');
+  espaciado(ctx,D.fecha.toUpperCase(),tx,ty+110,'600 24px '+TXT,'rgba(255,255,255,.75)',2.5);
+  sinSombra(ctx);
+  // fila de datos
+  var y=H-M-(formato==='post'?40:90), cw=(W-2*M)/3;
+  D.datos.forEach(function(d,i){
+    var x=M+cw*i;
+    if(i){ ctx.fillStyle='rgba(255,255,255,.22)'; ctx.fillRect(x-20,y-118,2,128); }
+    sombra(ctx,14);
+    ctx.font='700 '+(formato==='post'?80:96)+'px '+DISP; var vw=ctx.measureText(d.v).width;
+    texto(ctx,d.v,x,y-34,'700 '+(formato==='post'?80:96)+'px '+DISP,'#fff');
+    texto(ctx,d.u,x+vw+8,y-34,'700 36px '+DISP,NAR);
+    espaciado(ctx,d.l.toUpperCase(),x,y,'600 24px '+TXT,'rgba(255,255,255,.78)',2.5);
+    sinSombra(ctx);
+  });
+}
+function redondo(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+// ---- 3 · Postal ----
+function d3(cv){
+  var W=F[formato].w, H=F[formato].h; cv.width=W; cv.height=H; var ctx=cv.getContext('2d');
+  var post=formato==='post', panel=post?660:900, fy=H-panel;
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,fy+40); ctx.clip(); fondo(ctx,W,fy+40,foto||IM.fondo); ctx.restore();
+  velotop(ctx,W,220,.4);
+  marca(ctx,64,52,118,'left');
+  ctx.fillStyle='#0a0f1d'; ctx.fillRect(0,fy,W,panel);
+  // mapa panorámico con fundido hacia la foto y hacia abajo
+  var mh=post?410:420, k=W/1080, mapH=560*k;
+  ctx.save(); ctx.beginPath(); ctx.rect(0,fy,W,mh); ctx.clip();
+  // la franja se centra en la RUTA (no en la imagen), para que la ruta entera quepa en el alto disponible
+  var ys=D.franja.pts.map(function(p){ return p[1]; }), ry0=Math.min.apply(0,ys), ry1=Math.max.apply(0,ys);
+  var off=fy+mh/2-(ry0+ry1)/2*k; off=Math.min(fy, Math.max(fy+mh-mapH, off)); ctx.drawImage(IM.franja,0,off,W,mapH);
+  trazo(ctx,D.franja.pts.map(function(p){ return [p[0]*k, off+p[1]*k]; }),8,true);
+  var g=ctx.createLinearGradient(0,fy,0,fy+mh); g.addColorStop(0,'rgba(10,15,29,.85)'); g.addColorStop(.18,'rgba(10,15,29,0)'); g.addColorStop(.72,'rgba(10,15,29,0)'); g.addColorStop(1,'rgba(10,15,29,1)'); ctx.fillStyle=g; ctx.fillRect(0,fy,W,mh);
+  ctx.restore();
+  texto(ctx,'© OpenStreetMap',W-24,fy+mh-12,'500 15px '+TXT,'rgba(255,255,255,.5)','right');
+  // nombre, datos y perfil
+  var M=64, y=fy+mh+24;
+  texto(ctx,D.nombre,M,y+30,'700 56px '+DISP,'#fff');
+  espaciado(ctx,D.fecha.toUpperCase(),M,y+72,'600 22px '+TXT,'rgba(255,255,255,.65)',2.5);
+  var cw=(W-2*M)/3, yv=y+(post?150:170);
+  D.datos.forEach(function(d,i){
+    var x=M+cw*i;
+    ctx.font='700 78px '+DISP; var vw=ctx.measureText(d.v).width;
+    texto(ctx,d.v,x,yv,'700 78px '+DISP,'#fff'); texto(ctx,d.u,x+vw+8,yv,'700 32px '+DISP,NAR);
+    espaciado(ctx,d.l.toUpperCase(),x,yv+34,'600 21px '+TXT,'rgba(255,255,255,.7)',2.5);
+  });
+  if(formato==='historia'){
+    // perfil de elevación
+    var px=M, pw=W-2*M, py=yv+66, ph=130, E=D.elev, mn=Math.min.apply(0,E), mx=Math.max.apply(0,E);
+    var X=function(i){ return px+i/(E.length-1)*pw; }, Y=function(e){ return py+ph-(e-mn)/(mx-mn||1)*ph; };
+    ctx.beginPath(); E.forEach(function(e,i){ i?ctx.lineTo(X(i),Y(e)):ctx.moveTo(X(i),Y(e)); }); ctx.lineTo(px+pw,py+ph); ctx.lineTo(px,py+ph); ctx.closePath();
+    var gp=ctx.createLinearGradient(0,py,0,py+ph); gp.addColorStop(0,'rgba(252,76,2,.55)'); gp.addColorStop(1,'rgba(252,76,2,0)'); ctx.fillStyle=gp; ctx.fill();
+    ctx.beginPath(); E.forEach(function(e,i){ i?ctx.lineTo(X(i),Y(e)):ctx.moveTo(X(i),Y(e)); }); ctx.strokeStyle=NAR; ctx.lineWidth=4; ctx.lineJoin='round'; ctx.stroke();
+    texto(ctx,'máx. '+Math.round(mx)+' m',px+pw,py-10,'600 20px '+TXT,'rgba(255,255,255,.55)','right');
+    texto(ctx,'mín. '+Math.round(mn)+' m',px,py+ph+28,'600 20px '+TXT,'rgba(255,255,255,.55)','left');
+  }
+  if(!post) texto(ctx,'librepedal.cl',W-M,H-40,'600 24px '+TXT,'rgba(255,255,255,.6)','right');
+}
+function todo(){
+  var c1=document.getElementById('c1'), c2=document.getElementById('c2'), c3=document.getElementById('c3');
+  d1(c1); d2(c2); d3(c3);
+  try{
+    document.getElementById('prev-editor').src=c2.toDataURL('image/jpeg',.8);
+    document.getElementById('mini1').src=c1.toDataURL('image/jpeg',.5);
+    document.getElementById('mini2').src=c2.toDataURL('image/jpeg',.5);
+    document.getElementById('mini3').src=c3.toDataURL('image/jpeg',.5);
+  }catch(e){}
+}
+function fmt(f){ formato=f; document.getElementById('fmt-historia').setAttribute('aria-pressed',f==='historia'); document.getElementById('fmt-post').setAttribute('aria-pressed',f==='post'); todo(); }
+document.getElementById('fmt-historia').onclick=function(){ fmt('historia'); };
+document.getElementById('fmt-post').onclick=function(){ fmt('post'); };
+document.getElementById('foto').onchange=function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return;
+  var u=URL.createObjectURL(f), i=new Image();
+  i.onload=function(){ foto=i; document.getElementById('nota-foto').textContent='Con tu foto. Puedes probar otra cuando quieras.'; todo(); };
+  i.src=u;
+};
+Promise.all([cargar('fondo',D.img.fondo),cargar('mapa',D.img.mapa),cargar('franja',D.img.franja),cargar('logo',D.img.logo),
+  (document.fonts&&document.fonts.load?Promise.all([document.fonts.load('700 80px "Barlow Condensed"'),document.fonts.load('600 24px Barlow')]).catch(function(){}):Promise.resolve())
+]).then(todo);
+})();
+</script>

@@ -1,0 +1,11 @@
+import fs from 'node:fs'; import path from 'node:path';
+const { chromium } = await import('file:///C:/Users/intyr/lp-herr/node_modules/playwright-core/index.mjs');
+const b=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--use-gl=angle','--enable-webgl','--ignore-gpu-blocklist']});
+const p=await b.newPage({viewport:{width:1100,height:1950}});
+p.on('pageerror',e=>console.error('ERR',e.message));
+await p.goto('file:///'+path.resolve('render.html').split(path.sep).join('/'));
+await p.waitForFunction(()=>window.maplibregl);
+const sat={version:8,sources:{s:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:17}},layers:[{id:'s',type:'raster',source:'s'}]};
+const r=await p.evaluate((sat)=>window.render3d({style:sat,w:1080,h:1920,center:[-72.285,-40.175],zoom:13.2,pitch:80,bearing:110,exag:1.5}),sat);
+fs.writeFileSync('fondo3d.jpg',Buffer.from(r.img.split(',')[1],'base64')); console.log('ok',Math.round(r.img.length/1024),'KB');
+await b.close();
