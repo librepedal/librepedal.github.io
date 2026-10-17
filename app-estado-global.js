@@ -1,6 +1,14 @@
 let cu=null,uj=[],us={d:0,n:'Novato',di:0,c:0,la:null,lo:null,sumVelDist:0},mp,crl,gw,ig=false,rh=[],sm=[],cm=[],sc='classic',ghostMode=false,lastPos=null,ulp=null,radarActive=false,currentRoute=[],friendRequestSent=[],mapAllRoutes=null,mapHostelSelect=null,hostelCoords=null,nombreUsuario='',radarCircle=null,lastFixTime=0,posHistory=[];
 let categoriaActual='todos', hostelTipoActual='todos';
 let trips=[], currentTrip=null, navMap=null, helmetMarker=null, routeLine=null;
+// _navMapUsersActive: declarado ACÁ (no en motor-navegacion.js) a propósito -- lo lee
+// suscripcion-perezosa-rtd.js (carga ANTES que motor-navegacion.js en index.html) desde
+// el callback async de Firebase RTD. Si ese callback resuelve rápido (caché local de
+// IndexedDB) puede disparar en el hueco de microtasks entre un <script> y el siguiente,
+// antes de que motor-navegacion.js llegara a declararla -- "ReferenceError: _navMapUsersActive
+// is not defined", visto en vivo en producción (intermitente, no en cada carga). Este
+// archivo es el primero en cargar, así que la variable ya existe pase lo que pase.
+let _navMapUsersActive=false;
 let addedDests=[], currentFilter='hostel', allHostels=[];
 let gpsPoints=[], lastGpsPoint=null, totalDistance=0, gpsWatchId=null, tripStartTime=0, navPosHistory=[];
 // Evita perder el track al cerrar la navegación (✕) sin haber guardado explícitamente

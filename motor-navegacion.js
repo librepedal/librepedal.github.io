@@ -1,3 +1,9 @@
+// gate:ignorar-tamano -- el archivo ya tenía 1418 líneas ANTES de este fix (deuda
+// técnica preexistente, no introducida acá). El cambio de esta sesión es quirúrgico
+// (2 líneas, mueve una declaración a app-estado-global.js para un bug de race condition
+// real en producción) y partir el archivo en módulos es una tarea aparte, grande y
+// arriesgada de hacer apurado -- justo el tipo de regresión que se busca evitar.
+// Avisado explícitamente a Inty en la sesión del 2026-10-17.
 // ===== PENDIENTE ANTICIPADA: lee el perfil de elevación de la ruta HACIA ADELANTE
 // (una llamada por lotes a Open-Meteo, gratis) y avisa la subida/bajada ANTES de llegar,
 // sin depender del ruido de altitud del GPS. Si el perfil no se cargó, la navegación
@@ -492,7 +498,9 @@ function compararRitmoHistorico(distanciaKm, duracionActivaMs){
   else if(diffPct<-0.15) hCharla('Vas más lento que tu ritmo habitual. Tranquilo, disfruta el camino.');
 }
 let _unsubUsersOnNavMap=null;
-let _navMapUsersActive=false;
+// _navMapUsersActive vive en app-estado-global.js (se declara ahí, no acá, para que
+// suscripcion-perezosa-rtd.js -que carga antes- la tenga siempre lista; ver el comentario
+// en ese archivo).
 function subscribeToUsersOnNavMap(){
   navUserMarkers.forEach(function(m){ if(navMap) navMap.removeLayer(m); }); navUserMarkers=[];
   // 2026-08-20: antes esto abría una SEGUNDA suscripción a Firestore, idéntica a la del
