@@ -292,6 +292,7 @@ const tutorialSteps=[
   {view:'chat', sel:'button[onclick="verRodadas()"]', d:'Rodadas grupales: organiza o súmate a una salida con la comunidad. Una vez confirmada tu asistencia, se abre una radio para hablar con el grupo mientras pedaleas.'},
   {view:'chat', sel:'button[onclick="verRecomendacionRutas()"]', d:'Rutas para ti: recomendaciones reales de otros ciclistas, según tu distancia habitual.'},
   {view:'mac', sel:'#v-mac .section-info', d:'Taller: guía paso a paso según el síntoma, derivación al taller cuando es de seguridad, y la mantención de tu bici o vehículo.'},
+  {view:'customize', sel:'#epTarjeta', d:'Tu Pistero tiene varios modelos para elegir, no solo el Clásico. Toca "Cambiar modelo" cuando quieras probar otro — se ve igual en todas partes: tu chip, el mapa, el ranking.'},
   {view:'customize', sel:'#estilosGrid', d:'En Perfil armas tu personaje y eliges el estilo de la esfera. ¡A rodar!'}
 ];
 let tutorialIdx=0;
@@ -334,7 +335,8 @@ const TUTORIAL_TEMAS={
   rodada:15, rodadas:15, grupal:15, salida:15,
   recomendadas:16, descubre:16,
   taller:17, reparar:17, bici:17, mecanica:17,
-  perfil:18, personaje:18, casco:18, personalizar:18
+  modelo:18, modelos:18,
+  perfil:19, personaje:19, casco:19, personalizar:19
 };
 function mostrarPasoTutorial(indice){
   if(indice==null || !tutorialSteps[indice]) return;
