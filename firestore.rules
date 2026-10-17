@@ -620,6 +620,21 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
 
+    // Prueba de "Elige tu Pistero" (elige-pistero.js, 2026-10-16): cuántos eligen y cuántos dejan cada
+    // modelo. Solo contadores, sin uid ni datos personales. Cada escritura suma exactamente 1 a un solo
+    // contador; solo el admin lee (es la medición de la prueba).
+    match /pistModelosStats/{modelo} {
+      function esModelo() { return modelo in ['ciber','orbe','slime','vinilo','casco','clasico']; }
+      function soloContadores() { return request.resource.data.keys().hasOnly(['elegido','dejado']); }
+      function antes(c) { return resource == null ? 0 : resource.data.get(c, 0); }
+      function sube1(c) { return request.resource.data.get(c, 0) == antes(c) + 1; }
+      function igual(c) { return request.resource.data.get(c, 0) == antes(c); }
+      allow read: if isAdmin();
+      allow create, update: if signedIn() && esModelo() && soloContadores()
+        && ((sube1('elegido') && igual('dejado')) || (sube1('dejado') && igual('elegido')));
+      allow delete: if isAdmin();
+    }
+
     // Rutas recomendadas (rutas-recomendadas.js): GPX que sube cualquier usuario con cuenta
     // real para que la comunidad la vea en el mapa y la descargue. Pública para leer; solo el
     // autor la edita o la quita. Tope de puntos = RREC_MAX_PUNTOS del cliente.

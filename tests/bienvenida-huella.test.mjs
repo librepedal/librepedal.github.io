@@ -59,7 +59,8 @@ debe('el generador tiene las mismas 7 frases', ctx.bhFrases('l').every((f) => GE
 const IDX = leer('index.html'), SW = leer('sw.js'), AUTH = leer('auth-sesion.js');
 debe('index.html carga el módulo', IDX.includes('<script src="bienvenida-huella.js"></script>'));
 debe('sw.js lo guarda para usar sin red', SW.includes("'./bienvenida-huella.js'"));
-debe('el login pasa por la bienvenida', AUTH.includes('bhIniciar(nombre,_seguirTrasBienvenida)'));
+// 2026-10-16: después de la bienvenida va "Elige tu Pistero" (una vez) y recién ahí el saludo de siempre.
+debe('el login pasa por la bienvenida', AUTH.includes('bhIniciar(nombre,_trasBienvenida)') && /var _trasBienvenida=function\(rv\)\{[^\n]*epIniciar\(function\(\)\{ _seguirTrasBienvenida\(rv\); \}\)/.test(AUTH));
 debe('Comunidad abre el mapa de huellas', IDX.includes('onclick="bhAbrirMapa()"'));
 
 // Reglas de Firestore.

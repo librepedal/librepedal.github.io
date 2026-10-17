@@ -248,7 +248,7 @@ function _pistSorpresa(){ var o=_pistOpts();
 // Pistero del usuario en toda la app (pestaña Pistero, chip de usuario, título de la
 // sección): el MISMO personaje que arma en la tienda. Solo repinta si cambió.
 var _miPistKey='';
-function _pintarMiPistero(forzar){ var els=document.querySelectorAll('.lp-mi-pistero'); if(!els.length) return; var o=_pistOpts(), k=JSON.stringify(o); if(!forzar && k===_miPistKey) return; _miPistKey=k; var svg=_pistoDe(o,'feliz'); for(var i=0;i<els.length;i++) els[i].innerHTML=svg; }
+function _pintarMiPistero(forzar){ var els=document.querySelectorAll('.lp-mi-pistero'); if(!els.length) return; var o=_pistOpts(), k=JSON.stringify(o); if(!forzar && k===_miPistKey) return; _miPistKey=k; var svg=(typeof _pistAvatar==='function')?_pistAvatar(o,'feliz'):_pistoDe(o,'feliz'); for(var i=0;i<els.length;i++) els[i].innerHTML=svg; }
 function _pistCascoCol(){ return _lpColCasco(_pistOpts().casco); }
 function _pistPielCol(){ var o=_pistOpts(); var p=PIST_PIEL.find(function(x){return x.id===o.piel;}); return p?p.c:'#f4c9a0'; }
 function _pistoNuevo(expr){ var o=_pistOpts(); return _pisteroExprSVG(expr||'feliz', _pistCascoCol(), _pistPielCol(), o.lentes, o.bigote, o.acc, o); }

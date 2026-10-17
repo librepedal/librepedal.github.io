@@ -200,7 +200,8 @@ async function _completarLoginVerificadoOriginal(cuVal, nombre, e_val){
   }
   };
   if(typeof pioCargarMiEstado==='function') pioCargarMiEstado();
-  if(typeof bhIniciar==='function') bhIniciar(nombre,_seguirTrasBienvenida); else _seguirTrasBienvenida();
+  var _trasBienvenida=function(rv){ if(typeof epIniciar==='function') epIniciar(function(){ _seguirTrasBienvenida(rv); }); else _seguirTrasBienvenida(rv); }; // 2026-10-16: Elige tu Pistero, una vez por cuenta
+  if(typeof bhIniciar==='function') bhIniciar(nombre,_trasBienvenida); else _trasBienvenida();
   if(cu===ADMIN_ID && typeof pioAdminContar==='function') pioAdminContar();
 }
 
