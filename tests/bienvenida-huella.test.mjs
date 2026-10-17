@@ -62,6 +62,10 @@ debe('sw.js lo guarda para usar sin red', SW.includes("'./bienvenida-huella.js'"
 // 2026-10-16: después de la bienvenida va "Elige tu Pistero" (una vez) y recién ahí el saludo de siempre.
 debe('el login pasa por la bienvenida', AUTH.includes('bhIniciar(nombre,_trasBienvenida)') && /var _trasBienvenida=function\(rv\)\{[^\n]*epIniciar\(function\(\)\{ _seguirTrasBienvenida\(rv\); \}\)/.test(AUTH));
 debe('Comunidad abre el mapa de huellas', IDX.includes('onclick="bhAbrirMapa()"'));
+// 2026-10-17 (Inty: "no se sabe si se envió o no la propuesta"): antes "Dejar mi huella" SOLO
+// se podía abrir una vez, en el momento exacto de la bienvenida -- sin ningún botón para
+// volver si la cerrabas sin dejar tu idea, o querías volver a dejar la segunda más tarde.
+debe('Comunidad tiene un botón propio para dejar la huella (no solo en la bienvenida)', IDX.includes('onclick="bhAbrirHuella()"'));
 
 // Reglas de Firestore.
 const R = leer('firestore.rules');
