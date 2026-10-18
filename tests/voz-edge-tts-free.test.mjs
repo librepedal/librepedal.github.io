@@ -44,8 +44,12 @@ t('usa _claveCachePermanente (el mismo mecanismo que ya protege el gasto de Elev
   /_claveCachePermanente\(tEdge, voiceName, "edge-tts"/.test(bloqueEndpoint));
 t('un hit de cache responde sin llamar a Microsoft (return directo)',
   /return respCache;/.test(bloqueEndpoint));
-t('tras generar, se guarda en KV para la proxima vez (aunque ya sea gratis, evita depender de Microsoft en cada repeticion)',
-  /env\.VOZ_CUOTA\.put\(cacheKeyEdge, buf\)/.test(bloqueEndpoint));
+// Auditoría 2026-10-17: ya NO se escribe en KV (cada texto distinto gastaba 1 de las 1.000
+// escrituras/día y un script las agotaba; con eso se abrían los topes de las voces pagas).
+t('edgetts no escribe en KV (no se puede usar para agotar sus escrituras)',
+  !/VOZ_CUOTA\.put\(cacheKeyEdge/.test(bloqueEndpoint));
+t('sigue guardando en la caché de 24 h (Cache API), que no gasta escrituras de KV',
+  /cache\.put\(request, resp\.clone\(\)\)/.test(bloqueEndpoint));
 
 // --- La conexión sigue el protocolo real: WebSocket upgrade vía fetch (patrón nativo de
 //     Cloudflare Workers, no window.WebSocket que no existe en el runtime de Workers) ---

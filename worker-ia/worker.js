@@ -284,9 +284,15 @@ const MAX_CHARS_DIA = 120000;
 // patrón de falla silenciosa que la cuota de Firestore, pero de voz. Con margen bajo el
 // plan real (100.000 en vez de 121.000) para dejar colchón a lo que se pre-genera aparte
 // (voces-el/, gen-voces-elevenlabs.js).
+// PRESUPUESTO FALLA CERRADO (auditoría de seguridad 2026-10-17): antes, si KV fallaba,
+// los topes devolvían true ("no bloqueamos voz por un problema nuestro"). Pero KV falla
+// justo cuando se agotan sus 1.000 escrituras/día del plan gratis, y eso lo podía provocar
+// cualquiera desde Internet (edgetts escribía en KV por cada texto distinto, sin tope):
+// agotada la cuota, ElevenLabs y Google TTS (facturación real) quedaban SIN TOPE. Ahora, si
+// no se puede contar, no se gasta: la app cae sola a voces pregrabadas/gratis.
 const MAX_CHARS_MES = 100000;
 async function _presupuestoMensual(env, chars) {
-  if (!env.VOZ_CUOTA) return true;
+  if (!env.VOZ_CUOTA) return false; // sin contador no hay tope: no se gasta (auditoría 2026-10-17)
   const mes = new Date().toISOString().slice(0, 7); // "2026-08"
   const key = "presupuesto-mes:" + mes;
   try {
@@ -294,7 +300,7 @@ async function _presupuestoMensual(env, chars) {
     if (usado + chars > MAX_CHARS_MES) return false;
     await env.VOZ_CUOTA.put(key, String(usado + chars), { expirationTtl: 2764800 }); // ~32 dias, cubre el mes completo
     return true;
-  } catch (e) { return true; } // si KV falla, no bloqueamos voz por un problema nuestro
+  } catch (e) { return false; } // ver PRESUPUESTO FALLA CERRADO más abajo
 }
 // Tope MENSUAL propio para "leer respuestas largas de Claude a Inty" (herramienta nueva,
 // 2026-08-27, protocolo obligatorio en PROTOCOLO-DE-TRABAJO-INTY.md §9). Usa la MISMA
@@ -305,7 +311,7 @@ async function _presupuestoMensual(env, chars) {
 // de la app con miles de usuarios.
 const MAX_CHARS_MES_LECTOR = 30000;
 async function _presupuestoMensualLector(env, chars) {
-  if (!env.VOZ_CUOTA) return true;
+  if (!env.VOZ_CUOTA) return false; // sin contador no hay tope: no se gasta (auditoría 2026-10-17)
   const mes = new Date().toISOString().slice(0, 7);
   const key = "presupuesto-mes-lector:" + mes;
   try {
@@ -313,7 +319,7 @@ async function _presupuestoMensualLector(env, chars) {
     if (usado + chars > MAX_CHARS_MES_LECTOR) return false;
     await env.VOZ_CUOTA.put(key, String(usado + chars), { expirationTtl: 2764800 });
     return true;
-  } catch (e) { return true; }
+  } catch (e) { return false; }
 }
 // Tope MENSUAL propio para Google Cloud TTS (Chirp3-HD), 2026-09-05. La cuota real que
 // regala Google es 1.000.000 de caracteres/mes (verificado en la consola, se renueva
@@ -323,7 +329,7 @@ async function _presupuestoMensualLector(env, chars) {
 // dos proveedores distintos, no deberían pisarse.
 const MAX_CHARS_MES_GOOGLE = 900000;
 async function _presupuestoMensualGoogle(env, chars) {
-  if (!env.VOZ_CUOTA) return true;
+  if (!env.VOZ_CUOTA) return false; // sin contador no hay tope: no se gasta (auditoría 2026-10-17)
   const mes = new Date().toISOString().slice(0, 7);
   const key = "presupuesto-mes-google:" + mes;
   try {
@@ -331,7 +337,7 @@ async function _presupuestoMensualGoogle(env, chars) {
     if (usado + chars > MAX_CHARS_MES_GOOGLE) return false;
     await env.VOZ_CUOTA.put(key, String(usado + chars), { expirationTtl: 2764800 });
     return true;
-  } catch (e) { return true; }
+  } catch (e) { return false; }
 }
 // Freno anti-ráfaga por IP, 2026-09-04: movido de KV a la Cache API. Antes vivía en
 // VOZ_CUOTA (mismo KV que los presupuestos de abajo) y se disparaba en TODA síntesis de
@@ -346,6 +352,9 @@ async function _presupuestoMensualGoogle(env, chars) {
 // suficiente -- mismo criterio "best-effort, sin locking atómico" que ya regía este freno.
 async function _limiteIP(env, ip) {
   if (!ip) return true;
+  // IPv6 (auditoría 2026-10-17): una sola conexión doméstica tiene un /64 entero (2^64
+  // direcciones) y puede rotar sin costo; se cuenta por /64, no por dirección exacta.
+  if (ip.indexOf(":") !== -1) ip = ip.split(":").slice(0, 4).join(":") + "::/64";
   const minuto = Math.floor(Date.now() / 60000);
   const key = new Request("https://ratelimit.interno.worker/" + encodeURIComponent(ip) + "/" + minuto);
   try {
@@ -358,7 +367,7 @@ async function _limiteIP(env, ip) {
   } catch (e) { return true; } // si la Cache API falla, no bloqueamos voz por un problema nuestro
 }
 async function _presupuestoDiario(env, chars) {
-  if (!env.VOZ_CUOTA) return true;
+  if (!env.VOZ_CUOTA) return false; // sin contador no hay tope: no se gasta (auditoría 2026-10-17)
   const hoy = new Date().toISOString().slice(0, 10);
   const key = "presupuesto:" + hoy;
   try {
@@ -366,7 +375,7 @@ async function _presupuestoDiario(env, chars) {
     if (usado + chars > MAX_CHARS_DIA) return false;
     await env.VOZ_CUOTA.put(key, String(usado + chars), { expirationTtl: 172800 });
     return true;
-  } catch (e) { return true; }
+  } catch (e) { return false; }
 }
 
 // ===== Revierte un cargo de presupuesto ya sumado (fix 2026-09-22): aztts/eltts/gtts
@@ -913,7 +922,9 @@ export default {
         const buf = await _edgeSynth(tEdge, voiceName);
         const resp = new Response(buf, { headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=86400" } });
         ctx.waitUntil(cache.put(request, resp.clone()));
-        if (env.VOZ_CUOTA) ctx.waitUntil(env.VOZ_CUOTA.put(cacheKeyEdge, buf).catch(function () {}));
+        // Sin escritura en KV (auditoría 2026-10-17): es la voz gratis, sin presupuesto, y
+        // cada texto distinto gastaba 1 de las 1.000 escrituras/día de KV -- un script las
+        // agotaba y con eso abría los topes de las voces pagas. Basta la Cache API de 24 h.
         return resp;
       } catch (e) {
         return new Response(JSON.stringify({ error: "edgetts", detalle: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });
@@ -998,15 +1009,32 @@ export default {
       sys = personalidad(body.usuario, body.hospedajes, body.contexto);
       messages = [{ role: "system", content: sys }];
       const hist = Array.isArray(body.historial) ? body.historial.slice(-12) : [];
+      // Auditoría 2026-10-17: antes se aceptaba CUALQUIER rol (incluido "system": un segundo
+      // set de reglas inyectado después del real) y el historial no pasaba el filtro de
+      // "saltarse las reglas". Ahora solo user/assistant, y lo que intenta saltarse las reglas
+      // se descarta.
       for (const m of hist) {
-        if (m && m.role && m.content) messages.push({ role: m.role === "pistero" ? "assistant" : m.role, content: String(m.content).slice(0, 800) });
+        if (!m || !m.content) continue;
+        const rol = m.role === "pistero" || m.role === "assistant" ? "assistant" : (m.role === "user" ? "user" : null);
+        if (!rol) continue;
+        if (esIntentoSaltarReglas(m.content)) continue;
+        messages.push({ role: rol, content: String(m.content).slice(0, 800) });
       }
       messages.push({ role: "user", content: String(body.mensaje).slice(0, 800) + "\n\n[" + RECORDATORIO_TEMAS + "]" });
       maxTokens = 340;
     } else {
-      // Modo anécdota de lugar (lo usa la navegación, sin cambios)
-      lugar = (lugar || (body && body.lugar) || "").toString().slice(0, 140).trim();
+      // Modo anécdota de lugar (lo usa la navegación).
+      // Auditoría 2026-10-17: este modo no tenía freno por IP ni filtro, y `lugar` iba entre
+      // comillas dentro del prompt -- con `?lugar=X". Ignora lo anterior y...` cualquiera
+      // usaba el Worker como un LLM gratis y agotaba la cuota diaria de Workers AI (Pistero
+      // mudo para todos). Ahora: mismo freno por IP que el chat, el lugar queda reducido a
+      // lo que puede tener un nombre de lugar (sin comillas, corchetes ni saltos de línea)
+      // y pasa el mismo filtro de "saltarse las reglas".
+      if (!(await _limiteIP(env, clientIP))) return new Response(JSON.stringify({ error: "demasiadas_solicitudes" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      lugar = (lugar || (body && body.lugar) || "").toString().normalize("NFC")
+        .replace(/[^\p{L}\p{N} ,.\-()/]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 100);
       if (!lugar) return new Response(JSON.stringify({ error: "falta mensaje o lugar" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+      if (esIntentoSaltarReglas(lugar)) return new Response(JSON.stringify({ error: "lugar no válido" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
       const prompt = 'Eres Pistero, copiloto de una app de ciclismo chilena. Cuenta UNA anécdota o dato curioso y real sobre "' + lugar + '". Español de Chile, 2 frases cortas, sin emojis, sin saludar. Si no lo conoces, di algo lindo y breve sobre pedalear por esa zona.';
       messages = [{ role: "user", content: prompt }];
       maxTokens = 130;
@@ -1040,8 +1068,11 @@ export default {
 
     // Filtro de fuga de prompt (ver esFugaDePrompt arriba): si pasó esto, no se corrige
     // recortando -- se reemplaza entero por una respuesta honesta en personaje.
-    if (body && body.mensaje && esFugaDePrompt(texto)) {
-      texto = "Eso mejor me lo guardo yo -- cuéntame de tu viaje, ¿en qué te ayudo?";
+    // (2026-10-17: también en el modo anécdota, que antes no pasaba por este filtro.)
+    if (esFugaDePrompt(texto)) {
+      texto = body && body.mensaje
+        ? "Eso mejor me lo guardo yo -- cuéntame de tu viaje, ¿en qué te ayudo?"
+        : "Buen tramo para pedalear con calma y disfrutar el paisaje.";
     }
 
     // Filtro de vía prohibida (ver recomiendaViaProhibida arriba): igual que la fuga de

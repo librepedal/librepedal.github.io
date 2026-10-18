@@ -100,19 +100,20 @@ function montar({ kv } = {}) {
   debe('MAX_CHARS_MES deja margen real (no está pegado al límite del plan)', MAX_CHARS_MES <= 110000);
 }
 
-// ---- 6) Sin VOZ_CUOTA configurado (KV no disponible): no bloquea por un problema nuestro ----
+// ---- 6) y 7) FALLA CERRADO (auditoría 2026-10-17). Antes: sin KV o con KV caído se gastaba
+// SIN TOPE, y agotar las escrituras de KV lo podía provocar cualquiera desde Internet. Ahora,
+// si no se puede contar, no se gasta (la app cae a voces pregrabadas/gratis). ----
 {
   const _presupuestoMensual = montar();
-  const resultado = await _presupuestoMensual({}, 999999);
-  debe('sin KV, no se bloquea la voz (falla abierto, no cerrado)', resultado === true);
+  const resultado = await _presupuestoMensual({}, 10);
+  debe('sin KV no se gasta en la voz paga (falla cerrado)', resultado === false);
 }
-
-// ---- 7) Si el KV explota (excepción): tampoco bloquea, mismo criterio que el resto del worker ----
 {
   const kvQueFalla = { get: async () => { throw new Error('KV caído'); }, put: async () => { throw new Error('KV caído'); } };
   const _presupuestoMensual = montar();
-  const resultado = await _presupuestoMensual({ VOZ_CUOTA: kvQueFalla }, 999999);
-  debe('un KV que falla no deja a Pistero mudo', resultado === true);
+  debe('KV caído → no se gasta (falla cerrado)', await _presupuestoMensual({ VOZ_CUOTA: kvQueFalla }, 10) === false);
+  const kvSinEscrituras = { get: async () => '0', put: async () => { throw new Error('KV put() limit exceeded for the day'); } };
+  debe('KV con las escrituras del día agotadas (el ataque real) → no se gasta', await _presupuestoMensual({ VOZ_CUOTA: kvSinEscrituras }, 10) === false);
 }
 
 console.log(`\n${ok} ok, ${fail} fallas — voz-presupuesto-mensual.test.mjs`);

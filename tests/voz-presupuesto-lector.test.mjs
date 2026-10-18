@@ -74,12 +74,12 @@ function montar() {
   debe('el tope del lector es menor que el de Pistero (no compite por el mismo volumen)', MAX_CHARS_MES_LECTOR < MAX_PISTERO);
 }
 
-// ---- 4) Sin KV / KV que falla: falla abierto, mismo criterio que el resto del worker ----
+// ---- 4) Sin KV / KV que falla: FALLA CERRADO (auditoría 2026-10-17, ver voz-presupuesto-mensual) ----
 {
   const f = montar();
-  debe('sin VOZ_CUOTA no bloquea', await f({}, 999999) === true);
+  debe('sin VOZ_CUOTA no se gasta', await f({}, 10) === false);
   const kvQueFalla = { get: async () => { throw new Error('KV caído'); }, put: async () => { throw new Error('KV caído'); } };
-  debe('KV que falla no bloquea', await f({ VOZ_CUOTA: kvQueFalla }, 999999) === true);
+  debe('KV que falla → no se gasta', await f({ VOZ_CUOTA: kvQueFalla }, 10) === false);
 }
 
 // ---- 5) El endpoint /eltts elige el presupuesto según ?lector=1 (rama esLector) ----
