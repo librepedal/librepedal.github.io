@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
 
       - name: Instalar Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           # Ver build-apk.yml: Capacitor 8 exige Node >=22, este workflow fallaba igual.
           node-version: '22'
