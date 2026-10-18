@@ -9,12 +9,19 @@ on:
   pull_request:
   workflow_dispatch:   # tambien se puede lanzar a mano desde la pestana Actions
 
+# Auditoría de seguridad 2026-10-17: permisos mínimos por defecto. El token de GitHub solo
+# lee; el job que necesita escribir (publicar una Release) lo pide él mismo.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Traer el codigo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Instalar Node
         uses: actions/setup-node@v4

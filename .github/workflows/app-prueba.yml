@@ -16,6 +16,11 @@ on:
     branches: ['prueba/**']
     paths: ['package.json', 'capacitor.config.json', 'scripts/**', '.github/workflows/app-prueba.yml', 'resources/**']
 
+# Auditoría de seguridad 2026-10-17: permisos mínimos por defecto. El token de GitHub solo
+# lee; el job que necesita escribir (publicar una Release) lo pide él mismo.
+permissions:
+  contents: read
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -23,6 +28,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - uses: actions/setup-java@v4
@@ -52,7 +59,7 @@ jobs:
           ' "$URL"
           echo "URL_PRUEBA=$URL" >> "$GITHUB_ENV"
 
-      - run: npm install
+      - run: npm ci
       - run: node scripts/copy-web.js
       - run: npx cap add android
       - name: SDK Android 36
@@ -71,7 +78,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: LibrePedal-PRUEBA, path: LibrePedal-PRUEBA.apk, if-no-files-found: error }
       - name: Publicar en Releases (descarga directa desde el teléfono)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: app-prueba
           name: "Libre Pedal PRUEBA (no es la app de Play)"

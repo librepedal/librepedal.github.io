@@ -16,6 +16,11 @@ on:
       - 'scripts/**'
       - '.github/workflows/build-apk.yml'
 
+# Auditoría de seguridad 2026-10-17: permisos mínimos por defecto. El token de GitHub solo
+# lee; el job que necesita escribir (publicar una Release) lo pide él mismo.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,6 +29,8 @@ jobs:
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Instalar Node
         uses: actions/setup-node@v4
@@ -47,7 +54,7 @@ jobs:
           java-version: '21'
 
       - name: Instalar dependencias
-        run: npm install
+        run: npm ci
 
       - name: Preparar carpeta web (www/)
         run: node scripts/copy-web.js
@@ -92,7 +99,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publicar APK en Releases (enlace de descarga directa y fijo)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: latest-apk
           name: "Libre Pedal · Última APK"
