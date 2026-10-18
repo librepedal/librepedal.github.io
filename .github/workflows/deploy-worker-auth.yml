@@ -9,7 +9,11 @@ name: Publicar servidor de autenticación (worker-auth)
 on:
   workflow_dispatch:
   push:
-    branches: ['prueba/**', 'main']
+    # Auditoría 2026-10-17: antes también 'prueba/**' -- el Worker es UNO SOLO (librepedal-auth,
+    # sin [env] de staging), así que una rama de prueba sin revisión reemplazaba el login de
+    # PRODUCCIÓN. Ahora solo main (protegido: PR + tests + gitleaks). Las vistas previas ya
+    # funcionan con el Worker de main (acepta *.librepedal.pages.dev).
+    branches: ['main']
     paths: ['worker-auth/**', '.github/workflows/deploy-worker-auth.yml']
 
 jobs:

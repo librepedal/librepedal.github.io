@@ -35,5 +35,14 @@ const rec = bloque('recommendations');
 ok(/soloMiUidEnLista\('likedBy'\)/.test(rec) && /valoracionPropiaOk\(\)/.test(rec) && /numSiViene\('lat'\)/.test(rec), 'XSS recommendations: solo like/valoración propios y lat/lon numéricos');
 ok(/allow update: if false;/.test(bloque('hostels')) && /idDocOk\(id\)/.test(bloque('hostels')), 'XSS hostels: nadie los actualiza e id de documento normal');
 
+ok(/request\.auth\.uid == id && premiumSinTocar/.test(bloque('users')) && !/isOwnerOrLegacy/.test(bloque('users').replace(/\/\/.*$/gm, '')), '#10 users: solo el dueño (id = uid) actualiza su perfil');
+const dm = bloque('dm');
+ok(/conversationId\.split\('__'\)\.hasAny\(\[request\.auth\.uid\]\)/.test(dm.slice(dm.indexOf('allow create'))) && /get\('from', ''\) == request\.auth\.uid/.test(dm), '#6 dm: solo participantes, y from = quien escribe');
+ok(/get\('a', ''\) == request\.auth\.uid/.test(bloque('chat')), '#12 chat: el autor a = quien escribe');
+const geo = bloque('direccionesGeo');
+ok(/signedInReal\(\)/.test(geo) && /resource == null \|\| resource\.data\.get\('creadoPor', ''\) == request\.auth\.uid/.test(geo), '#9 direccionesGeo: cuenta real y solo quien la creó la corrige');
+const wf = readFileSync(join(raiz, '.github', 'workflows', 'deploy-worker-auth.yml'), 'utf8');
+ok(!/prueba\/\*\*/.test(wf.replace(/#.*$/gm, '')), 'el login de producción ya no se publica desde ramas prueba/**');
+
 console.log(`reglas auditoría 2026-10-17: ${n - f}/${n} OK`);
 process.exit(f ? 1 : 0);
