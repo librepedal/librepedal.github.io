@@ -12,11 +12,18 @@ on:
     branches: ['prueba/**']
   workflow_dispatch:
 
+# Auditoría de seguridad 2026-10-17: permisos mínimos por defecto. El token de GitHub solo
+# lee; el job que necesita escribir (publicar una Release) lo pide él mismo.
+permissions:
+  contents: read
+
 jobs:
   vista-previa:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:

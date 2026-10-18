@@ -20,7 +20,6 @@ node_modules/
 www/
 android/
 .gradle/
-package-lock.json
 
 # Cache local de Wrangler (Cloudflare Pages deploy)
 .wrangler/

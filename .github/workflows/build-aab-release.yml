@@ -12,12 +12,19 @@ on:
   push:
     branches: [ 'release/play-*' ]
 
+# Auditoría de seguridad 2026-10-17: permisos mínimos por defecto. El token de GitHub solo
+# lee; el job que necesita escribir (publicar una Release) lo pide él mismo.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Instalar Node
         uses: actions/setup-node@v4
@@ -34,7 +41,7 @@ jobs:
           java-version: '21'
 
       - name: Instalar dependencias
-        run: npm install
+        run: npm ci
 
       - name: Preparar carpeta web (www/)
         run: node scripts/copy-web.js
@@ -84,7 +91,9 @@ jobs:
         run: node scripts/patch-android-signing.js
 
       - name: Decodificar el keystore desde el secret
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/librepedal-release.keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/librepedal-release.keystore
 
       - name: Compilar AAB (release, firmado)
         env:
