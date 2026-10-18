@@ -190,5 +190,38 @@ ok(!(await escribir(tA, 'hostels/h1', { name: 'Casa 2' }, { actualizar: true }))
 ok(!(await escribir(tX, 'hostels/h2', { user: X, name: 'a', lat: XSS }, { crear: true })), 'ataque: crear con lat como texto → rechazado');
 ok(await escribir(tX, 'hostels/h3', { user: X, nombre: 'X', tipo: 'casa', name: 'Casa', location: 'Viña', desc: '', ratingSum: 0, votes: 0, ratedBy: {}, lat: -33, lon: -71, authUid: X }, { crear: true, ahora: ['ts'] }), 'legítimo: crear un alojamiento como la app');
 
+// ===== #10 /users: perfiles viejos sin authUid editables por cualquiera =====
+console.log('#10 users');
+await escribir(ADMIN, `users/${B}`, { nombre: 'Beto', km: 10, darma: 5 }); // perfil viejo, sin authUid
+ok(!(await escribir(tAnon, `users/${B}`, { nombre: 'hackeado' }, { actualizar: true })), 'ataque: anónimo reescribe un perfil viejo sin authUid → rechazado');
+ok(!(await escribir(tX, `users/${B}`, { authUid: X }, { actualizar: true })), 'ataque: ponerse como dueño de un perfil ajeno (dejaba fuera al dueño) → rechazado');
+ok(await escribir(tB, `users/${B}`, { bio: 'hola', lat: -33.4, lon: -70.6, visible: true }, { actualizar: true }), 'legítimo: el dueño actualiza su perfil (set merge de la app)');
+await escribir(ADMIN, `users/${A}`, { nombre: 'Ana', authUid: null });
+ok(await escribir(tA, `users/${A}`, { bio: 'ya puedo' }, { actualizar: true }), 'arreglo: el dueño de un perfil con authUid:null ya puede actualizarlo');
+
+// ===== #6 /dm: escribir en la conversación de otros dos =====
+console.log('#6 dm');
+const conv = [A, B].sort().join('__');
+ok(!(await escribir(tX, `dm/${conv}/messages/m1`, { from: X, text: 'soy tu amigo', authUid: X }, { crear: true })), 'ataque: un tercero escribe en la conversación de A y B → rechazado');
+ok(!(await escribir(tA, `dm/${conv}/messages/m2`, { from: B, text: 'mensaje falso de B' }, { crear: true })), 'ataque: A escribe haciéndose pasar por B → rechazado');
+ok(!(await escribir(tA, `dm/${conv}/messages/m3`, { text: 'sin from', authUid: A }, { crear: true })), 'ataque: mensaje sin `from` → rechazado');
+ok(await escribir(tA, `dm/${conv}/messages/m4`, { from: A, nombre: 'Ana', text: 'hola Beto', authUid: A }, { crear: true, ahora: ['ts'] }), 'legítimo: A le escribe a B (como la app)');
+ok(!(await borrar(tB, `dm/${conv}/messages/m4`)), 'B no borra el mensaje de A');
+
+// ===== #12 /chat: publicar a nombre de otro =====
+console.log('#12 chat');
+ok(!(await escribir(tX, 'chat/c1', { a: A, nombre: 'Ana', t: 'mensaje falso' }, { crear: true })), 'ataque: publicar en el chat con el autor de otra persona → rechazado');
+ok(!(await escribir(tX, 'chat/c2', { nombre: 'X', t: 'sin autor' }, { crear: true })), 'ataque: mensaje sin autor → rechazado');
+ok(await escribir(tX, 'chat/c3', { a: X, nombre: 'X', t: 'hola a todos', h: '20:00' }, { crear: true, ahora: ['ts'] }), 'legítimo: publicar en el chat (como la app)');
+
+// ===== #9 /direccionesGeo: envenenar la caché de direcciones =====
+console.log('#9 direccionesGeo');
+await escribir(ADMIN, 'direccionesGeo/hospital-van-buren', { q: 'hospital van buren', lat: -33.04, lon: -71.62, name: 'Hospital', origen: 'geocoder', creadoPor: A });
+ok(!(await escribir(tAnon, 'direccionesGeo/hospital-van-buren', { lat: -33.9, lon: -71.9, creadoPor: 'anonimo123' }, { actualizar: true })), 'ataque: anónimo cambia las coordenadas del hospital → rechazado');
+ok(!(await escribir(tX, 'direccionesGeo/hospital-van-buren', { lat: -33.9, lon: -71.9, creadoPor: X }, { actualizar: true })), 'ataque: otro usuario sobrescribe una dirección ajena → rechazado');
+ok(!(await escribir(tX, 'direccionesGeo/terminal', { q: 'terminal', lat: -33, lon: -71, creadoPor: A }, { crear: true })), 'ataque: guardar una dirección a nombre de otro → rechazado');
+ok(await escribir(tX, 'direccionesGeo/plaza-sotomayor', { q: 'plaza sotomayor', lat: -33.038, lon: -71.628, name: 'Plaza Sotomayor', origen: 'geocoder', creadoPor: X }, { crear: true, ahora: ['creadoEn'] }), 'legítimo: guardar una dirección nueva (como la app)');
+ok(await escribir(tX, 'direccionesGeo/plaza-sotomayor', { lat: -33.0381, creadoPor: X }, { actualizar: true }), 'legítimo: quien la creó la corrige');
+
 console.log(`\nreglas en emulador: ${n - f}/${n} OK`);
 process.exit(f ? 1 : 0);

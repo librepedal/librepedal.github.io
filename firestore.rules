@@ -203,7 +203,11 @@ service cloud.firestore {
         && !('premium' in request.resource.data)
         && numOk('darma', 0, 100000) && numOk('km', 0, 100000)
         && (!('createdAt' in request.resource.data) || request.resource.data.createdAt == request.time);
-      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && isOwnerOrLegacy() && premiumSinTocar()
+      // Auditoría 2026-10-17 (#10): era isOwnerOrLegacy() -- los perfiles sin `authUid` (11 de 28
+      // en el respaldo de julio) los podía reescribir CUALQUIERA, incluso anónimo, y si escribía
+      // su propio authUid dejaba al dueño fuera para siempre; y los de authUid:null no los podía
+      // tocar ni su dueño. El id del documento ES el uid del dueño: basta con eso.
+      allow update: if signedIn() && strOk('nombre', 60) && strOk('email', 120) && strOk('helmet', 40) && strOk('skin', 30) && strOk('bio', 300) && request.auth.uid == id && premiumSinTocar()
         && statsIncrementoPlausible('darma', 300) && statsIncrementoPlausible('km', 300) && createdAtSinTocar();
       allow delete: if false;
     }
@@ -382,7 +386,10 @@ service cloud.firestore {
     // igual, sin arreglar nada. Se compara directo contra `a`.
     match /chat/{id} {
       allow read: if true;
-      allow create: if signedInReal() && strOk('t', 500) && strOk('nombre', 60);
+      // Auditoría 2026-10-17 (#12): el autor `a` no se validaba -- se publicaba a nombre de otro y
+      // en el teléfono de la víctima se veía como mensaje propio.
+      allow create: if signedInReal() && strOk('t', 500) && strOk('nombre', 60)
+        && request.resource.data.get('a', '') == request.auth.uid;
       allow update, delete: if signedIn() && resource.data.a == request.auth.uid;
     }
 
@@ -584,8 +591,13 @@ service cloud.firestore {
     // editarlo/borrarlo.
     match /dm/{conversationId}/messages/{msgId} {
       allow read: if signedIn() && conversationId.split('__').hasAny([request.auth.uid]);
-      allow create: if signedInReal() && strOk('text', 1000) && autorEsUnoMismo();
-      allow update, delete: if signedIn() && isOwnerOrLegacy();
+      // Auditoría 2026-10-17 (#6): cualquiera escribía en la conversación de OTROS dos (el id es
+      // predecible) y el mensaje se veía como si lo hubiera mandado el otro. Ahora: solo los dos
+      // participantes, y `from` es obligatorio y es quien escribe.
+      allow create: if signedInReal() && strOk('text', 1000) && autorEsUnoMismo()
+        && conversationId.split('__').hasAny([request.auth.uid])
+        && request.resource.data.get('from', '') == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.get('from', '') == request.auth.uid;
     }
 
     // Te doy alojo (solo usuarios con 6+ meses, verificado en la app)
@@ -827,7 +839,13 @@ service cloud.firestore {
     // con una mejor, no se borra (evita vandalismo silencioso).
     match /direccionesGeo/{id} {
       allow read: if true;
-      allow create, update: if signedIn()
+      // Auditoría 2026-10-17 (#9): la app consulta esta caché ANTES que el geocodificador y un
+      // anónimo podía reescribir lat/lon de cualquier dirección ya guardada (hospital, terminal,
+      // punto de la cicletada) y desviar a quien navega. Ahora: cuenta real, `creadoPor` = quien
+      // escribe, y una dirección guardada solo la corrige quien la creó.
+      allow create, update: if signedInReal()
+        && request.resource.data.get('creadoPor', '') == request.auth.uid
+        && (resource == null || resource.data.get('creadoPor', '') == request.auth.uid)
         && strOk('q', 200) && strOk('name', 300) && strOk('origen', 40) && strOk('creadoPor', 120)
         && request.resource.data.lat is number && request.resource.data.lon is number
         && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
