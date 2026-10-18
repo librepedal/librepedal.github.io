@@ -75,7 +75,7 @@ jobs:
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon --stacktrace
       - name: Renombrar
         run: cp android/app/build/outputs/apk/debug/app-debug.apk LibrePedal-PRUEBA.apk
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: LibrePedal-PRUEBA, path: LibrePedal-PRUEBA.apk, if-no-files-found: error }
       - name: Publicar en Releases (descarga directa desde el teléfono)
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
